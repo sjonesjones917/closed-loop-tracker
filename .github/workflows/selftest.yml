@@ -1,4 +1,4 @@
-name: Closed Loop Self Test
+name: Closed Loop V2 Self Test
 
 on:
   push:
@@ -13,23 +13,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax check
+      - name: Syntax check final app engine
         run: |
-          node --check spec.js
-          node --check engine-base.js
-          node --check engine-contract.js
-          node --check engine-validate.js
-          node --check engine-batch.js
+          node --check v2-spec.js
+          node --check v2-model.js
+          node --check v2-contract.js
+          node --check v2-validate.js
+          node --check v2-fixes.js
+          node --check v2-batch.js
+          node --check v2-ui.js
       - name: Full 30-stage workflow self-test
-        run: node selftest.js
-      - name: Verify generated artifact
+        run: node selftest-v2.js
+      - name: Verify generated artifact identity
         run: |
-          test "$(cat selftest-artifact.txt)" = "HELLO CLOSED LOOP"
-          echo "960046275eb0798c9968d7a14d0a6d45c09c97534012185f27936cb4cb39550e  selftest-artifact.txt" | sha256sum -c -
-      - name: Upload evidence
+          test "$(cat selftest-artifact-v2.txt)" = "HELLO CLOSED LOOP"
+          echo "960046275eb0798c9968d7a14d0a6d45c09c97534012185f27936cb4cb39550e  selftest-artifact-v2.txt" | sha256sum -c -
+          ! grep -R '\$1' selftest-state-v2.json
+      - name: Upload full evidence
         uses: actions/upload-artifact@v4
         with:
-          name: closed-loop-selftest-evidence
+          name: closed-loop-v2-selftest-evidence
           path: |
-            selftest-artifact.txt
-            selftest-state.json
+            selftest-artifact-v2.txt
+            selftest-state-v2.json
