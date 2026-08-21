@@ -1,4 +1,4 @@
-name: Test real workflow engine and deploy GitHub Pages
+name: Test strict workflow engine and deploy GitHub Pages
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run real 30-stage engine E2E job
+      - name: Execute all 31 workflow gates and negative tests
         run: node e2e-test.mjs
-      - name: Build exact standalone deployment
+      - name: Build deployment from the exact tested files
         run: |
           rm -rf dist
           mkdir -p dist
