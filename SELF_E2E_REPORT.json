@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "testType": "Real Chromium UI self-build from empty project through exact visible export",
+  "app": "app-v13.html",
+  "projectId": "PROJECT-MT3LNMYL-2MB50W",
+  "jobId": "JOB-MT3LNMYL-1WBEZL",
+  "stagesCompleted": 31,
+  "producerResponsesPasted": 30,
+  "verifierResponsesPasted": 30,
+  "producerProcessCount": 30,
+  "verifierProcessCount": 30,
+  "firstCandidateDefect": "SELF_VERIFIED_PROJEC.json fails exact sidecar contract in 10/10 independent verifiers",
+  "correctedCandidate": "SELF_VERIFIED_PROJECT.json passes 10/10 corrected verifiers and 10/10 unchanged confirmation verifiers",
+  "releaseDecision": "ACCEPTED",
+  "artifactSha256": "3da4371e1a0c5c301a670354a617fdd35865db4446ade79ae4c2548ec16a3ad5",
+  "artifactBytes": 35408,
+  "artifactVisibleDownloadVerified": true,
+  "projectVisibleExport": "SELF_VERIFIED_PROJECT.json",
+  "projectExportSha256": "fbbd67104546d244f908d81618b6b95e537bbe65ad44e2dda68d59d7c8cf0612",
+  "hardcodedProject": false,
+  "freshBrowserSidecarAutoload": true,
+  "mobileWidthsVerified": [
+    393,
+    320
+  ],
+  "screenshots": [
+    "SELF_PROJECT_COMPLETED_393.png",
+    "SELF_PROJECT_AUTOLOADED_393.png",
+    "SELF_PROJECT_AUTOLOADED_320.png"
+  ]
+}
