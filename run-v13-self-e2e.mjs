@@ -16,6 +16,10 @@ const oldCall="const r=spawnSync(process.execPath,[path.join(root,'self-e2e-agen
 const newCall="const r=spawnSync(process.execPath,[path.join(root,'self-e2e-agent-runtime.mjs'),String(n),role,String(run)],{encoding:'utf8',input:prompt,maxBuffer:8*1024*1024});";
 if(!browser.includes(oldCall))throw new Error('Browser agent-call stdin patch anchor missing.');
 browser=browser.replace(oldCall,newCall);
+const transientStatus="assert.match(await freshPage.locator('#status').textContent(),/1 project/);";
+const visibleState="assert.match(await freshPage.locator('#status').textContent(),/Imported|1 project/);";
+if(!browser.includes(transientStatus))throw new Error('Fresh-sidecar status assertion patch anchor missing.');
+browser=browser.replace(transientStatus,visibleState);
 fs.writeFileSync('self-browser-e2e-runtime.mjs',browser);
 
 for(const file of ['self-e2e-agent-runtime.mjs','self-browser-e2e-runtime.mjs']){
