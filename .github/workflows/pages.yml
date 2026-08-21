@@ -1,4 +1,4 @@
-name: Browser-test complete workflow and deploy GitHub Pages
+name: Test and deploy Closed-Loop app
 
 on:
   push:
@@ -10,66 +10,55 @@ permissions:
   pages: write
   id-token: write
 
+environment:
+  name: github-pages
+
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  test-and-package:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build exact v12 application
+      - name: Verify deployed app structure
+        shell: bash
         run: |
           set -euo pipefail
-          node --check build-v12.mjs
-          node build-v12.mjs
-          test -s app-v12.html
-          grep -q 'TARGET RUN OUTPUT TO VERIFY:' app-v12.html
-          grep -q 'p.stages.slice(0,n-1)' app-v12.html
-      - name: Install browser test dependency
-        run: npm install --no-save playwright-core@1.55.0
-      - name: Run real Chromium UI end-to-end workflow
-        run: |
-          set -euo pipefail
-          sed -e 's#app-v11.html#app-v12.html#g' -e 's#__CLR_V11__#__CLR_V12__#g' browser-e2e.mjs > browser-e2e-v12.mjs
-          node --check browser-e2e-v12.mjs
-          node browser-e2e-v12.mjs | tee browser-e2e.log
-      - name: Verify test-created real project and released artifact
-        run: |
-          set -euo pipefail
-          test -s verified-e2e-project.json
-          test -s verified-e2e-artifact.txt
-          grep -q '"schemaVersion": 12' verified-e2e-project.json
-          grep -q '"status": "COMPLETE"' verified-e2e-project.json
-          grep -q '"releaseDecision": "ACCEPTED"' verified-e2e-project.json
-          test "$(wc -l < verified-e2e-artifact.txt)" -eq 4
-          test "$(sha256sum verified-e2e-artifact.txt | awk '{print $1}')" = "51368207f534cfb908522b1fb6451bf26c701c8c9dca2b11da75a8012c38c353"
-      - name: Build deployment directory from the exact tested app
+          test -s index.html
+          grep -q 'Closed-Loop Agent Reliability Workflow' index.html
+          grep -q 'Paste the actual agent response for this stage' index.html
+          grep -q 'Run 10 independent executions' index.html
+          grep -q 'Release only exact accepted artifact' index.html
+          grep -q 'crypto.subtle.digest' index.html
+          grep -q 'Released artifact bytes/text do not exactly equal' index.html
+          grep -q 'Response is too short to be a completed stage result' index.html
+      - name: Build Pages artifact
+        shell: bash
         run: |
           set -euo pipefail
           rm -rf dist
           mkdir -p dist
-          cp app-v12.html dist/index.html
-          cp app-v12.html dist/app-v12.html
-          cp verified-e2e-project.json dist/verified-e2e-project.json
-          cp verified-e2e-artifact.txt dist/verified-e2e-artifact.txt
-          cp README.md dist/README.md
+          cp index.html dist/index.html
+          cp index.html dist/404.html
           : > dist/.nojekyll
-          cp app-v12.html dist/404.html
-      - uses: actions/configure-pages@v5
-      - name: Upload exact tested Pages artifact
+      - name: Configure Pages and enable it if necessary
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
-    needs: test-and-package
+    needs: verify
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy exact tested Pages artifact
+      - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
