@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Verify exact application bytes and deploy GitHub Pages
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  verify-build-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -23,9 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Reconstruct and verify the exact audited application
+        run: python3 tools/build-pages.py
+      - name: Upload only the verified deployment directory
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-      - name: Deploy to GitHub Pages
+          path: dist
+      - name: Deploy verified bytes
         id: deployment
         uses: actions/deploy-pages@v4

@@ -1,9 +1,0 @@
-{
-  "name": "Closed Loop Tracker",
-  "short_name": "Closed Loop",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#07101e",
-  "theme_color": "#0b1220"
-}
