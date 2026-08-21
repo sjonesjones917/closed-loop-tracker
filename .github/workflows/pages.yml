@@ -1,4 +1,4 @@
-name: Test workflow state machine and deploy GitHub Pages
+name: Test complete workflow and deploy GitHub Pages
 
 on:
   push:
@@ -24,16 +24,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Syntax-check application core
         run: node --check app-core.js
-      - name: Run strict state-machine regression tests
+      - name: Run full 31-stage real-job traversal
         run: node e2e-test.mjs
-      - name: Build standalone Pages artifact
+      - name: Build Pages artifact from tested files
         run: |
           rm -rf dist
           mkdir -p dist
-          cp index.html app-core.js dist/
+          cp index.html app-core.js live.html README.md dist/
+          if [ -f payload-manifest.json ]; then cp payload-manifest.json dist/; fi
+          if [ -d release ]; then cp -R release dist/; fi
           printf '' > dist/.nojekyll
+          cp index.html dist/404.html
       - uses: actions/configure-pages@v5
-      - name: Upload tested application
+      - name: Upload exact tested application
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
