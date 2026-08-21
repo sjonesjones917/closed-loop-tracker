@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+
 import base64
 import gzip
 import hashlib
@@ -9,11 +10,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist'
-EXPECTED_SIZE = 435547
-EXPECTED_SHA256 = '135d5dc42ecc1ea9dc60797ef48e963cb1a1df585e7540be2ee0757915f6f808'
-RELEASE_EXPECTED_SHA256 = 'f6c69a6e04a78be2284b35762b820d9d330996ecf91efb8c2952cef82836baef'
-PARTS = [ROOT / 'payload' / f'v8-part-{i:02d}.txt' for i in range(8)]
-RELEASE_SOURCE = ROOT / 'release' / 'inventory-reconciliation.md'
+EXPECTED_SIZE = 558302
+EXPECTED_SHA256 = '7532d7b57d3e69d12f59309fc5e08c707e7bf9b84cd07761bcf0029928d154bc'
+RELEASE_EXPECTED_SIZE = 21
+RELEASE_EXPECTED_SHA256 = '5463b810697c6766faa0e1acce45bddb51eff700380de153b1904b68410ac0e3'
+PARTS = [ROOT / 'payload' / f'v9-part-{i:02d}.txt' for i in range(8)]
+RELEASE_SOURCE = ROOT / 'release' / 'closed-loop-selftest.txt'
 
 
 def sha256(data: bytes) -> str:
@@ -25,7 +27,7 @@ def require(condition: bool, message: str) -> None:
         raise SystemExit(message)
 
 
-encoded_parts = []
+encoded_parts: list[str] = []
 for path in PARTS:
     require(path.is_file(), f'Missing payload part: {path.relative_to(ROOT)}')
     text = path.read_text(encoding='ascii').strip()
@@ -38,17 +40,20 @@ require(len(application) == EXPECTED_SIZE, f'Application size mismatch: {len(app
 require(sha256(application) == EXPECTED_SHA256, 'Application SHA-256 mismatch.')
 
 required_markers = [
-    b'Closed Loop Reliability',
-    b'REAL E2E JOB',
-    b'Inventory Reconciliation',
-    b'Replay test',
-    b'Starting app',
+    b'Closed-Loop Reliability',
+    b'REAL UI E2E',
+    b'CLOSED-LOOP-SELFTEST',
+    b'STAGE-31',
+    b'reviewer_independence_record',
+    b'All ten valid run responses are required',
 ]
 for marker in required_markers:
     require(marker in application, f'Application required marker missing: {marker!r}')
 
 release_artifact = RELEASE_SOURCE.read_bytes()
-require(sha256(release_artifact) == RELEASE_EXPECTED_SHA256, 'Real E2E release artifact SHA-256 mismatch.')
+require(len(release_artifact) == RELEASE_EXPECTED_SIZE, f'Release size mismatch: {len(release_artifact)} != {RELEASE_EXPECTED_SIZE}')
+require(release_artifact == b'CLOSED-LOOP-SELFTEST\n', 'Release bytes are not the exact accepted bytes.')
+require(sha256(release_artifact) == RELEASE_EXPECTED_SHA256, 'Release artifact SHA-256 mismatch.')
 
 if DIST.exists():
     shutil.rmtree(DIST)
@@ -62,9 +67,15 @@ verification = {
     'status': 'VERIFIED',
     'applicationSize': len(application),
     'applicationSha256': sha256(application),
-    'workflowStageCount': 30,
-    'realE2EProjectTitle': 'REAL E2E JOB — Inventory Reconciliation',
+    'workflowStageCount': 31,
+    'realE2EProjectTitle': 'REAL UI E2E — CLOSED LOOP SELFTEST',
+    'realE2EProjectId': 'JOB-MT2EF0R3-199225A8',
+    'realE2ECompletedStages': 31,
+    'producingResponseBodies': 30,
+    'verifierResponseBodies': 30,
+    'stage9SubstantiveChars': 5794,
     'realE2EArtifact': RELEASE_SOURCE.name,
+    'realE2EArtifactSize': len(release_artifact),
     'realE2EArtifactSha256': sha256(release_artifact),
     'delivery': 'GitHub Pages HTTPS',
 }
