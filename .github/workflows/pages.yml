@@ -22,31 +22,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build v12 from reviewed v11 source
-        run: |
-          node --check build-v12.mjs
-          node build-v12.mjs
-          test -s app-v12.html
-          grep -q 'TARGET RUN OUTPUT TO VERIFY:' app-v12.html
-          grep -q 'p.stages.slice(0,n-1)' app-v12.html
-      - name: Verify Chrome is available
-        run: |
-          google-chrome --version || google-chrome-stable --version || chromium --version
-      - name: Install browser driver library only
-        run: npm install --no-save playwright-core@1.55.0
-      - name: Prepare exact v12 browser traversal
-        run: |
-          sed -e 's#app-v11.html#app-v12.html#g' -e 's#__CLR_V11__#__CLR_V12__#g' browser-e2e.mjs > browser-e2e-v12.mjs
-          node --check browser-e2e-v12.mjs
-      - name: Run real 393px Chromium UI traversal and capture exact result
+      - name: Execute complete build and Chromium traversal with unconditional diagnostic capture
         run: |
           set +e
-          node browser-e2e-v12.mjs > browser-e2e.log 2>&1
+          (
+            set -e
+            node --check build-v12.mjs
+            node build-v12.mjs
+            test -s app-v12.html
+            grep -q 'TARGET RUN OUTPUT TO VERIFY:' app-v12.html
+            grep -q 'p.stages.slice(0,n-1)' app-v12.html
+            google-chrome --version || google-chrome-stable --version || chromium --version
+            npm install --no-save playwright-core@1.55.0
+            sed -e 's#app-v11.html#app-v12.html#g' -e 's#__CLR_V11__#__CLR_V12__#g' browser-e2e.mjs > browser-e2e-v12.mjs
+            node --check browser-e2e-v12.mjs
+            node browser-e2e-v12.mjs
+          ) > browser-e2e.log 2>&1
           code=$?
           set -e
           printf '%s\n' "$code" > browser-e2e.exit.txt
           cat browser-e2e.log
-      - name: Commit exact browser diagnostic and any produced evidence
+      - name: Commit exact build/browser diagnostic and any produced evidence
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
