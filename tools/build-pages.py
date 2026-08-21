@@ -31,35 +31,51 @@ require(len(encoded) == MANIFEST['payload']['encodedLength'], 'Encoded payload l
 application = gzip.decompress(base64.b64decode(encoded, validate=True))
 require(len(application) == MANIFEST['application']['size'], 'Application byte size mismatch.')
 require(sha256(application) == MANIFEST['application']['sha256'], 'Application SHA-256 mismatch.')
-require(b'Closed-Loop Agent Reliability' in application, 'Application identity marker missing.')
-require(b"stageCount: 31" in application, 'Stage-count marker missing.')
-require(b'960046275eb0798c9968d7a14d0a6d45c09c97534012185f27936cb4cb39550e' in application, 'Release hash marker missing.')
+
+# Semantic identity gates for the exact audited application. These are additional
+# to the exact application hash above; changing any byte already requires a new manifest.
+required_markers = [
+    b'Closed-Loop Agent Reliability',
+    b'JOB-SELFTEST-001',
+    b'RELEASE ONLY THE EXACT ACCEPTED ARTIFACT',
+    b'd37d29bf116c0dd3fa88c5c5840339c09cacdff60427df29dd4660a71d3f05be',
+    b'TOOL-CONFIG-v002',
+    b'5283a2794c24d26fc0840f751fbd20f4b72071793821b224930f1cb05d50a6e7',
+    b'5463b810697c6766faa0e1acce45bddb51eff700380de153b1904b68410ac0e3',
+    b'SELFTEST-EVIDENCE-XX',
+]
+for marker in required_markers:
+    require(marker in application, f'Application required marker missing: {marker!r}')
 
 artifact_source = ROOT / MANIFEST['releaseArtifact']['source']
 artifact = artifact_source.read_bytes()
 require(len(artifact) == MANIFEST['releaseArtifact']['size'], 'Release artifact size mismatch.')
 require(sha256(artifact) == MANIFEST['releaseArtifact']['sha256'], 'Release artifact SHA-256 mismatch.')
+require(artifact == b'CLOSED-LOOP-SELFTEST\n', 'Release artifact exact-byte mismatch.')
 
 if DIST.exists():
     shutil.rmtree(DIST)
-(DIST / 'release').mkdir(parents=True)
+release_dir = DIST / 'release'
+release_dir.mkdir(parents=True)
 (DIST / 'index.html').write_bytes(application)
 (DIST / '404.html').write_bytes(application)
-(DIST / 'release' / 'HELLO_CLOSED_LOOP.txt').write_bytes(artifact)
+release_name = MANIFEST['releaseArtifact']['name']
+(release_dir / release_name).write_bytes(artifact)
 (DIST / '.nojekyll').write_text('')
-(DIST / 'deployment-verification.json').write_text(json.dumps({
+verification = {
     'status': 'VERIFIED',
     'applicationSize': len(application),
     'applicationSha256': sha256(application),
+    'releaseArtifact': release_name,
     'releaseArtifactSize': len(artifact),
     'releaseArtifactSha256': sha256(artifact),
-    'stageCount': 31,
-    'independentExecutions': 30
-}, indent=2) + '\n')
-print(json.dumps({
-    'status': 'VERIFIED',
-    'applicationSize': len(application),
-    'applicationSha256': sha256(application),
-    'releaseArtifactSize': len(artifact),
-    'releaseArtifactSha256': sha256(artifact)
-}, indent=2))
+    'stageCount': MANIFEST['workflow']['stageCount'],
+    'selfTestJobId': MANIFEST['workflow']['selfTestJobId'],
+    'candidateV1ExecutionRecords': MANIFEST['workflow']['candidateV1Runs'],
+    'correctedV2ExecutionRecords': MANIFEST['workflow']['correctedV2Runs'],
+    'unchangedConfirmationExecutionRecords': MANIFEST['workflow']['unchangedConfirmationRuns'],
+    'candidateV1Failure': MANIFEST['workflow']['candidateV1Failure'],
+    'correctedLayer': MANIFEST['workflow']['correctedLayer'],
+}
+(DIST / 'deployment-verification.json').write_text(json.dumps(verification, indent=2) + '\n')
+print(json.dumps(verification, indent=2))
