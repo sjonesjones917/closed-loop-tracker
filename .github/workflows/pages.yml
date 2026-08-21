@@ -22,32 +22,46 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify deployed app structure
+
+      - name: Verify source syntax and state-machine gates
         shell: bash
         run: |
           set -euo pipefail
-          test -s index.html
-          grep -q 'Closed-Loop Agent Reliability Workflow' index.html
-          grep -q 'Paste the actual agent response for this stage' index.html
-          grep -q 'Run 10 independent executions' index.html
-          grep -q 'Release only exact accepted artifact' index.html
-          grep -q 'crypto.subtle.digest' index.html
-          grep -q 'Released artifact bytes/text do not exactly equal' index.html
-          grep -q 'Response is too short to be a completed stage result' index.html
-      - name: Build Pages artifact
+          node --check app-core.js
+          node e2e-test.mjs
+
+      - name: Install browser test driver
+        shell: bash
+        run: npm install --no-save playwright-core
+
+      - name: Run real Chromium end-to-end workflow
         shell: bash
         run: |
           set -euo pipefail
+          CHROME_PATH=/usr/bin/google-chrome node run-v12-e2e.mjs
+
+      - name: Build exact Pages artifact from tested v12
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app-v12.html
+          grep -q 'Closed-Loop Agent Reliability v12' app-v12.html
+          grep -q 'every completion requires an actual pasted result' app-v12.html
+          grep -q 'RUN-001' app-v12.html
+          grep -q 'TARGET RUN OUTPUT TO VERIFY' app-v12.html
+          grep -q 'crypto.subtle.digest' app-v12.html
           rm -rf dist
           mkdir -p dist
-          cp index.html dist/index.html
-          cp index.html dist/404.html
+          cp app-v12.html dist/index.html
+          cp app-v12.html dist/404.html
           : > dist/.nojekyll
-      - name: Configure Pages and enable it if necessary
+
+      - name: Configure and enable GitHub Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Upload Pages artifact
+
+      - name: Upload tested Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -59,6 +73,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy Pages
+      - name: Deploy exact tested artifact
         id: deployment
         uses: actions/deploy-pages@v4
