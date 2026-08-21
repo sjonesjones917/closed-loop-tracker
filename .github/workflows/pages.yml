@@ -1,4 +1,4 @@
-name: Test complete workflow and deploy GitHub Pages
+name: Browser-test complete workflow and deploy GitHub Pages
 
 on:
   push:
@@ -15,39 +15,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-and-deploy:
+  browser-test-and-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Syntax-check application core
-        run: node --check app-core.js
-      - name: Run full 31-stage real-job traversal
-        run: node e2e-test.mjs
-      - name: Verify rebuilt phone UI exists
+      - name: Verify Chrome is available
         run: |
-          test -s app-v10.html
-          grep -q "Create real E2E job" app-v10.html
-          grep -q "Agent response — REQUIRED" app-v10.html
-          grep -q "Stage 1 is not tied to this real project" app-v10.html
-      - name: Build Pages artifact from tested files
+          google-chrome --version || google-chrome-stable --version || chromium --version
+      - name: Install browser driver library only
+        run: npm install --no-save playwright-core@1.55.0
+      - name: Run real 393px Chromium UI traversal
+        run: node browser-e2e.mjs
+      - name: Verify browser-created evidence exists
+        run: |
+          test -s verified-e2e-project.json
+          test -s verified-e2e-artifact.txt
+          grep -q '"status": "COMPLETE"' verified-e2e-project.json
+          grep -q '"releaseDecision": "ACCEPTED"' verified-e2e-project.json
+          test "$(wc -l < verified-e2e-artifact.txt)" -eq 4
+          test "$(sha256sum verified-e2e-artifact.txt | awk '{print $1}')" = "51368207f534cfb908522b1fb6451bf26c701c8c9dca2b11da75a8012c38c353"
+      - name: Build Pages artifact from the exact browser-tested app
         run: |
           rm -rf dist
           mkdir -p dist
-          cp app-v10.html dist/index.html
-          cp app-v10.html dist/app-v10.html
-          cp app-core.js live.html README.md dist/
-          if [ -f payload-manifest.json ]; then cp payload-manifest.json dist/; fi
-          if [ -d release ]; then cp -R release dist/; fi
+          cp app-v11.html dist/index.html
+          cp app-v11.html dist/app-v11.html
+          cp verified-e2e-project.json dist/verified-e2e-project.json
+          cp verified-e2e-artifact.txt dist/verified-e2e-artifact.txt
+          cp README.md dist/ 2>/dev/null || true
           printf '' > dist/.nojekyll
-          cp app-v10.html dist/404.html
+          cp app-v11.html dist/404.html
       - uses: actions/configure-pages@v5
-      - name: Upload exact tested application
+      - name: Upload only the exact browser-tested deployment directory
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-      - name: Deploy tested application
+      - name: Deploy browser-tested application
         id: deployment
         uses: actions/deploy-pages@v4
