@@ -1,0 +1,127 @@
+
+7. Identify factual propositions that must be true for a requirement to apply.
+8. Identify edge conditions and exceptions.
+9. Record exact source evidence for each externally derived requirement.
+10. Search specifically for requirements that could invalidate, contradict, or restrict requirements already found.
+
+Continue research until another research pass produces no new material requirement category and every known controlling source has been examined.
+Do not stop because the initial obvious requirements have been found.`,
+4:`Create one atomic requirement record for every independently testable obligation.
+
+Use this structure:
+REQ_ID:
+REQUIREMENT:
+TYPE:
+SOURCE:
+SOURCE_LOCATION:
+AUTHORITY:
+APPLICABILITY:
+DEPENDENCIES:
+PROHIBITIONS:
+VERIFICATION_METHOD:
+EXPECTED_EVIDENCE:
+FAILURE_CONDITION:
+STATUS:
+
+Write requirements so that two independent evaluators applying the same evidence should reach the same result.
+Split compound requirements.
+For every qualitative requirement, define what observable condition establishes satisfaction.
+Do not use undefined criteria such as good, strong, professional, complete, correct, sufficient, appropriate, or perfect.
+Replace each with measurable conditions.`,
+5:`Check the complete requirement set for:
+• duplicate requirements;
+• conflicting requirements;
+• requirements that cannot simultaneously be satisfied;
+• undefined terms;
+• circular dependencies;
+• missing prerequisites;
+• unsupported requirements;
+• requirements whose applicability cannot be determined;
+• requirements with no possible verification method.
+
+Resolve every resolvable defect.
+If a mandatory requirement cannot be resolved because required authority or evidence is unavailable, mark the affected work BLOCKED.
+Do not proceed as though the requirement were satisfied.`,
+6:`Create at least one verification procedure for every mandatory requirement.
+
+Use:
+TEST_ID:
+REQ_ID:
+TEST_TYPE:
+INPUTS_REQUIRED:
+PROCEDURE:
+EXPECTED_RESULT:
+FAILURE_CONDITION:
+EVIDENCE_PRODUCED:
+
+Choose the strongest available verification method in this order:
+1. formal proof or exact computation;
+2. deterministic programmatic test;
+3. schema or structural validation;
+4. exact source comparison;
+5. rule-based evaluation;
+6. independent semantic evaluation;
+7. expert or authorized human judgment when the task requires it.
+
+Do not use an AI evaluator for a property that can be deterministically checked.
+Create separate tests for separate requirements.
+Confirm that every mandatory requirement is covered.
+Calculate mandatory_test_coverage = mandatory_requirements_with_tests / total_mandatory_requirements.
+Do not proceed until mandatory_test_coverage = 1.00 unless a requirement is explicitly blocked and the workflow is stopping on that blocker.`,
+7:`For every requirement, determine at least one way the requirement could be violated.
+Construct malformed, incomplete, contradictory, stale, incorrect, or adversarial cases where applicable.
+For each test, define the required system response.
+The system must detect the defect, reject the affected result, or block the affected operation.
+A validator that accepts a deliberately constructed invalid case is defective.
+Correct the validator before continuing.`,
+8:`Write the instruction from the compiled requirements, not directly from memory of the original request.
+
+The instruction must explicitly specify:
+Objective
+Inputs
+Source authority
+Scope
+Defined terms
+Required procedure
+Decision rules
+Tool rules
+Output contract
+Failure handling
+Completion criteria
+
+Describe actual operations and their required order.
+Do not use vague commands such as "Research all requirements" or "Verify the result."
+Require TRUE → requirement established; FALSE → requirement violated; UNKNOWN → requirement not established.
+Never permit UNKNOWN to be silently converted to TRUE.`,
+9:`Use a separate evaluation process to inspect the instruction without executing the target work.
+Examine every sentence for material ambiguity, undefined objects, unsupplied information dependencies, conflicts, unavailable capabilities, objective verifiability, responsible operation, ordering, failure behavior, and requirement/control traceability.
+Correct every material defect.
+Repeat preflight until no known material instruction defect remains.
+Version the result as INSTRUCTION-vN.`,
+10:`Freeze together:
+INPUT-vN
+SOURCE-SET-vN
+REQUIREMENTS-vN
+TEST-SUITE-vN
+INSTRUCTION-vN
+TOOL-CONFIGURATION-vN
+Record hashes for file-based artifacts where practical.
+Do not alter any frozen component during the iteration batch.
+If anything must change, terminate the current batch and start a new version.`,
+11:`Create ten fresh execution contexts.
+Give every execution exactly the same frozen input, sources, requirements where intended, production instruction, and tool configuration.
+Do not give any execution another execution’s output, reviewer comments, prior failure explanations, or proposed corrections.
+Run all ten independently.
+Store every output separately as RUN-001 through RUN-010.`,
+12:`Run the complete verification suite against each result.
+For every requirement and run, record REQ_ID, RUN_ID, RESULT = SATISFIED | VIOLATED | UNDETERMINED, TEST_ID, EVIDENCE, and DEFECT_ID if applicable.
+Do not ask the generating agent whether its own work is correct.
+Run deterministic validators independently.
+Run semantic evaluation independently.
+Run adversarial evaluation independently where applicable.`,
+13:`Compare outcomes requirement-by-requirement.
+Identify requirements satisfied by all ten; violated by one or more; producing inconsistent interpretations; outputs varying where variation is prohibited; requirements tests cannot conclusively evaluate; repeated failures; unique failures.
+Do not select the best execution and discard evidence from the others.
+Treat correctness-affecting variance as a defect requiring investigation.`,
+14:`For each defect, determine the earliest layer at which the condition became incorrect.
+Use SOURCE_DEFECT, RESEARCH_DEFECT,
