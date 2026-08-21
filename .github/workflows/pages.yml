@@ -15,10 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  browser-test-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  browser-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,6 +62,23 @@ jobs:
           grep -q '"status": "COMPLETE"' verified-e2e-project.json
           grep -q '"releaseDecision": "ACCEPTED"' verified-e2e-project.json
           test "$(wc -l < verified-e2e-artifact.txt)" -eq 4
+          test "$(sha256sum verified-e2e-artifact.txt | awk '{print $1}')" = "51368207f534cfb908522b1fb6451bf26c701c8c9dca2b11da75a8012c38c353"
+
+  deploy:
+    needs: browser-test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild the exact tested v12 app
+        run: node build-v12.mjs
+      - name: Require committed browser evidence from the successful gate
+        run: |
+          test -s verified-e2e-project.json
+          test -s verified-e2e-artifact.txt
+          test "$(cat browser-e2e.exit.txt)" = "0"
           test "$(sha256sum verified-e2e-artifact.txt | awk '{print $1}')" = "51368207f534cfb908522b1fb6451bf26c701c8c9dca2b11da75a8012c38c353"
       - name: Build Pages artifact from the exact browser-tested app
         run: |
