@@ -167,9 +167,10 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Check out the source revision for the deployment receipt
+      - name: Check out latest main for the deployment receipt
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Commit a machine-verifiable successful deployment receipt
