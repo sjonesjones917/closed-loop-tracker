@@ -1,3 +1,51 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0f14"><title>Closed-Loop Agent Reliability</title><style>body{margin:0;background:#0b0f14;color:#f4f7fb;font-family:-apple-system,BlinkMacSystemFont,system-ui}.c{max-width:680px;margin:12vh auto;padding:18px}.p{background:#131a23;border:1px solid #2a3442;border-radius:14px;padding:18px}.m{color:#aab6c5}pre{white-space:pre-wrap;word-break:break-word;color:#ff9b9b}</style></head><body><div class="c"><div class="p"><h2>Loading Closed-Loop Agent Reliability v5…</h2><p class="m">Verifying the transport parts, reconstructing the exact audited application, and checking its SHA-256 before execution.</p><pre id="e"></pre></div></div><script>
-(async()=>{const fail=m=>{document.getElementById('e').textContent='LOAD FAILURE: '+m;throw new Error(m)};const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');const sha=async b=>hex(await crypto.subtle.digest('SHA-256',b));try{if(!crypto?.subtle)fail('Web Crypto unavailable.');if(!('DecompressionStream'in window))fail('DecompressionStream unavailable in this browser.');const mr=await fetch('payload-manifest.json',{cache:'no-store'});if(!mr.ok)fail('manifest HTTP '+mr.status);const m=await mr.json();if(m.workflow?.stageCount!==31)fail('manifest stage count is not 31');let encoded='';for(const rec of m.payload.parts){const r=await fetch(rec.file,{cache:'no-store'});if(!r.ok)fail(rec.file+' HTTP '+r.status);const t=(await r.text()).trim();const bytes=new TextEncoder().encode(t);if(bytes.length!==rec.length)fail(rec.file+' length mismatch');if(await sha(bytes)!==rec.sha256)fail(rec.file+' SHA-256 mismatch');encoded+=t}if(encoded.length!==m.payload.encodedLength)fail('encoded payload length mismatch');const raw=atob(encoded),gz=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)gz[i]=raw.charCodeAt(i);const ds=new DecompressionStream('gzip');const appBytes=await new Response(new Blob([gz]).stream().pipeThrough(ds)).arrayBuffer();if(appBytes.byteLength!==m.application.size)fail('application byte size mismatch');if(await sha(appBytes)!==m.application.sha256)fail('application SHA-256 mismatch');const app=new TextDecoder().decode(appBytes);for(const marker of ['JOB-SELFTEST-001','RELEASE ONLY THE EXACT ACCEPTED ARTIFACT','d37d29bf116c0dd3fa88c5c5840339c09cacdff60427df29dd4660a71d3f05be','TOOL-CONFIG-v002','5463b810697c6766faa0e1acce45bddb51eff700380de153b1904b68410ac0e3'])if(!app.includes(marker))fail('required application marker missing: '+marker);document.open();document.write(app);document.close()}catch(err){if(!document.getElementById('e')?.textContent)document.getElementById('e').textContent='LOAD FAILURE: '+(err?.message||String(err))}})();
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<title>Closed Loop Reliability</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#07111f;color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}.wrap{max-width:720px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 32px) 22px calc(env(safe-area-inset-bottom) + 32px)}.card{margin-top:18vh;background:#101d31;border:1px solid #345174;border-radius:22px;padding:24px;box-shadow:0 16px 44px #0006}.title{font-size:28px;font-weight:800;margin:0 0 14px}.status{font-size:17px;line-height:1.45;color:#b9c7dc;overflow-wrap:anywhere}.bar{height:10px;background:#1f3049;border-radius:999px;overflow:hidden;margin-top:20px}.fill{height:100%;width:2%;background:#68b7ff;transition:width .18s ease}.error{white-space:pre-wrap;color:#ffb5b5;margin-top:16px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card"><h1 class="title">Opening Closed Loop Reliability…</h1><div id="status" class="status">Connecting to the verified application payload.</div><div class="bar"><div id="fill" class="fill"></div></div><div id="error" class="error"></div></div></div>
+<script>
+(async()=>{
+  const EXPECTED_SIZE=435547;
+  const EXPECTED_SHA='135d5dc42ecc1ea9dc60797ef48e963cb1a1df585e7540be2ee0757915f6f808';
+  const PARTS=Array.from({length:8},(_,i)=>`payload/v8-part-${String(i).padStart(2,'0')}.txt`);
+  const status=document.getElementById('status'), fill=document.getElementById('fill'), error=document.getElementById('error');
+  const set=(m,p)=>{status.textContent=m;fill.style.width=`${p}%`};
+  const fail=m=>{status.textContent='Application failed to open.';error.textContent=m;fill.style.width='100%';fill.style.background='#ff7070';throw new Error(m)};
+  const timedFetch=async url=>{const c=new AbortController();const t=setTimeout(()=>c.abort(),15000);try{const r=await fetch(url,{cache:'no-store',signal:c.signal});if(!r.ok)throw new Error(`${url}: HTTP ${r.status}`);return r}finally{clearTimeout(t)}};
+  const hex=b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('');
+  try{
+    if(!window.crypto?.subtle) fail('Web Crypto is unavailable in this browser.');
+    if(!('DecompressionStream' in window)) fail('This Safari version does not support gzip DecompressionStream.');
+    let encoded='';
+    for(let i=0;i<PARTS.length;i++){
+      set(`Loading verified application data ${i+1} of ${PARTS.length}…`,5+Math.round((i/PARTS.length)*55));
+      const text=(await (await timedFetch(PARTS[i])).text()).trim();
+      if(!text) fail(`${PARTS[i]} was empty.`);
+      encoded+=text;
+    }
+    set('Decoding application…',65);
+    let binary;try{binary=atob(encoded)}catch(e){fail(`Base64 decode failed: ${e.message||e}`)}
+    const gz=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)gz[i]=binary.charCodeAt(i);
+    set('Decompressing application…',75);
+    let appBytes;try{appBytes=await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}catch(e){fail(`Gzip decode failed: ${e.message||e}`)}
+    if(appBytes.byteLength!==EXPECTED_SIZE) fail(`Application size mismatch: ${appBytes.byteLength} != ${EXPECTED_SIZE}.`);
+    set('Verifying SHA-256…',88);
+    const actual=hex(await crypto.subtle.digest('SHA-256',appBytes));
+    if(actual!==EXPECTED_SHA) fail(`Application SHA-256 mismatch.\nExpected: ${EXPECTED_SHA}\nActual:   ${actual}`);
+    const app=new TextDecoder().decode(appBytes);
+    for(const marker of ['Closed Loop Reliability','REAL E2E JOB','Inventory Reconciliation','Replay test']) if(!app.includes(marker)) fail(`Verified application is missing required marker: ${marker}`);
+    set('Verified. Starting application…',100);
+    document.open();document.write(app);document.close();
+  }catch(e){if(!error.textContent){status.textContent='Application failed to open.';error.textContent=e?.name==='AbortError'?'Network request timed out after 15 seconds.':(e?.message||String(e));fill.style.width='100%';fill.style.background='#ff7070'}}
+})();
+</script>
+</body>
+</html>
