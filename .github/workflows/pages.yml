@@ -6,56 +6,37 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
-
-concurrency:
+\concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  browser-test:
+  test-and-package:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Execute complete build and Chromium traversal with unconditional diagnostic capture
+      - name: Build exact v12 application
         run: |
-          set +e
-          (
-            set -e
-            node --check build-v12.mjs
-            node build-v12.mjs
-            test -s app-v12.html
-            grep -q 'TARGET RUN OUTPUT TO VERIFY:' app-v12.html
-            grep -q 'p.stages.slice(0,n-1)' app-v12.html
-            google-chrome --version || google-chrome-stable --version || chromium --version
-            npm install --no-save playwright-core@1.55.0
-            sed -e 's#app-v11.html#app-v12.html#g' -e 's#__CLR_V11__#__CLR_V12__#g' browser-e2e.mjs > browser-e2e-v12.mjs
-            node --check browser-e2e-v12.mjs
-            node browser-e2e-v12.mjs
-          ) > browser-e2e.log 2>&1
-          code=$?
-          set -e
-          printf '%s\n' "$code" > browser-e2e.exit.txt
-          cat browser-e2e.log
-      - name: Commit exact build/browser diagnostic and any produced evidence
+          set -euo pipefail
+          node --check build-v12.mjs
+          node build-v12.mjs
+          test -s app-v12.html
+          grep -q 'TARGET RUN OUTPUT TO VERIFY:' app-v12.html
+          grep -q 'p.stages.slice(0,n-1)' app-v12.html
+      - name: Install browser test dependency
+        run: npm install --no-save playwright-core@1.55.0
+      - name: Run real Chromium UI end-to-end workflow
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add browser-e2e.log browser-e2e.exit.txt
-          test ! -f verified-e2e-project.json || git add verified-e2e-project.json
-          test ! -f verified-e2e-artifact.txt || git add verified-e2e-artifact.txt
-          if git diff --cached --quiet; then
-            echo 'Diagnostic/evidence already matches repository.'
-          else
-            git commit -m 'Store exact Chromium E2E diagnostic [skip ci]'
-            git push
-          fi
-      - name: Require successful browser traversal
-        run: test "$(cat browser-e2e.exit.txt)" = "0"
-      - name: Verify browser-created evidence exists
+          set -euo pipefail
+          sed -e 's#app-v11.html#app-v12.html#g' -e 's#__CLR_V11__#__CLR_V12__#g' browser-e2e.mjs > browser-e2e-v12.mjs
+          node --check browser-e2e-v12.mjs
+          node browser-e2e-v12.mjs | tee browser-e2e.log
+      - name: Verify test-created real project and released artifact
         run: |
+          set -euo pipefail
           test -s verified-e2e-project.json
           test -s verified-e2e-artifact.txt
           grep -q '"schemaVersion": 12' verified-e2e-project.json
@@ -63,39 +44,31 @@ jobs:
           grep -q '"releaseDecision": "ACCEPTED"' verified-e2e-project.json
           test "$(wc -l < verified-e2e-artifact.txt)" -eq 4
           test "$(sha256sum verified-e2e-artifact.txt | awk '{print $1}')" = "51368207f534cfb908522b1fb6451bf26c701c8c9dca2b11da75a8012c38c353"
-
-  deploy:
-    needs: browser-test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Rebuild the exact tested v12 app
-        run: node build-v12.mjs
-      - name: Require committed browser evidence from the successful gate
+      - name: Build deployment directory from the exact tested app
         run: |
-          test -s verified-e2e-project.json
-          test -s verified-e2e-artifact.txt
-          test "$(cat browser-e2e.exit.txt)" = "0"
-          test "$(sha256sum verified-e2e-artifact.txt | awk '{print $1}')" = "51368207f534cfb908522b1fb6451bf26c701c8c9dca2b11da75a8012c38c353"
-      - name: Build Pages artifact from the exact browser-tested app
-        run: |
+          set -euo pipefail
           rm -rf dist
           mkdir -p dist
           cp app-v12.html dist/index.html
           cp app-v12.html dist/app-v12.html
           cp verified-e2e-project.json dist/verified-e2e-project.json
           cp verified-e2e-artifact.txt dist/verified-e2e-artifact.txt
-          cp README.md dist/ 2>/dev/null || true
-          printf '' > dist/.nojekyll
+          cp README.md dist/README.md
+          : > dist/.nojekyll
           cp app-v12.html dist/404.html
       - uses: actions/configure-pages@v5
-      - name: Upload only the exact browser-tested deployment directory
+      - name: Upload exact tested Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
-      - name: Deploy browser-tested application
+
+  deploy:
+    needs: test-and-package
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact tested Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
