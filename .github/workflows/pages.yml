@@ -2,16 +2,14 @@ name: Test and deploy Closed-Loop app
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
-
-environment:
-  name: github-pages
 
 concurrency:
   group: pages
@@ -20,8 +18,10 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out exact repository revision
+        uses: actions/checkout@v4
 
       - name: Verify source syntax and state-machine gates
         shell: bash
@@ -34,34 +34,84 @@ jobs:
         shell: bash
         run: npm install --no-save playwright-core
 
-      - name: Run real Chromium end-to-end workflow
+      - name: Run the real Chromium UI workflow from Stage 1 through Stage 31
         shell: bash
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
         run: |
           set -euo pipefail
-          CHROME_PATH=/usr/bin/google-chrome node run-v12-e2e.mjs
+          node run-v12-e2e.mjs
 
-      - name: Build exact Pages artifact from tested v12
+      - name: Verify the real E2E project, responses, artifact, persistence export, and hashes
         shell: bash
         run: |
           set -euo pipefail
           test -s app-v12.html
+          test -s verified-e2e-project.json
+          test -s verified-e2e-artifact.txt
           grep -q 'Closed-Loop Agent Reliability v12' app-v12.html
           grep -q 'every completion requires an actual pasted result' app-v12.html
           grep -q 'RUN-001' app-v12.html
           grep -q 'TARGET RUN OUTPUT TO VERIFY' app-v12.html
           grep -q 'crypto.subtle.digest' app-v12.html
+          node <<'NODE'
+          const fs = require('node:fs');
+          const crypto = require('node:crypto');
+          const p = JSON.parse(fs.readFileSync('verified-e2e-project.json', 'utf8'));
+          const artifact = fs.readFileSync('verified-e2e-artifact.txt');
+          const fail = message => { throw new Error(message); };
+          if (!Array.isArray(p.stages) || p.stages.length !== 31) fail('E2E export does not contain all 31 stages.');
+          if (p.stages.some(stage => stage.status !== 'COMPLETE')) fail('E2E export contains an incomplete stage.');
+          if (p.stages[10].producers.filter(Boolean).length !== 10) fail('Stage 11 does not contain 10 pasted producer responses.');
+          if (p.stages[11].verifiers.filter(Boolean).length !== 10) fail('Stage 12 does not contain 10 pasted verifier responses.');
+          if (p.stages[17].producers.filter(Boolean).length !== 10) fail('Stage 18 does not contain 10 pasted producer responses.');
+          if (p.stages[18].verifiers.filter(Boolean).length !== 10) fail('Stage 19 does not contain 10 pasted verifier responses.');
+          if (p.stages[19].producers.filter(Boolean).length !== 10) fail('Stage 20 does not contain 10 pasted producer responses.');
+          if (p.stages[19].verifiers.filter(Boolean).length !== 10) fail('Stage 20 does not contain 10 pasted verifier responses.');
+          if (p.releaseDecision !== 'ACCEPTED') fail('E2E release decision is not ACCEPTED.');
+          if (Buffer.compare(Buffer.from(p.artifact, 'utf8'), artifact) !== 0) fail('Exported project artifact differs from exported artifact bytes.');
+          const hash = crypto.createHash('sha256').update(artifact).digest('hex');
+          if (p.auditedHash !== hash || p.releaseHash !== hash) fail('E2E audited/release hashes do not equal the actual artifact SHA-256.');
+          console.log(JSON.stringify({
+            status: 'PASS',
+            stagesComplete: 31,
+            pastedProducerResponses: 30,
+            pastedVerifierResponses: 30,
+            releaseDecision: p.releaseDecision,
+            artifactSha256: hash
+          }, null, 2));
+          NODE
+
+      - name: Build the exact Pages artifact from the tested browser output
+        shell: bash
+        run: |
+          set -euo pipefail
           rm -rf dist
           mkdir -p dist
           cp app-v12.html dist/index.html
           cp app-v12.html dist/404.html
+          cp verified-e2e-project.json dist/verified-e2e-project.json
+          cp verified-e2e-artifact.txt dist/verified-e2e-artifact.txt
+          printf '{"commit":"%s","workflow":"real-browser-e2e","stages":31,"status":"PASS"}\n' "$GITHUB_SHA" > dist/build-info.json
           : > dist/.nojekyll
+
+      - name: Preserve downloadable E2E evidence from this exact run
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-browser-e2e-evidence
+          path: |
+            verified-e2e-project.json
+            verified-e2e-artifact.txt
+            app-v12.html
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Configure and enable GitHub Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: Upload tested Pages artifact
+      - name: Upload the exact tested Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -69,10 +119,14 @@ jobs:
   deploy:
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy exact tested artifact
+      - name: Deploy the exact tested artifact
         id: deployment
         uses: actions/deploy-pages@v4
