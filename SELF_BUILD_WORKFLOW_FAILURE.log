@@ -1,40 +1,51 @@
-FAILED_RUN_ID=32536828735
-FAILED_HEAD_SHA=e4324c0ad5c6e8516c07d957ec1f9398f1c44d38
-CAPTURED_AT=2026-08-21T23:26:41Z
+FAILED_RUN_ID=32536947695
+FAILED_HEAD_SHA=8443909050c722ecc81abf90edd7407b71d652b8
+CAPTURED_AT=2026-08-21T23:28:49Z
 
-verify	Use the app itself to create and complete the app self-build project	﻿2026-08-21T23:26:07.0181517Z ##[group]Run set -euo pipefail
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0182211Z ^[[36;1mset -euo pipefail^[[0m
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0182480Z ^[[36;1mnode run-v13-self-e2e.mjs^[[0m
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0218646Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0219006Z env:
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0219216Z   CHROME_PATH: /usr/bin/google-chrome
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0219482Z ##[endgroup]
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0890773Z {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0891257Z   "status": "BUILT",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0891899Z   "candidate": {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0892315Z     "output": "app-v13-candidate1.html",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0892653Z     "bytes": 35387,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0892948Z     "sidecarPath": "SELF_VERIFIED_PROJEC.json",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0893342Z     "autoLoadsSidecar": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0893679Z     "containsNoEmbeddedCompletedProject": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0894198Z     "preservesArtifactName": true
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0894490Z   },
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0894700Z   "corrected": {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0894951Z     "output": "app-v13.html",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0895304Z     "bytes": 35388,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0895619Z     "sidecarPath": "SELF_VERIFIED_PROJECT.json",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0895977Z     "autoLoadsSidecar": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0896332Z     "containsNoEmbeddedCompletedProject": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0896700Z     "preservesArtifactName": true
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0896993Z   }
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:07.0897202Z }
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7548058Z file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e.mjs:37
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7549639Z   if(r.status!==0)throw new Error(`External self-build agent failed stage ${n} ${role} ${run}: ${r.stderr}`);
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7551836Z                         ^
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7552291Z 
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7552792Z Error: External self-build agent failed stage 23 stage 0: undefined
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7554089Z     at agent (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e.mjs:37:25)
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7555421Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e.mjs:122:44
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7556249Z 
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7556625Z Node.js v22.23.2
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:26:28.7737087Z ##[error]Process completed with exit code 1.
+verify	Use the app itself to create and complete the app self-build project	﻿2026-08-21T23:28:10.8945583Z ##[group]Run set -euo pipefail
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.8945798Z ^[[36;1mset -euo pipefail^[[0m
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.8946132Z ^[[36;1mnode run-v13-self-e2e.mjs^[[0m
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.8977671Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.8977862Z env:
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.8977986Z   CHROME_PATH: /usr/bin/google-chrome
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.8978138Z ##[endgroup]
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9459488Z {
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9459810Z   "status": "BUILT",
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9460068Z   "candidate": {
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9460269Z     "output": "app-v13-candidate1.html",
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9460509Z     "bytes": 35387,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9460726Z     "sidecarPath": "SELF_VERIFIED_PROJEC.json",
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9461018Z     "autoLoadsSidecar": true,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9461260Z     "containsNoEmbeddedCompletedProject": true,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9461532Z     "preservesArtifactName": true
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9461788Z   },
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9461943Z   "corrected": {
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9462154Z     "output": "app-v13.html",
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9462450Z     "bytes": 35388,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9462675Z     "sidecarPath": "SELF_VERIFIED_PROJECT.json",
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9462977Z     "autoLoadsSidecar": true,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9463240Z     "containsNoEmbeddedCompletedProject": true,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9463525Z     "preservesArtifactName": true
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9463731Z   }
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:10.9463898Z }
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0802753Z node:internal/modules/run_main:123
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0803095Z     triggerUncaughtException(
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0803248Z     ^
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0803310Z 
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0803428Z AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0803987Z + actual - expected
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0804066Z 
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0804614Z + 'app-v13.html. A fresh production process generated the actual requested standalone application app-v13.html from the approved baseline. The product is not a template, receipt, or placeholder. Manifest: app-v13.html, text/html, 35388 bytes, SHA-256 26d43ca923228c29625a5aa8744d038430cda878568847c145da5a26a904e5ec.'
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0805296Z - 'app-v13.html'
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0805377Z 
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0805564Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:144:10 {
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0805855Z   generatedMessage: true,
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0806657Z   code: 'ERR_ASSERTION',
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0807275Z   actual: 'app-v13.html. A fresh production process generated the actual requested standalone application app-v13.html from the approved baseline. The product is not a template, receipt, or placeholder. Manifest: app-v13.html, text/html, 35388 bytes, SHA-256 26d43ca923228c29625a5aa8744d038430cda878568847c145da5a26a904e5ec.',
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0807912Z   expected: 'app-v13.html',
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0808054Z   operator: 'strictEqual',
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0808182Z   diff: 'simple'
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0808295Z }
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0808355Z 
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0808404Z Node.js v22.23.2
+verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:28:38.0950240Z ##[error]Process completed with exit code 1.
