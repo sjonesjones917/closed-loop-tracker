@@ -1,4 +1,4 @@
-name: Test strict workflow engine and deploy GitHub Pages
+name: Test workflow state machine and deploy GitHub Pages
 
 on:
   push:
@@ -22,9 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Execute all 31 workflow gates and negative tests
+      - name: Syntax-check application core
+        run: node --check app-core.js
+      - name: Run strict state-machine regression tests
         run: node e2e-test.mjs
-      - name: Build deployment from the exact tested files
+      - name: Build standalone Pages artifact
         run: |
           rm -rf dist
           mkdir -p dist
