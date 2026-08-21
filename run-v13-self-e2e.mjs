@@ -4,6 +4,13 @@ import {spawnSync} from 'node:child_process';
 const build=spawnSync(process.execPath,['build-v13-self.mjs'],{encoding:'utf8',stdio:'inherit'});
 if(build.status!==0)process.exit(build.status??1);
 
+// The first browser must remain genuinely unseeded, but the optional sidecar and
+// implicit favicon requests must not generate console network errors. The empty
+// JSON object cannot import as a project and is overwritten only by the visible
+// Export this project download after all 31 stages complete.
+fs.writeFileSync('SELF_VERIFIED_PROJECT.json','{}\n');
+fs.writeFileSync('favicon.ico','');
+
 let agent=fs.readFileSync('self-e2e-agent.mjs','utf8');
 const oldPrompt="const prompt=Buffer.from(promptB64,'base64').toString('utf8');";
 const newPrompt="const prompt=promptB64?Buffer.from(promptB64,'base64').toString('utf8'):fs.readFileSync(0,'utf8');";
