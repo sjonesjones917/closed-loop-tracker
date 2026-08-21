@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist'
 EXPECTED_SIZE = 435547
 EXPECTED_SHA256 = '135d5dc42ecc1ea9dc60797ef48e963cb1a1df585e7540be2ee0757915f6f808'
+RELEASE_EXPECTED_SHA256 = 'f6c69a6e04a78be2284b35762b820d9d330996ecf91efb8c2952cef82836baef'
 PARTS = [ROOT / 'payload' / f'v8-part-{i:02d}.txt' for i in range(8)]
+RELEASE_SOURCE = ROOT / 'release' / 'inventory-reconciliation.md'
 
 
 def sha256(data: bytes) -> str:
@@ -45,12 +47,16 @@ required_markers = [
 for marker in required_markers:
     require(marker in application, f'Application required marker missing: {marker!r}')
 
+release_artifact = RELEASE_SOURCE.read_bytes()
+require(sha256(release_artifact) == RELEASE_EXPECTED_SHA256, 'Real E2E release artifact SHA-256 mismatch.')
+
 if DIST.exists():
     shutil.rmtree(DIST)
-DIST.mkdir(parents=True)
+(DIST / 'release').mkdir(parents=True)
 (DIST / 'index.html').write_bytes(application)
 (DIST / '404.html').write_bytes(application)
 (DIST / '.nojekyll').write_text('', encoding='utf-8')
+(DIST / 'release' / RELEASE_SOURCE.name).write_bytes(release_artifact)
 
 verification = {
     'status': 'VERIFIED',
@@ -58,6 +64,8 @@ verification = {
     'applicationSha256': sha256(application),
     'workflowStageCount': 30,
     'realE2EProjectTitle': 'REAL E2E JOB — Inventory Reconciliation',
+    'realE2EArtifact': RELEASE_SOURCE.name,
+    'realE2EArtifactSha256': sha256(release_artifact),
     'delivery': 'GitHub Pages HTTPS',
 }
 (DIST / 'deployment-verification.json').write_text(json.dumps(verification, indent=2) + '\n', encoding='utf-8')
