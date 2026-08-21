@@ -1,132 +1,36 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "application": {
     "output": "dist/index.html",
-    "size": 150441,
-    "sha256": "8b2d82c4c12b6e7327971a30e37d371f5b779598239432a23a9a952c877828ca",
+    "size": 126476,
+    "sha256": "4003b16caecf99e76fa854ed72d55b7ca8f2430aae788d79f57e726cb9217da9",
     "packaging": "gzip+base64 ordered parts"
   },
   "releaseArtifact": {
-    "source": "release/HELLO_CLOSED_LOOP.txt",
-    "output": "dist/release/HELLO_CLOSED_LOOP.txt",
-    "size": 18,
-    "sha256": "960046275eb0798c9968d7a14d0a6d45c09c97534012185f27936cb4cb39550e"
+    "source": "release/closed-loop-selftest.txt",
+    "output": "dist/release/closed-loop-selftest.txt",
+    "name": "closed-loop-selftest.txt",
+    "size": 21,
+    "sha256": "5463b810697c6766faa0e1acce45bddb51eff700380de153b1904b68410ac0e3"
+  },
+  "workflow": {
+    "stageCount": 31,
+    "selfTestJobId": "JOB-SELFTEST-001",
+    "candidateV1Runs": 10,
+    "correctedV2Runs": 10,
+    "unchangedConfirmationRuns": 10,
+    "candidateV1Failure": "CRLF newline translation",
+    "correctedLayer": "TOOL-CONFIG-v002 binary exact-byte writer"
   },
   "payload": {
-    "chunkSize": 6000,
-    "encodedLength": 131104,
-    "partCount": 22,
+    "chunkSize": 5800,
+    "encodedLength": 22536,
+    "partCount": 4,
     "parts": [
-      {
-        "file": "payload/part-00.txt",
-        "length": 6000,
-        "sha256": "6e534a01a51afb5025af468563a6739ff1b88a0378e43d434063191e41affa20"
-      },
-      {
-        "file": "payload/part-01.txt",
-        "length": 6000,
-        "sha256": "9206bc69b8a2558505c816e9f06e3b624a73bc9c4cba443b39e7894d62b62e87"
-      },
-      {
-        "file": "payload/part-02.txt",
-        "length": 6000,
-        "sha256": "d12c6f120e868979c1408e8ffd3e89c1f5aff1d2555745af18644b3b206e3b9d"
-      },
-      {
-        "file": "payload/part-03.txt",
-        "length": 6000,
-        "sha256": "1b6210a4da383b1f60875e27d39c4f8faf3609f37af907cd51f47a16f4284cac"
-      },
-      {
-        "file": "payload/part-04.txt",
-        "length": 6000,
-        "sha256": "9518043724e7ecea843ffdf5f15b2433c5bd0ba2066e40c2807b0c1373f424f9"
-      },
-      {
-        "file": "payload/part-05.txt",
-        "length": 6000,
-        "sha256": "e44b1fa8c9ace13129e48a23bd5b8756ff63c1332242de7f56a12919fb1f3cfa"
-      },
-      {
-        "file": "payload/part-06.txt",
-        "length": 6000,
-        "sha256": "b6eb62e6fff9c55276efedcb39fbd329c99af3662b4f922fb7f52b64e8832369"
-      },
-      {
-        "file": "payload/part-07.txt",
-        "length": 6000,
-        "sha256": "4ecf750004145cfbe8ba4ef70bcec98c7ccf1639ea226d338a4e0c52ab61c42e"
-      },
-      {
-        "file": "payload/part-08.txt",
-        "length": 6000,
-        "sha256": "bcb1dc3e423974866020f2b65bc20489e51814fb6b0e628578d9bdcedcbfcb7d"
-      },
-      {
-        "file": "payload/part-09.txt",
-        "length": 6000,
-        "sha256": "b17fee203bde7ad08863570b86da0385172df7575f448e284d413377dfe53cac"
-      },
-      {
-        "file": "payload/part-10.txt",
-        "length": 6000,
-        "sha256": "b195d18a653edd09ed32610248c3e3e79078b44d70e44926027c5dba0abfea1d"
-      },
-      {
-        "file": "payload/part-11.txt",
-        "length": 6000,
-        "sha256": "5c7db27b53b6e60881711fc20074ae4c8d0ddf52e645e3f416ed7d4eb6e1cec4"
-      },
-      {
-        "file": "payload/part-12.txt",
-        "length": 6000,
-        "sha256": "dc42483a4983cf2f5f4aa79366f7bd66987ccd44722cbc4ef4a45665592ba88e"
-      },
-      {
-        "file": "payload/part-13.txt",
-        "length": 6000,
-        "sha256": "72c6049c9c1e6b88609c59e9016f919901a2c7b6fdec7441ceb7f9ad32ee4d02"
-      },
-      {
-        "file": "payload/part-14.txt",
-        "length": 6000,
-        "sha256": "6aa1a8f28f90d3fe901cc25edb4dfc0806f8a7ff8e7fd5f6c2537bb670464f41"
-      },
-      {
-        "file": "payload/part-15.txt",
-        "length": 6000,
-        "sha256": "c2745aed4fa13e9b6b19b593f998723d72be602eac09a729a7617fa949a1f4e6"
-      },
-      {
-        "file": "payload/part-16.txt",
-        "length": 6000,
-        "sha256": "02fc6fb5bbcc404400279026271079fc965639c0402777b1126c1134daa977e2"
-      },
-      {
-        "file": "payload/part-17.txt",
-        "length": 6000,
-        "sha256": "861f4734f5db5a99778624e16f7ef43e68d32c7a0e394f0aee99ea37254c8ca4"
-      },
-      {
-        "file": "payload/part-18.txt",
-        "length": 6000,
-        "sha256": "e3c644499314b0147cf225d42c9112367da26a9db5e653e1c756ef36f79708dc"
-      },
-      {
-        "file": "payload/part-19.txt",
-        "length": 6000,
-        "sha256": "2bea0f1725d2baecc97405d16e277d4844ec432c0439714a96eee6122eced2b3"
-      },
-      {
-        "file": "payload/part-20.txt",
-        "length": 6000,
-        "sha256": "b2dfad042e4ec62dd000a5e691492b208f580247ea202917f737f605bb91e79f"
-      },
-      {
-        "file": "payload/part-21.txt",
-        "length": 5104,
-        "sha256": "ab17e82ef7992d2119ebf2831e02a34e0ecb54cebb766799ff06a8181e30d662"
-      }
+      {"file":"payload/v5-part-00.txt","length":5800,"sha256":"18c42514cb440cc2ea1e64affe4423e68b736ad28b48566bd012ddd43461f645"},
+      {"file":"payload/v5-part-01.txt","length":5800,"sha256":"96a23b5c4a148cfb446523e06e5ac67a2c22f07709f948dd3e39ab7f28925d25"},
+      {"file":"payload/v5-part-02.txt","length":5800,"sha256":"7b84fd7f4bddf3f26a5d375161f941e8be78d964389921ce1c2317618547889e"},
+      {"file":"payload/v5-part-03.txt","length":5136,"sha256":"b0619fdc9cb9c1ae0763cdde3882e59e3060aa933365604a0acbb67d94a2d29f"}
     ]
   }
 }
