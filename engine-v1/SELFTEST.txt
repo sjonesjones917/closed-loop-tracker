@@ -1,0 +1,10 @@
+Closed Loop Workflow Engine end-to-end self-test
+
+Result: PASS
+Stages completed: 30/30
+Release state: ACCEPTED
+Generated artifact: selftest-artifact.txt
+Artifact content: HELLO CLOSED LOOP\n
+SHA-256: 960046275eb0798c9968d7a14d0a6d45c09c97534012185f27936cb4cb39550e
+
+The test executed the complete workflow from Stage 1 through Stage 30, including Stage 11 ten independent candidate executions, Stage 12 verification of all ten candidate runs, Stage 17 ten new executions, Stage 18 convergence, Stage 19 unchanged ten-run confirmation, Stage 20 baseline freeze, Stage 21 product generation, Stages 22-26 product/process verification, Stage 27 release gate, Stage 28 hash identity check, Stage 29 evidence chain, and Stage 30 regression/defect preservation.
