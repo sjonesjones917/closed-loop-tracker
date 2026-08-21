@@ -1,49 +1,13 @@
-FAILED_RUN_ID=32537364629
-FAILED_HEAD_SHA=6ecc87a3e21be84658f1c107a3d1bfa4bcb02bd0
-CAPTURED_AT=2026-08-21T23:35:17Z
+FAILED_RUN_ID=32537449820
+FAILED_HEAD_SHA=1837acd749377b30c52434c6a7205a32746a6712
+CAPTURED_AT=2026-08-21T23:37:12Z
 
-verify	Use the app itself to create and complete the app self-build project	﻿2026-08-21T23:34:48.5857583Z ##[group]Run set -euo pipefail
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.5857963Z ^[[36;1mset -euo pipefail^[[0m
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.5858291Z ^[[36;1mnode run-v13-self-e2e.mjs^[[0m
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.5898083Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.5898463Z env:
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.5898714Z   CHROME_PATH: /usr/bin/google-chrome
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.5899007Z ##[endgroup]
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6650723Z {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6651358Z   "status": "BUILT",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6651808Z   "candidate": {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6652218Z     "output": "app-v13-candidate1.html",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6652673Z     "bytes": 35407,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6653150Z     "sidecarPath": "SELF_VERIFIED_PROJEC.json",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6653689Z     "autoLoadsSidecar": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6654066Z     "containsNoEmbeddedCompletedProject": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6654436Z     "preservesArtifactName": true
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6654751Z   },
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6655016Z   "corrected": {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6655302Z     "output": "app-v13.html",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6655681Z     "bytes": 35408,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6656036Z     "sidecarPath": "SELF_VERIFIED_PROJECT.json",
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6656419Z     "autoLoadsSidecar": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6656751Z     "containsNoEmbeddedCompletedProject": true,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6657146Z     "preservesArtifactName": true
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6657466Z   }
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:34:48.6657742Z }
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4628023Z node:internal/modules/run_main:123
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4633212Z     triggerUncaughtException(
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4634198Z     ^
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4634354Z 
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4634968Z AssertionError [ERR_ASSERTION]: Primary browser errors: Failed to load resource: the server responded with a status of 404 (File not found) | Failed to load resource: the server responded with a status of 404 (File not found)
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4636184Z 
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4636259Z 2 !== 0
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4636367Z 
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4636701Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:203:10 {
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4637173Z   generatedMessage: false,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4637408Z   code: 'ERR_ASSERTION',
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4637616Z   actual: 2,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4637795Z   expected: 0,
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4637989Z   operator: 'strictEqual',
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4638198Z   diff: 'simple'
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4638375Z }
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4638472Z 
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4638548Z Node.js v22.23.2
-verify	Use the app itself to create and complete the app self-build project	2026-08-21T23:35:07.4787703Z ##[error]Process completed with exit code 1.
+verify	Configure and enable GitHub Pages	﻿2026-08-21T23:37:00.8763449Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:00.8764512Z ##[group]Run actions/configure-pages@v5
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:00.8764774Z with:
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:00.8765056Z   enablement: true
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:00.8766835Z   token: ***
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:00.8767086Z ##[endgroup]
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:01.1501358Z ##[warning]Get Pages site failed. Error: Not Found - https://docs.github.com/rest/pages/pages#get-a-apiname-pages-site
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:01.2610943Z ##[error]Create Pages site failed. Error: Resource not accessible by integration - https://docs.github.com/rest/pages/pages#create-a-apiname-pages-site
+verify	Configure and enable GitHub Pages	2026-08-21T23:37:01.2613913Z ##[error]HttpError: Resource not accessible by integration - https://docs.github.com/rest/pages/pages#create-a-apiname-pages-site
