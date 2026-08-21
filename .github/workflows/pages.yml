@@ -1,4 +1,4 @@
-name: Test and deploy Closed-Loop app
+name: Self-build, verify, and deploy Closed-Loop app
 
 on:
   push:
@@ -12,97 +12,132 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-self-build
   cancel-in-progress: false
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Check out exact repository revision
         uses: actions/checkout@v4
 
-      - name: Verify source syntax and state-machine gates
+      - name: Verify checked-in JavaScript syntax and base state machine
         shell: bash
         run: |
           set -euo pipefail
           node --check app-core.js
+          node --check build-v13-self.mjs
+          node --check self-e2e-agent.mjs
+          node --check self-browser-e2e.mjs
+          node --check run-v13-self-e2e.mjs
           node e2e-test.mjs
 
       - name: Install browser test driver
         shell: bash
         run: npm install --no-save playwright-core
 
-      - name: Run the real Chromium UI workflow from Stage 1 through Stage 31
+      - name: Use the app itself to create and complete the app self-build project
         shell: bash
         env:
           CHROME_PATH: /usr/bin/google-chrome
         run: |
           set -euo pipefail
-          node run-v12-e2e.mjs
+          node run-v13-self-e2e.mjs
 
-      - name: Verify the real E2E project, responses, artifact, persistence export, and hashes
+      - name: Independently verify the actual UI-exported self-build project and released app bytes
         shell: bash
         run: |
           set -euo pipefail
-          test -s app-v12.html
-          test -s verified-e2e-project.json
-          test -s verified-e2e-artifact.txt
-          grep -q 'Closed-Loop Agent Reliability v12' app-v12.html
-          grep -q 'every completion requires an actual pasted result' app-v12.html
-          grep -q 'RUN-001' app-v12.html
-          grep -q 'TARGET RUN OUTPUT TO VERIFY' app-v12.html
-          grep -q 'crypto.subtle.digest' app-v12.html
+          test -s app-v13-candidate1.html
+          test -s app-v13.html
+          test -s SELF_VERIFIED_PROJECT.json
+          test -s SELF_E2E_REPORT.json
+          test -s SELF_PROJECT_COMPLETED_393.png
+          test -s SELF_PROJECT_AUTOLOADED_393.png
+          test -s SELF_PROJECT_AUTOLOADED_320.png
+          grep -q 'Closed-Loop Agent Reliability v13' app-v13.html
+          grep -q 'SELF_VERIFIED_PROJECT.json' app-v13.html
+          grep -q 'TARGET RUN OUTPUT TO VERIFY' app-v13.html
+          grep -q 'crypto.subtle.digest' app-v13.html
+          grep -q 'SELF_VERIFIED_PROJEC.json' app-v13-candidate1.html
+          if grep -q 'SELF_VERIFIED_PROJECT.json' app-v13-candidate1.html; then
+            echo 'Defective first candidate unexpectedly contains the corrected sidecar filename.' >&2
+            exit 1
+          fi
           node <<'NODE'
-          const fs = require('node:fs');
-          const crypto = require('node:crypto');
-          const p = JSON.parse(fs.readFileSync('verified-e2e-project.json', 'utf8'));
-          const artifact = fs.readFileSync('verified-e2e-artifact.txt');
-          const fail = message => { throw new Error(message); };
-          if (!Array.isArray(p.stages) || p.stages.length !== 31) fail('E2E export does not contain all 31 stages.');
-          if (p.stages.some(stage => stage.status !== 'COMPLETE')) fail('E2E export contains an incomplete stage.');
-          if (p.stages[10].producers.filter(Boolean).length !== 10) fail('Stage 11 does not contain 10 pasted producer responses.');
-          if (p.stages[11].verifiers.filter(Boolean).length !== 10) fail('Stage 12 does not contain 10 pasted verifier responses.');
-          if (p.stages[17].producers.filter(Boolean).length !== 10) fail('Stage 18 does not contain 10 pasted producer responses.');
-          if (p.stages[18].verifiers.filter(Boolean).length !== 10) fail('Stage 19 does not contain 10 pasted verifier responses.');
-          if (p.stages[19].producers.filter(Boolean).length !== 10) fail('Stage 20 does not contain 10 pasted producer responses.');
-          if (p.stages[19].verifiers.filter(Boolean).length !== 10) fail('Stage 20 does not contain 10 pasted verifier responses.');
-          if (p.releaseDecision !== 'ACCEPTED') fail('E2E release decision is not ACCEPTED.');
-          if (Buffer.compare(Buffer.from(p.artifact, 'utf8'), artifact) !== 0) fail('Exported project artifact differs from exported artifact bytes.');
-          const hash = crypto.createHash('sha256').update(artifact).digest('hex');
-          if (p.auditedHash !== hash || p.releaseHash !== hash) fail('E2E audited/release hashes do not equal the actual artifact SHA-256.');
+          const fs=require('node:fs');
+          const crypto=require('node:crypto');
+          const fail=m=>{throw new Error(m)};
+          const app=fs.readFileSync('app-v13.html');
+          const p=JSON.parse(fs.readFileSync('SELF_VERIFIED_PROJECT.json','utf8'));
+          const r=JSON.parse(fs.readFileSync('SELF_E2E_REPORT.json','utf8'));
+          if(!Array.isArray(p.stages)||p.stages.length!==31)fail('Visible UI export does not contain all 31 stages.');
+          if(p.stages.some(s=>s.status!=='COMPLETE'))fail('Visible UI export contains an incomplete stage.');
+          if(p.stages[10].producers.filter(Boolean).length!==10)fail('Stage 11 does not contain 10 pasted producer responses.');
+          if(p.stages[11].verifiers.filter(Boolean).length!==10)fail('Stage 12 does not contain 10 pasted verifier responses.');
+          if(p.stages[17].producers.filter(Boolean).length!==10)fail('Stage 18 does not contain 10 pasted producer responses.');
+          if(p.stages[18].verifiers.filter(Boolean).length!==10)fail('Stage 19 does not contain 10 pasted verifier responses.');
+          if(p.stages[19].producers.filter(Boolean).length!==10)fail('Stage 20 does not contain 10 pasted producer responses.');
+          if(p.stages[19].verifiers.filter(Boolean).length!==10)fail('Stage 20 does not contain 10 pasted verifier responses.');
+          if(!p.objective.includes('application itself'))fail('The project objective is not the app self-build objective.');
+          if(p.releaseDecision!=='ACCEPTED')fail('Self-build release decision is not ACCEPTED.');
+          if(p.artifactName!=='app-v13.html')fail('Released artifact name is not app-v13.html.');
+          if(Buffer.compare(Buffer.from(p.artifact,'utf8'),app)!==0)fail('Project artifact differs from exact deployed app bytes.');
+          const hash=crypto.createHash('sha256').update(app).digest('hex');
+          if(p.auditedHash!==hash||p.releaseHash!==hash)fail('Audited/release hashes differ from actual app SHA-256.');
+          const html=app.toString('utf8');
+          if(html.includes(p.projectId))fail('Completed project ID is hardcoded into the HTML.');
+          if(html.includes(p.objective))fail('Completed project objective is hardcoded into the HTML.');
+          if(!p.stages[11].verifiers.every(v=>/REQ-015.*VIOLATED/i.test(v)))fail('The real first-candidate defect is not preserved in all ten independent verifier records.');
+          if(!p.stages[18].verifiers.every(v=>/REQ-015.*SATISFIED/i.test(v)))fail('The corrected candidate did not pass all ten verifier records.');
+          if(r.status!=='PASS'||r.hardcodedProject!==false||r.freshBrowserSidecarAutoload!==true)fail('Self E2E report does not prove the actual sidecar-loaded project.');
           console.log(JSON.stringify({
-            status: 'PASS',
-            stagesComplete: 31,
-            pastedProducerResponses: 30,
-            pastedVerifierResponses: 30,
-            releaseDecision: p.releaseDecision,
-            artifactSha256: hash
-          }, null, 2));
+            status:'PASS',
+            projectId:p.projectId,
+            jobId:p.jobId,
+            objective:p.objective,
+            stagesComplete:31,
+            pastedProducerResponses:30,
+            pastedVerifierResponses:30,
+            firstCandidateDefect:'10/10 VIOLATED',
+            correctedCandidate:'10/10 SATISFIED',
+            releaseDecision:p.releaseDecision,
+            appSha256:hash,
+            uiExport:'SELF_VERIFIED_PROJECT.json',
+            hardcodedProject:false
+          },null,2));
           NODE
 
-      - name: Build the exact Pages artifact from the tested browser output
+      - name: Build the exact Pages artifact from the tested app and actual visible UI export
         shell: bash
         run: |
           set -euo pipefail
           rm -rf dist
           mkdir -p dist
-          cp app-v12.html dist/index.html
-          cp app-v12.html dist/404.html
-          cp verified-e2e-project.json dist/verified-e2e-project.json
-          cp verified-e2e-artifact.txt dist/verified-e2e-artifact.txt
-          printf '{"commit":"%s","workflow":"real-browser-e2e","stages":31,"status":"PASS"}\n' "$GITHUB_SHA" > dist/build-info.json
+          cp app-v13.html dist/index.html
+          cp app-v13.html dist/404.html
+          cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
+          cp SELF_E2E_REPORT.json dist/SELF_E2E_REPORT.json
+          cp SELF_PROJECT_COMPLETED_393.png dist/SELF_PROJECT_COMPLETED_393.png
+          cp SELF_PROJECT_AUTOLOADED_393.png dist/SELF_PROJECT_AUTOLOADED_393.png
+          cp SELF_PROJECT_AUTOLOADED_320.png dist/SELF_PROJECT_AUTOLOADED_320.png
+          printf '{"commit":"%s","workflow":"real-app-self-build","stages":31,"producerResponses":30,"verifierResponses":30,"status":"PASS","project":"SELF_VERIFIED_PROJECT.json"}\n' "$GITHUB_SHA" > dist/build-info.json
           : > dist/.nojekyll
 
-      - name: Preserve downloadable E2E evidence from this exact run
+      - name: Preserve downloadable self-build evidence from this exact run
         uses: actions/upload-artifact@v4
         with:
-          name: real-browser-e2e-evidence
+          name: real-app-self-build-evidence
           path: |
-            verified-e2e-project.json
-            verified-e2e-artifact.txt
-            app-v12.html
+            app-v13-candidate1.html
+            app-v13.html
+            SELF_VERIFIED_PROJECT.json
+            SELF_E2E_REPORT.json
+            SELF_PROJECT_COMPLETED_393.png
+            SELF_PROJECT_AUTOLOADED_393.png
+            SELF_PROJECT_AUTOLOADED_320.png
           if-no-files-found: error
           retention-days: 30
 
@@ -128,7 +163,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy the exact tested artifact
+      - name: Deploy the exact tested self-build artifact
         id: deployment
         uses: actions/deploy-pages@v4
 
@@ -144,12 +179,12 @@ jobs:
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          printf '{"status":"DEPLOYED","sourceCommit":"%s","pageUrl":"%s","test":"31-stage real Chromium UI E2E","verifiedProject":"verified-e2e-project.json","verifiedArtifact":"verified-e2e-artifact.txt"}\n' "$SOURCE_SHA" "$PAGE_URL" > DEPLOYMENT_STATUS.json
+          printf '{"status":"DEPLOYED","sourceCommit":"%s","pageUrl":"%s","test":"real app self-build through 31-stage Chromium UI","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","hardcodedProject":false}\n' "$SOURCE_SHA" "$PAGE_URL" > DEPLOYMENT_STATUS.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add DEPLOYMENT_STATUS.json
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m 'Record successful tested Pages deployment [skip ci]'
+          git commit -m 'Record successful self-build deployment [skip ci]'
           git push origin HEAD:main
