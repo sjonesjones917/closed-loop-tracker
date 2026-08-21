@@ -38,7 +38,7 @@ function build(sidecarPath,output){
 
   s=replaceBetween(s,"$('loadVerifiedBtn').onclick=async()=>{","$('exportBtn').onclick=",`async function loadSelfProject(manual=false){try{const r=await fetch(SELF_PROJECT_PATH,{cache:'no-store'});if(!r.ok){if(manual)throw Error(\`Verified self-project export unavailable (\${r.status}).\`);return false}importProjectObject(await r.json());if(manual)show('workflow');return true}catch(e){if(manual)setStatus(e.message,true);return false}};$('loadVerifiedBtn').onclick=()=>loadSelfProject(true);`);
 
-  s=replaceBetween(s,'if(n===22){const m=t.match(/FINAL_ARTIFACT','if(n===29){',`if(n===22){const m=t.match(/FINAL_ARTIFACT\\s*:\\s*([\\s\\S]*)$/i);p.artifact=(m?m[1]:'').replace(/^\\n/,'');if(!p.artifact)throw Error('Stage 22 FINAL_ARTIFACT is empty.');const f=t.match(/ARTIFACT_NAME\\s*:\\s*([A-Za-z0-9._-]+)/i);if(f)p.artifactName=f[1]}`);
+  s=replaceBetween(s,'if(n===22){const m=t.match(/FINAL_ARTIFACT','if(n===29){',`if(n===22){const m=t.match(/FINAL_ARTIFACT\\s*:\\s*([\\s\\S]*)$/i);p.artifact=(m?m[1]:'').replace(/^\\n/,'');if(!p.artifact)throw Error('Stage 22 FINAL_ARTIFACT is empty.');const f=t.match(/ARTIFACT_NAME\\s*:\\s*([A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*)/i);if(f)p.artifactName=f[1]}`);
 
   const initAnchor='load();render();window.__CLR_V13__=';
   if(!s.includes(initAnchor))throw new Error('v13 initialization anchor missing');
