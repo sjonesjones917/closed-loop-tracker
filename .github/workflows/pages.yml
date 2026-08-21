@@ -1,4 +1,4 @@
-name: Self-build, verify, and deploy Closed-Loop app
+name: Self-build, verify, and publish Closed-Loop app
 
 on:
   push:
@@ -7,21 +7,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages-self-build
+  group: closed-loop-self-build
   cancel-in-progress: false
 
 jobs:
-  verify:
+  verify-and-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - name: Check out exact repository revision
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Verify checked-in JavaScript syntax and base state machine
         shell: bash
@@ -84,7 +84,7 @@ jobs:
           if(!p.objective.includes('application itself'))fail('The project objective is not the app self-build objective.');
           if(p.releaseDecision!=='ACCEPTED')fail('Self-build release decision is not ACCEPTED.');
           if(p.artifactName!=='app-v13.html')fail('Released artifact name is not app-v13.html.');
-          if(Buffer.compare(Buffer.from(p.artifact,'utf8'),app)!==0)fail('Project artifact differs from exact deployed app bytes.');
+          if(Buffer.compare(Buffer.from(p.artifact,'utf8'),app)!==0)fail('Project artifact differs from exact app bytes.');
           const hash=crypto.createHash('sha256').update(app).digest('hex');
           if(p.auditedHash!==hash||p.releaseHash!==hash)fail('Audited/release hashes differ from actual app SHA-256.');
           const html=app.toString('utf8');
@@ -97,7 +97,6 @@ jobs:
             status:'PASS',
             projectId:p.projectId,
             jobId:p.jobId,
-            objective:p.objective,
             stagesComplete:31,
             pastedProducerResponses:30,
             pastedVerifierResponses:30,
@@ -109,22 +108,6 @@ jobs:
             hardcodedProject:false
           },null,2));
           NODE
-
-      - name: Build the exact Pages artifact from the tested app and actual visible UI export
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf dist
-          mkdir -p dist
-          cp app-v13.html dist/index.html
-          cp app-v13.html dist/404.html
-          cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
-          cp SELF_E2E_REPORT.json dist/SELF_E2E_REPORT.json
-          cp SELF_PROJECT_COMPLETED_393.png dist/SELF_PROJECT_COMPLETED_393.png
-          cp SELF_PROJECT_AUTOLOADED_393.png dist/SELF_PROJECT_AUTOLOADED_393.png
-          cp SELF_PROJECT_AUTOLOADED_320.png dist/SELF_PROJECT_AUTOLOADED_320.png
-          printf '{"commit":"%s","workflow":"real-app-self-build","stages":31,"producerResponses":30,"verifierResponses":30,"status":"PASS","project":"SELF_VERIFIED_PROJECT.json"}\n' "$GITHUB_SHA" > dist/build-info.json
-          : > dist/.nojekyll
 
       - name: Preserve downloadable self-build evidence from this exact run
         uses: actions/upload-artifact@v4
@@ -141,51 +124,39 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Configure and enable GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Upload the exact tested Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy the exact tested self-build artifact
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: Check out latest main for the deployment receipt
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Commit a machine-verifiable successful deployment receipt
+      - name: Publish the exact tested app and exact visible-UI project export to main
         shell: bash
         env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          printf '{"status":"DEPLOYED","sourceCommit":"%s","pageUrl":"%s","test":"real app self-build through 31-stage Chromium UI","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","hardcodedProject":false}\n' "$SOURCE_SHA" "$PAGE_URL" > DEPLOYMENT_STATUS.json
+          rm -rf /tmp/closed-loop-publish
+          mkdir -p /tmp/closed-loop-publish
+          cp app-v13.html /tmp/closed-loop-publish/app-v13.html
+          cp SELF_VERIFIED_PROJECT.json /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json
+          cp SELF_E2E_REPORT.json /tmp/closed-loop-publish/SELF_E2E_REPORT.json
+          cp SELF_PROJECT_COMPLETED_393.png /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png
+          cp SELF_PROJECT_AUTOLOADED_393.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png
+          cp SELF_PROJECT_AUTOLOADED_320.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add DEPLOYMENT_STATUS.json
+          git fetch origin main
+          git reset --hard origin/main
+
+          cp /tmp/closed-loop-publish/app-v13.html app-v13.html
+          cp /tmp/closed-loop-publish/app-v13.html index.html
+          cp /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
+          cp /tmp/closed-loop-publish/SELF_E2E_REPORT.json SELF_E2E_REPORT.json
+          cp /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_COMPLETED_393.png
+          cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_393.png
+          cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png SELF_PROJECT_AUTOLOADED_320.png
+          printf '{"status":"PUBLISHED","sourceCommit":"%s","test":"real app self-build through 31-stage Chromium UI","app":"app-v13.html","entry":"index.html","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","hardcodedProject":false}\n' "$SOURCE_SHA" > PUBLISHED_SELF_BUILD.json
+
+          git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
           if git diff --cached --quiet; then
+            echo 'Exact tested publication already matches main.'
             exit 0
           fi
-          git commit -m 'Record successful self-build deployment [skip ci]'
+          git commit -m 'Publish exact tested self-build app and project [skip ci]'
           git push origin HEAD:main
