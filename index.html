@@ -4,69 +4,175 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
-<title>Closed-Loop Agent Reliability Workflow</title>
+<title>Closed-Loop Agent Reliability</title>
 <style>
-:root{color-scheme:dark;--bg:#07111f;--panel:#101d31;--panel2:#162640;--line:#2d4668;--text:#f4f7fb;--muted:#9fb0c9;--accent:#6ab8ff;--bad:#ff9a9a;--good:#9ce0ad}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;overflow-x:hidden}body{padding-bottom:90px}button,input,textarea,select{font:inherit}button{cursor:pointer}.shell{width:100%;max-width:920px;margin:auto;padding:calc(env(safe-area-inset-top) + 14px) 12px 24px}.top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}.top h1{font-size:24px;line-height:1.05;margin:2px 0}.top p{margin:5px 0 0;color:var(--muted);font-size:13px}.status{margin:14px 0;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#0b1728;overflow-wrap:anywhere}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0;overflow:hidden}.grid{display:grid;gap:10px}.field{display:grid;gap:6px;margin:11px 0}.field label{font-size:12px;font-weight:800;color:#d5def0}.field input,.field textarea,.field select{display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--line);background:#081423;color:var(--text);border-radius:11px;padding:11px}.field textarea{min-height:105px;resize:vertical}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 12px;border-radius:11px;font-weight:800;min-height:44px;white-space:normal;overflow-wrap:anywhere}.btn.primary{background:#205d91;border-color:#4a94d4}.btn.good{background:#21442d;border-color:#3d7550}.btn.danger{background:#40242a;border-color:#70434b}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions>.btn{flex:1 1 145px}.muted{color:var(--muted)}.hidden{display:none!important}.project-head{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:5px 8px;font-size:11px;max-width:45%;overflow-wrap:anywhere}.progress{height:9px;background:#21324a;border-radius:999px;overflow:hidden;margin:10px 0}.progress i{display:block;height:100%;background:var(--accent)}.stage-list{display:grid;grid-template-columns:1fr;gap:7px}.stage{width:100%;text-align:left;border:1px solid var(--line);background:#0c1728;color:var(--text);border-radius:10px;padding:10px;overflow-wrap:anywhere}.stage.active{outline:2px solid var(--accent)}.stage.complete{border-color:#3d7550}.stage.locked{opacity:.55}.stage small{display:block;color:var(--muted);margin-top:4px}pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#07111f;border:1px solid var(--line);padding:11px;border-radius:11px;max-height:360px;overflow:auto;font-size:12px;line-height:1.45}.error{color:var(--bad);white-space:pre-wrap}.success{color:var(--good)}.bottom{position:fixed;z-index:50;left:0;right:0;bottom:0;background:#081321f2;border-top:1px solid var(--line);padding:7px max(7px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));backdrop-filter:blur(10px)}.bottom-in{max-width:920px;margin:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.nav{min-width:0;border:1px solid var(--line);background:#14243c;color:#d5deec;border-radius:10px;padding:9px 2px;font-size:11px;font-weight:800;overflow-wrap:anywhere}.nav.active{border-color:var(--accent);color:#fff}@media(min-width:700px){.stage-list{grid-template-columns:repeat(2,minmax(0,1fr))}.top h1{font-size:28px}}@media(max-width:390px){.shell{padding-left:9px;padding-right:9px}.card{padding:11px}.btn{padding:9px 8px}.actions>.btn{flex-basis:125px}.nav{font-size:10px}}
+:root{color-scheme:dark;--bg:#07111f;--panel:#101d31;--panel2:#162640;--line:#2d4668;--text:#f4f7fb;--muted:#9fb0c9;--accent:#6ab8ff;--bad:#ff9a9a;--good:#8fe0a6}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.shell{width:100%;max-width:920px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 12px calc(env(safe-area-inset-bottom) + 96px)}
+header{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;margin-bottom:12px}.brand{min-width:0}.brand h1{font-size:23px;margin:0;overflow-wrap:anywhere}.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:11px 12px;border-radius:13px;font-weight:750;min-height:44px;max-width:100%;overflow-wrap:anywhere}.btn.primary{background:#1d5b92;border-color:#4a94d4}.btn.good{background:#21442d;border-color:#3d7550}.btn.danger{background:#3e2027;border-color:#70434b}.btn:disabled{opacity:.45;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;overflow:hidden}.grid{display:grid;gap:10px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.actions>.btn{flex:1 1 150px}.field{display:grid;gap:6px;margin:11px 0}.field label{font-size:13px;font-weight:800;color:#c9d5e8}
+.field input,.field textarea,.field select{width:100%;min-width:0;border:1px solid var(--line);background:#091525;color:var(--text);border-radius:11px;padding:11px}.field textarea{min-height:112px;resize:vertical}
+pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#07111f;border:1px solid var(--line);padding:11px;border-radius:11px;max-height:420px;overflow:auto;font-size:12px;line-height:1.42}
+.muted{color:var(--muted)}.statusline{padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#0a1728;margin-bottom:12px;overflow-wrap:anywhere}.hidden{display:none!important}
+.project-top{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}.pill{display:inline-flex;align-items:center;max-width:45%;border:1px solid var(--line);border-radius:999px;padding:5px 8px;color:#cfe0f7;font-size:11px;overflow-wrap:anywhere}
+.progress{height:9px;border-radius:999px;background:#21324a;overflow:hidden;margin-top:10px}.progress>i{display:block;height:100%;background:var(--accent);width:0}
+.stage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:7px}.stage-btn{display:block;text-align:left;width:100%;min-width:0;border:1px solid var(--line);background:#0c1728;color:var(--text);border-radius:11px;padding:9px;overflow-wrap:anywhere}.stage-btn.complete{border-color:#3d7550}.stage-btn.inprogress{border-color:#7e6c36}.stage-btn.active{outline:2px solid var(--accent)}
+.stage-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.stage-head h2{margin:0;font-size:20px}.tiny{font-size:12px}.error{color:#ffb6b6;white-space:pre-wrap}.success{color:#a9e6ba;white-space:pre-wrap}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#081321f2;border-top:1px solid var(--line);padding:7px max(7px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));backdrop-filter:blur(12px);z-index:20}
+.bottom-inner{max-width:920px;margin:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.navbtn{min-width:0;border:1px solid var(--line);background:#14243c;color:#cbd7e9;border-radius:11px;padding:9px 2px;font-weight:800;font-size:11px;white-space:normal;overflow-wrap:anywhere}.navbtn.active{border-color:var(--accent);color:white}
+details{border:1px solid var(--line);border-radius:11px;padding:9px;background:#0b1728}summary{font-weight:800;cursor:pointer}.kv{display:grid;grid-template-columns:minmax(110px,32%) minmax(0,1fr);gap:6px 9px;font-size:13px}.kv>div{overflow-wrap:anywhere}
+@media(max-width:540px){.shell{padding-left:9px;padding-right:9px}.card{padding:12px}.brand h1{font-size:20px}.stage-list{grid-template-columns:1fr}.actions>.btn{flex-basis:100%}.project-top{display:grid}.pill{max-width:100%}.kv{grid-template-columns:1fr}.bottom-inner{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="top"><div><h1>Closed-Loop Reliability</h1><p>31-stage enforced workflow. No stage skipping. No empty completion.</p></div><button id="backup" class="btn">Backup</button></div>
-  <div id="status" class="status">Starting…</div>
+<header>
+  <div class="brand"><h1>Closed-Loop Agent Reliability</h1><p id="subtitle">Projects</p></div>
+  <button class="btn" id="backupBtn">Backup</button>
+</header>
+<div id="status" class="statusline">Starting…</div>
 
-  <section id="projectsView">
-    <div class="actions"><button id="newProject" class="btn primary">New project</button><button id="verifiedJob" class="btn good">Create verified E2E project</button></div>
-    <div id="newCard" class="card hidden">
-      <h2>Create project</h2>
-      <div class="field"><label>Project name *</label><input id="pName"></div>
-      <div class="field"><label>Exact user objective *</label><textarea id="pObjective"></textarea></div>
-      <div class="field"><label>Exact deliverable requested *</label><textarea id="pDeliverable"></textarea></div>
-      <div class="field"><label>Supplied files, messages, links, data</label><textarea id="pInputs"></textarea></div>
-      <div class="field"><label>Constraints / prohibited actions</label><textarea id="pConstraints"></textarea></div>
-      <div class="field"><label>Required output format</label><input id="pFormat" value="UNSPECIFIED"></div>
-      <div class="field"><label>Deadline / temporal scope</label><input id="pDeadline" value="NONE SUPPLIED"></div>
-      <div class="actions"><button id="createProject" class="btn primary">Create</button><button id="cancelProject" class="btn">Cancel</button></div>
-      <div id="createError" class="error"></div>
+<section id="projectsView">
+  <div class="actions">
+    <button class="btn primary" id="newProjectBtn">New project</button>
+    <button class="btn good" id="realTestBtn">Create real E2E test project</button>
+    <button class="btn" id="selfCheckBtn">Run app self-check</button>
+  </div>
+  <div id="newProjectCard" class="card hidden" style="margin-top:10px">
+    <h2>Create project</h2>
+    <div class="field"><label>Project name *</label><input id="pName"></div>
+    <div class="field"><label>Exact user objective *</label><textarea id="pObjective"></textarea></div>
+    <div class="field"><label>Exact deliverable requested *</label><textarea id="pDeliverable"></textarea></div>
+    <div class="field"><label>Supplied files / messages / links / data</label><textarea id="pInputs"></textarea></div>
+    <div class="field"><label>Constraints / prohibited actions</label><textarea id="pConstraints"></textarea></div>
+    <div class="field"><label>Required output format</label><input id="pFormat" value="UNSPECIFIED"></div>
+    <div class="field"><label>Deadline / temporal scope</label><input id="pDeadline" value="NONE SUPPLIED"></div>
+    <div class="actions"><button class="btn primary" id="createProjectBtn">Create project</button><button class="btn" id="cancelProjectBtn">Cancel</button></div>
+    <div id="createError" class="error"></div>
+  </div>
+  <div id="projectList" class="grid" style="margin-top:10px"></div>
+</section>
+
+<section id="workflowView" class="hidden">
+  <div id="noProjectWorkflow" class="card">Select a project from Projects.</div>
+  <div id="workflowContent" class="hidden">
+    <div class="card">
+      <div class="project-top"><div><h2 id="wfProjectName" style="margin:0"></h2><div class="muted" id="wfIds"></div></div><span class="pill" id="wfPct"></span></div>
+      <div class="progress"><i id="wfBar"></i></div>
     </div>
-    <div id="projectList" class="grid"></div>
-  </section>
-
-  <section id="workflowView" class="hidden">
-    <div id="workflowEmpty" class="card">Select or create a project first.</div>
-    <div id="workflowBody" class="hidden">
-      <div class="card"><div class="project-head"><div><h2 id="wfName"></h2><div id="wfIds" class="muted"></div></div><span id="wfState" class="pill"></span></div><div class="progress"><i id="wfBar"></i></div></div>
-      <div class="card"><h3>Workflow stages</h3><div id="stageList" class="stage-list"></div></div>
-      <div class="card"><h2 id="stageTitle"></h2><p id="stageInstruction" class="muted"></p><div class="actions"><button id="copyPrompt" class="btn">Copy exact stage prompt</button></div><div class="field"><label>Exact prompt for agent</label><pre id="prompt"></pre></div><div class="field"><label>Agent response — REQUIRED</label><textarea id="response" placeholder="Paste the complete response from the agent. This field cannot be empty and must pass this stage's evidence gate."></textarea></div><div class="field"><label>Evidence / notes</label><textarea id="evidence"></textarea></div><div class="actions"><button id="completeStage" class="btn primary">Validate + complete stage</button><button id="saveDraft" class="btn">Save draft</button></div><div id="stageMsg" class="error"></div></div>
+    <div class="card" style="margin-top:10px"><h3 style="margin-top:0">31-operation workflow</h3><div id="stageList" class="stage-list"></div></div>
+    <div class="card" style="margin-top:10px">
+      <div class="stage-head"><h2 id="stageTitle"></h2><span class="pill" id="stageState"></span></div>
+      <p class="muted" id="stageInstruction"></p>
+      <div class="actions"><button class="btn" id="copyPromptBtn">Copy exact stage prompt</button></div>
+      <div class="field"><label>Exact prompt to send to the agent</label><pre id="promptPreview"></pre></div>
+      <div class="field"><label>Agent response — REQUIRED</label><textarea id="agentResponse" placeholder="Paste the complete response returned by the agent. A blank or inadequate response cannot complete this stage."></textarea></div>
+      <div class="field"><label>Evidence / notes</label><textarea id="stageEvidence" placeholder="Optional local evidence or notes."></textarea></div>
+      <div class="actions"><button class="btn primary" id="completeStageBtn">Validate + complete</button><button class="btn" id="saveProgressBtn">Save draft</button></div>
+      <div id="stageMessage" class="error"></div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="evidenceView" class="hidden"><div class="card"><h2>Evidence</h2><div id="evidenceContent"></div></div></section>
-  <section id="releaseView" class="hidden"><div class="card"><h2>Product / release</h2><div id="releaseContent"></div></div></section>
+<section id="evidenceView" class="hidden"><div class="card"><h2>Evidence</h2><div id="evidenceContent" class="muted">Select a project.</div></div></section>
+
+<section id="releaseView" class="hidden"><div class="card"><h2>Artifact / Release</h2><div id="releaseContent" class="muted">Select a project.</div></div></section>
 </div>
-<div class="bottom"><div class="bottom-in"><button class="nav active" data-view="projects">Projects</button><button class="nav" data-view="workflow">Workflow</button><button class="nav" data-view="evidence">Evidence</button><button class="nav" data-view="release">Release</button></div></div>
+
+<div class="bottom"><div class="bottom-inner">
+<button class="navbtn active" data-view="projects">Projects</button>
+<button class="navbtn" data-view="workflow">Workflow</button>
+<button class="navbtn" data-view="evidence">Evidence</button>
+<button class="navbtn" data-view="release">Release</button>
+</div></div>
+
 <script src="app-core.js"></script>
 <script>
-(function(){'use strict';
-const C=window.ClosedLoopCore;const $=id=>document.getElementById(id);const KEY='closedLoopReliability.projects.v2',SEL='closedLoopReliability.selected.v2';let projects=[],selectedId=null,stageNumber=1;
-function setStatus(t,kind=''){const e=$('status');e.textContent=t;e.style.borderColor=kind==='good'?'#3d7550':kind==='bad'?'#70434b':'#2d4668';}
-if(!C){setStatus('ERROR: application engine failed to load. Reload this page once.','bad');return;}
-function load(){try{projects=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(projects))projects=[];selectedId=localStorage.getItem(SEL)||null;if(selectedId&&!projects.some(p=>p.projectId===selectedId))selectedId=null;setStatus(`Ready. ${projects.length} project${projects.length===1?'':'s'} stored on this device.`,'good');}catch(e){projects=[];selectedId=null;setStatus(`Local storage error: ${e.message}`,'bad');}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(projects));if(selectedId)localStorage.setItem(SEL,selectedId);else localStorage.removeItem(SEL);}catch(e){setStatus(`Could not save: ${e.message}`,'bad');}}
-function current(){return projects.find(p=>p.projectId===selectedId)||null;}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function renderProjects(){const el=$('projectList');if(!projects.length){el.innerHTML='<div class="card"><h3>No projects yet</h3><p class="muted">Create a real project or create the verified E2E project. Nothing is hidden.</p></div>';return;}el.innerHTML=projects.map(p=>`<div class="card"><div class="project-head"><div><h3>${esc(p.name)}</h3><div class="muted">${esc(p.jobId)}</div></div><span class="pill">${C.completionPercent(p)}% · ${esc(p.releaseState)}</span></div><div class="progress"><i style="width:${C.completionPercent(p)}%"></i></div><div class="muted">${esc(p.objective)}</div><div class="actions"><button class="btn primary" data-open="${p.projectId}">Open workflow</button><button class="btn" data-export="${p.projectId}">Export project</button><button class="btn danger" data-delete="${p.projectId}">Delete</button></div></div>`).join('');el.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{selectedId=b.dataset.open;const p=current();const i=p.stages.findIndex(s=>s.status!=='COMPLETE');stageNumber=i<0?C.STAGES.length:i+1;save();show('workflow');});el.querySelectorAll('[data-export]').forEach(b=>b.onclick=()=>download(`${b.dataset.export}.json`,JSON.stringify(projects.find(p=>p.projectId===b.dataset.export),null,2),'application/json'));el.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(!confirm('Delete this project from this device?'))return;projects=projects.filter(p=>p.projectId!==b.dataset.delete);if(selectedId===b.dataset.delete)selectedId=null;save();renderAll();});}
-function renderWorkflow(){const p=current();$('workflowEmpty').classList.toggle('hidden',!!p);$('workflowBody').classList.toggle('hidden',!p);if(!p)return;$('wfName').textContent=p.name;$('wfIds').textContent=`${p.projectId} · ${p.jobId}`;$('wfState').textContent=`${C.completionPercent(p)}% · ${p.releaseState}`;$('wfBar').style.width=C.completionPercent(p)+'%';$('stageList').innerHTML=C.STAGES.map((d,i)=>{const rec=p.stages[i],locked=i>0&&p.stages.slice(0,i).some(s=>s.status!=='COMPLETE');return `<button class="stage ${rec.status==='COMPLETE'?'complete':''} ${stageNumber===i+1?'active':''} ${locked?'locked':''}" data-stage="${i+1}">${i+1}. ${esc(d.name)}<small>${esc(rec.status)}${locked?' · LOCKED':''}</small></button>`}).join('');$('stageList').querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{stageNumber=Number(b.dataset.stage);renderStage();});renderStage();}
-function renderStage(){const p=current();if(!p)return;const d=C.STAGES[stageNumber-1],r=p.stages[stageNumber-1];$('stageTitle').textContent=`${stageNumber}. ${d.name}`;$('stageInstruction').textContent=d.instruction;$('response').value=r.agentResponse||'';$('evidence').value=r.evidence||'';$('stageMsg').textContent='';try{$('prompt').textContent=C.buildPrompt(p,stageNumber);$('completeStage').disabled=false;$('saveDraft').disabled=false;}catch(e){$('prompt').textContent=`LOCKED: ${e.message}`;$('completeStage').disabled=true;$('saveDraft').disabled=true;$('stageMsg').textContent=e.message;}}
-function renderEvidence(){const p=current();if(!p){$('evidenceContent').innerHTML='<p class="muted">Select a project.</p>';return;}$('evidenceContent').innerHTML=p.stages.map((s,i)=>`<div class="card"><b>${i+1}. ${esc(C.STAGES[i].name)}</b><div class="muted">${esc(s.status)}${s.completedAt?' · '+esc(s.completedAt):''}</div><div>${esc(s.evidence||'No evidence note.')}</div><details><summary>Stored agent response</summary><pre>${esc(s.agentResponse||'')}</pre></details></div>`).join('');}
-async function renderRelease(){const p=current();if(!p){$('releaseContent').innerHTML='<p class="muted">Select a project.</p>';return;}const incomplete=p.stages.filter(s=>s.status!=='COMPLETE').length;$('releaseContent').innerHTML=`<p>Stages incomplete: <b>${incomplete}</b></p><div class="field"><label>Finished artifact text</label><textarea id="artifact">${esc(p.finalArtifact||'')}</textarea></div><div class="actions"><button id="auditHash" class="btn">Compute audited hash</button><button id="releaseHash" class="btn">Compute release hash</button></div><div class="field"><label>AUDITED_HASH</label><input id="audited" value="${esc(p.auditedHash||'')}" readonly></div><div class="field"><label>RELEASE_HASH</label><input id="released" value="${esc(p.releaseHash||'')}" readonly></div><div class="field"><label>Release decision</label><select id="decision"><option>UNSET</option><option>ACCEPTED</option><option>REJECTED</option><option>BLOCKED</option></select></div><div class="actions"><button id="saveRelease" class="btn primary">Save release record</button><button id="downloadProduct" class="btn good">Release exact artifact</button></div><div id="releaseMsg" class="error"></div>`;$('decision').value=p.releaseState;$('auditHash').onclick=async()=>{p.finalArtifact=$('artifact').value;p.auditedHash=await C.sha256(p.finalArtifact);p.releaseHash='';save();renderRelease();};$('releaseHash').onclick=async()=>{p.finalArtifact=$('artifact').value;p.releaseHash=await C.sha256(p.finalArtifact);save();renderRelease();};$('saveRelease').onclick=()=>{p.finalArtifact=$('artifact').value;p.releaseState=$('decision').value;save();renderAll();setStatus('Release record saved.','good');};$('downloadProduct').onclick=async()=>{p.finalArtifact=$('artifact').value;p.releaseState=$('decision').value;p.releaseHash=await C.sha256(p.finalArtifact);save();if(!C.canRelease(p)){$('releaseMsg').textContent='RELEASE BLOCKED. Required: every stage COMPLETE, decision ACCEPTED, non-empty artifact, AUDITED_HASH present, and RELEASE_HASH exactly equal to AUDITED_HASH.';return;}download('released-artifact.txt',p.finalArtifact,'text/plain');setStatus('Exact accepted artifact released.','good');};}
+'use strict';
+(function(){
+const C=window.ClosedLoopCore;
+const $=id=>document.getElementById(id);
+if(!C){$('status').textContent='ERROR: app-core.js did not load.';return;}
+const KEY='closedLoopReliability.projects.v3', SEL='closedLoopReliability.selected.v3';
+let projects=[], selectedId=null, stageNumber=1, activeView='projects';
+
+function setStatus(msg,kind=''){const el=$('status');el.textContent=msg;el.style.borderColor=kind==='bad'?'#8b4f5a':kind==='good'?'#3d7550':'#2d4668';}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function load(){
+  try{
+    projects=JSON.parse(localStorage.getItem(KEY)||'[]');
+    if(!Array.isArray(projects)) projects=[];
+    selectedId=localStorage.getItem(SEL)||null;
+    if(selectedId&&!projects.some(p=>p.projectId===selectedId)) selectedId=null;
+    setStatus(`Ready. ${projects.length} project${projects.length===1?'':'s'} stored on this device. No network wait state is used.`, 'good');
+  }catch(e){projects=[];selectedId=null;setStatus(`Local storage error: ${e.message}`,'bad');}
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(projects));if(selectedId)localStorage.setItem(SEL,selectedId);else localStorage.removeItem(SEL);}
+function current(){return projects.find(p=>p.projectId===selectedId)||null;}
+function nextIncomplete(p){const i=p.stages.findIndex(s=>s.status!=='COMPLETE');return i<0?C.STAGES.length:i+1;}
+
+function renderProjects(){
+  const list=$('projectList');
+  if(!projects.length){list.innerHTML='<div class="card"><h3>No projects yet</h3><div class="muted">Create a project. The real E2E test project is created uncompleted and must go through the same 31 operations as any other job.</div></div>';return;}
+  list.innerHTML=projects.map(p=>`<div class="card">
+    <div class="project-top"><div><h3 style="margin:0">${esc(p.name)}</h3><div class="muted tiny">${esc(p.jobId)} · ${C.completionPercent(p)}%</div></div><span class="pill">${esc(p.releaseState)}</span></div>
+    <div class="progress"><i style="width:${C.completionPercent(p)}%"></i></div>
+    <p>${esc(p.objective)}</p>
+    <div class="actions"><button class="btn primary" data-open="${p.projectId}">Open workflow</button><button class="btn" data-export="${p.projectId}">Export project JSON</button><button class="btn danger" data-delete="${p.projectId}">Delete</button></div>
+  </div>`).join('');
+  list.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{selectedId=b.dataset.open;stageNumber=nextIncomplete(current());save();showView('workflow');});
+  list.querySelectorAll('[data-export]').forEach(b=>b.onclick=()=>download(`${b.dataset.export}.json`,JSON.stringify(projects.find(p=>p.projectId===b.dataset.export),null,2),'application/json'));
+  list.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{if(!confirm('Delete this project from this device?'))return;projects=projects.filter(p=>p.projectId!==b.dataset.delete);if(selectedId===b.dataset.delete)selectedId=null;save();renderAll();});
+}
+function renderWorkflow(){
+  const p=current();$('noProjectWorkflow').classList.toggle('hidden',!!p);$('workflowContent').classList.toggle('hidden',!p);if(!p)return;
+  $('wfProjectName').textContent=p.name;$('wfIds').textContent=`${p.projectId} · ${p.jobId}`;
+  const pct=C.completionPercent(p);$('wfPct').textContent=`${pct}% complete`;$('wfBar').style.width=pct+'%';
+  $('stageList').innerHTML=C.STAGES.map((d,i)=>{const s=p.stages[i];return `<button class="stage-btn ${s.status==='COMPLETE'?'complete':s.status==='IN_PROGRESS'?'inprogress':''} ${stageNumber===i+1?'active':''}" data-stage="${i+1}"><b>${d.number}. ${esc(d.name)}</b><br><span class="muted tiny">${esc(s.status)}</span></button>`}).join('');
+  $('stageList').querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{stageNumber=Number(b.dataset.stage);renderStage();});
+  renderStage();
+}
+function renderStage(){
+  const p=current();if(!p)return;const d=C.STAGES[stageNumber-1],s=p.stages[stageNumber-1];
+  $('stageTitle').textContent=`${stageNumber}. ${d.name}`;$('stageState').textContent=s.status;$('stageInstruction').textContent=d.instruction;
+  $('agentResponse').value=s.agentResponse||'';$('stageEvidence').value=s.evidence||'';$('stageMessage').textContent='';
+  try{$('promptPreview').textContent=C.buildPrompt(p,stageNumber);$('completeStageBtn').disabled=false;$('saveProgressBtn').disabled=false;$('copyPromptBtn').disabled=false;}
+  catch(e){$('promptPreview').textContent=`LOCKED: ${e.message}`;$('completeStageBtn').disabled=true;$('saveProgressBtn').disabled=true;$('copyPromptBtn').disabled=true;$('stageMessage').textContent=e.message;}
+}
+function renderEvidence(){
+  const p=current();if(!p){$('evidenceContent').textContent='Select a project.';return;}
+  $('evidenceContent').innerHTML=`<div class="grid">${p.stages.map((s,i)=>`<details><summary>${i+1}. ${esc(C.STAGES[i].name)} — ${esc(s.status)}</summary><p><b>Completed:</b> ${esc(s.completedAt||'No')}</p><p><b>Evidence:</b> ${esc(s.evidence||'None recorded')}</p><pre>${esc(s.agentResponse||'No agent response stored.')}</pre></details>`).join('')}</div>`;
+}
+async function renderRelease(){
+  const p=current();if(!p){$('releaseContent').textContent='Select a project.';return;}
+  const actualHash=p.finalArtifact?await C.artifactHash(p):'';
+  const allowed=await C.canRelease(p);
+  $('releaseContent').innerHTML=`
+    <div class="kv"><div>Stages complete</div><div>${p.stages.filter(s=>s.status==='COMPLETE').length} / ${C.STAGES.length}</div><div>Release decision</div><div>${esc(p.releaseState)}</div><div>Actual artifact SHA-256</div><div>${esc(actualHash||'No artifact')}</div><div>Audited hash</div><div>${esc(p.auditedHash||'Not recorded')}</div><div>Release hash</div><div>${esc(p.releaseHash||'Not recorded')}</div><div>Release gate</div><div>${allowed?'PASS':'BLOCKED'}</div></div>
+    <div class="field"><label>Exact finished artifact bytes/text</label><textarea id="artifactText" style="min-height:220px"></textarea></div>
+    <div class="actions"><button class="btn primary" id="saveArtifactBtn">Save artifact + compute hash</button><button class="btn good" id="downloadArtifactBtn">Release/download accepted artifact</button></div>
+    <div id="releaseMsg" class="error"></div>`;
+  $('artifactText').value=p.finalArtifact||'';
+  $('saveArtifactBtn').onclick=async()=>{const h=await C.setFinalArtifact(p,$('artifactText').value);save();$('releaseMsg').className='success';$('releaseMsg').textContent=`Artifact saved. SHA-256: ${h}`;await renderRelease();};
+  $('downloadArtifactBtn').onclick=async()=>{p.finalArtifact=$('artifactText').value;save();if(!(await C.canRelease(p))){$('releaseMsg').className='error';$('releaseMsg').textContent='Release blocked. All 31 operations must be COMPLETE, Stage 29 must be ACCEPTED, the artifact must be non-empty, and Stage 30 hashes must equal the actual artifact SHA-256.';return;}download('released-artifact.txt',p.finalArtifact,'text/plain');};
+}
 function renderAll(){renderProjects();renderWorkflow();renderEvidence();renderRelease();}
-function show(v){['projects','workflow','evidence','release'].forEach(x=>$(x+'View').classList.toggle('hidden',x!==v));document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===v));renderAll();window.scrollTo(0,0);}
+function showView(name){activeView=name;['projects','workflow','evidence','release'].forEach(v=>$(v+'View').classList.toggle('hidden',v!==name));document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===name));$('subtitle').textContent=name[0].toUpperCase()+name.slice(1);renderAll();}
 function download(name,text,type){const blob=new Blob([text],{type:type||'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},300);}
-$('newProject').onclick=()=>$('newCard').classList.remove('hidden');$('cancelProject').onclick=()=>$('newCard').classList.add('hidden');$('createProject').onclick=()=>{try{const p=C.createProject({name:$('pName').value,objective:$('pObjective').value,deliverable:$('pDeliverable').value,suppliedInputs:$('pInputs').value,constraints:$('pConstraints').value,outputFormat:$('pFormat').value,deadline:$('pDeadline').value});projects.unshift(p);selectedId=p.projectId;stageNumber=1;save();$('newCard').classList.add('hidden');$('createError').textContent='';renderAll();show('workflow');}catch(e){$('createError').textContent=e.message;}};
-$('verifiedJob').onclick=async()=>{try{setStatus('Executing verified E2E project through all 31 real stage gates…');const r=await C.runVerificationJob();projects.unshift(r.project);selectedId=r.project.projectId;stageNumber=1;save();renderAll();setStatus(`Verified E2E PASS: ${r.trace.length} stages completed, artifact created, hashes matched, release gate passed.`,'good');show('projects');}catch(e){setStatus(`Verified E2E FAILED: ${e.message}`,'bad');}};
-$('completeStage').onclick=()=>{const p=current();try{C.completeStage(p,stageNumber,$('response').value,$('evidence').value);save();const next=p.stages.findIndex(s=>s.status!=='COMPLETE');stageNumber=next<0?C.STAGES.length:next+1;renderAll();setStatus(`Stage completed. ${C.completionPercent(p)}% total workflow completion.`,'good');}catch(e){$('stageMsg').textContent=e.message;setStatus(`Stage ${stageNumber} rejected: ${e.message}`,'bad');}};
-$('saveDraft').onclick=()=>{const p=current();try{C.saveStageDraft(p,stageNumber,$('response').value,$('evidence').value);save();renderAll();setStatus('Draft saved. Stage is not complete.','good');}catch(e){$('stageMsg').textContent=e.message;}};
-$('copyPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($('prompt').textContent);setStatus('Exact stage prompt copied.','good');}catch{setStatus('Clipboard permission was denied. Select the prompt text and copy it manually.','bad');}};
-$('backup').onclick=()=>download('closed-loop-workflow-backup.json',JSON.stringify({schemaVersion:2,exportedAt:new Date().toISOString(),projects},null,2),'application/json');document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.view));
+async function copyText(text){try{await navigator.clipboard.writeText(text);setStatus('Copied to clipboard.','good');}catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();setStatus('Copied to clipboard.','good');}}
+
+$('newProjectBtn').onclick=()=>$('newProjectCard').classList.remove('hidden');
+$('cancelProjectBtn').onclick=()=>$('newProjectCard').classList.add('hidden');
+$('createProjectBtn').onclick=()=>{try{const p=C.createProject({name:$('pName').value,objective:$('pObjective').value,deliverable:$('pDeliverable').value,suppliedInputs:$('pInputs').value,constraints:$('pConstraints').value,outputFormat:$('pFormat').value,deadline:$('pDeadline').value});projects.unshift(p);selectedId=p.projectId;stageNumber=1;save();$('newProjectCard').classList.add('hidden');$('createError').textContent='';showView('workflow');}catch(e){$('createError').textContent=e.message;}};
+$('realTestBtn').onclick=()=>{const p=C.makeRealTestProject();projects.unshift(p);selectedId=p.projectId;stageNumber=1;save();setStatus('Real E2E project created with 0/31 stages complete. You must paste actual agent responses to advance it.','good');showView('workflow');};
+$('selfCheckBtn').onclick=()=>{const r=C.runCoreRegression();setStatus(r.passed?`Self-check PASS: ${r.stageCount} operations; blank/short responses and stage skipping rejected.`:`Self-check FAIL: ${r.failures.join('; ')}`,r.passed?'good':'bad');};
+$('copyPromptBtn').onclick=()=>copyText($('promptPreview').textContent);
+$('saveProgressBtn').onclick=()=>{const p=current();try{C.saveStageDraft(p,stageNumber,$('agentResponse').value,$('stageEvidence').value);save();renderAll();$('stageMessage').className='success';$('stageMessage').textContent='Draft saved. This stage is not complete.';}catch(e){$('stageMessage').className='error';$('stageMessage').textContent=e.message;}};
+$('completeStageBtn').onclick=()=>{const p=current();try{C.completeStage(p,stageNumber,$('agentResponse').value,$('stageEvidence').value);save();const next=nextIncomplete(p);stageNumber=next;renderAll();setStatus(`Stage completed. ${p.stages.filter(s=>s.status==='COMPLETE').length}/${C.STAGES.length} complete.`,'good');}catch(e){$('stageMessage').className='error';$('stageMessage').textContent=e.message;setStatus(`Stage not completed: ${e.message}`,'bad');}};
+$('backupBtn').onclick=()=>download(`closed-loop-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({schema:3,exportedAt:new Date().toISOString(),projects},null,2),'application/json');
+document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
 load();renderAll();
 })();
 </script>
