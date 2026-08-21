@@ -1,0 +1,43 @@
+CLOSED-LOOP AGENT RELIABILITY V5 AUDIT
+
+APPLICATION STRUCTURE
+- Workflow operation count: 31.
+- Ordered first operation: DEFINE JOB.
+- Ordered final operation: RELEASE ONLY THE EXACT ACCEPTED ARTIFACT.
+- Built-in project: JOB-SELFTEST-001.
+- Stage-specific evidence contracts: enabled for all 31 operations.
+- Synthetic SELFTEST-EVIDENCE-XX tokens: forbidden by validation.
+- Bare/one-line completion evidence: rejected.
+
+SELF-TEST CLOSED LOOP
+- CANDIDATE-v001 executes 10 isolated runs through TOOL-CONFIG-v001.
+- All 10 v001 runs reproduce a real CRLF defect: 22 bytes, hash d37d29bf116c0dd3fa88c5c5840339c09cacdff60427df29dd4660a71d3f05be.
+- Every v001 run is checked against every requirement: 20/60 SATISFIED, 40/60 VIOLATED.
+- DEFECT-0001 root cause: text-mode writer newline translation.
+- REG-0001 permanently checks for CRLF recurrence; prior mutation tests remain REG-0002 through REG-0005.
+- Responsible-layer correction: TOOL-CONFIG-v002 binary exact-byte writer with newline translation disabled.
+- CANDIDATE-v002 frozen with SHA-256 5283a2794c24d26fc0840f751fbd20f4b72071793821b224930f1cb05d50a6e7.
+- 10 fresh v002 runs: 10/10 exact.
+- Unchanged v002 confirmation: 10/10 exact.
+- Baseline frozen only after correction, rerun, convergence, and unchanged confirmation.
+
+FINISHED PRODUCT
+- File: selftest/closed-loop-selftest.txt
+- Exact bytes: 43 4C 4F 53 45 44 2D 4C 4F 4F 50 2D 53 45 4C 46 54 45 53 54 0A
+- Byte count: 21
+- SHA-256: 5463b810697c6766faa0e1acce45bddb51eff700380de153b1904b68410ac0e3
+- Release gate: ACCEPTED.
+- Released bytes equal audited bytes: TRUE.
+
+RENDERED APPLICATION TEST
+- Built-in project visible: PASS.
+- Workflow renders 31 stages: PASS.
+- Stage 09 contains full reviewer evidence rather than a token: PASS.
+- Critical correction-cycle stages 11, 14, 16, 17, 18, 20 and process audit 27 inspected: PASS.
+- Completed-stage evidence-schema failures: 0.
+- New project creation: PASS.
+- Bogus Stage 01 result containing only COMPLETE: correctly REJECTED and missing evidence markers displayed.
+- Browser page errors during rendered DOM test: 0.
+
+NOTE ON EXECUTION INDEPENDENCE
+The built-in deterministic self-test uses isolated execution buffers/directories and deterministic byte generation. It does not claim that ten independent external LLM sessions were spawned. The application prompt for general jobs explicitly requires genuinely separate executions when that stage is performed.
