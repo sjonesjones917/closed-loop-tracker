@@ -26,15 +26,23 @@ jobs:
         run: node --check app-core.js
       - name: Run full 31-stage real-job traversal
         run: node e2e-test.mjs
+      - name: Verify rebuilt phone UI exists
+        run: |
+          test -s app-v10.html
+          grep -q "Create real E2E job" app-v10.html
+          grep -q "Agent response — REQUIRED" app-v10.html
+          grep -q "Stage 1 is not tied to this real project" app-v10.html
       - name: Build Pages artifact from tested files
         run: |
           rm -rf dist
           mkdir -p dist
-          cp index.html app-core.js live.html README.md dist/
+          cp app-v10.html dist/index.html
+          cp app-v10.html dist/app-v10.html
+          cp app-core.js live.html README.md dist/
           if [ -f payload-manifest.json ]; then cp payload-manifest.json dist/; fi
           if [ -d release ]; then cp -R release dist/; fi
           printf '' > dist/.nojekyll
-          cp index.html dist/404.html
+          cp app-v10.html dist/404.html
       - uses: actions/configure-pages@v5
       - name: Upload exact tested application
         uses: actions/upload-pages-artifact@v3
