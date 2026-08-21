@@ -38,8 +38,29 @@ jobs:
         run: |
           sed -e 's#app-v11.html#app-v12.html#g' -e 's#__CLR_V11__#__CLR_V12__#g' browser-e2e.mjs > browser-e2e-v12.mjs
           node --check browser-e2e-v12.mjs
-      - name: Run real 393px Chromium UI traversal
-        run: node browser-e2e-v12.mjs
+      - name: Run real 393px Chromium UI traversal and capture exact result
+        run: |
+          set +e
+          node browser-e2e-v12.mjs > browser-e2e.log 2>&1
+          code=$?
+          set -e
+          printf '%s\n' "$code" > browser-e2e.exit.txt
+          cat browser-e2e.log
+      - name: Commit exact browser diagnostic and any produced evidence
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser-e2e.log browser-e2e.exit.txt
+          test ! -f verified-e2e-project.json || git add verified-e2e-project.json
+          test ! -f verified-e2e-artifact.txt || git add verified-e2e-artifact.txt
+          if git diff --cached --quiet; then
+            echo 'Diagnostic/evidence already matches repository.'
+          else
+            git commit -m 'Store exact Chromium E2E diagnostic [skip ci]'
+            git push
+          fi
+      - name: Require successful browser traversal
+        run: test "$(cat browser-e2e.exit.txt)" = "0"
       - name: Verify browser-created evidence exists
         run: |
           test -s verified-e2e-project.json
@@ -68,14 +89,3 @@ jobs:
       - name: Deploy browser-tested application
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Commit exact browser-created project and artifact evidence
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verified-e2e-project.json verified-e2e-artifact.txt
-          if git diff --cached --quiet; then
-            echo 'Evidence already matches repository.'
-          else
-            git commit -m 'Store exact Chromium E2E evidence [skip ci]'
-            git push
-          fi
