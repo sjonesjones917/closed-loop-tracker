@@ -1,0 +1,80 @@
+name: Model capability probe record
+
+on:
+  push:
+    branches: [repair-existing-app]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  models: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair-existing-app
+      - name: Call real GitHub Models endpoints and record exact result
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, time, urllib.error, urllib.request
+          endpoint = "https://models.github.ai/inference/chat/completions"
+          models = ["openai/gpt-4.1-mini", "openai/gpt-4o-mini", "openai/gpt-4o"]
+          attempts = []
+          result = None
+          for model in models:
+              payload = json.dumps({
+                  "model": model,
+                  "temperature": 0,
+                  "max_tokens": 120,
+                  "messages": [
+                      {"role": "system", "content": "Return only valid JSON."},
+                      {"role": "user", "content": "Return {\"probe\":\"REAL_MODEL_RESPONSE\",\"complete\":true}."}
+                  ]
+              }).encode("utf-8")
+              req = urllib.request.Request(endpoint, data=payload, method="POST", headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Content-Type": "application/json",
+                  "Accept": "application/json",
+                  "User-Agent": "closed-loop-self-verification"
+              })
+              started = time.time()
+              try:
+                  with urllib.request.urlopen(req, timeout=90) as response:
+                      body = json.loads(response.read().decode("utf-8"))
+                  result = {
+                      "status": "SUCCESS",
+                      "model": model,
+                      "started_at_epoch": started,
+                      "completed_at_epoch": time.time(),
+                      "provider_response_id": body.get("id"),
+                      "content": body["choices"][0]["message"]["content"],
+                      "usage": body.get("usage", {})
+                  }
+                  break
+              except urllib.error.HTTPError as error:
+                  detail = error.read().decode("utf-8", "replace")
+                  attempts.append({"model": model, "http_status": error.code, "detail": detail[:4000]})
+              except Exception as error:
+                  attempts.append({"model": model, "error": repr(error)})
+          if result is None:
+              result = {"status": "BLOCKED", "attempts": attempts}
+          with open("MODEL_PROBE_RESULT.json", "w", encoding="utf-8") as f:
+              json.dump(result, f, indent=2, sort_keys=True)
+              f.write("\n")
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+      - name: Commit probe result to repair branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add MODEL_PROBE_RESULT.json
+          git commit -m "Record real model capability probe" || exit 0
+          git push origin HEAD:repair-existing-app
