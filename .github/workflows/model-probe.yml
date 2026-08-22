@@ -1,0 +1,75 @@
+name: Model capability probe
+
+on:
+  push:
+    branches: [repair-existing-app]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  models: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Call a real GitHub Models endpoint
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, time, urllib.error, urllib.request
+          endpoint = "https://models.github.ai/inference/chat/completions"
+          models = ["openai/gpt-4.1-mini", "openai/gpt-4o-mini", "openai/gpt-4o"]
+          attempts = []
+          for model in models:
+              payload = json.dumps({
+                  "model": model,
+                  "temperature": 0,
+                  "max_tokens": 120,
+                  "messages": [
+                      {"role": "system", "content": "Return only valid JSON."},
+                      {"role": "user", "content": "Return {\"probe\":\"REAL_MODEL_RESPONSE\",\"complete\":true}."}
+                  ]
+              }).encode("utf-8")
+              req = urllib.request.Request(endpoint, data=payload, method="POST", headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Content-Type": "application/json",
+                  "Accept": "application/json"
+              })
+              started = time.time()
+              try:
+                  with urllib.request.urlopen(req, timeout=90) as response:
+                      body = json.loads(response.read().decode("utf-8"))
+                  content = body["choices"][0]["message"]["content"]
+                  result = {
+                      "status": "SUCCESS",
+                      "model": model,
+                      "started_at_epoch": started,
+                      "completed_at_epoch": time.time(),
+                      "provider_response_id": body.get("id"),
+                      "content": content,
+                      "usage": body.get("usage", {})
+                  }
+                  open("model-probe.json", "w", encoding="utf-8").write(json.dumps(result, indent=2))
+                  print(json.dumps(result, indent=2))
+                  break
+              except urllib.error.HTTPError as error:
+                  detail = error.read().decode("utf-8", "replace")
+                  attempts.append({"model": model, "http_status": error.code, "detail": detail[:2000]})
+              except Exception as error:
+                  attempts.append({"model": model, "error": repr(error)})
+          else:
+              result = {"status": "BLOCKED", "attempts": attempts}
+              open("model-probe.json", "w", encoding="utf-8").write(json.dumps(result, indent=2))
+              print(json.dumps(result, indent=2))
+              raise SystemExit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-probe
+          path: model-probe.json
+          if-no-files-found: error
