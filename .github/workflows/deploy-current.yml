@@ -39,7 +39,7 @@ jobs:
           test -s app-v13.html
           cp app-v13.html index.html
 
-      - name: Verify the existing v13 contains the Stage 2 correction
+      - name: Verify the generated Stage 2 and Stage 3 research boundary
         shell: bash
         run: |
           set -euo pipefail
@@ -47,17 +47,15 @@ jobs:
           test -s app-v13.html
           cmp -s index.html app-v13.html
           grep -Fq 'EXTERNAL RESEARCH ONLY.' index.html
-          grep -Fq 'OMITTED FROM RESEARCH AUTHORITY' index.html
+          grep -Fq 'function researchPrompt(p,n)' index.html
+          grep -Fq 'if(n===2||n===3)return researchPrompt(p,n)' index.html
+          grep -Fq 'RAW STAGE 1 RESPONSE AND SUPPLIED IMPLEMENTATION FILE LIST OMITTED BY DESIGN.' index.html
+          grep -Fq 'STAGE ${n} RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' index.html
+          grep -Fq 'Do not inspect, inventory, cite, or treat supplied implementation files as research sources.' index.html
+          grep -Fq 'Do not inspect, inventory, cite, or treat application HTML, JavaScript, source code, tests, generated prompts, generated project JSON, candidate files, prior workflow outputs, project records, implementation behavior, or any other work product of this job as research authority.' index.html
           grep -Fq 'Stage 2 research sources must be independent external sources' index.html
-          grep -Fq 'In Stages 2 and 3, search external authority outside this project.' index.html
-          grep -Fq 'Do not use artifacts created by this project as research authority.' index.html
-          grep -Fq 'Do not inspect the requested product to determine what requirements it should satisfy.' index.html
           if grep -Fq 'Inspect the actual supplied sources and build the complete source inventory now.' index.html; then
             echo 'Refusing to deploy old circular Stage 2 HTML.' >&2
-            exit 1
-          fi
-          if grep -Fq 'Use actual supplied files/tools/sources when required.' index.html; then
-            echo 'Refusing to deploy stale generic research rule.' >&2
             exit 1
           fi
 
@@ -72,7 +70,7 @@ jobs:
           cp app-v13.html dist/app-v13.html
           # Do not publish the stale circular self-project export.
           # Missing sidecar leaves the application usable with empty/local project state.
-          printf '{"status":"CORRECTED_EXISTING_APP_DEPLOY","sourceCommit":"%s","stage2ResearchAuthority":"EXTERNAL_ONLY","generatedBeforeDeploy":true,"staleSelfProjectPublished":false}\n' "$GITHUB_SHA" > dist/build-info.json
+          printf '{"status":"CORRECTED_EXISTING_APP_DEPLOY","sourceCommit":"%s","stage2ResearchAuthority":"EXTERNAL_ONLY","dedicatedResearchPrompt":true,"generatedBeforeDeploy":true,"staleSelfProjectPublished":false}\n' "$GITHUB_SHA" > dist/build-info.json
           : > dist/.nojekyll
 
       - name: Configure GitHub Pages
