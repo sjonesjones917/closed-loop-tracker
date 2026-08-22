@@ -43,8 +43,9 @@ if(!source.includes(newLoop)){
 
 const oldStage30='    }else if(n===30){\n      const project=await page.evaluate(()=>window.__CLR_V13__.getCurrent());';
 const newStage30='    }else if(n===30){\n      if(await ensureApplicationContext(n))await page.locator(`[data-stage="${n}"]`).click();\n      const project=await page.evaluate(()=>window.__CLR_V13__.getCurrent());';
-if(!source.includes(newStage30)){
-  if(!source.includes(oldStage30))throw new Error('Stage 30 recovery anchor missing');
+const fileHashStage30="    }else if(n===30){\n      const actual=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'app-v13.html'))).digest('hex');";
+if(!source.includes(newStage30)&&!source.includes(fileHashStage30)){
+  if(!source.includes(oldStage30))throw new Error('Stage 30 is neither the legacy API-hash form nor the corrected exact-file-hash form');
   source=source.replace(oldStage30,newStage30);
 }
 
@@ -58,4 +59,4 @@ if(!source.includes('    browserContextRecoveries,')){
 fs.writeFileSync(file,source);
 const checked=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
 if(checked.status!==0)throw new Error(`${file} syntax failure: ${checked.stderr||checked.stdout}`);
-console.log(JSON.stringify({status:'PATCHED_OR_ALREADY_CURRENT',file,recovery:'STORAGE_BACKED_UI_RELOAD',reportField:'browserContextRecoveries'}));
+console.log(JSON.stringify({status:'PATCHED_OR_ALREADY_CURRENT',file,recovery:'STORAGE_BACKED_UI_RELOAD',stage30:'API_OR_EXACT_FILE_HASH_SUPPORTED',reportField:'browserContextRecoveries'}));
