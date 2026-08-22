@@ -1,13 +1,6 @@
-name: Correct external-agent prompt transport
+name: Correct external-agent prompt transport (manual only)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/patch-agent-prompt-transport.yml
-      - self-e2e-agent.mjs
-      - self-e2e-agent-base.mjs
   workflow_dispatch:
 
 permissions:
@@ -31,46 +24,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          from pathlib import Path
-
-          base = Path('self-e2e-agent-base.mjs')
-          base_source = base.read_text()
-          old_base = "const prompt=Buffer.from(promptB64,'base64').toString('utf8');"
-          new_base = "const prompt=promptB64?Buffer.from(promptB64,'base64').toString('utf8'):fs.readFileSync(0,'utf8');"
-          if old_base in base_source:
-              base.write_text(base_source.replace(old_base, new_base, 1))
-          elif new_base not in base_source:
-              raise SystemExit('Base-agent prompt-input anchor is missing')
-
-          wrapper = Path('self-e2e-agent.mjs')
-          wrapper_source = wrapper.read_text()
-          old_call = "const result=spawnSync(process.execPath,['self-e2e-agent-base.mjs',stageArg,role,runArg,Buffer.from(prompt).toString('base64')],{encoding:'utf8',maxBuffer:32*1024*1024});"
-          new_call = "const result=spawnSync(process.execPath,['self-e2e-agent-base.mjs',stageArg,role,runArg],{encoding:'utf8',input:prompt,maxBuffer:32*1024*1024});"
-          if old_call in wrapper_source:
-              wrapper_source = wrapper_source.replace(old_call, new_call, 1)
-          elif new_call not in wrapper_source:
-              raise SystemExit('Wrapper child-process anchor is missing')
-          old_error = "if(result.status!==0)throw new Error(`Base external agent failed: ${result.stderr||result.stdout}`);"
-          new_error = "if(result.status!==0)throw new Error(`Base external agent failed (${result.error?.message||`exit ${result.status}`}): ${result.stderr||result.stdout||'NO CHILD OUTPUT'}`);"
-          if old_error in wrapper_source:
-              wrapper_source = wrapper_source.replace(old_error, new_error, 1)
-          elif new_error not in wrapper_source:
-              raise SystemExit('Wrapper child-error anchor is missing')
-          wrapper.write_text(wrapper_source)
+          from pathlib import import Path
           PY
-          node --check self-e2e-agent.mjs
-          node --check self-e2e-agent-base.mjs
+          echo 'Manual migration retained for historical recovery only; the verified release already contains the corrected transport.'
 
-      - name: Commit the stdin prompt transport
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- self-e2e-agent.mjs self-e2e-agent-base.mjs; then
-            echo 'Prompt transport already uses stdin.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add self-e2e-agent.mjs self-e2e-agent-base.mjs
-          git commit -m 'Send large verifier prompts through stdin'
-          git push origin HEAD:main
+      - name: Do not mutate the verified release automatically
+        run: echo 'No automatic repository write is performed by this manual-only workflow.'
