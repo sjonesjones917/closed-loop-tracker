@@ -218,10 +218,11 @@ jobs:
           set -euo pipefail
           cp app-v13.html index.html
           rm -f SELF_BUILD_WORKFLOW_FAILURE.log
+          rm -f LIVE_DEPLOYMENT_VERIFIED.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
-          git add -u -- SELF_BUILD_WORKFLOW_FAILURE.log || true
+          git add -u -- SELF_BUILD_WORKFLOW_FAILURE.log LIVE_DEPLOYMENT_VERIFIED.json || true
           if git diff --cached --quiet; then
             echo 'Tested repository artifacts already match this run.'
           else
@@ -236,11 +237,17 @@ jobs:
     permissions:
       pages: write
       id-token: write
-      contents: read
+      contents: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Check out published main for live verification receipt
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
       - name: Deploy exact verified app and matching project
         id: deployment
         uses: actions/deploy-pages@v4
@@ -265,16 +272,7 @@ jobs:
               project_hash="$(sha256sum live-project.json | awk '{print $1}')"
               index_hash="$(sha256sum live-index.html | awk '{print $1}')"
               if [[ "$app_hash" == "$EXPECTED_APP_SHA256" && "$index_hash" == "$EXPECTED_APP_SHA256" && "$project_hash" == "$EXPECTED_PROJECT_SHA256" ]]; then
-                node <<'NODE'
-                const fs=require('node:fs');
-                const p=JSON.parse(fs.readFileSync('live-project.json','utf8'));
-                if(p.projectId!=='PROJECT-MT3M46X0-075JMP')throw new Error('Live project ID mismatch.');
-                if(p.jobId!=='JOB-MT3M46X0-M0LIB9')throw new Error('Live job ID mismatch.');
-                if(p.stages?.length!==31||p.stages.some(s=>s.status!=='COMPLETE'))throw new Error('Live project is not 31/31 complete.');
-                if(p.releaseDecision!=='ACCEPTED')throw new Error('Live project is not ACCEPTED.');
-                if(!/SOURCE_SET_VERSION:\s*SOURCE-SET-v002/i.test(String(p.stages[1].response)))throw new Error('Live Stage 2 is not SOURCE-SET-v002.');
-                if(!/RESEARCH_VERSION:\s*RESEARCH-v002/i.test(String(p.stages[2].response)))throw new Error('Live Stage 3 is not RESEARCH-v002.');
-                NODE
+                node -e "const fs=require('node:fs');const p=JSON.parse(fs.readFileSync('live-project.json','utf8'));if(p.projectId!=='PROJECT-MT3M46X0-075JMP')throw new Error('Live project ID mismatch.');if(p.jobId!=='JOB-MT3M46X0-M0LIB9')throw new Error('Live job ID mismatch.');if(p.stages?.length!==31||p.stages.some(s=>s.status!=='COMPLETE'))throw new Error('Live project is not 31/31 complete.');if(p.releaseDecision!=='ACCEPTED')throw new Error('Live project is not ACCEPTED.');if(!/SOURCE_SET_VERSION:\\s*SOURCE-SET-v002/i.test(String(p.stages[1].response)))throw new Error('Live Stage 2 is not SOURCE-SET-v002.');if(!/RESEARCH_VERSION:\\s*RESEARCH-v002/i.test(String(p.stages[2].response)))throw new Error('Live Stage 3 is not RESEARCH-v002.');"
                 verified=true
                 break
               fi
@@ -284,6 +282,18 @@ jobs:
           if [[ "$verified" != true ]]; then
             echo "Live Pages verification failed for $base" >&2
             exit 1
+          fi
+          verified_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          published_commit="$(git rev-parse HEAD)"
+          printf '{"status":"LIVE_DEPLOYMENT_VERIFIED","pageUrl":"%s","appSha256":"%s","projectSha256":"%s","indexSha256":"%s","projectId":"PROJECT-MT3M46X0-075JMP","jobId":"JOB-MT3M46X0-M0LIB9","stagesComplete":31,"producerResponses":30,"verifierResponses":30,"releaseDecision":"ACCEPTED","sourceCommit":"%s","publishedCommit":"%s","workflowRunId":"%s","verifiedAt":"%s"}\n' "$base" "$app_hash" "$project_hash" "$index_hash" "$GITHUB_SHA" "$published_commit" "$GITHUB_RUN_ID" "$verified_at" > LIVE_DEPLOYMENT_VERIFIED.json
+          rm -f SELF_BUILD_WORKFLOW_FAILURE.log
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add LIVE_DEPLOYMENT_VERIFIED.json
+          git add -u -- SELF_BUILD_WORKFLOW_FAILURE.log || true
+          if ! git diff --cached --quiet; then
+            git commit -m 'Record exact live Pages verification [skip ci]'
+            git push origin HEAD:main
           fi
           echo "Verified live deployment: $base"
           echo "App SHA-256: $EXPECTED_APP_SHA256"
