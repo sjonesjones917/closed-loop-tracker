@@ -57,7 +57,7 @@ const newStandard=`      const pr=await copyMain();
       assert.match(pr,new RegExp(\`STAGE \${n} OF 31\`));
       if(n===2){
         assert.match(pr,/RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY/);
-        assert.match(pr,/COMPLETE STAGE 1 JOB DEFINITION — USER INPUT \/ RESEARCH SCOPE, NOT EXTERNAL AUTHORITY/);
+        assert.ok(pr.includes('COMPLETE STAGE 1 JOB DEFINITION — USER INPUT / RESEARCH SCOPE, NOT EXTERNAL AUTHORITY'));
         assert.match(pr,/EXTERNAL RESEARCH QUESTIONS/);
       }
       if(n===3)assert.match(pr,/APPROVED STAGE 2 EXTERNAL SOURCE INVENTORY:/);
