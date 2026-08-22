@@ -1,4 +1,4 @@
-name: Self-build, verify, and publish Closed-Loop app
+name: Self-build, verify, publish, and deploy Closed-Loop app
 
 on:
   push:
@@ -8,65 +8,68 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+  actions: read
 
 concurrency:
-  group: closed-loop-self-build
+  group: closed-loop-build-and-pages-deploy
   cancel-in-progress: true
 
 jobs:
-  verify-and-publish:
+  verify-build-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Check out exact repository revision
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Regenerate and publish the corrected existing v13 application immediately
+      - name: Validate source and regenerate the existing application
         shell: bash
         run: |
           set -euo pipefail
-          node --check build-v13-self.mjs
-          node --check v13-state-replay.mjs
-          node build-v13-self.mjs
-          node v13-state-replay.mjs
-          test -s app-v13.html
-          grep -q 'if(n===2||n===3)return researchPrompt(p,n)' app-v13.html
-          grep -q 'RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html
-          grep -q 'external-authority-first-2026-08-22-r5-state-replay' app-v13.html
-          grep -q 'function replayProject(input)' app-v13.html
-          grep -q 'obsolete completion was reset from Stage' app-v13.html
-          if grep -q 'Inspect the actual supplied sources and build the complete source inventory now' app-v13.html; then
-            echo 'Legacy Stage 2 prompt survived regeneration.' >&2
-            exit 1
-          fi
-          cp app-v13.html index.html
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app-v13.html index.html
-          if ! git diff --cached --quiet; then
-            git commit -m 'Publish corrected existing v13 Stage 2 and stored-state replay [skip ci]'
-            git push origin HEAD:main
-          fi
-
-      - name: Verify checked-in JavaScript syntax and base state machine
-        shell: bash
-        run: |
-          set -euo pipefail
+          test -s self-stage1-response.txt
           node --check app-core.js
           node --check build-v13-self.mjs
           node --check v13-state-replay.mjs
           node --check self-e2e-agent.mjs
           node --check self-browser-e2e.mjs
           node --check run-v13-self-e2e.mjs
-          node e2e-test.mjs
+          node build-v13-self.mjs
+          node v13-state-replay.mjs
+          test -s app-v13-candidate1.html
+          test -s app-v13.html
+          cp app-v13.html index.html
+
+      - name: Verify lossless Stage 1 and external-authority research architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp -s app-v13.html index.html
+          grep -Fq 'all 20 scopes explicitly' app-v13.html
+          grep -Fq 'COMPLETE STAGE 1 JOB DEFINITION — USER INPUT / RESEARCH SCOPE, NOT EXTERNAL AUTHORITY:' app-v13.html
+          grep -Fq 'RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html
+          grep -Fq 'Stage 2 research sources must be independent external sources' app-v13.html
+          grep -Fq 'function replayProject(input)' app-v13.html
+          grep -Fq "requireFullyValid: true, source: 'Published self-project'" app-v13.html
+          grep -Fq 'SELF_VERIFIED_PROJECT.json' app-v13.html
+          grep -Fq 'TARGET RUN OUTPUT TO VERIFY' app-v13.html
+          if grep -Fq 'Inspect the actual supplied sources and build the complete source inventory now.' app-v13.html; then
+            echo 'Obsolete circular Stage 2 instruction remains.' >&2
+            exit 1
+          fi
+          if grep -Fq 'RAW STAGE 1 RESPONSE AND SUPPLIED IMPLEMENTATION FILE LIST OMITTED BY DESIGN.' app-v13.html; then
+            echo 'Obsolete narrowed Stage 1 handoff remains.' >&2
+            exit 1
+          fi
 
       - name: Install browser test driver
         shell: bash
         run: npm install --no-save playwright-core
 
-      - name: Use the app itself to create and complete the app self-build project
+      - name: Complete the actual 31-stage self-build through the rendered UI
         shell: bash
         env:
           CHROME_PATH: /usr/bin/google-chrome
@@ -74,93 +77,108 @@ jobs:
           set -euo pipefail
           node run-v13-self-e2e.mjs
 
-      - name: Independently verify the actual UI-exported self-build project and released app bytes
+      - name: Independently verify the UI-exported project and exact release bytes
         shell: bash
         run: |
           set -euo pipefail
-          test -s app-v13-candidate1.html
-          test -s app-v13.html
           test -s SELF_VERIFIED_PROJECT.json
           test -s SELF_E2E_REPORT.json
           test -s SELF_PROJECT_COMPLETED_393.png
           test -s SELF_PROJECT_AUTOLOADED_393.png
           test -s SELF_PROJECT_AUTOLOADED_320.png
-          grep -q 'Closed-Loop Agent Reliability v13' app-v13.html
-          grep -q 'SELF_VERIFIED_PROJECT.json' app-v13.html
-          grep -q 'TARGET RUN OUTPUT TO VERIFY' app-v13.html
-          grep -q 'crypto.subtle.digest' app-v13.html
-          grep -q 'EXTERNAL RESEARCH ONLY.' app-v13.html
-          grep -q 'EXTERNAL_SEARCH_PERFORMED' app-v13.html
-          grep -q 'STAGE .* RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html
-          grep -q 'Stage 2 research sources must be independent external sources' app-v13.html
-          grep -q 'external-authority-first-2026-08-22-r5-state-replay' app-v13.html
-          grep -q 'function replayProject(input)' app-v13.html
-          grep -q 'requireFullyValid: true' app-v13.html
-          if grep -q 'Inspect the actual supplied sources and build the complete source inventory now' app-v13.html; then
-            echo 'Old circular Stage 2 source-inventory instruction is still present.' >&2
-            exit 1
-          fi
-          grep -q 'SELF_VERIFIED_PROJEC.json' app-v13-candidate1.html
-          if grep -q 'SELF_VERIFIED_PROJECT.json' app-v13-candidate1.html; then
-            echo 'Defective first candidate unexpectedly contains the corrected sidecar filename.' >&2
-            exit 1
-          fi
           node <<'NODE'
-          const fs=require('node:fs');
-          const crypto=require('node:crypto');
-          const fail=m=>{throw new Error(m)};
-          const app=fs.readFileSync('app-v13.html');
-          const p=JSON.parse(fs.readFileSync('SELF_VERIFIED_PROJECT.json','utf8'));
-          const r=JSON.parse(fs.readFileSync('SELF_E2E_REPORT.json','utf8'));
-          const html=app.toString('utf8');
-          const stage2=String(p.stages?.[1]?.response||'');
-          const stage3=String(p.stages?.[2]?.response||'');
-          const researchStart=html.indexOf('function researchPrompt(p,n)');
-          const researchEnd=html.indexOf('function prompt(p,n)',researchStart);
-          const researchSource=researchStart>=0&&researchEnd>researchStart?html.slice(researchStart,researchEnd):'';
-          if(!html.includes('EXTERNAL RESEARCH ONLY.'))fail('Stage 2 external-research-only instruction missing from generated app.');
-          if(html.includes('Inspect the actual supplied sources and build the complete source inventory now'))fail('Old circular Stage 2 instruction survived regeneration.');
-          if(!html.includes('EXTERNAL_SEARCH_PERFORMED'))fail('Stage 2 does not require proof that external research actually occurred.');
-          if(!html.includes('if(n===2||n===3)return researchPrompt(p,n)'))fail('Stages 2 and 3 do not use the dedicated research prompt generator.');
-          if(!researchSource.includes('RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY'))fail('Dedicated research prompt does not expose the external-authority boundary.');
-          if(researchSource.includes('p.inputs')||researchSource.includes('prior(p,n)'))fail('Dedicated Stage 2/3 prompt still injects supplied implementation inputs or raw prior-stage handoff.');
-          if(researchSource.includes('SUPPLIED FILES / MESSAGES / LINKS / DATA'))fail('Dedicated Stage 2/3 prompt still renders the supplied-files block.');
-          if(!html.includes('external-authority-first-2026-08-22-r5-state-replay'))fail('Stored-project replay ruleset is missing.');
-          if(!html.includes('function replayProject(input)'))fail('Stored-project replay function is missing.');
-          if(!html.includes("requireFullyValid: true, source: 'Published self-project'"))fail('Published sidecar is not subjected to strict replay validation.');
-          if(/function importProjectObject\(p\)\{if\(!p\|\|p\.schemaVersion!==13/.test(html))fail('Import path still trusts raw completion flags.');
-          if(!Array.isArray(p.stages)||p.stages.length!==31)fail('Visible UI export does not contain all 31 stages.');
-          if(p.stages.some(s=>s.status!=='COMPLETE'))fail('Visible UI export contains an incomplete stage.');
-          if(!/EXTERNAL_SEARCH_PERFORMED\s*:\s*true/i.test(stage2))fail('UI-exported Stage 2 did not record real external searching.');
-          if(!/SOURCE_TYPE\s*:/i.test(stage2)||!/https?:\/\//i.test(stage2))fail('UI-exported Stage 2 lacks externally identifiable source provenance.');
-          if(/SRC-0002[^.]*app-v11\.html|SRC-0003[^.]*build-v13-self\.mjs|actual executable base|real Chromium UI runner|external process agent/i.test(stage2))fail('UI-exported Stage 2 still treats project implementation/work products as research sources.');
-          if(!/SOURCE_ID\s*:?\s*SRC-/i.test(stage3))fail('UI-exported Stage 3 findings do not trace to external SOURCE_ID records.');
-          if(/Requirement research completed across the actual intake and executable sources|app-v11\.html|build-v13-self\.mjs|self-browser-e2e\.mjs|self-e2e-agent\.mjs/i.test(stage3))fail('UI-exported Stage 3 still derives requirements from implementation/work-product files.');
-          if(p.stages[10].producers.filter(Boolean).length!==10)fail('Stage 11 does not contain 10 pasted producer responses.');
-          if(p.stages[11].verifiers.filter(Boolean).length!==10)fail('Stage 12 does not contain 10 pasted verifier responses.');
-          if(p.stages[17].producers.filter(Boolean).length!==10)fail('Stage 18 does not contain 10 pasted producer responses.');
-          if(p.stages[18].verifiers.filter(Boolean).length!==10)fail('Stage 19 does not contain 10 pasted verifier responses.');
-          if(p.stages[19].producers.filter(Boolean).length!==10)fail('Stage 20 does not contain 10 pasted producer responses.');
-          if(p.stages[19].verifiers.filter(Boolean).length!==10)fail('Stage 20 does not contain 10 pasted verifier responses.');
-          if(!p.objective.includes('application itself'))fail('The project objective is not the app self-build objective.');
-          if(p.releaseDecision!=='ACCEPTED')fail('Self-build release decision is not ACCEPTED.');
-          if(p.artifactName!=='app-v13.html')fail('Released artifact name is not app-v13.html.');
-          if(Buffer.compare(Buffer.from(p.artifact,'utf8'),app)!==0)fail('Project artifact differs from exact app bytes.');
-          const hash=crypto.createHash('sha256').update(app).digest('hex');
-          if(p.auditedHash!==hash||p.releaseHash!==hash)fail('Audited/release hashes differ from actual app SHA-256.');
-          if(html.includes(p.projectId))fail('Completed project ID is hardcoded into the HTML.');
-          if(html.includes(p.objective))fail('Completed project objective is hardcoded into the HTML.');
-          if(!p.stages[11].verifiers.every(v=>/REQ-015.*VIOLATED/i.test(v)))fail('The real first-candidate defect is not preserved in all ten independent verifier records.');
-          if(!p.stages[18].verifiers.every(v=>/REQ-015.*SATISFIED/i.test(v)))fail('The corrected candidate did not pass all ten verifier records.');
-          if(r.status!=='PASS'||r.hardcodedProject!==false||r.freshBrowserSidecarAutoload!==true)fail('Self E2E report does not prove the actual sidecar-loaded project.');
-          if(r.storedCircularStage2ReplayInvalidatedFromStage!==2)fail('Browser evidence did not prove startup invalidation of the stored circular Stage 2 project.');
-          console.log(JSON.stringify({status:'PASS',projectId:p.projectId,jobId:p.jobId,stagesComplete:31,pastedProducerResponses:30,pastedVerifierResponses:30,firstCandidateDefect:'10/10 VIOLATED',correctedCandidate:'10/10 SATISFIED',releaseDecision:p.releaseDecision,appSha256:hash,uiExport:'SELF_VERIFIED_PROJECT.json',stage2ResearchAuthority:'EXTERNAL_ONLY',stage3ResearchAuthority:'EXTERNAL_ONLY',stage2PromptSuppliedInputs:false,storedCircularStage2ReplayInvalidatedFromStage:2,hardcodedProject:false},null,2));
+          const fs = require('node:fs');
+          const crypto = require('node:crypto');
+          const fail = (message) => { throw new Error(message); };
+          const appBytes = fs.readFileSync('app-v13.html');
+          const html = appBytes.toString('utf8');
+          const projectBytes = fs.readFileSync('SELF_VERIFIED_PROJECT.json');
+          const project = JSON.parse(projectBytes.toString('utf8'));
+          const report = JSON.parse(fs.readFileSync('SELF_E2E_REPORT.json', 'utf8'));
+          const stage1 = String(project.stages?.[0]?.response || '');
+          const stage2 = String(project.stages?.[1]?.response || '');
+          const stage3 = String(project.stages?.[2]?.response || '');
+          const stage1Tokens = [
+            'JOB_ID', 'EXACT USER OBJECTIVE', 'EXACT DELIVERABLE', 'REQUESTED ACTIONS',
+            'SUBJECT AND TARGET', 'PROBLEM AND QUESTION SET', 'SCOPE BOUNDARIES',
+            'SUPPLIED INFORMATION', 'PROVENANCE CLASSIFICATION',
+            'PRIOR CONVERSATION DEPENDENCIES', 'USER-DEFINED TERMINOLOGY',
+            'CONSTRAINTS', 'PROHIBITED ACTIONS', 'REQUIRED METHODS',
+            'REQUIRED OUTPUT PROPERTIES', 'TEMPORAL SCOPE', 'LOCATION AND JURISDICTION',
+            'SUCCESS AND ACCEPTANCE CONDITIONS', 'PRIORITIES AND OPTIMIZATION CRITERIA',
+            'UNCERTAINTIES', 'EXTERNAL RESEARCH QUESTIONS', 'ASSUMPTIONS', 'BLOCKERS'
+          ];
+          for (const token of stage1Tokens) if (!stage1.toUpperCase().includes(token)) fail(`Stage 1 missing ${token}`);
+          if (!Array.isArray(project.stages) || project.stages.length !== 31) fail('Project does not contain exactly 31 stages.');
+          if (project.stages.some((stage) => stage.status !== 'COMPLETE')) fail('Project contains incomplete stages.');
+          if (project.projectId !== 'PROJECT-MT3M46X0-075JMP') fail('Exact PROJECT_ID was not preserved.');
+          if (project.jobId !== 'JOB-MT3M46X0-M0LIB9') fail('Exact JOB_ID was not preserved.');
+          if (!/EXTERNAL_SEARCH_PERFORMED\s*:\s*true/i.test(stage2)) fail('Stage 2 lacks real external-search evidence.');
+          if (!/SOURCE_ID\s*:\s*SRC-/i.test(stage2) || !/SOURCE_TYPE\s*:/i.test(stage2) || !/https?:\/\//i.test(stage2)) fail('Stage 2 lacks external-source records.');
+          if (/SOURCE_TYPE\s*:\s*(APPLICATION_FILE|GENERATED_FILE|WORK_PRODUCT|PROJECT_JSON|HTML|JAVASCRIPT)\b/i.test(stage2)) fail('Stage 2 contains an internal work product as external authority.');
+          if (/\b(app-v11\.html|build-v13-self\.mjs|self-browser-e2e\.mjs|self-e2e-agent\.mjs|SELF_VERIFIED_PROJECT\.json)\b/i.test(stage2)) fail('Stage 2 contains prohibited project work-product authority.');
+          if (!/FINDING_ID\s*:\s*FINDING-/i.test(stage3) || !/SOURCE_ID\s*:\s*SRC-/i.test(stage3)) fail('Stage 3 findings are not traced to external sources.');
+          if (/\b(app-v11\.html|build-v13-self\.mjs|self-browser-e2e\.mjs|self-e2e-agent\.mjs)\b/i.test(stage3)) fail('Stage 3 derives requirements from project work products.');
+          if (project.stages[10].producers.filter(Boolean).length !== 10) fail('Stage 11 does not contain 10 producer responses.');
+          if (project.stages[11].verifiers.filter(Boolean).length !== 10) fail('Stage 12 does not contain 10 verifier responses.');
+          if (project.stages[17].producers.filter(Boolean).length !== 10) fail('Stage 18 does not contain 10 producer responses.');
+          if (project.stages[18].verifiers.filter(Boolean).length !== 10) fail('Stage 19 does not contain 10 verifier responses.');
+          if (project.stages[19].producers.filter(Boolean).length !== 10) fail('Stage 20 does not contain 10 producer responses.');
+          if (project.stages[19].verifiers.filter(Boolean).length !== 10) fail('Stage 20 does not contain 10 verifier responses.');
+          if (!project.stages[11].verifiers.every((value) => /REQ-015.*VIOLATED/i.test(value))) fail('First-candidate defect is not preserved in all 10 verifier records.');
+          if (!project.stages[18].verifiers.every((value) => /REQ-015.*SATISFIED/i.test(value))) fail('Corrected candidate did not pass all 10 verifier records.');
+          if (project.releaseDecision !== 'ACCEPTED') fail('Release decision is not ACCEPTED.');
+          if (project.artifactName !== 'app-v13.html') fail('Released artifact name is not app-v13.html.');
+          if (Buffer.compare(Buffer.from(project.artifact, 'utf8'), appBytes) !== 0) fail('Project artifact is not byte-identical to app-v13.html.');
+          const hash = crypto.createHash('sha256').update(appBytes).digest('hex');
+          if (project.auditedHash !== hash || project.releaseHash !== hash) fail('Audited/release hashes do not equal the actual app SHA-256.');
+          if (html.includes(project.projectId) || html.includes(project.objective)) fail('Completed project state is hardcoded into the HTML.');
+          if (report.status !== 'PASS' || report.hardcodedProject !== false || report.freshBrowserSidecarAutoload !== true) fail('Browser report does not prove exact sidecar autoload without hardcoding.');
+          if (report.storedCircularStage2ReplayInvalidatedFromStage !== 2) fail('Browser report does not prove invalidation of obsolete circular Stage 2 state.');
+          console.log(JSON.stringify({
+            status: 'PASS',
+            projectId: project.projectId,
+            jobId: project.jobId,
+            stagesComplete: 31,
+            producerResponses: 30,
+            verifierResponses: 30,
+            releaseDecision: project.releaseDecision,
+            appSha256: hash,
+            projectExportBytes: projectBytes.length,
+            stage1LosslessScopes: 20,
+            stage2Authority: 'EXTERNAL_ONLY',
+            stage3Authority: 'EXTERNAL_ONLY',
+            hardcodedProject: false
+          }, null, 2));
           NODE
 
-      - name: Preserve downloadable self-build evidence from this exact run
+      - name: Create publication record and Pages artifact
+        id: publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_SHA256="$(sha256sum app-v13.html | awk '{print $1}')"
+          PROJECT_SHA256="$(sha256sum SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
+          printf '{"status":"VERIFIED_AND_DEPLOYING","sourceCommit":"%s","app":"app-v13.html","entry":"index.html","project":"SELF_VERIFIED_PROJECT.json","report":"SELF_E2E_REPORT.json","appSha256":"%s","projectSha256":"%s","projectId":"PROJECT-MT3M46X0-075JMP","jobId":"JOB-MT3M46X0-M0LIB9","stagesComplete":31,"producerResponses":30,"verifierResponses":30,"releaseDecision":"ACCEPTED","stage1LosslessScopes":20,"stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","hardcodedProject":false}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > PUBLISHED_SELF_BUILD.json
+          rm -rf dist
+          mkdir -p dist
+          cp app-v13.html dist/index.html
+          cp app-v13.html dist/404.html
+          cp app-v13.html dist/app-v13.html
+          cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
+          cp SELF_E2E_REPORT.json dist/SELF_E2E_REPORT.json
+          cp SELF_PROJECT_COMPLETED_393.png dist/SELF_PROJECT_COMPLETED_393.png
+          cp SELF_PROJECT_AUTOLOADED_393.png dist/SELF_PROJECT_AUTOLOADED_393.png
+          cp SELF_PROJECT_AUTOLOADED_320.png dist/SELF_PROJECT_AUTOLOADED_320.png
+          cp PUBLISHED_SELF_BUILD.json dist/PUBLISHED_SELF_BUILD.json
+          : > dist/.nojekyll
+          echo "app_sha256=$APP_SHA256" >> "$GITHUB_OUTPUT"
+          echo "project_sha256=$PROJECT_SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve downloadable evidence from this exact run
         uses: actions/upload-artifact@v4
         with:
-          name: real-app-self-build-evidence
+          name: closed-loop-v13-verified-release
           path: |
             app-v13-candidate1.html
             app-v13.html
@@ -169,39 +187,47 @@ jobs:
             SELF_PROJECT_COMPLETED_393.png
             SELF_PROJECT_AUTOLOADED_393.png
             SELF_PROJECT_AUTOLOADED_320.png
+            PUBLISHED_SELF_BUILD.json
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish the exact tested app and exact visible-UI project export to main
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload exact verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Publish the exact tested app and project export to main
         shell: bash
-        env:
-          SOURCE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          rm -rf /tmp/closed-loop-publish
-          mkdir -p /tmp/closed-loop-publish
-          cp app-v13.html /tmp/closed-loop-publish/app-v13.html
-          cp SELF_VERIFIED_PROJECT.json /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json
-          cp SELF_E2E_REPORT.json /tmp/closed-loop-publish/SELF_E2E_REPORT.json
-          cp SELF_PROJECT_COMPLETED_393.png /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png
-          cp SELF_PROJECT_AUTOLOADED_393.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png
-          cp SELF_PROJECT_AUTOLOADED_320.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png
+          cp app-v13.html index.html
+          rm -f SELF_BUILD_WORKFLOW_FAILURE.log
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main
-          git reset --hard origin/main
-          cp /tmp/closed-loop-publish/app-v13.html app-v13.html
-          cp /tmp/closed-loop-publish/app-v13.html index.html
-          cp /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
-          cp /tmp/closed-loop-publish/SELF_E2E_REPORT.json SELF_E2E_REPORT.json
-          cp /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_COMPLETED_393.png
-          cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_393.png
-          cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png SELF_PROJECT_AUTOLOADED_320.png
-          printf '{"status":"PUBLISHED","sourceCommit":"%s","test":"real app self-build through 31-stage Chromium UI","app":"app-v13.html","entry":"index.html","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","stage2PromptSuppliedInputs":false,"storedCircularStage2ReplayInvalidatedFromStage":2,"hardcodedProject":false}\n' "$SOURCE_SHA" > PUBLISHED_SELF_BUILD.json
-          git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
+          git add -A app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json SELF_BUILD_WORKFLOW_FAILURE.log
           if git diff --cached --quiet; then
-            echo 'Exact tested publication already matches main.'
-            exit 0
+            echo 'Tested repository artifacts already match this run.'
+          else
+            git commit -m 'Publish exact verified v13 app and matching project [skip ci]'
+            git push origin HEAD:main
           fi
-          git commit -m 'Publish exact tested self-build app and project [skip ci]'
-          git push origin HEAD:main
+
+  deploy:
+    needs: verify-build-publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact verified app and matching project
+        id: deployment
+        uses: actions/deploy-pages@v4

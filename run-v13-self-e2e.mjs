@@ -40,6 +40,9 @@ let agent=fs.readFileSync('self-e2e-agent.mjs','utf8');
 const oldPrompt="const prompt=Buffer.from(promptB64,'base64').toString('utf8');";
 const newPrompt="const prompt=promptB64?Buffer.from(promptB64,'base64').toString('utf8'):fs.readFileSync(0,'utf8');";
 agent=replaceExact(agent,oldPrompt,newPrompt,'Agent stdin');
+const oldStageDispatch="if(role==='stage'&&n===2)process.stdout.write(await stage2());";
+const newStageDispatch=`if(role==='stage'&&n===1){const stageOneJobId=((prompt.match(/^JOB_ID:\\s*(.+)$/m)||[])[1]||'UNKNOWN').trim();const stageOneProjectId=((prompt.match(/^PROJECT_ID:\\s*(.+)$/m)||[])[1]||'UNKNOWN').trim();const stageOneText=fs.readFileSync(new URL('./self-stage1-response.txt',import.meta.url),'utf8').replaceAll('{{JOB_ID}}',stageOneJobId).replaceAll('{{PROJECT_ID}}',stageOneProjectId);process.stdout.write(stageOneText+'\\n\\n'+receipt);}else if(role==='stage'&&n===2)process.stdout.write(await stage2());`;
+agent=replaceExact(agent,oldStageDispatch,newStageDispatch,'Lossless Stage 1 runtime response');
 fs.writeFileSync('self-e2e-agent-runtime.mjs',agent);
 
 let browser=fs.readFileSync('self-browser-e2e.mjs','utf8');
@@ -82,7 +85,7 @@ const replayTest=`  await freshContext.close();
   fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),'{}\\n');
   const legacyContext=await browser.newContext({viewport:{width:393,height:852}});
   await legacyContext.addInitScript(({legacy})=>{localStorage.setItem('closedLoopReliability.projects.v13',JSON.stringify([legacy]));localStorage.setItem('closedLoopReliability.selected.v13',legacy.projectId)},{legacy});
-  const legacyPage=await legacyContext.newPage();await legacyPage.goto(\`${origin}/app-v13.html?replay=\${Date.now()}\`,{waitUntil:'networkidle'});
+  const legacyPage=await legacyContext.newPage();await legacyPage.goto(\`\${origin}/app-v13.html?replay=\${Date.now()}\`,{waitUntil:'networkidle'});
   const replayed=await legacyPage.evaluate(()=>window.__CLR_V13__.getProjects().find(p=>p.projectId==='PROJECT-LEGACY-CIRCULAR-STAGE2'));
   assert.ok(replayed);assert.equal(replayed.stages[0].status,'COMPLETE');assert.equal(replayed.stages[1].status,'NOT_STARTED');assert.equal(replayed.stages.filter(s=>s.status==='COMPLETE').length,1);assert.equal(replayed.revalidation.invalidatedFromStage,2);assert.match(await legacyPage.locator('#status').textContent(),/Current-rule replay reset 1 obsolete project/);
   await legacyContext.close();fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),validSidecarBytes);

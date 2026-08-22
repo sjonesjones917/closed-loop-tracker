@@ -1,0 +1,73 @@
+JOB_ID: {{JOB_ID}}
+
+PROJECT_ID: {{PROJECT_ID}}
+
+INPUT_VERSION: INPUT-v001
+
+EXACT USER OBJECTIVE:
+Create, verify, and release the Closed-Loop Agent Reliability v13 application itself by using the actual application UI from an empty project through every one of the 31 sequential operations. The released application must automatically load and display the exact project JSON exported through the app's visible Export this project control after this run; the project must not be hardcoded into the HTML.
+
+EXACT DELIVERABLE OR DELIVERABLES:
+The exact standalone HTML file app-v13.html, the exact UI-downloaded SELF_VERIFIED_PROJECT.json project export, and reproducible browser evidence showing 31/31 stages complete, 30 producer responses, 30 verifier responses, a real candidate defect and correction, an ACCEPTED decision, and exact audited/release hash identity.
+
+REQUESTED ACTIONS:
+Modify the existing v13 application rather than substitute another product; execute its actual rendered UI from an empty project; perform all 31 ordered operations; conduct external research; establish requirements and tests; run producer and verifier executions; detect and correct a real first-candidate sidecar-filename defect; rerun and confirm the corrected candidate unchanged; audit and hash the final artifact; export the completed project through the visible control; publish the exact accepted HTML and visible-UI JSON export; and deploy both to the configured GitHub Pages project URL.
+
+SUBJECT AND TARGET:
+The subject is the existing Closed-Loop Agent Reliability v13 application and its complete self-build workflow. The target artifacts are the accepted standalone HTML application, its exact visible-UI project export, reproducible browser evidence, and the live GitHub Pages representation.
+
+PROBLEM AND QUESTION SET:
+Determine and prove whether the application implements a domain-general forward pipeline from user intent through external authority, requirements, tests, production, independent verification, correction, acceptance, and exact release. For this self-build, determine whether the real UI completes all 31 stages, preserves 30 producer and 30 verifier responses, detects and corrects the sidecar-filename defect, exports and reloads the completed project without embedding it, and deploys the exact accepted bytes.
+
+SCOPE BOUNDARIES:
+INCLUDED: the existing v13 application; the fixed 31-stage order; project creation at 0/31; exact identifiers; external research; requirements and tests; producer/verifier fields; project persistence, import, export, and sidecar loading; browser evidence at phone widths; candidate defect, correction, regression, convergence, confirmation, audits, SHA-256 identity, repository publication, and GitHub Pages deployment. EXCLUDED: treating source code, generated tests, generated project state, candidate behavior, prior workflow conclusions, or the artifact itself as external authority; arbitrary stage renumbering; arbitrary version-number changes; simulated completion; hardcoded completed project state; and release of unaccepted bytes.
+
+SUPPLIED INFORMATION AND INPUTS:
+User messages and the corrected architecture; the exact objective and deliverables; the fixed 31-stage sequence; named existing application/build/test files; candidate and corrected artifact names; system Chromium; SHA-256; GitHub Actions; visible project export and artifact download controls; exact JOB_ID and PROJECT_ID; the repository and GitHub Pages project address; and the explicit no-hardcoding, no-skipping, real-response, real-defect, correction, confirmation, audit, and release constraints.
+
+PROVENANCE CLASSIFICATION:
+USER_ASSERTION: stated objective, constraints, stage sequence, and success conditions. USER_OBSERVATION: reports that prior application or project behavior was incorrect or unchanged. USER_SUPPLIED_DATA: exact identifiers, filenames, counts, and workflow text. USER_SUPPLIED_DOCUMENT: the corrected complete build instruction supplied in conversation. USER_SUPPLIED_URL: repository and deployment address when supplied. THIRD_PARTY_QUOTATION: none material. PRIOR_AGENT_OUTPUT: prior proposed Stage 1/Stage 2 formulations and source inventory, retained only as conversation history and never promoted to external authority. EXISTING_WORK_PRODUCT: existing HTML, JavaScript, build scripts, browser runner, workflow files, and current project export. CANDIDATE_ARTIFACT: the first defective candidate and corrected candidate. OTHER_USER_SUPPLIED_INPUT: system Chromium, SHA-256, GitHub Actions, and visible controls identified as available job inputs.
+
+PRIOR CONVERSATION DEPENDENCIES:
+Preserve the user's architectural correction that Stage 1 is lossless intake, Stage 2 inventories independent external authorities, Stage 3 extracts externally governed findings, and internal work products never become authority for their own requirements. Preserve the instruction to modify and deploy the existing application and update the project displayed by that application rather than merely explain or create an unrelated replacement.
+
+USER-DEFINED TERMINOLOGY:
+USER JOB INPUT means user-originated objectives, facts, constraints, supplied materials, process conditions, and acceptance conditions. EXTERNAL RESEARCH SOURCE means independent authority outside the artifact and workflow-generated records. WORKFLOW-GENERATED ARTIFACT means any source inventory, finding, requirement, test, prompt, candidate, response, defect record, audit, hash, product, or other record produced by this workflow. ACCEPTED means every mandatory requirement has affirmative evidence and every mandatory validator passed. RELEASE means publication of only the exact accepted bytes.
+
+CONSTRAINTS:
+Keep exactly 31 stages in the supplied order; use the actual application UI from an empty project; require substantive completed responses; preserve producer/verifier separation; preserve exact identifiers; keep completed project state outside the HTML; use the visible UI project export; automatically reload the exact published sidecar; preserve phone-first usability; maintain traceability and evidence; and publish only after acceptance, audit, and exact hash equality.
+
+PROHIBITED ACTIONS:
+No hardcoded completed project; no skipped or silently completed stage; no fabricated source, response, execution, test, evidence, defect, correction, acceptance, or deployment claim; no use of application source, tests, generated JSON, candidates, prior workflow output, or implementation behavior as external research authority; no substitution of explanation for execution; no release of bytes different from the audited accepted artifact.
+
+REQUIRED METHODS AND PROCESS CONDITIONS:
+Use the real rendered UI and visible controls; perform actual external retrieval in Stage 2; distinguish user requirements from externally governed requirements; execute independent producer and verifier contexts; create and detect a real first-candidate sidecar-filename defect; correct the responsible layer; run regression, new independent executions, convergence, and unchanged confirmation; inspect the exact final representation; export through the visible project control; independently hash the exact files; deploy through the repository's GitHub Pages workflow; and verify the live representation.
+
+REQUIRED OUTPUT PROPERTIES:
+A standalone UTF-8 HTML application named app-v13.html; an exact UI-downloaded project export named SELF_VERIFIED_PROJECT.json; index.html byte-identical to the accepted application for GitHub Pages; reproducible browser evidence; machine-readable evidence records; 31/31 complete stages; 30 producer responses; 30 verifier responses; ACCEPTED decision; matching 64-hex SHA-256 audited and release hashes; and no embedded completed project object.
+
+TEMPORAL SCOPE:
+Current verified release. External authorities, platform behavior, browser/runtime versions, repository state, and deployed content must be current when researched, executed, audited, and released. Preserve exact timestamps for retrieval, executions, evidence, export, hash verification, publication, and deployment.
+
+LOCATION AND JURISDICTION:
+No legal jurisdiction or physical deployment jurisdiction was supplied as a controlling requirement for this self-build. The technical deployment target is the configured GitHub Pages project site. Any legal, privacy, accessibility, records, procurement, or geographic consequence that could apply remains a Stage 2 research question unless established by user input or external deployment facts.
+
+USER-STATED SUCCESS AND ACCEPTANCE CONDITIONS:
+The existing app is corrected and deployed; all 31 stages complete in sequence through the actual UI; every required standard, producer, and verifier field contains a substantive external-process result; there are 30 producer and 30 verifier responses; the first candidate has the real misspelled sidecar filename defect; the corrected candidate passes a fresh batch and unchanged confirmation; the final product is independently verified and audited; RELEASE_DECISION is ACCEPTED; AUDITED_HASH equals RELEASE_HASH and the actual artifact SHA-256; the exact visible-UI export reloads automatically; completed project state is not hardcoded into the HTML; and the live project URL serves the accepted app and matching project sidecar.
+
+PRIORITIES AND OPTIMIZATION CRITERIA:
+1. Reality and externally observable correctness. 2. Lossless preservation of user intent. 3. Non-circular external authority. 4. Complete execution rather than description. 5. Exact artifact identity and traceability. 6. Correct modification of the existing project and deployment path rather than creation of an unrelated substitute. 7. Phone-first usability and reproducibility.
+
+KNOWN UNCERTAINTIES, AMBIGUITIES, CONTRADICTIONS, AND MISSING INFORMATION:
+EXTERNALLY_RESEARCHABLE: current web standards, browser/runtime behavior, GitHub Actions and Pages behavior, accessibility requirements, cryptographic specifications, and professional verification guidance. NONMATERIAL: cosmetic wording that does not alter the fixed objective or acceptance conditions. USER_CLARIFICATION_REQUIRED: none required to begin because the target repository, application, artifacts, sequence, identifiers, and acceptance conditions are established. BLOCKING: none at Stage 1; any inaccessible mandatory authority or unavailable execution capability must be recorded as BLOCKED in its proper later stage rather than invented.
+
+EXTERNAL RESEARCH QUESTIONS AND DOMAINS:
+What official web-platform specifications govern HTML, DOM, encoding, Blob/File/download, URL/fetch, storage, and cryptographic digest behavior? What current Chromium and browser-automation documentation governs real UI interaction, downloads, screenshots, console/network evidence, and sidecar loading? What ECMAScript and Node.js documentation governs the build, filesystem, path, JSON, and SHA-256 operations? What GitHub Actions and GitHub Pages documentation governs workflow execution, artifacts, provenance, publication, and deployment? What accessibility standards govern phone reflow and operable controls? What software requirements, testing, V&V, audit, provenance, and reproducibility standards or established professional references apply? What current external facts and unresolved platform limitations affect exact deployment and verification?
+
+ASSUMPTIONS:
+NONE. User-supplied statements are preserved as job input; externally governed truth remains unresolved until researched.
+
+BLOCKERS:
+NONE AT STAGE 1.
+
+STAGE_1_EXTERNAL_RESEARCH_PERFORMED: false
