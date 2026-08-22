@@ -1,50 +1,34 @@
-FAILED_RUN_ID=32606203767
-FAILED_HEAD_SHA=77b00ee0dd6d91e6f8a49b186ce20b8cdf12d17e
-CAPTURED_AT=2026-08-22T23:49:48Z
+FAILED_RUN_ID=32606258416
+FAILED_HEAD_SHA=57751ef4354b2c45489030dd7d07690c0a895914
+CAPTURED_AT=2026-08-22T23:50:53Z
 
-deploy	Verify the live GitHub Pages bytes and matching project	﻿2026-08-22T23:49:38.1052952Z ##[group]Run set -euo pipefail
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1053882Z ^[[36;1mset -euo pipefail^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1054542Z ^[[36;1mtest -n "$PAGE_URL"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1055206Z ^[[36;1mbase="${PAGE_URL%/}/"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1055861Z ^[[36;1mverified=false^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1056486Z ^[[36;1mfor attempt in $(seq 1 30); do^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1057212Z ^[[36;1m  nonce="$(date +%s)-$attempt"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1058422Z ^[[36;1m  if curl -fsSL --retry 2 --retry-delay 1 "${base}app-v13.html?verify=${nonce}" -o live-app.html \^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1060507Z ^[[36;1m    && curl -fsSL --retry 2 --retry-delay 1 "${base}SELF_VERIFIED_PROJECT.json?verify=${nonce}" -o live-project.json \^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1062428Z ^[[36;1m    && curl -fsSL --retry 2 --retry-delay 1 "${base}?verify=${nonce}" -o live-index.html; then^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1063693Z ^[[36;1m    app_hash="$(sha256sum live-app.html | awk '{print $1}')"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1064789Z ^[[36;1m    project_hash="$(sha256sum live-project.json | awk '{print $1}')"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1065950Z ^[[36;1m    index_hash="$(sha256sum live-index.html | awk '{print $1}')"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1067548Z ^[[36;1m    if [[ "$app_hash" == "$EXPECTED_APP_SHA256" && "$index_hash" == "$EXPECTED_APP_SHA256" && "$project_hash" == "$EXPECTED_PROJECT_SHA256" ]]; then^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1068921Z ^[[36;1m      node <<'NODE'^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1069559Z ^[[36;1m      const fs=require('node:fs');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1070523Z ^[[36;1m      const p=JSON.parse(fs.readFileSync('live-project.json','utf8'));^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1071894Z ^[[36;1m      if(p.projectId!=='PROJECT-MT3M46X0-075JMP')throw new Error('Live project ID mismatch.');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1073657Z ^[[36;1m      if(p.jobId!=='JOB-MT3M46X0-M0LIB9')throw new Error('Live job ID mismatch.');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1075281Z ^[[36;1m      if(p.stages?.length!==31||p.stages.some(s=>s.status!=='COMPLETE'))throw new Error('Live project is not 31/31 complete.');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1076972Z ^[[36;1m      if(p.releaseDecision!=='ACCEPTED')throw new Error('Live project is not ACCEPTED.');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1078792Z ^[[36;1m      if(!/SOURCE_SET_VERSION:\s*SOURCE-SET-v002/i.test(String(p.stages[1].response)))throw new Error('Live Stage 2 is not SOURCE-SET-v002.');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1080925Z ^[[36;1m      if(!/RESEARCH_VERSION:\s*RESEARCH-v002/i.test(String(p.stages[2].response)))throw new Error('Live Stage 3 is not RESEARCH-v002.');^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1082522Z ^[[36;1m      NODE^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1083079Z ^[[36;1m      verified=true^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1083652Z ^[[36;1m      break^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1084178Z ^[[36;1m    fi^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1084685Z ^[[36;1m  fi^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1085182Z ^[[36;1m  sleep 5^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1085699Z ^[[36;1mdone^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1086231Z ^[[36;1mif [[ "$verified" != true ]]; then^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1087074Z ^[[36;1m  echo "Live Pages verification failed for $base" >&2^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1087993Z ^[[36;1m  exit 1^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1088499Z ^[[36;1mfi^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1089046Z ^[[36;1mecho "Verified live deployment: $base"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1089833Z ^[[36;1mecho "App SHA-256: $EXPECTED_APP_SHA256"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1090695Z ^[[36;1mecho "Project SHA-256: $EXPECTED_PROJECT_SHA256"^[[0m
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1133161Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1134081Z env:
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1134771Z   PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1136006Z   EXPECTED_APP_SHA256: a4ee9eba098a9fe766d1b4cd99d34c5f6c6dcbbdf2babedad12147c18a43fd4d
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1137422Z   EXPECTED_PROJECT_SHA256: ec8a1f5718ba71dd12dff13dfa9a0cfe7e85fda7b5e7a4fab81c8571de41a7fb
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1138459Z ##[endgroup]
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1221560Z /home/runner/work/_temp/65ed0fae-5c32-4ae3-8fd6-49747280a457.sh: line 36: warning: here-document at line 14 delimited by end-of-file (wanted `NODE')
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1225641Z /home/runner/work/_temp/65ed0fae-5c32-4ae3-8fd6-49747280a457.sh: line 37: syntax error: unexpected end of file
-deploy	Verify the live GitHub Pages bytes and matching project	2026-08-22T23:49:38.1238250Z ##[error]Process completed with exit code 2.
+verify-build-publish	Publish the exact tested app and project export to main	﻿2026-08-22T23:50:41.1742791Z ##[group]Run set -euo pipefail
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1743177Z ^[[36;1mset -euo pipefail^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1743466Z ^[[36;1mcp app-v13.html index.html^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1743804Z ^[[36;1mrm -f SELF_BUILD_WORKFLOW_FAILURE.log^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1744152Z ^[[36;1mrm -f LIVE_DEPLOYMENT_VERIFIED.json^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1744503Z ^[[36;1mgit config user.name 'github-actions[bot]'^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1745304Z ^[[36;1mgit config user.email '41898282+github-actions[bot]@users.noreply.github.com'^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1746344Z ^[[36;1mgit add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1747335Z ^[[36;1mgit add -u -- SELF_BUILD_WORKFLOW_FAILURE.log LIVE_DEPLOYMENT_VERIFIED.json || true^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1747842Z ^[[36;1mif git diff --cached --quiet; then^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1748256Z ^[[36;1m  echo 'Tested repository artifacts already match this run.'^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1748673Z ^[[36;1melse^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1749053Z ^[[36;1m  git commit -m 'Publish exact verified v13 app and matching project [skip ci]'^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1749508Z ^[[36;1m  git push origin HEAD:main^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1749791Z ^[[36;1mfi^[[0m
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1789506Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1789888Z env:
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1790111Z   GITHUB_PAGES: true
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.1790370Z ##[endgroup]
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.2037455Z fatal: pathspec 'SELF_BUILD_WORKFLOW_FAILURE.log' did not match any files
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.2115879Z [main 8a4af0c] Publish exact verified v13 app and matching project [skip ci]
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.2116738Z  3 files changed, 121 insertions(+), 121 deletions(-)
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4858191Z To https://github.com/sjonesjones917/closed-loop-tracker
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4858989Z  ! [rejected]        HEAD -> main (non-fast-forward)
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4859521Z error: failed to push some refs to 'https://github.com/sjonesjones917/closed-loop-tracker'
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4889489Z hint: Updates were rejected because the tip of your current branch is behind
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4890352Z hint: its remote counterpart. If you want to integrate the remote changes,
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4890924Z hint: use 'git pull' before pushing again.
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4891384Z hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+verify-build-publish	Publish the exact tested app and project export to main	2026-08-22T23:50:41.4907768Z ##[error]Process completed with exit code 1.
