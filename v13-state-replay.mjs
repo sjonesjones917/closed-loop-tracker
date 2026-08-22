@@ -9,6 +9,9 @@ const exact=(text,from,to,label)=>{
 const base=spawnSync(process.execPath,['v13-state-replay-base.mjs'],{encoding:'utf8',stdio:'inherit'});
 if(base.status!==0)process.exit(base.status??1);
 
+const stdinTransport=spawnSync(process.execPath,['v13-agent-stdin-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
+if(stdinTransport.status!==0)process.exit(stdinTransport.status??1);
+
 for(const file of ['app-v13-candidate1.html','app-v13.html']){
   let s=fs.readFileSync(file,'utf8');
   if(!s.includes('id="projectId"')){
@@ -64,4 +67,4 @@ if(!browser.includes("assert.equal(exported.projectId,'PROJECT-MT3M46X0-075JMP')
   browser=exact(browser,exportAnchor,exportReplacement,'exported exact identifier assertion');
 }
 fs.writeFileSync('self-browser-e2e.mjs',browser);
-console.log(JSON.stringify({status:'PATCHED_EXISTING_V13',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9',stage3ResearchFilenameLeak:false}));
+console.log(JSON.stringify({status:'PATCHED_EXISTING_V13',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9',stage3ResearchFilenameLeak:false,agentTransport:'STDIN'}));
