@@ -30,4 +30,4 @@ A real workflow test is performed through the app by selecting **Create real E2E
 
 ## Deployment
 
-`.github/workflows/pages.yml` syntax-checks the app core, runs the state-machine regression test, builds `dist/`, and deploys the tested files with GitHub Pages.
+`.github/workflows/deploy-current.yml` verifies the app artifacts, builds `dist/`, and deploys the tested files with GitHub Pages on every push to `main` (and via manual dispatch).
