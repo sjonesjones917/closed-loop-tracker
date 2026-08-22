@@ -1,1 +1,1 @@
-Re-run existing v13 self-build after external-only Stage 2 correction and reject stale circular project evidence.
+Deploy the corrected existing v13 app now. Stage 2 research authority must be external-only; do not publish the stale circular SELF_VERIFIED_PROJECT.json.
