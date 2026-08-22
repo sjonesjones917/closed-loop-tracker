@@ -1,1 +1,1 @@
-Rebuild existing v13 after Stage 2/3 prompt isolation fix.
+Re-run existing v13 self-build after external-only Stage 2 correction and reject stale circular project evidence.
