@@ -12,7 +12,7 @@ const replaceBetween = (text, start, end, replacement) => {
   return text.slice(0, a) + replacement + text.slice(b);
 };
 
-const sourceOf = (fn, name) => fn.toString().replace(/^function\s+\w+/, `function ${name}`);
+const sourceOf = (fn, name) => fn.toString().replace(/^(async\s+)?function\s+\w+/, (_, asyncPrefix = '') => `${asyncPrefix || ''}function ${name}`);
 
 function generatedResetProjectFrom(p, n, reason) {
   const start = Math.max(1, Math.min(31, Number(n) || 1));
@@ -159,18 +159,25 @@ for (const file of targets) {
     );
   }
 
+  text = text.replace(/async function generatedLoadSelfProject\s*\(/g, 'async function loadSelfProject(');
+
   const required = [
     'const PROJECT_REPLAY_RULESET=',
     RULESET,
     'function replayProject(input)',
     'Stage ${n} replay validation failed',
     'obsolete completion was reset from Stage',
-    "requireFullyValid: true, source: 'Published self-project'"
+    "requireFullyValid: true, source: 'Published self-project'",
+    'async function loadSelfProject(',
+    'loadSelfProject(false)'
   ];
   for (const token of required) if (!text.includes(token)) throw new Error(`${file} missing state-replay token: ${token}`);
+  if (/async function generatedLoadSelfProject\s*\(/.test(text)) {
+    throw new Error(`${file} still emits the wrong automatic sidecar-loader function name.`);
+  }
   if (/function importProjectObject\(p\)\{if\(!p\|\|p\.schemaVersion!==13/.test(text)) {
     throw new Error(`${file} still trusts imported completion flags without replay.`);
   }
   fs.writeFileSync(file, text);
-  console.log(JSON.stringify({ file, bytes: Buffer.byteLength(text), ruleset: RULESET, patched: true }));
+  console.log(JSON.stringify({ file, bytes: Buffer.byteLength(text), ruleset: RULESET, patched: true, autoloadFunction: 'loadSelfProject' }));
 }
