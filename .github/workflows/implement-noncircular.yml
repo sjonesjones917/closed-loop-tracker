@@ -1,0 +1,133 @@
+name: Implement non-circular closed-loop application
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - complete-app-work
+    paths:
+      - CONTROLLING_NON_CIRCULAR_SPEC.md
+      - .github/workflows/implement-noncircular.yml
+
+permissions:
+  contents: write
+  copilot-requests: write
+
+concurrency:
+  group: implement-noncircular-closed-loop
+  cancel-in-progress: false
+
+jobs:
+  implement:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: complete-app-work
+          fetch-depth: 0
+
+      - name: Preserve exact pre-change repository backup
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz -o pre-change-repository-backup.tar.gz HEAD
+          sha256sum pre-change-repository-backup.tar.gz > pre-change-repository-backup.sha256
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Implement the controlling specification in place
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > implementation-agent-prompt.txt <<'PROMPT'
+          You are the implementation agent for the existing repository. Execute the work; do not merely explain it.
+
+          Read CONTROLLING_NON_CIRCULAR_SPEC.md completely. Inspect the current repository. Replace defective implementation code in place so the application satisfies that specification. Do not create a parallel demonstration application. Do not add a user-visible version number. Preserve all 31 exact stage numbers, names, and order.
+
+          Mandatory first correction: Stage 1 defines the job only. Stage 2 must discover real external authoritative sources outside the project. Stage 3 must research requirements from those sources. Application files, HTML, JavaScript, tests, project JSON, generated artifacts, current behavior, and prior workflow outputs are WORK_PRODUCT and must be rejected as Stage 2/3 research authority.
+
+          Implement substantive generated prompts, deterministic validation, canonical import replay, source and requirement traceability, project operations, stage gates and invalidation, evidence/audit/event history, producer/verifier execution records, product generation and release controls, terminal async states, and phone-first UI behavior.
+
+          Add a package.json and lockfile if absent. Add deterministic unit/integration tests that prove at minimum:
+          - exactly 31 stages with exact names/order;
+          - new project is 0/31;
+          - Stage 1 prompt contains job definition and external research questions but does not research or inspect implementation;
+          - Stage 2 and Stage 3 prompts explicitly require external internet/authoritative research;
+          - Stage 2 rejects APPLICATION_FILE, GENERATED_FILE, PROJECT_JSON, HTML, JAVASCRIPT, TEST_FILE, localhost/file URLs, repository paths, generated artifacts, current behavior, and internal-only sources;
+          - Stage 2 requires externally identifiable provenance and coverage for every research area or blockers;
+          - Stage 3 requires accepted external-source references for every finding and rejects work-product authority;
+          - Stage 4 traceability can terminate only in USER_INPUT or EXTERNAL_SOURCE;
+          - blank/malformed/wrong-project/wrong-stage/wrong-name/wrong-prompt-hash/placeholder/empty/duplicate responses are rejected;
+          - imported completion/status/decision/hash fields are ignored and recomputed;
+          - upstream changes invalidate affected downstream state;
+          - duplicate producer/verifier hashes do not count as independent;
+          - Stage 31 requires exact accepted/release byte identity;
+          - every visible button has an action handler;
+          - startup cannot remain indefinitely loading;
+          - 320px and 390px layouts have no horizontal page overflow.
+
+          Add a visible-browser Playwright test that creates a project through the rendered UI, confirms 0/31, proves stage skipping fails, validates Stage 1, confirms only Stage 2 unlocks, validates a real externally grounded Stage 2 response, validates Stage 3 source references, tests save/reload/export/import/backup/restore/delete, and tests phone layouts. Do not inject completed state.
+
+          Add scripts/run-self-verification.mjs that is capable of driving the actual UI and invoking separate real Copilot CLI processes for each required response. It must start the self-verification project at 0/31 with job ID history JOB-MT3M46X0-M0LIB9, title Closed-Loop Application Self-Verification, perform real external research in Stage 2/3, create 30 unique producer and 30 unique corresponding verifier executions, and export verified-self-project.json through the visible Export control. The implementation workflow must not fabricate or pre-seed the completed export.
+
+          Run formatting or syntax checks as appropriate. Leave the repository in an executable, testable state. Do not claim ACCEPTED. The later real self-verification workflow decides that.
+          PROMPT
+
+          copilot --yolo -p "$(cat implementation-agent-prompt.txt)"
+
+          if git diff --quiet && git diff --cached --quiet; then
+            echo 'Implementation agent made no repository changes.' >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          test -s package.json
+          if test -s package-lock.json; then npm ci; else npm install; fi
+
+      - name: Run deterministic implementation tests
+        run: |
+          set -euo pipefail
+          npm test
+
+      - name: Install browser and run visible-interface tests
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+
+      - name: Record implementation evidence
+        run: |
+          set -euo pipefail
+          git diff --stat > implementation-diff-stat.txt
+          git diff > implementation.diff
+          sha256sum index.html > implementation-index.sha256
+          printf '{"status":"IMPLEMENTED_NOT_RELEASED","authorityModel":"USER_INPUT_EXTERNAL_SOURCE_WORK_PRODUCT","deterministicTests":"PASS","visibleBrowserTests":"PASS","accepted":false}\n' > implementation-result.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: non-circular-implementation-evidence
+          path: |
+            pre-change-repository-backup.tar.gz
+            pre-change-repository-backup.sha256
+            implementation-agent-prompt.txt
+            implementation-diff-stat.txt
+            implementation.diff
+            implementation-index.sha256
+            implementation-result.json
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+
+      - name: Commit tested implementation to engineering branch
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Implement non-circular external-source workflow [skip ci]'
+          git push origin HEAD:complete-app-work
