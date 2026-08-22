@@ -1,0 +1,38 @@
+name: Copilot CLI availability probe
+
+on:
+  push:
+    branches: [repair-workflow]
+    paths:
+      - .github/workflows/copilot-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install current Copilot CLI
+        run: npm_config_ignore_scripts=false npm install -g @github/copilot
+      - name: Execute one real non-interactive model request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_HOME: ${{ runner.temp }}/copilot-probe
+        run: |
+          set -euo pipefail
+          mkdir -p "$COPILOT_HOME"
+          copilot --yolo --silent --no-color --no-custom-instructions --no-ask-user -p 'Return exactly one JSON object and nothing else: {"schema":"copilot_probe","status":"SUCCESS","meaning":"A real GitHub Copilot CLI model request executed in GitHub Actions."}' > copilot-probe-response.json
+          node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("copilot-probe-response.json","utf8")); if(x.schema!=="copilot_probe"||x.status!=="SUCCESS") throw new Error("Unexpected model response: "+JSON.stringify(x)); console.log(JSON.stringify(x));'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: copilot-probe-evidence
+          path: copilot-probe-response.json
+          if-no-files-found: error
