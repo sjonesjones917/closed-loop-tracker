@@ -1,0 +1,58 @@
+name: Correct fallback agent stage dispatch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/patch-agent-dispatch.yml
+      - self-e2e-agent-base.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: correct-fallback-agent-stage-dispatch
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Make Stage 2 source retrieval lazy and stage-bound
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('self-e2e-agent-base.mjs')
+          source = path.read_text()
+          old = "2:pad(externalInventoryText()),"
+          new = "2:n===2?pad(externalInventoryText()):'',"
+          if old in source:
+              source = source.replace(old, new, 1)
+              path.write_text(source)
+          elif new not in source:
+              raise SystemExit('Stage 2 dispatch anchor is missing')
+          PY
+          node --check self-e2e-agent-base.mjs
+
+      - name: Commit the corrected fallback agent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- self-e2e-agent-base.mjs; then
+            echo 'Fallback agent already dispatches by the active stage.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add self-e2e-agent-base.mjs
+          git commit -m 'Dispatch fallback agent by the active stage only'
+          git push origin HEAD:main
