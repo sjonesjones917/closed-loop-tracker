@@ -19,7 +19,10 @@ concurrency:
 jobs:
   verify-build-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
+    outputs:
+      app_sha256: ${{ steps.publication.outputs.app_sha256 }}
+      project_sha256: ${{ steps.publication.outputs.project_sha256 }}
     steps:
       - name: Check out exact repository revision
         uses: actions/checkout@v4
@@ -44,7 +47,7 @@ jobs:
           test -s app-v13.html
           cp app-v13.html index.html
 
-      - name: Verify lossless Stage 1 and external-authority research architecture
+      - name: Verify lossless intake and external-authority architecture
         shell: bash
         run: |
           set -euo pipefail
@@ -115,10 +118,15 @@ jobs:
           if (project.stages.some((stage) => stage.status !== 'COMPLETE')) fail('Project contains incomplete stages.');
           if (project.projectId !== 'PROJECT-MT3M46X0-075JMP') fail('Exact PROJECT_ID was not preserved.');
           if (project.jobId !== 'JOB-MT3M46X0-M0LIB9') fail('Exact JOB_ID was not preserved.');
+          if (!/SOURCE_SET_VERSION:\s*SOURCE-SET-v002/i.test(stage2)) fail('Stage 2 is not the expanded source inventory.');
+          if (!/EXTERNAL_SOURCES_DISCOVERED:\s*40\b/i.test(stage2)) fail('Stage 2 does not inventory all 40 external sources.');
+          if (!/RESEARCH-AREA-012/i.test(stage2)) fail('Stage 2 does not cover all 12 research areas.');
           if (!/EXTERNAL_SEARCH_PERFORMED\s*:\s*true/i.test(stage2)) fail('Stage 2 lacks real external-search evidence.');
           if (!/SOURCE_ID\s*:\s*SRC-/i.test(stage2) || !/SOURCE_TYPE\s*:/i.test(stage2) || !/https?:\/\//i.test(stage2)) fail('Stage 2 lacks external-source records.');
           if (/SOURCE_TYPE\s*:\s*(APPLICATION_FILE|GENERATED_FILE|WORK_PRODUCT|PROJECT_JSON|HTML|JAVASCRIPT)\b/i.test(stage2)) fail('Stage 2 contains an internal work product as external authority.');
           if (/\b(app-v11\.html|build-v13-self\.mjs|self-browser-e2e\.mjs|self-e2e-agent\.mjs|SELF_VERIFIED_PROJECT\.json)\b/i.test(stage2)) fail('Stage 2 contains prohibited project work-product authority.');
+          if (!/RESEARCH_VERSION:\s*RESEARCH-v002/i.test(stage3)) fail('Stage 3 is not the expanded external research result.');
+          if (!/FINDING_ID\s*:\s*FINDING-0014/i.test(stage3)) fail('Stage 3 does not contain all 14 findings.');
           if (!/FINDING_ID\s*:\s*FINDING-/i.test(stage3) || !/SOURCE_ID\s*:\s*SRC-/i.test(stage3)) fail('Stage 3 findings are not traced to external sources.');
           if (/\b(app-v11\.html|build-v13-self\.mjs|self-browser-e2e\.mjs|self-e2e-agent\.mjs)\b/i.test(stage3)) fail('Stage 3 derives requirements from project work products.');
           if (project.stages[10].producers.filter(Boolean).length !== 10) fail('Stage 11 does not contain 10 producer responses.');
@@ -148,8 +156,9 @@ jobs:
             appSha256: hash,
             projectExportBytes: projectBytes.length,
             stage1LosslessScopes: 20,
-            stage2Authority: 'EXTERNAL_ONLY',
-            stage3Authority: 'EXTERNAL_ONLY',
+            stage2ExternalSources: 40,
+            stage2ResearchAreas: 12,
+            stage3ExternalFindings: 14,
             hardcodedProject: false
           }, null, 2));
           NODE
@@ -161,7 +170,7 @@ jobs:
           set -euo pipefail
           APP_SHA256="$(sha256sum app-v13.html | awk '{print $1}')"
           PROJECT_SHA256="$(sha256sum SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
-          printf '{"status":"VERIFIED_AND_DEPLOYING","sourceCommit":"%s","app":"app-v13.html","entry":"index.html","project":"SELF_VERIFIED_PROJECT.json","report":"SELF_E2E_REPORT.json","appSha256":"%s","projectSha256":"%s","projectId":"PROJECT-MT3M46X0-075JMP","jobId":"JOB-MT3M46X0-M0LIB9","stagesComplete":31,"producerResponses":30,"verifierResponses":30,"releaseDecision":"ACCEPTED","stage1LosslessScopes":20,"stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","hardcodedProject":false}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > PUBLISHED_SELF_BUILD.json
+          printf '{"status":"VERIFIED_AND_DEPLOYING","sourceCommit":"%s","app":"app-v13.html","entry":"index.html","project":"SELF_VERIFIED_PROJECT.json","report":"SELF_E2E_REPORT.json","appSha256":"%s","projectSha256":"%s","projectId":"PROJECT-MT3M46X0-075JMP","jobId":"JOB-MT3M46X0-M0LIB9","stagesComplete":31,"producerResponses":30,"verifierResponses":30,"releaseDecision":"ACCEPTED","stage1LosslessScopes":20,"stage2ExternalSources":40,"stage2ResearchAreas":12,"stage3ExternalFindings":14,"stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","hardcodedProject":false}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > PUBLISHED_SELF_BUILD.json
           rm -rf dist
           mkdir -p dist
           cp app-v13.html dist/index.html
@@ -206,12 +215,13 @@ jobs:
       - name: Publish the exact tested app and project export to main
         shell: bash
         run: |
-          set -euo pipefal
+          set -euo pipefail
           cp app-v13.html index.html
           rm -f SELF_BUILD_WORKFLOW_FAILURE.log
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json SELF_BUILD_WORKFLOW_FAILURE.log
+          git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
+          git add -u -- SELF_BUILD_WORKFLOW_FAILURE.log || true
           if git diff --cached --quiet; then
             echo 'Tested repository artifacts already match this run.'
           else
@@ -222,10 +232,11 @@ jobs:
   deploy:
     needs: verify-build-publish
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
+      contents: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -233,3 +244,47 @@ jobs:
       - name: Deploy exact verified app and matching project
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify the live GitHub Pages bytes and matching project
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_APP_SHA256: ${{ needs.verify-build-publish.outputs.app_sha256 }}
+          EXPECTED_PROJECT_SHA256: ${{ needs.verify-build-publish.outputs.project_sha256 }}
+        run: |
+          set -euo pipefail
+          test -n "$PAGE_URL"
+          base="${PAGE_URL%/}/"
+          verified=false
+          for attempt in $(seq 1 30); do
+            nonce="$(date +%s)-$attempt"
+            if curl -fsSL --retry 2 --retry-delay 1 "${base}app-v13.html?verify=${nonce}" -o live-app.html \
+              && curl -fsSL --retry 2 --retry-delay 1 "${base}SELF_VERIFIED_PROJECT.json?verify=${nonce}" -o live-project.json \
+              && curl -fsSL --retry 2 --retry-delay 1 "${base}?verify=${nonce}" -o live-index.html; then
+              app_hash="$(sha256sum live-app.html | awk '{print $1}')"
+              project_hash="$(sha256sum live-project.json | awk '{print $1}')"
+              index_hash="$(sha256sum live-index.html | awk '{print $1}')"
+              if [[ "$app_hash" == "$EXPECTED_APP_SHA256" && "$index_hash" == "$EXPECTED_APP_SHA256" && "$project_hash" == "$EXPECTED_PROJECT_SHA256" ]]; then
+                node <<'NODE'
+                const fs=require('node:fs');
+                const p=JSON.parse(fs.readFileSync('live-project.json','utf8'));
+                if(p.projectId!=='PROJECT-MT3M46X0-075JMP')throw new Error('Live project ID mismatch.');
+                if(p.jobId!=='JOB-MT3M46X0-M0LIB9')throw new Error('Live job ID mismatch.');
+                if(p.stages?.length!==31||p.stages.some(s=>s.status!=='COMPLETE'))throw new Error('Live project is not 31/31 complete.');
+                if(p.releaseDecision!=='ACCEPTED')throw new Error('Live project is not ACCEPTED.');
+                if(!/SOURCE_SET_VERSION:\s*SOURCE-SET-v002/i.test(String(p.stages[1].response)))throw new Error('Live Stage 2 is not SOURCE-SET-v002.');
+                if(!/RESEARCH_VERSION:\s*RESEARCH-v002/i.test(String(p.stages[2].response)))throw new Error('Live Stage 3 is not RESEARCH-v002.');
+                NODE
+                verified=true
+                break
+              fi
+            fi
+            sleep 5
+          done
+          if [[ "$verified" != true ]]; then
+            echo "Live Pages verification failed for $base" >&2
+            exit 1
+          fi
+          echo "Verified live deployment: $base"
+          echo "App SHA-256: $EXPECTED_APP_SHA256"
+          echo "Project SHA-256: $EXPECTED_PROJECT_SHA256"
