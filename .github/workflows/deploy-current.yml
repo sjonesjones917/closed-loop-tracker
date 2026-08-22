@@ -93,7 +93,7 @@ jobs:
           printf '{"status":"PASS","sourceCommit":"%s","project":"SELF_VERIFIED_PROJECT.json","hardcodedProject":false}\n' "$GITHUB_SHA" > dist/build-info.json
           : > dist/.nojekyll
 
-      - name: Configure GitHub Pages
+      - name: Configure and enable GitHub Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
