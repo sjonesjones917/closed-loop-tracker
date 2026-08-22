@@ -63,7 +63,7 @@ jobs:
           grep -q 'crypto.subtle.digest' app-v13.html
           grep -q 'EXTERNAL RESEARCH ONLY.' app-v13.html
           grep -q 'EXTERNAL_SEARCH_PERFORMED' app-v13.html
-          grep -q 'OMITTED FROM RESEARCH AUTHORITY' app-v13.html
+          grep -q 'STAGE .* RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html
           grep -q 'Stage 2 research sources must be independent external sources' app-v13.html
           if grep -q 'Inspect the actual supplied sources and build the complete source inventory now' app-v13.html; then
             echo 'Old circular Stage 2 source-inventory instruction is still present.' >&2
@@ -84,16 +84,22 @@ jobs:
           const html=app.toString('utf8');
           const stage2=String(p.stages?.[1]?.response||'');
           const stage3=String(p.stages?.[2]?.response||'');
+          const researchStart=html.indexOf('function researchPrompt(p,n)');
+          const researchEnd=html.indexOf('function prompt(p,n)',researchStart);
+          const researchSource=researchStart>=0&&researchEnd>researchStart?html.slice(researchStart,researchEnd):'';
           if(!html.includes('EXTERNAL RESEARCH ONLY.'))fail('Stage 2 external-research-only instruction missing from generated app.');
           if(html.includes('Inspect the actual supplied sources and build the complete source inventory now'))fail('Old circular Stage 2 instruction survived regeneration.');
           if(!html.includes('EXTERNAL_SEARCH_PERFORMED'))fail('Stage 2 does not require proof that external research actually occurred.');
-          if(!html.includes('OMITTED FROM RESEARCH AUTHORITY'))fail('Stage 2/3 prompt does not isolate implementation work products from research authority.');
+          if(!html.includes('if(n===2||n===3)return researchPrompt(p,n)'))fail('Stages 2 and 3 do not use the dedicated research prompt generator.');
+          if(!researchSource.includes('RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY'))fail('Dedicated research prompt does not expose the external-authority boundary.');
+          if(researchSource.includes('p.inputs')||researchSource.includes('prior(p,n)'))fail('Dedicated Stage 2/3 prompt still injects supplied implementation inputs or raw prior-stage handoff.');
+          if(researchSource.includes('SUPPLIED FILES / MESSAGES / LINKS / DATA'))fail('Dedicated Stage 2/3 prompt still renders the supplied-files block.');
           if(!Array.isArray(p.stages)||p.stages.length!==31)fail('Visible UI export does not contain all 31 stages.');
           if(p.stages.some(s=>s.status!=='COMPLETE'))fail('Visible UI export contains an incomplete stage.');
           if(!/EXTERNAL_SEARCH_PERFORMED\s*:\s*true/i.test(stage2))fail('UI-exported Stage 2 did not record real external searching.');
           if(!/SOURCE_TYPE\s*:/i.test(stage2)||!/https?:\/\//i.test(stage2))fail('UI-exported Stage 2 lacks externally identifiable source provenance.');
           if(/SRC-0002[^.]*app-v11\.html|SRC-0003[^.]*build-v13-self\.mjs|actual executable base|real Chromium UI runner|external process agent/i.test(stage2))fail('UI-exported Stage 2 still treats project implementation/work products as research sources.');
-          if(!/SOURCE_ID\s*:/i.test(stage3))fail('UI-exported Stage 3 findings do not trace to external SOURCE_ID records.');
+          if(!/SOURCE_ID\s*:?\s*SRC-/i.test(stage3))fail('UI-exported Stage 3 findings do not trace to external SOURCE_ID records.');
           if(/Requirement research completed across the actual intake and executable sources|app-v11\.html|build-v13-self\.mjs|self-browser-e2e\.mjs|self-e2e-agent\.mjs/i.test(stage3))fail('UI-exported Stage 3 still derives requirements from implementation/work-product files.');
           if(p.stages[10].producers.filter(Boolean).length!==10)fail('Stage 11 does not contain 10 pasted producer responses.');
           if(p.stages[11].verifiers.filter(Boolean).length!==10)fail('Stage 12 does not contain 10 pasted verifier responses.');
@@ -126,6 +132,7 @@ jobs:
             uiExport:'SELF_VERIFIED_PROJECT.json',
             stage2ResearchAuthority:'EXTERNAL_ONLY',
             stage3ResearchAuthority:'EXTERNAL_ONLY',
+            stage2PromptSuppliedInputs:false,
             hardcodedProject:false
           },null,2));
           NODE
@@ -172,7 +179,7 @@ jobs:
           cp /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_COMPLETED_393.png
           cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_393.png
           cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png SELF_PROJECT_AUTOLOADED_320.png
-          printf '{"status":"PUBLISHED","sourceCommit":"%s","test":"real app self-build through 31-stage Chromium UI","app":"app-v13.html","entry":"index.html","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","hardcodedProject":false}\n' "$SOURCE_SHA" > PUBLISHED_SELF_BUILD.json
+          printf '{"status":"PUBLISHED","sourceCommit":"%s","test":"real app self-build through 31-stage Chromium UI","app":"app-v13.html","entry":"index.html","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","stage2PromptSuppliedInputs":false,"hardcodedProject":false}\n' "$SOURCE_SHA" > PUBLISHED_SELF_BUILD.json
 
           git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
           if git diff --cached --quiet; then
