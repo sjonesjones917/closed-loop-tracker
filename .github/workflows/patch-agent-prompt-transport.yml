@@ -1,32 +1,14 @@
-name: Correct external-agent prompt transport (manual only)
+name: Prompt transport migration retired
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: correct-external-agent-prompt-transport
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  patch:
+  notice:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Move wrapper-to-agent prompt transport from argv to stdin
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import import Path
-          PY
-          echo 'Manual migration retained for historical recovery only; the verified release already contains the corrected transport.'
-
-      - name: Do not mutate the verified release automatically
-        run: echo 'No automatic repository write is performed by this manual-only workflow.'
+      - name: Confirm migration status
+        run: echo 'The verified release already uses the corrected large-prompt transport. This retired migration does not modify main.'
