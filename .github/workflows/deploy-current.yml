@@ -4,13 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/deploy-current.yml'
-      - 'index.html'
-      - 'app-v13.html'
-      - 'SELF_VERIFIED_PROJECT.json'
-      - 'SELF_E2E_REPORT.json'
-      - 'PUBLISHED_SELF_BUILD.json'
   workflow_dispatch:
 
 permissions:
