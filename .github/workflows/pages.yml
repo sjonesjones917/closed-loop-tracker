@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: closed-loop-self-build
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   verify-and-publish:
@@ -118,23 +118,7 @@ jobs:
           if(!p.stages[11].verifiers.every(v=>/REQ-015.*VIOLATED/i.test(v)))fail('The real first-candidate defect is not preserved in all ten independent verifier records.');
           if(!p.stages[18].verifiers.every(v=>/REQ-015.*SATISFIED/i.test(v)))fail('The corrected candidate did not pass all ten verifier records.');
           if(r.status!=='PASS'||r.hardcodedProject!==false||r.freshBrowserSidecarAutoload!==true)fail('Self E2E report does not prove the actual sidecar-loaded project.');
-          console.log(JSON.stringify({
-            status:'PASS',
-            projectId:p.projectId,
-            jobId:p.jobId,
-            stagesComplete:31,
-            pastedProducerResponses:30,
-            pastedVerifierResponses:30,
-            firstCandidateDefect:'10/10 VIOLATED',
-            correctedCandidate:'10/10 SATISFIED',
-            releaseDecision:p.releaseDecision,
-            appSha256:hash,
-            uiExport:'SELF_VERIFIED_PROJECT.json',
-            stage2ResearchAuthority:'EXTERNAL_ONLY',
-            stage3ResearchAuthority:'EXTERNAL_ONLY',
-            stage2PromptSuppliedInputs:false,
-            hardcodedProject:false
-          },null,2));
+          console.log(JSON.stringify({status:'PASS',projectId:p.projectId,jobId:p.jobId,stagesComplete:31,pastedProducerResponses:30,pastedVerifierResponses:30,firstCandidateDefect:'10/10 VIOLATED',correctedCandidate:'10/10 SATISFIED',releaseDecision:p.releaseDecision,appSha256:hash,uiExport:'SELF_VERIFIED_PROJECT.json',stage2ResearchAuthority:'EXTERNAL_ONLY',stage3ResearchAuthority:'EXTERNAL_ONLY',stage2PromptSuppliedInputs:false,hardcodedProject:false},null,2));
           NODE
 
       - name: Preserve downloadable self-build evidence from this exact run
@@ -166,12 +150,10 @@ jobs:
           cp SELF_PROJECT_COMPLETED_393.png /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png
           cp SELF_PROJECT_AUTOLOADED_393.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png
           cp SELF_PROJECT_AUTOLOADED_320.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png
-
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           git reset --hard origin/main
-
           cp /tmp/closed-loop-publish/app-v13.html app-v13.html
           cp /tmp/closed-loop-publish/app-v13.html index.html
           cp /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
@@ -180,7 +162,6 @@ jobs:
           cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_393.png
           cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png SELF_PROJECT_AUTOLOADED_320.png
           printf '{"status":"PUBLISHED","sourceCommit":"%s","test":"real app self-build through 31-stage Chromium UI","app":"app-v13.html","entry":"index.html","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","stage2ResearchAuthority":"EXTERNAL_ONLY","stage3ResearchAuthority":"EXTERNAL_ONLY","stage2PromptSuppliedInputs":false,"hardcodedProject":false}\n' "$SOURCE_SHA" > PUBLISHED_SELF_BUILD.json
-
           git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
           if git diff --cached --quiet; then
             echo 'Exact tested publication already matches main.'
