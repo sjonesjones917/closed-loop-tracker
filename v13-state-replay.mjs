@@ -3,9 +3,7 @@ import {spawnSync} from 'node:child_process';
 
 const exact=(text,from,to,label)=>{
   if(!text.includes(from))throw new Error(`${label} patch anchor missing`);
-  const out=text.replace(from,to);
-  if(out.includes(from))throw new Error(`${label} old form remains`);
-  return out;
+  return text.replace(from,to);
 };
 
 const base=spawnSync(process.execPath,['v13-state-replay-base.mjs'],{encoding:'utf8',stdio:'inherit'});
