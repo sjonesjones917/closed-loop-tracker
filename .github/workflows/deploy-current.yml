@@ -1,9 +1,16 @@
-name: Deploy app to GitHub Pages
+name: Deploy verified Closed-Loop self-build
 
 on:
   push:
     branches:
       - main
+    paths:
+      - '.github/workflows/deploy-current.yml'
+      - 'index.html'
+      - 'app-v13.html'
+      - 'SELF_VERIFIED_PROJECT.json'
+      - 'SELF_E2E_REPORT.json'
+      - 'PUBLISHED_SELF_BUILD.json'
   workflow_dispatch:
 
 permissions:
@@ -93,10 +100,8 @@ jobs:
           printf '{"status":"PASS","sourceCommit":"%s","project":"SELF_VERIFIED_PROJECT.json","hardcodedProject":false}\n' "$GITHUB_SHA" > dist/build-info.json
           : > dist/.nojekyll
 
-      - name: Configure and enable GitHub Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload the exact verified Pages artifact
         uses: actions/upload-pages-artifact@v3
