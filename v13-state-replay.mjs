@@ -1,176 +1,62 @@
 import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
 
-const RULESET = 'external-authority-first-2026-08-22-r5-state-replay';
-const targets = process.argv.slice(2).length
-  ? process.argv.slice(2)
-  : ['app-v13-candidate1.html', 'app-v13.html'];
-
-const replaceBetween = (text, start, end, replacement) => {
-  const a = text.indexOf(start);
-  const b = text.indexOf(end, a);
-  if (a < 0 || b < 0) throw new Error(`Patch anchor missing: ${start} / ${end}`);
-  return text.slice(0, a) + replacement + text.slice(b);
+const exact=(text,from,to,label)=>{
+  if(!text.includes(from))throw new Error(`${label} patch anchor missing`);
+  const out=text.replace(from,to);
+  if(out.includes(from))throw new Error(`${label} old form remains`);
+  return out;
 };
 
-const sourceOf = (fn, name) => fn.toString().replace(/^function\s+\w+/, `function ${name}`);
+const base=spawnSync(process.execPath,['v13-state-replay-base.mjs'],{encoding:'utf8',stdio:'inherit'});
+if(base.status!==0)process.exit(base.status??1);
 
-function generatedResetProjectFrom(p, n, reason) {
-  const start = Math.max(1, Math.min(31, Number(n) || 1));
-  for (let i = start - 1; i < 31; i += 1) p.stages[i] = newStage(i);
-  p.artifact = '';
-  p.artifactName = 'released-artifact.txt';
-  p.releaseDecision = 'UNSET';
-  p.auditedHash = '';
-  p.releaseHash = '';
-  p.revalidation = {
-    ruleset: PROJECT_REPLAY_RULESET,
-    at: now(),
-    invalidatedFromStage: start,
-    reason: String(reason || 'Stored completion did not satisfy the current validation rules.')
-  };
-  p.updatedAt = p.revalidation.at;
-  return p;
+for(const file of ['app-v13-candidate1.html','app-v13.html']){
+  let s=fs.readFileSync(file,'utf8');
+  if(!s.includes('id="projectId"')){
+    const oldForm='<div class="field"><label>Project name *</label><input id="name"></div>';
+    const newForm='<div class="field"><label>Project ID (preserve an existing identifier when supplied)</label><input id="projectId" autocomplete="off" placeholder="PROJECT-..."></div><div class="field"><label>Job ID (preserve an existing identifier when supplied)</label><input id="jobId" autocomplete="off" placeholder="JOB-..."></div>'+oldForm;
+    s=exact(s,oldForm,newForm,`${file} visible identifier fields`);
+  }
+
+  if(!s.includes('const suppliedProjectId=String(v.projectId||\'\').trim()')){
+    const oldCreate="function createProject(v){if(!v.name.trim()||!v.objective.trim()||!v.deliverable.trim())throw Error('Project name, exact objective, and exact deliverable are required.');return{schemaVersion:13,projectId:id('PROJECT'),jobId:id('JOB'),";
+    const newCreate="function createProject(v){if(!v.name.trim()||!v.objective.trim()||!v.deliverable.trim())throw Error('Project name, exact objective, and exact deliverable are required.');const suppliedProjectId=String(v.projectId||'').trim(),suppliedJobId=String(v.jobId||'').trim();if(suppliedProjectId&&!/^PROJECT-[A-Z0-9-]+$/i.test(suppliedProjectId))throw Error('Project ID must begin PROJECT- and contain only letters, numbers, and hyphens.');if(suppliedJobId&&!/^JOB-[A-Z0-9-]+$/i.test(suppliedJobId))throw Error('Job ID must begin JOB- and contain only letters, numbers, and hyphens.');if(suppliedProjectId&&projects.some(p=>p.projectId===suppliedProjectId))throw Error('That Project ID already exists in this browser.');return{schemaVersion:13,projectId:suppliedProjectId||id('PROJECT'),jobId:suppliedJobId||id('JOB'),";
+    s=exact(s,oldCreate,newCreate,`${file} identifier-preserving project creation`);
+  }
+
+  if(!s.includes("createProject({projectId:$('projectId').value,jobId:$('jobId').value")){
+    const oldSubmit="createProject({name:$('name').value,objective:$('objective').value";
+    const newSubmit="createProject({projectId:$('projectId').value,jobId:$('jobId').value,name:$('name').value,objective:$('objective').value";
+    s=exact(s,oldSubmit,newSubmit,`${file} identifier form submission`);
+  }
+
+  for(const token of ['id="projectId"','id="jobId"',"projectId:suppliedProjectId||id('PROJECT')","jobId:suppliedJobId||id('JOB')"]){
+    if(!s.includes(token))throw new Error(`${file} missing visible exact-identifier token ${token}`);
+  }
+  fs.writeFileSync(file,s);
 }
 
-function generatedReplayProject(input) {
-  if (!input || input.schemaVersion !== 13 || !input.projectId || !input.jobId || !Array.isArray(input.stages) || input.stages.length !== 31) {
-    throw Error('Not a valid v13 project export.');
-  }
-  const p = JSON.parse(JSON.stringify(input));
-  p.stages = p.stages.map((value, i) => {
-    const stage = value && typeof value === 'object' ? value : {};
-    const producers = Array.isArray(stage.producers) ? stage.producers.slice(0, 10) : [];
-    const verifiers = Array.isArray(stage.verifiers) ? stage.verifiers.slice(0, 10) : [];
-    while (producers.length < 10) producers.push('');
-    while (verifiers.length < 10) verifiers.push('');
-    return { ...newStage(i), ...stage, number: i + 1, producers, verifiers };
-  });
-
-  let firstIncomplete = 0;
-  for (let n = 1; n <= 3; n += 1) {
-    const stage = p.stages[n - 1];
-    if (stage.status !== 'COMPLETE') {
-      firstIncomplete = n;
-      break;
-    }
-    try {
-      validateStandard(p, n, stage.response);
-    } catch (error) {
-      const reason = `Stage ${n} replay validation failed: ${error.message}`;
-      return { project: resetProjectFrom(p, n, reason), invalidatedFrom: n, reason };
-    }
-  }
-
-  if (firstIncomplete && p.stages.slice(firstIncomplete).some((stage) => stage.status === 'COMPLETE')) {
-    const reason = `Non-contiguous imported completion detected after Stage ${firstIncomplete}.`;
-    return { project: resetProjectFrom(p, firstIncomplete, reason), invalidatedFrom: firstIncomplete, reason };
-  }
-  return { project: p, invalidatedFrom: 0, reason: '' };
+let browser=fs.readFileSync('self-browser-e2e.mjs','utf8');
+if(!browser.includes("page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP')")){
+  const creationAnchor="  await page.locator('#newBtn').click();\n  await page.locator('#name').fill('REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13');";
+  const creationReplacement="  await page.locator('#newBtn').click();\n  await page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP');\n  await page.locator('#jobId').fill('JOB-MT3M46X0-M0LIB9');\n  await page.locator('#name').fill('REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13');";
+  browser=exact(browser,creationAnchor,creationReplacement,'visible exact identifier entry');
 }
-
-function generatedLoad() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(KEY) || '[]');
-    const source = Array.isArray(stored) ? stored : [];
-    let invalidated = 0;
-    let dropped = 0;
-    projects = source.map((input) => {
-      try {
-        const replay = replayProject(input);
-        if (replay.invalidatedFrom) invalidated += 1;
-        return replay.project;
-      } catch (_) {
-        dropped += 1;
-        return null;
-      }
-    }).filter(Boolean);
-    selected = localStorage.getItem(SEL) || null;
-    if (selected && !projects.some((p) => p.projectId === selected)) selected = null;
-    if (invalidated || dropped) save();
-    const suffix = invalidated || dropped
-      ? ` Current-rule replay reset ${invalidated} obsolete project${invalidated === 1 ? '' : 's'} and rejected ${dropped} malformed record${dropped === 1 ? '' : 's'}.`
-      : '';
-    setStatus(`Ready. ${projects.length} project${projects.length === 1 ? '' : 's'} stored on this browser.${suffix}`, Boolean(invalidated || dropped));
-  } catch (e) {
-    storageOK = false;
-    projects = [];
-    selected = null;
-    setStatus('Persistent storage is unavailable in this browser context. The app remains usable, but export the project before closing.', true);
-  }
+if(!browser.includes("page.locator('#pIds').textContent(),/PROJECT-MT3M46X0-075JMP/")){
+  const createdAnchor="  assert.match(await page.locator('#pct').textContent(),/0\\/31/);";
+  const createdReplacement="  assert.match(await page.locator('#pct').textContent(),/0\\/31/);\n  assert.match(await page.locator('#pIds').textContent(),/PROJECT-MT3M46X0-075JMP/);\n  assert.match(await page.locator('#pIds').textContent(),/JOB-MT3M46X0-M0LIB9/);";
+  browser=exact(browser,createdAnchor,createdReplacement,'visible exact identifier display assertion');
 }
-
-function generatedImportProjectObject(input, options = {}) {
-  const replay = replayProject(input);
-  if (options.requireFullyValid && replay.invalidatedFrom) {
-    throw Error(`${options.source || 'Published self-project'} rejected by current replay validation at Stage ${replay.invalidatedFrom}: ${replay.reason}`);
-  }
-  const p = replay.project;
-  if (projects.some((x) => x.projectId === p.projectId)) projects = projects.filter((x) => x.projectId !== p.projectId);
-  projects.unshift(p);
-  selected = p.projectId;
-  save();
-  setStatus(
-    replay.invalidatedFrom
-      ? `Imported ${p.name}; obsolete completion was reset from Stage ${replay.invalidatedFrom}. ${replay.reason}`
-      : `Imported ${p.name}.`,
-    Boolean(replay.invalidatedFrom)
-  );
-  render();
-  return p;
+if(!browser.includes("assert.equal(project.projectId,'PROJECT-MT3M46X0-075JMP')")){
+  const projectAnchor="  assert.equal(project.stages.filter(s=>s.status==='COMPLETE').length,31);";
+  const projectReplacement="  assert.equal(project.projectId,'PROJECT-MT3M46X0-075JMP');\n  assert.equal(project.jobId,'JOB-MT3M46X0-M0LIB9');\n  assert.equal(project.stages.filter(s=>s.status==='COMPLETE').length,31);";
+  browser=exact(browser,projectAnchor,projectReplacement,'completed exact identifier assertion');
 }
-
-async function generatedLoadSelfProject(manual = false) {
-  try {
-    const r = await fetch(SELF_PROJECT_PATH, { cache: 'no-store' });
-    if (!r.ok) {
-      if (manual) throw Error(`Verified self-project export unavailable (${r.status}).`);
-      return false;
-    }
-    importProjectObject(await r.json(), { requireFullyValid: true, source: 'Published self-project' });
-    if (manual) show('workflow');
-    return true;
-  } catch (e) {
-    if (manual || /rejected by current replay validation/i.test(String(e.message || e))) setStatus(e.message, true);
-    return false;
-  }
+if(!browser.includes("assert.equal(exported.projectId,'PROJECT-MT3M46X0-075JMP')")){
+  const exportAnchor="  assert.equal(exported.projectId,project.projectId);";
+  const exportReplacement="  assert.equal(exported.projectId,'PROJECT-MT3M46X0-075JMP');\n  assert.equal(exported.jobId,'JOB-MT3M46X0-M0LIB9');\n  assert.equal(exported.projectId,project.projectId);";
+  browser=exact(browser,exportAnchor,exportReplacement,'exported exact identifier assertion');
 }
-
-for (const file of targets) {
-  if (!fs.existsSync(file)) throw new Error(`${file} does not exist.`);
-  let text = fs.readFileSync(file, 'utf8');
-  if (!text.includes('const PROJECT_REPLAY_RULESET=') || !text.includes(RULESET)) {
-    text = replaceBetween(
-      text,
-      'function load(){',
-      'function save(){',
-      `const PROJECT_REPLAY_RULESET=${JSON.stringify(RULESET)};${sourceOf(generatedResetProjectFrom, 'resetProjectFrom')}\n${sourceOf(generatedReplayProject, 'replayProject')}\n${sourceOf(generatedLoad, 'load')}\n`
-    );
-    text = replaceBetween(
-      text,
-      'function importProjectObject(p){',
-      "$('newBtn').onclick=",
-      `${sourceOf(generatedImportProjectObject, 'importProjectObject')}\n`
-    );
-    text = replaceBetween(
-      text,
-      'async function loadSelfProject(manual=false){',
-      "$('loadVerifiedBtn').onclick=",
-      `${sourceOf(generatedLoadSelfProject, 'loadSelfProject')};`
-    );
-  }
-
-  const required = [
-    'const PROJECT_REPLAY_RULESET=',
-    RULESET,
-    'function replayProject(input)',
-    'Stage ${n} replay validation failed',
-    'obsolete completion was reset from Stage',
-    "requireFullyValid: true, source: 'Published self-project'"
-  ];
-  for (const token of required) if (!text.includes(token)) throw new Error(`${file} missing state-replay token: ${token}`);
-  if (/function importProjectObject\(p\)\{if\(!p\|\|p\.schemaVersion!==13/.test(text)) {
-    throw new Error(`${file} still trusts imported completion flags without replay.`);
-  }
-  fs.writeFileSync(file, text);
-  console.log(JSON.stringify({ file, bytes: Buffer.byteLength(text), ruleset: RULESET, patched: true }));
-}
+fs.writeFileSync('self-browser-e2e.mjs',browser);
+console.log(JSON.stringify({status:'PATCHED_EXISTING_V13',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9'}));
