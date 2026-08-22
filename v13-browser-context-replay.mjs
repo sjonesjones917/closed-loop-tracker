@@ -17,7 +17,7 @@ const ensureApplicationContext=async(stageNumber)=>{
   };
   browserContextRecoveries.push(evidence);
   console.log(JSON.stringify({status:'RECOVERING_APPLICATION_CONTEXT',...evidence}));
-  await page.goto(\`${origin}/app-v13.html?resumeStage=\${stageNumber}&recovery=\${Date.now()}\`,{waitUntil:'networkidle'});
+  await page.goto(\`\${origin}/app-v13.html?resumeStage=\${stageNumber}&recovery=\${Date.now()}\`,{waitUntil:'networkidle'});
   await page.waitForFunction(()=>Boolean(window.__CLR_V13__&&typeof window.__CLR_V13__.getCurrent==='function'));
   const current=await page.evaluate(()=>window.__CLR_V13__.getCurrent());
   if(!current)throw new Error(\`Application context recovered at Stage \${stageNumber}, but the selected project was not restored from browser storage.\`);
