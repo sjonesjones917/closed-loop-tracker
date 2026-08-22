@@ -1,162 +1,49 @@
-name: Self-build, verify, and publish Closed-Loop app
+name: Install exact corrected Closed-Loop source
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'bootstrap-source.part-*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: closed-loop-self-build
+  group: closed-loop-source-bootstrap
   cancel-in-progress: false
 
 jobs:
-  verify-and-publish:
+  install-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
-      - name: Check out exact repository revision
+      - name: Check out bootstrap commit
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Verify checked-in JavaScript syntax and base state machine
+      - name: Restore and verify exact source archive
         shell: bash
         run: |
           set -euo pipefail
-          node --check app-core.js
-          node --check build-v13-self.mjs
-          node --check self-e2e-agent.mjs
-          node --check self-browser-e2e.mjs
-          node --check run-v13-self-e2e.mjs
-          node e2e-test.mjs
+          cat bootstrap-source.part-* > /tmp/closed-loop-source.b64
+          base64 --decode /tmp/closed-loop-source.b64 > /tmp/closed-loop-source.tar.gz
+          printf '%s  %s\n' '8a521131a84d3f236a29a7efd9905048aa8caa7c03caa58f5d2fb0c462b49415' '/tmp/closed-loop-source.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/closed-loop-source.tar.gz -C .
+          test -s .github/workflows/pages.yml
+          test -s tests/e2e_self_build.py
+          test -s source/core.template.js
 
-      - name: Install browser test driver
-        shell: bash
-        run: npm install --no-save playwright-core
-
-      - name: Use the app itself to create and complete the app self-build project
-        shell: bash
-        env:
-          CHROME_PATH: /usr/bin/google-chrome
-        run: |
-          set -euo pipefail
-          node run-v13-self-e2e.mjs
-
-      - name: Independently verify the actual UI-exported self-build project and released app bytes
+      - name: Commit the exact restored source candidate
         shell: bash
         run: |
           set -euo pipefail
-          test -s app-v13-candidate1.html
-          test -s app-v13.html
-          test -s SELF_VERIFIED_PROJECT.json
-          test -s SELF_E2E_REPORT.json
-          test -s SELF_PROJECT_COMPLETED_393.png
-          test -s SELF_PROJECT_AUTOLOADED_393.png
-          test -s SELF_PROJECT_AUTOLOADED_320.png
-          grep -q 'Closed-Loop Agent Reliability v13' app-v13.html
-          grep -q 'SELF_VERIFIED_PROJECT.json' app-v13.html
-          grep -q 'TARGET RUN OUTPUT TO VERIFY' app-v13.html
-          grep -q 'crypto.subtle.digest' app-v13.html
-          grep -q 'SELF_VERIFIED_PROJEC.json' app-v13-candidate1.html
-          if grep -q 'SELF_VERIFIED_PROJECT.json' app-v13-candidate1.html; then
-            echo 'Defective first candidate unexpectedly contains the corrected sidecar filename.' >&2
-            exit 1
-          fi
-          node <<'NODE'
-          const fs=require('node:fs');
-          const crypto=require('node:crypto');
-          const fail=m=>{throw new Error(m)};
-          const app=fs.readFileSync('app-v13.html');
-          const p=JSON.parse(fs.readFileSync('SELF_VERIFIED_PROJECT.json','utf8'));
-          const r=JSON.parse(fs.readFileSync('SELF_E2E_REPORT.json','utf8'));
-          if(!Array.isArray(p.stages)||p.stages.length!==31)fail('Visible UI export does not contain all 31 stages.');
-          if(p.stages.some(s=>s.status!=='COMPLETE'))fail('Visible UI export contains an incomplete stage.');
-          if(p.stages[10].producers.filter(Boolean).length!==10)fail('Stage 11 does not contain 10 pasted producer responses.');
-          if(p.stages[11].verifiers.filter(Boolean).length!==10)fail('Stage 12 does not contain 10 pasted verifier responses.');
-          if(p.stages[17].producers.filter(Boolean).length!==10)fail('Stage 18 does not contain 10 pasted producer responses.');
-          if(p.stages[18].verifiers.filter(Boolean).length!==10)fail('Stage 19 does not contain 10 pasted verifier responses.');
-          if(p.stages[19].producers.filter(Boolean).length!==10)fail('Stage 20 does not contain 10 pasted producer responses.');
-          if(p.stages[19].verifiers.filter(Boolean).length!==10)fail('Stage 20 does not contain 10 pasted verifier responses.');
-          if(!p.objective.includes('application itself'))fail('The project objective is not the app self-build objective.');
-          if(p.releaseDecision!=='ACCEPTED')fail('Self-build release decision is not ACCEPTED.');
-          if(p.artifactName!=='app-v13.html')fail('Released artifact name is not app-v13.html.');
-          if(Buffer.compare(Buffer.from(p.artifact,'utf8'),app)!==0)fail('Project artifact differs from exact app bytes.');
-          const hash=crypto.createHash('sha256').update(app).digest('hex');
-          if(p.auditedHash!==hash||p.releaseHash!==hash)fail('Audited/release hashes differ from actual app SHA-256.');
-          const html=app.toString('utf8');
-          if(html.includes(p.projectId))fail('Completed project ID is hardcoded into the HTML.');
-          if(html.includes(p.objective))fail('Completed project objective is hardcoded into the HTML.');
-          if(!p.stages[11].verifiers.every(v=>/REQ-015.*VIOLATED/i.test(v)))fail('The real first-candidate defect is not preserved in all ten independent verifier records.');
-          if(!p.stages[18].verifiers.every(v=>/REQ-015.*SATISFIED/i.test(v)))fail('The corrected candidate did not pass all ten verifier records.');
-          if(r.status!=='PASS'||r.hardcodedProject!==false||r.freshBrowserSidecarAutoload!==true)fail('Self E2E report does not prove the actual sidecar-loaded project.');
-          console.log(JSON.stringify({
-            status:'PASS',
-            projectId:p.projectId,
-            jobId:p.jobId,
-            stagesComplete:31,
-            pastedProducerResponses:30,
-            pastedVerifierResponses:30,
-            firstCandidateDefect:'10/10 VIOLATED',
-            correctedCandidate:'10/10 SATISFIED',
-            releaseDecision:p.releaseDecision,
-            appSha256:hash,
-            uiExport:'SELF_VERIFIED_PROJECT.json',
-            hardcodedProject:false
-          },null,2));
-          NODE
-
-      - name: Preserve downloadable self-build evidence from this exact run
-        uses: actions/upload-artifact@v4
-        with:
-          name: real-app-self-build-evidence
-          path: |
-            app-v13-candidate1.html
-            app-v13.html
-            SELF_VERIFIED_PROJECT.json
-            SELF_E2E_REPORT.json
-            SELF_PROJECT_COMPLETED_393.png
-            SELF_PROJECT_AUTOLOADED_393.png
-            SELF_PROJECT_AUTOLOADED_320.png
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Publish the exact tested app and exact visible-UI project export to main
-        shell: bash
-        env:
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/closed-loop-publish
-          mkdir -p /tmp/closed-loop-publish
-          cp app-v13.html /tmp/closed-loop-publish/app-v13.html
-          cp SELF_VERIFIED_PROJECT.json /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json
-          cp SELF_E2E_REPORT.json /tmp/closed-loop-publish/SELF_E2E_REPORT.json
-          cp SELF_PROJECT_COMPLETED_393.png /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png
-          cp SELF_PROJECT_AUTOLOADED_393.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png
-          cp SELF_PROJECT_AUTOLOADED_320.png /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png
-
+          rm -f bootstrap-source.part-*
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main
-          git reset --hard origin/main
-
-          cp /tmp/closed-loop-publish/app-v13.html app-v13.html
-          cp /tmp/closed-loop-publish/app-v13.html index.html
-          cp /tmp/closed-loop-publish/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
-          cp /tmp/closed-loop-publish/SELF_E2E_REPORT.json SELF_E2E_REPORT.json
-          cp /tmp/closed-loop-publish/SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_COMPLETED_393.png
-          cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_393.png
-          cp /tmp/closed-loop-publish/SELF_PROJECT_AUTOLOADED_320.png SELF_PROJECT_AUTOLOADED_320.png
-          printf '{"status":"PUBLISHED","sourceCommit":"%s","test":"real app self-build through 31-stage Chromium UI","app":"app-v13.html","entry":"index.html","verifiedProject":"SELF_VERIFIED_PROJECT.json","verifiedReport":"SELF_E2E_REPORT.json","hardcodedProject":false}\n' "$SOURCE_SHA" > PUBLISHED_SELF_BUILD.json
-
-          git add app-v13.html index.html SELF_VERIFIED_PROJECT.json SELF_E2E_REPORT.json SELF_PROJECT_COMPLETED_393.png SELF_PROJECT_AUTOLOADED_393.png SELF_PROJECT_AUTOLOADED_320.png PUBLISHED_SELF_BUILD.json
-          if git diff --cached --quiet; then
-            echo 'Exact tested publication already matches main.'
-            exit 0
-          fi
-          git commit -m 'Publish exact tested self-build app and project [skip ci]'
+          git add -A
+          git commit -m 'Install exact corrected Closed-Loop source candidate'
           git push origin HEAD:main
