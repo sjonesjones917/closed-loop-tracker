@@ -40,6 +40,9 @@ if(defectBoundaryReplay.status!==0)process.exit(defectBoundaryReplay.status??1);
 const browserReplay=spawnSync(process.execPath,['v13-browser-context-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
 if(browserReplay.status!==0)process.exit(browserReplay.status??1);
 
+const projectExportHashReplay=spawnSync(process.execPath,['v13-project-export-hash-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
+if(projectExportHashReplay.status!==0)process.exit(projectExportHashReplay.status??1);
+
 console.log(JSON.stringify({
   status: 'PATCHED_OR_ALREADY_CURRENT',
   transport: 'ASYNC_STDIN',
@@ -48,5 +51,6 @@ console.log(JSON.stringify({
   eliminatesSynchronousStdinEagain: true,
   exactDefectFieldVerification: true,
   projectEvidenceSource: 'VISIBLE_UI_EXPORT',
+  projectExportHashSource: 'projectExportBytes',
   files: ['self-e2e-agent-base.mjs', 'self-e2e-agent.mjs', 'self-browser-e2e.mjs']
 }));
