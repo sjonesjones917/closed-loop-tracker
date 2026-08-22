@@ -23,6 +23,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Regenerate and publish the corrected existing v13 application immediately
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check build-v13-self.mjs
+          node build-v13-self.mjs
+          test -s app-v13.html
+          grep -q 'if(n===2||n===3)return researchPrompt(p,n)' app-v13.html
+          grep -q 'RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html
+          if grep -q 'Inspect the actual supplied sources and build the complete source inventory now' app-v13.html; then
+            echo 'Legacy Stage 2 prompt survived regeneration.' >&2
+            exit 1
+          fi
+          cp app-v13.html index.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app-v13.html index.html
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish corrected existing v13 Stage 2 prompt [skip ci]'
+            git push origin HEAD:main
+          fi
+
       - name: Verify checked-in JavaScript syntax and base state machine
         shell: bash
         run: |
