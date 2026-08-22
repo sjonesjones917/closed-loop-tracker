@@ -10,6 +10,7 @@ on:
       - 'app-v13.html'
       - 'app-v11.html'
       - 'build-v13-self.mjs'
+      - 'v13-state-replay.mjs'
       - 'self-e2e-agent.mjs'
   workflow_dispatch:
 
@@ -35,11 +36,13 @@ jobs:
         run: |
           set -euo pipefail
           node --check build-v13-self.mjs
+          node --check v13-state-replay.mjs
           node build-v13-self.mjs
+          node v13-state-replay.mjs
           test -s app-v13.html
           cp app-v13.html index.html
 
-      - name: Verify the generated Stage 2 and Stage 3 research boundary
+      - name: Verify the generated Stage 2 and Stage 3 research boundary and stored-state replay
         shell: bash
         run: |
           set -euo pipefail
@@ -54,8 +57,16 @@ jobs:
           grep -Fq 'Do not inspect, inventory, cite, or treat supplied implementation files as research sources.' index.html
           grep -Fq 'Do not inspect, inventory, cite, or treat application HTML, JavaScript, source code, tests, generated prompts, generated project JSON, candidate files, prior workflow outputs, project records, implementation behavior, or any other work product of this job as research authority.' index.html
           grep -Fq 'Stage 2 research sources must be independent external sources' index.html
+          grep -Fq 'external-authority-first-2026-08-22-r5-state-replay' index.html
+          grep -Fq 'function replayProject(input)' index.html
+          grep -Fq "requireFullyValid: true, source: 'Published self-project'" index.html
+          grep -Fq 'obsolete completion was reset from Stage' index.html
           if grep -Fq 'Inspect the actual supplied sources and build the complete source inventory now.' index.html; then
             echo 'Refusing to deploy old circular Stage 2 HTML.' >&2
+            exit 1
+          fi
+          if grep -Eq 'function importProjectObject\(p\)\{if\(!p\|\|p\.schemaVersion!==13' index.html; then
+            echo 'Refusing to deploy an import path that trusts stored completion flags.' >&2
             exit 1
           fi
 
@@ -68,9 +79,9 @@ jobs:
           cp index.html dist/index.html
           cp index.html dist/404.html
           cp app-v13.html dist/app-v13.html
-          # Do not publish the stale circular self-project export.
-          # Missing sidecar leaves the application usable with empty/local project state.
-          printf '{"status":"CORRECTED_EXISTING_APP_DEPLOY","sourceCommit":"%s","stage2ResearchAuthority":"EXTERNAL_ONLY","dedicatedResearchPrompt":true,"generatedBeforeDeploy":true,"staleSelfProjectPublished":false}\n' "$GITHUB_SHA" > dist/build-info.json
+          # Do not publish the stale circular self-project export. The application
+          # also replays local/imported state and rejects obsolete published state.
+          printf '{"status":"CORRECTED_EXISTING_APP_DEPLOY","sourceCommit":"%s","stage2ResearchAuthority":"EXTERNAL_ONLY","dedicatedResearchPrompt":true,"storedProjectReplayRuleset":"external-authority-first-2026-08-22-r5-state-replay","staleSelfProjectPublished":false}\n' "$GITHUB_SHA" > dist/build-info.json
           : > dist/.nojekyll
 
       - name: Configure GitHub Pages
