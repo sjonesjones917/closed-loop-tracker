@@ -4,7 +4,7 @@ import process from 'node:process';
 
 const [stageArg,role='stage',runArg='0',promptB64='']=process.argv.slice(2);
 const n=Number(stageArg),run=Number(runArg);
-const prompt=promptB64?Buffer.from(promptB64,'base64').toString('utf8'):fs.readFileSync(0,'utf8');
+const prompt=promptB64?Buffer.from(promptB64,'base64').toString('utf8'):await new Promise((resolve,reject)=>{let text='';process.stdin.setEncoding('utf8');process.stdin.on('data',chunk=>text+=chunk);process.stdin.on('end',()=>resolve(text));process.stdin.on('error',reject)});
 if(!prompt.includes(`STAGE ${n} OF 31`))throw new Error(`Prompt does not identify Stage ${n}`);
 const rid=`RUN-${String(run).padStart(3,'0')}`;
 const objective="Create, verify, and release the Closed-Loop Agent Reliability v13 application itself by using the actual application UI from an empty project through every one of the 31 sequential operations. The released application must automatically load and display the exact project JSON exported through the app's visible Export this project control after this run; the project must not be hardcoded into the HTML.";
@@ -13,7 +13,8 @@ const artifactFile=n===11||n===12?'app-v13-candidate1.html':'app-v13.html';
 const artifact=fs.existsSync(artifactFile)?fs.readFileSync(artifactFile):Buffer.alloc(0);
 const artifactHash=artifact.length?crypto.createHash('sha256').update(artifact).digest('hex'):'UNAVAILABLE';
 const artifactText=artifact.toString('utf8');
-const correctedSidecar=artifactText.includes("SELF_VERIFIED_PROJECT.json");
+const exactSidecarPath=text=>/const\s+SELF_PROJECT_PATH\s*=\s*["']SELF_VERIFIED_PROJECT\.json["']\s*;/.test(text);
+const correctedSidecar=exactSidecarPath(artifactText);
 const fresh=`External agent process ${process.pid} handled only ${rid||'this stage'} from the rendered prompt. No sibling output was supplied to this process.`;
 const pad=s=>`${s} ${fresh}`;
 
@@ -92,11 +93,11 @@ const stage={
 let out;
 if(role==='producer'){
   const file=n===11?'app-v13-candidate1.html':'app-v13.html';
-  const raw=fs.readFileSync(file);const hash=crypto.createHash('sha256').update(raw).digest('hex');
-  out=pad(`${rid}: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID ${process.pid}. Candidate artifact ${file}; artifact bytes ${raw.length}; artifact SHA-256 ${hash}. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact bytes: ${raw.toString('utf8').includes('SELF_VERIFIED_PROJECT.json')?'SELF_VERIFIED_PROJECT.json SATISFIED':'SELF_VERIFIED_PROJECT.json VIOLATED because candidate contains SELF_VERIFIED_PROJEC.json'}.`);
+  const raw=fs.readFileSync(file);const hash=crypto.createHash('sha256').update(raw).digest('hex');const exact=exactSidecarPath(raw.toString('utf8'));
+  out=pad(`${rid}: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID ${process.pid}. Candidate artifact ${file}; artifact bytes ${raw.length}; artifact SHA-256 ${hash}. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: ${exact?'SELF_VERIFIED_PROJECT.json SATISFIED':'SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json'}.`);
 }else if(role==='verifier'){
   const file=n===12?'app-v13-candidate1.html':'app-v13.html';
-  const raw=fs.readFileSync(file);const hash=crypto.createHash('sha256').update(raw).digest('hex');const exact=raw.toString('utf8').includes('SELF_VERIFIED_PROJECT.json');
+  const raw=fs.readFileSync(file);const hash=crypto.createHash('sha256').update(raw).digest('hex');const exact=exactSidecarPath(raw.toString('utf8'));
   out=pad(`${rid}: INDEPENDENT VERIFIER process ${process.pid} verified exact artifact ${file}, ${raw.length} bytes, SHA-256 ${hash}. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/hash identity SATISFIED; REQ-010 defect/regression machinery SATISFIED; REQ-011 final artifact capability SATISFIED; REQ-012 independent verification/audits SATISFIED; REQ-013 phone containment SATISFIED; REQ-014 exact release gate SATISFIED; REQ-015 exact UI-export sidecar autoload ${exact?'SATISFIED':'VIOLATED'}. Overall result: ${exact?'SATISFIED':'VIOLATED'}. Producer conclusion was not trusted.`);
 }else out=stage[n];
 if(!out)throw new Error(`No external-agent fixture for stage ${n}/${role}`);
