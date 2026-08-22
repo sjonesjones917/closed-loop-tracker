@@ -80,9 +80,35 @@ if(source.includes(duplicateExportBlock))source=source.replace(duplicateExportBl
 else if(source.includes(assertedDuplicateExportBlock))source=source.replace(assertedDuplicateExportBlock,'  const exported=project;');
 else if(!source.includes('  const exported=project;'))throw new Error('duplicate visible-export block anchor missing');
 
+const legacyFreshWait=`  await freshPage.goto(\`${origin}/app-v13.html?fresh=\${Date.now()}\`,{waitUntil:'networkidle'});
+  await freshPage.locator('[data-open]').waitFor({state:'visible'});`;
+const diagnosticFreshWait=`  await freshPage.goto(\`${origin}/app-v13.html?fresh=\${Date.now()}\`,{waitUntil:'networkidle'});
+  await freshPage.waitForTimeout(3000);
+  const freshAutoloadDiagnostics=await freshPage.evaluate(async()=>{
+    const status=document.querySelector('#status')?.textContent||'';
+    const projectsText=document.querySelector('#projects')?.textContent||'';
+    const storage={};
+    for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);storage[key]=String(localStorage.getItem(key)||'').length}
+    let sidecar;
+    try{
+      const response=await fetch(\`SELF_VERIFIED_PROJECT.json?diagnostic=\${Date.now()}\`,{cache:'no-store'});
+      const text=await response.text();
+      let parsed=null,parseError='';
+      try{parsed=JSON.parse(text)}catch(error){parseError=String(error?.message||error)}
+      sidecar={ok:response.ok,status:response.status,url:response.url,bytes:new TextEncoder().encode(text).length,projectId:parsed?.projectId||null,jobId:parsed?.jobId||null,stageCount:Array.isArray(parsed?.stages)?parsed.stages.length:null,parseError};
+    }catch(error){sidecar={fetchError:String(error?.message||error)}}
+    return{status,projectsText,openCount:document.querySelectorAll('[data-open]').length,storage,sidecar};
+  });
+  if(!freshAutoloadDiagnostics.openCount)throw new Error(\`Fresh published-sidecar autoload failed: \${JSON.stringify(freshAutoloadDiagnostics)}\`);`;
+if(!source.includes(diagnosticFreshWait)){
+  if(!source.includes(legacyFreshWait))throw new Error('fresh-sidecar wait anchor missing');
+  source=source.replace(legacyFreshWait,diagnosticFreshWait);
+}
+
 if(source.includes('window.__CLR_V13__.getCurrent'))throw new Error('browser verification still depends on the internal project API');
 if(!source.includes('const project=JSON.parse(projectExportBytes.toString'))throw new Error('visible project export retrieval missing');
 if(!source.includes("await page.locator('[data-view=\"release\"]')"))throw new Error('release view restoration after project export missing');
+if(!source.includes('freshAutoloadDiagnostics'))throw new Error('fresh-sidecar diagnostics missing');
 if(!source.includes('const exported=project;'))throw new Error('single visible project export was not established');
 
 fs.writeFileSync(file,source);
@@ -94,5 +120,6 @@ console.log(JSON.stringify({
   projectEvidenceSource:'VISIBLE_UI_EXPORT',
   internalProjectHookRequired:false,
   releaseViewRestoredAfterProjectExport:true,
+  freshAutoloadDiagnostics:true,
   filenameAssertionOwner:'run-v13-self-e2e.mjs'
 }));
