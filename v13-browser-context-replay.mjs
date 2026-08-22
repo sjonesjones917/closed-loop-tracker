@@ -23,7 +23,8 @@ const visibleExportBlock=`  await page.locator('[data-view="workflow"]').click()
   const projectDownloadPath=await projectDownload.path();
   const projectExportBytes=fs.readFileSync(projectDownloadPath);
   fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),projectExportBytes);
-  const project=JSON.parse(projectExportBytes.toString('utf8'));`;
+  const project=JSON.parse(projectExportBytes.toString('utf8'));
+  await page.locator('[data-view="release"]').click();`;
 const assertedVisibleExportBlock=`  await page.locator('[data-view="workflow"]').click();
   const projectDownloadPromise=page.waitForEvent('download');
   await page.locator('#exportBtn').click();
@@ -32,8 +33,28 @@ const assertedVisibleExportBlock=`  await page.locator('[data-view="workflow"]')
   const projectDownloadPath=await projectDownload.path();
   const projectExportBytes=fs.readFileSync(projectDownloadPath);
   fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),projectExportBytes);
+  const project=JSON.parse(projectExportBytes.toString('utf8'));
+  await page.locator('[data-view="release"]').click();`;
+const priorVisibleExportBlock=`  await page.locator('[data-view="workflow"]').click();
+  const projectDownloadPromise=page.waitForEvent('download');
+  await page.locator('#exportBtn').click();
+  const projectDownload=await projectDownloadPromise;
+  const projectDownloadPath=await projectDownload.path();
+  const projectExportBytes=fs.readFileSync(projectDownloadPath);
+  fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),projectExportBytes);
   const project=JSON.parse(projectExportBytes.toString('utf8'));`;
-if(!source.includes(visibleExportBlock)&&!source.includes(assertedVisibleExportBlock)){
+const priorAssertedVisibleExportBlock=`  await page.locator('[data-view="workflow"]').click();
+  const projectDownloadPromise=page.waitForEvent('download');
+  await page.locator('#exportBtn').click();
+  const projectDownload=await projectDownloadPromise;
+  assert.equal(projectDownload.suggestedFilename(),'SELF_VERIFIED_PROJECT.json');
+  const projectDownloadPath=await projectDownload.path();
+  const projectExportBytes=fs.readFileSync(projectDownloadPath);
+  fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),projectExportBytes);
+  const project=JSON.parse(projectExportBytes.toString('utf8'));`;
+if(source.includes(priorAssertedVisibleExportBlock))source=source.replace(priorAssertedVisibleExportBlock,assertedVisibleExportBlock);
+else if(source.includes(priorVisibleExportBlock))source=source.replace(priorVisibleExportBlock,visibleExportBlock);
+else if(!source.includes(visibleExportBlock)&&!source.includes(assertedVisibleExportBlock)){
   if(!source.includes(internalProjectLine))throw new Error('completed-project retrieval anchor missing');
   source=source.replace(internalProjectLine,visibleExportBlock);
 }
@@ -61,6 +82,7 @@ else if(!source.includes('  const exported=project;'))throw new Error('duplicate
 
 if(source.includes('window.__CLR_V13__.getCurrent'))throw new Error('browser verification still depends on the internal project API');
 if(!source.includes('const project=JSON.parse(projectExportBytes.toString'))throw new Error('visible project export retrieval missing');
+if(!source.includes("await page.locator('[data-view=\"release\"]')"))throw new Error('release view restoration after project export missing');
 if(!source.includes('const exported=project;'))throw new Error('single visible project export was not established');
 
 fs.writeFileSync(file,source);
@@ -71,5 +93,6 @@ console.log(JSON.stringify({
   file,
   projectEvidenceSource:'VISIBLE_UI_EXPORT',
   internalProjectHookRequired:false,
+  releaseViewRestoredAfterProjectExport:true,
   filenameAssertionOwner:'run-v13-self-e2e.mjs'
 }));
