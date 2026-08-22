@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const BUILD_REVISION='2026-08-22-stage2-dedicated-external-research-wrapper-v4';
+const BUILD_REVISION='2026-08-22-stage2-dedicated-external-research-wrapper-v5';
 
 const replaceBetween=(text,start,end,replacement)=>{
   const a=text.indexOf(start),b=text.indexOf(end,a);
@@ -44,6 +44,11 @@ function build(sidecarPath,output){
   const newStage3="['RESEARCH REQUIREMENTS','Research the requirements governing this job from the Stage 2 EXTERNAL SOURCE inventory and additional external authoritative sources discovered as necessary. Search externally as needed. Do not derive requirements from application files, generated code, tests, project JSON, candidate implementations, generated prompts, prior workflow outputs, or other work products. The product may not exist yet. For every finding identify the external source and exact relevant portion, state what it requires or establishes, explain why it applies, distinguish mandatory requirements from recommendations, distinguish direct requirements from derived engineering implications, identify exceptions, conflicts, and applicability conditions, and preserve enough provenance for independent verification. Continue until every external research question from Stage 1 is answered or explicitly BLOCKED. Return research findings only; do not compile the Stage 4 requirement registry yet.'],";
   if(!s.includes(oldStage1)||!s.includes(oldStage2)||!s.includes(oldStage3))throw new Error('Stage 1-3 prompt patch anchors missing');
   s=s.replace(oldStage1,newStage1).replace(oldStage2,newStage2).replace(oldStage3,newStage3);
+
+  const oldStage1Validation="if(n===1){has(U,/JOB_ID/,'Stage 1 must contain JOB_ID.');has(U,/INPUT-V?001/,'Stage 1 must create INPUT-v001.');if(!U.includes(p.objective.slice(0,Math.min(24,p.objective.length)).toUpperCase()))throw Error('Stage 1 must preserve content from the real project objective.');if(!U.includes(p.deliverable.slice(0,Math.min(24,p.deliverable.length)).toUpperCase()))throw Error('Stage 1 must preserve content from the real requested deliverable.')}";
+  const newStage1Validation="if(n===1){has(U,/JOB_ID/,'Stage 1 must contain JOB_ID.');has(U,/EXPLICIT USER REQUIREMENTS/,'Stage 1 must record explicit user requirements.');has(U,/EXPLICIT PROHIBITIONS/,'Stage 1 must record explicit prohibitions.');has(U,/EXTERNAL RESEARCH QUESTIONS/,'Stage 1 must record external research questions without researching them yet.');has(U,/ASSUMPTIONS/,'Stage 1 must record assumptions.');has(U,/UNKNOWNS/,'Stage 1 must record unknowns.');has(U,/BLOCKERS/,'Stage 1 must record blockers.');if(!U.includes(p.objective.slice(0,Math.min(24,p.objective.length)).toUpperCase()))throw Error('Stage 1 must preserve content from the real project objective.');if(!U.includes(p.deliverable.slice(0,Math.min(24,p.deliverable.length)).toUpperCase()))throw Error('Stage 1 must preserve content from the real requested deliverable.')}";
+  if(!s.includes(oldStage1Validation))throw new Error('Stage 1 validator patch anchor missing');
+  s=s.replace(oldStage1Validation,newStage1Validation);
 
   const oldStage2Validation="if(n===2){has(U,/SOURCE_ID/,'Stage 2 must contain SOURCE_ID.');has(U,/SOURCE_ROLE/,'Stage 2 must contain SOURCE_ROLE.')}";
   const newStage2Validation="if(n===2){has(U,/SOURCE_ID/,'Stage 2 must contain SOURCE_ID.');has(U,/SOURCE_ROLE/,'Stage 2 must contain SOURCE_ROLE.');has(U,/EXTERNAL_SEARCH_PERFORMED\\s*[:=]\\s*TRUE/,'Stage 2 must affirm EXTERNAL_SEARCH_PERFORMED: true.');if(/SOURCE_TYPE\\s*[:=]\\s*(USER_INPUT|FILE|HTML|JAVASCRIPT|PROJECT_JSON|APPLICATION_FILE|GENERATED_FILE|WORK_PRODUCT)/i.test(t))throw Error('Stage 2 research sources must be independent external sources, not user input or project work products.');if(!/(https?:\\/\\/|DOI\\s*[:=]|ISBN\\s*[:=]|RFC\\s*[-:]?\\s*\\d+)/i.test(t))throw Error('Stage 2 must record externally identifiable source provenance such as a URL, DOI, ISBN, or RFC identifier.');}";
