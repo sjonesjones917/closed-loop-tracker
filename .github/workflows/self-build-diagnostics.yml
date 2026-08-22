@@ -3,7 +3,7 @@ name: Capture self-build workflow failure
 on:
   workflow_run:
     workflows:
-      - Self-build, verify, and deploy Closed-Loop app
+      - Self-build, verify, and publish Closed-Loop app
     types:
       - completed
 
