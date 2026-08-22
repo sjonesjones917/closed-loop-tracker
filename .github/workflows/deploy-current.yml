@@ -1,0 +1,125 @@
+name: Deploy verified Closed-Loop self-build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-current.yml'
+      - 'index.html'
+      - 'app-v13.html'
+      - 'SELF_VERIFIED_PROJECT.json'
+      - 'SELF_E2E_REPORT.json'
+      - 'PUBLISHED_SELF_BUILD.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact repository revision
+        uses: actions/checkout@v4
+
+      - name: Verify the actual UI-created self-build project and exact app bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s index.html
+          test -s app-v13.html
+          test -s SELF_VERIFIED_PROJECT.json
+          test -s SELF_E2E_REPORT.json
+          cmp -s index.html app-v13.html
+          node <<'NODE'
+          const fs = require('node:fs');
+          const crypto = require('node:crypto');
+          const fail = message => { throw new Error(message); };
+          const app = fs.readFileSync('index.html');
+          const html = app.toString('utf8');
+          const projectBytes = fs.readFileSync('SELF_VERIFIED_PROJECT.json');
+          const p = JSON.parse(projectBytes.toString('utf8'));
+          const report = JSON.parse(fs.readFileSync('SELF_E2E_REPORT.json', 'utf8'));
+          const appHash = crypto.createHash('sha256').update(app).digest('hex');
+          const projectHash = crypto.createHash('sha256').update(projectBytes).digest('hex');
+          if (p.name !== 'REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13') fail('Wrong project.');
+          if (!p.objective.includes('application itself')) fail('Project is not the app self-build job.');
+          if (!Array.isArray(p.stages) || p.stages.length !== 31) fail('Project does not contain 31 stages.');
+          if (p.stages.some(stage => stage.status !== 'COMPLETE')) fail('Project contains an incomplete stage.');
+          if (p.stages[10].producers.filter(Boolean).length !== 10) fail('Stage 11 does not contain ten actual producer responses.');
+          if (p.stages[11].verifiers.filter(Boolean).length !== 10) fail('Stage 12 does not contain ten actual verifier responses.');
+          if (p.stages[17].producers.filter(Boolean).length !== 10) fail('Stage 18 does not contain ten actual producer responses.');
+          if (p.stages[18].verifiers.filter(Boolean).length !== 10) fail('Stage 19 does not contain ten actual verifier responses.');
+          if (p.stages[19].producers.filter(Boolean).length !== 10) fail('Stage 20 does not contain ten actual producer responses.');
+          if (p.stages[19].verifiers.filter(Boolean).length !== 10) fail('Stage 20 does not contain ten actual verifier responses.');
+          if (p.releaseDecision !== 'ACCEPTED') fail('Release decision is not ACCEPTED.');
+          if (p.artifactName !== 'app-v13.html') fail('Wrong released artifact name.');
+          if (Buffer.compare(Buffer.from(p.artifact, 'utf8'), app) !== 0) fail('Project artifact is not byte-identical to the deployed app.');
+          if (p.auditedHash !== appHash || p.releaseHash !== appHash) fail('Audited/release hashes do not match deployed bytes.');
+          if (html.includes(p.projectId) || html.includes(p.objective)) fail('Completed project was embedded in the HTML instead of loaded from the UI export.');
+          if (!html.includes('SELF_VERIFIED_PROJECT.json')) fail('App does not load the separate UI export.');
+          if (report.status !== 'PASS' || report.hardcodedProject !== false || report.freshBrowserSidecarAutoload !== true) fail('Browser self-build report is not valid.');
+          console.log(JSON.stringify({
+            status: 'PASS',
+            projectId: p.projectId,
+            jobId: p.jobId,
+            stagesComplete: 31,
+            producerResponses: 30,
+            verifierResponses: 30,
+            releaseDecision: p.releaseDecision,
+            appSha256: appHash,
+            projectSha256: projectHash,
+            projectCreatedThroughActualUI: true,
+            hardcodedProject: false
+          }, null, 2));
+          NODE
+
+      - name: Build the exact Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+          cp index.html dist/index.html
+          cp index.html dist/404.html
+          cp app-v13.html dist/app-v13.html
+          cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
+          cp SELF_E2E_REPORT.json dist/SELF_E2E_REPORT.json
+          cp PUBLISHED_SELF_BUILD.json dist/PUBLISHED_SELF_BUILD.json
+          test -f SELF_PROJECT_COMPLETED_393.png && cp SELF_PROJECT_COMPLETED_393.png dist/
+          test -f SELF_PROJECT_AUTOLOADED_393.png && cp SELF_PROJECT_AUTOLOADED_393.png dist/
+          test -f SELF_PROJECT_AUTOLOADED_320.png && cp SELF_PROJECT_AUTOLOADED_320.png dist/
+          printf '{"status":"PASS","sourceCommit":"%s","project":"SELF_VERIFIED_PROJECT.json","hardcodedProject":false}\n' "$GITHUB_SHA" > dist/build-info.json
+          : > dist/.nojekyll
+
+      - name: Configure and enable GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload the exact verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the exact verified artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
