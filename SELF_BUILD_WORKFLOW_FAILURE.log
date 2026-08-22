@@ -1,44 +1,44 @@
-FAILED_RUN_ID=32602721923
-FAILED_HEAD_SHA=c061bfb45184ca9dcc402c254e820e72faebc171
-CAPTURED_AT=2026-08-22T22:32:45Z
+FAILED_RUN_ID=32602770447
+FAILED_HEAD_SHA=65b546334a86db17be968e2f3c06940e05b2861b
+CAPTURED_AT=2026-08-22T22:33:44Z
 
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	﻿2026-08-22T22:32:34.1333441Z ##[group]Run set -euo pipefail
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1334776Z ^[[36;1mset -euo pipefail^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1335943Z ^[[36;1mnode --check build-v13-self.mjs^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1337288Z ^[[36;1mnode --check v13-state-replay.mjs^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1338640Z ^[[36;1mnode build-v13-self.mjs^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1339842Z ^[[36;1mnode v13-state-replay.mjs^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1341049Z ^[[36;1mtest -s app-v13.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1342646Z ^[[36;1mgrep -q 'if(n===2||n===3)return researchPrompt(p,n)' app-v13.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1344839Z ^[[36;1mgrep -q 'RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1347342Z ^[[36;1mgrep -q 'external-authority-first-2026-08-22-r5-state-replay' app-v13.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1349535Z ^[[36;1mgrep -q 'function replayProject(input)' app-v13.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1351655Z ^[[36;1mgrep -q 'obsolete completion was reset from Stage' app-v13.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1354749Z ^[[36;1mif grep -q 'Inspect the actual supplied sources and build the complete source inventory now' app-v13.html; then^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1357516Z ^[[36;1m  echo 'Legacy Stage 2 prompt survived regeneration.' >&2^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1359023Z ^[[36;1m  exit 1^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1359886Z ^[[36;1mfi^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1360757Z ^[[36;1mcp app-v13.html index.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1362058Z ^[[36;1mgit config user.name 'github-actions[bot]'^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1364256Z ^[[36;1mgit config user.email '41898282+github-actions[bot]@users.noreply.github.com'^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1366214Z ^[[36;1mgit add app-v13.html index.html^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1367512Z ^[[36;1mif ! git diff --cached --quiet; then^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1369652Z ^[[36;1m  git commit -m 'Publish corrected existing v13 Stage 2 and stored-state replay [skip ci]'^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1371709Z ^[[36;1m  git push origin HEAD:main^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1373016Z ^[[36;1mfi^[[0m
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1423638Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.1425184Z ##[endgroup]
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3863588Z file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:4
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3867897Z const between=(s,a,b,r)=>{const i=s.indexOf(a),j=s.indexOf(b,i);if(i<0||j<0)throw Error(`anchor missing: ${a}`);return s.slice(0,i)+r+s.slice(j)};
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3871505Z                                                                                   ^
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3873390Z 
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3874424Z Error: anchor missing: function prior(p,n){
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3877496Z     at between (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:4:83)
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3880659Z     at build (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:39:5)
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3883754Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:47:17
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3886070Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3888176Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3890640Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3892097Z 
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3892659Z Node.js v22.23.2
-verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:32:34.3914695Z ##[error]Process completed with exit code 1.
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	﻿2026-08-22T22:33:32.5805162Z ##[group]Run set -euo pipefail
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5805915Z ^[[36;1mset -euo pipefail^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5806528Z ^[[36;1mnode --check build-v13-self.mjs^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5807182Z ^[[36;1mnode --check v13-state-replay.mjs^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5807840Z ^[[36;1mnode build-v13-self.mjs^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5808419Z ^[[36;1mnode v13-state-replay.mjs^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5808998Z ^[[36;1mtest -s app-v13.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5809717Z ^[[36;1mgrep -q 'if(n===2||n===3)return researchPrompt(p,n)' app-v13.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5811042Z ^[[36;1mgrep -q 'RESEARCH AUTHORITY BOUNDARY — EXTERNAL SOURCES ONLY' app-v13.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5812197Z ^[[36;1mgrep -q 'external-authority-first-2026-08-22-r5-state-replay' app-v13.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5813188Z ^[[36;1mgrep -q 'function replayProject(input)' app-v13.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5814322Z ^[[36;1mgrep -q 'obsolete completion was reset from Stage' app-v13.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5815546Z ^[[36;1mif grep -q 'Inspect the actual supplied sources and build the complete source inventory now' app-v13.html; then^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5816758Z ^[[36;1m  echo 'Legacy Stage 2 prompt survived regeneration.' >&2^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5817472Z ^[[36;1m  exit 1^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5817937Z ^[[36;1mfi^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5818407Z ^[[36;1mcp app-v13.html index.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5819049Z ^[[36;1mgit config user.name 'github-actions[bot]'^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5820140Z ^[[36;1mgit config user.email '41898282+github-actions[bot]@users.noreply.github.com'^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5821045Z ^[[36;1mgit add app-v13.html index.html^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5821695Z ^[[36;1mif ! git diff --cached --quiet; then^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5822747Z ^[[36;1m  git commit -m 'Publish corrected existing v13 Stage 2 and stored-state replay [skip ci]'^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5823687Z ^[[36;1m  git push origin HEAD:main^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5824265Z ^[[36;1mfi^[[0m
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5869568Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.5870597Z ##[endgroup]
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7634830Z file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:4
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7637051Z const between=(s,a,b,r)=>{const i=s.indexOf(a),j=s.indexOf(b,i);if(i<0||j<0)throw Error(`anchor missing: ${a}`);return s.slice(0,i)+r+s.slice(j)};
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7640009Z                                                                                   ^
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7641150Z 
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7641874Z Error: anchor missing: function prior(p,n){
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7643323Z     at between (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:4:83)
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7645607Z     at build (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:39:5)
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7647803Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:47:17
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7649655Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7651553Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7653482Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7654641Z 
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7654983Z Node.js v22.23.2
+verify-and-publish	Regenerate and publish the corrected existing v13 application immediately	2026-08-22T22:33:32.7682858Z ##[error]Process completed with exit code 1.
