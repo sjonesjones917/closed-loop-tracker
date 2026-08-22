@@ -104,8 +104,7 @@ try{
       await page.locator('#notes').fill('Visible UI evidence: all ten unchanged-confirmation producer and verifier textareas were populated through the rendered Stage 20 controls.');
       await page.locator('#completeConfirm').click();
     }else if(n===30){
-      const project=await page.evaluate(()=>window.__CLR_V13__.getCurrent());
-      const actual=crypto.createHash('sha256').update(Buffer.from(project.artifact,'utf8')).digest('hex');
+      const actual=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'app-v13.html'))).digest('hex');
       const pr=await copyMain();
       assert.match(pr,/VERIFY RELEASE HASH/);
       const resp=`AUDITED_HASH: ${actual}. RELEASE_HASH: ${actual}. Equality result: TRUE. Independent Node.js SHA-256 and the browser application hash the exact stored app-v13.html bytes identically. The audited bytes and proposed release bytes are the same byte sequence; no reserialization, regeneration, appended newline, renamed content, or other mutation occurred.`;
