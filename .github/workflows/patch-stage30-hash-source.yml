@@ -1,0 +1,58 @@
+name: Correct Stage 30 hash source
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/patch-stage30-hash-source.yml
+      - self-browser-e2e.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: correct-stage30-hash-source
+  cancel-in-progress: true
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Hash the exact generated app file at Stage 30
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('self-browser-e2e.mjs')
+          source = path.read_text()
+          old = "      const project=await page.evaluate(()=>window.__CLR_V13__.getCurrent());\n      const actual=crypto.createHash('sha256').update(Buffer.from(project.artifact,'utf8')).digest('hex');"
+          new = "      const actual=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'app-v13.html'))).digest('hex');"
+          if old in source:
+              source = source.replace(old, new, 1)
+              path.write_text(source)
+          elif new not in source:
+              raise SystemExit('Stage 30 hash-source anchor is missing')
+          PY
+          node --check self-browser-e2e.mjs
+
+      - name: Commit the Stage 30 browser-harness correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- self-browser-e2e.mjs; then
+            echo 'Stage 30 already hashes the exact generated app file.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add self-browser-e2e.mjs
+          git commit -m 'Hash the exact app file during Stage 30'
+          git push origin HEAD:main
