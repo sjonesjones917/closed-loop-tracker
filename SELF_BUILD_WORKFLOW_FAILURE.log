@@ -1,52 +1,71 @@
-FAILED_RUN_ID=32603770054
-FAILED_HEAD_SHA=130c8a03a554066469867bc4f125c62c7a1d9a8d
-CAPTURED_AT=2026-08-22T22:55:13Z
+FAILED_RUN_ID=32604010185
+FAILED_HEAD_SHA=cbac013df47477f076cb0619db66b9ff1ca85904
+CAPTURED_AT=2026-08-22T23:00:39Z
 
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	﻿2026-08-22T22:54:58.6044595Z ##[group]Run set -euo pipefail
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6045224Z ^[[36;1mset -euo pipefail^[[0m
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6045491Z ^[[36;1mnode run-v13-self-e2e.mjs^[[0m
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6085753Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6086093Z env:
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6086323Z   CHROME_PATH: /usr/bin/google-chrome
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6086617Z ##[endgroup]
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6741465Z {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6741983Z   "status": "BUILT",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6742688Z   "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6743413Z   "candidate": {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6743772Z     "output": "app-v13-candidate1.html",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6744176Z     "bytes": 50349,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6744529Z     "sidecar": "SELF_VERIFIED_PROJEC.json",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6745430Z     "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6746139Z     "losslessStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6746529Z     "stage2ReceivesStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6747057Z     "nonCircularStage2": true
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6747419Z   },
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6747701Z   "corrected": {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6748035Z     "output": "app-v13.html",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6748407Z     "bytes": 50350,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6748767Z     "sidecar": "SELF_VERIFIED_PROJECT.json",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6749487Z     "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6750154Z     "losslessStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6750549Z     "stage2ReceivesStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6750956Z     "nonCircularStage2": true
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6751320Z   }
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.6751584Z }
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.7330346Z {"file":"app-v13-candidate1.html","bytes":50349,"ruleset":"external-authority-first-2026-08-22-r5-state-replay","patched":true}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.7336017Z {"file":"app-v13.html","bytes":50350,"ruleset":"external-authority-first-2026-08-22-r5-state-replay","patched":true}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:58.7392719Z {"status":"PATCHED_EXISTING_V13","visibleProjectIdField":true,"visibleJobIdField":true,"exactSelfBuildProjectId":"PROJECT-MT3M46X0-075JMP","exactSelfBuildJobId":"JOB-MT3M46X0-M0LIB9","stage3ResearchFilenameLeak":false}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9253272Z node:internal/modules/run_main:123
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9254281Z     triggerUncaughtException(
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9255345Z     ^
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9255732Z 
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9256251Z AssertionError [ERR_ASSERTION]: The first candidate must contain the real sidecar filename defect.
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9257149Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:23:8 {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9257815Z   generatedMessage: false,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9258449Z   code: 'ERR_ASSERTION',
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9258934Z   actual: false,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9259424Z   expected: true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9259926Z   operator: '==',
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9260410Z   diff: 'simple'
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9260870Z }
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9261235Z 
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9261550Z Node.js v22.23.2
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T22:54:59.9399773Z ##[error]Process completed with exit code 1.
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	﻿2026-08-22T23:00:14.8909991Z ##[group]Run set -euo pipefail
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8910397Z ^[[36;1mset -euo pipefail^[[0m
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8910685Z ^[[36;1mnode self-browser-defect-boundary.mjs^[[0m
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8910995Z ^[[36;1mnode run-v13-self-e2e.mjs^[[0m
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8932295Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8932667Z env:
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8932886Z   CHROME_PATH: /usr/bin/google-chrome
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.8933142Z ##[endgroup]
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9244170Z {"status":"PATCHED","file":"self-browser-e2e.mjs","defectField":"SELF_PROJECT_PATH","candidate":"SELF_VERIFIED_PROJEC.json","corrected":"SELF_VERIFIED_PROJECT.json"}
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9810941Z {
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9811311Z   "status": "BUILT",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9811955Z   "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9812374Z   "candidate": {
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9812640Z     "output": "app-v13-candidate1.html",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9812906Z     "bytes": 50349,
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9813203Z     "sidecar": "SELF_VERIFIED_PROJEC.json",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9813627Z     "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9814032Z     "losslessStage1": true,
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9814286Z     "stage2ReceivesStage1": true,
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9814562Z     "nonCircularStage2": true
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9814844Z   },
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9815068Z   "corrected": {
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9815314Z     "output": "app-v13.html",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9815607Z     "bytes": 50350,
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9815895Z     "sidecar": "SELF_VERIFIED_PROJECT.json",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9816386Z     "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9816854Z     "losslessStage1": true,
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9817199Z     "stage2ReceivesStage1": true,
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9817550Z     "nonCircularStage2": true
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9817854Z   }
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:14.9818080Z }
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:15.0365693Z {"file":"app-v13-candidate1.html","bytes":50349,"ruleset":"external-authority-first-2026-08-22-r5-state-replay","patched":true}
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:15.0372344Z {"file":"app-v13.html","bytes":50350,"ruleset":"external-authority-first-2026-08-22-r5-state-replay","patched":true}
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:15.0419967Z {"status":"PATCHED_EXISTING_V13","visibleProjectIdField":true,"visibleJobIdField":true,"exactSelfBuildProjectId":"PROJECT-MT3M46X0-075JMP","exactSelfBuildJobId":"JOB-MT3M46X0-M0LIB9","stage3ResearchFilenameLeak":false}
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4405231Z file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:37
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4406054Z   if(r.status!==0)throw new Error(`External self-build agent failed stage ${n} ${role} ${run}: ${r.stderr}`);
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4406515Z                         ^
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4406656Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4407110Z Error: External self-build agent failed stage 4 stage 0: file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-e2e-agent-runtime.mjs:33
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4408818Z else{const r=spawnSync(process.execPath,['self-e2e-agent-base.mjs',stageArg,role,runArg,Buffer.from(prompt).toString('base64')],{encoding:'utf8',maxBuffer:32*1024*1024});if(r.status!==0)throw new Error(`Base external agent failed: ${r.stderr||r.stdout}`);process.stdout.write(r.stdout)}
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4410700Z                                                                                                                                                                                                 ^
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4411121Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4411636Z Error: Base external agent failed: file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-e2e-agent-base.mjs:58
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4412442Z   if(!successfulExternal.length)throw new Error('Stage 2 BLOCKED: no external authoritative source could be retrieved and examined.');
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4413096Z                                       ^
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4413397Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4414046Z Error: Stage 2 BLOCKED: no external authoritative source could be retrieved and examined.
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4414973Z     at externalInventoryText (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-e2e-agent-base.mjs:58:39)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4415888Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-e2e-agent-base.mjs:64:7
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4416580Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4417274Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4417991Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4418373Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4418692Z Node.js v22.23.2
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4418846Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4419304Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-e2e-agent-runtime.mjs:33:193
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4420430Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4420907Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4421436Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4421753Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4421835Z Node.js v22.23.2
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4421961Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4422281Z     at agent (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:37:25)
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4422966Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:132:44
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4423335Z 
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4423425Z Node.js v22.23.2
+verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:00:27.4536685Z ##[error]Process completed with exit code 1.
