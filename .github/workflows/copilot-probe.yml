@@ -1,4 +1,4 @@
-name: Copilot CLI capability probe
+name: External research capability probe
 
 on:
   push:
@@ -16,30 +16,50 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - name: Install Copilot CLI
         run: npm install -g @github/copilot
-      - name: Run isolated real agent request
+      - name: Perform real external-source discovery
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          copilot --yolo -sp 'Return only this JSON object and no markdown: {"schema":"copilot_probe","status":"COMPLETE","summary":"Real isolated Copilot CLI request completed."}' > copilot-probe-result.json
+          cat > external-research-prompt.txt <<'PROMPT'
+          Search the internet and other external authoritative information sources now. Find primary, independently identifiable sources governing a phone-first browser application that stores canonical project state, hashes exact bytes, supports streaming and failure handling, and must be usable on iPhone Safari. Do not inspect this repository, project files, application HTML, JavaScript, tests, generated JSON, or any work product as authority. Return only one JSON object with schema "external_research_probe", status COMPLETE or BLOCKED, and a nonempty sources array. Each source must include exact_title, source_type, issuing_organization, url, authority_level, relevant_portion, and why_relevant. Include at least one official source for HTML, accessibility, IndexedDB, Web Crypto, Fetch or Streams, and Apple Safari/WebKit or Apple platform guidance. Do not fabricate a source or URL.
+          PROMPT
+          copilot --yolo -sp "$(cat external-research-prompt.txt)" > external-research-result.raw
           python - <<'PY'
-          import json
+          import json, re
           from pathlib import Path
-          text=Path('copilot-probe-result.json').read_text().strip()
-          if text.startswith('```'):
-              text='\n'.join(text.splitlines()[1:-1]).strip()
-          obj=json.loads(text)
-          assert obj['schema']=='copilot_probe'
-          assert obj['status']=='COMPLETE'
-          Path('copilot-probe-result.json').write_text(json.dumps(obj,indent=2)+'\n')
+          raw=Path('external-research-result.raw').read_text().strip()
+          match=re.search(r'\{.*\}', raw, re.S)
+          if not match:
+              raise SystemExit('No JSON object returned by external research process.')
+          obj=json.loads(match.group(0))
+          if obj.get('schema')!='external_research_probe':
+              raise SystemExit('Wrong schema.')
+          if obj.get('status')!='COMPLETE':
+              raise SystemExit('External research process returned BLOCKED.')
+          sources=obj.get('sources')
+          if not isinstance(sources,list) or len(sources)<6:
+              raise SystemExit('Fewer than six external sources returned.')
+          forbidden=('localhost','file://','index.html','app.js','project json','repository file')
+          for source in sources:
+              for key in ('exact_title','source_type','issuing_organization','url','authority_level','relevant_portion','why_relevant'):
+                  if not isinstance(source.get(key),str) or not source[key].strip():
+                      raise SystemExit(f'Missing {key}.')
+              u=source['url'].lower()
+              if not u.startswith('https://') or any(x in u for x in forbidden):
+                  raise SystemExit(f'Non-external or forbidden URL: {u}')
+          Path('external-research-result.json').write_text(json.dumps(obj,indent=2,sort_keys=True)+'\n')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: copilot-probe-result
-          path: copilot-probe-result.json
+          name: external-research-result
+          path: |
+            external-research-prompt.txt
+            external-research-result.raw
+            external-research-result.json
           if-no-files-found: error

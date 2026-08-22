@@ -1,0 +1,114 @@
+name: Implement and test non-circular application on PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - CONTROLLING_NON_CIRCULAR_SPEC.md
+      - NON_CIRCULAR_IMPLEMENTATION_SPEC.md
+      - .github/workflows/implement-noncircular-pr.yml
+      - .github/workflows/implement-noncircular.yml
+
+permissions:
+  contents: write
+  copilot-requests: write
+
+concurrency:
+  group: non-circular-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  implement-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Preserve pre-change repository
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz -o pre-change-repository-backup.tar.gz HEAD
+          sha256sum pre-change-repository-backup.tar.gz > pre-change-repository-backup.sha256
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Replace circular implementation in place
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > implementation-agent-prompt.txt <<'PROMPT'
+          Execute the implementation. Do not merely describe it.
+
+          Read CONTROLLING_NON_CIRCULAR_SPEC.md and NON_CIRCULAR_IMPLEMENTATION_SPEC.md completely. Replace the current application in this repository in place. Do not create a parallel demo. Do not preserve defective code merely for compatibility. Keep the exact 31 stage numbers, names, and order. Do not add a user-visible application version.
+
+          The authority model is mandatory: USER_INPUT and independent EXTERNAL_SOURCE records establish requirements; WORK_PRODUCT is never research authority. Stage 1 defines the job only. Stage 2 must direct a real external agent to search the internet, official sites, standards, documentation, books, libraries, academic literature, databases, laws, and regulations. Stage 2 must never tell the agent to inspect application files, index.html, JavaScript, tests, project JSON, repository files, candidates, or current behavior as sources. Stage 3 must research requirements from accepted external sources and reject work-product authority. Stage 4 requirements must trace to USER_INPUT or EXTERNAL_SOURCE.
+
+          Implement the full phone-first multi-project application, canonical replay, strict response envelopes, record identifiers, substantive validators, stage gates, downstream invalidation, evidence/audit/event history, project persistence/search/import/export/backup/restore/delete, 30-producer/30-verifier execution records, product ingestion and verification, evidence-derived decision, exact-byte release, terminal async states, retry/cancel/timeout, and 320/390 viewport containment. Every visible control must work.
+
+          Add package.json and package-lock.json. Add deterministic tests proving the authority boundary, exact 31 stages, 0/31 creation, Stage 1 job-only prompt, Stage 2/3 external-research prompts, rejection of internal source types and localhost/file/repository provenance, source-area coverage, Stage 3 accepted-source references, Stage 4 traceability, response rejection cases, canonical import recalculation, invalidation, independence, exact-byte release, terminal loading, button handlers, and phone overflow.
+
+          Add Playwright tests that use the rendered interface: create a project at 0/31, block stage skipping, validate Stage 1 and unlock only Stage 2, submit a real externally identifiable Stage 2 response, validate Stage 3 findings, test save/reload/search/export/import/backup/restore/delete, and inspect 320/390 portrait and landscape. Do not inject completed state.
+
+          Add scripts/run-self-verification.mjs capable of driving the actual visible UI and invoking separate real Copilot CLI processes for each required response. It must recreate JOB-MT3M46X0-M0LIB9 from 0/31 with title Closed-Loop Application Self-Verification, perform real external research in Stages 2 and 3, create 30 unique producer and 30 matching verifier executions, generate and verify the actual app, complete all audits and release gates, export through the UI as verified-self-project.json, and prove clean-session load. Do not pre-seed or fabricate the completed project.
+
+          Run and repair tests until they pass. Leave the repository executable. Do not claim the application is accepted; the subsequent real self-verification decides that.
+          PROMPT
+          copilot --yolo -p "$(cat implementation-agent-prompt.txt)"
+          git diff --stat
+          test -s package.json
+          test -s index.html
+          tar --exclude=.git --exclude=node_modules --exclude=implementation-workspace.tgz -czf implementation-workspace.tgz .
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          if test -s package-lock.json; then npm ci; else npm install; fi
+
+      - name: Deterministic tests
+        run: npm test
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Visible browser tests
+        run: npm run test:e2e
+
+      - name: Record tested implementation evidence
+        run: |
+          set -euo pipefail
+          git diff --stat > implementation-diff-stat.txt
+          git diff > implementation.diff
+          sha256sum index.html > implementation-index.sha256
+          printf '{"status":"IMPLEMENTED_NOT_RELEASED","authority_model":"USER_INPUT_EXTERNAL_SOURCE_WORK_PRODUCT","deterministic_tests":"PASS","visible_browser_tests":"PASS","accepted":false}\n' > implementation-result.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: non-circular-pr-implementation
+          path: |
+            pre-change-repository-backup.tar.gz
+            pre-change-repository-backup.sha256
+            implementation-agent-prompt.txt
+            implementation-workspace.tgz
+            implementation-diff-stat.txt
+            implementation.diff
+            implementation-index.sha256
+            implementation-result.json
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+
+      - name: Commit only tested implementation
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Implement tested non-circular external-source application [skip ci]'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
