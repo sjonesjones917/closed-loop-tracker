@@ -34,11 +34,15 @@ for (const file of ['self-e2e-agent-base.mjs', 'self-e2e-agent.mjs']) {
 if (!fs.readFileSync('self-e2e-agent-base.mjs', 'utf8').includes(BASE_NEW)) throw new Error('base agent asynchronous stdin transport not installed');
 if (!fs.readFileSync('self-e2e-agent.mjs', 'utf8').includes(WRAPPER_NEW)) throw new Error('wrapper stdin transport not installed');
 
+const browserReplay=spawnSync(process.execPath,['v13-browser-context-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
+if(browserReplay.status!==0)process.exit(browserReplay.status??1);
+
 console.log(JSON.stringify({
   status: 'PATCHED_OR_ALREADY_CURRENT',
   transport: 'ASYNC_STDIN',
   idempotent: true,
   eliminatesSingleArgumentSizeLimit: true,
   eliminatesSynchronousStdinEagain: true,
-  files: ['self-e2e-agent-base.mjs', 'self-e2e-agent.mjs']
+  browserContextRecovery: true,
+  files: ['self-e2e-agent-base.mjs', 'self-e2e-agent.mjs', 'self-browser-e2e.mjs']
 }));
