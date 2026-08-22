@@ -21,7 +21,7 @@ jobs:
   implement:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
         with:
@@ -47,7 +47,9 @@ jobs:
 
           Read CONTROLLING_NON_CIRCULAR_SPEC.md completely. Inspect the current repository. Replace defective implementation code in place so the application satisfies that specification. Do not create a parallel demonstration application. Do not add a user-visible version number. Preserve all 31 exact stage numbers, names, and order.
 
-          Mandatory first correction: Stage 1 defines the job only. Stage 2 must discover real external authoritative sources outside the project. Stage 3 must research requirements from those sources. Application files, HTML, JavaScript, tests, project JSON, generated artifacts, current behavior, and prior workflow outputs are WORK_PRODUCT and must be rejected as Stage 2/3 research authority.
+          Mandatory first correction: Stage 1 defines the job only. Stage 2 must discover real external authoritative sources outside the project. Stage 3 must research requirements from those external sources. Application files, HTML, JavaScript, tests, project JSON, generated artifacts, current behavior, and prior workflow outputs are WORK_PRODUCT and must be rejected as Stage 2/3 research authority.
+
+          The Stage 2 generated instruction must not tell the agent to inspect supplied application files and must not present implementation files as the source inventory. It may provide the accepted Stage 1 job definition, domains, research questions, and user-supplied links only as USER_INPUT context. It must directly command internet, official-site, standards, documentation, books, libraries, academic-literature, database, law, and regulation discovery and must return the completed EXTERNAL_SOURCE records only. Stage 3 must read those accepted external records and return externally grounded findings only.
 
           Implement substantive generated prompts, deterministic validation, canonical import replay, source and requirement traceability, project operations, stage gates and invalidation, evidence/audit/event history, producer/verifier execution records, product generation and release controls, terminal async states, and phone-first UI behavior.
 
