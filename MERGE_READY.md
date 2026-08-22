@@ -1,0 +1,1 @@
+The exact application artifact and UI-exported self-verification project passed the complete real-agent workflow and clean-session verification on the engineering branch. This file is an engineering merge marker and is not part of the release payload.
