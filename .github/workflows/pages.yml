@@ -36,6 +36,7 @@ jobs:
           node --check v13-state-replay.mjs
           node --check self-e2e-agent.mjs
           node --check self-browser-e2e.mjs
+          node --check self-browser-defect-boundary.mjs
           node --check run-v13-self-e2e.mjs
           node build-v13-self.mjs
           node v13-state-replay.mjs
@@ -75,6 +76,7 @@ jobs:
           CHROME_PATH: /usr/bin/google-chrome
         run: |
           set -euo pipefail
+          node self-browser-defect-boundary.mjs
           node run-v13-self-e2e.mjs
 
       - name: Independently verify the UI-exported project and exact release bytes
@@ -204,7 +206,7 @@ jobs:
       - name: Publish the exact tested app and project export to main
         shell: bash
         run: |
-          set -euo pipefail
+          set -euo pipefal
           cp app-v13.html index.html
           rm -f SELF_BUILD_WORKFLOW_FAILURE.log
           git config user.name 'github-actions[bot]'
