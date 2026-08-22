@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - complete-app-work
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
