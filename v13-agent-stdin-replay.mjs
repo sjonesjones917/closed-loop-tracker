@@ -34,6 +34,9 @@ for (const file of ['self-e2e-agent-base.mjs', 'self-e2e-agent.mjs']) {
 if (!fs.readFileSync('self-e2e-agent-base.mjs', 'utf8').includes(BASE_NEW)) throw new Error('base agent asynchronous stdin transport not installed');
 if (!fs.readFileSync('self-e2e-agent.mjs', 'utf8').includes(WRAPPER_NEW)) throw new Error('wrapper stdin transport not installed');
 
+const defectBoundaryReplay=spawnSync(process.execPath,['v13-agent-defect-boundary-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
+if(defectBoundaryReplay.status!==0)process.exit(defectBoundaryReplay.status??1);
+
 const browserReplay=spawnSync(process.execPath,['v13-browser-context-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
 if(browserReplay.status!==0)process.exit(browserReplay.status??1);
 
@@ -43,6 +46,7 @@ console.log(JSON.stringify({
   idempotent: true,
   eliminatesSingleArgumentSizeLimit: true,
   eliminatesSynchronousStdinEagain: true,
-  browserContextRecovery: true,
+  exactDefectFieldVerification: true,
+  projectEvidenceSource: 'VISIBLE_UI_EXPORT',
   files: ['self-e2e-agent-base.mjs', 'self-e2e-agent.mjs', 'self-browser-e2e.mjs']
 }));
