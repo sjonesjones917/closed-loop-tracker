@@ -202,7 +202,7 @@ async function stage3(){
 if(role==='stage'&&n===2)process.stdout.write(await stage2());
 else if(role==='stage'&&n===3)process.stdout.write(await stage3());
 else{
-  const result=spawnSync(process.execPath,['self-e2e-agent-base.mjs',stageArg,role,runArg,Buffer.from(prompt).toString('base64')],{encoding:'utf8',maxBuffer:32*1024*1024});
-  if(result.status!==0)throw new Error(`Base external agent failed: ${result.stderr||result.stdout}`);
+  const result=spawnSync(process.execPath,['self-e2e-agent-base.mjs',stageArg,role,runArg],{encoding:'utf8',input:prompt,maxBuffer:32*1024*1024});
+  if(result.status!==0)throw new Error(`Base external agent failed (${result.error?.message||`exit ${result.status}`}): ${result.stderr||result.stdout||'NO CHILD OUTPUT'}`);
   process.stdout.write(result.stdout);
 }

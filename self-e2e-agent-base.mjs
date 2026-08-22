@@ -4,7 +4,7 @@ import process from 'node:process';
 
 const [stageArg,role='stage',runArg='0',promptB64='']=process.argv.slice(2);
 const n=Number(stageArg),run=Number(runArg);
-const prompt=Buffer.from(promptB64,'base64').toString('utf8');
+const prompt=promptB64?Buffer.from(promptB64,'base64').toString('utf8'):fs.readFileSync(0,'utf8');
 if(!prompt.includes(`STAGE ${n} OF 31`))throw new Error(`Prompt does not identify Stage ${n}`);
 const rid=`RUN-${String(run).padStart(3,'0')}`;
 const objective="Create, verify, and release the Closed-Loop Agent Reliability v13 application itself by using the actual application UI from an empty project through every one of the 31 sequential operations. The released application must automatically load and display the exact project JSON exported through the app's visible Export this project control after this run; the project must not be hardcoded into the HTML.";
