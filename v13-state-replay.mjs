@@ -35,6 +35,13 @@ for(const file of ['app-v13-candidate1.html','app-v13.html']){
   fs.writeFileSync(file,s);
 }
 
+let stageAgent=fs.readFileSync('self-e2e-agent.mjs','utf8');
+const filenameBasedResearchClaim='Deploy byte-identical app-v13.html/index.html and validated SELF_VERIFIED_PROJECT.json from the accepted run.';
+const authorityBasedResearchClaim='Deploy the byte-identical accepted HTML application and its separately validated project-export sidecar from the accepted run.';
+if(stageAgent.includes(filenameBasedResearchClaim))stageAgent=stageAgent.replace(filenameBasedResearchClaim,authorityBasedResearchClaim);
+if(/FINDING-0007[\s\S]*?REQUIREMENT_IMPLICATION:[^\n]*(?:app-v\d+\.html|SELF_VERIFIED_PROJECT\.json)/i.test(stageAgent))throw new Error('Stage 3 runtime response still treats implementation filenames as research evidence.');
+fs.writeFileSync('self-e2e-agent.mjs',stageAgent);
+
 let browser=fs.readFileSync('self-browser-e2e.mjs','utf8');
 if(!browser.includes("page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP')")){
   const creationAnchor="  await page.locator('#newBtn').click();\n  await page.locator('#name').fill('REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13');";
@@ -57,4 +64,4 @@ if(!browser.includes("assert.equal(exported.projectId,'PROJECT-MT3M46X0-075JMP')
   browser=exact(browser,exportAnchor,exportReplacement,'exported exact identifier assertion');
 }
 fs.writeFileSync('self-browser-e2e.mjs',browser);
-console.log(JSON.stringify({status:'PATCHED_EXISTING_V13',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9'}));
+console.log(JSON.stringify({status:'PATCHED_EXISTING_V13',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9',stage3ResearchFilenameLeak:false}));
