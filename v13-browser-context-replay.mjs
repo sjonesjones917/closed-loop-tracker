@@ -80,9 +80,9 @@ if(source.includes(duplicateExportBlock))source=source.replace(duplicateExportBl
 else if(source.includes(assertedDuplicateExportBlock))source=source.replace(assertedDuplicateExportBlock,'  const exported=project;');
 else if(!source.includes('  const exported=project;'))throw new Error('duplicate visible-export block anchor missing');
 
-const legacyFreshWait=`  await freshPage.goto(\`${origin}/app-v13.html?fresh=\${Date.now()}\`,{waitUntil:'networkidle'});
+const legacyFreshWait=`  await freshPage.goto(\`\${origin}/app-v13.html?fresh=\${Date.now()}\`,{waitUntil:'networkidle'});
   await freshPage.locator('[data-open]').waitFor({state:'visible'});`;
-const diagnosticFreshWait=`  await freshPage.goto(\`${origin}/app-v13.html?fresh=\${Date.now()}\`,{waitUntil:'networkidle'});
+const diagnosticFreshWait=`  await freshPage.goto(\`\${origin}/app-v13.html?fresh=\${Date.now()}\`,{waitUntil:'networkidle'});
   await freshPage.waitForTimeout(3000);
   const freshAutoloadDiagnostics=await freshPage.evaluate(async()=>{
     const status=document.querySelector('#status')?.textContent||'';
