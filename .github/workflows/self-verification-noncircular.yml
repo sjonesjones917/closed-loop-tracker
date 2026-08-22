@@ -1,0 +1,266 @@
+name: Real non-circular self-verification and release candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [complete-app-work]
+    paths:
+      - .self-verification-trigger
+
+permissions:
+  contents: write
+  copilot-requests: write
+
+concurrency:
+  group: real-noncircular-self-verification
+  cancel-in-progress: false
+
+jobs:
+  self-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: complete-app-work
+          fetch-depth: 0
+
+      - name: Preserve pre-self-verification repository backup
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz -o pre-self-verification-backup.tar.gz HEAD
+          sha256sum pre-self-verification-backup.tar.gz > pre-self-verification-backup.sha256
+
+      - name: Install dependencies and real-agent executor
+        run: |
+          set -euo pipefail
+          test -s package.json
+          if test -s package-lock.json; then npm ci; else npm install; fi
+          npm install -g @github/copilot
+          npx playwright install --with-deps chromium
+
+      - name: Re-run implementation tests before self-verification
+        run: |
+          set -euo pipefail
+          npm test
+          npm run test:e2e
+
+      - name: Execute real self-verification from 0 of 31 through the visible UI
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SELF_VERIFICATION_JOB_ID: JOB-MT3M46X0-M0LIB9
+          SELF_VERIFICATION_TITLE: Closed-Loop Application Self-Verification
+          SELF_VERIFICATION_EXPORT: verified-self-project.json
+          REQUIRE_REAL_EXTERNAL_RESEARCH: 'true'
+          REQUIRE_REAL_PRODUCER_COUNT: '30'
+          REQUIRE_REAL_VERIFIER_COUNT: '30'
+        run: |
+          set -euo pipefail
+          test -s scripts/run-self-verification.mjs
+          node scripts/run-self-verification.mjs
+
+      - name: Independently validate the UI-exported canonical project and exact release files
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, re
+          from pathlib import Path
+
+          required = [
+              'index.html',
+              'verified-self-project.json',
+              'verification-evidence.json',
+              'release-manifest.json',
+              'candidate-identity.json',
+              'complete-test-report.json',
+          ]
+          for name in required:
+              path=Path(name)
+              if not path.is_file() or path.stat().st_size == 0:
+                  raise SystemExit(f'Missing required release file: {name}')
+
+          project=json.loads(Path('verified-self-project.json').read_text())
+          evidence=json.loads(Path('verification-evidence.json').read_text())
+          manifest=json.loads(Path('release-manifest.json').read_text())
+          identity=json.loads(Path('candidate-identity.json').read_text())
+          report=json.loads(Path('complete-test-report.json').read_text())
+
+          def walk(obj):
+              if isinstance(obj, dict):
+                  yield obj
+                  for value in obj.values():
+                      yield from walk(value)
+              elif isinstance(obj, list):
+                  for value in obj:
+                      yield from walk(value)
+
+          objects=list(walk(project))
+          text=json.dumps(project, sort_keys=True)
+          if 'JOB-MT3M46X0-M0LIB9' not in text:
+              raise SystemExit('Historical job identifier is absent.')
+          if 'Closed-Loop Application Self-Verification' not in text:
+              raise SystemExit('Exact self-verification title is absent.')
+
+          stages=[]
+          for obj in objects:
+              n=obj.get('stage_number', obj.get('number'))
+              name=obj.get('stage_name', obj.get('name'))
+              status=obj.get('status')
+              if isinstance(n,int) and 1 <= n <= 31 and isinstance(name,str) and status == 'COMPLETE':
+                  stages.append((n,name))
+          completed_numbers={n for n,_ in stages}
+          if completed_numbers != set(range(1,32)):
+              raise SystemExit(f'Canonical replay did not establish 31 completed stages: {sorted(completed_numbers)}')
+
+          producers=[]; verifiers=[]; external_sources=[]; research_findings=[]
+          for obj in objects:
+              kind=str(obj.get('record_type',obj.get('type',obj.get('kind','')))).upper()
+              if 'PRODUCER_EXECUTION' in kind or kind == 'PRODUCER':
+                  producers.append(obj)
+              if 'VERIFIER' in kind or 'REQUIREMENT_VERIFICATION' in kind:
+                  if any(k in obj for k in ('raw_response','raw_response_hash','response_hash','producer_output_hash')):
+                      verifiers.append(obj)
+              if kind in {'EXTERNAL_SOURCE','EXTERNAL_SOURCE_RECORD','SOURCE'}:
+                  st=str(obj.get('source_type','')).upper()
+                  url=str(obj.get('url',obj.get('external_location','')))
+                  if st and url:
+                      external_sources.append(obj)
+              if kind in {'RESEARCH_FINDING','FINDING'}:
+                  research_findings.append(obj)
+
+          # Use explicit report counts when present, but prove raw response hashes are present and unique in the export.
+          def report_int(*keys):
+              for key in keys:
+                  value=report.get(key)
+                  if isinstance(value,int): return value
+              return None
+          reported_producers=report_int('producer_response_count','producer_count')
+          reported_verifiers=report_int('verifier_response_count','verifier_count')
+          if reported_producers != 30 or reported_verifiers != 30:
+              raise SystemExit(f'Wrong report counts: producers={reported_producers}, verifiers={reported_verifiers}')
+
+          producer_hashes=set(); verifier_hashes=set()
+          for obj in objects:
+              role=str(obj.get('role',obj.get('execution_role',''))).upper()
+              raw=obj.get('raw_response')
+              h=obj.get('raw_response_hash',obj.get('response_hash'))
+              if role == 'PRODUCER' or 'PRODUCER_EXECUTION' in str(obj.get('record_type','')).upper():
+                  if isinstance(raw,str) and raw.strip() and isinstance(h,str) and re.fullmatch(r'[0-9a-fA-F]{64}',h): producer_hashes.add(h.lower())
+              if role == 'VERIFIER' or 'VERIFIER_EXECUTION' in str(obj.get('record_type','')).upper():
+                  if isinstance(raw,str) and raw.strip() and isinstance(h,str) and re.fullmatch(r'[0-9a-fA-F]{64}',h): verifier_hashes.add(h.lower())
+          if len(producer_hashes) < 30 or len(verifier_hashes) < 30:
+              raise SystemExit(f'Insufficient unique raw response hashes: {len(producer_hashes)} producers, {len(verifier_hashes)} verifiers')
+
+          forbidden_types={'APPLICATION_FILE','GENERATED_FILE','PROJECT_JSON','HTML','JAVASCRIPT','TEST_FILE','WORK_PRODUCT'}
+          forbidden_url_parts=('localhost','file://','index.html','app.js','javascript','project.json')
+          if not external_sources:
+              raise SystemExit('No external source records found.')
+          source_ids=set()
+          for source in external_sources:
+              st=str(source.get('source_type','')).upper()
+              if st in forbidden_types:
+                  raise SystemExit(f'Forbidden research-source type: {st}')
+              url=str(source.get('url',source.get('external_location',''))).strip()
+              if not url.startswith('https://') or any(part in url.lower() for part in forbidden_url_parts):
+                  raise SystemExit(f'Forbidden or non-external source provenance: {url}')
+              sid=source.get('record_id',source.get('source_id',source.get('id')))
+              if isinstance(sid,str) and sid.strip(): source_ids.add(sid)
+          if len(external_sources) < 8:
+              raise SystemExit(f'Insufficient external source inventory: {len(external_sources)}')
+          if not research_findings:
+              raise SystemExit('No external research findings found.')
+          for finding in research_findings:
+              refs=finding.get('source_refs',finding.get('source_ids',finding.get('external_source_refs',[])))
+              if isinstance(refs,str): refs=[refs]
+              if not isinstance(refs,list) or not refs or not all(ref in source_ids for ref in refs):
+                  raise SystemExit('Research finding does not trace to accepted external source records.')
+
+          decision=str(report.get('final_decision',report.get('decision',''))).upper()
+          if decision != 'ACCEPTED':
+              raise SystemExit(f'Final decision is not ACCEPTED: {decision}')
+          if report.get('workflow_count') not in (31,'31/31'):
+              raise SystemExit(f'Wrong workflow count: {report.get("workflow_count")}')
+          for key in ('process_audit','product_audit'):
+              value=str(report.get(key,'')).upper()
+              if value not in ('PASS','PASSED','SATISFIED'):
+                  raise SystemExit(f'{key} did not pass: {value}')
+
+          app_hash=hashlib.sha256(Path('index.html').read_bytes()).hexdigest()
+          accepted=str(report.get('accepted_artifact_sha256',identity.get('build_artifact_sha256',identity.get('release_artifact_sha256','')))).lower()
+          released=str(report.get('release_artifact_sha256',identity.get('release_artifact_sha256',''))).lower()
+          if not accepted or not released or accepted != app_hash or released != app_hash:
+              raise SystemExit(f'Exact-byte identity failure: actual={app_hash}, accepted={accepted}, released={released}')
+
+          manifest_text=json.dumps(manifest,sort_keys=True)
+          if app_hash not in manifest_text:
+              raise SystemExit('Release manifest does not identify actual application SHA-256.')
+          project_hash=hashlib.sha256(Path('verified-self-project.json').read_bytes()).hexdigest()
+          if project_hash not in manifest_text:
+              raise SystemExit('Release manifest does not identify verified-self-project.json SHA-256.')
+
+          result={
+              'status':'PASS',
+              'workflow_count':31,
+              'producer_response_count':30,
+              'verifier_response_count':30,
+              'unique_producer_hashes':len(producer_hashes),
+              'unique_verifier_hashes':len(verifier_hashes),
+              'external_source_records':len(external_sources),
+              'research_findings':len(research_findings),
+              'application_sha256':app_hash,
+              'verified_self_project_sha256':project_hash,
+              'decision':'ACCEPTED',
+          }
+          Path('independent-release-validation.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result,indent=2))
+          PY
+
+      - name: Clean-session public-file browser verification
+        run: |
+          set -euo pipefail
+          if npm run | grep -q 'test:clean-session'; then
+            npm run test:clean-session
+          elif test -s scripts/verify-clean-session.mjs; then
+            node scripts/verify-clean-session.mjs
+          else
+            echo 'Missing clean-session verification script.' >&2
+            exit 1
+          fi
+
+      - name: Build exact release archive and hashes
+        run: |
+          set -euo pipefail
+          sha256sum index.html verified-self-project.json verification-evidence.json release-manifest.json candidate-identity.json complete-test-report.json > FINAL_RELEASE_HASHES.txt
+          tar --exclude=.git --exclude=node_modules --exclude=release-source-archive.tar.gz -czf release-source-archive.tar.gz .
+          sha256sum release-source-archive.tar.gz >> FINAL_RELEASE_HASHES.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-noncircular-self-verification-release
+          path: |
+            pre-self-verification-backup.tar.gz
+            pre-self-verification-backup.sha256
+            index.html
+            verified-self-project.json
+            verification-evidence.json
+            release-manifest.json
+            candidate-identity.json
+            complete-test-report.json
+            independent-release-validation.json
+            FINAL_RELEASE_HASHES.txt
+            release-source-archive.tar.gz
+            evidence/
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+
+      - name: Commit exact accepted release candidate to engineering branch
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Add real non-circular 31-stage self-verification release [skip ci]'
+          git push origin HEAD:complete-app-work
