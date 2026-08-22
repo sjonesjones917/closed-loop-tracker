@@ -1,12 +1,6 @@
-name: Correct fallback agent stage dispatch
+name: Correct fallback agent stage dispatch (manual only)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/patch-agent-dispatch.yml
-      - self-e2e-agent-base.mjs
   workflow_dispatch:
 
 permissions:
