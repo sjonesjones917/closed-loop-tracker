@@ -1,0 +1,20 @@
+{
+  "attempts": [
+    {
+      "detail": "{\"error\":{\"code\":\"github_models_retirement_brownout\",\"message\":\"GitHub Models is temporarily unavailable as part of a scheduled retirement brownout.\"}}\n",
+      "http_status": 410,
+      "model": "openai/gpt-4.1-mini"
+    },
+    {
+      "detail": "{\"error\":{\"code\":\"github_models_retirement_brownout\",\"message\":\"GitHub Models is temporarily unavailable as part of a scheduled retirement brownout.\"}}\n",
+      "http_status": 410,
+      "model": "openai/gpt-4o-mini"
+    },
+    {
+      "detail": "{\"error\":{\"code\":\"github_models_retirement_brownout\",\"message\":\"GitHub Models is temporarily unavailable as part of a scheduled retirement brownout.\"}}\n",
+      "http_status": 410,
+      "model": "openai/gpt-4o"
+    }
+  ],
+  "status": "BLOCKED"
+}
