@@ -55,11 +55,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node verify-live.mjs
-      - name: Verify 320-pixel human view
+      - name: Verify phone human views
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=320,800 --virtual-time-budget=6000 --dump-dom "${PAGE_URL}" > live-320.html
-          grep -q 'GEN-042' live-320.html
-          grep -q '30/30' live-320.html
-          grep -q 'Complete project records\|Overview' live-320.html
+          for WIDTH in 320 393; do
+            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=6000 --dump-dom "${PAGE_URL}" > "live-${WIDTH}.html"
+            grep -q 'GEN-042' "live-${WIDTH}.html"
+            grep -q '30/30' "live-${WIDTH}.html"
+            grep -q 'Overview' "live-${WIDTH}.html"
+          done
