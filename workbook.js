@@ -1,7 +1,7 @@
 (async()=>{
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
-    const cacheKey="single-workbook-stage-native-controls";
+    const cacheKey="single-workbook-stage-native-controls-final";
     const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
     const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
     for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
@@ -23,9 +23,11 @@
 (()=>{
   "use strict";
 
+  const STORE="mclarw";
   const BAD_NAV=/^(?:Appendices\s+A\s*[–—-]\s*F|Control records|Appendix controls|Operational controls\s+A\s*[–—-]\s*F|[A-F]\s+(?:FRESH AGENT CONTEXT LAUNCH CHECKLIST|UNIVERSAL BLOCKER RECORD|UNIVERSAL CHANGE AND INVALIDATION LOG|EXACT FINAL RELEASE CHECKLIST|NEW-JOB RESET CHECKLIST|UNIVERSAL AGENT-OUTPUT RECEIPT))$/i;
+  const WORKBOOK_NAV=/^30\s*[–—-]\s*stage workbook$/i;
   const APPENDIX_HEADING=/^APPENDIX\s+[A-F]\s*[-–—]/i;
-  const CONTROL_HEADING=/^(?:CONTROL RECORDS|APPENDIX CONTROLS|OPERATIONAL CONTROLS\s+A\s*[–—-]\s*F)$/i;
+  const CONTROL_HEADING=/^(?:APPENDICES\s+A\s*[–—-]\s*F|CONTROL RECORDS|APPENDIX CONTROLS|OPERATIONAL CONTROLS\s+A\s*[–—-]\s*F)$/i;
   const STYLE_ID="stage-native-control-style";
   const PURPOSE_ID="appendix-operational-purpose";
   const DEFINITIONS=[
@@ -41,11 +43,36 @@
 
   const normalizedText=element=>String(element?.textContent||"").replace(/\s+/g," ").trim();
   const allControls=()=>[...document.querySelectorAll("button,a,[role='button']")];
-  const workbookButton=()=>allControls().find(element=>/^30\s*[–—-]\s*stage workbook$/i.test(normalizedText(element)));
+  const workbookButton=()=>allControls().find(element=>WORKBOOK_NAV.test(normalizedText(element)));
   const isActive=element=>Boolean(element&&(element.classList.contains("active")||element.getAttribute("aria-current")==="page"||element.getAttribute("aria-selected")==="true"||element.getAttribute("aria-pressed")==="true"));
   const isVisible=element=>Boolean(element&&!element.hidden&&element.getAttribute("aria-hidden")!=="true");
 
-  function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
+  function escapeHtml(value){
+    return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+  }
+
+  function readState(){
+    try{return JSON.parse(localStorage.getItem(STORE)||"null");}
+    catch{return null;}
+  }
+
+  function appendixRecords(state,letter){
+    if(Array.isArray(state?.operationalRecords?.[letter]))return state.operationalRecords[letter];
+    if(Array.isArray(state?.appendices?.[letter]?.records))return state.appendices[letter].records;
+    return [];
+  }
+
+  function recordId(record){
+    return record?.id||
+      record?.FRESH_CONTEXT_LAUNCH_RECORD_ID||
+      record?.BLOCKER_ID||
+      record?.CHANGE_ID||
+      record?.RELEASE_ID||
+      record?.HASH_AUDIT_ID||
+      record?.NEW_JOB_INITIALIZATION_RECORD_ID||
+      record?.RECEIPT_ID||
+      "recorded";
+  }
 
   function addStyles(){
     if(document.getElementById(STYLE_ID))return;
@@ -62,56 +89,72 @@
       [data-control-records="true"] .record-state{float:right;color:#666;font-size:11px;font-weight:400}
       [data-control-records="true"] .record-id{color:#666;font-weight:400}
       [data-contextual-controls="true"] [data-hash-control="true"]{margin-top:10px}
-      [data-appendix-reference-hidden="true"],[data-obsolete-workbook-navigation="true"]{display:none!important}
+      [data-appendix-reference-hidden="true"]{display:none!important}
       #${PURPOSE_ID} .appendix-row{border-top:1px solid #ddd;padding:9px 0}
-      #${PURPOSE_ID} .appendix-row .muted{margin-top:4px}
+      #${PURPOSE_ID} .appendix-meta{margin-top:4px}
     `;
     document.head.appendChild(style);
   }
 
+  function activateWorkbook(){
+    const button=workbookButton();
+    if(button&&!button.hidden&&!forcingWorkbook){
+      forcingWorkbook=true;
+      try{button.click();}
+      finally{queueMicrotask(()=>{forcingWorkbook=false;queue();});}
+      return true;
+    }
+    let changed=false;
+    try{
+      if("view" in globalThis&&globalThis.view!=="workbook"){
+        globalThis.view="workbook";
+        changed=true;
+      }
+    }catch{}
+    if(changed&&typeof globalThis.render==="function"){
+      globalThis.render();
+      return true;
+    }
+    return false;
+  }
+
   function obsoleteSurfaceVisible(){
     if(allControls().some(element=>BAD_NAV.test(normalizedText(element))&&isActive(element)))return true;
-    return [...document.querySelectorAll("h1,h2,h3,h4,summary")].some(heading=>{
-      if(heading.closest('[data-contextual-controls="true"],[data-stage-native-operational-controls="true"],#appendix-operational-purpose'))return false;
+    const content=document.getElementById("content");
+    if(!content)return false;
+    return [...content.querySelectorAll("h1,h2,h3,h4,summary")].some(heading=>{
+      if(heading.closest('[data-contextual-controls="true"],[data-stage-native-operational-controls="true"]'))return false;
       const value=normalizedText(heading);
       return isVisible(heading)&&(APPENDIX_HEADING.test(value)||CONTROL_HEADING.test(value));
     });
   }
 
+  function forceWorkbookSurface(){
+    if(!obsoleteSurfaceVisible())return false;
+    return activateWorkbook();
+  }
+
   function keepWorkbookSurface(event){
     const clicked=event?.target?.closest?.("button,a,[role='button']")||null;
-    if(clicked&&BAD_NAV.test(normalizedText(clicked))){
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
-    try{if("view" in globalThis&&globalThis.view!=="workbook")globalThis.view="workbook"}catch{}
-    const button=workbookButton();
-    if(!button||forcingWorkbook||(!clicked&&!obsoleteSurfaceVisible()))return;
-    forcingWorkbook=true;
-    button.hidden=false;
-    button.removeAttribute("aria-hidden");
-    try{button.click();}
-    finally{queueMicrotask(()=>{forcingWorkbook=false;queue();});}
+    if(!clicked||!BAD_NAV.test(normalizedText(clicked)))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activateWorkbook();
+    queue();
   }
 
   function removeDuplicateNavigation(){
+    const containers=new Set();
     for(const element of allControls()){
       if(!BAD_NAV.test(normalizedText(element)))continue;
-      element.dataset.obsoleteWorkbookNavigation="true";
-      element.hidden=true;
-      element.setAttribute("aria-hidden","true");
-      element.setAttribute("tabindex","-1");
-      element.classList.remove("active");
-      element.removeAttribute("aria-current");
-      element.removeAttribute("aria-selected");
-      element.removeAttribute("aria-pressed");
+      const container=element.closest(".tabs,[data-view-tabs],[role='tablist']")||element.parentElement;
+      if(container)containers.add(container);
+      element.remove();
     }
-    for(const container of document.querySelectorAll(".nav,.tabs,[role='tablist']")){
-      const children=[...container.querySelectorAll("button,a,[role='button']")];
-      if(children.length&&children.every(child=>!isVisible(child))){
-        container.hidden=true;
-        container.setAttribute("aria-hidden","true");
-      }
+    for(const container of containers){
+      if(!container?.isConnected)continue;
+      const remaining=[...container.querySelectorAll("button,a,[role='button']")].filter(isVisible);
+      if(!remaining.length||(remaining.length===1&&WORKBOOK_NAV.test(normalizedText(remaining[0]))))container.remove();
     }
   }
 
@@ -139,8 +182,18 @@
       panel.dataset.appendixOperationalPurpose="true";
       master.appendChild(panel);
     }
-    const rows=DEFINITIONS.map(([letter,title,meaning])=>`<div class="appendix-row"><strong>Appendix ${letter} — ${escapeHtml(title)}</strong><div class="muted">${escapeHtml(meaning)}</div></div>`).join("");
-    panel.innerHTML=`<summary><strong>APPENDIX A–F — OPERATIONAL CONTROLS</strong></summary><p class="muted">Appendices A–F are retained inside this existing 30-stage application as reusable event-driven controls. They are not extra stages and not permanent checklist stacks. The matching control creates or enforces the required record only when its workflow event occurs.</p>${rows}`;
+    const state=readState();
+    const rows=DEFINITIONS.map(([letter,title,meaning])=>{
+      const list=appendixRecords(state,letter);
+      const latest=list.length?recordId(list[list.length-1]):"none yet";
+      return {letter,title,meaning,count:list.length,latest};
+    });
+    const signature=JSON.stringify(rows.map(({letter,count,latest})=>[letter,count,latest]));
+    if(panel.dataset.renderSignature===signature)return;
+    const wasOpen=panel.open;
+    panel.dataset.renderSignature=signature;
+    panel.innerHTML=`<summary><strong>APPENDIX A–F — OPERATIONAL CONTROLS</strong></summary><p class="muted">Appendices A–F are retained inside this existing 30-stage application as reusable event-driven controls. They are not extra stages and not permanent checklist stacks. The matching control creates, enforces, or preserves the required record only when its workflow event occurs.</p>${rows.map(({letter,title,meaning,count,latest})=>`<div class="appendix-row"><strong>Appendix ${letter} — ${escapeHtml(title)}</strong><div class="muted appendix-meta">${escapeHtml(meaning)}</div><div class="muted appendix-meta">Preserved records: ${count}. Latest: ${escapeHtml(latest)}</div></div>`).join("")}`;
+    panel.open=wasOpen;
   }
 
   function recordState(record){
@@ -150,23 +203,27 @@
   }
 
   function normalizeRecord(record){
-    record.open=false;
-    record.removeAttribute("open");
+    if(record.dataset.stageNativeInitialized!=="true"){
+      record.open=false;
+      record.removeAttribute("open");
+      record.dataset.stageNativeInitialized="true";
+    }
     record.dataset.stageNativeRecord="true";
     const summary=record.querySelector(":scope > summary");
     if(!summary)return;
-    const raw=normalizedText(summary),separator=raw.lastIndexOf("—"),title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record",id=(separator>=0?raw.slice(separator+1):"").trim(),status=recordState(record),signature=`${title}|${id}|${status}`;
+    const raw=normalizedText(summary);
+    const separator=raw.lastIndexOf("—");
+    const title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record";
+    const id=(separator>=0?raw.slice(separator+1):"").trim();
+    const status=recordState(record);
+    const signature=`${title}|${id}|${status}`;
     if(summary.dataset.compactSignature===signature)return;
     summary.dataset.compactSignature=signature;
     summary.innerHTML=`<strong>${escapeHtml(title)}</strong>${id?` <span class="record-id">— ${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(status)}</span>`;
   }
 
   function compactContextualControls(){
-    document.querySelectorAll('[data-integrated-operational-controls="true"]').forEach(panel=>{
-      panel.hidden=true;
-      panel.setAttribute("aria-hidden","true");
-      panel.dataset.appendixReferenceHidden="true";
-    });
+    document.querySelectorAll('[data-integrated-operational-controls="true"]').forEach(panel=>panel.remove());
     document.querySelectorAll('[data-contextual-controls="true"]').forEach(root=>{
       root.dataset.stageNativeOperationalControls="true";
       const all=[...root.querySelectorAll("details[data-record]")];
@@ -177,15 +234,20 @@
         group=document.createElement("details");
         group.className="card";
         group.dataset.controlRecords="true";
+        group.dataset.stageNativeInitialized="true";
         group.appendChild(document.createElement("summary"));
         root.insertBefore(group,direct[0]);
         direct.forEach(record=>group.appendChild(record));
       }
       if(group){
-        group.open=false;
-        group.removeAttribute("open");
+        if(group.dataset.stageNativeInitialized!=="true"){
+          group.open=false;
+          group.removeAttribute("open");
+          group.dataset.stageNativeInitialized="true";
+        }
         const count=group.querySelectorAll("details[data-record]").length;
-        const unresolved=[...group.querySelectorAll("details[data-record]")].filter(record=>recordState(record)!=="recorded").length;
+        const unresolved=[...group.querySelectorAll("details[data-record]")]
+          .filter(record=>recordState(record)!=="recorded").length;
         const summary=group.querySelector(":scope > summary");
         if(summary){
           const signature=`${count}|${unresolved}`;
@@ -201,7 +263,7 @@
   function refine(){
     queued=false;
     addStyles();
-    keepWorkbookSurface();
+    forceWorkbookSurface();
     removeDuplicateNavigation();
     hideStandaloneAppendixReferences();
     compactContextualControls();
@@ -218,6 +280,7 @@
   document.addEventListener("change",queue,true);
   window.addEventListener("pageshow",queue);
   window.addEventListener("popstate",queue);
+  window.addEventListener("storage",queue);
   new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["class","hidden","aria-current","aria-selected","aria-pressed"]});
   queue();
 })();
