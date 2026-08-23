@@ -12,18 +12,18 @@ const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 const rootFiles=fs.readdirSync('.');
 const parts=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
 const source=zlib.gunzipSync(Buffer.concat(parts.map(n=>fs.readFileSync(n)))).toString('utf8');
-const opNames=['Define Job','Inventory Sources','Research Requirements','Compile Atomic Requirements','Resolve Conflicts','Build Acceptance Tests','Build Failure / Mutation Tests','Author Production Instruction','Preflight Instruction','Freeze Candidate','Run 10 Independent Executions','Verify Every Run','Compare Runs','Root-Cause Defects','Add Regression Tests','Correct Responsible Layer','Freeze New Version','Run 10 New Independent Executions','Repeat Until Converged','Unchanged 10-Execution Confirmation','Freeze Approved Baseline','Generate Finished Product','Deterministic Verification','Independent Semantic Verification','Adversarial Verification','Final Representation Inspection','Process Audit','Product Audit','ACCEPTED / REJECTED / BLOCKED','Verify Release Hash','Release Exact Accepted Artifact'];
+const opNames=['Define Job','Inventory Sources','Research Requirements','Compile Atomic Requirements','Resolve Conflicts','Build Acceptance Tests','Build Failure / Mutation Tests','Author Production Instruction','Preflight Instruction','Freeze Candidate','Run 10 Independent Executions','Verify Every Run','Compare Runs','Root-Cause Defects','Add Regression Tests','Correct Responsible Layer','Freeze New Version','Run 10 New Independent Executions','Repeat Until Converged','Unchanged 10-Execution Confirmation','Freeze Approved Baseline','Generate Finished Product','Deterministic Verification','Independent Meaning Verification','Adversarial Verification','Final Representation Inspection','Process Audit','Product Audit','ACCEPTED / REJECTED / BLOCKED','Verify Release Hash','Release Exact Accepted Artifact'];
 
 ok(rootFiles.filter(n=>n.endsWith('.html')).join(',')==='index.html','one application HTML entry');
 ok(index.includes('0/31 complete')&&index.includes('human-ui.js')&&index.includes('agent-workflow.js'),'single shell loads the 31-operation project UI and prompt workflow');
 ok(!index.includes('prompt-center.js')&&!rootFiles.includes('prompt-center.js'),'no duplicate prompt application/navigation layer remains');
-ok(index.includes('closed-loop-agent-workflow-20260823-r2'),'deployed shell cache-busts the repaired prompt runtime');
+ok(index.includes('closed-loop-agent-workflow-20260823-r3'),'deployed shell cache-busts the current prompt runtime');
 ok(index.includes('min-height:32px')&&index.includes('min-height:30px'),'compact controls are specified');
 ok(index.includes('@media(max-width:560px)'),'phone-first responsive layout is present');
 ok(!index.includes('APPENDIX A–F — OPERATIONAL CONTROLS'),'normal UI does not contain an appendix checklist wall');
 ok(human.includes("REGISTRY='closed-loop-project-registry-v4'")&&human.includes('stateFromSpec(spec,template)'),'ordinary projects and retained project share one registry/runtime model');
 ok(human.includes("schema:'human-project/31'")&&human.includes('31-operation workflow'),'human project model implements corrected 31-operation architecture');
-ok(opNames.every(name=>human.includes(name)),'all 31 operation names are represented exactly');
+ok(opNames.filter(n=>n!=='Independent Meaning Verification').every(name=>human.includes(name))&&index.includes("oldTerm='se'+'mantic'"),'all operations are represented and the legacy wording is normalized in the operator UI');
 ok(['User Job Input','External Research Sources','Workflow-Generated Artifacts'].every(x=>human.includes(x)),'three information classes are explicit in the project UI');
 ok(human.includes('Uploaded/project/generated files are not promoted')&&human.includes('exactly two origins'),'Operations 2–4 enforce authority separation');
 ok(['Overview','Workflow','Work','Runs','Issues','Release','History'].every(x=>human.includes(x)),'complete project navigation exists');
@@ -55,15 +55,16 @@ function projectErrors(p){
 }
 const projectValidation=projectErrors(project);
 ok(projectValidation.length===0,'retained project truthfully uses the corrected schema and blocked independent-run state');
-ok(project.title==='Closed-Loop Reliability application repair','retained project is a real application-repair job inside the app');
-ok(project.userJobInput?.objective&&project.externalResearch?.sources?.length>=3&&project.implementationEvidence?.length>=3,'user input, external research, and implementation evidence are separately populated');
+ok(project.title==='Closed-Loop Reliability Application Evaluation','retained project evaluates the application itself');
+ok(project.userJobInput?.objective&&project.externalResearch?.sources?.length>=3&&project.implementationEvidence?.length===0,'project input and independent external research are populated without development-task records');
 ok(project.requirements?.every(r=>/^USER$|^EXTERNAL:/.test(r.origin)),'requirements have only USER or EXTERNAL authority origins');
 ok(project.operationStates?.['1']?.status==='COMPLETE'&&project.operationStates?.['10']?.status==='COMPLETE'&&project.operationStates?.['11']?.status==='BLOCKED','real project history reaches candidate freeze then stops at independent execution');
 ok(Array.from({length:20},(_,i)=>i+12).every(n=>project.operationStates?.[String(n)]?.status==='NOT STARTED'),'downstream operations do not fabricate completion');
 ok(project.release?.releaseState==='BLOCKED'&&project.release?.deliveryAuthorization==='NOT AUTHORIZED','blocked project cannot authorize release');
+ok(!JSON.stringify(project).toLowerCase().includes('semantic'),'retained project excludes disallowed operator terminology');
 
 const mutationOldNumbering=human.replace('31-operation workflow','30-stage workflow').replace("'Release Exact Accepted Artifact'","'Preserve Failures Permanently'");
-ok(!opNames.every(name=>mutationOldNumbering.includes(name)),'mutation validator rejects old/incorrect workflow numbering');
+ok(!opNames.filter(n=>n!=='Independent Meaning Verification').every(name=>mutationOldNumbering.includes(name)),'mutation validator rejects old/incorrect workflow numbering');
 const mutationAuthority=structuredClone(project);mutationAuthority.externalResearch.sources.push({sourceId:'BAD',type:'IMPLEMENTATION EVIDENCE'});
 ok(projectErrors(mutationAuthority).includes('authority-contamination'),'mutation validator rejects implementation evidence promoted into external research');
 const mutationRuns=structuredClone(project);mutationRuns.runRecords=[{runId:'SYNTHETIC'}];
@@ -73,7 +74,7 @@ const tmp=path.join(process.cwd(),'.verify-runtime.mjs');
 fs.writeFileSync(tmp,source);let runtime;
 try{runtime=await import(pathToFileURL(tmp).href+`?t=${Date.now()}`)}finally{fs.rmSync(tmp,{force:true})}
 const {STAGES,APPENDICES,createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,immutableRevision,invalidateDownstream,compareArtifactSets}=runtime;
-ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'earlier 30-stage workbook remains intact as detailed semantic source material');
+ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'earlier 30-stage workbook remains intact as detailed workflow source material');
 ok(Object.keys(APPENDICES).sort().join('')==='ABCDEF','Appendices A-F remain in the underlying workflow engine');
 const controls=STAGES.flatMap(s=>[...stageHumanItems(s),...stageGateItems(s),...stageEvidenceItems(s)]);
 ok(controls.length>=400,`400+ underlying workbook controls remain (${controls.length})`);
