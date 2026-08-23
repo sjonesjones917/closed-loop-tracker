@@ -18,6 +18,7 @@
 <script>globalThis.job=document.getElementById('job');globalThis.count=document.getElementById('count');globalThis.bar=document.getElementById('bar');globalThis.nav=document.getElementById('nav');globalThis.content=document.getElementById('content');globalThis.imp=document.getElementById('imp');</script>
 <script src="workbook.js?v=closed-loop-runtime-20260823-r16"></script>
 <script src="human-ui.js?v=closed-loop-human-20260823-r31"></script>
+<script src="agent-workflow.js?v=closed-loop-agent-workflow-20260823-r1"></script>
 <script>
 (()=>{const fix=()=>document.querySelectorAll('.status-chip').forEach(el=>{const t=el.textContent.trim().toUpperCase();if(/UNKNOWN|UNDETERMINED|NOT STARTED|NOT READY/.test(t)){el.classList.remove('satisfied','blocked');el.classList.add('warn')}else if(/BLOCK|VIOLAT|REJECT|OPEN|FAIL|STALE/.test(t)){el.classList.remove('satisfied','warn');el.classList.add('blocked')}});new MutationObserver(fix).observe(document.body,{childList:true,subtree:true,characterData:true});fix()})();
 </script>
