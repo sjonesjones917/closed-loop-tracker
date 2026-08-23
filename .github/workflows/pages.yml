@@ -93,18 +93,25 @@ jobs:
           done
       - name: Exercise deployed project and persistence in Chromium
         run: node verify-browser.mjs
-      - name: Publish live-verification status
-        if: always()
+
+  publish-status:
+    if: always() && github.event_name != 'pull_request'
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish exact workflow status
         env:
           GH_TOKEN: ${{ github.token }}
-          RESULT: ${{ job.status }}
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
         run: |
-          if [ "$RESULT" = success ]; then
+          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
             STATE=success
             DESCRIPTION='Source, deployment, mobile/desktop UI, persistence, and browser verification passed'
           else
             STATE=failure
-            DESCRIPTION='Live deployment verification failed; inspect exact workflow run'
+            DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
           fi
           curl --fail-with-body --silent --show-error \
             --request POST \
