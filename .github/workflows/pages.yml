@@ -21,7 +21,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     permissions:
       contents: read
       pages: write
@@ -30,22 +30,35 @@ jobs:
       app_sha256: ${{ steps.package.outputs.app_sha256 }}
       project_sha256: ${{ steps.package.outputs.project_sha256 }}
     steps:
-      - name: Check out the exact source revision
+      - name: Check out the exact source revision with full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Use current Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install the browser driver
+        run: npm install --no-save --ignore-scripts playwright-core
       - name: Build the human-first application
         run: node build-app.mjs
       - name: Keep the native retained application project in Projects
         run: node attach-self-project.mjs
+      - name: Synchronize both committed application entry files
+        run: cp index.html app-v13.html
+      - name: Rebuild the retained project through authoritative native browser executions
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_PATH"
+          CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
       - name: Verify application architecture
         run: node verify-app.mjs
       - name: Verify native structured retained project and exact product bytes
         run: node verify-self-project.mjs
-      - name: Install the browser driver
-        run: npm install --no-save --ignore-scripts playwright-core
+      - name: Validate current project schema without rewriting project meaning
+        run: node migrate-self-project.mjs
       - name: Execute rendered phone UI, retained-project refresh, and human-owner tests
         shell: bash
         run: |
@@ -53,6 +66,15 @@ jobs:
           CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_PATH"
           CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+      - name: Verify synchronized entry files and reject obsolete project framing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp -s index.html app-v13.html
+          if grep -Eqi 'sidecar-filename defect|app-arbitrary application version|External agent process|Visible UI evidence for Stage|executable prompt was copied|repair-task tracker|fix stage|\bversion 13\b|\bv13\b' SELF_VERIFIED_PROJECT.json; then
+            echo 'Obsolete version, repair, prompt-relay, or filename-defect framing remains in the retained application project.' >&2
+            exit 1
+          fi
       - name: Build exact static Pages payload
         id: package
         shell: bash
@@ -68,7 +90,7 @@ jobs:
           cp SELF_PROJECT_VERIFICATION.json dist/SELF_PROJECT_VERIFICATION.json
           if [[ -f SELF_PROJECT_RUN_REPORT.json ]]; then cp SELF_PROJECT_RUN_REPORT.json dist/SELF_PROJECT_RUN_REPORT.json; fi
           : > dist/.nojekyll
-          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectVisible":true,"retainedProjectCurrentSchema":true,"retainedProjectRefreshVerified":true,"unrelatedProjectsPreserved":true,"newHumanProjectsStartAtZero":true,"structuredProjectRecords":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
+          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectVisible":true,"retainedProjectCurrentSchema":true,"retainedProjectAuthoritativelyRebuilt":true,"retainedProjectRefreshVerified":true,"unrelatedProjectsPreserved":true,"newHumanProjectsStartAtZero":true,"structuredProjectRecords":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
           echo "app_sha256=$APP_SHA256" >> "$GITHUB_OUTPUT"
           echo "project_sha256=$PROJECT_SHA256" >> "$GITHUB_OUTPUT"
       - name: Preserve exact application, project, and verification evidence
@@ -77,6 +99,7 @@ jobs:
           name: closed-loop-verification-evidence
           path: |
             index.html
+            app-v13.html
             STATIC_VERIFICATION.json
             SELF_PROJECT_VERIFICATION.json
             SELF_PROJECT_RUN_REPORT.json
@@ -190,7 +213,7 @@ jobs:
           cp verified-source/index.html index.html
           cp verified-source/index.html app-v13.html
           cp verified-source/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
-          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectVisible":true,"retainedProjectCurrentSchema":true,"retainedProjectRefreshVerified":true,"unrelatedProjectsPreserved":true,"newHumanProjectsStartAtZero":true,"structuredProjectRecords":true,"promptRelayArchitecture":false,"repositoryMatchesLiveBytes":true,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
+          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectVisible":true,"retainedProjectCurrentSchema":true,"retainedProjectAuthoritativelyRebuilt":true,"retainedProjectRefreshVerified":true,"unrelatedProjectsPreserved":true,"newHumanProjectsStartAtZero":true,"structuredProjectRecords":true,"promptRelayArchitecture":false,"repositoryMatchesLiveBytes":true,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
 
           test "$(sha256sum index.html | awk '{print $1}')" = "$LIVE_APP_SHA256"
           test "$(sha256sum app-v13.html | awk '{print $1}')" = "$LIVE_APP_SHA256"
