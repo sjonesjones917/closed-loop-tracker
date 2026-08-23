@@ -22,6 +22,9 @@ jobs:
       - id: human
         continue-on-error: true
         run: node --check human-ui.js
+      - id: live_verifier
+        continue-on-error: true
+        run: node --check verify-live.mjs
       - id: verifier
         continue-on-error: true
         run: node verify.mjs
@@ -37,17 +40,19 @@ jobs:
           NODE
       - name: Publish source statuses
         if: always()
-        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', LOADER: '${{ steps.loader.outcome }}', HUMAN: '${{ steps.human.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
+        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', LOADER: '${{ steps.loader.outcome }}', HUMAN: '${{ steps.human.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
         run: |
-          for pair in "retained-project:$PROJECT" "workbook-loader:$LOADER" "human-ui-syntax:$HUMAN" "repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
+          target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          for pair in "retained-project:$PROJECT" "workbook-loader:$LOADER" "human-ui-syntax:$HUMAN" "live-verifier-syntax:$LIVE" "repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
             context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
-            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result"
+            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
           done
       - name: Enforce source verification
         run: |
           test '${{ steps.project.outcome }}' = success
           test '${{ steps.loader.outcome }}' = success
           test '${{ steps.human.outcome }}' = success
+          test '${{ steps.live_verifier.outcome }}' = success
           test '${{ steps.verifier.outcome }}' = success
           test '${{ steps.structure.outcome }}' = success
 
@@ -84,7 +89,7 @@ jobs:
           set -euo pipefail
           mkdir -p live-proof
           verified=false
-          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json)
+          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json verify-live.mjs)
           for attempt in $(seq 1 36); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"; good=true
             for f in "${FILES[@]}"; do curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false; done
@@ -113,54 +118,39 @@ jobs:
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=320,800 --dump-dom "$BASE" > live-proof/test-320.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=320,800 --screenshot=live-proof/test-320.png "$BASE"
           grep -q 'Closed-Loop Reliability application repair' live-proof/test-320.html
-      - id: interaction
-        continue-on-error: true
+      - name: Start interaction browser
         run: |
-          set -euo pipefail
           BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium)"
           rm -rf /tmp/live-e2e
           "$BROWSER" --headless --no-sandbox --disable-gpu --remote-debugging-port=9222 --user-data-dir=/tmp/live-e2e --window-size=393,852 about:blank >/tmp/live-chrome.log 2>&1 &
-          for n in $(seq 1 50); do curl -fsS http://127.0.0.1:9222/json/version >/dev/null && break; sleep .2; done
-          cat > /tmp/live-e2e.mjs <<'NODE'
-          import fs from 'node:fs';
-          const port=9222,base=process.env.PAGE_URL.replace(/\/$/,'')+'/?test=1&e2e='+Date.now(),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-          const target=(await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(x=>x.type==='page');if(!target)throw Error('No page target');
-          const ws=new WebSocket(target.webSocketDebuggerUrl);let seq=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result)}};await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
-          const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++seq;pending.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}))});
-          async function ev(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value}
-          async function waitFor(expression,ms=20000){const end=Date.now()+ms;while(Date.now()<end){try{if(await ev(expression))return}catch{}await sleep(100)}throw Error(`Timed out: ${expression}`)}
-          const ok=(c,m)=>{if(!c)throw Error(m)};
-          await send('Page.enable');await send('Page.navigate',{url:base});
-          await waitFor("document.readyState==='complete'&&document.body.innerText.includes('Closed-Loop Reliability application repair')");
-          ok((await ev("document.querySelector('#new-job-button').getBoundingClientRect().height"))<=36,'New project button oversized');
-          ok((await ev("document.querySelector('#project-data-button').getBoundingClientRect().height"))<=36,'Project button oversized');
-          await ev("document.querySelector('[data-view=workflow]').click()");await waitFor("document.body.innerText.includes('31-operation workflow')");
-          ok((await ev("document.querySelectorAll('[data-operation]').length"))===31,'31 operations not rendered');
-          await ev("document.querySelector('[data-operation=2]').click()");await waitFor("document.body.innerText.includes('Discover independent external authorities')");
-          ok(await ev("document.body.innerText.includes('Generated instruction / prompt')"),'Prompt not inspectable');
-          await ev("document.querySelector('[data-view=runs]').click()");await waitFor("document.body.innerText.includes('Executions and independent review')");
-          ok(await ev("document.body.innerText.includes('None recorded')"),'Synthetic run data unexpectedly present');
-          await ev("document.querySelector('[data-view=history]').click()");await waitFor("document.body.innerText.includes('Complete history')");
-          ok(await ev("document.body.innerText.includes('Generated instruction')"),'History does not expose generated instructions');
-          await ev("document.querySelector('#new-job-button').click()");await waitFor("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE==='New project'");
-          const clean=await ev("(()=>{const s=JSON.parse(localStorage.getItem('mobile-closed-loop-agent'));return {op:s.projectData.currentOperation,req:s.projectData.requirements.length,runs:s.projectData.runRecords.length,blockers:s.projectData.blockers.length,baseline:Object.keys(s.projectData.baseline).length,product:Object.keys(s.projectData.product).length}})()");
-          ok(clean.op===1&&clean.req===0&&clean.runs===0&&clean.blockers===0&&clean.baseline===0&&clean.product===0,'New project inherited prior state');
-          fs.writeFileSync('live-proof/interaction.json',JSON.stringify({ok:true,operations:31,compactButtons:true,authoritySeparation:true,syntheticRuns:false,cleanNewProject:true},null,2));ws.close();
-          NODE
-          node /tmp/live-e2e.mjs 2>&1 | tee live-proof/interaction.log
+          for n in $(seq 1 50); do curl -fsS http://127.0.0.1:9222/json/version >/dev/null && exit 0; sleep .2; done
+          cat /tmp/live-chrome.log
+          exit 1
+      - id: workflow_interaction
+        continue-on-error: true
+        run: node verify-live.mjs workflow 2>&1 | tee live-proof/workflow-interaction.log
+      - id: history_interaction
+        continue-on-error: true
+        run: node verify-live.mjs history 2>&1 | tee live-proof/history-interaction.log
+      - id: reset_interaction
+        continue-on-error: true
+        run: node verify-live.mjs reset 2>&1 | tee live-proof/reset-interaction.log
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: 'live-proof-${{ github.run_id }}', path: live-proof, if-no-files-found: error}
       - name: Publish live verification statuses
         if: always()
-        env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', RENDER: '${{ steps.render.outcome }}', INTERACTION: '${{ steps.interaction.outcome }}'}
+        env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', RENDER: '${{ steps.render.outcome }}', WORKFLOW: '${{ steps.workflow_interaction.outcome }}', HISTORY: '${{ steps.history_interaction.outcome }}', RESET: '${{ steps.reset_interaction.outcome }}'}
         run: |
-          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$RENDER" "live-controls:$INTERACTION"; do
+          target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$RENDER" "live-workflow-controls:$WORKFLOW" "live-project-history:$HISTORY" "live-new-project-reset:$RESET"; do
             context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
-            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result"
+            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
           done
       - name: Enforce live verification
         run: |
           test '${{ steps.identity.outcome }}' = success
           test '${{ steps.render.outcome }}' = success
-          test '${{ steps.interaction.outcome }}' = success
+          test '${{ steps.workflow_interaction.outcome }}' = success
+          test '${{ steps.history_interaction.outcome }}' = success
+          test '${{ steps.reset_interaction.outcome }}' = success
