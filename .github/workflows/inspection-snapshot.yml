@@ -13,10 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Package repository source
-        run: tar --exclude=.git -czf repository-snapshot.tar.gz .
+        run: tar --exclude=.git -C "$GITHUB_WORKSPACE" -czf /tmp/repository-snapshot.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
           name: repository-snapshot
-          path: repository-snapshot.tar.gz
+          path: /tmp/repository-snapshot.tar.gz
           if-no-files-found: error
           retention-days: 1
