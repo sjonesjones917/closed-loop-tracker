@@ -12,10 +12,10 @@ Appendices A-F are implemented as cross-cutting project controls at the stages w
 
 `TEST_PROJECT.json` is the retained authorized project `JOB-20260823144121`, titled `Mobile Closed-Loop Agent Reliability Workbook`. It preserves the completed Operation 01 / Stage 01 job definition supplied for that project, shows Stage 01 complete, leaves Stages 02-30 not started, and sets the next required action to Operation 02 — Build the Source Inventory. It does not fabricate requirements, tests, run sets, verification results, release evidence, or other downstream records that have not happened yet. The completed Operation 01 output, generated Stage 01 instruction, output receipt, user-entered job data, supplied-material record, controlled unknowns, and stage record are visible inside the project.
 
-`build-test-project.mjs` validates and preserves that retained authorized project; it does not rewrite it into an unrelated demonstration job.
+`build-test-project.mjs` validates and materializes the retained authorized project for deployment. It preserves the complete Operation 01 output, expands the Stage 01 copy block, converts every stage record into readable text, initializes unused stages with their actual fill-in templates, and repairs the existing application import path without creating another application.
 
 `workbook.js` contains the single 30-stage workflow core. `app.js` contains the human-facing application controller. Existing browser projects remain under the same project-storage key and are preserved when the repaired application loads.
 
-`node verify.mjs` checks the single-app structure, exact 30 stages, the authorized retained project identity and state, Stage 01 completion, absence of fabricated downstream evidence, human-facing project records, and discarded architecture checks.
+`node verify.mjs` checks the single-app structure, exact 30 stages, authorized retained-project identity and state, readable records for all 30 stages, the usable Stage 02 source-inventory template, complete Stage 01 instruction and output preservation, absence of fabricated downstream evidence, human-facing project records, and discarded architecture checks.
 
 The GitHub Pages workflow validates the retained project, deploys the same single application, and renders the live interface at 320 and 393 CSS-pixel widths.
