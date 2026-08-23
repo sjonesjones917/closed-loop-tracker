@@ -1,2 +1,356 @@
-(async()=>{try{const names=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];const rs=await Promise.all(names.map(n=>fetch(`${n}?project-view-20260823`,{cache:'no-store'})));const ps=await Promise.all(rs.map(r=>r.arrayBuffer()));const b=new Uint8Array(ps.reduce((n,p)=>n+p.byteLength,0));let o=0;for(const p of ps){b.set(new Uint8Array(p),o);o+=p.byteLength}const src=await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text();const u=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));try{globalThis.ClosedLoopWorkbook=await import(u);window.dispatchEvent(new Event('closed-loop-workbook-ready'))}finally{URL.revokeObjectURL(u)}}catch(e){console.error(e);if(content)content.textContent='Application runtime failed to load: '+e.message}})();
-(()=>{'use strict';const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let P=null,q=false;function css(){if(document.getElementById('human-project-css'))return;let s=document.createElement('style');s.id='human-project-css';s.textContent=`body{background:#f5f5f2}.app{max-width:760px}header,main{padding:14px}.tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.tools button{min-height:44px}.nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.nav button{min-height:54px;font-size:12px}.card{border-radius:13px}.project-view{background:#fff;border:1px solid #d8d8d3;border-radius:13px;padding:14px;margin:12px 0}.project-view h2{font-size:20px;margin:0 0 5px}.project-view details{border-top:1px solid #ddd;padding:10px 0}.project-view summary{font-weight:750;cursor:pointer}.project-grid{display:grid;gap:8px;margin-top:8px}.project-item{border:1px solid #ddd;border-radius:9px;padding:10px}.project-label{font-size:11px;color:#666;text-transform:uppercase}.project-value{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}.project-view pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f1;border-radius:8px;padding:10px;font:12px/1.45 ui-monospace,monospace}.internal-surface{display:none!important}@media(max-width:520px){.tools{grid-template-columns:repeat(2,minmax(0,1fr))}.nav{grid-template-columns:1fr}}`;document.head.appendChild(s)}function clean(){document.querySelectorAll('section,article,details,.card').forEach(e=>{let t=(e.querySelector(':scope>summary,:scope>h2,:scope>h3')?.textContent||'').trim();if(/^APPENDIX(?:ES)?\s+A\s*[–—-]\s*F/i.test(t)||/^TEST PROJECT\s*[–—-]\s*EXISTING APPLICATION VERIFICATION/i.test(t)){e.classList.add('internal-surface');e.hidden=true}});document.querySelectorAll('button,a,[role=button]').forEach(e=>{if(/^APPENDIX(?:ES)?\b/i.test((e.textContent||'').trim())){e.classList.add('internal-surface');e.hidden=true}});document.querySelectorAll('[data-integrated-operational-controls="true"],#appendix-operational-purpose').forEach(e=>{e.classList.add('internal-surface');e.hidden=true})}const row=(l,v)=>`<div class="project-item"><div class="project-label">${E(l)}</div><div class="project-value">${E(typeof v==='string'?v:JSON.stringify(v,null,2))}</div></div>`;const list=(t,a,f)=>a?.length?`<details open><summary>${E(t)} (${a.length})</summary><div class="project-grid">${a.map(f).join('')}</div></details>`:'';function html(p){return `<section id="retained-project-view" class="project-view"><h2>${E(p.title)}</h2><p>${E(p.description)}</p><div class="project-grid">${row('Job ID',p.jobId)}${row('Exact user objective',p.objective?.exactUserObjective)}${row('Expected filename',p.objective?.exactFilename)}${row('Expected product bytes',p.objective?.exactProductUtf8)}${row('Expected byte length',p.objective?.expectedByteLength)}${row('Expected SHA-256',p.objective?.expectedSha256)}</div>${list('Sources',p.sourceInventory,x=>row(x.sourceId,x))}${list('Generated requirements',p.requirements,x=>row(x.reqId,x))}${list('Generated verification tests',p.tests,x=>row(x.testId,x))}${list('Failure and mutation tests',p.mutations,x=>row(x.mutationId,x))}<details open><summary>Generated production instruction</summary><pre>${E(JSON.stringify(p.productionInstruction,null,2))}</pre></details>${list('Execution iterations',Object.entries(p.phases||{}),x=>row(x[0],x[1]))}${list('Defects and root cause',p.defects,x=>row(x.defectId,x))}${list('Regression tests',p.regressions,x=>row(x.regId,x))}<details open><summary>Convergence</summary><div class="project-grid">${Object.entries(p.convergence||{}).map(x=>row(x[0],x[1])).join('')}</div></details><details open><summary>Approved baseline</summary><div class="project-grid">${Object.entries(p.baseline||{}).map(x=>row(x[0],x[1])).join('')}</div></details><details open><summary>Finished product</summary><div class="project-grid">${Object.entries(p.product||{}).map(x=>row(x[0],x[1])).join('')}</div></details><details open><summary>Release record</summary><div class="project-grid">${Object.entries(p.release||{}).map(x=>row(x[0],x[1])).join('')}</div></details>${list('Evidence chains',p.evidenceChains,x=>row(x.chainRecordId,x))}${list('All 30 stage records',p.stageEvidence,(x,i)=>row('Stage '+String(i+1).padStart(2,'0'),x))}<details><summary>Complete project data</summary><pre>${E(JSON.stringify(p,null,2))}</pre></details></section>`}async function load(){if(P)return P;let r=await fetch(`TEST_PROJECT.json?t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw Error('Test project HTTP '+r.status);return P=await r.json()}async function show(){let p=await load(),v=document.getElementById('retained-project-view');if(!v){document.getElementById('master')?.insertAdjacentHTML('afterbegin',html(p));v=document.getElementById('retained-project-view')}v?.scrollIntoView({behavior:'smooth',block:'start'})}function btn(){let t=document.querySelector('header .tools');if(!t||document.getElementById('open-test-project'))return;let b=document.createElement('button');b.id='open-test-project';b.type='button';b.textContent='Test project';b.onclick=()=>show().catch(e=>alert(e.message));t.appendChild(b)}function paint(){css();clean();btn()}function queue(){if(q)return;q=true;requestAnimationFrame(()=>{q=false;paint()})}new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});window.addEventListener('pageshow',queue);window.addEventListener('closed-loop-workbook-ready',queue);queue()})();
+(async()=>{
+  try{
+    if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
+    const cacheKey="single-workbook-stage-native-controls-test-project-final";
+    const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
+    const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
+    for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
+    const parts=await Promise.all(responses.map(response=>response.arrayBuffer()));
+    const total=parts.reduce((sum,part)=>sum+part.byteLength,0);
+    const bytes=new Uint8Array(total);
+    let offset=0;
+    for(const part of parts){bytes.set(new Uint8Array(part),offset);offset+=part.byteLength;}
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    const source=await new Response(stream).text();
+    const url=URL.createObjectURL(new Blob([source],{type:"text/javascript"}));
+    try{
+      const workbook=await import(url);
+      globalThis.ClosedLoopWorkbook=workbook;
+      window.dispatchEvent(new CustomEvent("closed-loop-workbook-ready"));
+    }finally{
+      URL.revokeObjectURL(url);
+    }
+  }catch(error){
+    console.error(error);
+    const target=document.getElementById("content");
+    if(target)target.textContent=`Application runtime failed to load: ${error.message}`;
+  }
+})();
+
+(()=>{
+  "use strict";
+
+  const TEST_PANEL_ID="repository-test-project";
+  const TEST_BUTTON_ID="run-repository-test-project";
+  const STYLE_ID="single-workbook-stage-native-ui";
+  const TEST_STORAGE_KEY="mclarw-repository-test-project";
+  const BAD_NAV=/^(?:Appendices\s+A\s*[–—-]\s*F|Control records|Appendix controls|Operational controls\s+A\s*[–—-]\s*F|[A-F]\s+(?:FRESH AGENT CONTEXT LAUNCH CHECKLIST|UNIVERSAL BLOCKER RECORD|UNIVERSAL CHANGE AND INVALIDATION LOG|EXACT FINAL RELEASE CHECKLIST|NEW-JOB RESET CHECKLIST|UNIVERSAL AGENT-OUTPUT RECEIPT))$/i;
+  const WORKBOOK_NAV=/^30\s*[–—-]\s*stage workbook$/i;
+  let running=false;
+  let scheduled=false;
+  let forcingWorkbook=false;
+  let latestReport=null;
+
+  const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+  const normalizedText=element=>String(element?.textContent||"").replace(/\s+/g," ").trim();
+  const controls=()=>[...document.querySelectorAll("button,a,[role='button']")];
+  const isActive=element=>Boolean(element&&(element.classList.contains("active")||element.getAttribute("aria-current")==="page"||element.getAttribute("aria-selected")==="true"||element.getAttribute("aria-pressed")==="true"));
+  const isVisible=element=>Boolean(element&&!element.hidden&&element.getAttribute("aria-hidden")!=="true");
+
+  function addStyles(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement("style");
+    style.id=STYLE_ID;
+    style.textContent=`
+      #${TEST_PANEL_ID}{margin:10px 0;border-width:2px}
+      #${TEST_PANEL_ID}>summary{cursor:pointer}
+      #${TEST_PANEL_ID} .test-project-summary{margin:8px 0 0}
+      #${TEST_PANEL_ID} .test-project-state{font-weight:800}
+      #${TEST_PANEL_ID} code{font:11px ui-monospace,monospace;overflow-wrap:anywhere}
+      #${TEST_PANEL_ID} [data-test-evidence]>summary{cursor:pointer;margin-top:8px}
+      #${TEST_PANEL_ID} .test-project-check{border-top:1px solid #ddd;padding:7px 0}
+      [data-contextual-controls="true"]>[data-control-records="true"]{margin:10px 0}
+      [data-control-records="true"]>summary{cursor:pointer;font-weight:700}
+      [data-control-records="true"] .control-count{font-weight:400;color:#666}
+      [data-control-records="true"] details[data-record]{display:block;margin:8px 0;padding:10px;border:1px solid #ddd;border-radius:8px}
+      [data-control-records="true"] details[data-record]>summary{cursor:pointer}
+      [data-control-records="true"] details[data-record]>p.muted{display:none}
+      [data-control-records="true"] .record-state{float:right;color:#666;font-size:11px;font-weight:400}
+      [data-control-records="true"] .record-id{color:#666;font-weight:400}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function activateWorkbookSurface(){
+    const legacyActive=controls().find(element=>BAD_NAV.test(normalizedText(element))&&isActive(element));
+    if(!legacyActive)return false;
+    const workbook=controls().find(element=>WORKBOOK_NAV.test(normalizedText(element))&&isVisible(element));
+    if(workbook&&!forcingWorkbook){
+      forcingWorkbook=true;
+      try{workbook.click();}
+      finally{queueMicrotask(()=>{forcingWorkbook=false;queue();});}
+      return true;
+    }
+    try{
+      if("view" in globalThis)globalThis.view="workbook";
+      if(typeof globalThis.render==="function")globalThis.render();
+      return true;
+    }catch(error){console.error(error);return false;}
+  }
+
+  function removeDuplicateNavigation(){
+    const containers=new Set();
+    for(const element of controls()){
+      if(!BAD_NAV.test(normalizedText(element)))continue;
+      if(element.closest('[data-contextual-controls="true"]'))continue;
+      const container=element.closest(".tabs,[data-view-tabs],[role='tablist']")||element.parentElement;
+      if(container)containers.add(container);
+      element.remove();
+    }
+    for(const container of containers){
+      if(!container?.isConnected)continue;
+      const remaining=[...container.querySelectorAll("button,a,[role='button']")].filter(isVisible);
+      if(!remaining.length||(remaining.length===1&&WORKBOOK_NAV.test(normalizedText(remaining[0]))))container.remove();
+    }
+  }
+
+  function recordState(record){
+    const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
+    const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
+    return unresolved?`${unresolved} unresolved`:"recorded";
+  }
+
+  function compactRecord(record){
+    if(record.dataset.stageNativeInitialized!=="true"){
+      record.open=false;
+      record.removeAttribute("open");
+      record.dataset.stageNativeInitialized="true";
+    }
+    const summary=record.querySelector(":scope > summary");
+    if(!summary)return;
+    const raw=normalizedText(summary);
+    const separator=raw.lastIndexOf("—");
+    const title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record";
+    const id=(separator>=0?raw.slice(separator+1):"").trim();
+    const state=recordState(record);
+    const signature=`${title}|${id}|${state}`;
+    if(summary.dataset.compactSignature===signature)return;
+    summary.dataset.compactSignature=signature;
+    summary.innerHTML=`<strong>${escapeHtml(title)}</strong>${id?` <span class="record-id">— ${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(state)}</span>`;
+  }
+
+  function compactStageRecords(){
+    document.querySelectorAll('[data-integrated-operational-controls="true"]').forEach(panel=>panel.remove());
+    document.getElementById("appendix-operational-purpose")?.remove();
+    for(const root of document.querySelectorAll('[data-contextual-controls="true"]')){
+      root.dataset.stageNativeOperationalControls="true";
+      const records=[...root.querySelectorAll("details[data-record]")];
+      records.forEach(compactRecord);
+      let group=root.querySelector(':scope > details[data-control-records="true"]');
+      const direct=records.filter(record=>record.parentElement===root);
+      if(!group&&direct.length){
+        group=document.createElement("details");
+        group.className="card";
+        group.dataset.controlRecords="true";
+        group.dataset.stageNativeInitialized="true";
+        group.appendChild(document.createElement("summary"));
+        root.insertBefore(group,direct[0]);
+        direct.forEach(record=>group.appendChild(record));
+      }
+      if(!group)continue;
+      if(group.dataset.stageNativeInitialized!=="true"){
+        group.open=false;
+        group.removeAttribute("open");
+        group.dataset.stageNativeInitialized="true";
+      }
+      const grouped=[...group.querySelectorAll("details[data-record]")];
+      const unresolved=grouped.filter(record=>recordState(record)!=="recorded").length;
+      const summary=group.querySelector(":scope > summary");
+      if(summary){
+        const signature=`${grouped.length}|${unresolved}`;
+        if(summary.dataset.compactSignature!==signature){
+          summary.dataset.compactSignature=signature;
+          summary.innerHTML=`Required event records <span class="control-count">(${grouped.length}; ${unresolved} need evidence)</span>`;
+        }
+      }
+    }
+  }
+
+  function ensureButton(){
+    const toolRow=document.querySelector("header .tools");
+    if(!toolRow||document.getElementById(TEST_BUTTON_ID))return;
+    const button=document.createElement("button");
+    button.id=TEST_BUTTON_ID;
+    button.type="button";
+    button.textContent="Run test project";
+    button.addEventListener("click",()=>runTestProject(true));
+    toolRow.appendChild(button);
+  }
+
+  function ensurePanel(){
+    const master=document.getElementById("master");
+    if(!master)return null;
+    let panel=document.getElementById(TEST_PANEL_ID);
+    if(!panel){
+      panel=document.createElement("details");
+      panel.id=TEST_PANEL_ID;
+      panel.className="card";
+      panel.open=true;
+      master.insertBefore(panel,master.firstChild);
+    }else if(panel.parentElement!==master){
+      master.insertBefore(panel,master.firstChild);
+    }
+    return panel;
+  }
+
+  function readStoredReport(){
+    try{return JSON.parse(localStorage.getItem(TEST_STORAGE_KEY)||"null");}
+    catch{return null;}
+  }
+
+  function saveReport(report){
+    latestReport=report;
+    try{localStorage.setItem(TEST_STORAGE_KEY,JSON.stringify(report));}
+    catch(error){console.error(error);}
+  }
+
+  function renderReport(report){
+    const panel=ensurePanel();
+    if(!panel)return;
+    const result=report?.determination||"NOT RUN";
+    const checks=Array.isArray(report?.checks)?report.checks:[];
+    const satisfied=checks.filter(check=>check.result==="SATISFIED").length;
+    const signature=JSON.stringify([result,report?.completedAt,checks.map(check=>[check.id,check.result,check.observed])]);
+    if(panel.dataset.signature===signature)return;
+    const wasOpen=panel.open;
+    panel.dataset.signature=signature;
+    panel.innerHTML=`<summary><strong>TEST PROJECT — ${escapeHtml(result)}</strong></summary>
+      <p class="muted">Deterministic verification for this existing application. It runs against isolated in-memory state and does not replace, reset, or modify the active job.</p>
+      <div class="test-project-summary"><span class="test-project-state">${escapeHtml(result)}</span> — ${satisfied}/${checks.length||0} checks SATISFIED</div>
+      <div class="muted">Repository test: <code>verify.mjs</code>. Retained project: <code>TEST_PROJECT.json</code>. Deployment gate: <code>.github/workflows/pages.yml</code>. Last run: ${escapeHtml(report?.completedAt||"not run")}</div>
+      <div class="tools"><button type="button" data-run-test-project>Run test project</button><button type="button" data-open-retained-test-project>Open retained test project</button><button type="button" data-download-test-project ${report?"":"disabled"}>Download test evidence</button></div>
+      <details data-test-evidence><summary>Test evidence (${checks.length})</summary>${checks.map(check=>`<div class="test-project-check"><strong>${escapeHtml(check.result)} — ${escapeHtml(check.name)}</strong><div class="muted">${escapeHtml(check.observed||"")}</div></div>`).join("")}</details>`;
+    panel.open=wasOpen||!panel.dataset.initialized;
+    panel.dataset.initialized="true";
+    panel.querySelector("[data-run-test-project]")?.addEventListener("click",()=>runTestProject(true));
+    panel.querySelector("[data-open-retained-test-project]")?.addEventListener("click",()=>window.open("TEST_PROJECT.json","_blank","noopener"));
+    panel.querySelector("[data-download-test-project]")?.addEventListener("click",()=>downloadReport(report));
+  }
+
+  function downloadReport(report){
+    if(!report)return;
+    const blob=new Blob([JSON.stringify(report,null,2)+"\n"],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=url;
+    link.download="WORKBOOK_TEST_PROJECT_EVIDENCE.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function runTestProject(userInitiated=false){
+    if(running)return;
+    const workbook=globalThis.ClosedLoopWorkbook;
+    if(!workbook){
+      if(userInitiated)renderReport({determination:"BLOCKED",completedAt:new Date().toISOString(),checks:[{id:"TP-000",name:"Workbook runtime available",result:"UNDETERMINED",observed:"The workbook module has not finished loading."}]});
+      return;
+    }
+    running=true;
+    const checks=[];
+    const record=(id,name,condition,observed)=>checks.push({id,name,result:condition?"SATISFIED":"VIOLATED",observed:String(observed??"")});
+    try{
+      const {
+        STAGES,APPENDICES,SECTION_HEADINGS,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,
+        createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,
+        immutableRevision,invalidateDownstream,compareArtifactSets
+      }=workbook;
+      record("TP-001","Single application shell",document.querySelectorAll(".app").length===1,`${document.querySelectorAll(".app").length} application shell(s)`);
+      record("TP-002","Exactly 30 ordered stages",Array.isArray(STAGES)&&STAGES.length===30&&STAGES.every((stage,index)=>stage.number===index+1),`${STAGES?.length??0} stages`);
+      record("TP-003","Thirty distinct stage titles",new Set((STAGES||[]).map(stage=>stage.title)).size===30,`${new Set((STAGES||[]).map(stage=>stage.title)).size} distinct titles`);
+      record("TP-004","Appendix control families A–F",Object.keys(APPENDICES||{}).sort().join("")==="ABCDEF",Object.keys(APPENDICES||{}).sort().join("")||"none");
+      const blank=createBlankState();
+      record("TP-005","Every job retains A–F record stores",Object.keys(blank?.appendices||{}).sort().join("")==="ABCDEF",Object.keys(blank?.appendices||{}).sort().join("")||"none");
+      record("TP-006","Seven controlling stage sections",SECTION_HEADINGS?.length===7,`${SECTION_HEADINGS?.length??0} sections`);
+      record("TP-007","Exact stage-decision vocabulary",STAGE_DECISIONS?.join("|")==="READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED",STAGE_DECISIONS?.join(" | ")||"missing");
+      record("TP-008","Exact requirement-outcome vocabulary",REQUIREMENT_OUTCOMES?.join("|")==="SATISFIED|VIOLATED|UNDETERMINED",REQUIREMENT_OUTCOMES?.join(" | ")||"missing");
+      record("TP-009","Exact release-outcome vocabulary",RELEASE_OUTCOMES?.join("|")==="ACCEPTED|REJECTED|BLOCKED",RELEASE_OUTCOMES?.join(" | ")||"missing");
+      const controlCount=(STAGES||[]).reduce((sum,stage)=>sum+stageHumanItems(stage).length+stageGateItems(stage).length+stageEvidenceItems(stage).length,0);
+      record("TP-010","At least 400 explicit workbook controls",controlCount>=400,`${controlCount} human/gate/evidence controls`);
+      record("TP-011","Every stage has human, gate, and evidence controls",(STAGES||[]).every(stage=>stageHumanItems(stage).length&&stageGateItems(stage).length&&stageEvidenceItems(stage).length),"all 30 stage control groups evaluated");
+      const prompts=(STAGES||[]).map(stage=>buildStagePrompt(stage,createBlankState()));
+      record("TP-012","One reusable agent block per stage",prompts.length===30,`${prompts.length} copy blocks`);
+      record("TP-013","Every agent block preserves role and task",prompts.every((prompt,index)=>prompt.includes(STAGES[index].role)&&prompt.includes(STAGES[index].task)),"all generated blocks compared to stage definitions");
+      record("TP-014","Every agent block carries universal rules and outcomes",prompts.every(prompt=>prompt.includes("Do not invent a missing fact")&&prompt.includes("SATISFIED")&&prompt.includes("VIOLATED")&&prompt.includes("UNDETERMINED")&&prompt.includes("ACCEPTED")&&prompt.includes("REJECTED")&&prompt.includes("BLOCKED")),"all 30 generated blocks evaluated");
+      const history=[];
+      const first=await immutableRevision(history,{value:1},{artifactType:"TEST"});
+      history.push(first.record);
+      const second=await immutableRevision(history,{value:2},{artifactType:"TEST"});
+      record("TP-015","Material revisions are append-only",first.record.version==="v001"&&second.record.version==="v002"&&history[0].payload.value===1,`${first.record.version} → ${second.record.version}; prior payload ${history[0].payload.value}`);
+      const downstream=createBlankState();
+      downstream.stages[2].decision="READY TO PROCEED";
+      downstream.stages[2].status="COMPLETE";
+      const invalidated=invalidateDownstream(downstream,1,"CHANGE-TEST-001");
+      record("TP-016","Upstream material change invalidates downstream determinations",invalidated.length>0&&downstream.stages[2].decision==="NOT READY - CORRECTION REQUIRED",`${invalidated.length} downstream stage(s) invalidated`);
+      const audited=[{artifactId:"A1",name:"artifact",size:1,sha256:"1".repeat(64)}];
+      const identical=[{name:"artifact",size:1,sha256:"1".repeat(64)}];
+      const different=[{name:"artifact",size:1,sha256:"2".repeat(64)}];
+      record("TP-017","Accepted byte-identical artifact is authorized",compareArtifactSets(audited,identical,"ACCEPTED").authorization==="AUTHORIZED","ACCEPTED + identical bytes");
+      record("TP-018","Hash mismatch stops release",compareArtifactSets(audited,different,"ACCEPTED").authorization==="NOT AUTHORIZED","ACCEPTED + mismatched hash");
+      record("TP-019","Non-ACCEPTED gate stops release",compareArtifactSets(audited,identical,"BLOCKED").authorization==="NOT AUTHORIZED","BLOCKED + identical bytes");
+      record("TP-020","Operational Appendix controls are integrated into the application",Boolean(document.querySelector('script[data-integrated-appendix-controls="true"]')),"integrated Appendix control runtime located in index.html");
+      record("TP-021","Appendix records are stage-native and actionable",Boolean(document.querySelector('[data-contextual-controls="true"] [data-workflow-actions="true"]')),"active stage workflow actions rendered");
+      record("TP-022","No static Appendix description panel replaces the controls",!document.getElementById("appendix-operational-purpose"),"static purpose panel absent");
+      record("TP-023","No separate Appendix application navigation",!controls().some(element=>BAD_NAV.test(normalizedText(element))),"obsolete Appendix/control navigation absent");
+      const retainedResponse=await fetch("TEST_PROJECT.json",{cache:"no-store"});
+      const retained=retainedResponse.ok?await retainedResponse.json():null;
+      record("TP-024","Retained test-project file is available",Boolean(retainedResponse.ok&&retained),`HTTP ${retainedResponse.status}`);
+      record("TP-025","Retained test project covers all 30 stages",Array.isArray(retained?.stageEvidence)&&retained.stageEvidence.length===30,`${retained?.stageEvidence?.length??0} stage evidence records`);
+      record("TP-026","Retained test-project release evidence is internally consistent",retained?.release?.releaseState==="ACCEPTED"&&retained.release.auditedSha256===retained.release.releaseSha256&&retained.release.hashesEqual===true,retained?.release?.releaseState||"missing release evidence");
+    }catch(error){
+      checks.push({id:"TP-999",name:"Test project execution",result:"VIOLATED",observed:error?.stack||error?.message||String(error)});
+    }
+    const report={
+      testProject:"Mobile Closed-Loop Agent Reliability Workbook",
+      application:"index.html",
+      activeJobModified:false,
+      completedAt:new Date().toISOString(),
+      determination:checks.every(check=>check.result==="SATISFIED")?"SATISFIED":"VIOLATED",
+      checks
+    };
+    saveReport(report);
+    renderReport(report);
+    running=false;
+  }
+
+  function refine(){
+    scheduled=false;
+    addStyles();
+    activateWorkbookSurface();
+    removeDuplicateNavigation();
+    compactStageRecords();
+    ensureButton();
+    const stored=latestReport||readStoredReport();
+    if(stored)renderReport(stored);
+    else renderReport({determination:"NOT RUN",completedAt:null,checks:[]});
+  }
+
+  function queue(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(refine);
+  }
+
+  document.addEventListener("click",event=>{
+    const clicked=event.target.closest("button,a,[role='button']");
+    if(!clicked||!BAD_NAV.test(normalizedText(clicked)))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activateWorkbookSurface();
+    queue();
+  },true);
+  window.addEventListener("closed-loop-workbook-ready",()=>{
+    queue();
+    setTimeout(()=>runTestProject(false),250);
+  });
+  window.addEventListener("pageshow",queue);
+  window.addEventListener("storage",queue);
+  document.addEventListener("change",queue,true);
+  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});
+  setInterval(()=>{
+    if(!document.getElementById(TEST_PANEL_ID)||!document.getElementById(TEST_BUTTON_ID)||controls().some(element=>BAD_NAV.test(normalizedText(element))))queue();
+  },500);
+  globalThis.runClosedLoopTestProject=()=>runTestProject(true);
+  queue();
+})();
