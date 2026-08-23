@@ -1,0 +1,73 @@
+name: Apply structured prompt generation correction
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-prompt-generation-once.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-generation-correction
+  cancel-in-progress: false
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use current Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild base application and apply the minimal Stage 8/9 generation correction
+        run: |
+          set -euo pipefail
+          node build-app.mjs
+          node apply-prompt-generation.mjs
+          node attach-self-project.mjs
+          cp index.html app-v13.html
+      - name: Install browser driver
+        run: npm install --no-save --ignore-scripts playwright-core
+      - name: Rebuild retained application project against the corrected application
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_PATH"
+          CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
+      - name: Verify application and retained project
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-app.mjs
+          node verify-self-project.mjs
+          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+          CHROME_PATH="$CHROME_PATH" node prompt-generation-smoke.mjs
+          cmp -s index.html app-v13.html
+          grep -Fq 'data-generate-production-instruction' index.html
+          grep -Fq 'data-generate-preflighted-instruction' index.html
+          grep -Fq 'Generated production prompt / instruction' index.html
+      - name: Commit exact verified correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f app-payload/manifest.json app-payload/part-*.txt index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json STATIC_VERIFICATION.json BROWSER_SMOKE_REPORT.json PROMPT_GENERATION_SMOKE.json PHONE_SMOKE_393.png PHONE_SMOKE_320.png apply-prompt-generation.mjs prompt-generation-smoke.mjs
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Make Stage 8 and Stage 9 generate production prompts'
+          git pull --rebase origin main
+          git push origin HEAD:main
