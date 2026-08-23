@@ -34,3 +34,5 @@ jobs:
           git add workbook.module.source.js
           git commit -m "Expose current workbook module source for exact repair"
           git push
+
+# Triggered for the current in-place repair.
