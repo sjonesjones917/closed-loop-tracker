@@ -1,0 +1,40 @@
+cope:productionInstructions[0].scope,orderedProcedure:productionInstructions[0].orderedProcedure,decisionRules:productionInstructions[0].decisionRules,toolRules:productionInstructions[0].toolRules,outputContract:productionInstructions[0].outputContract,failureBehavior:productionInstructions[0].failureBehavior,truthSemantics:productionInstructions[0].truthSemantics,completionCriteria:productionInstructions[0].completionCriteria}));
+`;
+if(!builder.includes('const preflightReviews=['))throw new Error('Retained project preflight record insertion point was not found.');
+builder=builder.replace('const preflightReviews=[',productionRecordPatch+'\\nconst preflightReviews=[');
+const retainedPromptLoop=String.raw`
+for(const stage of project.stages){
+  const snapshot=retainedStagePromptSnapshot(project,stage.number);
+  stage.executionPrompt=buildRetainedStagePrompt(project,stage.number,snapshot);
+  stage.executionPromptGeneratedAt=stamp;
+  stage.executionPromptSourceHash=hashObject(snapshot);
+}
+
+`;
+const forbiddenMarker='const forbiddenJob=/\\b(existing )?v13\\b|version 13|sidecar-filename defect|repair-task tracker|fix stage|app-arbitrary application version/i;';
+if(!builder.includes(forbiddenMarker))throw new Error('Retained project completion insertion point was not found.');
+builder=builder.replace(forbiddenMarker,retainedPromptLoop+forbiddenMarker);
+fs.writeFileSync(builderPath,builder);
+
+const selfVerifierPath='verify-self-project.mjs';
+let selfVerifier=fs.readFileSync(selfVerifierPath,'utf8');
+const completionNeedle="if(!String(stage.completionEvidence||'').trim())fail(`Retained project stage ${index+1} lacks completion evidence.`)});";
+const completionReplacement="if(!String(stage.completionEvidence||'').trim())fail(`Retained project stage ${index+1} lacks completion evidence.`);if(!String(stage.executionPrompt||'').trim())fail(`Retained project stage ${index+1} lacks its copy-ready execution prompt.`);if(!/^[a-f0-9]{64}$/i.test(String(stage.executionPromptSourceHash||'')))fail(`Retained project stage ${index+1} lacks an exact prompt-source SHA-256.`)});";
+if(!selfVerifier.includes(completionNeedle))throw new Error('Retained-project stage prompt verification insertion point was not found.');
+selfVerifier=selfVerifier.replace(completionNeedle,completionReplacement);
+const stage1Needle="if(!/REQUESTED ACTIONS:/i.test(stage1)||!/USER JOB INPUT/i.test(stage1)||!/EXTERNAL RESEARCH SOURCES/i.test(stage1)||!/WORKFLOW-GENERATED ARTIFACTS/i.test(stage1))fail('Stage 1 does not preserve requested actions and all three information classes.');";
+const stagePromptChecks=stage1Needle+"const prompt2=String(project.stages[1].executionPrompt||''),prompt8=String(project.stages[7].executionPrompt||''),prompt11=String(project.stages[10].executionPrompt||''),prompt20=String(project.stages[19].executionPrompt||'');if(!prompt2.includes('Perform actual outward external source discovery')||!prompt2.includes('never use the artifact, source code, tests, project JSON, prior agent output, or workflow records as authority'))fail('Retained Stage 2 prompt does not perform correct non-circular external source discovery.');if(!prompt8.includes('This stage execution prompt is not the production instruction itself'))fail('Retained Stage 8 execution prompt is conflated with its production-instruction output.');if(!prompt11.includes('RUN_ID: <<RUN-001 through RUN-010>>')||!prompt11.includes('do not create ten different prompts'))fail('Retained Stage 11 does not contain one reusable ten-run prompt.');if(!prompt20.includes('MODE: <<PRODUCER or VERIFIER>>')||!prompt20.includes('RUN_ID: <<RUN-001 through RUN-010>>'))fail('Retained Stage 20 does not contain the reusable producer/verifier confirmation prompt.');";
+if(!selfVerifier.includes(stage1Needle))throw new Error('Retained-project prompt semantic verification insertion point was not found.');
+selfVerifier=selfVerifier.replace(stage1Needle,stagePromptChecks);
+const instructionNeedle="requireArray('productionInstructions');";
+const instructionReplacement="const instructionRecords=requireArray('productionInstructions',2);if(!instructionRecords.some(record=>Number(record.stageNumber)===8&&String(record.promptText||'').includes('PRODUCTION INSTRUCTION')))fail('Stage 8 lacks its actual production-instruction prompt output.');if(!instructionRecords.some(record=>Number(record.stageNumber)===9&&String(record.promptText||'').includes('PREFLIGHTED PRODUCTION INSTRUCTION')))fail('Stage 9 lacks its separately versioned preflighted production-instruction output.');";
+if(!selfVerifier.includes(instructionNeedle))throw new Error('Retained-project production-instruction verification insertion point was not found.');
+selfVerifier=selfVerifier.replace(instructionNeedle,instructionReplacement);
+fs.writeFileSync(selfVerifierPath,selfVerifier);
+
+fs.writeFileSync(indexPath,html);
+console.log(JSON.stringify({status:'PASS',stagePromptSystem:true,stagePromptSpecs:Object.keys(STAGE_PROMPT_SPECS_FOR_REPORT()).length},null,2));
+
+function STAGE_PROMPT_SPECS_FOR_REPORT(){
+  return Object.fromEntries(Array.from({length:31},(_,index)=>[index+1,true]));
+}

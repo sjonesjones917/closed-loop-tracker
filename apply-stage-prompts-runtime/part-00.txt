@@ -1,0 +1,61 @@
+import fs from 'node:fs';
+
+const indexPath = 'index.html';
+let html = fs.readFileSync(indexPath, 'utf8');
+
+const replaceOnce = (source, needle, replacement, label) => {
+  const count = source.split(needle).length - 1;
+  if (count !== 1) throw new Error(`${label}: expected exactly one match, found ${count}.`);
+  return source.replace(needle, replacement);
+};
+
+const promptDir='stage-prompt-runtime';
+const promptSystem=fs.readdirSync(promptDir).filter(name=>/^part-\d+\.js$/.test(name)).sort().map(name=>fs.readFileSync(`${promptDir}/${name}`,'utf8')).join('').trim();
+const promptSpecSource=promptSystem.match(/const STAGE_PROMPT_SPECS=(\{[\s\S]*?\n\});\nfunction stagePromptRequired/);
+if(!promptSpecSource)throw new Error('Stage prompt specification source could not be parsed.');
+const stagePromptSpecs=Function(`return (${promptSpecSource[1]})`)();
+const definitionStart=html.indexOf('const INFORMATION_CLASSES=');
+const definitionEnd=html.indexOf('let projects=[]',definitionStart);
+if(definitionStart<0||definitionEnd<0)throw new Error('Application record-schema definitions could not be located.');
+const schemaModel=Function(`${html.slice(definitionStart,definitionEnd)}; return {JOB_FIELDS,COLLECTIONS,STAGE_GROUPS};`)();
+const retainedPromptSchemas=Object.fromEntries(Array.from({length:31},(_,index)=>{
+  const n=index+1;
+  if(n===1)return[n,schemaModel.JOB_FIELDS.map(([key,label])=>`${key}: ${label}`).concat(['userInputs: supplied-input records']).join('\n')];
+  const groups=schemaModel.STAGE_GROUPS[n]||[];
+  const value=groups.length?groups.map(name=>{const config=schemaModel.COLLECTIONS[name];return`${name} (${config.label})\n${config.fields.map(field=>`- ${field.key}${field.required?' [REQUIRED]':''}: ${field.label}`).join('\n')}`}).join('\n\n'):'Use the stage completion evidence and exact prior structured records required by the stage.';
+  return[n,value];
+}));
+
+if (!html.includes('data-stage-prompt-system="true"')) {
+  html = replaceOnce(
+    html,
+    "};\nlet projects=[];let selectedProjectId=null;let currentView='projects';let selectedStage=1;let recordContext=null;let recordsClassFilter='ALL';",
+    `};\n${promptSystem}\nlet projects=[];let selectedProjectId=null;let currentView='projects';let selectedStage=1;let recordContext=null;let recordsClassFilter='ALL';`,
+    'stage prompt system insertion'
+  );
+
+  html = replaceOnce(
+    html,
+    "function blankStage(stage){return{number:stage.number,name:stage.name,status:'NOT_STARTED',assignedActorType:'HUMAN',assignedActorName:'',completionEvidence:'',blocker:'',startedAt:null,completedAt:null,updatedAt:null}}",
+    "function blankStage(stage){return{number:stage.number,name:stage.name,status:'NOT_STARTED',assignedActorType:'HUMAN',assignedActorName:'',completionEvidence:'',blocker:'',executionPrompt:'',executionPromptGeneratedAt:null,executionPromptSourceHash:'',startedAt:null,completedAt:null,updatedAt:null}}",
+    'stage prompt state fields'
+  );
+
+  html = replaceOnce(
+    html,
+    "function invalidateFrom(project,stageNumber,reason='Upstream material changed.'){const stage=project.stages[stageNumber-1];if(stage.status==='NOT_STARTED'||stage.status==='STALE')stage.status='IN_PROGRESS';else if(stage.status==='COMPLETE'||stage.status==='BLOCKED')stage.status='IN_PROGRESS';stage.updatedAt=now();if(!stage.startedAt)stage.startedAt=stage.updatedAt;for(let i=stageNumber;i<project.stages.length;i++){const downstream=project.stages[i];if(['COMPLETE','BLOCKED','IN_PROGRESS'].includes(downstream.status)){downstream.status='STALE';downstream.blocker=reason;downstream.completedAt=null;downstream.updatedAt=now()}}updateProjectTimestamp(project)}",
+    "function invalidateFrom(project,stageNumber,reason='Upstream material changed.'){const stage=project.stages[stageNumber-1];if(stage.status==='NOT_STARTED'||stage.status==='STALE')stage.status='IN_PROGRESS';else if(stage.status==='COMPLETE'||stage.status==='BLOCKED')stage.status='IN_PROGRESS';stage.executionPrompt='';stage.executionPromptGeneratedAt=null;stage.executionPromptSourceHash='';stage.updatedAt=now();if(!stage.startedAt)stage.startedAt=stage.updatedAt;for(let i=stageNumber;i<project.stages.length;i++){const downstream=project.stages[i];downstream.executionPrompt='';downstream.executionPromptGeneratedAt=null;downstream.executionPromptSourceHash='';if(['COMPLETE','BLOCKED','IN_PROGRESS'].includes(downstream.status)){downstream.status='STALE';downstream.blocker=reason;downstream.completedAt=null;downstream.updatedAt=now()}}updateProjectTimestamp(project)}",
+    'prompt invalidation'
+  );
+
+  html = replaceOnce(
+    html,
+    "function renderStagePanel(project,n){const stage=project.stages[n-1],manifest=STAGES[n-1];const previousOK=n===1||project.stages[n-2].status==='COMPLETE';const groups=(STAGE_GROUPS[n]||[]).map(name=>renderCollectionGroup(project,name,n,false)).join('');const special=renderStageSpecial(project,n);return`",
+    "function renderStagePanel(project,n){const stage=project.stages[n-1],manifest=STAGES[n-1];const previousOK=n===1||project.stages[n-2].status==='COMPLETE';const groups=(STAGE_GROUPS[n]||[]).map(name=>renderCollectionGroup(project,name,n,false)).join('');const promptPanel=renderStagePrompt(project,n);const special=renderStageSpecial(project,n);return`",
+    'stage prompt panel binding'
+  );
+  html = replaceOnce(html,"</div>${special}${groups||(!special?'<div class=\"empty\">This stage uses the completion evidence field and prior structured records.</div>':'')}`}","</div>${promptPanel}${special}${groups||(!special?'<div class=\"empty\">This stage uses the completion evidence field and prior structured records.</div>':'')}`}",'stage prompt panel rendering');
+
+  html = replaceOnce(
+    html,
+    "function validateStage(project,n){if(n>1&&project.stages[n-2].status!=='COMPLETE')
