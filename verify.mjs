@@ -8,7 +8,6 @@ const ok=(condition,message)=>(condition?evidence:failures).push(message);
 const index=fs.readFileSync('index.html','utf8');
 const human=fs.readFileSync('human-ui.js','utf8');
 const agent=fs.readFileSync('agent-workflow.js','utf8');
-const promptCenter=fs.readFileSync('prompt-center.js','utf8');
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 const rootFiles=fs.readdirSync('.');
 const parts=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
@@ -16,7 +15,9 @@ const source=zlib.gunzipSync(Buffer.concat(parts.map(n=>fs.readFileSync(n)))).to
 const opNames=['Define Job','Inventory Sources','Research Requirements','Compile Atomic Requirements','Resolve Conflicts','Build Acceptance Tests','Build Failure / Mutation Tests','Author Production Instruction','Preflight Instruction','Freeze Candidate','Run 10 Independent Executions','Verify Every Run','Compare Runs','Root-Cause Defects','Add Regression Tests','Correct Responsible Layer','Freeze New Version','Run 10 New Independent Executions','Repeat Until Converged','Unchanged 10-Execution Confirmation','Freeze Approved Baseline','Generate Finished Product','Deterministic Verification','Independent Semantic Verification','Adversarial Verification','Final Representation Inspection','Process Audit','Product Audit','ACCEPTED / REJECTED / BLOCKED','Verify Release Hash','Release Exact Accepted Artifact'];
 
 ok(rootFiles.filter(n=>n.endsWith('.html')).join(',')==='index.html','one application HTML entry');
-ok(index.includes('0/31 complete')&&index.includes('human-ui.js')&&index.includes('agent-workflow.js')&&index.includes('prompt-center.js'),'single shell loads the 31-operation project UI and prompt workflow');
+ok(index.includes('0/31 complete')&&index.includes('human-ui.js')&&index.includes('agent-workflow.js'),'single shell loads the 31-operation project UI and prompt workflow');
+ok(!index.includes('prompt-center.js')&&!rootFiles.includes('prompt-center.js'),'no duplicate prompt application/navigation layer remains');
+ok(index.includes('closed-loop-agent-workflow-20260823-r2'),'deployed shell cache-busts the repaired prompt runtime');
 ok(index.includes('min-height:32px')&&index.includes('min-height:30px'),'compact controls are specified');
 ok(index.includes('@media(max-width:560px)'),'phone-first responsive layout is present');
 ok(!index.includes('APPENDIX A–F — OPERATIONAL CONTROLS'),'normal UI does not contain an appendix checklist wall');
@@ -32,10 +33,13 @@ ok(human.includes('completeResponseSaved:true'),'output-receipt provenance captu
 ok(human.includes('New isolated project created at Operation 01')&&human.includes('requirements:[]'),'new projects start clean');
 ok(human.includes('staleChanges')&&human.includes("releaseState:open||stale?'BLOCKED'"),'stale change evidence cannot count toward release');
 ok(opNames.every(name=>agent.includes(name))&&agent.includes('function buildPrompt')&&agent.includes('AUTHORIZED PROJECT PACKAGE'),'all 31 operations have deterministic project-specific agent prompt generation');
-ok(agent.includes('Copy prompt')&&agent.includes('Rebuild from current project data')&&agent.includes('Paste agent response'),'operation workspace exposes copy, rebuild, and response capture controls');
+ok(agent.includes('CLOSED-LOOP RELIABILITY WORK ORDER')&&agent.includes('NON-NEGOTIABLE CONTROL RULES'),'agent prompt is a substantive controlled work order');
+ok(agent.includes('Existing implementation')&&agent.includes('never external requirement authority'),'agent prompt enforces external-authority separation');
+ok(agent.includes('Current agent work')&&agent.includes('Agent prompt ·')&&agent.includes('agent-fab'),'current prompt is first-class and persistently accessible');
+ok(agent.includes('Copy prompt')&&agent.includes('Copy prompt + authorized package')&&agent.includes('Paste response')&&agent.includes('Paste agent response'),'prompt copy/package/response controls exist');
 ok(agent.includes('navigator.clipboard.writeText')&&agent.includes("document.execCommand('copy')"),'prompt copy has modern and fallback clipboard paths');
-ok(promptCenter.includes("b.textContent='Prompts'")&&promptCenter.includes('Copy current prompt')&&promptCenter.includes('data-prompt-operation'),'Prompts workspace and direct current-prompt action are present');
-ok(promptCenter.includes("openOperation(n,true)")&&promptCenter.includes("#copy-agent-prompt"),'Prompt Center routes copy actions to the exact operation prompt');
+ok(agent.includes("insertAdjacentElement('afterbegin',card)")&&agent.includes("#project-view .project-panel"),'current prompt is injected at the top of ordinary project screens');
+ok(agent.includes('generatedPrompts')&&agent.includes("type:'agent-prompt'"),'prompt generation/copy preserves project provenance');
 
 function projectErrors(p){
   const errors=[];
@@ -84,4 +88,4 @@ ok(compareArtifactSets(audited,[{name:'a',size:1,sha256:'2'.repeat(64)}],'ACCEPT
 ok(compareArtifactSets(audited,[{name:'a',size:1,sha256:'1'.repeat(64)}],'BLOCKED').authorization==='NOT AUTHORIZED','BLOCKED gate cannot authorize delivery');
 
 if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
-console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',workflowOperations:31,detailedWorkbookStages:30,promptCenter:true,testProject:project.testProjectId,currentOperation:project.currentOperation,state:project.currentState,independentRuns:project.runRecords.length,externalSources:project.externalResearch.sources.length,controls:controls.length,checks:evidence.length},null,2));
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',workflowOperations:31,detailedWorkbookStages:30,promptWorkflow:'single-first-class',testProject:project.testProjectId,currentOperation:project.currentOperation,state:project.currentState,independentRuns:project.runRecords.length,externalSources:project.externalResearch.sources.length,controls:controls.length,checks:evidence.length},null,2));
