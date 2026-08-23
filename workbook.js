@@ -1,7 +1,7 @@
 (async()=>{
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
-    const cacheKey="human-workbook-20260823-r3";
+    const cacheKey="human-workbook-20260823-r4";
     const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
     const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
     for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
@@ -21,290 +21,29 @@
 
 (()=>{
 "use strict";
-const STORE="mclarw";
-const STYLE_ID="human-stage-controls-r3";
-const GLOBAL_INTERNAL_HEADING=/^(?:APPENDIX(?:ES)?\s+A\s*[–—-]\s*F(?:\s*[–—-].*)?|APPENDIX\s+[A-F]\s*[–—-].*|TEST PROJECT\s*[–—-]\s*EXISTING APPLICATION VERIFICATION|OPERATIONAL CONTROLS\s+A\s*[–—-]\s*F)$/i;
-const GLOBAL_INTERNAL_TEXT=/(?:Repository test project|Deployment gate|Live application checks|Verifier coverage|Preserved records:\s*\d+\.\s*Latest:)/i;
-const NAV_INTERNAL=/^(?:Appendices?\s+A\s*[–—-]\s*F|Appendix controls|Operational controls(?:\s+A\s*[–—-]\s*F)?|Control records|Test project)$/i;
-const RECORD_TITLES=[
-  [/Fresh[- ]context launch/i,"Independent run setup"],
-  [/Universal blocker/i,"Blocked stage"],
-  [/Change and invalidation/i,"Change impact"],
-  [/Exact final release/i,"Final release"],
-  [/New[- ]job/i,"New job setup"],
-  [/Agent[- ]output receipt/i,"Response record"]
-];
-const RECORD_HELP=[
-  [/Fresh[- ]context launch/i,"Complete this before starting the independent run or review."],
-  [/Universal blocker/i,"Record what is missing, why the stage cannot continue, and what work must stop."],
-  [/Change and invalidation/i,"Record what changed and which later work must be repeated."],
-  [/Exact final release/i,"Complete this only after the release gate and exact file-identity checks."],
-  [/New[- ]job/i,"Confirm this job starts clean and does not inherit decisions or evidence from an older job."],
-  [/Agent[- ]output receipt/i,"Save the response identity, files, problems, and next verification step."]
-];
-let queued=false;
-const cleanText=element=>String(element?.textContent||"").replace(/\s+/g," ").trim();
-const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-
-function installStyles(){
-  if(document.getElementById(STYLE_ID))return;
-  const style=document.createElement("style");
-  style.id=STYLE_ID;
-  style.textContent=`
-    :root{--human-ink:#171717;--human-muted:#666;--human-line:#d9d9d4;--human-soft:#f5f5f2}
-    body{background:var(--human-soft);color:var(--human-ink);font-size:15px;line-height:1.45}
-    .app{max-width:760px;box-shadow:0 0 0 1px #e8e8e3}
-    header,main{padding:14px}
-    header{background:#fff;position:static}
-    h1{font-size:20px;line-height:1.2;margin:0 0 5px}
-    #job{font-size:13px;color:var(--human-muted);overflow-wrap:anywhere}
-    .tools{display:grid;grid-template-columns:1.45fr repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
-    .tools button{min-height:44px;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:650;line-height:1.2}
-    .nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .nav button{min-height:52px;border-radius:10px;padding:8px;font-size:12px;line-height:1.25}
-    .card{border-color:var(--human-line);border-radius:12px;padding:14px;margin:12px 0}
-    .card h2{font-size:18px;line-height:1.25;margin-top:0}
-    .card h3{font-size:12px;margin:16px 0 6px}
-    .muted{font-size:13px;line-height:1.4;color:var(--human-muted)}
-    .copy{font-size:12px;line-height:1.45;max-height:360px}
-    textarea,input,select{font-size:16px;min-height:44px}
-    textarea{min-height:92px}
-    #appendix-operational-purpose,#repository-test-project,#human-test-project,#run-test-project,[data-integrated-operational-controls="true"],[data-hidden-internal-ui="true"]{display:none!important}
-    [data-human-stage-records="true"]{margin-top:12px}
-    [data-human-stage-records="true"]>summary{cursor:pointer;font-weight:750;list-style-position:outside}
-    [data-human-stage-records="true"] .record-count{color:#666;font-weight:500;font-size:12px}
-    [data-human-stage-records="true"] details[data-record]{border:1px solid #ddd;border-radius:10px;padding:10px;margin:10px 0;background:#fff}
-    [data-human-stage-records="true"] details[data-record]>summary{cursor:pointer;font-weight:700}
-    [data-human-stage-records="true"] .record-state{float:right;color:#666;font-size:11px;font-weight:600}
-    [data-human-stage-records="true"] .record-id{color:#777;font-size:11px;font-weight:500}
-    [data-human-stage-records="true"] p.muted{margin:6px 0 10px}
-    [data-human-stage-records="true"] [data-save-record]{width:100%;margin-top:12px}
-    #load-test-job{background:#fff}
-    @media(max-width:520px){header,main{padding:12px}.tools{grid-template-columns:repeat(2,minmax(0,1fr))}.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.nav button{min-height:50px}.card{padding:13px}}
-    @media(max-width:350px){.nav{grid-template-columns:1fr}}
-  `;
-  document.head.appendChild(style);
-}
-
-function removeInternalPanels(){
-  for(const id of ["appendix-operational-purpose","repository-test-project","human-test-project","run-test-project"]){
-    document.getElementById(id)?.remove();
-  }
-  for(const control of document.querySelectorAll("button,a,[role='button']")){
-    if(NAV_INTERNAL.test(cleanText(control))){
-      control.remove();
-    }
-  }
-  for(const heading of document.querySelectorAll("h1,h2,h3,h4,summary")){
-    if(!GLOBAL_INTERNAL_HEADING.test(cleanText(heading)))continue;
-    if(heading.closest('[data-contextual-controls="true"],[data-human-stage-records="true"]'))continue;
-    const box=heading.closest("section,article,details,.card,.panel")||heading.parentElement;
-    box?.remove();
-  }
-  for(const box of document.querySelectorAll("section,article,details,.card,.panel")){
-    if(box.closest('[data-contextual-controls="true"],[data-human-stage-records="true"]'))continue;
-    if(GLOBAL_INTERNAL_TEXT.test(cleanText(box)))box.remove();
-  }
-}
-
-function readableFieldName(name){
-  return String(name||"")
-    .replace(/SHA256/g,"SHA-256")
-    .replace(/_/g," ")
-    .toLowerCase()
-    .replace(/\b(id|sha-256|url|utc|api)\b/g,word=>word.toUpperCase())
-    .replace(/^./,char=>char.toUpperCase());
-}
-
-function mappedTitle(raw){
-  for(const [pattern,title] of RECORD_TITLES)if(pattern.test(raw))return title;
-  return raw.replace(/\s+[—-]\s+\S+$/," ").trim()||"Stage record";
-}
-
-function mappedHelp(raw){
-  for(const [pattern,help] of RECORD_HELP)if(pattern.test(raw))return help;
-  return "Complete and save this record before the stage can rely on it.";
-}
-
-function recordStatus(record){
-  const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
-  const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
-  return {unresolved,label:unresolved?"Needs information":"Saved"};
-}
-
-function humanizeRecord(record){
-  record.dataset.humanStageRecord="true";
-  const summary=record.querySelector(":scope > summary");
-  const rendered=cleanText(summary);
-  const raw=record.dataset.originalRecordTitle||rendered;
-  if(!record.dataset.originalRecordTitle)record.dataset.originalRecordTitle=raw;
-  const id=record.dataset.originalRecordId||(raw.match(/(?:—|-)\s*([A-Z][A-Z0-9-]*-\d+)\s*$/)||[])[1]||"";
-  if(id&&!record.dataset.originalRecordId)record.dataset.originalRecordId=id;
-  const title=mappedTitle(raw);
-  const status=recordStatus(record);
-  if(summary){
-    summary.innerHTML=`<span>${escapeHtml(title)}</span>${id?` <span class="record-id">${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(status.label)}</span>`;
-  }
-  const help=record.querySelector(":scope > p.muted");
-  if(help)help.textContent=mappedHelp(raw);
-  for(const field of record.querySelectorAll("[data-rfield]")){
-    const label=field.previousElementSibling;
-    if(label?.tagName==="LABEL")label.textContent=readableFieldName(field.dataset.rfield);
-  }
-  const save=record.querySelector("[data-save-record]");
-  if(save)save.textContent="Save this record";
-  record.open=true;
-  return status.unresolved;
-}
-
-function humanizeContextualControls(){
-  for(const root of document.querySelectorAll('[data-contextual-controls="true"]')){
-    root.dataset.workflowNative="true";
-    let group=root.querySelector(':scope > details[data-human-stage-records="true"]');
-    const direct=[...root.querySelectorAll(':scope > details[data-record]')];
-    if(!group&&direct.length){
-      group=document.createElement("details");
-      group.className="card";
-      group.dataset.humanStageRecords="true";
-      group.appendChild(document.createElement("summary"));
-      root.insertBefore(group,direct[0]);
-      direct.forEach(record=>group.appendChild(record));
-    }
-    if(!group)continue;
-    const records=[...group.querySelectorAll(":scope > details[data-record]")];
-    let unresolved=0;
-    records.forEach(record=>{unresolved+=humanizeRecord(record)});
-    const summary=group.querySelector(":scope > summary");
-    if(summary){
-      const noun=records.length===1?"record":"records";
-      const state=unresolved?`${unresolved} field${unresolved===1?"":"s"} need information`:"all saved";
-      summary.innerHTML=`Additional information for this stage <span class="record-count">(${records.length} ${noun}; ${escapeHtml(state)})</span>`;
-    }
-    group.open=records.length===1&&unresolved>0;
-  }
-}
-
-function readState(){
-  try{return JSON.parse(localStorage.getItem(STORE)||"null")}catch{return null}
-}
-
-function stageEntries(state){
-  const stages=state?.stages;
-  if(Array.isArray(stages))return stages.map((stage,index)=>[Number(stage?.number||index+1),stage]).filter(([,stage])=>stage);
-  if(stages&&typeof stages==="object")return Object.entries(stages).map(([key,stage])=>[Number(stage?.number||key),stage]).filter(([number,stage])=>Number.isFinite(number)&&stage);
-  return [];
-}
-
-function clearRecordStores(state){
-  for(const key of ["defects","regressions","blockers","changes","agentOutputReceipts","freshContextLaunches","releaseIdentityRecords","finalReleaseRecords","newJobResets"]){
-    if(Array.isArray(state[key]))state[key]=[];
-  }
-  if(state.operationalRecords&&typeof state.operationalRecords==="object"){
-    for(const letter of ["A","B","C","D","E","F"])state.operationalRecords[letter]=[];
-  }
-  if(state.appendices&&typeof state.appendices==="object"){
-    for(const letter of ["A","B","C","D","E","F"])if(state.appendices[letter])state.appendices[letter].records=[];
-  }
-}
-
-function buildTestJobState(template,spec){
-  const state=structuredClone(template);
-  clearRecordStores(state);
-  state.currentStage=1;
-  state.jobId=spec.jobId;
-  state.testProject={id:spec.testProjectId,source:"TEST_PROJECT.json",loadedAt:new Date().toISOString(),autoload:false};
-  state.job=state.job&&typeof state.job==="object"?state.job:{};
-  Object.assign(state.job,{
-    id:spec.jobId,
-    JOB_ID:spec.jobId,
-    title:spec.title,
-    JOB_TITLE:spec.title,
-    owner:"Workbook user",
-    dateOpened:new Date().toISOString(),
-    currentStage:1,
-    currentIteration:spec.phases?.confirmation?.iterationId||"CONFIRMATION-001",
-    currentState:"ACCEPTED",
-    inputVersion:spec.baseline?.inputVersion||"INPUT-v001",
-    sourceSetVersion:spec.baseline?.sourceSetVersion||"SOURCE-SET-v001",
-    requirementsVersion:spec.baseline?.requirementsVersion||"REQUIREMENTS-v001",
-    testSuiteVersion:spec.baseline?.testSuiteVersion||"TEST-SUITE-v001",
-    instructionVersion:spec.baseline?.instructionVersion||"INSTRUCTION-v001",
-    toolConfigurationVersion:spec.baseline?.toolConfigurationVersion||"TOOL-CONFIGURATION-v002",
-    baselineId:spec.baseline?.baselineId||"BASELINE-TEST-001",
-    productId:spec.product?.productId||"PRODUCT-TEST-001",
-    blockers:"NONE",
-    nextAction:"Review the retained completed test job or start a new clean job.",
-    latestEvidence:"TEST_PROJECT.json"
-  });
-  const evidence=Array.isArray(spec.stageEvidence)?spec.stageEvidence:[];
-  for(const [number,stage] of stageEntries(state)){
-    const line=evidence[number-1]||`STAGE ${String(number).padStart(2,"0")}: Retained test evidence.`;
-    stage.status="COMPLETE";
-    stage.decision="READY TO PROCEED";
-    stage.evidence=line;
-    stage.decisionEvidence=line;
-    stage.decidedBy="Retained test project";
-    stage.dateTime=spec.date||new Date().toISOString();
-    stage.draftRecord=`TEST PROJECT — STAGE ${String(number).padStart(2,"0")}\nJOB_ID: ${spec.jobId}\nSTATUS: COMPLETE\nEVIDENCE: ${line}`;
-    if(stage.fields&&typeof stage.fields==="object")stage.fields={TEST_PROJECT_EVIDENCE:line};
-    for(const key of ["humanChecks","gateChecks","evidenceChecks"]){
-      if(Array.isArray(stage[key]))stage[key]=stage[key].map(()=>true);
-    }
-  }
-  state.defects=Array.isArray(spec.defects)?structuredClone(spec.defects):[];
-  state.regressions=Array.isArray(spec.regressions)?structuredClone(spec.regressions):[];
-  return state;
-}
-
-async function loadTestJob(){
-  const current=readState();
-  if(!current){alert("The workbook is still loading. Try again in a moment.");return;}
-  if(!confirm("Load the retained test job into this workbook? Export the current job first if it must be kept."))return;
-  try{
-    const response=await fetch(`TEST_PROJECT.json?t=${Date.now()}`,{cache:"no-store"});
-    if(!response.ok)throw new Error(`HTTP ${response.status}`);
-    const spec=await response.json();
-    if(spec?.testProjectId!=="TEST-PROJECT-30-STAGE-001"||spec?.autoload!==false)throw new Error("The retained test project is invalid.");
-    const state=buildTestJobState(current,spec);
-    localStorage.setItem(STORE,JSON.stringify(state));
-    location.reload();
-  }catch(error){
-    console.error(error);
-    alert(`The test job could not be loaded: ${error.message}`);
-  }
-}
-
-function ensureLoadTestJobButton(){
-  const tools=document.querySelector("header .tools");
-  if(!tools||document.getElementById("load-test-job"))return;
-  const button=document.createElement("button");
-  button.id="load-test-job";
-  button.type="button";
-  button.textContent="Test job";
-  button.title="Load the retained completed test project into this workbook";
-  button.addEventListener("click",loadTestJob);
-  const importButton=[...tools.querySelectorAll("button")].find(item=>cleanText(item)==="Import");
-  if(importButton)tools.insertBefore(button,importButton);
-  else tools.appendChild(button);
-}
-
-function render(){
-  installStyles();
-  removeInternalPanels();
-  humanizeContextualControls();
-  ensureLoadTestJobButton();
-  removeInternalPanels();
-}
-
-function queue(){
-  if(queued)return;
-  queued=true;
-  requestAnimationFrame(()=>{queued=false;render()});
-}
-
-document.addEventListener("click",queue,true);
-document.addEventListener("change",queue,true);
-window.addEventListener("pageshow",queue);
-new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});
-queue();
+const STORE="mclarw",STYLE_ID="human-ui-r4";
+let queued=false,testSpec=null;
+const clean=e=>String(e?.textContent||"").replace(/\s+/g," ").trim();
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const read=()=>{try{return JSON.parse(localStorage.getItem(STORE)||"null")}catch{return null}};
+const stageEntries=s=>Array.isArray(s?.stages)?s.stages.map((x,i)=>[Number(x?.number||i+1),x]).filter(([,x])=>x):Object.entries(s?.stages||{}).map(([k,x])=>[Number(x?.number||k),x]).filter(([n,x])=>Number.isFinite(n)&&x);
+function styles(){if(document.getElementById(STYLE_ID))return;const s=document.createElement("style");s.id=STYLE_ID;s.textContent=`
+body{font-size:14px;line-height:1.35}.app{max-width:760px}header,main{padding:10px 12px}h1{font-size:18px;line-height:1.15;margin:0 0 4px}#job{font-size:12px;color:#666}.tools{display:flex!important;gap:5px!important;flex-wrap:wrap;margin:7px 0!important}.tools button{min-height:34px!important;padding:6px 9px!important;border-radius:7px!important;font-size:13px!important;font-weight:600!important}.nav{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important}.nav button{min-height:38px!important;padding:5px 3px!important;border-radius:7px!important;font-size:10.5px!important;line-height:1.15!important}.card{padding:10px!important;margin:8px 0!important;border-radius:9px!important}.card h2{font-size:16px!important}.card h3{margin:11px 0 4px!important}.muted{font-size:12px!important}.copy{font-size:11px!important;max-height:300px!important}textarea,input,select{font-size:16px;min-height:36px!important;padding:6px!important}textarea{min-height:68px!important}#appendix-operational-purpose,#repository-test-project,[data-integrated-operational-controls="true"]{display:none!important}#test-project-view{margin:8px 0}#test-project-view summary{cursor:pointer;font-weight:700}.tp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.tp-section{border:1px solid #ddd;border-radius:8px;padding:8px;margin:7px 0}.tp-section h3{margin:0 0 5px;font-size:13px}.tp-pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px ui-monospace,monospace;background:#f4f4f2;padding:7px;border-radius:6px;max-height:280px;overflow:auto}.tp-item{border-top:1px solid #e2e2de;padding:6px 0}.tp-item:first-child{border-top:0}.tp-label{font-size:10px;text-transform:uppercase;color:#666}.tp-value{font-size:12px;overflow-wrap:anywhere}[data-human-stage-records="true"]{margin-top:8px}[data-human-stage-records="true"] details[data-record]{padding:8px!important;margin:6px 0!important}[data-human-stage-records="true"] [data-save-record]{width:auto!important;margin-top:7px!important}
+@media(max-width:520px){.nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.nav button{font-size:9.5px!important}.tp-grid{grid-template-columns:1fr}.tools button{font-size:12px!important}}
+@media(max-width:360px){.nav{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+`;document.head.appendChild(s)}
+function removeNonUserPanels(){document.getElementById("appendix-operational-purpose")?.remove();document.getElementById("repository-test-project")?.remove();for(const e of document.querySelectorAll('[data-integrated-operational-controls="true"]'))e.remove();for(const e of document.querySelectorAll("button,a,[role=button]")){if(/^(?:Appendices? A.?F|Operational controls|Control records)$/i.test(clean(e)))e.remove()}}
+function readable(n){return String(n||"").replace(/SHA256/g,"SHA-256").replace(/_/g," ").toLowerCase().replace(/\b(id|sha-256|url|api)\b/g,x=>x.toUpperCase()).replace(/^./,x=>x.toUpperCase())}
+function humanize(){for(const root of document.querySelectorAll('[data-contextual-controls="true"]')){let group=root.querySelector(':scope > details[data-human-stage-records="true"]');const direct=[...root.querySelectorAll(':scope > details[data-record]')];if(!group&&direct.length){group=document.createElement("details");group.dataset.humanStageRecords="true";group.className="card";group.innerHTML="<summary>Stage supporting records</summary>";root.insertBefore(group,direct[0]);direct.forEach(x=>group.appendChild(x))}if(!group)continue;for(const rec of group.querySelectorAll("details[data-record]")){const sum=rec.querySelector(":scope > summary");if(sum&&!sum.dataset.done){sum.dataset.done="1";sum.textContent=sum.textContent.replace(/Fresh[- ]context launch/i,"Independent run setup").replace(/Universal blocker/i,"Blocked stage").replace(/Change and invalidation/i,"Change impact").replace(/Exact final release/i,"Final release").replace(/New[- ]job/i,"New job setup").replace(/Agent[- ]output receipt/i,"Response record")}for(const f of rec.querySelectorAll("[data-rfield]")){const l=f.previousElementSibling;if(l?.tagName==="LABEL")l.textContent=readable(f.dataset.rfield)}const b=rec.querySelector("[data-save-record]");if(b)b.textContent="Save record"}}}}
+function clearStores(s){for(const k of ["defects","regressions","blockers","changes","agentOutputReceipts","freshContextLaunches","releaseIdentityRecords","finalReleaseRecords","newJobResets"])if(Array.isArray(s[k]))s[k]=[];if(s.operationalRecords)for(const l of "ABCDEF")s.operationalRecords[l]=[];if(s.appendices)for(const l of "ABCDEF")if(s.appendices[l])s.appendices[l].records=[]}
+function build(template,spec){const s=structuredClone(template);clearStores(s);s.currentStage=1;s.jobId=spec.jobId;s.testProject={id:spec.testProjectId,source:"TEST_PROJECT.json",loadedAt:new Date().toISOString(),spec:structuredClone(spec)};s.job=s.job||{};Object.assign(s.job,{id:spec.jobId,JOB_ID:spec.jobId,title:spec.title,JOB_TITLE:spec.title,owner:"Workbook user",dateOpened:spec.date,currentStage:1,currentIteration:spec.phases?.confirmation?.iterationId||"CONFIRMATION-001",currentState:"ACCEPTED",inputVersion:spec.baseline?.inputVersion,sourceSetVersion:spec.baseline?.sourceSetVersion,requirementsVersion:spec.baseline?.requirementsVersion,testSuiteVersion:spec.baseline?.testSuiteVersion,instructionVersion:spec.baseline?.instructionVersion,toolConfigurationVersion:spec.baseline?.toolConfigurationVersion,baselineId:spec.baseline?.baselineId,productId:spec.product?.productId,blockers:"NONE",nextAction:"Inspect the completed test project in this application.",latestEvidence:"TEST_PROJECT.json"});const ev=spec.stageEvidence||[];for(const [n,st] of stageEntries(s)){const line=ev[n-1]||`STAGE ${String(n).padStart(2,"0")}: completed test-project evidence`;st.status="COMPLETE";st.decision="READY TO PROCEED";st.evidence=line;st.decisionEvidence=line;st.decidedBy="Test project";st.dateTime=spec.date;st.draftRecord=`TEST PROJECT — STAGE ${String(n).padStart(2,"0")}\n${line}`;for(const k of ["humanChecks","gateChecks","evidenceChecks"])if(Array.isArray(st[k]))st[k]=st[k].map(()=>true)}s.defects=structuredClone(spec.defects||[]);s.regressions=structuredClone(spec.regressions||[]);return s}
+async function getSpec(){if(testSpec)return testSpec;const r=await fetch(`TEST_PROJECT.json?t=${Date.now()}`,{cache:"no-store"});if(!r.ok)throw Error(`HTTP ${r.status}`);testSpec=await r.json();return testSpec}
+async function loadTest(){const current=read();if(!current)return;try{const spec=await getSpec();localStorage.setItem(STORE,JSON.stringify(build(current,spec)));location.reload()}catch(e){alert(`Test project could not be loaded: ${e.message}`)}}
+function button(){const tools=document.querySelector("header .tools");if(!tools||document.getElementById("load-test-job"))return;const b=document.createElement("button");b.id="load-test-job";b.type="button";b.textContent="Test project";b.addEventListener("click",loadTest);const imp=[...tools.querySelectorAll("button")].find(x=>clean(x)==="Import");tools.insertBefore(b,imp||null)}
+const kv=(label,value)=>`<div class="tp-item"><div class="tp-label">${esc(label)}</div><div class="tp-value">${esc(value)}</div></div>`;
+function listSection(title,items,render){return `<section class="tp-section"><h3>${esc(title)}</h3>${items?.length?items.map(render).join(""):"<div class=\"muted\">None</div>"}</section>`}
+function testProjectView(){const state=read();const spec=state?.testProject?.spec;if(!spec){document.getElementById("test-project-view")?.remove();return}let root=document.getElementById("test-project-view");if(!root){root=document.createElement("details");root.id="test-project-view";root.className="card";const main=document.querySelector("main");main?.insertBefore(root,main.firstChild)}root.open=true;const stages=stageEntries(state);root.innerHTML=`<summary>Test project — ${esc(spec.title)}</summary><p class="muted">Complete retained project. All project inputs, generated instructions, requirements, tests, iterations, defects, product data, release evidence, and stage evidence are inspectable here.</p><div class="tp-grid"><div>${kv("Job",spec.jobId)}${kv("Objective",spec.objective?.exactUserObjective)}${kv("Product filename",spec.product?.filename)}${kv("Product bytes",spec.product?.byteLength)}${kv("Product SHA-256",spec.product?.sha256)}</div><div>${kv("Baseline",spec.baseline?.baselineId)}${kv("Release gate",spec.release?.releaseState)}${kv("Confirmation",spec.phases?.confirmation?.iterationId)}${kv("Requirements",spec.requirements?.length||0)}${kv("Tests",spec.tests?.length||0)}</div></div>${listSection("Sources",spec.sourceInventory,x=>`<div class="tp-item"><b>${esc(x.sourceId)}</b> — ${esc(x.title)}<div class="muted">${esc(x.type)} · ${esc(x.role)} · inspected: ${esc(x.actualSourceInspected)}</div></div>`)}${listSection("Requirements",spec.requirements,x=>`<div class="tp-item"><b>${esc(x.reqId)}</b> ${esc(x.requirement)}<div class="muted">Verify: ${esc(x.verificationMethod)} · Failure: ${esc(x.failureCondition)}</div></div>`)}${listSection("Verification tests",spec.tests,x=>`<div class="tp-item"><b>${esc(x.testId)}</b> → ${esc(x.reqId)}<div>${esc(x.procedure)}</div><div class="muted">Expected: ${esc(x.expectedResult)}</div></div>`)}${listSection("Failure / mutation tests",spec.mutations,x=>`<div class="tp-item"><b>${esc(x.mutationId)}</b> ${esc(x.violationMode)}<div class="muted">Expected: ${esc(x.expectedSystemResponse)} · Validator: ${esc(x.validatorResult)}</div></div>`)}<section class="tp-section"><h3>Generated production instruction</h3><div class="tp-pre">${esc(JSON.stringify(spec.productionInstruction,null,2))}</div></section><section class="tp-section"><h3>Execution iterations and outputs</h3><div class="tp-pre">${esc(JSON.stringify(spec.phases,null,2))}</div></section>${listSection("Defects",spec.defects,x=>`<div class="tp-item"><b>${esc(x.defectId)}</b> ${esc(x.observedFailure)}<div class="muted">Root cause: ${esc(x.rootCauseCategory)} · ${esc(x.status)}</div></div>`)}${listSection("Regression tests",spec.regressions,x=>`<div class="tp-item"><b>${esc(x.regId)}</b><div class="muted">Before: ${esc(x.preCorrectionResult)} · After: ${esc(x.postCorrectionResult)}</div></div>`)}<section class="tp-section"><h3>Convergence, baseline, product and release</h3><div class="tp-pre">${esc(JSON.stringify({convergence:spec.convergence,baseline:spec.baseline,product:spec.product,release:spec.release,evidenceChains:spec.evidenceChains},null,2))}</div></section>${listSection("All 30 stage evidence records",stages,([n,st])=>`<div class="tp-item"><b>Stage ${String(n).padStart(2,"0")}</b> — ${esc(st.status)}<div>${esc(st.decisionEvidence||st.evidence||"")}</div>${st.draftRecord?`<details><summary>Saved stage record</summary><div class="tp-pre">${esc(st.draftRecord)}</div></details>`:""}</div>`)}`}
+function render(){styles();removeNonUserPanels();humanize();button();testProjectView();removeNonUserPanels()}
+function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;render()})}
+document.addEventListener("click",queue,true);document.addEventListener("change",queue,true);window.addEventListener("pageshow",queue);new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});queue();
 })();
