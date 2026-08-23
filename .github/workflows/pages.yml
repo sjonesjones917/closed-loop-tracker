@@ -33,19 +33,8 @@ jobs:
           if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated product content');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
           NODE
-      - name: Materialize verified repair on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if ! git diff --quiet -- app.js workbook.js index.html TEST_PROJECT.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app.js workbook.js index.html TEST_PROJECT.json
-            git commit -m "Materialize verified authoritative workbook repair"
-            git push origin HEAD:main
-          fi
 
   deploy:
-    if: github.event_name != 'pull_request'
     needs: test
     environment: {name: github-pages, url: '${{ steps.deployment.outputs.page_url }}'}
     runs-on: ubuntu-latest
@@ -62,7 +51,6 @@ jobs:
         uses: actions/deploy-pages@v4
 
   verify-live:
-    if: github.event_name != 'pull_request'
     needs: [test, deploy]
     runs-on: ubuntu-latest
     env: {PAGE_URL: '${{ needs.deploy.outputs.page_url }}'}
@@ -100,22 +88,7 @@ jobs:
             "status": "VERIFIED",
             "application": "Mobile Closed-Loop Agent Reliability Workbook",
             "pageUrl": "https://sjonesjones917.github.io/closed-loop-tracker/",
-            "checks": [
-              "deployed resources",
-              "retained project identity and truthful Stage 01/Stage 02 state",
-              "320 CSS pixel rendering",
-              "393 CSS pixel rendering",
-              "1280 CSS pixel rendering",
-              "no horizontal overflow",
-              "no oversized buttons",
-              "Stage 01 generated instruction",
-              "complete Operation 01 output",
-              "Records visibility",
-              "Stage 02 structured editing and refresh persistence",
-              "contextual supporting records",
-              "new project coexistence",
-              "zero browser/runtime errors"
-            ]
+            "checks": ["deployed resources","retained project identity and truthful Stage 01/Stage 02 state","320 CSS pixel rendering","393 CSS pixel rendering","1280 CSS pixel rendering","no horizontal overflow","no oversized buttons","Stage 01 generated instruction","complete Operation 01 output","Records visibility","Stage 02 structured editing and refresh persistence","contextual supporting records","new project coexistence","zero browser/runtime errors"]
           }
           JSON
           git config user.name "github-actions[bot]"
