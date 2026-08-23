@@ -1,0 +1,36 @@
+name: Extract current workbook module source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/extract-source.yml
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct the exact current module source
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import zlib from 'node:zlib';
+          const names = ['workbook.module.gz.1', 'workbook.module.gz.2', 'workbook.module.gz.3'];
+          const source = zlib.gunzipSync(Buffer.concat(names.map(name => fs.readFileSync(name))));
+          fs.writeFileSync('workbook.module.source.js', source);
+          NODE
+          node --check workbook.module.source.js
+      - name: Commit the exact extracted source
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workbook.module.source.js
+          git commit -m "Expose current workbook module source for exact repair"
+          git push
