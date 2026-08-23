@@ -89,7 +89,7 @@ async function main(){
   await click(cdp,'[data-view="Records"]');await waitExpr(cdp,`document.body.innerText.includes('Complete project record')`);
   const records=await pageSnapshot(cdp);
   for(const text of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Sources','Blockers'])assert(records.text.includes(text),`Records view is missing ${text}.`);
-  const openedOutputs=await evalValue(cdp,`(()=>{const d=[...document.querySelectorAll('details.record-card')].find(x=>x.querySelector(':scope>summary')?.textContent.includes('Generated outputs'));if(!d)return false;d.open=true;return true})()`);
+  const openedOutputs=await evalValue(cdp,`(()=>{const d=[...document.querySelectorAll('details.record-card')].find(x=>x.querySelector(':scope>summary')?.textContent.includes('Generated outputs'));if(!d)return false;d.open=true;d.querySelectorAll('details').forEach(x=>x.open=true);return true})()`);
   assert(openedOutputs,'Generated outputs record group could not be opened.');
   await waitExpr(cdp,`document.body.innerText.includes('BROWSER STAGE 02 OUTPUT RECEIPT CHECK')`);
 
