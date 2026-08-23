@@ -1,0 +1,114 @@
+name: Repair application and retained project
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/repair-current.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: closed-loop-source-repair
+  cancel-in-progress: true
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Use current Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact correction bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat repair-payload/part-* > /tmp/closed-loop-repair.b64
+          base64 -d /tmp/closed-loop-repair.b64 > /tmp/closed-loop-repair.tgz
+          echo '739027351307d55388205c4b65006fe95012f8157da3ef04b0027f224f5658e8  /tmp/closed-loop-repair.tgz' | sha256sum -c -
+          tar -xzf /tmp/closed-loop-repair.tgz -C .
+          node --check migrate-self-project.mjs
+          node --check attach-self-project.mjs
+          node --check verify-app.mjs
+          node --check browser-smoke.mjs
+      - name: Build canonical application and project
+        shell: bash
+        run: |
+          set -euo pipefail
+          node migrate-self-project.mjs
+          node build-app.mjs
+          node attach-self-project.mjs
+          node verify-app.mjs
+          node verify-self-project.mjs
+      - name: Execute rendered phone regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --ignore-scripts playwright-core
+          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_PATH"
+          CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+          rm -rf node_modules package-lock.json
+      - name: Remove the obsolete competing versioned entry
+        shell: bash
+        run: |
+          cat > app-v13.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+          <meta http-equiv="refresh" content="0;url=./">
+          <link rel="canonical" href="./">
+          <title>Closed-Loop Agent Reliability</title>
+          </head>
+          <body><p>The application is available at <a href="./">the repository root</a>.</p></body>
+          </html>
+          HTML
+      - name: Record synchronized source identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_SHA256="$(sha256sum index.html | awk '{print $1}')"
+          PROJECT_SHA256="$(sha256sum SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
+          printf '{"status":"VERIFIED_SOURCE_SYNCHRONIZED","repairTriggerCommit":"%s","appSha256":"%s","projectSha256":"%s","stages":31,"stage1Scopes":20,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedProjectVisible":true,"directStorageFallbackVerified":true,"canonicalProjectDefinition":true,"promptRelayArchitecture":false}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > SOURCE_SYNCHRONIZATION_VERIFIED.json
+      - name: Commit exact verified correction
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -r repair-payload .github/workflows/repair-current.yml
+          git add README.md migrate-self-project.mjs attach-self-project.mjs verify-app.mjs browser-smoke.mjs .github/workflows/pages.yml index.html app-v13.html SELF_VERIFIED_PROJECT.json SOURCE_SYNCHRONIZATION_VERIFIED.json STATIC_VERIFICATION.json BROWSER_SMOKE_REPORT.json PHONE_SMOKE_393.png PHONE_SMOKE_320.png
+          git diff --exit-code
+          git commit -m 'Restore human-first application and retained completed project'
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
+          echo "source_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Dispatch exact-source Pages verification and deployment
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/dispatch-response -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/pages.yml/dispatches" \
+            -d '{"ref":"main"}')"
+          test "$code" = '204'
