@@ -25,6 +25,7 @@ jobs:
       id-token: write
     outputs:
       app_sha256: ${{ steps.package.outputs.app_sha256 }}
+      project_sha256: ${{ steps.package.outputs.project_sha256 }}
     steps:
       - name: Check out the exact source revision
         uses: actions/checkout@v4
@@ -34,16 +35,22 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Rebuild the exact application from the verified payload
+      - name: Build the human-first application
         run: node build-app.mjs
 
-      - name: Verify the application architecture and JavaScript
+      - name: Keep the verified app self-project in the Projects UI
+        run: node attach-self-project.mjs
+
+      - name: Verify application architecture
         run: node verify-app.mjs
+
+      - name: Verify the retained self-project against the current 31-stage workflow
+        run: node verify-self-project.mjs
 
       - name: Install the browser driver
         run: npm install --no-save --ignore-scripts playwright-core
 
-      - name: Execute the rendered phone UI smoke test
+      - name: Execute rendered phone UI smoke test with a human project owner
         shell: bash
         run: |
           set -euo pipefail
@@ -51,23 +58,22 @@ jobs:
           test -n "$CHROME_PATH"
           CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
 
-      - name: Build the exact static Pages payload
+      - name: Build exact static Pages payload
         id: package
         shell: bash
         run: |
           set -euo pipefail
           APP_SHA256="$(sha256sum index.html | awk '{print $1}')"
+          PROJECT_SHA256="$(sha256sum SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
           rm -rf dist
           mkdir -p dist
           cp index.html dist/index.html
           cp index.html dist/404.html
-          cp -R app-payload dist/app-payload
-          for legacy in app-v10.html app-v11.html app-v13.html live.html; do
-            if [[ -f "$legacy" ]]; then cp "$legacy" "dist/$legacy"; fi
-          done
+          cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
           : > dist/.nojekyll
-          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"seededSelfBuildProject":false,"promptRelayArchitecture":false,"appSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" > dist/deployment.json
+          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedSelfProjectProof":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
           echo "app_sha256=$APP_SHA256" >> "$GITHUB_OUTPUT"
+          echo "project_sha256=$PROJECT_SHA256" >> "$GITHUB_OUTPUT"
 
       - name: Preserve verification evidence
         uses: actions/upload-artifact@v4
@@ -78,6 +84,7 @@ jobs:
             BROWSER_SMOKE_REPORT.json
             PHONE_SMOKE_393.png
             PHONE_SMOKE_320.png
+            SELF_VERIFIED_PROJECT.json
           if-no-files-found: error
           retention-days: 30
 
@@ -86,7 +93,7 @@ jobs:
         with:
           enablement: true
 
-      - name: Upload the verified Pages artifact
+      - name: Upload verified Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -103,27 +110,30 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out the exact verified source revision
+      - name: Check out exact verified source revision
         uses: actions/checkout@v4
 
-      - name: Deploy the verified application
+      - name: Deploy verified application
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify the live root bytes
+      - name: Verify live application and retained self-project bytes
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          EXPECTED_SHA256: ${{ needs.verify.outputs.app_sha256 }}
+          EXPECTED_APP_SHA256: ${{ needs.verify.outputs.app_sha256 }}
+          EXPECTED_PROJECT_SHA256: ${{ needs.verify.outputs.project_sha256 }}
         run: |
           set -euo pipefail
           mkdir -p live-check
           verified=false
           for attempt in $(seq 1 36); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
-            if curl -fsSL --retry 2 --retry-delay 1 "${PAGE_URL}?verify=${nonce}" -o live-check/index.html; then
-              LIVE_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
-              if [[ "$LIVE_SHA256" == "$EXPECTED_SHA256" ]]; then
+            if curl -fsSL --retry 2 --retry-delay 1 "${PAGE_URL}?verify=${nonce}" -o live-check/index.html \
+              && curl -fsSL --retry 2 --retry-delay 1 "${PAGE_URL%/}/SELF_VERIFIED_PROJECT.json?verify=${nonce}" -o live-check/SELF_VERIFIED_PROJECT.json; then
+              LIVE_APP_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
+              LIVE_PROJECT_SHA256="$(sha256sum live-check/SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
+              if [[ "$LIVE_APP_SHA256" == "$EXPECTED_APP_SHA256" && "$LIVE_PROJECT_SHA256" == "$EXPECTED_PROJECT_SHA256" ]]; then
                 verified=true
                 break
               fi
@@ -131,26 +141,32 @@ jobs:
             sleep 5
           done
           if [[ "$verified" != true ]]; then
-            echo 'Live GitHub Pages root did not become byte-identical to the verified application.' >&2
+            echo 'Live GitHub Pages bytes did not become identical to the verified application and self-project.' >&2
             exit 1
           fi
           grep -Fq '<title>Closed-Loop Agent Reliability</title>' live-check/index.html
           grep -Fq '<h1>Closed-Loop Agent Reliability</h1>' live-check/index.html
+          grep -Fq 'data-self-project-proof="true"' live-check/index.html
+          grep -Fq 'SELF_VERIFIED_PROJECT.json' live-check/index.html
+          node -e "const p=require('./live-check/SELF_VERIFIED_PROJECT.json'); if(!Array.isArray(p.stages)||p.stages.length!==31||p.releaseDecision!=='ACCEPTED') process.exit(1)"
           if grep -Eqi 'Closed-Loop Agent Reliability[[:space:]]+v[0-9]+' live-check/index.html; then
             echo 'A public version label appeared in the live application.' >&2
             exit 1
           fi
 
-      - name: Record the verified live deployment
+      - name: Record verified live deployment
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          EXPECTED_SHA256: ${{ needs.verify.outputs.app_sha256 }}
+          EXPECTED_APP_SHA256: ${{ needs.verify.outputs.app_sha256 }}
+          EXPECTED_PROJECT_SHA256: ${{ needs.verify.outputs.project_sha256 }}
         run: |
           set -euo pipefail
-          LIVE_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
-          test "$LIVE_SHA256" = "$EXPECTED_SHA256"
-          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"seededSelfBuildProject":false,"promptRelayArchitecture":false,"appSha256":"%s","liveSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_SHA256" "$LIVE_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
+          LIVE_APP_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
+          LIVE_PROJECT_SHA256="$(sha256sum live-check/SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
+          test "$LIVE_APP_SHA256" = "$EXPECTED_APP_SHA256"
+          test "$LIVE_PROJECT_SHA256" = "$EXPECTED_PROJECT_SHA256"
+          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedSelfProjectProof":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add LIVE_DEPLOYMENT_VERIFIED.json
