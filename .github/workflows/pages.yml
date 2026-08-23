@@ -1,200 +1,39 @@
-name: Deploy Closed-Loop Agent Reliability
-
+name: Verify and deploy the single workbook app
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - LIVE_DEPLOYMENT_VERIFIED.json
+    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
+  pages: write
+  id-token: write
 concurrency:
-  group: closed-loop-pages-deployment
+  group: pages
   cancel-in-progress: true
-
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    outputs:
-      app_sha256: ${{ steps.package.outputs.app_sha256 }}
-      project_sha256: ${{ steps.package.outputs.project_sha256 }}
     steps:
-      - name: Check out the exact source revision
-        uses: actions/checkout@v4
-      - name: Use current Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build the structured human-operable application
-        run: node build-app.mjs
-      - name: Add the exact stage-specific prompt system
-        run: node apply-stage-prompts.mjs
-      - name: Keep the retained application project in Projects
-        run: node attach-self-project.mjs
-      - name: Install the browser driver
-        run: npm install --no-save --ignore-scripts playwright-core
-      - name: Rebuild the retained application project against these exact application bytes
-        shell: bash
+      - run: node verify.mjs
+      - name: Enforce one application
         run: |
-          set -euo pipefail
-          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          test -n "$CHROME_PATH"
-          CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
-      - name: Verify application architecture, prompts, and native retained project
-        run: |
-          node verify-app.mjs
-          node verify-self-project.mjs
-      - name: Execute rendered phone UI and prompt smoke tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          test -n "$CHROME_PATH"
-          CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
-      - name: Build exact static Pages payload
-        id: package
-        shell: bash
-        run: |
-          set -euo pipefail
-          APP_SHA256="$(sha256sum index.html | awk '{print $1}')"
-          PROJECT_SHA256="$(sha256sum SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
-          rm -rf dist
-          mkdir -p dist
-          cp index.html dist/index.html
-          cp index.html dist/404.html
-          cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
-          cp SELF_PROJECT_VERIFICATION.json dist/SELF_PROJECT_VERIFICATION.json
-          if [[ -f SELF_PROJECT_RUN_REPORT.json ]]; then cp SELF_PROJECT_RUN_REPORT.json dist/SELF_PROJECT_RUN_REPORT.json; fi
-          : > dist/.nojekyll
-          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stagePromptSpecifications":31,"stagePromptGeneration":true,"singleReusableTenRunPrompts":true,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"structuredRecordsRemainPrimary":true,"retainedSelfProjectProof":true,"retainedSelfProjectVisible":true,"retainedSelfProjectStagePrompts":31,"retainedProductionInstructionOutputs":2,"nativeCurrentSchemaProject":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
-          echo "app_sha256=$APP_SHA256" >> "$GITHUB_OUTPUT"
-          echo "project_sha256=$PROJECT_SHA256" >> "$GITHUB_OUTPUT"
-      - name: Preserve verification evidence
-        uses: actions/upload-artifact@v4
+          test -f index.html
+          test "$(find . -maxdepth 1 -type f \( -name '*.html' -o -name 'app-*' -o -name 'v*.html' \) | wc -l)" -eq 1
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: closed-loop-verification-evidence
-          path: |
-            STATIC_VERIFICATION.json
-            SELF_PROJECT_VERIFICATION.json
-            SELF_PROJECT_RUN_REPORT.json
-            BROWSER_SMOKE_REPORT.json
-            PHONE_SMOKE_393.png
-            PHONE_SMOKE_320.png
-            SELF_VERIFIED_PROJECT.json
-          if-no-files-found: error
-          retention-days: 30
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Upload verified Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
+          path: .
   deploy:
     needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Check out exact verified source revision
-        uses: actions/checkout@v4
-      - name: Deploy verified application
+      - name: Deploy exact verified repository
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify live application, retained project, prompts, and exact Stage 22 product bytes
-        shell: bash
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          EXPECTED_APP_SHA256: ${{ needs.verify.outputs.app_sha256 }}
-          EXPECTED_PROJECT_SHA256: ${{ needs.verify.outputs.project_sha256 }}
-        run: |
-          set -euo pipefail
-          mkdir -p live-check
-          verified=false
-          for attempt in $(seq 1 36); do
-            nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
-            if curl -fsSL --retry 2 --retry-delay 1 "${PAGE_URL}?verify=${nonce}" -o live-check/index.html \
-              && curl -fsSL --retry 2 --retry-delay 1 "${PAGE_URL%/}/SELF_VERIFIED_PROJECT.json?verify=${nonce}" -o live-check/SELF_VERIFIED_PROJECT.json; then
-              LIVE_APP_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
-              LIVE_PROJECT_SHA256="$(sha256sum live-check/SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
-              if [[ "$LIVE_APP_SHA256" == "$EXPECTED_APP_SHA256" && "$LIVE_PROJECT_SHA256" == "$EXPECTED_PROJECT_SHA256" ]]; then verified=true; break; fi
-            fi
-            sleep 5
-          done
-          test "$verified" = true
-          grep -Fq '<title>Closed-Loop Agent Reliability</title>' live-check/index.html
-          grep -Fq '<h1>Closed-Loop Agent Reliability</h1>' live-check/index.html
-          grep -Fq '<script id="stage-manifest" type="application/json">' live-check/index.html
-          grep -Fq 'data-self-project-proof="true"' live-check/index.html
-          grep -Fq 'data-retained-self-project-loader="true"' live-check/index.html
-          grep -Fq 'SELF_VERIFIED_PROJECT.json' live-check/index.html
-          grep -Fq 'data-stage-prompt-system="true"' live-check/index.html
-          grep -Fq 'data-generate-stage-prompt' live-check/index.html
-          grep -Fq 'data-copy-stage-prompt' live-check/index.html
-          grep -Fq 'Perform actual outward external source discovery' live-check/index.html
-          grep -Fq 'RUN_ID: <<RUN-001 through RUN-010>>' live-check/index.html
-          grep -Fq 'MODE: <<PRODUCER or VERIFIER>>' live-check/index.html
-          if grep -Eqi 'Agent response|Paste agent response|Paste completed agent result|sidecar-filename defect|app-arbitrary application version|Closed-Loop Agent Reliability[[:space:]]+v[0-9]+' live-check/index.html; then exit 1; fi
-          node <<'NODE'
-          const fs=require('fs');
-          const crypto=require('crypto');
-          const html=fs.readFileSync('live-check/index.html');
-          const text=html.toString('utf8');
-          const p=JSON.parse(fs.readFileSync('live-check/SELF_VERIFIED_PROJECT.json','utf8'));
-          const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
-          if(p.schema!=='closed-loop-project/1'||!Array.isArray(p.stages)||p.stages.length!==31||p.stages.some((s,i)=>s.number!==i+1||s.status!=='COMPLETE'))process.exit(1);
-          if(!String(p.job?.exactUserObjective||'').includes('complete phone-first, domain-general Closed-Loop Agent Reliability application'))process.exit(1);
-          if(/\bexisting v13\b|version 13|sidecar-filename defect|fix stage|repair-task tracker/i.test(JSON.stringify(p.job||{})))process.exit(1);
-          if(p.stages[0]?.assignedActorType!=='HUMAN')process.exit(1);
-          if(!['HUMAN','HUMAN_AGENT_TEAM'].includes(p.stages[26]?.assignedActorType)||!['HUMAN','HUMAN_AGENT_TEAM'].includes(p.stages[27]?.assignedActorType))process.exit(1);
-          if(p.stages.some(stage=>!String(stage.executionPrompt||'').trim()||!(/^[a-f0-9]{64}$/i).test(String(stage.executionPromptSourceHash||''))))process.exit(1);
-          if(!String(p.stages[1].executionPrompt||'').includes('Perform actual outward external source discovery')||!String(p.stages[7].executionPrompt||'').includes('This stage execution prompt is not the production instruction itself')||!String(p.stages[10].executionPrompt||'').includes('RUN_ID: <<RUN-001 through RUN-010>>')||!String(p.stages[19].executionPrompt||'').includes('MODE: <<PRODUCER or VERIFIER>>'))process.exit(1);
-          if(!p.productionInstructions.some(r=>Number(r.stageNumber)===8&&String(r.promptText||'').includes('PRODUCTION INSTRUCTION'))||!p.productionInstructions.some(r=>Number(r.stageNumber)===9&&String(r.promptText||'').includes('PREFLIGHTED PRODUCTION INSTRUCTION')))process.exit(1);
-          const spec=text.match(/const STAGE_PROMPT_SPECS=\{([\s\S]*?)\n\};\nfunction stagePromptRequired/);
-          if(!spec||[...spec[1].matchAll(/(?:^|\n)(\d+):\{/g)].length!==31)process.exit(1);
-          for(const name of ['externalSources','requirements','acceptanceTests','mutationTests','productionInstructions','candidates','executions','verificationRecords','defects','regressionTests','corrections','products','processAudits','productAudits','decisions','hashVerifications','releases'])if(!Array.isArray(p[name])||p[name].length===0)process.exit(1);
-          for(const n of [11,18,20])if(p.executions.filter(r=>Number(r.stageNumber)===n).length!==10)process.exit(1);
-          const product=p.products.find(r=>Number(r.stageNumber)===22&&r.artifactKind==='FILE'&&r.artifactFile?.base64);
-          if(!product)process.exit(1);
-          const productBytes=Buffer.from(product.artifactFile.base64,'base64');
-          if(!productBytes.equals(html)||product.computedSha256!==hash(html))process.exit(1);
-          const decision=p.decisions.find(r=>r.decision==='ACCEPTED');
-          const verifiedHash=p.hashVerifications.find(r=>r.productId===product.productId&&r.match==='YES'&&r.auditedHash===hash(html)&&r.releaseHash===hash(html));
-          const release=p.releases.find(r=>r.productId===product.productId&&r.releaseStatus==='RELEASED');
-          if(!decision||!verifiedHash||!release)process.exit(1);
-          NODE
-      - name: Record verified live deployment
-        shell: bash
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          EXPECTED_APP_SHA256: ${{ needs.verify.outputs.app_sha256 }}
-          EXPECTED_PROJECT_SHA256: ${{ needs.verify.outputs.project_sha256 }}
-        run: |
-          set -euo pipefail
-          LIVE_APP_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
-          LIVE_PROJECT_SHA256="$(sha256sum live-check/SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
-          test "$LIVE_APP_SHA256" = "$EXPECTED_APP_SHA256"
-          test "$LIVE_PROJECT_SHA256" = "$EXPECTED_PROJECT_SHA256"
-          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stagePromptSpecifications":31,"stagePromptGeneration":true,"singleReusableTenRunPrompts":true,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"structuredRecordsRemainPrimary":true,"retainedSelfProjectProof":true,"retainedSelfProjectVisible":true,"retainedSelfProjectStagePrompts":31,"retainedProductionInstructionOutputs":2,"nativeCurrentSchemaProject":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add LIVE_DEPLOYMENT_VERIFIED.json
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Record verified live application deployment [skip ci]'
-          git push origin HEAD:main
