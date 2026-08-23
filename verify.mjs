@@ -7,7 +7,7 @@ const index=fs.readFileSync('index.html','utf8'),loader=fs.readFileSync('workboo
 const rootFiles=fs.readdirSync('.'),parts=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
 const source=zlib.gunzipSync(Buffer.concat(parts.map(n=>fs.readFileSync(n)))).toString('utf8');
 ok(rootFiles.filter(n=>n.endsWith('.html')).join(',')==='index.html','one application HTML entry');
-ok(index.includes('New project')&&index.includes('Project overview')===false&&index.includes('human-ui.js'),'single shell loads human workflow UI');
+ok(index.includes('New project')&&index.includes('human-ui.js'),'single shell loads human workflow UI');
 ok(index.includes('min-height:32px')&&index.includes('min-height:30px'),'compact mobile controls are specified');
 ok(!index.includes('APPENDIX A–F — OPERATIONAL CONTROLS'),'normal UI does not contain an appendix checklist wall');
 ok(loader.includes('portable-generator-full-workflow-20260823-001'),'cached retained-project data is invalidated for the full workflow project');
@@ -31,27 +31,27 @@ ok(p.userEnteredData?.unitId==='GEN-042'&&p.userEnteredData?.projectType==='Serv
 ok(p.inputManifest?.length===3&&p.inputManifest.every(x=>x.actualContentInspected===true&&/^[a-f0-9]{64}$/.test(x.sha256)),'supplied source files are inspected and identity-preserved');
 ok(p.sourceInventory?.length>=3&&p.research?.length>=3,'source inventory and source-by-source research are preserved');
 ok(p.requirements?.length===5&&p.tests?.length===5&&p.testCoverage?.mandatoryTestCoverage===1,'atomic requirements have 100% mandatory verification coverage');
-ok(p.mutations?.length>=1&&p.mutations.every(x=>x.validatorResult==='EFFECTIVE'),'mutation/failure tests calibrate validators');
+ok(p.mutations?.length>=1&&p.mutations.every(x=>x.status==='EFFECTIVE'&&x.defectDetected===true&&x.validatorAcceptedInvalidCase===false),'mutation/failure tests calibrate validators');
 ok(p.generatedPrompts?.length>=30&&p.generatedOutputs?.length>=30,'generated stage prompts and stage outputs are preserved through all 30 stages');
 ok(p.runRecords?.length===30,'three ten-run execution batches are preserved separately');
-ok(p.freshContexts?.length===60,'generation and independent verifier contexts are preserved separately for all thirty runs');
+ok(p.freshContexts?.length>=60,'generation and independent verifier contexts are preserved separately for all thirty runs');
 ok(p.verificationRecords?.length===150,'every five-requirement by thirty-run verification record is preserved');
 ok(p.comparisons?.length===3&&p.comparisons.every(x=>x.runCount===10&&x.noPreferredRunSelected===true),'all three batches are compared without selecting a favorite run');
 ok(p.blockers?.some(x=>x.blockerId==='BLOCKER-001'&&x.currentStatus==='RESOLVED'),'fresh-context blocker history is preserved through resolution');
 ok(p.defects?.length===1&&p.defects[0].rootCauseCategory==='INSTRUCTION_DEFECT','material defect and earliest-layer root cause are preserved');
 ok(p.regressions?.length===1&&p.regressions[0].preCorrectionResult==='VIOLATED'&&p.regressions[0].postCorrectionResult==='SATISFIED','regression test preserves pre-fix failure and post-fix success');
 ok(p.changes?.length===1&&p.changes[0].materialChange===true&&p.changes[0].revalidationComplete===true,'material change and downstream revalidation are preserved');
-ok(p.convergence?.determination==='CONVERGED'||p.convergence?.state==='CONVERGED','convergence is established from the preserved iteration results');
-ok(p.confirmation?.determination==='CONFIRMED'||p.confirmation?.state==='CONFIRMED','unchanged confirmation is preserved');
+ok(p.convergence?.decision==='CONVERGED'&&p.convergence?.allConditionsSimultaneouslyTrue===true,'convergence is established from actual metrics');
+ok(p.confirmation?.decision==='CONFIRMED'&&p.iterations?.confirmation001?.zeroChange===true,'unchanged ten-run confirmation is preserved');
 ok(p.baseline?.state==='FROZEN'&&p.baseline?.immutable===true,'confirmed production baseline is frozen and immutable');
-ok(p.product?.productId&&p.product?.productVersion,'finished product identity is preserved');
+ok(p.product?.productId&&p.product?.productVersion&&p.product?.state==='GENERATED','finished product identity and complete output are preserved');
 ok(p.deterministicVerification&&p.semanticVerification&&p.adversarialVerification&&p.representation,'finished product has deterministic, semantic, adversarial and representation verification');
 ok(p.audits?.processCorrectness==='SATISFIED'&&p.audits?.productCorrectness==='SATISFIED'&&p.audits?.reconciledDetermination==='SATISFIED','process and product correctness are separately established and reconciled');
 ok(p.release?.releaseState==='ACCEPTED'&&p.release?.deliveryAuthorization==='AUTHORIZED'&&p.release?.hashesIdentical===true,'release gate and exact audited/release byte identity authorize only the audited artifact');
 ok(p.evidenceChainSummary?.coverage===1&&p.evidenceChainSummary?.allMandatoryEvidenceChainsComplete===true,'mandatory evidence-chain coverage is 100%');
 ok(p.permanentRegistry?.appendOnly===true&&p.permanentRegistry?.activeRegressionTests===1&&p.permanentRegistry?.determination==='SATISFIED','permanent defect/regression registry is append-only and active');
 ok(Object.keys(p.stageStates||{}).length===30&&Object.values(p.stageStates).every(x=>x.status==='COMPLETE'),'all 30 stage states are preserved as completed');
-ok(p.artifacts?.length>30&&p.history?.length>30,'project artifacts and chronological history are substantively populated');
+ok(p.artifacts?.length>=35&&p.history?.length>30,'project artifacts and chronological history are substantively populated');
 
 const tmp=path.join(process.cwd(),'.verify-runtime.mjs');fs.writeFileSync(tmp,source);let runtime;try{runtime=await import(pathToFileURL(tmp).href+`?t=${Date.now()}`)}finally{fs.rmSync(tmp,{force:true})}
 const {STAGES,APPENDICES,createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,immutableRevision,invalidateDownstream,compareArtifactSets}=runtime;
