@@ -32,9 +32,19 @@ try{
     ok(count===31,`Expected 31 operation controls, found ${count}`);
     await ev("document.querySelector('[data-operation=2]').click()");
     await waitFor("document.body.innerText.includes('Discover independent external authorities')");
-    ok(await ev("document.body.innerText.includes('Generated instruction / prompt')"),'Generated prompt is not inspectable');
+    ok(await ev("document.body.innerText.includes('Generated instruction / prompt')"),'Generated prompt history is not inspectable');
     ok(await ev("document.body.innerText.includes('Uploaded/project/generated files are not promoted')"),'Authority-separation guidance is not visible at Operation 02');
-    fs.writeFileSync('live-proof/workflow-interaction.json',JSON.stringify({ok:true,newHeight,projectHeight,operations:count},null,2));
+    await waitFor("document.body.innerText.includes('Use with your agent')&&document.querySelector('#copy-agent-prompt')");
+    const promptText=await ev("document.querySelector('#agent-prompt-text').textContent");
+    ok(promptText.length>800,'Prepared agent prompt is missing or superficial');
+    ok(promptText.includes('Operation 02')&&promptText.includes('External Research Sources'),'Prepared prompt does not encode the current operation and authority model');
+    ok(promptText.includes('AUTHORIZED PROJECT CONTEXT')&&promptText.includes('CONTROL RULES'),'Prepared prompt is not a complete executable agent instruction');
+    const before=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.generatedPrompts.length");
+    await ev("document.querySelector('#refresh-agent-prompt').click()");await sleep(150);
+    const after=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.generatedPrompts.length");
+    ok(after>before,'Rebuilding a prompt did not preserve a prompt provenance record');
+    ok(await ev("!!document.querySelector('#copy-agent-package')&&!!document.querySelector('#paste-agent-response')"),'Copy-package or paste-response workflow control is missing');
+    fs.writeFileSync('live-proof/workflow-interaction.json',JSON.stringify({ok:true,newHeight,projectHeight,operations:count,promptLength:promptText.length,promptRecordsBefore:before,promptRecordsAfter:after},null,2));
   }
   if(mode==='history'){
     const persistedRuns=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.runRecords.length");
@@ -55,7 +65,11 @@ try{
     ok(clean.op===1,'New project did not start at Operation 01');
     ok(clean.requirements===0&&clean.tests===0&&clean.runs===0&&clean.blockers===0&&clean.changes===0,'New project inherited prior workflow records');
     ok(clean.baseline===0&&clean.product===0&&clean.release===0,'New project inherited prior baseline/product/release state');
-    fs.writeFileSync('live-proof/reset-interaction.json',JSON.stringify({ok:true,...clean},null,2));
+    await ev("document.querySelector('[data-view=workflow]').click();document.querySelector('[data-operation=1]').click()");
+    await waitFor("document.body.innerText.includes('Use with your agent')&&document.querySelector('#agent-prompt-text')");
+    const newPrompt=await ev("document.querySelector('#agent-prompt-text').textContent");
+    ok(newPrompt.includes('Operation 01')&&newPrompt.includes('lossless job definition'),'New project does not receive a usable first-operation agent prompt');
+    fs.writeFileSync('live-proof/reset-interaction.json',JSON.stringify({ok:true,...clean,newProjectPrompt:true},null,2));
   }
   console.log(JSON.stringify({determination:'SATISFIED',mode},null,2));
 } finally {
