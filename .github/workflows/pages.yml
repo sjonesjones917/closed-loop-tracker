@@ -27,29 +27,25 @@ jobs:
           test -f index.html
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test -f TEST_PROJECT.json
-          test -f test-project/inputs/REQUEST.md
-          test -f test-project/inputs/SITE_POLICY.md
-          test -f test-project/inputs/WORKFLOW_RULES.md
-          test -f test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md
-          test ! -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
-      - name: Publish source verification status
+          node -e "const p=require('./TEST_PROJECT.json'); if(p.schema!=='mobile-closed-loop-project/4'||p.currentStage!==11||p.currentState!=='BLOCKED')process.exit(1)"
+      - name: Publish source statuses
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', WORKBOOK: '${{ steps.workbook.outcome }}', HUMAN: '${{ steps.human.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
         run: |
           for pair in "workbook-syntax:$WORKBOOK" "human-ui-syntax:$HUMAN" "repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success; gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result"; done
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state=success -f context='pages-run-${{ github.run_id }}' -f description='Actions run identifier for live diagnostics'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state=success -f context='pages-run-${{ github.run_id }}' -f description='Actions run identifier'
       - name: Enforce source verification
         run: |
           test '${{ steps.workbook.outcome }}' = success
           test '${{ steps.human.outcome }}' = success
           test '${{ steps.verifier.outcome }}' = success
           test '${{ steps.structure.outcome }}' = success
-      - name: Publish project verification status
+      - name: Publish retained-project status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           state=failure; [ "$RESULT" = success ] && state=success
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context='workbook-test-project' -f description='Project model and retained test project verification'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context='workbook-test-project' -f description='Ordinary persisted retained-project verification'
   deploy:
     if: github.event_name != 'pull_request'
     needs: test
@@ -83,8 +79,8 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail; mkdir -p live-proof; verified=false
-          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md)
-          for attempt in $(seq 1 36); do nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"; good=true; for f in "${FILES[@]}"; do mkdir -p "live-proof/$(dirname "$f")"; curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false; done; if $good; then exact=true; for f in "${FILES[@]}"; do [[ "$(sha256sum "$f"|awk '{print $1}')" == "$(sha256sum "live-proof/$f"|awk '{print $1}')" ]] || exact=false; done; $exact && verified=true && break; fi; sleep 5; done
+          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json verify.mjs)
+          for attempt in $(seq 1 36); do nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"; good=true; for f in "${FILES[@]}"; do curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$(basename "$f")" || good=false; done; if $good; then exact=true; for f in "${FILES[@]}"; do [[ "$(sha256sum "$f"|awk '{print $1}')" == "$(sha256sum "live-proof/$(basename "$f")"|awk '{print $1}')" ]] || exact=false; done; $exact && verified=true && break; fi; sleep 5; done
           test "$verified" = true
       - id: render
         continue-on-error: true
@@ -92,10 +88,10 @@ jobs:
           set -euo pipefail; BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium)"; BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --dump-dom "$BASE" > live-proof/working.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --screenshot=live-proof/working.png "$BASE"
-          grep -q 'Closed-Loop Reliability' live-proof/working.html; grep -q 'Project overview' live-proof/working.html; grep -q '>Overview<' live-proof/working.html; grep -q '>Workflow<' live-proof/working.html; grep -q '>Work<' live-proof/working.html; ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/working.html
+          grep -q 'Closed-Loop Reliability' live-proof/working.html; grep -q 'Project overview' live-proof/working.html; grep -q '>Workflow<' live-proof/working.html; ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/working.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=45000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=45000 --window-size=393,852 --screenshot=live-proof/test.png "${BASE}&test=1"
-          grep -q 'Portable generator service handoff' live-proof/test.html; grep -q 'GEN-042' live-proof/test.html; grep -q 'Retained test project.' live-proof/test.html; grep -q 'BLOCKED' live-proof/test.html; grep -q '>Runs<' live-proof/test.html; grep -q '>Issues<' live-proof/test.html; grep -q '>Release<' live-proof/test.html; grep -q '>History<' live-proof/test.html
+          grep -q 'Closed-Loop Reliability application repair' live-proof/test.html; grep -q 'Retained test project.' live-proof/test.html; grep -q 'BLOCKED' live-proof/test.html; grep -q 'Requirements' live-proof/test.html; grep -q '>Runs<' live-proof/test.html; grep -q '>Issues<' live-proof/test.html; grep -q '>Release<' live-proof/test.html; grep -q '>History<' live-proof/test.html
       - id: interaction
         continue-on-error: true
         run: |
@@ -105,28 +101,25 @@ jobs:
           import fs from 'node:fs';
           const port=9222,base=process.env.PAGE_URL.replace(/\/$/,'')+'/?e2e='+Date.now(),sleep=ms=>new Promise(r=>setTimeout(r,ms));
           const target=(await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(x=>x.type==='page');if(!target)throw Error('No page target');
-          const ws=new WebSocket(target.webSocketDebuggerUrl);let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result)}};await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
-          const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}))});
+          const ws=new WebSocket(target.webSocketDebuggerUrl);let seq=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(JSON.stringify(m.error))):p.resolve(m.result)}};await new Promise((r,j)=>{ws.onopen=r;ws.onerror=j});
+          const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++seq;pending.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}))});
           async function ev(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||JSON.stringify(r.exceptionDetails));return r.result.value}
           async function waitFor(expression,ms=15000){const end=Date.now()+ms;while(Date.now()<end){try{if(await ev(expression))return}catch{}await sleep(100)}throw Error(`Timed out: ${expression}`)}
           const ok=(c,m)=>{if(!c)throw Error(m)};await send('Page.enable');await send('Page.navigate',{url:base});await waitFor("document.readyState==='complete' && document.body.innerText.includes('Project overview')",25000);
           ok((await ev("document.querySelector('#new-job-button').getBoundingClientRect().height"))<=36,'New project button oversized');ok((await ev("document.querySelector('#project-data-button').getBoundingClientRect().height"))<=36,'Project button oversized');
-          await ev("document.querySelector('#guide-button').click()");await waitFor("document.body.innerText.includes('How this application uses the workbook')");
-          await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");
-          await ev("document.querySelector('[data-view=workflow]').click()");await waitFor("document.body.innerText.includes('30-stage workflow')");
-          await ev("document.querySelector('[data-stage=1]').click()");await waitFor("document.body.innerText.includes('Capture stage work')");
-          await ev("document.querySelector('#stage-response').value='Captured Stage 01 response';document.querySelector('#stage-evidence').value='Evidence 01';document.querySelector('#stage-status').value='IN PROGRESS';document.querySelector('#save-stage').click()");await sleep(100);ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.generatedOutputs.length"))===1,'Output receipt not created');
-          await ev("document.querySelector('#open-stage-controls').click()");await waitFor("!document.querySelector('#workspace-workbook').hasAttribute('hidden')");
-          await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");await ev("document.querySelector('[data-view=workflow]').click()");await waitFor("document.body.innerText.includes('30-stage workflow')");await ev("document.querySelector('[data-stage=11]').click()");await waitFor("!!document.querySelector('#prepare-context')");await ev("document.querySelector('#prepare-context').click()");await sleep(100);ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.freshContexts.length"))===1,'Fresh context not recorded');
-          await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");await ev("document.querySelector('#new-job-button').click()");await waitFor("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE==='New project'");const clean=await ev("(()=>{const s=JSON.parse(localStorage.getItem('mobile-closed-loop-agent'));return {stage:s.activeStage,req:s.projectData.requirements.length,tests:s.projectData.tests.length,blockers:s.projectData.blockers.length,runs:s.projectData.runRecords.length,baseline:Object.keys(s.projectData.baseline).length,product:Object.keys(s.projectData.product).length,release:Object.keys(s.projectData.release).length}})()");ok(clean.stage===1&&clean.req===0&&clean.tests===0&&clean.blockers===0&&clean.runs===0&&clean.baseline===0&&clean.product===0&&clean.release===0,'New project inherited prior project state');
-          await ev("document.querySelector('#project-picker').value='test-project';document.querySelector('#project-picker').dispatchEvent(new Event('change',{bubbles:true}))");await waitFor("document.body.innerText.includes('Portable generator service handoff')",20000);ok(await ev("document.body.innerText.includes('GEN-042')"),'Test project user data not visible');
-          for(const view of ['work','runs','issues','release','history']){await ev(`document.querySelector('[data-view="${view}"]').click()`);await sleep(80);ok((await ev('document.body.innerText.length'))>500,`${view} view empty`)}ok(await ev("document.body.innerText.includes('Generated instruction')"),'Generated instructions not inspectable');const persisted=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent'))");ok(persisted.job.JOB_TITLE==='Portable generator service handoff','Test project is not ordinary persisted state');ok(persisted.projectData.requirements.length===5,'Test project requirements lost in runtime conversion');fs.writeFileSync('live-proof/interaction.json',JSON.stringify({ok:true,compactButtons:true,outputReceipt:true,freshContext:true,cleanNewProject:true,testProjectPersisted:true,testRequirements:persisted.projectData.requirements.length},null,2));ws.close();
+          await ev("document.querySelector('#guide-button').click()");await waitFor("document.body.innerText.includes('How this application uses the workbook')");await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");
+          await ev("document.querySelector('[data-view=workflow]').click()");await waitFor("document.body.innerText.includes('30-stage workflow')");await ev("document.querySelector('[data-stage=1]').click()");await waitFor("document.body.innerText.includes('Capture stage work')");
+          await ev("document.querySelector('#stage-response').value='Captured Stage 01 response';document.querySelector('#stage-evidence').value='Evidence 01';document.querySelector('#stage-status').value='IN PROGRESS';document.querySelector('#save-stage').click()");await sleep(120);ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.generatedOutputs.length"))===1,'Output receipt not created');
+          await ev("document.querySelector('#open-stage-controls').click()");await waitFor("!document.querySelector('#workspace-workbook').hasAttribute('hidden')");await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");await ev("document.querySelector('[data-view=workflow]').click()");await waitFor("document.body.innerText.includes('30-stage workflow')");await ev("document.querySelector('[data-stage=11]').click()");await waitFor("!!document.querySelector('#prepare-context')");await ev("document.querySelector('#prepare-context').click()");await sleep(120);ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.freshContexts.length"))===1,'Fresh context not recorded');
+          await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");await ev("document.querySelector('#new-job-button').click()");await waitFor("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE==='New project'");const clean=await ev("(()=>{const s=JSON.parse(localStorage.getItem('mobile-closed-loop-agent'));return {stage:s.activeStage,req:s.projectData.requirements.length,tests:s.projectData.tests.length,blockers:s.projectData.blockers.length,runs:s.projectData.runRecords.length,baseline:Object.keys(s.projectData.baseline).length,product:Object.keys(s.projectData.product).length,release:Object.keys(s.projectData.release).length}})()");ok(clean.stage===1&&clean.req===0&&clean.tests===0&&clean.blockers===0&&clean.runs===0&&clean.baseline===0&&clean.product===0&&clean.release===0,'New project inherited prior state');
+          await ev("document.querySelector('#project-picker').value='test-project';document.querySelector('#project-picker').dispatchEvent(new Event('change',{bubbles:true}))");await waitFor("document.body.innerText.includes('Closed-Loop Reliability application repair')",20000);ok(await ev("document.body.innerText.includes('Existing application repair')"),'Retained project user data not visible');
+          for(const view of ['work','runs','issues','release','history']){await ev(`document.querySelector('[data-view="${view}"]').click()`);await sleep(100);ok((await ev('document.body.innerText.length'))>500,`${view} view empty`)}ok(await ev("document.body.innerText.includes('Generated instruction')"),'Generated instructions not inspectable');const persisted=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent'))");ok(persisted.job.JOB_TITLE==='Closed-Loop Reliability application repair','Retained project is not ordinary persisted state');ok(persisted.projectData.requirements.length===15,'Retained project requirements lost during runtime conversion');fs.writeFileSync('live-proof/interaction.json',JSON.stringify({ok:true,compactButtons:true,outputReceipt:true,freshContext:true,cleanNewProject:true,testProjectPersisted:true,testRequirements:persisted.projectData.requirements.length},null,2));ws.close();
           NODE
           node /tmp/live-e2e.mjs 2>&1 | tee live-proof/interaction.log
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: 'live-proof-${{ github.run_id }}', path: live-proof, if-no-files-found: error}
-      - name: Publish live verification statuses
+      - name: Publish live statuses
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', RENDER: '${{ steps.render.outcome }}', INTERACTION: '${{ steps.interaction.outcome }}'}
         run: |
