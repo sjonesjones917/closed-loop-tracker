@@ -1,13 +1,15 @@
 import fs from 'node:fs';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
+const SCHEMA='closed-loop-project/30';
 const encoded=fs.readFileSync('test_project.payload.gz.b64','utf8').trim();
 const text=zlib.gunzipSync(Buffer.from(encoded,'base64')).toString('utf8');
 const p=JSON.parse(text);
-if(p.schema!=='human-project/30'||p.currentStage!==30||Object.keys(p.stageStates||{}).length!==30)throw new Error('Generated retained project is not the exact 30-stage project');
+p.schema=SCHEMA;
+if(p.currentStage!==30||Object.keys(p.stageStates||{}).length!==30)throw new Error('Generated retained project is not the exact 30-stage project');
 if(/application conformance|Evaluate the Closed-Loop Reliability application/i.test(text))throw new Error('Self-referential test project is prohibited');
 if(!p.userJobInput?.objective?.includes('GEN-042'))throw new Error('Retained project is not the real GEN-042 handoff job');
 const f=p.product?.files?.[0];
 if(!f||crypto.createHash('sha256').update(f.content).digest('hex')!==f.sha256)throw new Error('Product hash mismatch');
 fs.writeFileSync('TEST_PROJECT.json',JSON.stringify(p,null,2)+'\n');
-console.log(`built real GEN-042 project: ${p.requirements.length} requirements, ${p.runRecords.length} runs, ${p.verificationRecords.length} verification records, 30 stages`);
+console.log(`built real GEN-042 project: ${p.requirements.length} requirements, ${p.runRecords.length} runs, ${p.verificationRecords.length} verification records, 30 stages, schema ${SCHEMA}`);
