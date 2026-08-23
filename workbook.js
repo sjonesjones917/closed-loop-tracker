@@ -1,9 +1,9 @@
 (async()=>{
   const STATE_STORE="mobile-closed-loop-agent";
-  const TEST_SPEC_REVISION="real-generator-handoff-30-stage-20260823-001";
+  const TEST_SPEC_REVISION="retained-real-job-20260823-001";
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
-    const cacheKey="human-workbook-20260823-r17";
+    const cacheKey="human-workbook-20260823-r18";
     const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
     const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
     for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
@@ -22,8 +22,8 @@
     }
     const revisionKey="closed-loop-test-project-spec-revision";
     if(localStorage.getItem(revisionKey)!==TEST_SPEC_REVISION){
-      for(const registryKey of ["closed-loop-project-registry-v5","closed-loop-project-registry-v4","closed-loop-project-registry-v3","closed-loop-project-registry-v2"]){
-        try{const registry=JSON.parse(localStorage.getItem(registryKey)||"{}");delete registry["test-project"];localStorage.setItem(registryKey,JSON.stringify(registry));}catch(error){console.warn("Unable to invalidate stale retained test project",error);}
+      for(const registryKey of ["closed-loop-project-registry-v6","closed-loop-project-registry-v5","closed-loop-project-registry-v4","closed-loop-project-registry-v3","closed-loop-project-registry-v2"]){
+        try{const registry=JSON.parse(localStorage.getItem(registryKey)||"{}");delete registry["test-project"];localStorage.setItem(registryKey,JSON.stringify(registry));}catch(error){console.warn("Unable to invalidate stale retained project",error);}
       }
       localStorage.setItem(revisionKey,TEST_SPEC_REVISION);
     }
