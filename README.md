@@ -1,56 +1,51 @@
 # Closed-Loop Agent Reliability
 
-Deployed application:
+Live application:
 
 https://sjonesjones917.github.io/closed-loop-tracker/
 
-The account-root address (`https://sjonesjones917.github.io/`) is a separate GitHub Pages location. The application is deployed at the repository project URL above.
-
 ## Purpose
 
-Closed-Loop Agent Reliability is a phone-first, domain-general web application for taking an arbitrary user job through a forward research, requirements, production, independent-verification, correction, acceptance, and release pipeline.
+This repository contains one phone-first, domain-general application that takes an arbitrary user job through the exact 31-stage closed-loop research, production, verification, correction, acceptance, and release process.
+
+The application does not preload a project whose objective is to rebuild or repair the application. New projects begin with the actual job entered by the user.
+
+## Required forward architecture
 
 The governing direction is:
 
 `USER INTENT → EXTERNAL RESEARCH → EXTERNAL AUTHORITY → REQUIREMENTS → TESTS → PRODUCTION → INDEPENDENT VERIFICATION → CORRECTION → ACCEPTED PRODUCT → RELEASE`
 
-The application keeps three information classes separate:
+The application stores and displays three distinct information classes:
 
 1. `USER_JOB_INPUT`
-2. `EXTERNAL_RESEARCH_SOURCES`
-3. `WORKFLOW_GENERATED_ARTIFACTS`
+2. `EXTERNAL_RESEARCH_SOURCE`
+3. `WORKFLOW_GENERATED_ARTIFACT`
 
-An unfinished product, implementation source, generated test, candidate behavior, project JSON, prior workflow report, or prior agent conclusion cannot establish its own requirements.
+External-source records require affirmative evidence that the source was accessed externally and is independent of the artifact and workflow records being produced. Local files, relative paths, generated blobs, existing work products, candidates, prior agent output, and workflow artifacts cannot be silently registered as external authority.
 
-## Workflow
+## Human and agent work
 
-The application implements the exact 31 stages beginning with `DEFINE JOB` and ending with `RELEASE ONLY THE EXACT ACCEPTED ARTIFACT`.
+Humans, agents, human-agent teams, tools, and organizations are first-class work owners. The application records who performed each operation and the evidence supporting that work. It does not reduce stage completion to a pasted generic “agent response,” and it does not fill the UI with generated prompts.
 
-Stage 1 performs lossless intake across the complete 20-scope user-job definition. Stage 2 searches independent external authorities. Stage 3 derives externally governed findings from those sources. Stage 4 permits exactly two requirement origins: `USER_REQUIREMENT` and `EXTERNALLY_GOVERNED_REQUIREMENT`.
+## Application behavior
 
-New projects begin at `0/31`. Stages cannot be skipped. Required responses must be substantive. Independent execution stages preserve ten distinct producer outputs, and verification stages preserve corresponding independent verifier outputs. Material upstream edits invalidate downstream completion.
+- Exactly 31 stages in the required order.
+- Complete 20-scope Stage 1 job definition.
+- Separate user-input, external-source, and generated-artifact registries.
+- Structured findings, requirements, conflicts, tests, instructions, candidates, executions, verification matrices, defects, regressions, corrections, convergence evidence, baselines, products, audits, decisions, hashes, and releases.
+- Exactly ten run records for the execution stages.
+- Requirement-by-run verification matrices.
+- Downstream stages become stale when upstream material changes.
+- Exact SHA-256 calculation over the finished product bytes or exact external-result release package.
+- Release gate that permits release only for the exact accepted artifact.
+- Local browser persistence plus explicit JSON import and export.
+- No preloaded completed project and no automatic sidecar project loading.
 
-## Verified deployed project
+## Verification and deployment
 
-The deployed sidecar project is named:
+`verify-app.mjs` verifies the static architecture, exact stage manifest, 20-scope intake, three information classes, standalone packaging, and absence of the prior self-build/prompt-relay design.
 
-`CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD`
+`browser-smoke.mjs` executes the rendered phone UI, creates a real arbitrary job, completes Stage 1, verifies all 31 stages render, opens the external-source guard, and checks the three information classes at phone widths.
 
-Its objective is to build, verify, release, and deploy the complete domain-general application—not to repair a fictional public version, demonstrate a filename fixture, or treat implementation defects as the project definition.
-
-The verified release record establishes:
-
-- 31 of 31 stages complete
-- 30 producer responses from 30 external processes
-- 30 verifier responses from 30 external processes
-- `RELEASE_DECISION: ACCEPTED`
-- exact UI project export: `SELF_VERIFIED_PROJECT.json`
-- separate sidecar autoload in a clean browser
-- no hardcoded completed project in the HTML
-- phone-width verification at 393 px and 320 px
-- accepted application SHA-256: `e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e`
-- project export SHA-256: `d46bbf9cd76ff9929647ae15e21e924a54e7a27d29e53f2f2bd1288237887d6d`
-
-## Deployment
-
-`.github/workflows/pages.yml` builds and verifies the application through its rendered UI, deploys the exact verified Pages artifact, verifies the live application and project bytes against their expected SHA-256 values, and only then publishes the matching repository artifacts.
+`.github/workflows/pages.yml` runs both verification layers, creates the exact static Pages payload, deploys it through GitHub Pages, and verifies the live root bytes against the verified `index.html` SHA-256.
