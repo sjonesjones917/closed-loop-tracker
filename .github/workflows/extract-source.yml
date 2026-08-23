@@ -2,7 +2,7 @@ name: Extract current workbook module source
 
 on:
   push:
-    branches: [main]
+    branches: [repair-workbook-human-ui]
     paths:
       - .github/workflows/extract-source.yml
 
