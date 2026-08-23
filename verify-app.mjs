@@ -3,52 +3,20 @@ import fs from 'node:fs';
 const html = fs.readFileSync('index.html', 'utf8');
 const fail = (message) => { throw new Error(message); };
 const requiredStages = [
-  'DEFINE JOB',
-  'INVENTORY SOURCES',
-  'RESEARCH REQUIREMENTS',
-  'COMPILE ATOMIC REQUIREMENTS',
-  'RESOLVE CONFLICTS',
-  'BUILD ACCEPTANCE TESTS',
-  'BUILD FAILURE/MUTATION TESTS',
-  'AUTHOR PRODUCTION INSTRUCTION',
-  'PREFLIGHT INSTRUCTION',
-  'FREEZE CANDIDATE',
-  'RUN 10 INDEPENDENT EXECUTIONS',
-  'VERIFY EVERY RUN AGAINST EVERY REQUIREMENT',
-  'COMPARE ALL RUNS',
-  'ROOT-CAUSE EVERY DEFECT',
-  'ADD REGRESSION TESTS',
-  'CORRECT RESPONSIBLE LAYER',
-  'FREEZE NEW VERSION',
-  'RUN 10 NEW INDEPENDENT EXECUTIONS',
-  'REPEAT UNTIL CONVERGED',
-  'RUN UNCHANGED 10-EXECUTION CONFIRMATION',
-  'FREEZE APPROVED BASELINE',
-  'GENERATE FINISHED PRODUCT',
-  'DETERMINISTIC PRODUCT VERIFICATION',
-  'INDEPENDENT SEMANTIC VERIFICATION',
-  'ADVERSARIAL PRODUCT VERIFICATION',
-  'FINAL REPRESENTATION INSPECTION',
-  'PROCESS AUDIT',
-  'PRODUCT AUDIT',
-  'ACCEPTED / REJECTED / BLOCKED',
-  'VERIFY RELEASE HASH',
-  'RELEASE ONLY THE EXACT ACCEPTED ARTIFACT'
+  'DEFINE JOB','INVENTORY SOURCES','RESEARCH REQUIREMENTS','COMPILE ATOMIC REQUIREMENTS','RESOLVE CONFLICTS','BUILD ACCEPTANCE TESTS','BUILD FAILURE/MUTATION TESTS','AUTHOR PRODUCTION INSTRUCTION','PREFLIGHT INSTRUCTION','FREEZE CANDIDATE','RUN 10 INDEPENDENT EXECUTIONS','VERIFY EVERY RUN AGAINST EVERY REQUIREMENT','COMPARE ALL RUNS','ROOT-CAUSE EVERY DEFECT','ADD REGRESSION TESTS','CORRECT RESPONSIBLE LAYER','FREEZE NEW VERSION','RUN 10 NEW INDEPENDENT EXECUTIONS','REPEAT UNTIL CONVERGED','RUN UNCHANGED 10-EXECUTION CONFIRMATION','FREEZE APPROVED BASELINE','GENERATE FINISHED PRODUCT','DETERMINISTIC PRODUCT VERIFICATION','INDEPENDENT SEMANTIC VERIFICATION','ADVERSARIAL PRODUCT VERIFICATION','FINAL REPRESENTATION INSPECTION','PROCESS AUDIT','PRODUCT AUDIT','ACCEPTED / REJECTED / BLOCKED','VERIFY RELEASE HASH','RELEASE ONLY THE EXACT ACCEPTED ARTIFACT'
 ];
 
 if (!html.includes('<title>Closed-Loop Agent Reliability</title>')) fail('Public title is incorrect.');
 if (!html.includes('<h1>Closed-Loop Agent Reliability</h1>')) fail('Public heading is incorrect.');
 if (/Closed-Loop Agent Reliability\s+v\d/i.test(html)) fail('An arbitrary public application version label remains.');
 for (const forbidden of [
-  'SELF_VERIFIED_PROJECT',
-  'Reload verified self-project',
   'sidecar-filename defect',
   'Agent response',
   'paste agent response',
   'REAL SELF-BUILD',
   'application itself by using the actual application UI'
 ]) {
-  if (html.toLowerCase().includes(forbidden.toLowerCase())) fail(`Forbidden self-build or prompt-relay text remains: ${forbidden}`);
+  if (html.toLowerCase().includes(forbidden.toLowerCase())) fail(`Forbidden repair/prompt-relay text remains: ${forbidden}`);
 }
 
 const manifestMatch = html.match(/<script id="stage-manifest" type="application\/json">([\s\S]*?)<\/script>/);
@@ -61,20 +29,7 @@ for (let i = 0; i < requiredStages.length; i += 1) {
 }
 
 const requiredArchitectureTokens = [
-  'USER_JOB_INPUT',
-  'EXTERNAL_RESEARCH_SOURCE',
-  'WORKFLOW_GENERATED_ARTIFACT',
-  'HUMAN',
-  'AGENT',
-  'HUMAN_AGENT_TEAM',
-  "schema:'closed-loop-project/1'",
-  'validateSourceGuard',
-  'independentOfArtifact',
-  'externallyAccessed',
-  'productBytes',
-  'sha256Bytes',
-  'RUN-001',
-  'Create missing matrix records'
+  'USER_JOB_INPUT','EXTERNAL_RESEARCH_SOURCE','WORKFLOW_GENERATED_ARTIFACT','HUMAN','AGENT','HUMAN_AGENT_TEAM',"schema:'closed-loop-project/1'",'validateSourceGuard','independentOfArtifact','externallyAccessed','productBytes','sha256Bytes','RUN-001','Create missing matrix records'
 ];
 for (const token of requiredArchitectureTokens) if (!html.includes(token)) fail(`Required architecture token missing: ${token}`);
 
@@ -90,6 +45,8 @@ new Function(scripts.at(-1));
 if (/<script[^>]+src=/i.test(html) || /<link[^>]+rel=["']stylesheet/i.test(html)) fail('The deployed application must remain standalone.');
 if (!html.includes('No seeded build job')) fail('The empty arbitrary-job creation invariant is not visible.');
 if (!html.includes('Three information classes')) fail('The three information classes are not visible in the UI.');
+if (!html.includes('data-self-project-proof="true"')) fail('The retained self-project proof is not visible in the Projects UI.');
+if (!html.includes('SELF_VERIFIED_PROJECT.json')) fail('The retained self-project export is not linked from the application.');
 
 const result = {
   status: 'PASS',
@@ -100,7 +57,8 @@ const result = {
   informationClasses: 3,
   humanWorkSupported: true,
   agentWorkSupported: true,
-  seededSelfBuildProject: false,
+  humanAgentTeamSupported: true,
+  retainedSelfProjectProof: true,
   promptRelayArchitecture: false,
   standalone: true
 };
