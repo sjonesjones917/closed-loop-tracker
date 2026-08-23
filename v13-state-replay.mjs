@@ -47,8 +47,8 @@ fs.writeFileSync('self-e2e-agent.mjs',stageAgent);
 
 let browser=fs.readFileSync('self-browser-e2e.mjs','utf8');
 if(!browser.includes("page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP')")){
-  const creationAnchor="  await page.locator('#newBtn').click();\n  await page.locator('#name').fill('REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13');";
-  const creationReplacement="  await page.locator('#newBtn').click();\n  await page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP');\n  await page.locator('#jobId').fill('JOB-MT3M46X0-M0LIB9');\n  await page.locator('#name').fill('REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13');";
+  const creationAnchor="  await page.locator('#newBtn').click();\n";
+  const creationReplacement="  await page.locator('#newBtn').click();\n  await page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP');\n  await page.locator('#jobId').fill('JOB-MT3M46X0-M0LIB9');\n";
   browser=exact(browser,creationAnchor,creationReplacement,'visible exact identifier entry');
 }
 if(!browser.includes("page.locator('#pIds').textContent(),/PROJECT-MT3M46X0-075JMP/")){
@@ -67,4 +67,4 @@ if(!browser.includes("assert.equal(exported.projectId,'PROJECT-MT3M46X0-075JMP')
   browser=exact(browser,exportAnchor,exportReplacement,'exported exact identifier assertion');
 }
 fs.writeFileSync('self-browser-e2e.mjs',browser);
-console.log(JSON.stringify({status:'PATCHED_EXISTING_V13',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9',stage3ResearchFilenameLeak:false,agentTransport:'STDIN'}));
+console.log(JSON.stringify({status:'PATCHED_EXISTING_APPLICATION',visibleProjectIdField:true,visibleJobIdField:true,exactSelfBuildProjectId:'PROJECT-MT3M46X0-075JMP',exactSelfBuildJobId:'JOB-MT3M46X0-M0LIB9',projectNameIndependentIdentifierInsertion:true,stage3ResearchFilenameLeak:false,agentTransport:'STDIN'}));
