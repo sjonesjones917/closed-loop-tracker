@@ -94,11 +94,11 @@ jobs:
             DESCRIPTION='Source, deployment, mobile/desktop UI, persistence, and browser verification passed'
           else
             STATE=failure
-            DESCRIPTION='Live deployment verification failed; inspect workflow run'
+            DESCRIPTION='Live deployment verification failed; inspect exact workflow run'
           fi
           curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Authorization: Bearer $GH_TOKEN" \
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions\"}"
+            --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
