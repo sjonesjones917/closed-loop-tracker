@@ -3,7 +3,7 @@ on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
   workflow_dispatch:
-permissions: {contents: read, pages: write, id-token: write, statuses: write}
+permissions: {contents: write, pages: write, id-token: write, statuses: write}
 concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 
 jobs:
@@ -11,10 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check verify.mjs && node --check verify-live.mjs
+      - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs
       - run: node verify.mjs
       - name: Verify single application source
         run: |
@@ -32,6 +33,16 @@ jobs:
           if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated product content');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
           NODE
+      - name: Materialize verified repair on main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          if ! git diff --quiet -- app.js workbook.js index.html TEST_PROJECT.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app.js workbook.js index.html TEST_PROJECT.json
+            git commit -m "Materialize verified authoritative workbook repair"
+            git push origin HEAD:main
+          fi
 
   deploy:
     if: github.event_name != 'pull_request'
