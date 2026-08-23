@@ -2,7 +2,9 @@ name: Extract current workbook module source
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - repair/human-closed-loop-workflow-20260823
     paths:
       - .github/workflows/extract-source.yml
 
