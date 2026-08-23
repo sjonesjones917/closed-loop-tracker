@@ -7,6 +7,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  statuses: write
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -31,6 +32,20 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      - name: Publish verification status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Single workbook verification succeeded'; else STATE=failure; DESCRIPTION='Single workbook verification failed'; fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"single-workbook-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
   deploy:
     needs: verify
     environment:
@@ -41,3 +56,17 @@ jobs:
       - name: Deploy exact verified repository
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Publish deployment status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Exact verified workbook deployed'; else STATE=failure; DESCRIPTION='Workbook deployment failed'; fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"single-workbook-pages\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
