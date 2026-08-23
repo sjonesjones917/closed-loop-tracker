@@ -17,18 +17,22 @@ for(let n=1;n<=30;n++){
   const record=project.stageRecords?.[String(n)]?.record;
   if(typeof record!=='string'||!record.trim()||record.includes('[object Object]'))throw new Error(`Live Stage ${n} record is not readable.`);
 }
-if(!project.stageRecords['2'].record.includes('STAGE 02 — BUILD THE SOURCE INVENTORY')||!project.stageRecords['2'].record.includes('SOURCE_SET_VERSION'))throw new Error('Live Stage 02 is not usable.');
+if(!project.stageRecords['2'].record.includes('STAGE 02 — BUILD THE SOURCE INVENTORY')||!project.stageRecords['2'].record.includes('SOURCE_SET_VERSION')||!project.stageRecords['2'].record.includes('AUTHORITY_HIERARCHY'))throw new Error('Live Stage 02 is not usable.');
+if(!project.stageRecords['30'].record.includes('DEFECT_REGISTRY_VERSION')||!project.stageRecords['30'].record.includes('REGRESSION_REGISTRY_VERSION'))throw new Error('Live Stage 30 is not usable.');
 if((project.generatedPrompts||[]).length!==1||(project.generatedOutputs||[]).length!==1||(project.outputReceipts||[]).length!==1)throw new Error('Live project must expose the one actual instruction, output, and receipt from Operation 01.');
 const prompt=project.generatedPrompts[0]?.prompt||'';
 if(!prompt.includes('COPY BLOCK — STAGE 01 — INITIALIZE THE JOB')||!prompt.includes('JOB_ID: JOB-20260823144121')||prompt.includes('[object Object]'))throw new Error('Live Stage 01 instruction is incomplete or unreadable.');
 const operation01=project.stageRecords['1'].output;
-if(project.generatedOutputs[0]?.output!==operation01||!operation01.includes('OPERATION 01 — DEFINE JOB')||!operation01.includes('Proceed to Operation 02 — Build the Source Inventory.'))throw new Error('Live authorized Operation 01 output is incomplete or inconsistent.');
+if(project.generatedOutputs[0]?.output!==operation01)throw new Error('Live authorized Operation 01 output is incomplete or inconsistent.');
+for(const marker of ['OPERATION 01 — DEFINE JOB','EXACT USER OBJECTIVE VERBATIM','UNRESOLVED UNKNOWNS','EXACT DECISIONS','OPERATION 01 COMPLETION EVIDENCE','Proceed to Operation 02 — Build the Source Inventory.'])if(!operation01.includes(marker))throw new Error(`Live Operation 01 output is missing ${marker}.`);
 for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`Live ${name} contains fabricated downstream records.`);
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Unrelated generator project content remains live.');
 const source=fetched['index.html']+fetched['app.js']+fetched['workbook.js'];
-if(!fetched['index.html'].includes('closed-loop-30-runtime-4'))throw new Error('Live repaired cache identity is missing.');
-if(!fetched['app.js'].includes('stageRecordText')||!fetched['app.js'].includes('stageOutputText')||fetched['app.js'].includes("draftRecord:r.record||r.evidenceRecord"))throw new Error('Live stage-record normalization is not repaired.');
+if(!fetched['index.html'].includes('closed-loop-30-runtime-5'))throw new Error('Live repaired cache identity is missing.');
+for(const token of ['stageRecordText','stageOutputText','isObsoleteRetainedProject','requestedView=params.get',"if(!req.length||!tests.length)return 'BLOCKED';"])if(!fetched['app.js'].includes(token))throw new Error(`Live application repair missing: ${token}`);
+if(fetched['app.js'].includes("draftRecord:r.record||r.evidenceRecord"))throw new Error('Live stage-record normalization is not repaired.');
 if(/human-project\/31|31 operations|Freeze New Version/i.test(source))throw new Error('Discarded architecture remains live.');
 const banned=new RegExp('se'+'mantic','i');if(banned.test(source))throw new Error('Prohibited terminology remains live.');
+if(/GEN-042|field status report|maintenance[- ]handoff/i.test(source))throw new Error('Unrelated demonstration terminology remains live.');
 for(const token of ['Complete project record','Generated instructions','Generated outputs','Original project input','Supporting records for this stage','PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY'])if(!source.includes(token))throw new Error(`Live human-facing project control missing: ${token}`);
-console.log(JSON.stringify({live:true,stages:30,title:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,prompts:project.generatedPrompts.length,outputs:project.generatedOutputs.length,receipts:project.outputReceipts.length,readableStageRecords:30},null,2));
+console.log(JSON.stringify({live:true,stages:30,title:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,prompts:project.generatedPrompts.length,outputs:project.generatedOutputs.length,receipts:project.outputReceipts.length,readableStageRecords:30,deduplicatedRetainedProject:true,phoneViewsAddressable:true},null,2));
