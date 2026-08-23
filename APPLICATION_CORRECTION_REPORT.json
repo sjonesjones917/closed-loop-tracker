@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "inputPath": "index.html",
+  "outputPath": "index.html",
+  "changes": [
+    "new-project-boundary-copy",
+    "new-project-role",
+    "project-shape-role",
+    "projects-view",
+    "retained-delete-protection",
+    "native-project-import-export-loader",
+    "retained-reload-control",
+    "native-public-api-and-startup"
+  ],
+  "byteLength": 108634
+}
