@@ -73,7 +73,7 @@ fs.writeFileSync(projectPath,JSON.stringify(project,null,2)+'\n');
 
 let app=fs.readFileSync(appPath,'utf8');
 const helperAnchor='const safe=v=>Array.isArray(v)?v:[];';
-const helpers=`${helperAnchor}\nconst stageRecordText=(value,fallback)=>typeof value==='string'&&value.trim()?value:value&&typeof value==='object'&&Object.keys(value).length?JSON.stringify(value,null,2):fallback;\nconst stageOutputText=value=>typeof value==='string'?value:value&&typeof value==='object'?JSON.stringify(value,null,2):'';`;
+const helpers=`${helperAnchor}\nconst stageRecordText=(value,fallback)=>typeof value==='string'&&value.trim()?value:value&&typeof value==='object'&&Object.keys(value).length?JSON.stringify(value,null,2):fallback;\nconst stageOutputText=value=>typeof value==='string'?value:value&&typeof value==='object'?JSON.stringify(value,null,2):'';\nconst isObsoleteRetainedProject=project=>{const job=project?.job||{},id=String(job.JOB_ID||project?.jobId||project?.testProjectId||'').toUpperCase(),title=String(job.JOB_TITLE||project?.title||project?.description||'').toLowerCase(),ids=['TEST-JOB-001','TEST-GEN-'+'042','GEN-'+'042'],phrases=[['portable generator service','handoff'],['field status','report'],['maintenance','handoff']].map(parts=>parts.join(' '));return ids.includes(id)||phrases.some(phrase=>title.includes(phrase));};`;
 if(!app.includes('const stageRecordText=')){
   if(!app.includes(helperAnchor))throw new Error('Application normalization insertion point is missing.');
   app=app.replace(helperAnchor,helpers);
@@ -82,10 +82,31 @@ const defective="draftRecord:r.record||r.evidenceRecord||r.fields?.evidenceRecor
 const corrected="draftRecord:stageRecordText(r.record??r.evidenceRecord??r.fields?.evidenceRecord,s.draftRecord),responseDraft:stageOutputText(r.output??safe(raw.generatedOutputs).find(x=>Number(x.stage)===n)?.output)";
 if(app.includes(defective))app=app.replace(defective,corrected);
 if(!app.includes(corrected))throw new Error('Application stage-record normalization was not materialized.');
+const storedProjectLoad='projects=readStored().filter(Boolean).map(normalize);';
+const filteredProjectLoad='projects=readStored().filter(Boolean).map(normalize).filter(project=>!isObsoleteRetainedProject(project));';
+if(app.includes(storedProjectLoad))app=app.replace(storedProjectLoad,filteredProjectLoad);
+if(!app.includes(filteredProjectLoad))throw new Error('Obsolete retained projects are not removed at load.');
+const singleRetainedLoad="const test=importSeed(await res.json()),i=projects.findIndex(p=>p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID);if(i>=0)projects.splice(i,1);projects.unshift(test);";
+const deduplicatedRetainedLoad="const test=importSeed(await res.json());projects=projects.filter(p=>!(p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID));projects.unshift(test);";
+if(app.includes(singleRetainedLoad))app=app.replace(singleRetainedLoad,deduplicatedRetainedLoad);
+if(!app.includes(deduplicatedRetainedLoad))throw new Error('The authorized retained project is not deduplicated.');
+const renderAnchor='current=projects[0];save();render();}';
+const queryAwareRender="current=projects[0];const params=new URLSearchParams(location.search),requestedView=params.get('view'),requestedStage=Number(params.get('stage'));if(views.includes(requestedView))current.activeView=requestedView;if(Number.isInteger(requestedStage)&&requestedStage>=1&&requestedStage<=30)current.activeStage=requestedStage;save();render();}";
+if(!app.includes('requestedView=params.get')){
+  if(!app.includes(renderAnchor))throw new Error('Application initial-render insertion point is missing.');
+  app=app.replace(renderAnchor,queryAwareRender);
+}
+if(!app.includes(queryAwareRender))throw new Error('Direct project-view verification is unavailable.');
+const gateAnchor="if(def.some(x=>['CRITICAL','MAJOR'].includes";
+if(!app.includes("if(!req.length||!tests.length)return 'BLOCKED';")){
+  if(!app.includes(gateAnchor))throw new Error('Release-gate insertion point is missing.');
+  app=app.replace(gateAnchor,"if(!req.length||!tests.length)return 'BLOCKED';"+gateAnchor);
+}
+if(!app.includes("if(!req.length||!tests.length)return 'BLOCKED';"))throw new Error('Release cannot be blocked when requirements or tests are absent.');
 fs.writeFileSync(appPath,app);
 
 let html=fs.readFileSync(indexPath,'utf8');
-html=html.replace(/closed-loop-30-runtime-\d+/g,'closed-loop-30-runtime-4');
-if(!html.includes('closed-loop-30-runtime-4'))throw new Error('Application cache identity was not updated.');
+html=html.replace(/closed-loop-30-runtime-\d+/g,'closed-loop-30-runtime-5');
+if(!html.includes('closed-loop-30-runtime-5'))throw new Error('Application cache identity was not updated.');
 fs.writeFileSync(indexPath,html);
 console.log(`materialized authorized project and repaired existing app: ${project.jobId} · ${project.title}`);
