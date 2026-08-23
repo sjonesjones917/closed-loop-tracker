@@ -25,10 +25,11 @@ if(project.generatedOutputs[0]?.output!==operation01||!operation01.includes('OPE
 for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`Live ${name} contains fabricated downstream records.`);
 const source=fetched['index.html']+fetched['app.js']+fetched['workbook.js'];
 if(!fetched['index.html'].includes('closed-loop-30-runtime-5'))throw new Error('Live repaired cache identity is missing.');
-for(const token of ['stageRecordText','stageOutputText','stageRecordEditor','syncStageRecordFromFields','New-job initialization','Supporting records for this stage'])if(!fetched['app.js'].includes(token))throw new Error(`Live human-facing application control missing: ${token}`);
+for(const token of ['stageRecordText','stageOutputText','stageRecordEditor','syncStageRecordFromFields','${stageRecordEditor(d,s,locked)}','New-job initialization','Supporting records for this stage'])if(!fetched['app.js'].includes(token))throw new Error(`Live human-facing application control missing: ${token}`);
+if(fetched['app.js'].includes('<div class="record-body">${stageRecordEditor(d,s,locked)}</div>'))throw new Error('Live recursive stage renderer remains.');
 if(fetched['app.js'].includes("1:['B','C','E','F']"))throw new Error('Live Stage 01 still contains recurring new-job reset clutter.');
 if(!fetched['app.js'].includes("k!=='B'")||!fetched['app.js'].includes('const latest=new Map()'))throw new Error('Live blocker resolution control is incomplete.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(source+JSON.stringify(project)))throw new Error('Unrelated product content remains live.');
 if(/human-project\/31|31 operations|Freeze New Version/i.test(source))throw new Error('Discarded architecture remains live.');
 const banned=new RegExp('se'+'mantic','i');if(banned.test(source))throw new Error('Prohibited terminology remains live.');
-console.log(JSON.stringify({live:true,stages:30,title:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,completedStages:1,prompts:1,outputs:1,receipts:1,futureProjectRecords:'status-only'},null,2));
+console.log(JSON.stringify({live:true,stages:30,title:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,completedStages:1,prompts:1,outputs:1,receipts:1,futureProjectRecords:'status-only',structuredStageFields:true},null,2));
