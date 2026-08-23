@@ -84,3 +84,5 @@ jobs:
           git commit -m 'Make Stage 8 and Stage 9 generate verified production instructions'
           git pull --rebase origin main
           git push origin HEAD:main
+
+# rerun: retained project must itself contain independently versioned Stage 8 and Stage 9 generated prompt records
