@@ -32,6 +32,7 @@
     ['Universal agent-output receipt','Agent output details'],
     ['Exact artifact identity control','Release identity']
   ]);
+  const IMMUTABLE_RECORD_FAMILIES=new Set(['C','D','E']);
   function removeDuplicateNavigation(){
     document.querySelectorAll('button').forEach(button=>{
       const text=button.textContent.trim();
@@ -54,6 +55,13 @@
     panel.querySelectorAll(':scope > details > summary').forEach(summary=>{
       const next=SUMMARY_LABELS.get(summary.textContent.trim());
       if(next)summary.textContent=next;
+    });
+    panel.querySelectorAll('textarea[data-record-letter]').forEach(textarea=>{
+      if(IMMUTABLE_RECORD_FAMILIES.has(textarea.dataset.recordLetter)){
+        textarea.readOnly=true;
+        textarea.setAttribute('aria-readonly','true');
+        textarea.title='Preserved append-only evidence. Create a new superseding record instead of overwriting history.';
+      }
     });
     const recordDetails=[...panel.querySelectorAll(':scope > details')].filter(details=>/^Appendix [A-F]\b/.test(details.querySelector('summary')?.textContent?.trim()||''));
     if(recordDetails.length){
