@@ -17,7 +17,7 @@ Appendices A–F are retained as cross-cutting operational controls used by the 
 - Appendix E is the clean-new-job reset behavior: a new job begins at Stage 01 without inheriting an old baseline, release decision, requirement, test, or job-specific state unless reuse is expressly authorized and re-established.
 - Appendix F creates an agent-output receipt for every agent response/artifact, preserving context, versions, files/hashes, deviations, defects/blockers, and the next independent verification stage.
 
-The application exposes those Appendix A–F records through the existing **Operational controls A–F** surface. They are not additional stages and there is no second checklist application.
+Those Appendix A–F records and actions appear inside the applicable 30-stage workbook screens and use the same controlling workbook state. There is no separate appendix workflow, control application, or duplicate checklist surface.
 
 ## Repository contents
 
