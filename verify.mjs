@@ -5,7 +5,7 @@ const html=fs.readFileSync('index.html','utf8');
 const app=fs.readFileSync('app.js','utf8');
 const bridge=fs.readFileSync('workbook.js','utf8');
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-if(!html.includes('<script src="workbook.js"></script>')||!html.includes('<script src="app.js"></script>'))throw new Error('Single application shell is not wired to the repaired controller.');
+if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired to the repaired controller.');
 if(project.schema!=='closed-loop-project/30')throw new Error(`Unexpected retained-project schema ${project.schema}`);
 if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Retained project must contain exactly 30 stage records.');
 if(project.job?.currentStage!==30||project.job?.currentState!=='ACCEPTED')throw new Error('Retained project must preserve the completed accepted 30-stage job.');
@@ -23,6 +23,7 @@ if(!(project.artifacts||[]).length)throw new Error('Exact project artifacts and 
 for(const token of ['validateStageDraft','stageHumanItems','stageGateItems','stageEvidenceItems','saveAppendix','sha256Bytes','compareArtifactSets','Complete project records','Generated outputs','Output receipts'])if(!app.includes(token))throw new Error(`Application control missing: ${token}`);
 for(const letter of ['A','B','C','D','E','F'])if(!app.includes(`'${letter}'`)&&!app.includes(`.${letter}`))throw new Error(`Integrated control ${letter} is not represented in the human workflow.`);
 if(!bridge.includes('runtime.STAGES')||!bridge.includes('runtime.buildStagePrompt'))throw new Error('Application is not using the complete existing 30-stage engine.');
+if(!bridge.includes('expose(fallback)'))throw new Error('Application does not retain a browser-compatible 30-stage runtime fallback.');
 if(/human-project\/31|31 operations|Freeze New Version/i.test(app+html+bridge))throw new Error('Discarded 31-operation architecture remains in the live application.');
 if(/\bsemantic\b/i.test(app+html+bridge))throw new Error('Prohibited user-facing terminology remains in application source.');
 console.log(JSON.stringify({application:'single',stages:30,retainedProject:project.job?.title,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.agentOutputs.length,outputReceipts:project.outputReceipts.length,runs:project.runs.length,verificationRecords:project.verification.length,evidenceChains:project.evidenceChains.length},null,2));
