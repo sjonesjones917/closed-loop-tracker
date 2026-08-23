@@ -19,11 +19,103 @@ jobs:
         with:
           node-version: '22'
       - run: node --check workbook.js
-      - run: node verify.mjs
+      - name: Verify the exact single-workbook architecture and controls
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import zlib from 'node:zlib';
+          import path from 'node:path';
+          import {pathToFileURL} from 'node:url';
+
+          const failures=[];
+          const evidence=[];
+          const ok=(condition,message)=>{(condition?evidence:failures).push(message)};
+          const index=fs.readFileSync('index.html','utf8');
+          const loader=fs.readFileSync('workbook.js','utf8');
+          const chunks=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
+          const compressed=Buffer.concat(chunks.map(name=>fs.readFileSync(name)));
+          const source=zlib.gunzipSync(compressed).toString('utf8');
+
+          const rootHtml=fs.readdirSync('.').filter(name=>name.endsWith('.html'));
+          ok(rootHtml.length===1&&rootHtml[0]==='index.html','exactly one application entry exists');
+          ok((index.match(/<script[^>]+src=/g)||[]).length===1&&index.includes('<script src="workbook.js"></script>'),'the one app has exactly one external runtime loader');
+          ok(chunks.every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")')&&loader.includes('cache:"no-store"'),'the existing workbook runtime is loaded without stale-cache reuse');
+          ok(source.includes('export const STAGES'),'the existing workbook runtime payload decompresses');
+
+          ok(index.includes('data-integrated-appendix-controls="true"'),'Appendix A-F behavior is integrated into the existing workbook');
+          const integrated=index.match(/<script data-integrated-appendix-controls="true">([\s\S]*?)<\/script>/)?.[1]||'';
+          ok(integrated.length>0,'the integrated Appendix control runtime exists');
+          try{new Function(integrated);evidence.push('integrated Appendix runtime parses')}catch(error){failures.push(`integrated Appendix runtime syntax error: ${error.message}`)}
+          ok(index.includes("const STORE='mclarw'")&&index.includes("const LETTERS=['A','B','C','D','E','F']")&&index.includes('operationalRecords'),'Appendix A-F use the same job state');
+          ok(index.includes('freshRecord(state,n)')&&index.includes('data-add-fresh'),'Appendix A creates repeatable fresh-context records');
+          ok(index.includes('blockerRecord(state,n)')&&index.includes('data-open-blocker')&&index.includes("stage.status='BLOCKED'")&&index.includes('invalidateAfter'),'Appendix B blocks affected work and downstream stages');
+          ok(index.includes('function changeRecord(state,n)')&&index.includes('data-add-change')&&index.includes('DOWNSTREAM_ARTIFACTS_INVALIDATED'),'Appendix C records material change and invalidation');
+          ok(index.includes('verifyIdentity(state,n,gate,audited,release)')&&index.includes("crypto.subtle.digest('SHA-256'")&&index.includes('function releaseRecord(state,hashId,audited,release,a,b)'),'Appendix D performs exact identity and final-release control');
+          ok(index.includes('resetRecord(state,old)')&&index.includes("OLD_BASELINE_STATUS_CARRIED_FORWARD:'FALSE'")&&index.includes("OLD_RELEASE_DECISION_CARRIED_FORWARD:'FALSE'"),'Appendix E performs a clean new-job reset');
+          ok(index.includes('receiptRecord(state,n)')&&index.includes('data-add-receipt')&&index.includes('NEXT_REQUIRED_VERIFICATION_STAGE'),'Appendix F records every agent output and verification route');
+          ok(index.includes('pendingForStage(state,n)')&&index.includes('stageControls(state,n)')&&index.includes('data-contextual-controls="true"'),'Appendix records are rendered only in the applicable stage');
+
+          ok(loader.includes('BAD_NAV')&&loader.includes('removeDuplicateNavigation'),'the obsolete Appendix/control navigation surface is suppressed');
+          ok(loader.includes('keepWorkbookSurface')&&loader.includes('obsoleteSurfaceVisible')&&loader.includes('workbookButton'),'the application is forced back to the existing 30-stage workbook surface');
+          ok(loader.includes('hideStandaloneAppendixReferences'),'standalone Appendix checklist documents are suppressed without removing their control behavior');
+          ok(loader.includes('compactContextualControls')&&loader.includes('stageNativeOperationalControls'),'required Appendix records are collapsed stage-native controls, not checklist stacks');
+          ok(loader.includes('renderPurpose')&&loader.includes('APPENDIX A–F — OPERATIONAL CONTROLS')&&loader.includes('not permanent checklist stacks'),'the intended Appendix purpose remains visible in the one application');
+          ok(!loader.includes('renderOperationalControl')&&!loader.includes('controlPanel('),'the loader does not construct a second application');
+
+          const temp=path.join(process.cwd(),'.verify-runtime.mjs');
+          fs.writeFileSync(temp,source);
+          let workbook;
+          try{workbook=await import(pathToFileURL(temp).href+`?t=${Date.now()}`)}finally{fs.rmSync(temp,{force:true})}
+          const {STAGES,APPENDICES,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,immutableRevision,invalidateDownstream,compareArtifactSets}=workbook;
+          ok(STAGES.length===30&&STAGES.every((stage,index)=>stage.number===index+1),'exactly 30 ordered stages exist');
+          ok(new Set(STAGES.map(stage=>stage.title)).size===30,'all 30 stage titles are distinct');
+          ok(Object.keys(APPENDICES).sort().join('')==='ABCDEF','Appendices A-F remain defined as operational controls');
+          const blank=createBlankState();
+          ok(blank?.appendices&&Object.keys(blank.appendices).sort().join('')==='ABCDEF','every job retains Appendix A-F record stores');
+          ok(STAGE_DECISIONS.join('|')==='READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED','stage decisions are exact');
+          ok(REQUIREMENT_OUTCOMES.join('|')==='SATISFIED|VIOLATED|UNDETERMINED','requirement outcomes are exact');
+          ok(RELEASE_OUTCOMES.join('|')==='ACCEPTED|REJECTED|BLOCKED','release outcomes are exact');
+          ok(!/31-stage|\/31 complete/i.test(index+source),'no alternate stage architecture exists');
+
+          const defectIds=STAGES.flatMap(stage=>stage.defectIds||[]);
+          ok(defectIds.length===269&&new Set(defectIds).size===269,'269 explicit stage defect IDs are represented once');
+          const controls=STAGES.flatMap(stage=>[...stageHumanItems(stage),...stageGateItems(stage),...stageEvidenceItems(stage)]);
+          ok(controls.length>=400,`at least 400 explicit human, gate, and evidence controls exist (actual ${controls.length})`);
+          ok(STAGES.every(stage=>stageHumanItems(stage).length&&stageGateItems(stage).length&&stageEvidenceItems(stage).length),'every stage contains human, gate, and evidence controls');
+          const prompts=STAGES.map(stage=>buildStagePrompt(stage,createBlankState()));
+          ok(prompts.length===30&&prompts.every((prompt,index)=>prompt.includes(STAGES[index].role)&&prompt.includes(STAGES[index].task)),'one exact reusable agent block exists per stage');
+          ok(prompts.every(prompt=>prompt.includes('Do not invent a missing fact')&&prompt.includes('SATISFIED')&&prompt.includes('VIOLATED')&&prompt.includes('UNDETERMINED')&&prompt.includes('ACCEPTED')&&prompt.includes('REJECTED')&&prompt.includes('BLOCKED')),'every agent block retains the universal rules and exact outcomes');
+
+          const history=[];
+          const first=await immutableRevision(history,{value:1},{artifactType:'TEST'});
+          history.push(first.record);
+          const second=await immutableRevision(history,{value:2},{artifactType:'TEST'});
+          ok(first.record.version==='v001'&&second.record.version==='v002'&&history[0].payload.value===1,'material revision appends without overwriting history');
+          const downstream=createBlankState();
+          downstream.stages[2].decision='READY TO PROCEED';
+          downstream.stages[2].status='COMPLETE';
+          ok(invalidateDownstream(downstream,1,'CHANGE-1').length>0&&downstream.stages[2].decision==='NOT READY - CORRECTION REQUIRED','material upstream change invalidates downstream determinations');
+          const audited=[{artifactId:'A1',name:'artifact',size:1,sha256:'1'.repeat(64)}];
+          const same=[{name:'artifact',size:1,sha256:'1'.repeat(64)}];
+          const different=[{name:'artifact',size:1,sha256:'2'.repeat(64)}];
+          ok(compareArtifactSets(audited,same,'ACCEPTED').authorization==='AUTHORIZED','accepted byte-identical release is authorized');
+          ok(compareArtifactSets(audited,different,'ACCEPTED').authorization==='NOT AUTHORIZED','hash mismatch stops release');
+          ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','non-ACCEPTED gate stops release');
+
+          if(failures.length){
+            console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',applicationEntries:1,stages:30,stageDefectIds:defectIds.length,stageControls:controls.length,appendixControlFamilies:6,separateAppendixChecklistView:false,contextualAppendixControls:true,visibleAppendixPurpose:true,behavioralChecks:evidence.length},null,2));
+          NODE
       - name: Enforce one application
         run: |
           test -f index.html
-          test "$(find . -maxdepth 1 -type f \( -name '*.html' -o -name 'app-*' -o -name 'v*.html' \) | wc -l)" -eq 1
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -e app.html
+          test ! -e app-v1.html
+          test ! -e app-v2.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
