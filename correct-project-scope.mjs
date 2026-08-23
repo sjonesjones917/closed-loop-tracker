@@ -26,6 +26,16 @@ function replaceSupported(text,oldValue,newValue,label){
   if(text.includes(newValue))return text;
   throw new Error(`${label} anchor missing`);
 }
+function patchBuilderOriginParser(){
+  const file='build-v13-self.mjs';
+  let s=fs.readFileSync(file,'utf8');
+  const oldPattern='/(?:^|\\\\n)\\\\s*ORIGIN\\\\s*[:=]\\\\s*([A-Z_]+)/gim';
+  const correctedPattern='/\\\\bORIGIN\\\\s*[:=]\\\\s*([A-Z_]+)/gim';
+  if(s.includes(oldPattern))s=s.replaceAll(oldPattern,correctedPattern);
+  const correctedCount=s.split(correctedPattern).length-1;
+  if(correctedCount<2)throw new Error(`build-v13-self.mjs origin parser correction incomplete: found ${correctedCount}, expected at least 2`);
+  writeIfChanged(file,s);
+}
 function patchGenerated(file){
   if(!fs.existsSync(file))return;
   let s=fs.readFileSync(file,'utf8');
@@ -81,6 +91,7 @@ function patchRunner(){
   writeIfChanged(file,s);
 }
 
+patchBuilderOriginParser();
 if(!generatedOnly){
   patchBrowser();
   patchRunner();
@@ -96,4 +107,4 @@ for(const file of syntaxFiles){
     if(result.status!==0)throw new Error(`${file} syntax failure: ${result.stderr||result.stdout}`);
   }
 }
-console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true,publishedProjectMetadata:true}));
+console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true,publishedProjectMetadata:true,originParserMatchesAnywhere:true}));
