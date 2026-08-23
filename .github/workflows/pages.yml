@@ -37,6 +37,7 @@ jobs:
           test -f test-project/inputs/REQUEST.md
           test -f test-project/inputs/SITE_POLICY.md
           test -f test-project/inputs/WORKFLOW_RULES.md
+          test -f test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md
           test ! -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
       - name: Publish granular verification status
         if: always()
@@ -93,7 +94,9 @@ jobs:
     env: {PAGE_URL: '${{ needs.deploy.outputs.page_url }}'}
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for exact deployed files
+      - id: live_identity
+        continue-on-error: true
+        name: Verify exact deployed files
         run: |
           set -euo pipefail; mkdir -p live-proof; verified=false
           FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md)
@@ -114,12 +117,14 @@ jobs:
             sleep 5
           done
           test "$verified" = true
-      - name: Render phone UI and open real test project
+      - id: blank_render
+        continue-on-error: true
+        name: Render compact working project UI
         run: |
           set -euo pipefail
           BROWSER="$(command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
           BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=18000 --window-size=393,852 --dump-dom "$BASE" > live-proof/blank.html
+          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --dump-dom "$BASE" > live-proof/blank.html
           grep -q 'Closed-Loop Reliability' live-proof/blank.html
           grep -q 'Current working job' live-proof/blank.html
           grep -q 'New project' live-proof/blank.html
@@ -127,7 +132,14 @@ jobs:
           grep -q '>Workflow<' live-proof/blank.html
           grep -q '>Work<' live-proof/blank.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/blank.html
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=24000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
+      - id: test_render
+        continue-on-error: true
+        name: Render genuine test project UI
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
+          BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
+          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=45000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
           grep -q 'Portable generator service handoff' live-proof/test-project.html
           grep -q 'GEN-042' live-proof/test-project.html
           grep -q 'Test project.' live-proof/test-project.html
@@ -144,6 +156,25 @@ jobs:
           grep -q 'BLOCKED' live-proof/test-project.html
           grep -q 'genuinely independent fresh execution contexts' live-proof/test-project.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/test-project.html
+      - name: Publish granular live status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IDENTITY: ${{ steps.live_identity.outcome }}
+          BLANK: ${{ steps.blank_render.outcome }}
+          TEST: ${{ steps.test_render.outcome }}
+        run: |
+          for pair in "live-file-identity:$IDENTITY" "live-working-ui:$BLANK" "live-test-project-ui:$TEST"; do
+            context="${pair%%:*}"; outcome="${pair#*:}"
+            if [ "$outcome" = success ]; then state=success; else state=failure; fi
+            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $outcome"
+          done
+      - name: Enforce live verification
+        if: always()
+        run: |
+          test '${{ steps.live_identity.outcome }}' = success
+          test '${{ steps.blank_render.outcome }}' = success
+          test '${{ steps.test_render.outcome }}' = success
       - name: Publish live status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
