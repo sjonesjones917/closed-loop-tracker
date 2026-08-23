@@ -1,0 +1,33 @@
+name: Export repair snapshot
+
+on:
+  push:
+    branches:
+      - repair/human-reliability-app
+    paths:
+      - .github/workflows/export-repair-snapshot.yml
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pack repository
+        run: zip -qr repair-snapshot.zip . -x '.git/*' 'repair-snapshot.zip'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repair-snapshot
+          path: repair-snapshot.zip
+          retention-days: 1
+      - name: Publish run URL
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+        run: |
+          if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='repair-snapshot' -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' -f description='Repair snapshot export'
