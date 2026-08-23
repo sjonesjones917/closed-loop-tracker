@@ -1,20 +1,66 @@
 import fs from 'node:fs';
-import vm from 'node:vm';
-const h=fs.readFileSync('index.html','utf8');
-const j=fs.readFileSync('workbook.js','utf8');
-const fail=m=>{throw new Error(m)};
-if(!h.includes('<script src="workbook.js"></script>'))fail('index does not load workbook runtime');
-if((h.match(/<script src=/g)||[]).length!==1)fail('more than one application runtime is loaded');
-if(!j.includes("q.stages?.length!==30"))fail('import gate is not exactly 30 stages');
-if(/31-stage|\/31 complete|Stage .* of 31/.test(h+j))fail('legacy 31-stage control remains');
-new vm.Script(j,{filename:'workbook.js'});
-const titles=['INITIALIZE THE JOB','BUILD THE SOURCE INVENTORY','RESEARCH THE REQUIREMENTS','COMPILE THE REQUIREMENT SPECIFICATION','RESOLVE THE REQUIREMENT SET','BUILD THE VERIFICATION SUITE BEFORE WRITING THE PRODUCTION INSTRUCTION','BUILD FAILURE TESTS','AUTHOR THE PRODUCTION INSTRUCTION','PREFLIGHT THE PRODUCTION INSTRUCTION','FREEZE THE TEST CANDIDATE','RUN TEN INDEPENDENT EXECUTIONS','VERIFY EACH EXECUTION INDEPENDENTLY','COMPARE THE TEN EXECUTIONS','ROOT-CAUSE EVERY DEFECT','CONVERT EVERY CONFIRMED FAILURE INTO A REGRESSION TEST','REVISE THE RESPONSIBLE LAYER','RE-RUN THE COMPLETE TEN-EXECUTION ITERATION','CONTINUE UNTIL CONVERGENCE','RUN AN UNCHANGED CONFIRMATION ITERATION','FREEZE THE PRODUCTION BASELINE','GENERATE THE FINISHED PRODUCT','RUN DETERMINISTIC VERIFICATION ON THE FINISHED PRODUCT','RUN INDEPENDENT SEMANTIC VERIFICATION','RUN ADVERSARIAL VERIFICATION','INSPECT THE FINAL REPRESENTATION','RECONCILE PROCESS AND PRODUCT EVIDENCE','APPLY THE RELEASE GATE','VERIFY ARTIFACT IDENTITY BEFORE RELEASE','PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY'];
-for(const t of titles)if(!j.includes(`t:'${t}'`))fail('missing stage definition '+t);
-if((j.match(/\{t:'/g)||[]).length!==30)fail('stage definition count is not 30');
-for(const a of ['A:{title:','B:{title:','C:{title:','D:{title:','E:{title:','F:{title:'])if(!j.includes(a))fail('missing appendix '+a[0]);
-const controls=['UNKNOWN','NONE','NOT APPLICABLE','SATISFIED | VIOLATED | UNDETERMINED','ACCEPTED | REJECTED | BLOCKED','SHA-256','RUN-001 THROUGH RUN-010','MANDATORY_TEST_COVERAGE','REGRESSION_TEST_SUCCESS','RELEASE_HASH_EQUALS_AUDITED_HASH','EVIDENCE_CHAIN_VERSION','REGISTRY_IS_APPEND_ONLY','Never modify a version in place','Do not allow the generator to be its sole validator','Do not release bytes different from audited bytes'];
-for(const c of controls)if(!j.includes(c))fail('missing mandatory control '+c);
-for(const section of ['Authorized inputs','Human checklist','Fill-in stage record','Copy into the assigned agent','Stage completion gate','Evidence to preserve'])if(!j.includes(section))fail('missing stage UI section '+section);
-for(const key of ['defects:[]','regressions:[]','blockers:[]','changes:[]','agentOutputReceipts:[]','freshContextLaunches:[]'])if(!j.includes(key))fail('missing persistent control collection '+key);
-if(!h.includes('30-stage workbook')||!h.includes('Appendices A–F')||!h.includes('Control records'))fail('single application navigation incomplete');
-console.log(JSON.stringify({status:'PASS',singleApp:'index.html',runtime:'workbook.js',stages:30,appendices:6,controls:'verified'}));
+
+const html = fs.readFileSync('index.html', 'utf8');
+const fail = (message) => { throw new Error(message); };
+const requiredStages = [
+  'DEFINE JOB','INVENTORY SOURCES','RESEARCH REQUIREMENTS','COMPILE ATOMIC REQUIREMENTS','RESOLVE CONFLICTS','BUILD ACCEPTANCE TESTS','BUILD FAILURE/MUTATION TESTS','AUTHOR PRODUCTION INSTRUCTION','PREFLIGHT INSTRUCTION','FREEZE CANDIDATE','RUN 10 INDEPENDENT EXECUTIONS','VERIFY EVERY RUN AGAINST EVERY REQUIREMENT','COMPARE ALL RUNS','ROOT-CAUSE EVERY DEFECT','ADD REGRESSION TESTS','CORRECT RESPONSIBLE LAYER','FREEZE NEW VERSION','RUN 10 NEW INDEPENDENT EXECUTIONS','REPEAT UNTIL CONVERGED','RUN UNCHANGED 10-EXECUTION CONFIRMATION','FREEZE APPROVED BASELINE','GENERATE FINISHED PRODUCT','DETERMINISTIC PRODUCT VERIFICATION','INDEPENDENT SEMANTIC VERIFICATION','ADVERSARIAL PRODUCT VERIFICATION','FINAL REPRESENTATION INSPECTION','PROCESS AUDIT','PRODUCT AUDIT','ACCEPTED / REJECTED / BLOCKED','VERIFY RELEASE HASH','RELEASE ONLY THE EXACT ACCEPTED ARTIFACT'
+];
+
+if (!html.includes('<title>Closed-Loop Agent Reliability</title>')) fail('Public title is incorrect.');
+if (!html.includes('<h1>Closed-Loop Agent Reliability</h1>')) fail('Public heading is incorrect.');
+if (/Closed-Loop Agent Reliability\s+v\d/i.test(html)) fail('An arbitrary public application version label remains.');
+for (const forbidden of [
+  'sidecar-filename defect',
+  'Agent response',
+  'paste agent response',
+  'REAL SELF-BUILD',
+  'application itself by using the actual application UI'
+]) {
+  if (html.toLowerCase().includes(forbidden.toLowerCase())) fail(`Forbidden repair/prompt-relay text remains: ${forbidden}`);
+}
+
+const manifestMatch = html.match(/<script id="stage-manifest" type="application\/json">([\s\S]*?)<\/script>/);
+if (!manifestMatch) fail('Stage manifest is missing.');
+const manifest = JSON.parse(manifestMatch[1]);
+if (manifest.length !== 31) fail(`Expected 31 stages, found ${manifest.length}.`);
+for (let i = 0; i < requiredStages.length; i += 1) {
+  if (manifest[i]?.number !== i + 1) fail(`Stage ${i + 1} is renumbered.`);
+  if (manifest[i]?.name !== requiredStages[i]) fail(`Stage ${i + 1} name changed: ${manifest[i]?.name}`);
+}
+
+const requiredArchitectureTokens = [
+  'USER_JOB_INPUT','EXTERNAL_RESEARCH_SOURCE','WORKFLOW_GENERATED_ARTIFACT','HUMAN','AGENT','HUMAN_AGENT_TEAM',"schema:'closed-loop-project/1'",'validateSourceGuard','independentOfArtifact','externallyAccessed','productBytes','sha256Bytes','RUN-001','Create missing matrix records'
+];
+for (const token of requiredArchitectureTokens) if (!html.includes(token)) fail(`Required architecture token missing: ${token}`);
+
+const jobBlock = html.match(/const JOB_FIELDS=\[([\s\S]*?)\];\nconst USER_INPUT_CLASSIFICATIONS/);
+if (!jobBlock) fail('Stage 1 field definition is missing.');
+const jobFieldCount = (jobBlock[1].match(/^\s*\['/gm) || []).length;
+if (jobFieldCount !== 20) fail(`Expected 20 Stage 1 scopes, found ${jobFieldCount}.`);
+
+const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
+if (scripts.length < 2) fail('Application script is missing.');
+new Function(scripts.at(-1));
+
+if (/<script[^>]+src=/i.test(html) || /<link[^>]+rel=["']stylesheet/i.test(html)) fail('The deployed application must remain standalone.');
+if (!html.includes('No seeded build job')) fail('The empty arbitrary-job creation invariant is not visible.');
+if (!html.includes('Three information classes')) fail('The three information classes are not visible in the UI.');
+if (!html.includes('data-self-project-proof="true"')) fail('The retained self-project proof is not visible in the Projects UI.');
+if (!html.includes('SELF_VERIFIED_PROJECT.json')) fail('The retained self-project export is not linked from the application.');
+
+const result = {
+  status: 'PASS',
+  publicName: 'Closed-Loop Agent Reliability',
+  publicVersionLabel: false,
+  stages: manifest.length,
+  stage1Scopes: jobFieldCount,
+  informationClasses: 3,
+  humanWorkSupported: true,
+  agentWorkSupported: true,
+  humanAgentTeamSupported: true,
+  retainedSelfProjectProof: true,
+  promptRelayArchitecture: false,
+  standalone: true
+};
+fs.writeFileSync('STATIC_VERIFICATION.json', `${JSON.stringify(result, null, 2)}\n`);
+console.log(JSON.stringify(result, null, 2));

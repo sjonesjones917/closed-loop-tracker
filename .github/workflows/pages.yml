@@ -1,4 +1,4 @@
-name: Verify and deploy the single workbook app
+name: Verify and deploy the single application
 on:
   push:
     branches: [main]
@@ -18,15 +18,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node verify.mjs
       - name: Enforce one application
         run: |
           test -f index.html
-          test "$(find . -maxdepth 1 -type f \( -name '*.html' -o -name 'app-*' -o -name 'v*.html' \) | wc -l)" -eq 1
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -e workbook.js
+      - name: Verify application architecture
+        run: node verify.mjs
+      - name: Verify retained proof project
+        run: node verify-project.mjs
       - uses: actions/configure-pages@v5
+      - name: Build minimal Pages payload
+        run: |
+          mkdir -p _site
+          cp index.html SELF_VERIFIED_PROJECT.json .nojekyll _site/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
   deploy:
     needs: verify
     environment:
@@ -34,6 +42,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy exact verified repository
+      - name: Deploy exact verified application
         id: deployment
         uses: actions/deploy-pages@v4

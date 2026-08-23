@@ -1,25 +1,11 @@
-# Mobile Closed-Loop Agent Reliability Workbook
-
-Live application:
-
-https://sjonesjones917.github.io/closed-loop-tracker/
+# Closed-Loop Agent Reliability
 
 This repository contains one application: `index.html`.
 
-The application implements the controlling 30-stage Mobile Closed-Loop Agent Reliability Workbook. New jobs start clean at Stage 01. It provides the 30-stage tracker, phone-first stage records, copy-ready agent blocks, explicit stage gates, JSON import/export, append-only control-record collections, and Appendices A–F controls.
+The application is the phone-first, domain-general Closed-Loop Agent Reliability system with the exact 31-stage workflow, five primary views (Projects, Job, Workflow, Records, Release), 20-scope job intake, separated user/external/workflow information classes, human and agent ownership, independent execution and verification records, correction/regression controls, acceptance gating, and exact SHA-256 release identity.
 
-## Repository contents
+`SELF_VERIFIED_PROJECT.json` is the retained current-schema completed project used by the application as its built-in proof project. It is data for the one application, not a second application.
 
-- `index.html` — the only application entry point.
-- `workbook.js` — the application runtime and 30-stage workbook definition.
-- `verify.mjs` — release verification for the 30-stage architecture and required controls.
-- `.github/workflows/pages.yml` — verifies and deploys the exact application.
-- `.nojekyll` — GitHub Pages static-file control.
+`verify.mjs` verifies the application architecture. `verify-project.mjs` verifies the retained project, execution matrices, regressions, audits, acceptance decision, and release-hash evidence. GitHub Pages deploys only these application/support artifacts from `main`.
 
-There are no numbered app versions, legacy app entry points, retained completed projects, substitute applications, or alternate deployment artifacts.
-
-## Local verification
-
-Run `node verify.mjs`.
-
-Requirement outcomes are `SATISFIED`, `VIOLATED`, or `UNDETERMINED`. Release outcomes are `ACCEPTED`, `REJECTED`, or `BLOCKED`.
+Live application: https://sjonesjones917.github.io/closed-loop-tracker/
