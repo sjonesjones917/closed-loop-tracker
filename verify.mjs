@@ -38,7 +38,7 @@ ok(index.includes('pendingForStage(state,n)')&&index.includes('stageControls(sta
 ok(index.includes('This record is required by the current workflow event. Complete it here; it is not an additional stage or checklist.'),'contextual control records are not presented as a parallel checklist workflow');
 ok(!index.includes('data-integrated-operational-controls="true"'),'obsolete always-visible operational-controls panel is removed');
 ok(index.includes('Master 30-stage tracker')&&index.includes('Mandatory operating rules')&&index.includes('Quick execution loop')&&index.includes('Master job control'),'master workbook controls remain in the single application');
-ok(index.includes('How to use this workbook on a phone')&&index.includes('Phone folder structure')&&index.includes('Agent-role separation map'),'phone-use, folder, and role-separation controls remain in the application');
+ok(index.includes('How to use this workbook on a phone')&&index.includes('Mobile file/version naming and folder structure')&&index.includes('Agent-role separation map'),'phone-use, folder, and role-separation controls remain in the application');
 
 ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name)),'loader reads the existing workbook runtime chunks');
 ok(loader.includes('DecompressionStream("gzip")')&&loader.includes('cache:"no-store"'),'runtime is decompressed and requested without stale-cache reuse');
