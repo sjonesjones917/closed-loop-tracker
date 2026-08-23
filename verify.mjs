@@ -21,7 +21,7 @@ ok(index.includes('New clean job')&&index.includes('Export')&&index.includes('Im
 ok(loader.includes('Test project')&&loader.includes('runBrowserTestProject'),'retained test project is human-accessible from the existing app');
 ok(loader.includes('TEST_PROJECT.json')&&rootFiles.includes('TEST_PROJECT.json'),'retained deterministic test-project fixture exists and is used');
 ok(testProject.testProjectId==='TEST-PROJECT-30-STAGE-001'&&testProject.autoload===false,'test project remains a retained non-autoload fixture');
-ok(loader.includes('Appendix reference screens removed')&&loader.includes('data-contextual-controls'),'Appendix reference screens are removed while contextual controls remain');
+ok(loader.includes('hideDeveloperSurfaces')&&loader.includes('data-contextual-controls'),'appendix/dashboard developer surfaces are hidden while contextual workflow controls remain');
 ok(!loader.includes('Repository test project')&&!loader.includes('Deployment gate')&&!loader.includes('Verifier coverage'),'developer/repository diagnostic prose is not rendered as primary user UI');
 ok(runtimeParts.every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'existing runtime payload is loaded without a second app');
 ok(loader.includes('cache:"no-store"'),'runtime bypasses stale asset reuse');
