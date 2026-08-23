@@ -1,2 +1,2 @@
-deployment verification requested 2026-08-23T01:33:30Z
-reason: deploy the current human-first application with the retained native 31-stage application project visible in Projects and verify both live artifacts
+deployment verification requested 2026-08-23T01:35:00Z
+reason: clean authoritative Pages deployment after disabling diagnostic push races; retained native 31-stage application project must be visible in Projects and both live artifacts must hash-match
