@@ -17,7 +17,8 @@ const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++seq;pend
 async function ev(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||JSON.stringify(r.exceptionDetails));return r.result.value}
 async function waitFor(expression,ms=20000){const end=Date.now()+ms;while(Date.now()<end){try{if(await ev(expression))return true}catch{}await sleep(100)}throw new Error(`Timed out: ${expression}`)}
 const ok=(condition,message)=>{if(!condition)throw new Error(message)};
-async function fresh(){await send('Page.enable');await send('Page.navigate',{url:base+'&mode='+mode+'&t='+Date.now()});await waitFor("document.readyState==='complete'&&document.body.innerText.includes('Closed-Loop Reliability application repair')");await waitFor("!!document.querySelector('.agent-fab')&&!!document.querySelector('.agent-now')",20000);}
+async function screenshot(name){const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:true});fs.writeFileSync(`live-proof/${name}.png`,Buffer.from(r.data,'base64'));}
+async function fresh(){await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});await send('Page.navigate',{url:base+'&mode='+mode+'&t='+Date.now()});await waitFor("document.readyState==='complete'&&document.body.innerText.includes('Closed-Loop Reliability application repair')");await waitFor("!!document.querySelector('.agent-fab')&&!!document.querySelector('.agent-now')",20000);}
 
 try{
   await fresh();
@@ -29,6 +30,7 @@ try{
     ok(projectHeight<=36,`Project button oversized: ${projectHeight}`);
     ok(promptButtonHeight<=36,`Copy prompt button oversized: ${promptButtonHeight}`);
     ok(await ev("document.body.innerText.includes('Current agent work')&&document.body.innerText.includes('Copy prompt')"),'Project does not expose the current agent prompt');
+    await screenshot('phone-overview-393x852');
     await ev("document.querySelector('[data-view=workflow]').click()");
     await waitFor("document.querySelectorAll('[data-operation]').length===31");
     const count=await ev("document.querySelectorAll('[data-operation]').length");
@@ -50,7 +52,8 @@ try{
     await ev("document.querySelector('.agent-fab').click()");
     await waitFor("!!document.querySelector('.agent-drawer')&&document.body.innerText.includes('Copy prompt + package')");
     ok(await ev("document.querySelector('.agent-drawer pre').textContent.length>800"),'Persistent prompt drawer does not expose the complete prompt');
-    fs.writeFileSync('live-proof/workflow-interaction.json',JSON.stringify({ok:true,newHeight,projectHeight,promptButtonHeight,operations:count,promptLength:promptText.length,promptRecordsBefore:before,promptRecordsAfter:after,persistentPrompt:true},null,2));
+    await screenshot('phone-agent-prompt-393x852');
+    fs.writeFileSync('live-proof/workflow-interaction.json',JSON.stringify({ok:true,newHeight,projectHeight,promptButtonHeight,operations:count,promptLength:promptText.length,promptRecordsBefore:before,promptRecordsAfter:after,persistentPrompt:true,renderedPhoneScreenshots:['phone-overview-393x852.png','phone-agent-prompt-393x852.png']},null,2));
   }
   if(mode==='history'){
     const persistedRuns=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.runRecords.length");
@@ -63,6 +66,7 @@ try{
     ok(await ev("document.body.innerText.includes('Generated instruction')"),'Generated instructions are not inspectable in History');
     ok(await ev("document.body.innerText.includes('Lossless application-repair job definition preserved.')"),'Preserved generated output is not inspectable in History');
     ok(await ev("!!document.querySelector('.agent-fab')"),'Agent prompt is not accessible while reviewing history');
+    await screenshot('phone-history-393x852');
     fs.writeFileSync('live-proof/history-interaction.json',JSON.stringify({ok:true,runRecords:persistedRuns,historyVisible:true,promptAccessible:true},null,2));
   }
   if(mode==='reset'){
@@ -77,6 +81,7 @@ try{
     ok(newPrompt.includes('01 — Define Job')&&newPrompt.includes('Capture the complete authorized user job losslessly'),'New project does not receive a usable first-operation agent prompt');
     ok(newPrompt.includes('AUTHORIZED PROJECT PACKAGE'),'New-project prompt does not include the project package');
     ok(newPrompt.includes('User Job Input')&&newPrompt.includes('External Research Sources')&&newPrompt.includes('Workflow-Generated Artifacts'),'New-project prompt does not preserve the three-class architecture');
+    await screenshot('phone-new-project-393x852');
     fs.writeFileSync('live-proof/reset-interaction.json',JSON.stringify({ok:true,...clean,newProjectPrompt:true,persistentPrompt:true},null,2));
   }
   console.log(JSON.stringify({determination:'SATISFIED',mode},null,2));
