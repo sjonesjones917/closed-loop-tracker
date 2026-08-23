@@ -29,15 +29,25 @@ const {STAGES,APPENDICES,SECTION_HEADINGS,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,R
 ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'exactly 30 ordered stages');
 ok(new Set(STAGES.map(s=>s.title)).size===30,'30 distinct stage titles');
 ok(Object.keys(APPENDICES).join('')==='ABCDEF','exactly Appendices A-F exist as reusable operational control definitions');
+const blankState=createBlankState();
+ok(blankState&&blankState.appendices&&Object.keys(blankState.appendices).sort().join('')==='ABCDEF','Appendices A-F exist in every actual job state as operational records, not shell prose');
 ok(SECTION_HEADINGS.length===7,'seven controlling stage sections');
 ok(STAGE_DECISIONS.join('|')==='READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED','exact stage decisions');
 ok(REQUIREMENT_OUTCOMES.join('|')==='SATISFIED|VIOLATED|UNDETERMINED','exact requirement outcomes');
 ok(RELEASE_OUTCOMES.join('|')==='ACCEPTED|REJECTED|BLOCKED','exact release outcomes');
 ok(!/31-stage|\/31 complete/i.test(index+source),'no 31-stage architecture');
 ok(ROLE_SEPARATION.length>=20&&FOLDERS.includes('12_PERMANENT_DEFECT_REGISTRY'),'role separation and permanent regression registry retained');
-const stageDefects=STAGES.flatMap(s=>s.defectIds||[]); ok(stageDefects.length===269&&new Set(stageDefects).size===269,'269 explicit stage defect controls represented exactly once');
+const stageDefects=STAGES.flatMap(s=>s.defectIds||[]); ok(stageDefects.length===269&&new Set(stageDefects).size===269,'269 explicit stage defect IDs are represented exactly once');
+const stageControls=STAGES.flatMap(s=>[
+  ...stageHumanItems(s).map((x,i)=>`S${s.number}-H${i+1}:${x}`),
+  ...stageGateItems(s).map((x,i)=>`S${s.number}-G${i+1}:${x}`),
+  ...stageEvidenceItems(s).map((x,i)=>`S${s.number}-E${i+1}:${x}`)
+]);
+ok(stageControls.length>=400,`full 30-stage workbook exposes at least 400 explicit human, gate, and evidence controls (actual ${stageControls.length})`);
+ok(STAGES.every(s=>stageHumanItems(s).length>0&&stageGateItems(s).length>0&&stageEvidenceItems(s).length>0),'every stage has human controls, a completion gate, and evidence-preservation controls');
 const prompts=STAGES.map(s=>buildStagePrompt(s,createBlankState())); ok(prompts.length===30,'exactly one reusable copy block per stage');
 ok(prompts.every((p,i)=>p.includes(STAGES[i].role)&&p.includes(STAGES[i].task)),'every copy block preserves exact stage role and task');
+ok(prompts.every(p=>p.includes('Do not invent a missing fact')&&p.includes('SATISFIED')&&p.includes('VIOLATED')&&p.includes('UNDETERMINED')&&p.includes('ACCEPTED')&&p.includes('REJECTED')&&p.includes('BLOCKED')),'every copy block carries the universal operating rules and exact outcome vocabulary');
 for(const n of [11,12,17,19])ok(prompts[n-1].includes('RUN_ID: <<RUN-001 THROUGH RUN-010>>'),`stage ${n} uses one reusable ten-run prompt`);
 let s=createBlankState(), st=STAGES[0], item=s.stages[1]; item.draftRecord=createRecordTemplate(st); item.decision='READY TO PROCEED'; item.decisionEvidence='e'; item.decidedBy='x'; item.dateTime='2026-01-01T00:00:00Z'; stageHumanItems(st).forEach((_,i)=>item.humanChecks[i]=true); stageGateItems(st).forEach((_,i)=>item.gateChecks[i]=true); stageEvidenceItems(st).forEach((_,i)=>item.evidenceChecks[i]=true); ok(validateStageDraft(st,item,s).issues.length>0,'unresolved placeholders block READY');
 item.draftRecord=item.draftRecord.replace(/<<[^>]+>>/g,'VALUE'); s.job.JOB_ID='JOB-1'; s.job.EXACT_USER_OBJECTIVE_VERBATIM='objective'; ok(!hasUnresolvedPlaceholder(item.draftRecord),'filled record contains no unresolved placeholders');
@@ -55,4 +65,4 @@ ok(source.includes('newJob')||source.includes('createBlankState'),'Appendix E is
 ok(source.includes('appendices.F'),'Appendix F is implemented as the universal agent-output receipt path');
 ok(source.includes('ACTUAL_CONTENT_INSPECTED')&&source.includes('CURRENCY_CONFIRMED'),'source inspection and current-source currency controls are implemented');
 if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
-console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,integratedAppendixControls:true,staticAppendixSubstitute:false,visualDesignChanged:false},null,2));
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectIds:stageDefects.length,stageControls:stageControls.length,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,integratedAppendixControls:true,staticAppendixSubstitute:false,visualDesignChanged:false},null,2));
