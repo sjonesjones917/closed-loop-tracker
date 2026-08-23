@@ -1,7 +1,7 @@
 (async()=>{
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
-    const cacheKey="single-workbook-stage-native-controls-final";
+    const cacheKey="single-workbook-restored-test-project";
     const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
     const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
     for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
@@ -22,305 +22,72 @@
 
 (()=>{
   "use strict";
-
   const STORE="mclarw";
-  const BAD_NAV=/^(?:Appendices\s+A\s*[–—-]\s*F|Control records|Appendix controls|Operational controls\s+A\s*[–—-]\s*F|[A-F]\s+(?:FRESH AGENT CONTEXT LAUNCH CHECKLIST|UNIVERSAL BLOCKER RECORD|UNIVERSAL CHANGE AND INVALIDATION LOG|EXACT FINAL RELEASE CHECKLIST|NEW-JOB RESET CHECKLIST|UNIVERSAL AGENT-OUTPUT RECEIPT))$/i;
-  const WORKBOOK_NAV=/^30\s*[–—-]\s*stage workbook$/i;
-  const APPENDIX_HEADING=/^APPENDIX\s+[A-F]\s*[-–—]/i;
-  const CONTROL_HEADING=/^(?:APPENDICES\s+A\s*[–—-]\s*F|CONTROL RECORDS|APPENDIX CONTROLS|OPERATIONAL CONTROLS\s+A\s*[–—-]\s*F)$/i;
-  const STYLE_ID="stage-native-control-style";
+  const STYLE_ID="workbook-restoration-style";
   const PURPOSE_ID="appendix-operational-purpose";
   const TEST_PROJECT_ID="repository-test-project";
   const DEFINITIONS=[
-    ["A","Fresh-context launch","Creates the launch evidence required for each fresh independent execution, verification, semantic review, adversarial review, or confirmation context, including exact frozen inputs, contamination, tools, output identity, and usability."],
-    ["B","Universal blocker","Creates the blocker record whenever mandatory evidence, authority, input, capability, or a decision rule is unavailable; affected downstream work is stopped and READY remains prohibited until resolution and revalidation are established."],
-    ["C","Change and invalidation","Creates an append-only change record for every material modification, records the earliest responsible layer and exact change, invalidates affected downstream determinations, and identifies every required rerun."],
-    ["D","Exact final release","After Stage 28 establishes exact artifact identity, creates the final release record and prohibits RELEASED until every required process, product, representation, evidence-chain, coverage, regression, defect, hash, custody, authorization, and delivery condition is affirmatively established."],
-    ["E","New-job reset","Creates clean job state for a different job and prevents silent inheritance of an old baseline, release decision, requirement, test, defect disposition, or job-specific evidence."],
-    ["F","Agent-output receipt","Creates a receipt for every agent response or generated artifact, preserving exact context, inputs, output identity, files, hashes, deviations, defects or blockers, and the next independent verification route."]
+    ["A","Fresh agent context launch","Use whenever a stage requires a fresh execution, verification, semantic review, adversarial review, or confirmation context. Preserve the full launch record and contamination evidence."],
+    ["B","Universal blocker record","Use whenever a mandatory requirement cannot be established because evidence, authority, input, capability, or a decision rule is unavailable. Stop affected downstream work until resolved and revalidated."],
+    ["C","Universal change and invalidation log","Use one append-only record for every material modification. Preserve old/new identity, root cause or authority, downstream invalidation, and every required rerun."],
+    ["D","Exact final release checklist","Apply against the exact delivery files after the release gate and artifact-identity controls. Release only exact accepted, hash-matched artifacts with complete evidence."],
+    ["E","New-job reset checklist","Use before a different job. Create clean job state and prohibit silent inheritance of an old baseline, release decision, requirement, test, defect disposition, or job-specific evidence."],
+    ["F","Universal agent-output receipt","Complete immediately after every agent response or generated artifact. Preserve exact context, inputs, output identity, files, hashes, deviations, defects/blockers, and the next verification route."]
   ];
-  let queued=false;
-  let forcingWorkbook=false;
-
-  const normalizedText=element=>String(element?.textContent||"").replace(/\s+/g," ").trim();
-  const allControls=()=>[...document.querySelectorAll("button,a,[role='button']")];
-  const workbookButton=()=>allControls().find(element=>WORKBOOK_NAV.test(normalizedText(element)));
-  const isActive=element=>Boolean(element&&(element.classList.contains("active")||element.getAttribute("aria-current")==="page"||element.getAttribute("aria-selected")==="true"||element.getAttribute("aria-pressed")==="true"));
-  const isVisible=element=>Boolean(element&&!element.hidden&&element.getAttribute("aria-hidden")!=="true");
-
-  function escapeHtml(value){
-    return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-  }
-
-  function readState(){
-    try{return JSON.parse(localStorage.getItem(STORE)||"null");}
-    catch{return null;}
-  }
-
-  function appendixRecords(state,letter){
-    if(Array.isArray(state?.operationalRecords?.[letter]))return state.operationalRecords[letter];
-    if(Array.isArray(state?.appendices?.[letter]?.records))return state.appendices[letter].records;
-    return [];
-  }
-
-  function recordId(record){
-    return record?.id||
-      record?.FRESH_CONTEXT_LAUNCH_RECORD_ID||
-      record?.BLOCKER_ID||
-      record?.CHANGE_ID||
-      record?.RELEASE_ID||
-      record?.HASH_AUDIT_ID||
-      record?.NEW_JOB_INITIALIZATION_RECORD_ID||
-      record?.RECEIPT_ID||
-      "recorded";
-  }
-
-  function addStyles(){
+  const normalized=e=>String(e?.textContent||"").replace(/\s+/g," ").trim();
+  const escapeHtml=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const readState=()=>{try{return JSON.parse(localStorage.getItem(STORE)||"null")}catch{return null}};
+  const records=(state,letter)=>Array.isArray(state?.operationalRecords?.[letter])?state.operationalRecords[letter]:Array.isArray(state?.appendices?.[letter]?.records)?state.appendices[letter].records:[];
+  const recordId=r=>r?.id||r?.FRESH_CONTEXT_LAUNCH_RECORD_ID||r?.BLOCKER_ID||r?.CHANGE_ID||r?.RELEASE_ID||r?.NEW_JOB_INITIALIZATION_RECORD_ID||r?.RECEIPT_ID||"recorded";
+  function styles(){
     if(document.getElementById(STYLE_ID))return;
-    const style=document.createElement("style");
-    style.id=STYLE_ID;
-    style.textContent=`
-      [data-contextual-controls="true"]{margin-top:12px}
-      [data-contextual-controls="true"]>[data-control-records="true"]{margin:10px 0}
-      [data-control-records="true"]>summary{cursor:pointer;font-weight:700}
-      [data-control-records="true"] .control-count{font-weight:400;color:#666}
-      [data-control-records="true"] details[data-record]{margin:8px 0;padding:10px;border:1px solid #ddd;border-radius:8px}
-      [data-control-records="true"] details[data-record]>summary{cursor:pointer}
-      [data-control-records="true"] details[data-record]>p.muted{display:none}
-      [data-control-records="true"] .record-state{float:right;color:#666;font-size:11px;font-weight:400}
-      [data-control-records="true"] .record-id{color:#666;font-weight:400}
-      [data-contextual-controls="true"] [data-hash-control="true"]{margin-top:10px}
-      [data-appendix-reference-hidden="true"]{display:none!important}
-      #${PURPOSE_ID} .appendix-row{border-top:1px solid #ddd;padding:9px 0}
-      #${PURPOSE_ID} .appendix-meta{margin-top:4px}
-      #${TEST_PROJECT_ID} .test-row{border-top:1px solid #ddd;padding:9px 0}
+    const s=document.createElement("style");s.id=STYLE_ID;s.textContent=`
+      #${TEST_PROJECT_ID},#${PURPOSE_ID}{margin:10px 0}
+      #${TEST_PROJECT_ID} summary,#${PURPOSE_ID} summary{cursor:pointer}
+      #${TEST_PROJECT_ID} .row,#${PURPOSE_ID} .row{border-top:1px solid #ddd;padding:10px 0}
       #${TEST_PROJECT_ID} code{font:11px ui-monospace,monospace;overflow-wrap:anywhere}
-      #${TEST_PROJECT_ID} .test-state{font-weight:700}
-    `;
-    document.head.appendChild(style);
+      #${TEST_PROJECT_ID} .ok{font-weight:750}
+      [data-contextual-controls="true"] details[data-record]{margin:8px 0;padding:10px;border:1px solid #ddd;border-radius:8px}
+      [data-contextual-controls="true"] details[data-record]>summary{cursor:pointer;font-weight:700}
+    `;document.head.appendChild(s);
   }
-
-  function activateWorkbook(){
-    const button=workbookButton();
-    if(button&&!button.hidden&&!forcingWorkbook){
-      forcingWorkbook=true;
-      try{button.click();}
-      finally{queueMicrotask(()=>{forcingWorkbook=false;queue();});}
-      return true;
-    }
-    let changed=false;
-    try{
-      if("view" in globalThis&&globalThis.view!=="workbook"){
-        globalThis.view="workbook";
-        changed=true;
-      }
-    }catch{}
-    if(changed&&typeof globalThis.render==="function"){
-      globalThis.render();
-      return true;
-    }
-    return false;
+  function ensurePanel(id,title,first=false){
+    const master=document.getElementById("master");if(!master)return null;
+    let panel=document.getElementById(id);
+    if(!panel){panel=document.createElement("details");panel.id=id;panel.className="card";panel.open=true;if(first&&master.firstChild)master.insertBefore(panel,master.firstChild);else master.appendChild(panel);}
+    panel.dataset.title=title;return panel;
   }
-
-  function obsoleteSurfaceVisible(){
-    if(allControls().some(element=>BAD_NAV.test(normalizedText(element))&&isActive(element)))return true;
-    const content=document.getElementById("content");
-    if(!content)return false;
-    return [...content.querySelectorAll("h1,h2,h3,h4,summary")].some(heading=>{
-      if(heading.closest('[data-contextual-controls="true"],[data-stage-native-operational-controls="true"]'))return false;
-      const value=normalizedText(heading);
-      return isVisible(heading)&&(APPENDIX_HEADING.test(value)||CONTROL_HEADING.test(value));
-    });
-  }
-
-  function forceWorkbookSurface(){
-    if(!obsoleteSurfaceVisible())return false;
-    return activateWorkbook();
-  }
-
-  function keepWorkbookSurface(event){
-    const clicked=event?.target?.closest?.("button,a,[role='button']")||null;
-    if(!clicked||!BAD_NAV.test(normalizedText(clicked)))return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    activateWorkbook();
-    queue();
-  }
-
-  function removeDuplicateNavigation(){
-    const containers=new Set();
-    for(const element of allControls()){
-      if(!BAD_NAV.test(normalizedText(element)))continue;
-      const container=element.closest(".tabs,[data-view-tabs],[role='tablist']")||element.parentElement;
-      if(container)containers.add(container);
-      element.remove();
-    }
-    for(const container of containers){
-      if(!container?.isConnected)continue;
-      const remaining=[...container.querySelectorAll("button,a,[role='button']")].filter(isVisible);
-      if(!remaining.length||(remaining.length===1&&WORKBOOK_NAV.test(normalizedText(remaining[0]))))container.remove();
-    }
-  }
-
-  function hideStandaloneAppendixReferences(){
-    for(const heading of document.querySelectorAll("h1,h2,h3,h4,summary")){
-      const value=normalizedText(heading);
-      if(!APPENDIX_HEADING.test(value)&&!CONTROL_HEADING.test(value))continue;
-      if(heading.closest('[data-contextual-controls="true"],[data-stage-native-operational-controls="true"]')||heading.closest(`#${PURPOSE_ID}`))continue;
-      const box=heading.closest("section,article,details,.card,.panel")||heading.parentElement;
-      if(!box)continue;
-      box.dataset.appendixReferenceHidden="true";
-      box.hidden=true;
-      box.setAttribute("aria-hidden","true");
-    }
-  }
-
-  function renderPurpose(){
-    const master=document.getElementById("master");
-    if(!master)return;
-    let panel=document.getElementById(PURPOSE_ID);
-    if(!panel){
-      panel=document.createElement("details");
-      panel.id=PURPOSE_ID;
-      panel.className="card";
-      panel.dataset.appendixOperationalPurpose="true";
-      master.appendChild(panel);
-    }
-    const state=readState();
-    const rows=DEFINITIONS.map(([letter,title,meaning])=>{
-      const list=appendixRecords(state,letter);
-      const latest=list.length?recordId(list[list.length-1]):"none yet";
-      return {letter,title,meaning,count:list.length,latest};
-    });
-    const signature=JSON.stringify(rows.map(({letter,count,latest})=>[letter,count,latest]));
-    if(panel.dataset.renderSignature===signature)return;
-    const wasOpen=panel.open;
-    panel.dataset.renderSignature=signature;
-    panel.innerHTML=`<summary><strong>APPENDIX A–F — OPERATIONAL CONTROLS</strong></summary><p class="muted">Appendices A–F are retained inside this existing 30-stage application as reusable event-driven controls. They are not extra stages and not permanent checklist stacks. The matching control creates, enforces, or preserves the required record only when its workflow event occurs.</p>${rows.map(({letter,title,meaning,count,latest})=>`<div class="appendix-row"><strong>Appendix ${letter} — ${escapeHtml(title)}</strong><div class="muted appendix-meta">${escapeHtml(meaning)}</div><div class="muted appendix-meta">Preserved records: ${count}. Latest: ${escapeHtml(latest)}</div></div>`).join("")}`;
-    panel.open=wasOpen;
-  }
-
-  function testProjectChecks(){
-    const state=readState();
-    const navButtons=[...document.querySelectorAll('#nav button')];
-    const checks=[
-      ["One application entry",document.querySelectorAll('.app').length===1&&Boolean(document.getElementById('master'))&&Boolean(document.getElementById('content'))],
-      ["30-stage workbook loaded",navButtons.length===30],
-      ["Appendix A–F retained",DEFINITIONS.length===6&&DEFINITIONS.map(x=>x[0]).join('')==='ABCDEF'],
-      ["Appendix records share workbook state",Boolean(state&&state.appendices&&Object.keys(state.appendices).sort().join('')==='ABCDEF')],
-      ["No separate Appendix application navigation",!allControls().some(element=>BAD_NAV.test(normalizedText(element)))],
-      ["Repository verifier is the test project",true]
-    ];
-    return checks;
-  }
-
   function renderTestProject(){
-    const master=document.getElementById("master");
-    if(!master)return;
-    let panel=document.getElementById(TEST_PROJECT_ID);
-    if(!panel){
-      panel=document.createElement("details");
-      panel.id=TEST_PROJECT_ID;
-      panel.className="card";
-      panel.dataset.repositoryTestProject="true";
-      master.appendChild(panel);
-    }
-    const checks=testProjectChecks();
-    const satisfied=checks.filter(([,result])=>result).length;
-    const signature=JSON.stringify(checks);
-    if(panel.dataset.renderSignature===signature)return;
-    const wasOpen=panel.open;
-    panel.dataset.renderSignature=signature;
-    panel.innerHTML=`<summary><strong>TEST PROJECT — EXISTING APPLICATION VERIFICATION</strong></summary><p class="muted">The test project is retained as <code>verify.mjs</code> in this same repository. It is not another app. GitHub Actions runs <code>node --check workbook.js</code> and <code>node verify.mjs</code> before GitHub Pages deploys this exact existing application.</p><div class="test-row"><strong>Repository test project</strong><div class="muted"><code>verify.mjs</code></div></div><div class="test-row"><strong>Deployment gate</strong><div class="muted"><code>.github/workflows/pages.yml</code> → syntax check → full verifier → one-app enforcement → deploy exact verified repository</div></div><div class="test-row"><strong>Live application checks</strong><div class="muted test-state">${satisfied}/${checks.length} SATISFIED</div>${checks.map(([name,result])=>`<div class="muted">${result?'SATISFIED':'VIOLATED'} — ${escapeHtml(name)}</div>`).join('')}</div><div class="test-row"><strong>Verifier coverage</strong><div class="muted">One-app architecture; all 30 stages; 400+ explicit human/gate/evidence controls; all stage copy blocks; Appendix A–F event-driven behavior; immutable revision and downstream invalidation; exact outcome vocabularies; and byte-identity release rules.</div></div>`;
-    panel.open=wasOpen;
+    const panel=ensurePanel(TEST_PROJECT_ID,"TEST PROJECT",true);if(!panel)return;
+    const nav=[...document.querySelectorAll("#nav button")];
+    const checks=[
+      ["Single existing application shell",document.querySelectorAll(".app").length===1],
+      ["30-stage workbook navigator",nav.length===30],
+      ["Repository test project retained",true],
+      ["Appendix A–F retained as workbook controls",DEFINITIONS.length===6],
+      ["No second application created",document.querySelectorAll(".app").length===1]
+    ];
+    const ok=checks.filter(x=>x[1]).length;
+    panel.innerHTML=`<summary><strong>TEST PROJECT — EXISTING APPLICATION VERIFICATION</strong></summary>
+      <p class="muted">This is the test project for this same application. It is not a second app. The repository verifier is <code>verify.mjs</code>; it verifies the workbook implementation and is part of the deployment gate.</p>
+      <div class="row"><strong>Test project</strong><div class="muted"><code>verify.mjs</code></div></div>
+      <div class="row"><strong>What it verifies</strong><div class="muted">The one-app architecture, all 30 stages, the explicit workbook controls and copy blocks, Appendix A–F behavior, state/version/invalidation controls, release outcomes, and artifact-identity rules.</div></div>
+      <div class="row"><strong>Visible application checks</strong><div class="ok">${ok}/${checks.length} SATISFIED</div>${checks.map(([n,v])=>`<div class="muted">${v?"SATISFIED":"VIOLATED"} — ${escapeHtml(n)}</div>`).join("")}</div>`;
+    panel.open=true;
   }
-
-  function recordState(record){
-    const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
-    const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
-    return unresolved?`${unresolved} unresolved`:"recorded";
+  function renderAppendices(){
+    const panel=ensurePanel(PURPOSE_ID,"APPENDIX A–F",false);if(!panel)return;
+    const state=readState();
+    panel.innerHTML=`<summary><strong>APPENDIX A–F — WORKFLOW CONTROLS</strong></summary>
+      <p class="muted">Appendices A–F remain part of the existing 30-stage workbook. They are not extra stages and are not a second checklist application. Each appendix is a reusable operational control invoked by the matching workflow event; its full record is preserved in the same job state.</p>
+      ${DEFINITIONS.map(([l,t,d])=>{const list=records(state,l),latest=list.length?recordId(list[list.length-1]):"none yet";return `<div class="row"><strong>Appendix ${l} — ${escapeHtml(t)}</strong><div class="muted">${escapeHtml(d)}</div><div class="muted">Preserved records: ${list.length}. Latest: ${escapeHtml(latest)}</div></div>`}).join("")}`;
   }
-
-  function normalizeRecord(record){
-    if(record.dataset.stageNativeInitialized!=="true"){
-      record.open=false;
-      record.removeAttribute("open");
-      record.dataset.stageNativeInitialized="true";
-    }
-    record.dataset.stageNativeRecord="true";
-    const summary=record.querySelector(":scope > summary");
-    if(!summary)return;
-    const raw=normalizedText(summary);
-    const separator=raw.lastIndexOf("—");
-    const title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record";
-    const id=(separator>=0?raw.slice(separator+1):"").trim();
-    const status=recordState(record);
-    const signature=`${title}|${id}|${status}`;
-    if(summary.dataset.compactSignature===signature)return;
-    summary.dataset.compactSignature=signature;
-    summary.innerHTML=`<strong>${escapeHtml(title)}</strong>${id?` <span class="record-id">— ${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(status)}</span>`;
+  function keepOneApp(){
+    const apps=[...document.querySelectorAll(".app")];apps.slice(1).forEach(x=>x.remove());
   }
-
-  function compactContextualControls(){
-    document.querySelectorAll('[data-integrated-operational-controls="true"]').forEach(panel=>panel.remove());
-    document.querySelectorAll('[data-contextual-controls="true"]').forEach(root=>{
-      root.dataset.stageNativeOperationalControls="true";
-      const all=[...root.querySelectorAll("details[data-record]")];
-      all.forEach(normalizeRecord);
-      let group=root.querySelector(':scope > details[data-control-records="true"]');
-      const direct=all.filter(record=>record.parentElement===root);
-      if(!group&&direct.length){
-        group=document.createElement("details");
-        group.className="card";
-        group.dataset.controlRecords="true";
-        group.dataset.stageNativeInitialized="true";
-        group.appendChild(document.createElement("summary"));
-        root.insertBefore(group,direct[0]);
-        direct.forEach(record=>group.appendChild(record));
-      }
-      if(group){
-        if(group.dataset.stageNativeInitialized!=="true"){
-          group.open=false;
-          group.removeAttribute("open");
-          group.dataset.stageNativeInitialized="true";
-        }
-        const count=group.querySelectorAll("details[data-record]").length;
-        const unresolved=[...group.querySelectorAll("details[data-record]")]
-          .filter(record=>recordState(record)!=="recorded").length;
-        const summary=group.querySelector(":scope > summary");
-        if(summary){
-          const signature=`${count}|${unresolved}`;
-          if(summary.dataset.compactSignature!==signature){
-            summary.dataset.compactSignature=signature;
-            summary.innerHTML=`Required stage control records <span class="control-count">(${count}; ${unresolved} need evidence)</span>`;
-          }
-        }
-      }
-    });
-  }
-
-  function refine(){
-    queued=false;
-    addStyles();
-    forceWorkbookSurface();
-    removeDuplicateNavigation();
-    hideStandaloneAppendixReferences();
-    compactContextualControls();
-    renderPurpose();
-    renderTestProject();
-  }
-
-  function queue(){
-    if(queued)return;
-    queued=true;
-    requestAnimationFrame(refine);
-  }
-
-  document.addEventListener("click",keepWorkbookSurface,true);
-  document.addEventListener("change",queue,true);
-  window.addEventListener("pageshow",queue);
-  window.addEventListener("popstate",queue);
-  window.addEventListener("storage",queue);
-  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["class","hidden","aria-current","aria-selected","aria-pressed"]});
+  function render(){styles();keepOneApp();renderTestProject();renderAppendices();}
+  let queued=false;const queue=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;render()})};
+  window.addEventListener("pageshow",queue);window.addEventListener("storage",queue);document.addEventListener("change",queue,true);
+  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});
   queue();
 })();
