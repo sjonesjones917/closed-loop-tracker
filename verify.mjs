@@ -31,9 +31,9 @@ ok(human.includes('function addBlocker')&&human.includes('function change(')&&hu
 ok(human.includes('completeResponseSaved:true'),'output-receipt provenance capture exists');
 ok(human.includes('New isolated project created at Operation 01')&&human.includes('requirements:[]'),'new projects start clean');
 ok(human.includes('staleChanges')&&human.includes("releaseState:open||stale?'BLOCKED'"),'stale change evidence cannot count toward release');
-ok(opNames.every(name=>agent.includes(name))&&agent.includes('function buildPrompt')&&agent.includes('AUTHORIZED PROJECT CONTEXT'),'all 31 operations have deterministic project-specific agent prompt generation');
+ok(opNames.every(name=>agent.includes(name))&&agent.includes('function buildPrompt')&&agent.includes('AUTHORIZED PROJECT PACKAGE'),'all 31 operations have deterministic project-specific agent prompt generation');
 ok(agent.includes('Copy prompt')&&agent.includes('Rebuild from current project data')&&agent.includes('Paste agent response'),'operation workspace exposes copy, rebuild, and response capture controls');
-ok(agent.includes('navigator.clipboard?.writeText')&&agent.includes("document.execCommand('copy')"),'prompt copy has modern and fallback clipboard paths');
+ok(agent.includes('navigator.clipboard.writeText')&&agent.includes("document.execCommand('copy')"),'prompt copy has modern and fallback clipboard paths');
 ok(promptCenter.includes("b.textContent='Prompts'")&&promptCenter.includes('Copy current prompt')&&promptCenter.includes('data-prompt-operation'),'Prompts workspace and direct current-prompt action are present');
 ok(promptCenter.includes("openOperation(n,true)")&&promptCenter.includes("#copy-agent-prompt"),'Prompt Center routes copy actions to the exact operation prompt');
 
