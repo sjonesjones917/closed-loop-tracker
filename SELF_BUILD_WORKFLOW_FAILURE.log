@@ -1,58 +1,39 @@
-FAILED_RUN_ID=32606690189
-FAILED_HEAD_SHA=f9b1cd96ba433153a91e14274a016be8c9c217ba
-CAPTURED_AT=2026-08-23T00:00:04Z
+FAILED_WORKFLOW_NAME=Build, verify, publish, and deploy Closed-Loop Agent Reliability
+FAILED_RUN_ID=32606994604
+FAILED_HEAD_SHA=a467ac1c7e75f2904ebdd5dbec4a54b75db46873
+CAPTURED_AT=2026-08-23T00:06:41Z
 
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	﻿2026-08-22T23:59:42.1958166Z ##[group]Run set -euo pipefail
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1958658Z ^[[36;1mset -euo pipefail^[[0m
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1959175Z ^[[36;1mnode self-browser-defect-boundary.mjs^[[0m
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1959592Z ^[[36;1mnode run-v13-self-e2e.mjs^[[0m
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1986568Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1987077Z env:
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1987410Z   CHROME_PATH: /usr/bin/google-chrome
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.1987824Z ##[endgroup]
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2315139Z {"status":"PATCHED","file":"self-browser-e2e.mjs","defectField":"SELF_PROJECT_PATH","candidate":"SELF_VERIFIED_PROJEC.json","corrected":"SELF_VERIFIED_PROJECT.json"}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2930425Z {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2931076Z   "status": "BUILT",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2931834Z   "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2932770Z   "candidate": {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2933204Z     "output": "app-v13-candidate1.html",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2933633Z     "bytes": 50340,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2934303Z     "sidecar": "SELF_VERIFIED_PROJEC.json",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2934974Z     "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2935688Z     "losslessStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2936310Z     "stage2ReceivesStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2936861Z     "nonCircularStage2": true
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2937306Z   },
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2937693Z   "corrected": {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2938166Z     "output": "app-v13.html",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2938624Z     "bytes": 50341,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2939070Z     "sidecar": "SELF_VERIFIED_PROJECT.json",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2939679Z     "buildRevision": "2026-08-22-lossless-stage1-external-authority-r8-idempotent",
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2940378Z     "losslessStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2940917Z     "stage2ReceivesStage1": true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2941585Z     "nonCircularStage2": true
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2942210Z   }
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.2942716Z }
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.3604887Z {"file":"app-v13-candidate1.html","bytes":50340,"ruleset":"external-authority-first-2026-08-22-r5-state-replay","patched":true,"autoloadFunction":"loadSelfProject"}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.3612811Z {"file":"app-v13.html","bytes":50341,"ruleset":"external-authority-first-2026-08-22-r5-state-replay","patched":true,"autoloadFunction":"loadSelfProject"}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.4979953Z {"status":"PATCHED_OR_ALREADY_CURRENT","file":"self-e2e-agent-base.mjs","defectField":"SELF_PROJECT_PATH","candidatePath":"SELF_VERIFIED_PROJEC.json","correctedPath":"SELF_VERIFIED_PROJECT.json","broadFilenameSearch":false}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.5555122Z {"status":"PATCHED_OR_ALREADY_CURRENT","file":"self-browser-e2e.mjs","projectEvidenceSource":"VISIBLE_UI_EXPORT","internalProjectHookRequired":false,"releaseViewRestoredAfterProjectExport":true,"freshAutoloadDiagnostics":true,"filenameAssertionOwner":"run-v13-self-e2e.mjs"}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.6142551Z {"status":"PATCHED_OR_ALREADY_CURRENT","file":"self-browser-e2e.mjs","projectExportHashSource":"projectExportBytes","visibleProjectExportCount":1}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.6186725Z {"status":"PATCHED_OR_ALREADY_CURRENT","transport":"ASYNC_STDIN","idempotent":true,"eliminatesSingleArgumentSizeLimit":true,"eliminatesSynchronousStdinEagain":true,"exactDefectFieldVerification":true,"projectEvidenceSource":"VISIBLE_UI_EXPORT","projectExportHashSource":"projectExportBytes","files":["self-e2e-agent-base.mjs","self-e2e-agent.mjs","self-browser-e2e.mjs"]}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:42.6263107Z {"status":"PATCHED_EXISTING_V13","visibleProjectIdField":true,"visibleJobIdField":true,"exactSelfBuildProjectId":"PROJECT-MT3M46X0-075JMP","exactSelfBuildJobId":"JOB-MT3M46X0-M0LIB9","stage3ResearchFilenameLeak":false,"agentTransport":"STDIN"}
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9466288Z node:internal/modules/run_main:123
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9467796Z     triggerUncaughtException(
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9468202Z     ^
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9468325Z 
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9468842Z AssertionError [ERR_ASSERTION]: Stage 1 emitted error: Stage 1 must preserve content from the real project objective.
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9470082Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/self-browser-e2e-runtime.mjs:136:12 {
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9471154Z   generatedMessage: false,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9471839Z   code: 'ERR_ASSERTION',
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9472161Z   actual: false,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9472481Z   expected: true,
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9472779Z   operator: '==',
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9473073Z   diff: 'simple'
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9473387Z }
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9473550Z 
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9473666Z Node.js v22.23.2
-verify-build-publish	Complete the actual 31-stage self-build through the rendered UI	2026-08-22T23:59:54.9586641Z ##[error]Process completed with exit code 1.
+verify	Generate the existing application with the corrected public scope	﻿2026-08-23T00:06:29.5285602Z ##[group]Run set -euo pipefail
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5286575Z ^[[36;1mset -euo pipefail^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5287086Z ^[[36;1mnode build-v13-self.mjs^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5287591Z ^[[36;1mnode v13-state-replay.mjs^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5288169Z ^[[36;1mnode correct-project-scope.mjs --generated-only^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5288810Z ^[[36;1mtest -s app-v13-candidate1.html^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5289348Z ^[[36;1mtest -s app-v13.html^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5289839Z ^[[36;1mcp app-v13.html index.html^[[0m
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5326663Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.5327294Z ##[endgroup]
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7916305Z file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:386
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7918247Z if (regression.status !== 0) throw new Error(`Forward-pipeline regression failed: ${regression.stderr || regression.stdout}`);
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7919492Z                                    ^
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7919972Z 
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7921004Z Error: Forward-pipeline regression failed: file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/forward-pipeline-regression.mjs:4
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7922453Z const fail=m=>{throw new Error(m)};
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7923066Z                      ^
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7923472Z 
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7924657Z Error: core accepted a third requirement origin
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7926467Z     at fail (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/forward-pipeline-regression.mjs:4:22)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7928394Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/forward-pipeline-regression.mjs:26:14
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7929975Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7931309Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7932395Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7933353Z 
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7933759Z Node.js v22.23.2
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7934223Z 
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7935081Z     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-v13-self.mjs:386:36
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7937084Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7938390Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7939809Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7940614Z 
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7940905Z Node.js v22.23.2
+verify	Generate the existing application with the corrected public scope	2026-08-23T00:06:29.7972167Z ##[error]Process completed with exit code 1.
