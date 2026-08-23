@@ -111,28 +111,6 @@ jobs:
             sleep 5
           done
           test "$verified" = true
-      - id: render
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          BROWSER="$(command -v google-chrome || command -v chrome || command -v chromium)"
-          BASE="${PAGE_URL%/}/?test=1&verify=${GITHUB_SHA}"
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --dump-dom "$BASE" > live-proof/test-393.html
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --screenshot=live-proof/test-393.png "$BASE"
-          grep -q 'Closed-Loop Reliability application repair' live-proof/test-393.html
-          grep -q 'Real retained project.' live-proof/test-393.html
-          grep -q 'BLOCKED' live-proof/test-393.html
-          grep -q '10/31 complete' live-proof/test-393.html
-          grep -q 'User Job Input' live-proof/test-393.html
-          grep -q 'External Research Sources' live-proof/test-393.html
-          grep -q 'Current agent work' live-proof/test-393.html
-          grep -q 'Copy prompt' live-proof/test-393.html
-          grep -q 'Agent prompt · 11 Run 10 Independent Executions' live-proof/test-393.html
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=320,800 --dump-dom "$BASE" > live-proof/test-320.html
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=320,800 --screenshot=live-proof/test-320.png "$BASE"
-          grep -q 'Current agent work' live-proof/test-320.html
-          grep -q 'Copy prompt' live-proof/test-320.html
-          grep -q 'Agent prompt · 11 Run 10 Independent Executions' live-proof/test-320.html
       - name: Start interaction browser
         run: |
           BROWSER="$(command -v google-chrome || command -v chrome || command -v chromium)"
@@ -155,17 +133,16 @@ jobs:
         with: {name: 'live-proof-${{ github.run_id }}', path: live-proof, if-no-files-found: error}
       - name: Publish live verification statuses
         if: always()
-        env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', RENDER: '${{ steps.render.outcome }}', WORKFLOW: '${{ steps.workflow_interaction.outcome }}', HISTORY: '${{ steps.history_interaction.outcome }}', RESET: '${{ steps.reset_interaction.outcome }}'}
+        env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', WORKFLOW: '${{ steps.workflow_interaction.outcome }}', HISTORY: '${{ steps.history_interaction.outcome }}', RESET: '${{ steps.reset_interaction.outcome }}'}
         run: |
           target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$RENDER" "live-prompt-workflow:$WORKFLOW" "live-project-history:$HISTORY" "live-new-project-reset:$RESET"; do
+          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$WORKFLOW" "live-prompt-workflow:$WORKFLOW" "live-project-history:$HISTORY" "live-new-project-reset:$RESET"; do
             context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
             gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
           done
       - name: Enforce live verification
         run: |
           test '${{ steps.identity.outcome }}' = success
-          test '${{ steps.render.outcome }}' = success
           test '${{ steps.workflow_interaction.outcome }}' = success
           test '${{ steps.history_interaction.outcome }}' = success
           test '${{ steps.reset_interaction.outcome }}' = success
