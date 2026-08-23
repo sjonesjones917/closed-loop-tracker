@@ -21,6 +21,11 @@ ok((index.match(/<script[^>]+src=/g)||[]).length===1&&/<script\s+src="workbook\.
 ok(runtimeParts.every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'the existing workbook runtime payload is loaded');
 ok(loader.includes('cache:"no-store"')&&loader.includes('single-workbook-stage-native-controls-final'),'the current runtime and module payload bypass stale asset reuse');
 ok(compressed.length>0&&source.includes('export const STAGES'),'the workbook module payload exists and decompresses');
+ok(rootFiles.includes('verify.mjs'),'the repository test project exists as verify.mjs');
+ok(loader.includes('TEST PROJECT — EXISTING APPLICATION VERIFICATION')&&loader.includes('data.repositoryTestProject')===false,'the test project is visibly represented inside the existing app without a second application');
+ok(loader.includes('dataset.repositoryTestProject="true"')&&loader.includes('Repository test project')&&loader.includes('verify.mjs'),'the in-app test-project panel identifies the repository verifier');
+ok(loader.includes('.github/workflows/pages.yml')&&loader.includes('syntax check → full verifier → one-app enforcement → deploy exact verified repository'),'the in-app test-project panel identifies the deployment verification gate');
+ok(loader.includes('function testProjectChecks()')&&loader.includes('30-stage workbook loaded')&&loader.includes('No separate Appendix application navigation'),'the in-app test project exposes live architecture checks');
 
 ok(index.includes('data-integrated-appendix-controls="true"'),'Appendix A-F behavior is integrated into the existing application');
 const integrated=index.match(/<script data-integrated-appendix-controls="true">([\s\S]*?)<\/script>/)?.[1]||'';
@@ -54,6 +59,7 @@ ok(loader.includes('event-driven controls')&&loader.includes('not permanent chec
 ok(loader.includes('compactContextualControls')&&loader.includes('Required stage control records'),'required records are compacted into the stage instead of stacked as open checklists');
 ok(loader.includes('stageNativeInitialized')&&loader.includes('renderSignature'),'record editors remain usable after opening and purpose rendering is mutation-stable');
 ok(!loader.includes('createIntegratedPanel')&&!loader.includes('ACTION_LABELS'),'the loader does not create a second A-F application or parallel button panel');
+ok(loader.includes('renderTestProject();')&&loader.indexOf('renderPurpose();')<loader.indexOf('renderTestProject();'),'the visible test project is rendered in the same master workbook surface');
 
 const requiredShellText=[
   'Mobile Closed-Loop Agent Reliability Workbook',
@@ -163,6 +169,8 @@ console.log(JSON.stringify({
   determination:'SATISFIED',
   application:'index.html',
   applicationEntries:1,
+  testProject:'verify.mjs',
+  testProjectVisibleInApplication:true,
   stages:30,
   stageDefectIds:stageDefects.length,
   stageControls:stageControls.length,
