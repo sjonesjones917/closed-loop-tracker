@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: prompt-generation-correction
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   correct:
@@ -41,6 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node patch-retained-prompt-model.mjs
           CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_PATH"
           CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
@@ -57,17 +58,29 @@ jobs:
           grep -Fq 'data-generate-production-instruction' index.html
           grep -Fq 'data-generate-preflighted-instruction' index.html
           grep -Fq 'Generated production prompt / instruction' index.html
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const project=JSON.parse(fs.readFileSync('SELF_VERIFIED_PROJECT.json','utf8'));
+          const stage8=project.productionInstructions?.find(record=>Number(record.stageNumber)===8);
+          const stage9=project.productionInstructions?.find(record=>Number(record.stageNumber)===9);
+          if(!stage8?.promptText?.startsWith('PRODUCTION INSTRUCTION'))throw new Error('Retained Stage 8 generated production prompt is missing.');
+          if(!stage9?.promptText?.startsWith('PREFLIGHTED PRODUCTION INSTRUCTION'))throw new Error('Retained Stage 9 preflighted production prompt is missing.');
+          if(stage8.instructionId===stage9.instructionId)throw new Error('Retained Stage 8 and 9 instruction identities are not independently versioned.');
+          for(const record of [stage8,stage9])for(const required of ['OBJECTIVE','INDEPENDENT EXTERNAL AUTHORITY','MANDATORY ATOMIC REQUIREMENTS','ACCEPTANCE TESTS','FAILURE / MUTATION TESTS','TRUTH SEMANTICS','COMPLETION CRITERIA'])if(!record.promptText.includes(required))throw new Error(`${record.instructionId} is missing ${required}.`);
+          NODE
       - name: Commit exact verified correction
         shell: bash
         run: |
           set -euo pipefail
+          rm -f .github/workflows/apply-prompt-generation-once.yml apply-prompt-generation.mjs patch-retained-prompt-model.mjs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f app-payload/manifest.json app-payload/part-*.txt index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json STATIC_VERIFICATION.json BROWSER_SMOKE_REPORT.json PROMPT_GENERATION_SMOKE.json PHONE_SMOKE_393.png PHONE_SMOKE_320.png apply-prompt-generation.mjs prompt-generation-smoke.mjs
+          git add -A
+          git diff --cached --check
           if git diff --cached --quiet; then
             echo 'No changes to commit.'
             exit 0
           fi
-          git commit -m 'Make Stage 8 and Stage 9 generate production prompts'
+          git commit -m 'Make Stage 8 and Stage 9 generate verified production instructions'
           git pull --rebase origin main
           git push origin HEAD:main
