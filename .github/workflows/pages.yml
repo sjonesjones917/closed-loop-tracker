@@ -29,7 +29,6 @@ jobs:
           test -f test-project/inputs/REQUEST.md
           test -f test-project/inputs/SITE_POLICY.md
           test -f test-project/inputs/WORKFLOW_RULES.md
-          test -f test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md
           test ! -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
       - name: Publish test status
         if: always()
@@ -68,7 +67,7 @@ jobs:
       - name: Wait for exact deployed files
         run: |
           set -euo pipefail; mkdir -p live-proof; verified=false
-          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md)
+          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md)
           for attempt in $(seq 1 48); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
             good=true
@@ -95,18 +94,23 @@ jobs:
           grep -q 'Closed-Loop Reliability' live-proof/blank.html
           grep -q 'Current working job' live-proof/blank.html
           grep -q 'New project' live-proof/blank.html
+          grep -q 'Project data' live-proof/blank.html
+          grep -q 'Workflow' live-proof/blank.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/blank.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=24000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
           grep -q 'Portable generator service handoff' live-proof/test-project.html
           grep -q 'GEN-042' live-proof/test-project.html
-          grep -q 'Project data' live-proof/test-project.html
-          grep -q 'Independent runs' live-proof/test-project.html
-          grep -q 'Failures, blockers and corrections' live-proof/test-project.html
-          grep -q 'Release readiness' live-proof/test-project.html
-          grep -q 'Complete project history' live-proof/test-project.html
-          grep -q 'Stage 11' live-proof/test-project.html
+          grep -q 'Test project.' live-proof/test-project.html
+          grep -q 'Current stage' live-proof/test-project.html
+          grep -q 'Open blockers' live-proof/test-project.html
+          grep -q 'Requirements' live-proof/test-project.html
+          grep -q '>Workflow<' live-proof/test-project.html
+          grep -q '>Work<' live-proof/test-project.html
+          grep -q '>Runs<' live-proof/test-project.html
+          grep -q '>Issues<' live-proof/test-project.html
+          grep -q '>Release<' live-proof/test-project.html
+          grep -q '>History<' live-proof/test-project.html
           grep -q 'BLOCKED' live-proof/test-project.html
-          grep -q 'zero are recorded' live-proof/test-project.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/test-project.html
       - name: Publish live status
         if: always()
