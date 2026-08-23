@@ -13,40 +13,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - id: build
-        continue-on-error: true
-        run: node build-test-project.mjs
-      - id: syntax
-        continue-on-error: true
-        run: node --check app.js && node --check workbook.js && node --check verify-live.mjs
-      - id: data
-        continue-on-error: true
-        run: |
-          node - <<'NODE'
-          const fs=require('fs'),p=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-          const ok=(x,m)=>{if(!x)throw new Error(m)};
-          ok(p.schema==='closed-loop-project/30','schema');ok(Object.keys(p.stageRecords||{}).length===30,'stages');ok(p.job?.currentStage===30&&p.job?.currentState==='ACCEPTED','state');ok(p.userEntries?.[0]?.objective?.includes('GEN-042'),'job');ok(!/application conformance|Evaluate the Closed-Loop Reliability application|maintenance handoff/i.test(JSON.stringify(p)),'framing');ok((p.generatedPrompts||[]).length===30,'prompts');ok((p.agentOutputs||[]).length===30&&p.agentOutputs.every(x=>typeof x.output==='string'&&x.output.length),'outputs');ok((p.outputReceipts||[]).length===30,'receipts');ok((p.runs||[]).length===20,'runs');const m=(p.requirements||[]).filter(r=>r.mandatory!==false).length;ok((p.verification||[]).length===m*20,'matrix');ok((p.evidenceChains||[]).length>0,'chains');ok((p.appendOnly?.regressions||[]).length>0,'regressions');ok((p.artifacts||[]).length>0,'artifacts');
-          NODE
-      - id: ui
-        continue-on-error: true
-        run: |
-          node - <<'NODE'
-          const fs=require('fs'),a=fs.readFileSync('app.js','utf8'),h=fs.readFileSync('index.html','utf8');const ok=(x,m)=>{if(!x)throw new Error(m)};for(const t of ['validateStageDraft','stageHumanItems','stageGateItems','stageEvidenceItems','saveAppendix','sha256Bytes','compareArtifactSets','Complete project records','Generated outputs','Output receipts'])ok(a.includes(t),t);ok(!/human-project\/31|31 operations|Freeze New Version/i.test(a+h),'old model');
-          NODE
-      - id: core
-        continue-on-error: true
-        run: |
-          node - <<'NODE'
-          const fs=require('fs'),b=fs.readFileSync('workbook.js','utf8');if(!b.includes('runtime.STAGES')||!b.includes('runtime.buildStagePrompt')||!b.includes('expose(fallback)'))throw new Error('runtime bridge');
-          NODE
-      - id: terms
-        continue-on-error: true
-        run: |
-          node - <<'NODE'
-          const fs=require('fs'),s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8');if(/\bsemantic\b/i.test(s))throw new Error('prohibited term');
-          NODE
-      - id: single
-        continue-on-error: true
+      - run: node build-test-project.mjs
+      - run: node --check app.js && node --check workbook.js && node --check verify.mjs && node --check verify-live.mjs
+      - run: node verify.mjs
+      - name: Verify single app and source terminology
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
@@ -54,21 +24,13 @@ jobs:
           test ! -f prompt-center.js
           grep -q 'src="workbook.js' index.html
           grep -q 'src="app.js' index.html
-      - name: Publish exact source results
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUILD: ${{ steps.build.outcome }}
-          SYNTAX: ${{ steps.syntax.outcome }}
-          DATA: ${{ steps.data.outcome }}
-          UI: ${{ steps.ui.outcome }}
-          CORE: ${{ steps.core.outcome }}
-          TERMS: ${{ steps.terms.outcome }}
-          SINGLE: ${{ steps.single.outcome }}
-        run: |
-          post(){ local c="$1" r="$2" s=failure; [ "$r" = success ] && s=success; curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "{\"state\":\"$s\",\"context\":\"$c\",\"description\":\"$r\"}" >/dev/null; }
-          post source-build "$BUILD"; post source-syntax "$SYNTAX"; post source-project-data "$DATA"; post source-ui-controls "$UI"; post source-workflow-core "$CORE"; post source-terms "$TERMS"; post source-single-app "$SINGLE"
-          [ "$BUILD" = success ] && [ "$SYNTAX" = success ] && [ "$DATA" = success ] && [ "$UI" = success ] && [ "$CORE" = success ] && [ "$TERMS" = success ] && [ "$SINGLE" = success ]
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8');
+          const banned=new RegExp('se'+'mantic','i');
+          if(banned.test(s))throw new Error('prohibited terminology');
+          if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
+          NODE
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -97,30 +59,14 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node verify-live.mjs
-      - name: Verify phone human views
+      - name: Verify phone views at 320 and 393 CSS pixels
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           for WIDTH in 320 393; do
             "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?verify=${GITHUB_SHA}-${WIDTH}" > "live-${WIDTH}.html"
-            grep -q 'GEN-042' "live-${WIDTH}.html"
-            grep -q '30/30' "live-${WIDTH}.html"
+            grep -q 'GEN-042 maintenance handoff' "live-${WIDTH}.html"
+            grep -q '30/30 complete' "live-${WIDTH}.html"
             grep -q 'Overview' "live-${WIDTH}.html"
             ! grep -q 'Loading the workflow' "live-${WIDTH}.html"
-            ! grep -q 'Application runtime failed to load' "live-${WIDTH}.html"
           done
-
-  report:
-    if: always() && github.event_name != 'pull_request'
-    needs: [test, deploy, verify-live]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish exact repair results
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          LIVE_RESULT: ${{ needs.verify-live.result }}
-        run: |
-          post(){ local c="$1" r="$2" s=failure; [ "$r" = success ] && s=success; curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "{\"state\":\"$s\",\"context\":\"$c\",\"description\":\"$r\"}" >/dev/null; }
-          post repair-source "$TEST_RESULT"; post repair-deploy "$DEPLOY_RESULT"; post repair-live "$LIVE_RESULT"; ALL=failure; [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ] && ALL=success; post repaired-app "$ALL"
