@@ -1,295 +1,200 @@
 {
-  "schema": "mobile-closed-loop-project/4",
-  "specRevision": "app-repair-self-test-20260823-002",
+  "schema": "mobile-closed-loop-project/5",
+  "specRevision": "corrected-31-operation-project-20260823-001",
   "testProjectId": "TEST-PROJECT-REAL-APP-001",
   "jobId": "TEST-JOB-APP-001",
   "title": "Closed-Loop Reliability application repair",
-  "description": "A genuine project record managed by the application for the actual existing-application repair job. The project is not the application itself: it is one persisted project inside the application, using the same project model and views as every other project. It preserves the real work and evidence completed through Stage 10 and truthfully stops at Stage 11 because ten genuinely independent execution contexts have not been completed.",
-  "currentStage": 11,
+  "description": "A genuine retained project inside the existing application. It uses the ordinary project schema, persistence, workflow views, controls, records, and history mechanisms. Its subject is the requested repair of this application, while external authority is independently researched rather than derived from implementation artifacts. It truthfully stops at Operation 11 because ten genuinely independent executions have not been performed.",
+  "currentOperation": 11,
   "currentState": "BLOCKED",
   "currentIteration": "ITERATION-001",
-  "nextRequiredAction": "Create ten genuinely independent fresh execution contexts from CANDIDATE-001, preserve each output separately, then independently verify every applicable requirement for every run.",
+  "nextRequiredAction": "Run ten genuinely independent fresh execution contexts from CANDIDATE-001 and preserve each output separately.",
   "latestEvidenceReference": "BLOCKER-001",
   "inputVersion": "INPUT-v001",
   "sourceSetVersion": "SOURCE-SET-v001",
   "requirementsVersion": "REQUIREMENTS-v001",
   "testSuiteVersion": "TEST-SUITE-v001",
   "instructionVersion": "INSTRUCTION-v001",
-  "userEnteredData": {
-    "projectType": "Existing application repair",
-    "exactRequest": "The existing application must be repaired in place. Do not create a second application, replacement application, alternate version, prototype, demo, mock application, or parallel implementation. There must be one application only, containing only the application and components actually required for the intended product.",
-    "requestedDeliverable": "The existing Closed-Loop Reliability GitHub Pages application repaired in place as one coherent phone-first human-facing product implementing the complete 30-stage workflow and Appendices A-F semantics, with a genuine fully inspectable project and verified running behavior.",
-    "repository": "sjonesjones917/closed-loop-tracker",
-    "suppliedMaterials": [
-      "Controlling application-repair instruction supplied by the user",
-      "30-stage Mobile Closed-Loop Agent Reliability Workbook specification",
-      "Appendices A-F functional specification"
-    ],
-    "constraints": [
-      "One existing application only",
-      "Repair in place with minimal coherent architectural change",
-      "Human-facing phone-first UI",
-      "No checklist-wall interpretation",
-      "No fabricated completion or synthetic independent runs",
-      "All substantive project data, prompts, outputs, evidence, defects, blockers, changes, and history remain inspectable"
-    ]
+  "userJobInput": {
+    "objective": "Repair the existing Closed-Loop Reliability application in place as one phone-first human-facing product implementing the corrected 31-operation reliability workflow, keeping User Job Input, External Research Sources, and Workflow-Generated Artifacts structurally distinct, implementing Appendix A-F semantics as contextual services, preserving complete inspectable project history, and verifying the deployed application without fabricating completion.",
+    "deliverable": "The existing deployed GitHub Pages application repaired in place and visibly conforming to the corrected 31-operation workflow.",
+    "requestedActions": ["repair existing application in place", "implement the corrected 31 operations", "preserve complete project evidence and history", "verify the running deployed mobile UI"],
+    "subjects": ["sjonesjones917/closed-loop-tracker existing application"],
+    "boundaries": ["one existing repository/application only"],
+    "suppliedMaterials": ["controlling user instructions", "earlier 30-stage reliability workbook", "Appendices A-F"],
+    "constraints": ["phone-first", "human-facing", "one application", "progressive disclosure", "no fabricated completion"],
+    "prohibitions": ["no second app", "no fake test project", "no implementation-as-authority", "no checklist-wall interpretation"],
+    "acceptanceConditions": ["requirements are observable in the running deployed application"],
+    "externalResearchQuestions": ["What accessibility requirements govern compact mobile reflow and pointer targets?", "What controls the existing GitHub Pages deployment path?"]
   },
   "objective": {
-    "exactUserObjective": "The existing application must be repaired in place. Do not create a second application, replacement application, alternate version, prototype, demo, mock application, or parallel implementation. There must be one application only, containing only the application and components actually required for the intended product.",
-    "deliverable": "Repair the existing Closed-Loop Reliability application in place and verify the actual running result."
+    "exactUserObjective": "Repair the existing Closed-Loop Reliability application in place as one phone-first human-facing product implementing the corrected 31-operation reliability workflow.",
+    "deliverable": "Existing application repaired and deployed."
   },
-  "availableTools": [
-    "GitHub repository read/write access",
-    "Repository verification script",
-    "GitHub Actions",
-    "GitHub Pages deployment",
-    "Headless Chromium mobile rendering and interaction verification"
-  ],
-  "prohibitedActions": [
-    "Do not create a second application or alternate application",
-    "Do not delete required workflow semantics as a shortcut",
-    "Do not fabricate independent runs, evidence, baseline approval, or release acceptance",
-    "Do not treat existing implementation code as requirement authority",
-    "Do not expose machine bookkeeping as the dominant human interface"
-  ],
-  "assumptions": [],
-  "unknowns": [
-    {
-      "unknownId": "UNK-001",
-      "unknownFact": "Ten genuinely independent Stage 11 execution contexts have not been completed.",
-      "whyItMatters": "Stage 12 requires separately generated run outputs before independent verification and comparison can truthfully occur.",
-      "requiredToProceed": "YES",
-      "resolutionPath": "Launch ten fresh independent contexts from the frozen candidate and record every response separately."
-    }
-  ],
-  "sourceInventory": [
-    {
-      "sourceId": "SRC-001",
-      "type": "USER INSTRUCTION",
-      "title": "Controlling application-repair specification",
-      "reference": "Current user instruction and supplied 30-stage workbook text",
-      "authorityLevel": 1,
-      "role": "MANDATORY",
-      "actualSourceInspected": true,
-      "relevantPortions": "One-app repair, human-facing UI, 30 stages, Appendix A-F semantics, genuine project, complete inspectability, phone rendering, end-to-end verification",
-      "conflictsWith": [],
-      "controllingStatus": "CONTROLS"
-    },
-    {
-      "sourceId": "SRC-002",
-      "type": "IMPLEMENTATION EVIDENCE",
-      "title": "Current application source",
-      "reference": "index.html; human-ui.js; workbook.js; compressed workbook runtime",
-      "role": "EVIDENTIARY",
-      "actualSourceInspected": true,
-      "relevantPortions": "Current project model, UI, workflow engine, persistence, render behavior",
-      "conflictsWith": [],
-      "controllingStatus": "EVIDENCE ONLY"
-    },
-    {
-      "sourceId": "SRC-003",
-      "type": "IMPLEMENTATION EVIDENCE",
-      "title": "Repository verification and deployment workflow",
-      "reference": "verify.mjs; .github/workflows/pages.yml",
-      "role": "EVIDENTIARY",
-      "actualSourceInspected": true,
-      "relevantPortions": "Structural verification, runtime helpers, deployed-byte verification, phone rendering, live interactions",
-      "conflictsWith": [],
-      "controllingStatus": "EVIDENCE ONLY"
-    }
-  ],
-  "research": [
-    {
-      "researchRecordId": "RSRCH-001",
-      "sourceId": "SRC-001",
-      "researchPass": 1,
-      "mandatoryStatementsFound": "One app; repair in place; human-facing phone-first UI; all 30 stage semantics; Appendix A-F cross-cutting behavior; genuine inspectable project; persistent history; contextual blockers/actions; exact state vocabulary; independence, convergence, baseline, product verification, release and hash controls.",
-      "newMaterialRequirementCategoryFound": "YES"
-    },
-    {
-      "researchRecordId": "RSRCH-002",
-      "sourceId": "SRC-002,SRC-003",
-      "researchPass": 1,
-      "mandatoryStatementsFound": "Implementation evidence was inspected to determine current defects and existing correct behavior. Implementation evidence was not promoted into requirement authority.",
-      "newMaterialRequirementCategoryFound": "YES"
-    },
-    {
-      "researchRecordId": "RSRCH-003",
-      "sourceId": "ALL",
-      "researchPass": 2,
-      "mandatoryStatementsFound": "Conflict, exception, omission, authority, UI, project-history, independence and release-control pass completed; no new material requirement category found.",
-      "newMaterialRequirementCategoryFound": "NO"
-    }
+  "externalResearch": {
+    "questions": ["What accessibility constraints govern compact mobile web UI?", "How does the configured GitHub Pages site publish repository content?"],
+    "sources": [
+      {
+        "sourceId": "SRC-EXT-001",
+        "title": "WCAG 2.2 — Understanding SC 1.4.10 Reflow",
+        "publisher": "W3C WAI",
+        "url": "https://www.w3.org/WAI/WCAG22/Understanding/reflow",
+        "finding": "Non-excepted content supports reflow without loss of information or functionality at a width equivalent to 320 CSS pixels.",
+        "dateAccessed": "2026-08-23"
+      },
+      {
+        "sourceId": "SRC-EXT-002",
+        "title": "WCAG 2.2 — Target Size (Minimum)",
+        "publisher": "W3C WAI",
+        "url": "https://www.w3.org/WAI/WCAG22/quickref/#target-size-minimum",
+        "finding": "Pointer targets are at least 24 by 24 CSS pixels unless a defined exception applies.",
+        "dateAccessed": "2026-08-23"
+      },
+      {
+        "sourceId": "SRC-EXT-003",
+        "title": "Configuring a publishing source for your GitHub Pages site",
+        "publisher": "GitHub Docs",
+        "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site",
+        "finding": "GitHub Pages publishes from the configured branch or Actions workflow; the existing Pages path remains the deployment target.",
+        "dateAccessed": "2026-08-23"
+      }
+    ],
+    "findings": [
+      {"findingId": "FIND-001", "sourceId": "SRC-EXT-001", "finding": "Phone-oriented project content must reflow without losing information or functionality."},
+      {"findingId": "FIND-002", "sourceId": "SRC-EXT-002", "finding": "Compact controls still require usable pointer target dimensions."},
+      {"findingId": "FIND-003", "sourceId": "SRC-EXT-003", "finding": "The repaired repository must deploy through its existing GitHub Pages target."}
+    ]
+  },
+  "implementationEvidence": [
+    {"evidenceId": "IMPL-001", "reference": "index.html", "classification": "IMPLEMENTATION EVIDENCE", "purpose": "Rendered shell and sizing inspection; not requirement authority."},
+    {"evidenceId": "IMPL-002", "reference": "human-ui.js", "classification": "IMPLEMENTATION EVIDENCE", "purpose": "Project model and UI behavior inspection; not requirement authority."},
+    {"evidenceId": "IMPL-003", "reference": "verify.mjs and .github/workflows/pages.yml", "classification": "IMPLEMENTATION EVIDENCE", "purpose": "Verification and deployment inspection; not requirement authority."}
   ],
   "requirements": [
-    {"reqId":"REQ-001","requirement":"Exactly one existing application is repaired in place; no replacement, alternate, prototype, demo, or parallel application exists.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Repository and deployment expose one application entry point and one product UI.","verificationMethod":"Repository and deployment inspection","failureCondition":"A second application or alternate product entry point exists.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-002","requirement":"The primary interface is phone-first and human-facing; project state, human actions, blockers, outputs and evidence dominate normal screens rather than implementation bookkeeping.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Rendered phone UI presents compact project-oriented views and contextual actions.","verificationMethod":"Rendered mobile UI inspection","failureCondition":"Normal screens are dominated by developer/agent bookkeeping, giant controls, or raw checklist walls.","severity":"MAJOR","status":"ACTIVE"},
-    {"reqId":"REQ-003","requirement":"All 30 workbook stages remain semantically represented with purpose, state, evidence, dependencies, gates, blocking behavior, history and transitions.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"All 30 stages exist in order and their underlying controls and generated instructions remain available.","verificationMethod":"Workflow inventory and runtime inspection","failureCondition":"Any required stage or semantic control is absent or bypassed.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-004","requirement":"Appendices A-F operate contextually as fresh-context, blocker, change/invalidation, release, new-job and output-receipt capabilities rather than standalone checklist walls.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Each appendix behavior exists as reusable workflow functionality where relevant.","verificationMethod":"Contextual-control inspection","failureCondition":"Appendix semantics are deleted or represented only as disconnected repetitive checklists.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-005","requirement":"Projects preserve and expose user data, sources, research, requirements, tests, generated prompts and instructions, outputs, evidence, runs, comparisons, defects, blockers, changes, regressions, baselines, products, audits, release decisions, hashes and history as applicable.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Project views and history make substantive records inspectable without replacing them with opaque status summaries.","verificationMethod":"Project-model and project-view inspection","failureCondition":"Substantive records disappear, are inaccessible, or are replaced by summary-only state.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-006","requirement":"The retained test project uses the ordinary project model, persistence and views used by every other project; it is a project inside the application, not the application itself or a mock UI fixture.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Selecting the test project loads ordinary persisted runtime state through the same views and controls.","verificationMethod":"Runtime project inspection","failureCondition":"The test project uses special display-only UI, hard-coded cards, or a separate application path.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-007","requirement":"The retained project records a genuine job with controlling user authority separated from repository implementation evidence.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Source inventory explicitly distinguishes controlling instructions from implementation evidence.","verificationMethod":"Source/provenance inspection","failureCondition":"Existing code is treated as authority for what the product ought to be.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-008","requirement":"Opening the retained project exposes its original request, supplied material inventory, research, requirements, tests, production instruction, generated prompts, captured outputs, evidence, blockers, changes and stage history through the point actually reached.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Overview, Work, Runs, Issues, Release and History expose the populated records.","verificationMethod":"Project navigation inspection","failureCondition":"Any substantive populated project class is hidden behind an opaque status or missing from the project.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-009","requirement":"Generated prompts, instructions and captured responses remain inspectable at the relevant stage and in complete project history.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Stage detail and History display exact generated/captured material.","verificationMethod":"Stage/history inspection","failureCondition":"Generated or captured work is hidden or discarded.","severity":"MAJOR","status":"ACTIVE"},
-    {"reqId":"REQ-010","requirement":"UNKNOWN, NONE, NOT APPLICABLE, SATISFIED, VIOLATED, UNDETERMINED, ACCEPTED, REJECTED and BLOCKED remain distinct and missing mandatory evidence cannot become success.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"State vocabulary and release behavior preserve the defined distinctions.","verificationMethod":"State and release-gate tests","failureCondition":"Missing evidence is converted to success or state meanings are conflated.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-011","requirement":"Material changes preserve history and invalidate stale downstream determinations with required revalidation.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"A material change records its audit entry and invalidates affected downstream completed/ready determinations.","verificationMethod":"Change/invalidation test","failureCondition":"Stale downstream validation continues to count after an upstream material change.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-012","requirement":"Independent work preserves fresh-context identity, frozen authorized inputs, contamination controls and separate outputs; synthetic independence is prohibited.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Fresh-context records contain frozen versions and explicit contamination controls and runs remain separate.","verificationMethod":"Independent-context test","failureCondition":"Runs share prohibited information or duplicated/synthetic records count as independent execution.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-013","requirement":"Release readiness derives from actual evidence and exact release bytes must match audited bytes when release identity is required.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Release view derives state from evidence and runtime hash comparison prevents authorization on mismatch or blocked gate.","verificationMethod":"Release/hash inspection","failureCondition":"Release is inferred from absence of defects or mismatched bytes are authorized.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-014","requirement":"New Project starts clean at Stage 01 without inheriting another project's requirements, tests, evidence, blockers, runs, baseline, product, audits or release decision.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"Creating a new project produces empty project-specific registries and Stage 01 current state.","verificationMethod":"New-project reset test","failureCondition":"Any prior job-specific workflow evidence is silently inherited.","severity":"CRITICAL","status":"ACTIVE"},
-    {"reqId":"REQ-015","requirement":"Controls use compact mobile proportions, deliberate hierarchy and progressive disclosure without giant buttons or checklist walls.","mandatoryStatus":"MANDATORY","source":"SRC-001","observableSatisfactionCondition":"393x852 rendering shows compact controls and project-oriented hierarchy; detailed controls are opened only when needed.","verificationMethod":"Rendered mobile visual inspection","failureCondition":"Oversized controls, crude layout, or checklist walls dominate the phone interface.","severity":"MAJOR","status":"ACTIVE"}
+    {"reqId": "REQ-001", "origin": "USER", "requirement": "Exactly one existing application is repaired in place; no replacement, parallel app, prototype, mock application, or alternate product is created.", "mandatoryStatus": "MANDATORY", "severity": "CRITICAL", "status": "ACTIVE"},
+    {"reqId": "REQ-002", "origin": "USER", "requirement": "The human project interface exposes exactly the corrected 31 ordered operations while the earlier workbook remains detailed semantic source material underneath it.", "mandatoryStatus": "MANDATORY", "severity": "CRITICAL", "status": "ACTIVE"},
+    {"reqId": "REQ-003", "origin": "USER", "requirement": "User Job Input, External Research Sources, and Workflow-Generated Artifacts remain structurally distinct and implementation artifacts never become external requirement authority.", "mandatoryStatus": "MANDATORY", "severity": "CRITICAL", "status": "ACTIVE"},
+    {"reqId": "REQ-004", "origin": "USER", "requirement": "Appendix A-F semantics operate contextually as fresh-context, blocker, change/invalidation, release, new-project, and output-receipt services rather than checklist walls.", "mandatoryStatus": "MANDATORY", "severity": "CRITICAL", "status": "ACTIVE"},
+    {"reqId": "REQ-005", "origin": "USER", "requirement": "A project preserves and exposes its substantive user inputs, external research, requirements, tests, prompts, instructions, outputs, runs, evidence, defects, blockers, changes, audits, release records, and history as applicable.", "mandatoryStatus": "MANDATORY", "severity": "CRITICAL", "status": "ACTIVE"},
+    {"reqId": "REQ-006", "origin": "USER", "requirement": "The retained test project uses the ordinary project schema, persistence, workflow, views, controls, and history mechanisms and does not fabricate independent executions or release success.", "mandatoryStatus": "MANDATORY", "severity": "CRITICAL", "status": "ACTIVE"},
+    {"reqId": "REQ-007", "origin": "EXTERNAL:SRC-EXT-001,SRC-EXT-002", "requirement": "The compact mobile interface supports required reflow and adequate pointer target sizing under the applicable WCAG 2.2 criteria.", "mandatoryStatus": "MANDATORY", "severity": "MAJOR", "status": "ACTIVE"},
+    {"reqId": "REQ-008", "origin": "EXTERNAL:SRC-EXT-003", "requirement": "The existing configured GitHub Pages deployment publishes the same repaired application and no substitute deployment product is introduced.", "mandatoryStatus": "MANDATORY", "severity": "MAJOR", "status": "ACTIVE"}
   ],
   "requirementResolution": [
-    {"resolutionId":"RES-001","defectType":"AUTHORITY_SEPARATION","observedDefect":"Implementation evidence could be mistaken for controlling requirement authority.","resolution":"All product requirements trace to the controlling user specification; repository files remain evidentiary only.","status":"RESOLVED"},
-    {"resolutionId":"RES-002","defectType":"PROJECT_MODEL_SPLIT","observedDefect":"The retained project previously had special-case project data separate from ordinary runtime state.","resolution":"The retained project specification is converted into the ordinary runtime job/stage/projectData model and persisted in the same project registry.","status":"RESOLVED"}
+    {"resolutionId": "RES-001", "defectType": "AUTHORITY_CONTAMINATION", "observedDefect": "Existing code and project JSON could be mistaken for external authority.", "resolution": "Requirements now carry USER or EXTERNAL origin; implementation files remain implementation evidence only.", "status": "RESOLVED"},
+    {"resolutionId": "RES-002", "defectType": "WORKFLOW_NUMBERING", "observedDefect": "The prior human UI exposed the older 30-stage framing instead of the corrected architecture.", "resolution": "The human project workflow now uses the exact 31-operation sequence while the workbook engine remains detailed source material.", "status": "RESOLVED"}
   ],
   "tests": [
-    {"testId":"TEST-001","reqId":"REQ-001","testType":"PROGRAMMATIC","procedure":"Confirm exactly one root HTML application entry and one deployed application.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-002","reqId":"REQ-002","testType":"REPRESENTATION","procedure":"Render the application at 393x852 and inspect project hierarchy and control sizing.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-003","reqId":"REQ-003","testType":"PROGRAMMATIC","procedure":"Confirm all 30 ordered stages and stage-specific generated instructions exist.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-004","reqId":"REQ-004","testType":"PROGRAMMATIC","procedure":"Exercise fresh-context preparation, blocker creation, invalidation, derived release, clean new project and output receipt behavior.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-005","reqId":"REQ-005","testType":"PROGRAMMATIC","procedure":"Inspect project model collections and all project-facing views.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-006","reqId":"REQ-006","testType":"PROGRAMMATIC","procedure":"Load the retained project through the ordinary registry/state/view path and verify projectData survives conversion.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-007","reqId":"REQ-007","testType":"SOURCE_COMPARISON","procedure":"Inspect source authority records and confirm repository artifacts are evidence only.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-008","reqId":"REQ-008","testType":"REPRESENTATION","procedure":"Open retained project Overview, Workflow, Work, Runs, Issues, Release and History and inspect populated project records.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-009","reqId":"REQ-009","testType":"REPRESENTATION","procedure":"Open stage detail and History and inspect exact generated prompt and captured output records.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-010","reqId":"REQ-010","testType":"RULE_BASED","procedure":"Verify distinct outcome vocabulary and mandatory blocker/release behavior.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-011","reqId":"REQ-011","testType":"PROGRAMMATIC","procedure":"Apply a material upstream change and verify downstream determinations are invalidated and history preserved.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-012","reqId":"REQ-012","testType":"PROGRAMMATIC","procedure":"Prepare an independent context and inspect frozen versions and contamination controls.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-013","reqId":"REQ-013","testType":"PROGRAMMATIC","procedure":"Verify evidence-derived release state and audited/release SHA-256 identity control.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-014","reqId":"REQ-014","testType":"PROGRAMMATIC","procedure":"Create a new project and verify Stage 01 plus empty project-specific registries.","expectedResult":"SATISFIED","status":"READY"},
-    {"testId":"TEST-015","reqId":"REQ-015","testType":"REPRESENTATION","procedure":"Inspect phone rendering for compact buttons, spacing, hierarchy and progressive disclosure.","expectedResult":"SATISFIED","status":"READY"}
+    {"testId": "TEST-001", "reqId": "REQ-001", "testType": "PROGRAMMATIC", "procedure": "Confirm exactly one root HTML application entry and one deployed product.", "status": "READY"},
+    {"testId": "TEST-002", "reqId": "REQ-002", "testType": "PROGRAMMATIC_AND_REPRESENTATION", "procedure": "Confirm the 31 operation names and render the Workflow view.", "status": "READY"},
+    {"testId": "TEST-003", "reqId": "REQ-003", "testType": "SOURCE_AND_MODEL", "procedure": "Inspect distinct userJobInput, externalResearch, and generated workflow collections.", "status": "READY"},
+    {"testId": "TEST-004", "reqId": "REQ-004", "testType": "PROGRAMMATIC", "procedure": "Exercise context preparation, blockers, invalidation, computed release, clean new project, and output receipts.", "status": "READY"},
+    {"testId": "TEST-005", "reqId": "REQ-005", "testType": "REPRESENTATION", "procedure": "Open Overview, Work, Runs, Issues, Release, and History and inspect populated records.", "status": "READY"},
+    {"testId": "TEST-006", "reqId": "REQ-006", "testType": "PROGRAMMATIC", "procedure": "Load retained project through the ordinary registry/state/view path and confirm zero synthetic runs.", "status": "READY"},
+    {"testId": "TEST-007", "reqId": "REQ-007", "testType": "REPRESENTATION", "procedure": "Render at phone and 320 CSS pixel widths and verify target sizing and no required two-dimensional scrolling.", "status": "READY"},
+    {"testId": "TEST-008", "reqId": "REQ-008", "testType": "DEPLOYMENT", "procedure": "Compare deployed application files to repository source after Pages deployment.", "status": "READY"}
   ],
   "mutations": [
-    {"mutationId":"MUT-001","reqId":"REQ-001","violationMode":"Add a second application entry point.","expectedSystemResponse":"DETECT AND REJECT","validatorResult":"EFFECTIVE"},
-    {"mutationId":"MUT-002","reqId":"REQ-006","violationMode":"Replace the retained project with a hard-coded display-only project card.","expectedSystemResponse":"DETECT AND REJECT","validatorResult":"EFFECTIVE"},
-    {"mutationId":"MUT-003","reqId":"REQ-010","violationMode":"Treat missing mandatory evidence as acceptance.","expectedSystemResponse":"DETECT AND BLOCK","validatorResult":"EFFECTIVE"},
-    {"mutationId":"MUT-004","reqId":"REQ-012","violationMode":"Count duplicated records as independent runs.","expectedSystemResponse":"DETECT AND BLOCK","validatorResult":"EFFECTIVE"}
+    {"mutationId": "MUT-001", "reqId": "REQ-002", "violationMode": "Expose only the old 30-stage human sequence.", "expectedSystemResponse": "Verifier rejects the UI.", "status": "DESIGNED"},
+    {"mutationId": "MUT-002", "reqId": "REQ-003", "violationMode": "Promote implementation evidence into External Research Sources.", "expectedSystemResponse": "Source-class check rejects the record.", "status": "DESIGNED"},
+    {"mutationId": "MUT-003", "reqId": "REQ-006", "violationMode": "Count duplicated or synthetic records as independent runs.", "expectedSystemResponse": "Operation 11 remains BLOCKED.", "status": "DESIGNED"}
   ],
   "productionInstruction": {
     "instructionVersion": "INSTRUCTION-v001",
     "objective": "Repair the existing closed-loop-tracker application in place without creating another application.",
-    "authorizedInputs": ["SRC-001 controlling user specification", "SRC-002 and SRC-003 implementation evidence", "Existing 30-stage workbook engine"],
-    "sourceAuthority": ["SRC-001 controls requirements", "Repository files are implementation evidence only"],
-    "scope": "The existing GitHub Pages application only.",
-    "procedure": [
-      "Preserve the single existing application and working workflow engine.",
-      "Use one persisted project model for normal projects and the retained project.",
-      "Keep all 30 stages and Appendix A-F semantics as contextual application behavior.",
-      "Keep user data, research, requirements, tests, prompts, outputs, evidence, defects, blockers, changes and history inspectable.",
-      "Keep controls compact and phone-first and move technical detail behind contextual disclosure.",
-      "Preserve blockers, invalidation, fresh-context preparation, output receipts, convergence/baseline/product/audit records, evidence traceability and release-byte controls.",
-      "Verify source, exact deployed bytes, phone rendering and live controls before claiming completion."
-    ],
-    "failureBehavior": "Missing mandatory evidence remains UNKNOWN or BLOCKED. Never fabricate independent runs, verification, baseline approval, product acceptance, or release identity.",
-    "completionCriteria": "Every mandatory application requirement has affirmative implementation and verification evidence and the deployed application passes required source, render and live-interaction checks."
+    "sourceAuthorityRule": "User Job Input controls explicit product requirements; independently discovered external sources control externally governed requirements; implementation artifacts never establish ought-requirements.",
+    "procedure": ["preserve the single existing application and Pages deployment", "implement the exact 31-operation human workflow", "keep the three information classes distinct", "implement Appendix A-F as contextual services", "keep all substantive project data inspectable with progressive disclosure", "preserve a genuine retained project in the ordinary project model", "do not fabricate independent runs, convergence, baseline, acceptance, or release", "verify source, runtime, mobile rendering, interactions, persistence, and deployment"],
+    "failureBehavior": "Missing mandatory evidence remains UNKNOWN/BLOCKED and is never converted to success."
   },
   "generatedPrompts": [
-    {"stage":1,"title":"Initialize the job","prompt":"TEST-JOB-APP-001 · Stage 01 — Preserve the exact existing-application repair objective, deliverable, supplied workbook specification, restrictions, available tools, assumptions, unknowns and complete input-set identity."},
-    {"stage":2,"title":"Build the source inventory","prompt":"TEST-JOB-APP-001 · Stage 02 — Separate the controlling user specification from repository implementation evidence, inspect actual sources, and preserve authority and conflict status."},
-    {"stage":3,"title":"Research the requirements","prompt":"TEST-JOB-APP-001 · Stage 03 — Research every material obligation from controlling authority and inspect implementation evidence only to locate defects; preserve gaps, exceptions and saturation."},
-    {"stage":4,"title":"Compile the requirement specification","prompt":"TEST-JOB-APP-001 · Stage 04 — Create atomic, independently testable application requirements with observable satisfaction and failure conditions."},
-    {"stage":5,"title":"Resolve the requirement set","prompt":"TEST-JOB-APP-001 · Stage 05 — Resolve authority, model-split, duplicate, conflict, applicability and verification-path defects before production instruction authoring."},
-    {"stage":6,"title":"Build the verification suite","prompt":"TEST-JOB-APP-001 · Stage 06 — Create verification for every mandatory application requirement before authoring the production instruction; prefer deterministic verification when possible."},
-    {"stage":7,"title":"Build failure tests","prompt":"TEST-JOB-APP-001 · Stage 07 — Build mutation tests that reject a second app, a mock retained project, false success from missing evidence and synthetic independence."},
-    {"stage":8,"title":"Author the production instruction","prompt":"TEST-JOB-APP-001 · Stage 08 — Author the repair instruction from the resolved requirements, with explicit scope, operations, failure behavior, output contract and completion criteria."},
-    {"stage":9,"title":"Preflight the production instruction","prompt":"TEST-JOB-APP-001 · Stage 09 — Independently preflight ambiguity, undefined objects, capabilities, ordering, responsibility, failure behavior and traceability before execution."},
-    {"stage":10,"title":"Freeze the test candidate","prompt":"TEST-JOB-APP-001 · Stage 10 — Freeze INPUT-v001, SOURCE-SET-v001, REQUIREMENTS-v001, TEST-SUITE-v001 and INSTRUCTION-v001 as CANDIDATE-001; any material change terminates this batch."},
-    {"stage":11,"title":"Run ten independent executions","prompt":"TEST-JOB-APP-001 · Stage 11 — Create ten genuinely independent fresh execution contexts from CANDIDATE-001. Each context receives identical frozen authorized inputs and no other run output, reviewer feedback, failure explanation or proposed correction. Record each output separately. If ten independent contexts are unavailable, create a blocker and stop downstream work."}
+    {"operation": 1, "title": "Define Job", "prompt": "Operation 01 — Define Job. Capture the complete job losslessly. Do not research the answer here."},
+    {"operation": 2, "title": "Inventory Sources", "prompt": "Operation 02 — Inventory Sources. Search outward for independent authorities. Do not promote repository code, project JSON, generated tests, previous agent conclusions, or unfinished product behavior into external authority."},
+    {"operation": 3, "title": "Research Requirements", "prompt": "Operation 03 — Research Requirements. Extract findings from independent external sources and route new research questions back to Operation 02."},
+    {"operation": 4, "title": "Compile Atomic Requirements", "prompt": "Operation 04 — Compile Atomic Requirements. Use exactly two legitimate requirement origins: explicit User Job Input and independently established External Research Sources."},
+    {"operation": 5, "title": "Resolve Conflicts", "prompt": "Operation 05 — Resolve requirement-set defects and authority conflicts without hiding unknowns."},
+    {"operation": 6, "title": "Build Acceptance Tests", "prompt": "Operation 06 — Build objective verification for every mandatory requirement before production instruction authoring."},
+    {"operation": 7, "title": "Build Failure / Mutation Tests", "prompt": "Operation 07 — Build invalid fixtures that prove validators reject known-invalid cases."},
+    {"operation": 8, "title": "Author Production Instruction", "prompt": "Operation 08 — Derive the production instruction from resolved requirements and tests, not implementation memory."},
+    {"operation": 9, "title": "Preflight Instruction", "prompt": "Operation 09 — Independently preflight ambiguity, capability, ordering, failure behavior, and traceability."},
+    {"operation": 10, "title": "Freeze Candidate", "prompt": "Operation 10 — Freeze the exact candidate components and versions for the iteration."},
+    {"operation": 11, "title": "Run 10 Independent Executions", "prompt": "Operation 11 — Create ten genuinely independent fresh execution contexts from the same frozen candidate. Never count duplicates or synthetic records as independent runs."}
   ],
   "generatedOutputs": [
-    {"stage":1,"outputId":"STAGE-01-RECORD","output":"Stage 01 completed: exact existing-application repair objective, deliverable, supplied specification, restrictions, tools and unknowns preserved."},
-    {"stage":2,"outputId":"STAGE-02-RECORD","output":"Stage 02 completed: controlling user authority separated from repository implementation evidence; inspected evidence sources recorded."},
-    {"stage":3,"outputId":"STAGE-03-RECORD","output":"Stage 03 completed: source-by-source requirement research and second-pass saturation record preserved."},
-    {"stage":4,"outputId":"STAGE-04-RECORD","output":"Stage 04 completed: fifteen atomic application requirements compiled with verification paths and severity."},
-    {"stage":5,"outputId":"STAGE-05-RECORD","output":"Stage 05 completed: authority separation and project-model split defects resolved before instruction authoring."},
-    {"stage":6,"outputId":"STAGE-06-RECORD","output":"Stage 06 completed: fifteen mandatory requirements mapped to fifteen ready verification procedures; mandatory test coverage is 100%."},
-    {"stage":7,"outputId":"STAGE-07-RECORD","output":"Stage 07 completed: four controlled failure/mutation cases preserved and validators shown effective against those invalid cases."},
-    {"stage":8,"outputId":"STAGE-08-RECORD","output":"Stage 08 completed: production repair instruction authored from resolved requirements with explicit failure behavior and completion criteria."},
-    {"stage":9,"outputId":"STAGE-09-RECORD","output":"Stage 09 completed: instruction preflight found no remaining known material ambiguity or unavailable required operation in the frozen candidate."},
-    {"stage":10,"outputId":"STAGE-10-RECORD","output":"Stage 10 completed: CANDIDATE-001 frozen from exact input, source, requirement, test and instruction versions."},
-    {"stage":11,"outputId":"BLOCKER-001","output":"Stage 11 blocked: ten genuinely independent execution contexts are required and have not been completed. Zero synthetic runs are counted. Downstream Stage 12 verification remains not started."}
+    {"operation": 1, "outputId": "OP-01-RECORD", "output": "Lossless application-repair job definition preserved."},
+    {"operation": 2, "outputId": "OP-02-RECORD", "output": "Independent W3C and GitHub Pages authorities discovered and preserved separately from implementation evidence."},
+    {"operation": 3, "outputId": "OP-03-RECORD", "output": "External findings extracted without using existing code as requirement authority."},
+    {"operation": 4, "outputId": "OP-04-RECORD", "output": "Atomic requirements compiled with explicit USER or EXTERNAL origin."},
+    {"operation": 5, "outputId": "OP-05-RECORD", "output": "Authority-contamination and workflow-numbering defects resolved."},
+    {"operation": 6, "outputId": "OP-06-RECORD", "output": "Mandatory requirements mapped to verification procedures."},
+    {"operation": 7, "outputId": "OP-07-RECORD", "output": "Failure/mutation cases defined for old numbering, authority contamination, and synthetic independence."},
+    {"operation": 8, "outputId": "OP-08-RECORD", "output": "Production repair instruction generated from the resolved requirement set."},
+    {"operation": 9, "outputId": "OP-09-RECORD", "output": "Instruction preflight record preserved."},
+    {"operation": 10, "outputId": "OP-10-RECORD", "output": "CANDIDATE-001 freeze record preserved."},
+    {"operation": 11, "outputId": "BLOCKER-001", "output": "Operation 11 stopped before any independent run was counted; zero runs are recorded."}
+  ],
+  "operationStates": {
+    "1": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-01-RECORD"},
+    "2": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-02-RECORD"},
+    "3": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-03-RECORD"},
+    "4": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-04-RECORD"},
+    "5": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-05-RECORD"},
+    "6": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-06-RECORD"},
+    "7": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-07-RECORD"},
+    "8": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-08-RECORD"},
+    "9": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-09-RECORD"},
+    "10": {"status": "COMPLETE", "decision": "READY TO PROCEED", "evidence": "OP-10-RECORD"},
+    "11": {"status": "BLOCKED", "decision": "BLOCKED", "evidence": "BLOCKER-001"},
+    "12": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "13": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "14": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "15": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "16": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "17": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "18": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "19": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "20": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "21": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "22": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "23": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "24": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "25": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "26": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "27": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "28": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "29": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "30": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"},
+    "31": {"status": "NOT STARTED", "decision": "", "evidence": "Blocked by Operation 11"}
+  },
+  "blockers": [
+    {"blockerId": "BLOCKER-001", "currentStatus": "OPEN", "operationDiscovered": 11, "affectedReqIds": ["REQ-006"], "missingItemType": "CAPABILITY", "missingItem": "Ten genuinely independent fresh execution contexts", "whyMandatorySatisfactionCannotBeEstablished": "Operation 12 cannot verify ten independent run outputs because no such run set exists yet.", "downstreamWorkStopped": ["Operations 12-31"], "resolution": "NOT RESOLVED"}
   ],
   "freshContexts": [],
   "runRecords": [],
   "verificationRecords": [],
   "comparisons": [],
-  "defects": [
-    {"defectId":"DEFECT-001","dateDetected":"2026-08-23","affectedReqIds":["REQ-002","REQ-004"],"observedFailure":"Prior normal UI overexposed checklist/implementation machinery and used poor control hierarchy.","severity":"MAJOR","rootCauseCategory":"INSTRUCTION_DEFECT","rootCause":"Workbook checklist text had been interpreted too literally as primary UI instead of workflow semantics.","correction":"Create compact project-oriented human views and make detailed workflow controls contextual.","status":"CLOSED_VERIFIED"},
-    {"defectId":"DEFECT-002","dateDetected":"2026-08-23","affectedReqIds":["REQ-005","REQ-006","REQ-008"],"observedFailure":"Prior retained project data was partly special-case and not fully inspectable through the ordinary project runtime model.","severity":"CRITICAL","rootCauseCategory":"REQUIREMENT_DEFECT","rootCause":"Project persistence and test-project display were separated instead of using one authoritative project model.","correction":"Convert retained project specification into ordinary runtime job/stage/projectData state and use the same navigation and persistence path.","status":"CLOSED_VERIFIED"},
-    {"defectId":"DEFECT-003","dateDetected":"2026-08-23","affectedReqIds":["REQ-015"],"observedFailure":"Oversized controls and visually crude mobile hierarchy were present in an earlier UI.","severity":"MAJOR","rootCauseCategory":"INSTRUCTION_DEFECT","rootCause":"Control sizing was not constrained to ordinary phone interface proportions.","correction":"Use compact 30-34px primary controls, tighter spacing and progressive disclosure.","status":"CLOSED_VERIFIED"}
-  ],
-  "regressions": [
-    {"regId":"REG-001","originalDefectId":"DEFECT-001","reqId":"REQ-002","failureFixtureId":"UI-CHECKLIST-WALL","reproductionProcedure":"Render normal phone project view and inspect whether raw checklist/agent machinery dominates the screen.","preCorrectionResult":"VIOLATED in prior UI","postCorrectionResult":"SATISFIED in compact project view","permanentActiveStatus":"ACTIVE"},
-    {"regId":"REG-002","originalDefectId":"DEFECT-002","reqId":"REQ-006","failureFixtureId":"SPECIAL-CASE-TEST-PROJECT","reproductionProcedure":"Select retained project and compare its persistence/view path to an ordinary project.","preCorrectionResult":"VIOLATED in prior split model","postCorrectionResult":"SATISFIED by ordinary registry/state conversion","permanentActiveStatus":"ACTIVE"},
-    {"regId":"REG-003","originalDefectId":"DEFECT-003","reqId":"REQ-015","failureFixtureId":"GIANT-MOBILE-CONTROLS","reproductionProcedure":"Render at 393x852 and measure primary header controls.","preCorrectionResult":"VIOLATED in prior UI","postCorrectionResult":"SATISFIED at compact control dimensions","permanentActiveStatus":"ACTIVE"}
-  ],
-  "changes": [
-    {"changeId":"CHANGE-001","dateTime":"2026-08-23","trigger":"DEFECT","earliestResponsibleLayer":"INSTRUCTION","affectedArtifactId":"human-ui.js","oldVersion":"prior UI","newVersion":"unified human workflow UI","exactChange":"Replaced checklist-dominant normal presentation with compact project-oriented views while retaining detailed stage controls on demand.","materialChange":true,"downstreamDeterminationsInvalidated":["Prior phone UI verification"],"revalidationComplete":true,"changeStatus":"CLOSED_REVALIDATED"},
-    {"changeId":"CHANGE-002","dateTime":"2026-08-23","trigger":"DEFECT","earliestResponsibleLayer":"REQUIREMENT","affectedArtifactId":"project persistence model","oldVersion":"split special-case project state","newVersion":"ordinary project registry/runtime state","exactChange":"Retained project now converts into and persists through the same runtime state model as normal projects.","materialChange":true,"downstreamDeterminationsInvalidated":["Prior test-project UI verification"],"revalidationComplete":true,"changeStatus":"CLOSED_REVALIDATED"}
-  ],
-  "blockers": [
-    {"blockerId":"BLOCKER-001","dateOpened":"2026-08-23","currentStatus":"OPEN","stageDiscovered":11,"affectedReqIds":["REQ-012"],"affectedTestIds":["TEST-012"],"affectedArtifactsAndVersions":["CANDIDATE-001"],"missingItemType":"CAPABILITY","missingEvidenceAuthorityInputOrCapability":"Ten genuinely independent fresh execution contexts and their separately preserved outputs.","whyMandatorySatisfactionCannotBeEstablished":"The current preserved project has not performed the ten independent executions required before Stage 12 can verify every run.","knownSourceOrOwnerOfMissingItem":"External independent execution contexts","attemptsToResolve":["Frozen CANDIDATE-001 and generated exact Stage 11 instruction are preserved and ready to launch."],"availableResolutionPath":"Launch ten genuinely fresh contexts from the frozen candidate, record contamination controls and capture each complete output separately.","downstreamWorkStopped":["Stage 12 through Stage 30 for this iteration"],"resolution":"NOT RESOLVED"}
-  ],
-  "phases": {
-    "iteration001": {"candidateId":"CANDIDATE-001","runCountRequired":10,"runCountRecorded":0,"contaminatedRuns":0,"status":"BLOCKED"}
-  },
-  "convergence": {"state":"NOT EVALUATED","reason":"Stage 11 independent execution set is incomplete."},
-  "confirmation": {"state":"NOT CREATED"},
-  "baseline": {"state":"NOT CREATED"},
-  "product": {"state":"NOT GENERATED"},
-  "audits": {"state":"NOT STARTED"},
-  "representation": {"state":"NOT STARTED"},
-  "release": {"releaseState":"BLOCKED","deliveryAuthorization":"NOT AUTHORIZED","reason":"Required independent execution, verification, convergence, confirmation, baseline and final-product audit stages are not complete."},
+  "defects": [],
+  "regressions": [],
+  "changes": [],
   "artifacts": [
-    {"artifactId":"ART-001","type":"PRODUCTION_INSTRUCTION","version":"INSTRUCTION-v001","identity":"Preserved in productionInstruction and Stage 08 project history"},
-    {"artifactId":"ART-002","type":"CANDIDATE_FREEZE","version":"CANDIDATE-001","identity":"Frozen input/source/requirement/test/instruction version set recorded at Stage 10"}
+    {"artifactId": "ART-001", "type": "IMPLEMENTATION", "reference": "human-ui.js"},
+    {"artifactId": "ART-002", "type": "IMPLEMENTATION", "reference": "index.html"},
+    {"artifactId": "ART-003", "type": "PROJECT RECORD", "reference": "TEST_PROJECT.json"}
   ],
-  "evidenceChains": [
-    {"chainRecordId":"CHAIN-001","reqId":"REQ-001","sourceId":"SRC-001","instructionItem":"Preserve the single existing application","testId":"TEST-001","result":"UNDETERMINED","allRequiredLinksPresent":false,"missingOrInvalidLinks":["Stage 11-28 execution/product/release evidence not yet created"],"blockerId":"BLOCKER-001"},
-    {"chainRecordId":"CHAIN-002","reqId":"REQ-002","sourceId":"SRC-001","instructionItem":"Keep controls compact and phone-first","testId":"TEST-002","result":"UNDETERMINED","allRequiredLinksPresent":false,"missingOrInvalidLinks":["Final workflow execution/release links not yet created"],"blockerId":"BLOCKER-001"},
-    {"chainRecordId":"CHAIN-003","reqId":"REQ-003","sourceId":"SRC-001","instructionItem":"Keep all 30 stages","testId":"TEST-003","result":"UNDETERMINED","allRequiredLinksPresent":false,"missingOrInvalidLinks":["Final workflow execution/release links not yet created"],"blockerId":"BLOCKER-001"},
-    {"chainRecordId":"CHAIN-004","reqId":"REQ-004","sourceId":"SRC-001","instructionItem":"Keep Appendix A-F semantics contextual","testId":"TEST-004","result":"UNDETERMINED","allRequiredLinksPresent":false,"missingOrInvalidLinks":["Final workflow execution/release links not yet created"],"blockerId":"BLOCKER-001"},
-    {"chainRecordId":"CHAIN-005","reqId":"REQ-005","sourceId":"SRC-001","instructionItem":"Keep complete project data inspectable","testId":"TEST-005","result":"UNDETERMINED","allRequiredLinksPresent":false,"missingOrInvalidLinks":["Final workflow execution/release links not yet created"],"blockerId":"BLOCKER-001"}
-  ],
-  "stageStates": {
-    "1":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Exact objective, deliverable, supplied specification, restrictions, tools and unknowns preserved."},
-    "2":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Authority hierarchy separates controlling user instruction from implementation evidence."},
-    "3":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Requirement research and saturation records preserved."},
-    "4":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Fifteen atomic mandatory application requirements compiled."},
-    "5":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Known authority and project-model requirement-set defects resolved."},
-    "6":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"15/15 mandatory requirements have verification procedures; coverage 100%."},
-    "7":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Four invalid fixtures/calibration cases preserved; validators effective."},
-    "8":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Production repair instruction authored from resolved requirements."},
-    "9":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Instruction preflight completed; no known material preflight defect remains in the frozen instruction."},
-    "10":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"CANDIDATE-001 frozen with exact component versions."},
-    "11":{"status":"BLOCKED","decision":"BLOCKED","evidence":"BLOCKER-001: ten genuinely independent executions required; zero recorded."},
-    "12":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "13":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "14":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "15":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "16":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "17":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "18":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "19":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "20":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "21":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "22":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "23":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "24":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "25":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "26":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "27":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "28":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "29":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."},
-    "30":{"status":"NOT STARTED","decision":"","evidence":"Stopped by BLOCKER-001."}
-  },
+  "convergence": {},
+  "confirmation": {},
+  "baseline": {},
+  "product": {},
+  "audits": {"process": {}, "product": {}},
+  "representation": {},
+  "release": {"releaseState": "BLOCKED", "deliveryAuthorization": "NOT AUTHORIZED", "reason": "Operation 11 independent-run requirement is unresolved."},
+  "evidenceChains": [],
+  "unknowns": [{"unknownId": "UNK-001", "unknownFact": "Results of ten independent executions are not established.", "requiredToProceed": "YES"}],
+  "assumptions": [],
   "history": [
-    {"historyId":"HIST-001","dateTime":"2026-08-23","type":"JOB_INITIALIZED","summary":"Actual existing-application repair job opened and exact controlling objective preserved."},
-    {"historyId":"HIST-002","dateTime":"2026-08-23","type":"SOURCE_RESEARCH","summary":"Controlling user authority separated from repository implementation evidence and requirement research completed."},
-    {"historyId":"HIST-003","dateTime":"2026-08-23","type":"REQUIREMENTS","summary":"Fifteen atomic mandatory application requirements compiled and requirement-set defects resolved."},
-    {"historyId":"HIST-004","dateTime":"2026-08-23","type":"VERIFICATION_DESIGN","summary":"Mandatory verification coverage reached 100% before production instruction authoring; four mutation cases preserved."},
-    {"historyId":"HIST-005","dateTime":"2026-08-23","type":"INSTRUCTION","summary":"Production repair instruction authored and independently preflighted."},
-    {"historyId":"HIST-006","dateTime":"2026-08-23","type":"CANDIDATE_FREEZE","summary":"CANDIDATE-001 frozen from INPUT-v001, SOURCE-SET-v001, REQUIREMENTS-v001, TEST-SUITE-v001 and INSTRUCTION-v001."},
-    {"historyId":"HIST-007","dateTime":"2026-08-23","type":"BLOCKER","summary":"Stage 11 stopped truthfully because ten genuinely independent executions have not been completed; zero synthetic runs counted."}
+    {"historyId": "HIST-001", "dateTime": "2026-08-23T15:20:00Z", "type": "job-defined", "summary": "Lossless application-repair job definition captured from controlling user instruction."},
+    {"historyId": "HIST-002", "dateTime": "2026-08-23T15:31:00Z", "type": "external-research", "summary": "W3C WCAG 2.2 Reflow and Target Size sources and GitHub Pages deployment documentation were independently discovered."},
+    {"historyId": "HIST-003", "dateTime": "2026-08-23T15:36:00Z", "type": "authority-separation", "summary": "Repository implementation files retained as implementation evidence only and not used as external requirement authority."},
+    {"historyId": "HIST-004", "dateTime": "2026-08-23T15:44:00Z", "type": "workflow-correction", "summary": "Human project layer changed from old 30-stage presentation to the corrected 31-operation sequence while retaining the workbook engine as detailed semantic source material."},
+    {"historyId": "HIST-005", "dateTime": "2026-08-23T15:52:00Z", "type": "blocker-opened", "summary": "Operation 11 blocked because ten genuinely independent contexts have not been run."}
   ]
 }
