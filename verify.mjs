@@ -6,7 +6,8 @@ if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script s
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Test project must contain exactly 30 stage records.');
 if(project.currentStage!==30||project.currentState!=='ACCEPTED')throw new Error('Test project must preserve the completed accepted 30-stage job.');
-if(!project.userJobInput?.objective?.includes('GEN-042')||!/maintenance handoff/i.test(project.userJobInput?.objective||''))throw new Error('Test project is not the real GEN-042 maintenance-handoff job.');
+if(!project.userJobInput?.objective?.includes('GEN-042')||!/field status report/i.test(project.userJobInput?.objective||''))throw new Error('Test project purpose is incorrect.');
+if(/maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Incorrect maintenance-handoff framing remains.');
 if(/application conformance|Evaluate the Closed-Loop Reliability application/i.test(JSON.stringify(project)))throw new Error('Self-referential test-project framing is prohibited.');
 if((project.generatedPrompts||[]).length!==30)throw new Error('Every generated stage instruction must be preserved.');
 if((project.generatedOutputs||[]).length!==30||!project.generatedOutputs.every(x=>typeof x.output==='string'&&x.output.length))throw new Error('Every generated stage output must be preserved.');
