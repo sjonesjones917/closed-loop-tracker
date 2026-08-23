@@ -8,7 +8,7 @@ https://sjonesjones917.github.io/closed-loop-tracker/
 
 This repository contains one phone-first, domain-general application that takes an arbitrary user job through the exact 31-stage closed-loop research, production, verification, correction, acceptance, and release process.
 
-The application does not preload a project whose objective is to rebuild or repair the application. New projects begin with the actual job entered by the user.
+The application retains one completed native project named **CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD**. That project was created with the same project model and visible application controls used for every other project, is about the complete application itself, and preserves all 31 completed stages as proof that the application works. It is workflow evidence, never external authority for its own requirements. New user-created projects still begin at Stage 1 with 0 of 31 stages complete.
 
 ## Required forward architecture
 
@@ -40,12 +40,16 @@ Humans, agents, human-agent teams, tools, and organizations are first-class work
 - Exact SHA-256 calculation over the finished product bytes or exact external-result release package.
 - Release gate that permits release only for the exact accepted artifact.
 - Local browser persistence plus explicit JSON import and export.
-- No preloaded completed project and no automatic sidecar project loading.
+- Automatic same-origin loading of the completed application project as a protected native project while every new user project starts at 0/31.
 
 ## Verification and deployment
 
-`verify-app.mjs` verifies the static architecture, exact stage manifest, 20-scope intake, three information classes, standalone packaging, and absence of the prior self-build/prompt-relay design.
+`migrate-self-project.mjs` keeps the retained project in the current `closed-loop-project/1` schema and removes obsolete repair/version framing from its narrative records without treating the project as external authority.
 
-`browser-smoke.mjs` executes the rendered phone UI, creates a real arbitrary job, completes Stage 1, verifies all 31 stages render, opens the external-source guard, and checks the three information classes at phone widths.
+`verify-app.mjs` verifies the static architecture, exact stage manifest, 20-scope intake, three information classes, standalone packaging, human-first interaction model, and persistent native-project bootstrap.
 
-`.github/workflows/pages.yml` runs both verification layers, creates the exact static Pages payload, deploys it through GitHub Pages, and verifies the live root bytes against the verified `index.html` SHA-256.
+`verify-self-project.mjs` verifies that the completed project is about the entire application, has exactly 31 completed stages, preserves human work ownership, contains the required independent execution and verification records, has no obsolete version/repair scope drift, and retains an accepted release identity.
+
+`browser-smoke.mjs` executes the rendered phone UI from clean browser storage, proves the completed application project is automatically loaded, visible, protected, and openable as a native project, creates a separate human-owned arbitrary job at 0/31, completes Stage 1, verifies all 31 stages render, opens the external-source guard, and checks the three information classes at phone widths.
+
+`.github/workflows/pages.yml` runs these verification layers, creates the exact static Pages payload, deploys the application and completed project JSON through GitHub Pages, and verifies the live bytes of both artifacts against their verified SHA-256 values.
