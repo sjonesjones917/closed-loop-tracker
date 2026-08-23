@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: native-retained-project-rebuild
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   rebuild:
@@ -36,6 +36,23 @@ jobs:
           rm -f "$LOG"
           {
             set -euo pipefail
+            python - <<'PY'
+          from pathlib import Path
+          path = Path('rebuild-self-project.mjs')
+          source = path.read_text()
+          old = """      retainedLoaded=true;
+                const projectsText=await page.locator('#projectsView').innerText();
+                retainedLoaded=retainedLoaded&&(projectsText.includes(currentProject.projectId)||projectsText.includes(currentProject.name));
+                await page.click('#newProjectBtn');"""
+          new = """      retainedLoaded=true;
+                await page.click('[data-view=\"projects\"]');
+                const projectsText=await page.locator('#projectsView').innerText();
+                retainedLoaded=retainedLoaded&&(projectsText.includes(currentProject.projectId)||projectsText.includes(currentProject.name));
+                await page.click('#newProjectBtn');"""
+          if old not in source:
+              raise SystemExit('Expected browser-navigation block was not found.')
+          path.write_text(source.replace(old, new, 1))
+          PY
             npm install --no-save --ignore-scripts playwright-core
             node build-app.mjs
             node attach-self-project.mjs
@@ -60,7 +77,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if [[ "$STATUS" -eq 0 ]]; then
             rm -f "$LOG" .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml
-            git add -f index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml
+            git add -f index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json rebuild-self-project.mjs .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml
             git commit -m 'Rebuild retained project as native whole-application self-verification'
           else
             printf '\nRECONSTRUCTION_EXIT_STATUS=%s\n' "$STATUS" >> "$LOG"
