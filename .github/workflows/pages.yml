@@ -18,11 +18,11 @@ jobs:
       - name: Materialize canonical application source once
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          if ! git diff --quiet -- app.js TEST_PROJECT.json; then
+          if ! git diff --quiet -- app.js TEST_PROJECT.json index.html; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app.js TEST_PROJECT.json
-            git commit -m "Materialize compact 30-stage tracker"
+            git add app.js TEST_PROJECT.json index.html
+            git commit -m "Materialize verified application shell"
             git push origin HEAD:main
           fi
       - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
@@ -35,6 +35,7 @@ jobs:
           test ! -f prompt-center.js
           grep -q 'src="workbook.js' index.html
           grep -q 'src="app.js' index.html
+          grep -q 'rel="icon"' index.html
           node - <<'NODE'
           const fs=require('fs');
           const s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
