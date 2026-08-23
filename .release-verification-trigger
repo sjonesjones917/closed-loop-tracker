@@ -1,2 +1,2 @@
-manual self-build regeneration requested 2026-08-22T22:45:00Z
-reason: regenerate the visible-UI SELF_VERIFIED_PROJECT.json after Stage 1 lossless-intake and Stage 2 external-authority corrections
+deployment verification requested 2026-08-23T01:33:30Z
+reason: deploy the current human-first application with the retained native 31-stage application project visible in Projects and verify both live artifacts
