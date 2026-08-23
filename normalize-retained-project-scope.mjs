@@ -10,6 +10,8 @@ const replacements=[
   ['self-verification','application-build verification']
 ];
 for(const [from,to] of replacements)source=source.split(from).join(to);
+source=source.replace("currentProject.legacyProjectMetadata?.jobId||'JOB-APPLICATION-BUILD'","'JOB-APPLICATION-BUILD'");
 if(/self-verification/i.test(source))throw new Error('Residual self-verification terminology remains in the retained project generator.');
+if(source.includes('currentProject.legacyProjectMetadata?.jobId'))throw new Error('The generator still inherits an obsolete legacy job identity.');
 fs.writeFileSync(file,source);
-console.log(JSON.stringify({status:'PASS',retainedProjectScope:'COMPLETE_APPLICATION_BUILD',replacements:replacements.map(([from,to])=>({from,to}))},null,2));
+console.log(JSON.stringify({status:'PASS',retainedProjectScope:'COMPLETE_APPLICATION_BUILD',legacyJobIdentityInherited:false,replacements:replacements.map(([from,to])=>({from,to}))},null,2));
