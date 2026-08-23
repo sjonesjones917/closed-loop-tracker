@@ -31,6 +31,44 @@ jobs:
           if(banned.test(s))throw new Error('prohibited terminology');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
           NODE
+      - name: Render the existing application at phone and desktop sizes
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          for WIDTH in 320 393 1365; do
+            "$BROWSER" --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=${WIDTH},900 --virtual-time-budget=12000 --screenshot="render-${WIDTH}.png" "http://127.0.0.1:4173/?verify=${GITHUB_SHA}-${WIDTH}"
+            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},900 --virtual-time-budget=12000 --dump-dom "http://127.0.0.1:4173/?verify=${GITHUB_SHA}-${WIDTH}" > "render-${WIDTH}.html"
+            grep -q 'JOB-20260823144121' "render-${WIDTH}.html"
+            grep -q 'Mobile Closed-Loop Agent Reliability Workbook' "render-${WIDTH}.html"
+            grep -q '1/30 complete' "render-${WIDTH}.html"
+            grep -q 'STAGE 02' "render-${WIDTH}.html"
+            grep -q 'Proceed to Operation 02' "render-${WIDTH}.html"
+            ! grep -qi 'GEN-042' "render-${WIDTH}.html"
+            ! grep -qi 'field status report' "render-${WIDTH}.html"
+            ! grep -qi 'maintenance handoff' "render-${WIDTH}.html"
+          done
+      - name: Preserve source and rendered verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: existing-app-verification-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            index.html
+            app.js
+            workbook.js
+            TEST_PROJECT.json
+            build-test-project.mjs
+            verify.mjs
+            verify-live.mjs
+            README.md
+            .github/workflows/pages.yml
+            render-*.png
+            render-*.html
+            server.log
 
   deploy:
     if: github.event_name != 'pull_request'
