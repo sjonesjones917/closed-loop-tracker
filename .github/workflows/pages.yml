@@ -22,6 +22,12 @@ jobs:
       - id: human
         continue-on-error: true
         run: node --check human-ui.js
+      - id: agent
+        continue-on-error: true
+        run: node --check agent-workflow.js
+      - id: prompts
+        continue-on-error: true
+        run: node --check prompt-center.js
       - id: live_verifier
         continue-on-error: true
         run: node --check verify-live.mjs
@@ -34,16 +40,18 @@ jobs:
           test -f index.html
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test -f TEST_PROJECT.json
+          test -f agent-workflow.js
+          test -f prompt-center.js
           node - <<'NODE'
           const p=require('./TEST_PROJECT.json');
           if(p.schema!=='mobile-closed-loop-project/5'||p.currentOperation!==11||p.currentState!=='BLOCKED'||p.runRecords.length!==0||Object.keys(p.operationStates).length!==31)process.exit(1);
           NODE
       - name: Publish source statuses
         if: always()
-        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', LOADER: '${{ steps.loader.outcome }}', HUMAN: '${{ steps.human.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
+        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', LOADER: '${{ steps.loader.outcome }}', HUMAN: '${{ steps.human.outcome }}', AGENT: '${{ steps.agent.outcome }}', PROMPTS: '${{ steps.prompts.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
         run: |
           target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          for pair in "retained-project:$PROJECT" "workbook-loader:$LOADER" "human-ui-syntax:$HUMAN" "live-verifier-syntax:$LIVE" "repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
+          for pair in "retained-project:$PROJECT" "workbook-loader:$LOADER" "human-ui-syntax:$HUMAN" "agent-workflow-syntax:$AGENT" "prompt-center-syntax:$PROMPTS" "live-verifier-syntax:$LIVE" "repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
             context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
             gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
           done
@@ -52,6 +60,8 @@ jobs:
           test '${{ steps.project.outcome }}' = success
           test '${{ steps.loader.outcome }}' = success
           test '${{ steps.human.outcome }}' = success
+          test '${{ steps.agent.outcome }}' = success
+          test '${{ steps.prompts.outcome }}' = success
           test '${{ steps.live_verifier.outcome }}' = success
           test '${{ steps.verifier.outcome }}' = success
           test '${{ steps.structure.outcome }}' = success
@@ -89,7 +99,7 @@ jobs:
           set -euo pipefail
           mkdir -p live-proof
           verified=false
-          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json verify-live.mjs)
+          FILES=(index.html workbook.js human-ui.js agent-workflow.js prompt-center.js TEST_PROJECT.json verify-live.mjs)
           for attempt in $(seq 1 36); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"; good=true
             for f in "${FILES[@]}"; do curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false; done
@@ -115,9 +125,12 @@ jobs:
           grep -q '10/31 complete' live-proof/test-393.html
           grep -q 'User Job Input' live-proof/test-393.html
           grep -q 'External Research Sources' live-proof/test-393.html
+          grep -q '>Prompts<' live-proof/test-393.html
+          grep -q 'Copy prompt' live-proof/test-393.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=320,800 --dump-dom "$BASE" > live-proof/test-320.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=320,800 --screenshot=live-proof/test-320.png "$BASE"
-          grep -q 'Closed-Loop Reliability application repair' live-proof/test-320.html
+          grep -q '>Prompts<' live-proof/test-320.html
+          grep -q 'Copy prompt' live-proof/test-320.html
       - name: Start interaction browser
         run: |
           BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium)"
@@ -143,7 +156,7 @@ jobs:
         env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', RENDER: '${{ steps.render.outcome }}', WORKFLOW: '${{ steps.workflow_interaction.outcome }}', HISTORY: '${{ steps.history_interaction.outcome }}', RESET: '${{ steps.reset_interaction.outcome }}'}
         run: |
           target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$RENDER" "live-workflow-controls:$WORKFLOW" "live-project-history:$HISTORY" "live-new-project-reset:$RESET"; do
+          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$RENDER" "live-prompt-workflow:$WORKFLOW" "live-project-history:$HISTORY" "live-new-project-reset:$RESET"; do
             context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
             gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
           done
