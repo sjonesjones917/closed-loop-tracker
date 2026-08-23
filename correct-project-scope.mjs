@@ -12,6 +12,7 @@ const INPUTS='The complete user-issued application build instruction; the existi
 const OLD_INPUTS='Actual inputs: app-v11.html; build-v13-self.mjs; self-browser-e2e.mjs; self-e2e-agent.mjs; generated app-v13-candidate1.html; generated app-v13.html; system Chromium; SHA-256; GitHub Actions; visible app export and download controls.';
 const CONSTRAINTS='Implement the complete domain-general application, not a repair-task tracker or a narrow self-test. Preserve exactly the 31 stage numbers, names, and order. Keep USER JOB INPUT, EXTERNAL RESEARCH SOURCES, and WORKFLOW-GENERATED ARTIFACTS separate. Never use the product, its code, tests, generated project state, candidates, or prior workflow conclusions as authority for its own requirements. Start real projects at 0/31, require actual completed responses, preserve independent producer/verifier execution, keep completed project state outside the HTML, remain phone-first, and release only exact accepted bytes after audit and hash equality. Do not invent a public application version merely because defects were corrected.';
 const OLD_CONSTRAINTS='No hardcoded completed project. No skipped stage. Every required standard, producer, and verifier field must receive an actual completed external-process response. The first candidate must be tested with a real sidecar filename defect, corrected, rerun, confirmed unchanged, audited, and released only when exact hashes match.';
+const PUBLISHED_PROJECT_META=`<meta name="closed-loop-published-project" content="${PROJECT_NAME}">`;
 
 const args=new Set(process.argv.slice(2));
 const generatedOnly=args.has('--generated-only');
@@ -31,6 +32,10 @@ function patchGenerated(file){
   s=s.replaceAll('<title>Closed-Loop Reliability v13</title>','<title>Closed-Loop Reliability</title>');
   s=s.replaceAll('<h1>Closed-Loop Agent Reliability v13</h1>','<h1>Closed-Loop Agent Reliability</h1>');
   s=s.replaceAll(OLD_PROJECT_NAME,PROJECT_NAME);
+  if(!s.includes(PROJECT_NAME)){
+    if(!s.includes('</head>'))throw new Error(`${file} head closing tag missing`);
+    s=s.replace('</head>',`${PUBLISHED_PROJECT_META}\n</head>`);
+  }
   writeIfChanged(file,s);
 }
 function patchReadme(){
@@ -91,4 +96,4 @@ for(const file of syntaxFiles){
     if(result.status!==0)throw new Error(`${file} syntax failure: ${result.stderr||result.stdout}`);
   }
 }
-console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true}));
+console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true,publishedProjectMetadata:true}));
