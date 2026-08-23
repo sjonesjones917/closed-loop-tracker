@@ -24,44 +24,44 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install browser driver
-        run: npm install --no-save --ignore-scripts playwright-core
-      - name: Build current structured application and retain project loader
+      - name: Execute closed-loop reconstruction and commit success or exact failure
         shell: bash
         run: |
-          set -euo pipefail
-          node build-app.mjs
-          node attach-self-project.mjs
-          cp index.html app-v13.html
-      - name: Rebuild native current-schema project with actual isolated executions
-        shell: bash
-        run: |
-          set -euo pipefail
-          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          test -n "$CHROME_PATH"
-          CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
-      - name: Verify application, retained project, and rendered phone behavior
-        shell: bash
-        run: |
-          set -euo pipefail
-          node verify-app.mjs
-          node verify-self-project.mjs
-          node migrate-self-project.mjs
-          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
-          cmp -s index.html app-v13.html
-          grep -Fq 'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE SELF-VERIFICATION' SELF_VERIFIED_PROJECT.json
-          if grep -Eqi 'sidecar-filename defect|app-arbitrary application version|External agent process|Visible UI evidence for Stage|executable prompt was copied' SELF_VERIFIED_PROJECT.json; then
-            echo 'Obsolete migrated project narrative remains.' >&2
-            exit 1
-          fi
-      - name: Commit exact current application and native retained project
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -f .github/workflows/rebuild-retained-project-once.yml
+          set +e
+          LOG=SELF_PROJECT_REBUILD_FAILURE.log
+          rm -f "$LOG"
+          {
+            set -euo pipefail
+            npm install --no-save --ignore-scripts playwright-core
+            node build-app.mjs
+            node attach-self-project.mjs
+            cp index.html app-v13.html
+            CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+            test -n "$CHROME_PATH"
+            CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
+            node verify-app.mjs
+            node verify-self-project.mjs
+            node migrate-self-project.mjs
+            CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+            cmp -s index.html app-v13.html
+            grep -Fq 'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE SELF-VERIFICATION' SELF_VERIFIED_PROJECT.json
+            if grep -Eqi 'sidecar-filename defect|app-arbitrary application version|External agent process|Visible UI evidence for Stage|executable prompt was copied' SELF_VERIFIED_PROJECT.json; then
+              echo 'Obsolete migrated project narrative remains.' >&2
+              exit 1
+            fi
+          } >"$LOG" 2>&1
+          STATUS=$?
+          cat "$LOG"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json .github/workflows/rebuild-retained-project-once.yml
-          git commit -m 'Rebuild retained project as native whole-application self-verification'
+          if [[ "$STATUS" -eq 0 ]]; then
+            rm -f "$LOG" .github/workflows/rebuild-retained-project-once.yml
+            git add -f index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json .github/workflows/rebuild-retained-project-once.yml
+            git commit -m 'Rebuild retained project as native whole-application self-verification'
+          else
+            printf '\nRECONSTRUCTION_EXIT_STATUS=%s\n' "$STATUS" >> "$LOG"
+            git add -f "$LOG"
+            git commit -m 'Record exact retained-project reconstruction failure'
+          fi
+          git pull --rebase origin main
           git push origin HEAD:main
