@@ -1,0 +1,76 @@
+name: Apply human workbook cache-bust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-cache-bust.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    name: Force fresh human runtime on existing clients
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch the application shell and its verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index_path=Path('index.html')
+          index=index_path.read_text()
+          viewport='<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+          cache_meta=(
+              '<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n'
+              '<meta http-equiv="Pragma" content="no-cache">\n'
+              '<meta http-equiv="Expires" content="0">\n'
+          )
+          if cache_meta not in index:
+              if viewport not in index:
+                  raise SystemExit('viewport insertion point is missing')
+              index=index.replace(viewport,viewport+cache_meta,1)
+          old_loader='<script src="workbook.js"></script>'
+          new_loader='<script src="workbook.js?v=human-workbook-20260823-r4"></script>'
+          if new_loader not in index:
+              if old_loader not in index:
+                  raise SystemExit('workbook loader insertion point is missing')
+              index=index.replace(old_loader,new_loader,1)
+          index_path.write_text(index)
+
+          verify_path=Path('verify.mjs')
+          verify=verify_path.read_text()
+          anchor="ok(index.includes('New clean job')&&index.includes('Export')&&index.includes('Import'),'human job controls are retained');\n"
+          checks=(
+              "ok(index.includes('workbook.js?v=human-workbook-20260823-r4'),'the application shell cache-busts the human-facing runtime');\n"
+              "ok(index.includes('no-cache, no-store, must-revalidate')&&index.includes('http-equiv=\"Pragma\"')&&index.includes('http-equiv=\"Expires\"'),'the application shell rejects stale document reuse');\n"
+          )
+          if checks not in verify:
+              if anchor not in verify:
+                  raise SystemExit('verifier insertion point is missing')
+              verify=verify.replace(anchor,anchor+checks,1)
+          verify_path.write_text(verify)
+          PY
+      - name: Verify the patched exact application
+        run: |
+          set -euo pipefail
+          node --check workbook.js
+          node verify.mjs
+      - name: Commit the verified cache-bust and remove this one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/apply-cache-bust.yml
+          git add index.html verify.mjs .github/workflows/apply-cache-bust.yml
+          git diff --cached --check
+          git commit -m "Force fresh verified runtime on existing phones"
+          git push origin HEAD:main
