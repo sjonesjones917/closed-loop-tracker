@@ -33,19 +33,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Migrate the retained app self-project into the current application schema
+      - name: Normalize the retained application project to the complete application scope
         run: node migrate-self-project.mjs
       - name: Build the human-first application
         run: node build-app.mjs
-      - name: Keep the verified app self-project in the Projects UI
+      - name: Keep the retained application project in the normal Projects UI
         run: node attach-self-project.mjs
       - name: Verify application architecture
         run: node verify-app.mjs
-      - name: Verify the retained self-project against the current 31-stage workflow
+      - name: Verify the retained application project against the current 31-stage workflow
         run: node verify-self-project.mjs
       - name: Install the browser driver
         run: npm install --no-save --ignore-scripts playwright-core
-      - name: Execute rendered phone UI smoke test with retained self-project and a human project owner
+      - name: Execute rendered phone UI smoke test with retained project and human project ownership
         shell: bash
         run: |
           set -euo pipefail
@@ -65,14 +65,15 @@ jobs:
           cp index.html dist/404.html
           cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
           : > dist/.nojekyll
-          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedSelfProjectProof":true,"retainedSelfProjectVisible":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
+          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectNormalProject":true,"retainedProjectVisible":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
           echo "app_sha256=$APP_SHA256" >> "$GITHUB_OUTPUT"
           echo "project_sha256=$PROJECT_SHA256" >> "$GITHUB_OUTPUT"
-      - name: Preserve verification evidence
+      - name: Preserve exact verification and publication evidence
         uses: actions/upload-artifact@v4
         with:
           name: closed-loop-verification-evidence
           path: |
+            index.html
             STATIC_VERIFICATION.json
             BROWSER_SMOKE_REPORT.json
             PHONE_SMOKE_393.png
@@ -103,10 +104,17 @@ jobs:
     steps:
       - name: Check out exact verified source revision
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download exact verified application and project
+        uses: actions/download-artifact@v4
+        with:
+          name: closed-loop-verification-evidence
+          path: verified-source
       - name: Deploy verified application
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify live application and retained self-project bytes
+      - name: Verify live application and retained project bytes
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
@@ -127,13 +135,16 @@ jobs:
             sleep 5
           done
           test "$verified" = true
+          cmp -s verified-source/index.html live-check/index.html
+          cmp -s verified-source/SELF_VERIFIED_PROJECT.json live-check/SELF_VERIFIED_PROJECT.json
           grep -Fq '<title>Closed-Loop Agent Reliability</title>' live-check/index.html
           grep -Fq '<h1>Closed-Loop Agent Reliability</h1>' live-check/index.html
           grep -Fq 'data-self-project-proof="true"' live-check/index.html
+          grep -Fq 'data-self-project-status' live-check/index.html
           grep -Fq 'SELF_VERIFIED_PROJECT.json' live-check/index.html
-          node -e "const p=require('./live-check/SELF_VERIFIED_PROJECT.json'); if(p.schema!=='closed-loop-project/1'||!Array.isArray(p.stages)||p.stages.length!==31||p.stages.some((s,i)=>s.number!==i+1||s.status!=='COMPLETE')||p.legacyProjectMetadata?.releaseDecision!=='ACCEPTED') process.exit(1)"
+          node -e "const p=require('./live-check/SELF_VERIFIED_PROJECT.json'); if(p.schema!=='closed-loop-project/1'||!Array.isArray(p.stages)||p.stages.length!==31||p.stages.some((s,i)=>s.number!==i+1||s.status!=='COMPLETE')||p.stages[0]?.assignedActorType!=='HUMAN_AGENT_TEAM'||p.legacyProjectMetadata?.releaseDecision!=='ACCEPTED') process.exit(1)"
           if grep -Eqi 'Closed-Loop Agent Reliability[[:space:]]+v[0-9]+' live-check/index.html; then exit 1; fi
-      - name: Record verified live deployment
+      - name: Materialize the live-verified application, project, and deployment receipt
         shell: bash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
@@ -145,10 +156,22 @@ jobs:
           LIVE_PROJECT_SHA256="$(sha256sum live-check/SELF_VERIFIED_PROJECT.json | awk '{print $1}')"
           test "$LIVE_APP_SHA256" = "$EXPECTED_APP_SHA256"
           test "$LIVE_PROJECT_SHA256" = "$EXPECTED_PROJECT_SHA256"
-          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedSelfProjectProof":true,"retainedSelfProjectVisible":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
+          cmp -s verified-source/index.html live-check/index.html
+          cmp -s verified-source/SELF_VERIFIED_PROJECT.json live-check/SELF_VERIFIED_PROJECT.json
+
+          git pull --rebase origin main
+          cp verified-source/index.html index.html
+          cp verified-source/index.html app-v13.html
+          cp verified-source/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
+          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectNormalProject":true,"retainedProjectVisible":true,"promptRelayArchitecture":false,"repositoryMatchesLiveBytes":true,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
+
+          test "$(sha256sum index.html | awk '{print $1}')" = "$LIVE_APP_SHA256"
+          test "$(sha256sum app-v13.html | awk '{print $1}')" = "$LIVE_APP_SHA256"
+          test "$(sha256sum SELF_VERIFIED_PROJECT.json | awk '{print $1}')" = "$LIVE_PROJECT_SHA256"
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add LIVE_DEPLOYMENT_VERIFIED.json
+          git add index.html app-v13.html SELF_VERIFIED_PROJECT.json LIVE_DEPLOYMENT_VERIFIED.json
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Record verified live application deployment [skip ci]'
+          git commit -m 'Publish verified human-first application and retained project [skip ci]'
           git push origin HEAD:main
