@@ -16,9 +16,6 @@ jobs:
       - id: project
         continue-on-error: true
         run: node build-test-project.mjs
-      - id: loader
-        continue-on-error: true
-        run: node --check workbook.js
       - id: human
         continue-on-error: true
         run: node --check human-ui.js
@@ -38,24 +35,24 @@ jobs:
           test ! -f prompt-center.js
           node - <<'NODE'
           const p=require('./TEST_PROJECT.json');
-          if(p.schema!=='human-project/30'||p.currentStage!==30||Object.keys(p.stageStates||{}).length!==30)process.exit(1);
+          if(p.schema!=='closed-loop-project/30'||p.job?.currentStage!==30||Object.keys(p.stageRecords||{}).length!==30)process.exit(1);
           const text=JSON.stringify(p);
           if(/application conformance|Evaluate the Closed-Loop Reliability application/i.test(text))process.exit(1);
-          if(!p.userJobInput?.objective?.includes('GEN-042'))process.exit(1);
+          if(!p.userEntries?.[0]?.objective?.includes('GEN-042'))process.exit(1);
+          if(p.runs?.length!==20||p.verification?.length!==p.requirements.length*20)process.exit(1);
           NODE
       - name: Publish source statuses
         if: always()
-        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', LOADER: '${{ steps.loader.outcome }}', HUMAN: '${{ steps.human.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
+        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', HUMAN: '${{ steps.human.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
         run: |
           target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          for pair in "retained-real-project:$PROJECT" "workbook-loader:$LOADER" "human-ui-syntax:$HUMAN" "live-verifier-syntax:$LIVE" "30-stage-repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
+          for pair in "retained-real-project:$PROJECT" "human-ui-syntax:$HUMAN" "live-verifier-syntax:$LIVE" "30-stage-repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
             context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
             gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
           done
       - name: Enforce source verification
         run: |
           test '${{ steps.project.outcome }}' = success
-          test '${{ steps.loader.outcome }}' = success
           test '${{ steps.human.outcome }}' = success
           test '${{ steps.live_verifier.outcome }}' = success
           test '${{ steps.verifier.outcome }}' = success
@@ -100,7 +97,7 @@ jobs:
           set -euo pipefail
           mkdir -p live-proof
           verified=false
-          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json verify-live.mjs)
+          FILES=(index.html human-ui.js TEST_PROJECT.json verify-live.mjs)
           for attempt in $(seq 1 36); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"; good=true
             for f in "${FILES[@]}"; do curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false; done
