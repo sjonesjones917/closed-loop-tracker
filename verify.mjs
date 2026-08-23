@@ -6,7 +6,6 @@ import {pathToFileURL} from 'node:url';
 const failures=[],evidence=[];
 const ok=(condition,message)=>(condition?evidence:failures).push(message);
 const index=fs.readFileSync('index.html','utf8');
-const loader=fs.readFileSync('workbook.js','utf8');
 const human=fs.readFileSync('human-ui.js','utf8');
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 const rootFiles=fs.readdirSync('.');
@@ -23,7 +22,7 @@ ok(human.includes("REGISTRY='closed-loop-project-registry-v4'")&&human.includes(
 ok(human.includes("schema:'human-project/31'")&&human.includes('31-operation workflow'),'human project model implements corrected 31-operation architecture');
 ok(opNames.every(name=>human.includes(name)),'all 31 operation names are represented exactly');
 ok(['User Job Input','External Research Sources','Workflow-Generated Artifacts'].every(x=>human.includes(x)),'three information classes are explicit in the project UI');
-ok(human.includes('Do not promote repository code')&&human.includes('exactly two origins'),'Operations 2–4 enforce authority separation');
+ok(human.includes('Uploaded/project/generated files are not promoted')&&human.includes('exactly two origins'),'Operations 2–4 enforce authority separation');
 ok(['Overview','Workflow','Work','Runs','Issues','Release','History'].every(x=>human.includes(x)),'complete project navigation exists');
 ok(human.includes('Generated instruction / prompt')&&human.includes('Generated / captured outputs')&&human.includes('Complete history'),'prompts, outputs, and history are inspectable');
 ok(human.includes('function addBlocker')&&human.includes('function change(')&&human.includes('function context('),'blocker, invalidation, and fresh-context services exist');
