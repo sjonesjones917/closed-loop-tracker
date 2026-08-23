@@ -105,6 +105,13 @@ jobs:
           const project=JSON.parse(fs.readFileSync('SELF_VERIFIED_PROJECT.json','utf8'));
           const stage8=project.productionInstructions?.find(record=>Number(record.stageNumber)===8);
           const stage9=project.productionInstructions?.find(record=>Number(record.stageNumber)===9);
+          if(project.name!=='CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD')throw new Error('Retained project is not the complete application build.');
+          if(!String(project.job?.exactUserObjective||'').startsWith('Build and deploy the complete phone-first, domain-general Closed-Loop Agent Reliability application'))throw new Error('Stage 1 objective is not the complete application build.');
+          if(!String(project.job?.requestedActions||'').startsWith('Build the application defined by the corrected complete build instruction'))throw new Error('Stage 1 requested actions do not begin with the actual build.');
+          if(/self-verification|\bv13\b|version 13|sidecar-filename defect|fix stage/i.test(JSON.stringify(project)))throw new Error('Residual version, repair, sidecar, or self-verification framing remains in the retained project.');
+          if(project.stages?.[0]?.assignedActorType!=='HUMAN')throw new Error('Stage 1 is not human-owned.');
+          if(project.stages?.[26]?.assignedActorType!=='HUMAN'||project.stages?.[27]?.assignedActorType!=='HUMAN')throw new Error('Process and product audits are not human-owned.');
+          if(!Array.isArray(project.stages)||project.stages.length!==31||project.stages.some((stage,index)=>stage.number!==index+1||stage.status!=='COMPLETE'))throw new Error('The retained project does not contain all 31 completed stages in order.');
           if(!stage8?.promptText?.startsWith('PRODUCTION INSTRUCTION'))throw new Error('Retained Stage 8 generated production prompt is missing.');
           if(!stage9?.promptText?.startsWith('PREFLIGHTED PRODUCTION INSTRUCTION'))throw new Error('Retained Stage 9 preflighted production prompt is missing.');
           if(stage8.instructionId===stage9.instructionId)throw new Error('Retained Stage 8 and 9 instruction identities are not independently versioned.');
@@ -123,6 +130,8 @@ jobs:
             echo 'No changes to commit.'
             exit 0
           fi
-          git commit -m 'Make Stage 8 and Stage 9 generate verified production instructions'
+          git commit -m 'Finalize complete application project and durable Projects retention'
           git pull --rebase origin main
           git push origin HEAD:main
+
+# final scope correction trigger
