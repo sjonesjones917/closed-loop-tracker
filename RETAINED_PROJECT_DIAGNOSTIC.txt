@@ -1,4 +1,13 @@
-SOURCE_COMMIT=ac0ab9a50eef92b82dd2a7594d6baf24b905c65b
+SOURCE_COMMIT=fc5a9cbe4cfd14fad0668b99a427bcdca9dd5756
+{
+  "status": "PASS",
+  "projectId": "PROJECT-MT3M46X0-075JMP",
+  "schema": "closed-loop-project/1",
+  "stages": 31,
+  "executions": 30,
+  "verificationRecords": 30
+}
+MIGRATE_EXIT=0
 {
   "status": "PASS",
   "htmlBytes": 104483,
@@ -27,116 +36,70 @@ ATTACH_EXIT=0
   "standalone": true
 }
 VERIFY_APP_EXIT=0
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-self-project.mjs:4
-const fail = (m) => { throw new Error(m); };
-                            ^
-
-Error: Self-project is incorrectly framed as a v13/fix/fixture project.
-    at fail (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-self-project.mjs:4:29)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-self-project.mjs:39:161
-    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-
-Node.js v22.23.2
-VERIFY_SELF_EXIT=1
+{
+  "status": "PASS",
+  "selfProject": true,
+  "currentSchema": true,
+  "aboutApplicationItself": true,
+  "stageWorkflowMatchesCurrentApp": true,
+  "stages": 31,
+  "appSha256": "3676f12df44499a58237db060909bb9a2e94c83f46c982bc1d1350457de75620",
+  "projectSha256": "75369eb8e2881c6241bfedeb30df9fac251ee1bf9c7ed26a0f0a441e87d48722"
+}
+VERIFY_SELF_EXIT=0
 
 added 1 package in 1s
-{
-  "initialProjectsView": "Projects\nEach project begins with the user’s actual arbitrary job. No project is precompleted or defined as an application self-build.\nNew project\nImport project JSON\nNo current project exists. Create a project for the real job to begin Stage 1.",
-  "fileInputs": [
-    {
-      "id": "importInput",
-      "name": "",
-      "accept": "application/json,.json",
-      "aria": null
-    }
-  ],
-  "storage": {
-    "closedLoopReliability.projects": "[{\"schema\":\"closed-loop-project/1\",\"projectId\":\"PROJECT-8AA261E8-4D6A-4159-8DE6-41B393554B77\",\"name\":\"SCHEMA PROBE\",\"createdAt\":\"2026-08-23T01:27:14.516Z\",\"updatedAt\":\"2026-08-23T01:27:14.516Z\",\"job\":{\"exactUserObjective\":\"Probe current project schema only.\",\"exactDeliverables\":\"Schema probe project.\",\"requestedActions\":\"\",\"subjectAndTarget\":\"\",\"problemAndQuestionSet\":\"\",\"scopeBoundaries\":\"\",\"suppliedInformation\":\"\",\"provenanceClassification\":\"\",\"priorConversationDependencies\":\"\",\"userDefinedTerminology\":\"\",\"constraints\":\"\",\"prohibitedActions\":\"\",\"requiredMethods\":\"\",\"requiredOutputProperties\":\"\",\"temporalScope\":\"\",\"locationAndJurisdiction\":\"\",\"successConditions\":\"\",\"priorities\":\"\",\"uncertainties\":\"\",\"externalResearchQuestions\":\"\"},\"stages\":[{\"number\":1,\"name\":\"DEFINE JOB\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"Schema probe\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":2,\"name\":\"INVENTORY SOURCES\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":3,\"name\":\"RESEARCH REQUIREMENTS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":4,\"name\":\"COMPILE ATOMIC REQUIREMENTS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":5,\"name\":\"RESOLVE CONFLICTS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":6,\"name\":\"BUILD ACCEPTANCE TESTS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":7,\"name\":\"BUILD FAILURE/MUTATION TESTS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":8,\"name\":\"AUTHOR PRODUCTION INSTRUCTION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":9,\"name\":\"PREFLIGHT INSTRUCTION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":10,\"name\":\"FREEZE CANDIDATE\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":11,\"name\":\"RUN 10 INDEPENDENT EXECUTIONS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":12,\"name\":\"VERIFY EVERY RUN AGAINST EVERY REQUIREMENT\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":13,\"name\":\"COMPARE ALL RUNS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":14,\"name\":\"ROOT-CAUSE EVERY DEFECT\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":15,\"name\":\"ADD REGRESSION TESTS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":16,\"name\":\"CORRECT RESPONSIBLE LAYER\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":17,\"name\":\"FREEZE NEW VERSION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":18,\"name\":\"RUN 10 NEW INDEPENDENT EXECUTIONS\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":19,\"name\":\"REPEAT UNTIL CONVERGED\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":20,\"name\":\"RUN UNCHANGED 10-EXECUTION CONFIRMATION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":21,\"name\":\"FREEZE APPROVED BASELINE\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":22,\"name\":\"GENERATE FINISHED PRODUCT\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":23,\"name\":\"DETERMINISTIC PRODUCT VERIFICATION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":24,\"name\":\"INDEPENDENT SEMANTIC VERIFICATION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":25,\"name\":\"ADVERSARIAL PRODUCT VERIFICATION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":26,\"name\":\"FINAL REPRESENTATION INSPECTION\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":27,\"name\":\"PROCESS AUDIT\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":28,\"name\":\"PRODUCT AUDIT\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":29,\"name\":\"ACCEPTED / REJECTED / BLOCKED\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":30,\"name\":\"VERIFY RELEASE HASH\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null},{\"number\":31,\"name\":\"RELEASE ONLY THE EXACT ACCEPTED ARTIFACT\",\"status\":\"NOT_STARTED\",\"assignedActorType\":\"HUMAN\",\"assignedActorName\":\"\",\"completionEvidence\":\"\",\"blocker\":\"\",\"startedAt\":null,\"completedAt\":null,\"updatedAt\":null}],\"selectedStage\":1,\"userInputs\":[],\"externalSources\":[],\"researchCoverage\":[],\"findings\":[],\"requirements\":[],\"conflicts\":[],\"acceptanceTests\":[],\"mutationTests\":[],\"productionInstructions\":[],\"preflightReviews\":[],\"candidates\":[],\"executions\":[],\"verificationRecords\":[],\"comparisons\":[],\"defects\":[],\"regressionTests\":[],\"corrections\":[],\"convergenceCycles\":[],\"baselines\":[],\"products\":[],\"deterministicChecks\":[],\"semanticChecks\":[],\"adversarialChecks\":[],\"representationInspections\":[],\"processAudits\":[],\"productAudits\":[],\"decisions\":[],\"hashVerifications\":[],\"releases\":[],\"workflowArtifacts\":[]}]",
-    "closedLoopReliability.selectedProject": "PROJECT-8AA261E8-4D6A-4159-8DE6-41B393554B77"
-  },
-  "buttons": [
-    "Projects",
-    "Job",
-    "Workflow",
-    "Records",
-    "Release",
-    "New project",
-    "Import project JSON",
-    "Open project",
-    "Export JSON",
-    "Delete",
-    "Add supplied input",
-    "Save all 20 scopes",
-    "Validate and complete Stage 1",
-    "Add user input",
-    "1DEFINE JOBNOT_STARTED",
-    "2INVENTORY SOURCESNOT_STARTED",
-    "3RESEARCH REQUIREMENTSNOT_STARTED",
-    "4COMPILE ATOMIC REQUIREMENTSNOT_STARTED",
-    "5RESOLVE CONFLICTSNOT_STARTED",
-    "6BUILD ACCEPTANCE TESTSNOT_STARTED",
-    "7BUILD FAILURE/MUTATION TESTSNOT_STARTED",
-    "8AUTHOR PRODUCTION INSTRUCTIONNOT_STARTED",
-    "9PREFLIGHT INSTRUCTIONNOT_STARTED",
-    "10FREEZE CANDIDATENOT_STARTED",
-    "11RUN 10 INDEPENDENT EXECUTIONSNOT_STARTED",
-    "12VERIFY EVERY RUN AGAINST EVERY REQUIREMENTNOT_STARTED",
-    "13COMPARE ALL RUNSNOT_STARTED",
-    "14ROOT-CAUSE EVERY DEFECTNOT_STARTED",
-    "15ADD REGRESSION TESTSNOT_STARTED",
-    "16CORRECT RESPONSIBLE LAYERNOT_STARTED",
-    "17FREEZE NEW VERSIONNOT_STARTED",
-    "18RUN 10 NEW INDEPENDENT EXECUTIONSNOT_STARTED",
-    "19REPEAT UNTIL CONVERGEDNOT_STARTED",
-    "20RUN UNCHANGED 10-EXECUTION CONFIRMATIONNOT_STARTED",
-    "21FREEZE APPROVED BASELINENOT_STARTED",
-    "22GENERATE FINISHED PRODUCTNOT_STARTED",
-    "23DETERMINISTIC PRODUCT VERIFICATIONNOT_STARTED",
-    "24INDEPENDENT SEMANTIC VERIFICATIONNOT_STARTED",
-    "25ADVERSARIAL PRODUCT VERIFICATIONNOT_STARTED",
-    "26FINAL REPRESENTATION INSPECTIONNOT_STARTED",
-    "27PROCESS AUDITNOT_STARTED",
-    "28PRODUCT AUDITNOT_STARTED",
-    "29ACCEPTED / REJECTED / BLOCKEDNOT_STARTED",
-    "30VERIFY RELEASE HASHNOT_STARTED",
-    "31RELEASE ONLY THE EXACT ACCEPTED ARTIFACTNOT_STARTED",
-    "Start / reopen",
-    "Validate and complete",
-    "Mark blocked",
-    "Edit the complete 20-scope job definition",
-    "All structured records",
-    "User job input",
-    "External sources",
-    "Workflow artifacts",
-    "Add user input",
-    "Add external source",
-    "Register workflow artifact",
-    "Export complete project JSON",
-    "Download exact accepted artifact",
-    "×",
-    "Cancel",
-    "Create project",
-    "×",
-    "Cancel",
-    "Save record"
-  ],
-  "logs": [
-    "CONSOLE error Failed to load resource: the server responded with a status of 404 (File not found)",
-    "CONSOLE error Error: The retained self-project was not accepted by the application project importer.\n    at http://127.0.0.1:4174/:388:108"
-  ]
-}
-IMPORT_PROBE_EXIT=0
 node:internal/modules/run_main:123
     triggerUncaughtException(
     ^
 
-page.waitForFunction: Timeout 5000ms exceeded.
-    at /home/runner/work/closed-loop-tracker/closed-loop-tracker/browser-smoke.mjs:18:14 {
-  log: [],
+page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#newProjectBtn')
+    - locator resolved to <button id="newProjectBtn" class="btn primary">New project</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    58 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+
+    at /home/runner/work/closed-loop-tracker/closed-loop-tracker/probe-retained-project.mjs:17:13 {
+  log: [
+    "  - waiting for locator('#newProjectBtn')",
+    '    - locator resolved to <button id="newProjectBtn" class="btn primary">New project</button>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not visible',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not visible',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    58 × waiting for element to be visible, enabled and stable',
+    '       - element is not visible',
+    '     - retrying click action',
+    '       - waiting 500ms'
+  ],
   name: 'TimeoutError'
 }
+
+Node.js v22.23.2
+IMPORT_PROBE_EXIT=1
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/browser-smoke.mjs:21
+  if(errors.length)throw new Error(`Self-project load errors: ${errors.join(' | ')}`);
+                         ^
+
+Error: Self-project load errors: Failed to load resource: the server responded with a status of 404 (File not found)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/browser-smoke.mjs:21:26
 
 Node.js v22.23.2
 BROWSER_SMOKE_EXIT=1
