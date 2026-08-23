@@ -1,0 +1,814 @@
+{
+  "status": "REVIEW_REQUIRED",
+  "totalMatches": 160,
+  "counts": {
+    "v13": 61,
+    "version 13": 0,
+    "sidecar": 94,
+    "repair framing": 0,
+    "implementation history": 3,
+    "agent-instruction relay": 2
+  },
+  "matches": [
+    {
+      "label": "sidecar",
+      "path": "$.job.exactDeliverables",
+      "excerpt": "A working deployed Closed-Loop Agent Reliability web application at https://sjonesjones917.github.io/closed-loop-tracker/; the exact standalone UTF-8 release HTML; the exact project JSON exported through the application's visible Export this project control and automatically reloaded as a separate sidecar; and reproducible browser, process, audit, and SHA-256 evidence establishing the complete 31-stage workflow, the required independent execution and verification cycles, an ACCEPTED decision, an"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.job.requestedActions",
+      "excerpt": "Implement the complete domain-general application described by the user’s build instruction; preserve the exact 31-stage order; implement lossless intake, external source discovery, external requirement research, atomic requirement compilation, conflict resolution, test construction, production, independent verification, defect correction, convergence, audit, acceptance, release hashing, and exact release; operate the finished application through its real rendered UI from a new 0/31 project; exp"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.job.scopeBoundaries",
+      "excerpt": "INCLUDED: the complete domain-general workflow; all 31 fixed stages; the three information classes; non-circular research; project creation at 0/31; exact intake preservation; dynamic domain and research-question identification; external research; requirements and traceability; acceptance and failure testing; production instructions; independent executions and verifications; defect, regression, correction, convergence, and unchanged confirmation; project persistence, import, export, and separate"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.job.requiredMethods",
+      "excerpt": "Use the application's actual rendered UI and visible controls for the retained application project. Perform real external retrieval in Stage 2. Derive Stage 3 findings only from the Stage 2 external source set and additional independent authority discovered through the permitted feedback path. Compile atomic traceable requirements before tests and production. Build affirmative acceptance tests and failure/mutation tests. Freeze candidates before independent runs. Use fresh producer and verifier "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.job.successConditions",
+      "excerpt": "The deployed application represents the complete domain-general build instruction rather than a narrow repair/version project. Its visible project name, objective, deliverable, Stage 1 result, and downstream work all remain within the complete application-build scope. The app preserves the three information classes and blocks circular authority. A new project begins at 0/31. All 31 stages execute in sequence through the rendered UI with the required substantive stage, producer, and verifier reco"
+    },
+    {
+      "label": "implementation history",
+      "path": "$.job.priorities",
+      "excerpt": "1. Correct scope and complete user intent. 2. Reality and externally observable execution. 3. Independent external authority before requirements and production. 4. Strict information-class separation and non-circularity. 5. Complete stage-specific execution without substitution or shortcuts. 6. Independent verification, correction, and traceability. 7. Exact artifact identity and live deployment. 8. Phone-first usability. 9. Avoidance of arbitrary public versioning and implementation-history fra"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.job.externalResearchQuestions",
+      "excerpt": "Which official web-platform specifications govern the application document, controls, events, encoding, files, downloads, URLs, fetch, storage, accessibility tree, and cryptographic digest behavior? Which current browser and automation documentation governs real UI interaction, clean contexts, downloads, screenshots, console/network evidence, mobile viewport behavior, and sidecar loading? Which ECMAScript and Node.js authorities govern build execution, modules, filesystem operations, paths, JSON"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[0].completionEvidence",
+      "excerpt": "JOB_ID: JOB-MT3M46X0-M0LIB9\n\nPROJECT_ID: PROJECT-MT3M46X0-075JMP\n\nINPUT_VERSION: INPUT-v001\n\nEXACT USER OBJECTIVE:\nBuild, verify, release, and deploy one phone-first, domain-general Closed-Loop Agent Reliability application that accepts an arbitrary user job and drives it through the exact 31-stage forward pipeline from lossless user intent through independent external research, external authority, atomic requirements, tests, production, independent verification, correction, acceptance, release-"
+    },
+    {
+      "label": "implementation history",
+      "path": "$.stages[0].completionEvidence",
+      "excerpt": "JOB_ID: JOB-MT3M46X0-M0LIB9\n\nPROJECT_ID: PROJECT-MT3M46X0-075JMP\n\nINPUT_VERSION: INPUT-v001\n\nEXACT USER OBJECTIVE:\nBuild, verify, release, and deploy one phone-first, domain-general Closed-Loop Agent Reliability application that accepts an arbitrary user job and drives it through the exact 31-stage forward pipeline from lossless user intent through independent external research, external authority, atomic requirements, tests, production, independent verification, correction, acceptance, release-"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[1].completionEvidence",
+      "excerpt": "SOURCE_SET_VERSION: SOURCE-SET-v002\n\nEXTERNAL_SEARCH_PERFORMED: true\n\nEXTERNAL_SOURCES_DISCOVERED: 40\n\nEXTERNAL_SOURCES_SUCCESSFULLY_RETRIEVED: 38/40\n\nPROHIBITED_WORK_PRODUCTS_USED_AS_AUTHORITY: false\n\nSOURCE_INVENTORY_COMPLETE: true\n\nCOMPLETION_BASIS: Every Stage 1 research area is COVERED by at least one examined external source or explicitly BLOCKED.\n\nSOURCE_ID: SRC-0001\nEXACT_TITLE: HTML Living Standard\nSOURCE_TYPE: STANDARD\nAUTHOR_OR_ISSUING_ORGANIZATION: WHATWG\nPUBLISHER_OR_HOST: WHATWG\nCA"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[2].completionEvidence",
+      "excerpt": "RESEARCH_VERSION: RESEARCH-v002\n\nEXTERNAL_REQUIREMENTS_RESEARCH_COMPLETE: true\n\nEXTERNAL_SOURCES_SUCCESSFULLY_RETRIEVED: 38/40\n\nPROHIBITED_WORK_PRODUCTS_USED_AS_AUTHORITY: false\n\nFINDING_ID: FINDING-0001\nSOURCE_ID: SRC-0001, SRC-0002\nRELEVANT_EXTERNAL_PORTION: Document structure, native controls, DOM events, and browser processing\nSOURCE_ESTABLISHES: A browser application must use conforming document/control semantics and observable event/state behavior; a visual label alone is not proof that an"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[5].completionEvidence",
+      "excerpt": "Acceptance suite TEST-001 through TEST-015 was completed before production. Tests cover immediate render, empty project creation, exact objective/deliverable preservation, 31-stage order, locked-stage rejection, all 30 producer fields, all 30 verifier fields, target-output verifier prompts, candidate hashes, root-cause/regression evidence, real final HTML bytes, deterministic/semantic/adversarial verification, phone-width overflow, exact release hashes, and sidecar auto-load from the visible UI "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[6].completionEvidence",
+      "excerpt": "Mutation suite MUT-001 through MUT-015 executed. Invalid fixtures included removal of the New project control, stage deletion, unlocked Stage 2, missing producer and verifier fields, verifier prompts without target output, altered candidate hash, absent regression record, placeholder final artifact, injected external dependency, forced 320px overflow, changed release byte, embedded completed project data, and a misspelled sidecar filename. Each deliberately invalid fixture was detected and REJEC"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[7].completionEvidence",
+      "excerpt": "INSTRUCTION-v001 directs a fresh process to build a standalone phone-first domain-general Closed-Loop Agent Reliability application from the approved job definition, externally researched requirements, acceptance tests, and mutation tests; preserve all 31 stages and required fields; keep completed project state outside the HTML; load the verified project from a same-origin sidecar when available; execute ten-run producer/verifier batches; preserve evidence; verify mobile rendering and exact hash"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[8].completionEvidence",
+      "excerpt": "PREFLIGHT of INSTRUCTION-v001 completed against the approved requirement/test package and actual tools. The output contract, browser runner, external process runner, hashing, file export, and release procedure are available and ordered. The preflight confirmed no missing capability or hidden state mutation. It retained the sidecar-path requirement for candidate verification because only execution can establish whether the generated filename matches the deployment contract. External agent process"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[11].completionEvidence",
+      "excerpt": "10 independent verifier records captured for Stage 12.\n\nNOTES:\nVisible UI evidence: ten independent verifier textareas contain fresh-process requirement matrices. Every verifier independently observed the same real sidecar filename defect in CANDIDATE-v001."
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[13].completionEvidence",
+      "excerpt": "DEFECT-001 CONFIRMED, severity MAJOR, category INSTRUCTION/BUILD DEFECT. Earliest responsible layer: INSTRUCTION-v001 and its build-sidecar filename parameter. ROOT CAUSE: the exact filename was not fixed in the instruction, allowing app-arbitrary application version-candidate1.html to omit the final T in PROJECT. Evidence: ten actual candidate files, ten independent verifier processes, and literal source inspection all report REQ-015 VIOLATED. CANDIDATE-v001 and its dependent verification are i"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[15].completionEvidence",
+      "excerpt": "The responsible build layer was corrected. INSTRUCTION-v002 and build-arbitrary application version-self.mjs now require the exact filename SELF_VERIFIED_PROJECT.json, a no-store same-origin fetch, normal project import validation, and automatic startup loading while leaving missing-sidecar startup usable. app-arbitrary application version.html was regenerated, REG-001 passed, and all downstream candidate and verification artifacts were regenerated. External agent process 3327 handled only RUN-0"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[18].completionEvidence",
+      "excerpt": "CONVERGENCE LEDGER: mandatory requirement coverage 100%; mandatory verification coverage 100%; regression success 100%; CRITICAL defects 0; MAJOR defects 0; mandatory unknowns 0; correctness contradictions 0; correctness ambiguities 0; unexplained correctness variance 0. All ten corrected app artifacts load the real sidecar fixture, preserve all gates, and pass the phone and exact-hash checks. Exact converged candidate: CANDIDATE-v002. External agent process 3636 handled only RUN-000 from the re"
+    },
+    {
+      "label": "agent-instruction relay",
+      "path": "$.stages[21].completionEvidence",
+      "excerpt": "PRODUCT_ID: PRODUCT-CLR-arbitrary application version. BASELINE_ID: BASELINE-SELF-v001. ARTIFACT_NAME: app-arbitrary application version.html. A fresh production process generated the actual requested standalone application app-arbitrary application version.html from the approved baseline. The product is not a template, receipt, or placeholder. Manifest: app-arbitrary application version.html, text/html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e.\nFINAL"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[23].completionEvidence",
+      "excerpt": "INDEPENDENT SEMANTIC VERIFICATION completed in a verifier context separate from final production. REQ-001 through REQ-015 are SATISFIED. Observed meaning matches the required meaning: the app starts usable, creates an empty project through visible controls, prevents stage skipping, captures all required responses, preserves the actual finished app, and loads the exact UI-exported completed self-project from the sidecar without embedding it in the HTML. External agent process 3986 handled only RU"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[24].completionEvidence",
+      "excerpt": "ADVERSARIAL PRODUCT VERIFICATION attempted to disprove app-arbitrary application version.html using missing controls, clipped options, blank/loading-only startup, stage bypass, absent producer/verifier inputs, fabricated proof state, stale candidate hashes, verifier target omission, wrong sidecar filename, external dependency injection, changed release bytes, and malformed project JSON. The corrected product resisted every attack. Unresolved critical findings 0; unresolved major findings 0. Exte"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.stages[28].completionEvidence",
+      "excerpt": "RELEASE_DECISION: ACCEPTED. Every mandatory requirement has affirmative evidence; every mandatory validator passed on the exact finished artifact; the candidate sidecar defect was corrected and covered by REG-001; required producer and verifier counts are present; critical defects 0; major defects 0; mandatory unknowns 0. Exact release-hash verification is authorized. External agent process 4058 handled only RUN-000 from the rendered prompt. No sibling output was supplied to this process.\n\nNOTES"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[0].output",
+      "excerpt": "RUN-001: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3003. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[0].output",
+      "excerpt": "RUN-001: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3003. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[1].output",
+      "excerpt": "RUN-002: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3017. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[1].output",
+      "excerpt": "RUN-002: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3017. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[2].output",
+      "excerpt": "RUN-003: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3031. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[2].output",
+      "excerpt": "RUN-003: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3031. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[3].output",
+      "excerpt": "RUN-004: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3045. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[3].output",
+      "excerpt": "RUN-004: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3045. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[4].output",
+      "excerpt": "RUN-005: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3059. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[4].output",
+      "excerpt": "RUN-005: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3059. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[5].output",
+      "excerpt": "RUN-006: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3073. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[5].output",
+      "excerpt": "RUN-006: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3073. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[6].output",
+      "excerpt": "RUN-007: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3087. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[6].output",
+      "excerpt": "RUN-007: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3087. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[7].output",
+      "excerpt": "RUN-008: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3101. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[7].output",
+      "excerpt": "RUN-008: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3101. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[8].output",
+      "excerpt": "RUN-009: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3115. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[8].output",
+      "excerpt": "RUN-009: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3115. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[9].output",
+      "excerpt": "RUN-010: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3129. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[9].output",
+      "excerpt": "RUN-010: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3129. Candidate artifact app-v13-candidate1.html; artifact bytes 65280; artifact SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json VIOLATED because SELF_PROJECT_PATH is SELF_VERIFIED_PROJEC.json. Ex"
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[10].output",
+      "excerpt": "RUN-001: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3356. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3356 handled only RUN-001 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[10].output",
+      "excerpt": "RUN-001: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3356. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3356 handled only RUN-001 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[11].output",
+      "excerpt": "RUN-002: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3370. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3370 handled only RUN-002 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[11].output",
+      "excerpt": "RUN-002: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3370. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3370 handled only RUN-002 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[12].output",
+      "excerpt": "RUN-003: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3384. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3384 handled only RUN-003 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[12].output",
+      "excerpt": "RUN-003: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3384. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3384 handled only RUN-003 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[13].output",
+      "excerpt": "RUN-004: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3398. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3398 handled only RUN-004 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[13].output",
+      "excerpt": "RUN-004: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3398. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3398 handled only RUN-004 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[14].output",
+      "excerpt": "RUN-005: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3412. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3412 handled only RUN-005 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[14].output",
+      "excerpt": "RUN-005: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3412. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3412 handled only RUN-005 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[15].output",
+      "excerpt": "RUN-006: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3426. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3426 handled only RUN-006 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[15].output",
+      "excerpt": "RUN-006: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3426. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3426 handled only RUN-006 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[16].output",
+      "excerpt": "RUN-007: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3440. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3440 handled only RUN-007 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[16].output",
+      "excerpt": "RUN-007: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3440. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3440 handled only RUN-007 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[17].output",
+      "excerpt": "RUN-008: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3454. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3454 handled only RUN-008 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[17].output",
+      "excerpt": "RUN-008: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3454. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3454 handled only RUN-008 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[18].output",
+      "excerpt": "RUN-009: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3468. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3468 handled only RUN-009 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[18].output",
+      "excerpt": "RUN-009: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3468. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3468 handled only RUN-009 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[19].output",
+      "excerpt": "RUN-010: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3482. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3482 handled only RUN-010 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[19].output",
+      "excerpt": "RUN-010: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3482. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3482 handled only RUN-010 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[20].output",
+      "excerpt": "RUN-001: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3650. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3650 handled only RUN-001 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[20].output",
+      "excerpt": "RUN-001: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3650. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3650 handled only RUN-001 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[21].output",
+      "excerpt": "RUN-002: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3678. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3678 handled only RUN-002 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[21].output",
+      "excerpt": "RUN-002: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3678. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3678 handled only RUN-002 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[22].output",
+      "excerpt": "RUN-003: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3706. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3706 handled only RUN-003 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[22].output",
+      "excerpt": "RUN-003: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3706. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3706 handled only RUN-003 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[23].output",
+      "excerpt": "RUN-004: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3734. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3734 handled only RUN-004 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[23].output",
+      "excerpt": "RUN-004: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3734. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3734 handled only RUN-004 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[24].output",
+      "excerpt": "RUN-005: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3762. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3762 handled only RUN-005 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[24].output",
+      "excerpt": "RUN-005: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3762. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3762 handled only RUN-005 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[25].output",
+      "excerpt": "RUN-006: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3790. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3790 handled only RUN-006 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[25].output",
+      "excerpt": "RUN-006: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3790. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3790 handled only RUN-006 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[26].output",
+      "excerpt": "RUN-007: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3818. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3818 handled only RUN-007 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[26].output",
+      "excerpt": "RUN-007: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3818. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3818 handled only RUN-007 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[27].output",
+      "excerpt": "RUN-008: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3846. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3846 handled only RUN-008 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[27].output",
+      "excerpt": "RUN-008: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3846. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3846 handled only RUN-008 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[28].output",
+      "excerpt": "RUN-009: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3874. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3874 handled only RUN-009 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[28].output",
+      "excerpt": "RUN-009: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3874. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3874 handled only RUN-009 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.executions[29].output",
+      "excerpt": "RUN-010: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3902. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3902 handled only RUN-010 from the rendered "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.executions[29].output",
+      "excerpt": "RUN-010: ACTUAL INDEPENDENT EXECUTION COMPLETE. Fresh process ID 3902. Candidate artifact app-v13.html; artifact bytes 65281; artifact SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. The process received only its rendered run prompt, did not read sibling output, and produced a complete app artifact receipt. Sidecar contract observed in exact SELF_PROJECT_PATH bytes: SELF_VERIFIED_PROJECT.json SATISFIED. External agent process 3902 handled only RUN-010 from the rendered "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[0].result",
+      "excerpt": "RUN-001: INDEPENDENT VERIFIER process 3144 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[0].result",
+      "excerpt": "RUN-001: INDEPENDENT VERIFIER process 3144 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[1].result",
+      "excerpt": "RUN-002: INDEPENDENT VERIFIER process 3158 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[1].result",
+      "excerpt": "RUN-002: INDEPENDENT VERIFIER process 3158 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[2].result",
+      "excerpt": "RUN-003: INDEPENDENT VERIFIER process 3172 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[2].result",
+      "excerpt": "RUN-003: INDEPENDENT VERIFIER process 3172 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[3].result",
+      "excerpt": "RUN-004: INDEPENDENT VERIFIER process 3187 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[3].result",
+      "excerpt": "RUN-004: INDEPENDENT VERIFIER process 3187 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[4].result",
+      "excerpt": "RUN-005: INDEPENDENT VERIFIER process 3201 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[4].result",
+      "excerpt": "RUN-005: INDEPENDENT VERIFIER process 3201 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[5].result",
+      "excerpt": "RUN-006: INDEPENDENT VERIFIER process 3215 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[5].result",
+      "excerpt": "RUN-006: INDEPENDENT VERIFIER process 3215 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[6].result",
+      "excerpt": "RUN-007: INDEPENDENT VERIFIER process 3229 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[6].result",
+      "excerpt": "RUN-007: INDEPENDENT VERIFIER process 3229 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[7].result",
+      "excerpt": "RUN-008: INDEPENDENT VERIFIER process 3243 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[7].result",
+      "excerpt": "RUN-008: INDEPENDENT VERIFIER process 3243 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[8].result",
+      "excerpt": "RUN-009: INDEPENDENT VERIFIER process 3257 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[8].result",
+      "excerpt": "RUN-009: INDEPENDENT VERIFIER process 3257 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[9].result",
+      "excerpt": "RUN-010: INDEPENDENT VERIFIER process 3271 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[9].result",
+      "excerpt": "RUN-010: INDEPENDENT VERIFIER process 3271 verified exact artifact app-v13-candidate1.html, 65280 bytes, SHA-256 be0178d98bda937f0db6f26e1cb86020357140c20362b8aa5c164cd6ce127efe. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 "
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[10].result",
+      "excerpt": "RUN-001: INDEPENDENT VERIFIER process 3496 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[10].result",
+      "excerpt": "RUN-001: INDEPENDENT VERIFIER process 3496 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[11].result",
+      "excerpt": "RUN-002: INDEPENDENT VERIFIER process 3510 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[11].result",
+      "excerpt": "RUN-002: INDEPENDENT VERIFIER process 3510 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[12].result",
+      "excerpt": "RUN-003: INDEPENDENT VERIFIER process 3524 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[12].result",
+      "excerpt": "RUN-003: INDEPENDENT VERIFIER process 3524 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[13].result",
+      "excerpt": "RUN-004: INDEPENDENT VERIFIER process 3538 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[13].result",
+      "excerpt": "RUN-004: INDEPENDENT VERIFIER process 3538 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[14].result",
+      "excerpt": "RUN-005: INDEPENDENT VERIFIER process 3552 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[14].result",
+      "excerpt": "RUN-005: INDEPENDENT VERIFIER process 3552 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[15].result",
+      "excerpt": "RUN-006: INDEPENDENT VERIFIER process 3566 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[15].result",
+      "excerpt": "RUN-006: INDEPENDENT VERIFIER process 3566 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[16].result",
+      "excerpt": "RUN-007: INDEPENDENT VERIFIER process 3580 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[16].result",
+      "excerpt": "RUN-007: INDEPENDENT VERIFIER process 3580 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[17].result",
+      "excerpt": "RUN-008: INDEPENDENT VERIFIER process 3594 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[17].result",
+      "excerpt": "RUN-008: INDEPENDENT VERIFIER process 3594 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[18].result",
+      "excerpt": "RUN-009: INDEPENDENT VERIFIER process 3608 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[18].result",
+      "excerpt": "RUN-009: INDEPENDENT VERIFIER process 3608 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[19].result",
+      "excerpt": "RUN-010: INDEPENDENT VERIFIER process 3622 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[19].result",
+      "excerpt": "RUN-010: INDEPENDENT VERIFIER process 3622 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[20].result",
+      "excerpt": "RUN-001: INDEPENDENT VERIFIER process 3664 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[20].result",
+      "excerpt": "RUN-001: INDEPENDENT VERIFIER process 3664 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[21].result",
+      "excerpt": "RUN-002: INDEPENDENT VERIFIER process 3692 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[21].result",
+      "excerpt": "RUN-002: INDEPENDENT VERIFIER process 3692 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[22].result",
+      "excerpt": "RUN-003: INDEPENDENT VERIFIER process 3720 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[22].result",
+      "excerpt": "RUN-003: INDEPENDENT VERIFIER process 3720 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[23].result",
+      "excerpt": "RUN-004: INDEPENDENT VERIFIER process 3748 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[23].result",
+      "excerpt": "RUN-004: INDEPENDENT VERIFIER process 3748 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[24].result",
+      "excerpt": "RUN-005: INDEPENDENT VERIFIER process 3776 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[24].result",
+      "excerpt": "RUN-005: INDEPENDENT VERIFIER process 3776 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[25].result",
+      "excerpt": "RUN-006: INDEPENDENT VERIFIER process 3804 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[25].result",
+      "excerpt": "RUN-006: INDEPENDENT VERIFIER process 3804 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[26].result",
+      "excerpt": "RUN-007: INDEPENDENT VERIFIER process 3832 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[26].result",
+      "excerpt": "RUN-007: INDEPENDENT VERIFIER process 3832 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[27].result",
+      "excerpt": "RUN-008: INDEPENDENT VERIFIER process 3860 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[27].result",
+      "excerpt": "RUN-008: INDEPENDENT VERIFIER process 3860 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[28].result",
+      "excerpt": "RUN-009: INDEPENDENT VERIFIER process 3888 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[28].result",
+      "excerpt": "RUN-009: INDEPENDENT VERIFIER process 3888 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "v13",
+      "path": "$.verificationRecords[29].result",
+      "excerpt": "RUN-010: INDEPENDENT VERIFIER process 3916 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.verificationRecords[29].result",
+      "excerpt": "RUN-010: INDEPENDENT VERIFIER process 3916 verified exact artifact app-v13.html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e. REQ-001 immediate usable load SATISFIED; REQ-002 visible project creation SATISFIED; REQ-003 exact intake preservation SATISFIED; REQ-004 31 operations SATISFIED; REQ-005 sequential gate SATISFIED; REQ-006 producer controls SATISFIED; REQ-007 verifier controls SATISFIED; REQ-008 target-output binding SATISFIED; REQ-009 version/has"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[0].content",
+      "excerpt": "JOB_ID: JOB-MT3M46X0-M0LIB9\n\nPROJECT_ID: PROJECT-MT3M46X0-075JMP\n\nINPUT_VERSION: INPUT-v001\n\nEXACT USER OBJECTIVE:\nBuild, verify, release, and deploy one phone-first, domain-general Closed-Loop Agent Reliability application that accepts an arbitrary user job and drives it through the exact 31-stage forward pipeline from lossless user intent through independent external research, external authority, atomic requirements, tests, production, independent verification, correction, acceptance, release-"
+    },
+    {
+      "label": "implementation history",
+      "path": "$.workflowArtifacts[0].content",
+      "excerpt": "JOB_ID: JOB-MT3M46X0-M0LIB9\n\nPROJECT_ID: PROJECT-MT3M46X0-075JMP\n\nINPUT_VERSION: INPUT-v001\n\nEXACT USER OBJECTIVE:\nBuild, verify, release, and deploy one phone-first, domain-general Closed-Loop Agent Reliability application that accepts an arbitrary user job and drives it through the exact 31-stage forward pipeline from lossless user intent through independent external research, external authority, atomic requirements, tests, production, independent verification, correction, acceptance, release-"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[1].content",
+      "excerpt": "SOURCE_SET_VERSION: SOURCE-SET-v002\n\nEXTERNAL_SEARCH_PERFORMED: true\n\nEXTERNAL_SOURCES_DISCOVERED: 40\n\nEXTERNAL_SOURCES_SUCCESSFULLY_RETRIEVED: 38/40\n\nPROHIBITED_WORK_PRODUCTS_USED_AS_AUTHORITY: false\n\nSOURCE_INVENTORY_COMPLETE: true\n\nCOMPLETION_BASIS: Every Stage 1 research area is COVERED by at least one examined external source or explicitly BLOCKED.\n\nSOURCE_ID: SRC-0001\nEXACT_TITLE: HTML Living Standard\nSOURCE_TYPE: STANDARD\nAUTHOR_OR_ISSUING_ORGANIZATION: WHATWG\nPUBLISHER_OR_HOST: WHATWG\nCA"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[2].content",
+      "excerpt": "RESEARCH_VERSION: RESEARCH-v002\n\nEXTERNAL_REQUIREMENTS_RESEARCH_COMPLETE: true\n\nEXTERNAL_SOURCES_SUCCESSFULLY_RETRIEVED: 38/40\n\nPROHIBITED_WORK_PRODUCTS_USED_AS_AUTHORITY: false\n\nFINDING_ID: FINDING-0001\nSOURCE_ID: SRC-0001, SRC-0002\nRELEVANT_EXTERNAL_PORTION: Document structure, native controls, DOM events, and browser processing\nSOURCE_ESTABLISHES: A browser application must use conforming document/control semantics and observable event/state behavior; a visual label alone is not proof that an"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[5].content",
+      "excerpt": "Acceptance suite TEST-001 through TEST-015 was completed before production. Tests cover immediate render, empty project creation, exact objective/deliverable preservation, 31-stage order, locked-stage rejection, all 30 producer fields, all 30 verifier fields, target-output verifier prompts, candidate hashes, root-cause/regression evidence, real final HTML bytes, deterministic/semantic/adversarial verification, phone-width overflow, exact release hashes, and sidecar auto-load from the visible UI "
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[6].content",
+      "excerpt": "Mutation suite MUT-001 through MUT-015 executed. Invalid fixtures included removal of the New project control, stage deletion, unlocked Stage 2, missing producer and verifier fields, verifier prompts without target output, altered candidate hash, absent regression record, placeholder final artifact, injected external dependency, forced 320px overflow, changed release byte, embedded completed project data, and a misspelled sidecar filename. Each deliberately invalid fixture was detected and REJEC"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[7].content",
+      "excerpt": "INSTRUCTION-v001 directs a fresh process to build a standalone phone-first domain-general Closed-Loop Agent Reliability application from the approved job definition, externally researched requirements, acceptance tests, and mutation tests; preserve all 31 stages and required fields; keep completed project state outside the HTML; load the verified project from a same-origin sidecar when available; execute ten-run producer/verifier batches; preserve evidence; verify mobile rendering and exact hash"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[8].content",
+      "excerpt": "PREFLIGHT of INSTRUCTION-v001 completed against the approved requirement/test package and actual tools. The output contract, browser runner, external process runner, hashing, file export, and release procedure are available and ordered. The preflight confirmed no missing capability or hidden state mutation. It retained the sidecar-path requirement for candidate verification because only execution can establish whether the generated filename matches the deployment contract. External agent process"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[11].content",
+      "excerpt": "10 independent verifier records captured for Stage 12.\n\nNOTES:\nVisible UI evidence: ten independent verifier textareas contain fresh-process requirement matrices. Every verifier independently observed the same real sidecar filename defect in CANDIDATE-v001."
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[13].content",
+      "excerpt": "DEFECT-001 CONFIRMED, severity MAJOR, category INSTRUCTION/BUILD DEFECT. Earliest responsible layer: INSTRUCTION-v001 and its build-sidecar filename parameter. ROOT CAUSE: the exact filename was not fixed in the instruction, allowing app-arbitrary application version-candidate1.html to omit the final T in PROJECT. Evidence: ten actual candidate files, ten independent verifier processes, and literal source inspection all report REQ-015 VIOLATED. CANDIDATE-v001 and its dependent verification are i"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[15].content",
+      "excerpt": "The responsible build layer was corrected. INSTRUCTION-v002 and build-arbitrary application version-self.mjs now require the exact filename SELF_VERIFIED_PROJECT.json, a no-store same-origin fetch, normal project import validation, and automatic startup loading while leaving missing-sidecar startup usable. app-arbitrary application version.html was regenerated, REG-001 passed, and all downstream candidate and verification artifacts were regenerated. External agent process 3327 handled only RUN-0"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[18].content",
+      "excerpt": "CONVERGENCE LEDGER: mandatory requirement coverage 100%; mandatory verification coverage 100%; regression success 100%; CRITICAL defects 0; MAJOR defects 0; mandatory unknowns 0; correctness contradictions 0; correctness ambiguities 0; unexplained correctness variance 0. All ten corrected app artifacts load the real sidecar fixture, preserve all gates, and pass the phone and exact-hash checks. Exact converged candidate: CANDIDATE-v002. External agent process 3636 handled only RUN-000 from the re"
+    },
+    {
+      "label": "agent-instruction relay",
+      "path": "$.workflowArtifacts[21].content",
+      "excerpt": "PRODUCT_ID: PRODUCT-CLR-arbitrary application version. BASELINE_ID: BASELINE-SELF-v001. ARTIFACT_NAME: app-arbitrary application version.html. A fresh production process generated the actual requested standalone application app-arbitrary application version.html from the approved baseline. The product is not a template, receipt, or placeholder. Manifest: app-arbitrary application version.html, text/html, 65281 bytes, SHA-256 e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e.\nFINAL"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[23].content",
+      "excerpt": "INDEPENDENT SEMANTIC VERIFICATION completed in a verifier context separate from final production. REQ-001 through REQ-015 are SATISFIED. Observed meaning matches the required meaning: the app starts usable, creates an empty project through visible controls, prevents stage skipping, captures all required responses, preserves the actual finished app, and loads the exact UI-exported completed self-project from the sidecar without embedding it in the HTML. External agent process 3986 handled only RU"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[24].content",
+      "excerpt": "ADVERSARIAL PRODUCT VERIFICATION attempted to disprove app-arbitrary application version.html using missing controls, clipped options, blank/loading-only startup, stage bypass, absent producer/verifier inputs, fabricated proof state, stale candidate hashes, verifier target omission, wrong sidecar filename, external dependency injection, changed release bytes, and malformed project JSON. The corrected product resisted every attack. Unresolved critical findings 0; unresolved major findings 0. Exte"
+    },
+    {
+      "label": "sidecar",
+      "path": "$.workflowArtifacts[28].content",
+      "excerpt": "RELEASE_DECISION: ACCEPTED. Every mandatory requirement has affirmative evidence; every mandatory validator passed on the exact finished artifact; the candidate sidecar defect was corrected and covered by REG-001; required producer and verifier counts are present; critical defects 0; major defects 0; mandatory unknowns 0. Exact release-hash verification is authorized. External agent process 4058 handled only RUN-000 from the rendered prompt. No sibling output was supplied to this process.\n\nNOTES"
+    },
+    {
+      "label": "v13",
+      "path": "$.legacyProjectMetadata.artifactName",
+      "excerpt": "app-v13.html"
+    }
+  ]
+}
