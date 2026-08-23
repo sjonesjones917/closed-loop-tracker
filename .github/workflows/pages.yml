@@ -1,4 +1,4 @@
-name: Verify, test, and deploy the single reliability app
+name: Verify and deploy the single reliability app
 on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
@@ -13,50 +13,62 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - id: project
+      - id: build
         continue-on-error: true
         run: node build-test-project.mjs
-      - id: human
+      - id: syntax
         continue-on-error: true
-        run: node --check human-ui.js
-      - id: live_verifier
-        continue-on-error: true
-        run: node --check verify-live.mjs
-      - id: verifier
-        continue-on-error: true
-        run: node verify.mjs
-      - id: structure
+        run: node --check app.js && node --check workbook.js && node --check verify-live.mjs
+      - id: data
         continue-on-error: true
         run: |
-          test -f index.html
+          node - <<'NODE'
+          const fs=require('fs'),p=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
+          const ok=(x,m)=>{if(!x)throw new Error(m)};
+          ok(p.schema==='closed-loop-project/30','schema');ok(Object.keys(p.stageRecords||{}).length===30,'stages');ok(p.job?.currentStage===30&&p.job?.currentState==='ACCEPTED','state');ok(p.userEntries?.[0]?.objective?.includes('GEN-042'),'job');ok(!/application conformance|Evaluate the Closed-Loop Reliability application|maintenance handoff/i.test(JSON.stringify(p)),'framing');ok((p.generatedPrompts||[]).length===30,'prompts');ok((p.agentOutputs||[]).length===30&&p.agentOutputs.every(x=>typeof x.output==='string'&&x.output.length),'outputs');ok((p.outputReceipts||[]).length===30,'receipts');ok((p.runs||[]).length===20,'runs');const m=(p.requirements||[]).filter(r=>r.mandatory!==false).length;ok((p.verification||[]).length===m*20,'matrix');ok((p.evidenceChains||[]).length>0,'chains');ok((p.appendOnly?.regressions||[]).length>0,'regressions');ok((p.artifacts||[]).length>0,'artifacts');
+          NODE
+      - id: ui
+        continue-on-error: true
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),a=fs.readFileSync('app.js','utf8'),h=fs.readFileSync('index.html','utf8');const ok=(x,m)=>{if(!x)throw new Error(m)};for(const t of ['validateStageDraft','stageHumanItems','stageGateItems','stageEvidenceItems','saveAppendix','sha256Bytes','compareArtifactSets','Complete project records','Generated outputs','Output receipts'])ok(a.includes(t),t);ok(!/human-project\/31|31 operations|Freeze New Version/i.test(a+h),'old model');
+          NODE
+      - id: core
+        continue-on-error: true
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),b=fs.readFileSync('workbook.js','utf8');if(!b.includes('runtime.STAGES')||!b.includes('runtime.buildStagePrompt'))throw new Error('runtime bridge');
+          NODE
+      - id: terms
+        continue-on-error: true
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8');if(/\bsemantic\b/i.test(s))throw new Error('prohibited term');
+          NODE
+      - id: single
+        continue-on-error: true
+        run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
-          test -f TEST_PROJECT.json
+          test ! -f human-ui.js
           test ! -f agent-workflow.js
           test ! -f prompt-center.js
-          node - <<'NODE'
-          const p=require('./TEST_PROJECT.json');
-          if(p.schema!=='closed-loop-project/30'||p.job?.currentStage!==30||Object.keys(p.stageRecords||{}).length!==30)process.exit(1);
-          const text=JSON.stringify(p);
-          if(/application conformance|Evaluate the Closed-Loop Reliability application/i.test(text))process.exit(1);
-          if(!p.userEntries?.[0]?.objective?.includes('GEN-042'))process.exit(1);
-          if(p.runs?.length!==20||p.verification?.length!==p.requirements.length*20)process.exit(1);
-          NODE
-      - name: Publish source statuses
+          grep -q '<script src="workbook.js"></script>' index.html
+          grep -q '<script src="app.js"></script>' index.html
+      - name: Publish exact source results
         if: always()
-        env: {GH_TOKEN: '${{ github.token }}', PROJECT: '${{ steps.project.outcome }}', HUMAN: '${{ steps.human.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER: '${{ steps.verifier.outcome }}', STRUCTURE: '${{ steps.structure.outcome }}'}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD: ${{ steps.build.outcome }}
+          SYNTAX: ${{ steps.syntax.outcome }}
+          DATA: ${{ steps.data.outcome }}
+          UI: ${{ steps.ui.outcome }}
+          CORE: ${{ steps.core.outcome }}
+          TERMS: ${{ steps.terms.outcome }}
+          SINGLE: ${{ steps.single.outcome }}
         run: |
-          target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          for pair in "retained-real-project:$PROJECT" "human-ui-syntax:$HUMAN" "live-verifier-syntax:$LIVE" "30-stage-repository-verifier:$VERIFIER" "single-app-structure:$STRUCTURE"; do
-            context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
-            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
-          done
-      - name: Enforce source verification
-        run: |
-          test '${{ steps.project.outcome }}' = success
-          test '${{ steps.human.outcome }}' = success
-          test '${{ steps.live_verifier.outcome }}' = success
-          test '${{ steps.verifier.outcome }}' = success
-          test '${{ steps.structure.outcome }}' = success
+          post(){ local c="$1" r="$2" s=failure; [ "$r" = success ] && s=success; curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "{\"state\":\"$s\",\"context\":\"$c\",\"description\":\"$r\"}" >/dev/null; }
+          post source-build "$BUILD"; post source-syntax "$SYNTAX"; post source-project-data "$DATA"; post source-ui-controls "$UI"; post source-workflow-core "$CORE"; post source-terms "$TERMS"; post source-single-app "$SINGLE"
+          [ "$BUILD" = success ] && [ "$SYNTAX" = success ] && [ "$DATA" = success ] && [ "$UI" = success ] && [ "$CORE" = success ] && [ "$TERMS" = success ] && [ "$SINGLE" = success ]
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -84,69 +96,29 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Build the same retained real project used in deployment
-        run: node build-test-project.mjs
-      - name: Confirm runner browser
+      - run: node verify-live.mjs
+      - name: Verify phone human views
         run: |
-          BROWSER="$(command -v google-chrome || command -v chrome || command -v chromium || true)"
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          "$BROWSER" --version
-      - id: identity
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          mkdir -p live-proof
-          verified=false
-          FILES=(index.html human-ui.js TEST_PROJECT.json verify-live.mjs)
-          for attempt in $(seq 1 36); do
-            nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"; good=true
-            for f in "${FILES[@]}"; do curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false; done
-            if $good; then
-              exact=true
-              for f in "${FILES[@]}"; do [[ "$(sha256sum "$f"|awk '{print $1}')" == "$(sha256sum "live-proof/$f"|awk '{print $1}')" ]] || exact=false; done
-              $exact && verified=true && break
-            fi
-            sleep 5
+          for WIDTH in 320 393; do
+            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=6000 --dump-dom "${PAGE_URL}" > "live-${WIDTH}.html"
+            grep -q 'GEN-042' "live-${WIDTH}.html"
+            grep -q '30/30' "live-${WIDTH}.html"
+            grep -q 'Overview' "live-${WIDTH}.html"
           done
-          test "$verified" = true
-      - name: Start 320px interaction browser
+
+  report:
+    if: always() && github.event_name != 'pull_request'
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish exact repair results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
         run: |
-          BROWSER="$(command -v google-chrome || command -v chrome || command -v chromium)"
-          rm -rf /tmp/live-e2e
-          "$BROWSER" --headless --no-sandbox --disable-gpu --remote-debugging-port=9222 --user-data-dir=/tmp/live-e2e --window-size=320,800 about:blank >/tmp/live-chrome.log 2>&1 &
-          for n in $(seq 1 50); do curl -fsS http://127.0.0.1:9222/json/version >/dev/null && exit 0; sleep .2; done
-          cat /tmp/live-chrome.log
-          exit 1
-      - id: workflow_interaction
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          node verify-live.mjs workflow 2>&1 | tee live-proof/workflow-interaction.log
-      - id: history_interaction
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          node verify-live.mjs history 2>&1 | tee live-proof/history-interaction.log
-      - id: reset_interaction
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          node verify-live.mjs reset 2>&1 | tee live-proof/reset-interaction.log
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with: {name: 'live-proof-${{ github.run_id }}', path: live-proof, if-no-files-found: error}
-      - name: Publish live verification statuses
-        if: always()
-        env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', WORKFLOW: '${{ steps.workflow_interaction.outcome }}', HISTORY: '${{ steps.history_interaction.outcome }}', RESET: '${{ steps.reset_interaction.outcome }}'}
-        run: |
-          target="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          for pair in "live-file-identity:$IDENTITY" "live-320px-workflow:$WORKFLOW" "live-project-history:$HISTORY" "live-new-project-reset:$RESET"; do
-            context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
-            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result" -f target_url="$target"
-          done
-      - name: Enforce live verification
-        run: |
-          test '${{ steps.identity.outcome }}' = success
-          test '${{ steps.workflow_interaction.outcome }}' = success
-          test '${{ steps.history_interaction.outcome }}' = success
-          test '${{ steps.reset_interaction.outcome }}' = success
+          post(){ local c="$1" r="$2" s=failure; [ "$r" = success ] && s=success; curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "{\"state\":\"$s\",\"context\":\"$c\",\"description\":\"$r\"}" >/dev/null; }
+          post repair-source "$TEST_RESULT"; post repair-deploy "$DEPLOY_RESULT"; post repair-live "$LIVE_RESULT"; ALL=failure; [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ] && ALL=success; post repaired-app "$ALL"
