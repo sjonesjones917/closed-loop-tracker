@@ -44,7 +44,10 @@ ok(index.includes('Master 30-stage tracker')&&index.includes('Mandatory operatin
 
 ok(chunks.every(name=>loader.includes(name)),'loader reads all three existing runtime chunks');
 ok(loader.includes('DecompressionStream("gzip")')&&loader.includes('cache:"no-store"'),'loader decompresses runtime and bypasses stale cache');
-ok(!loader.includes('localStorage')&&!loader.includes('renderOperationalControl')&&!loader.includes('controlPanel('),'workbook.js remains a loader, not a second application');
+ok(loader.includes('BAD_NAV')&&loader.includes('Control records')&&loader.includes('removeDuplicateNavigation'),'workbook.js removes the duplicate appendix/control navigation surface');
+ok(loader.includes('compactContextualControls')&&loader.includes('stageNativeOperationalControls'),'workbook.js preserves Appendix records as stage-native controls in the same application');
+ok(loader.includes('document.getElementById(PURPOSE_ID)?.remove()'),'workbook.js removes the parallel appendix-purpose panel');
+ok(!loader.includes('renderOperationalControl')&&!loader.includes('controlPanel('),'workbook.js does not create a second application');
 ok(compressed.length>0&&source.includes('export const STAGES'),'runtime payload is present and decompresses');
 
 const temp=path.join(process.cwd(),'.verify-runtime.mjs');
