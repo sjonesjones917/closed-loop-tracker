@@ -4,6 +4,14 @@ const path='SELF_VERIFIED_PROJECT.json';
 const old=JSON.parse(fs.readFileSync(path,'utf8'));
 const stageNames=['DEFINE JOB','INVENTORY SOURCES','RESEARCH REQUIREMENTS','COMPILE ATOMIC REQUIREMENTS','RESOLVE CONFLICTS','BUILD ACCEPTANCE TESTS','BUILD FAILURE/MUTATION TESTS','AUTHOR PRODUCTION INSTRUCTION','PREFLIGHT INSTRUCTION','FREEZE CANDIDATE','RUN 10 INDEPENDENT EXECUTIONS','VERIFY EVERY RUN AGAINST EVERY REQUIREMENT','COMPARE ALL RUNS','ROOT-CAUSE EVERY DEFECT','ADD REGRESSION TESTS','CORRECT RESPONSIBLE LAYER','FREEZE NEW VERSION','RUN 10 NEW INDEPENDENT EXECUTIONS','REPEAT UNTIL CONVERGED','RUN UNCHANGED 10-EXECUTION CONFIRMATION','FREEZE APPROVED BASELINE','GENERATE FINISHED PRODUCT','DETERMINISTIC PRODUCT VERIFICATION','INDEPENDENT SEMANTIC VERIFICATION','ADVERSARIAL PRODUCT VERIFICATION','FINAL REPRESENTATION INSPECTION','PROCESS AUDIT','PRODUCT AUDIT','ACCEPTED / REJECTED / BLOCKED','VERIFY RELEASE HASH','RELEASE ONLY THE EXACT ACCEPTED ARTIFACT'];
 
+if(old.schema==='closed-loop-project/1'){
+ if(!Array.isArray(old.stages)||old.stages.length!==31)throw new Error('Current-schema self-project does not contain exactly 31 stages.');
+ old.stages.forEach((stage,i)=>{if(stage.number!==i+1||stage.name!==stageNames[i])throw new Error(`Current-schema self-project stage ${i+1} does not match the required workflow.`)});
+ if(!String(old.job?.exactUserObjective||'').trim()||!String(old.job?.exactDeliverables||'').trim())throw new Error('Current-schema self-project lost its job definition.');
+ console.log(JSON.stringify({status:'PASS',migrationRequired:false,projectId:old.projectId,schema:old.schema,stages:old.stages.length},null,2));
+ process.exit(0);
+}
+
 const stage1=String(old.stages?.[0]?.response||'');
 const section=(label,nextLabels=[])=>{
   const start=stage1.toUpperCase().indexOf(label.toUpperCase()+':');
@@ -50,8 +58,7 @@ const job={
 
 const stages=stageNames.map((name,i)=>{
  const prior=old.stages?.[i]||{};
- const actor=(Array.isArray(prior.producers)&&prior.producers.some(Boolean))||(Array.isArray(prior.verifiers)&&prior.verifiers.some(Boolean))?'HUMAN_AGENT_TEAM':'HUMAN_AGENT_TEAM';
- return {number:i+1,name,status:'COMPLETE',assignedActorType:actor,assignedActorName:'Verified application self-project',completionEvidence:cleanRepairFraming([prior.response,prior.notes].filter(Boolean).join('\n\nNOTES:\n')),blocker:'',startedAt:prior.completedAt||old.createdAt||null,completedAt:prior.completedAt||old.updatedAt||null,updatedAt:prior.completedAt||old.updatedAt||null};
+ return {number:i+1,name,status:'COMPLETE',assignedActorType:'HUMAN_AGENT_TEAM',assignedActorName:'Verified application self-project',completionEvidence:cleanRepairFraming([prior.response,prior.notes].filter(Boolean).join('\n\nNOTES:\n')),blocker:'',startedAt:prior.completedAt||old.createdAt||null,completedAt:prior.completedAt||old.updatedAt||null,updatedAt:prior.completedAt||old.updatedAt||null};
 });
 
 const executions=[];const verificationRecords=[];
@@ -62,10 +69,6 @@ for(const [stageIndex,stage] of (old.stages||[]).entries()){
 
 const workflowArtifacts=(old.stages||[]).map((stage,i)=>({artifactId:`LEGACY-STAGE-${String(i+1).padStart(2,'0')}-EVIDENCE`,stageNumber:i+1,informationClass:'WORKFLOW_GENERATED_ARTIFACT',artifactType:'STAGE_COMPLETION_EVIDENCE',name:`Stage ${i+1} ${stageNames[i]} evidence`,content:cleanRepairFraming([stage.response,stage.notes].filter(Boolean).join('\n\nNOTES:\n')),provenance:'Preserved from the prior visible-UI project export during schema migration; never external authority.'}));
 
-const migrated={
- schema:'closed-loop-project/1',projectId:old.projectId,name:'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD',createdAt:old.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),job,stages,selectedStage:31,
- userInputs:[],externalSources:[],researchCoverage:[],findings:[],requirements:[],conflicts:[],acceptanceTests:[],mutationTests:[],productionInstructions:[],preflightReviews:[],candidates:[],executions,verificationRecords,comparisons:[],defects:[],regressionTests:[],corrections:[],convergenceCycles:[],baselines:[],products:[],deterministicChecks:[],semanticChecks:[],adversarialChecks:[],representationInspections:[],processAudits:[],productAudits:[],decisions:[],hashVerifications:[],releases:[],workflowArtifacts,
- legacyProjectMetadata:{jobId:old.jobId||'',informationClassModel:old.informationClassModel||'',sourceAuthorityPolicy:old.sourceAuthorityPolicy||'',artifactName:old.artifactName||'',releaseDecision:old.releaseDecision||'',auditedHash:old.auditedHash||'',releaseHash:old.releaseHash||'',migrationNote:'Same self-project migrated to the current application project schema. Prior stage evidence is retained as workflow-generated evidence, not external authority.'}
-};
+const migrated={schema:'closed-loop-project/1',projectId:old.projectId,name:'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD',createdAt:old.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),job,stages,selectedStage:31,userInputs:[],externalSources:[],researchCoverage:[],findings:[],requirements:[],conflicts:[],acceptanceTests:[],mutationTests:[],productionInstructions:[],preflightReviews:[],candidates:[],executions,verificationRecords,comparisons:[],defects:[],regressionTests:[],corrections:[],convergenceCycles:[],baselines:[],products:[],deterministicChecks:[],semanticChecks:[],adversarialChecks:[],representationInspections:[],processAudits:[],productAudits:[],decisions:[],hashVerifications:[],releases:[],workflowArtifacts,legacyProjectMetadata:{jobId:old.jobId||'',informationClassModel:old.informationClassModel||'',sourceAuthorityPolicy:old.sourceAuthorityPolicy||'',artifactName:old.artifactName||'',releaseDecision:old.releaseDecision||'',auditedHash:old.auditedHash||'',releaseHash:old.releaseHash||'',migrationNote:'Same self-project migrated to the current application project schema. Prior stage evidence is retained as workflow-generated evidence, not external authority.'}};
 fs.writeFileSync(path,JSON.stringify(migrated,null,2)+'\n');
-console.log(JSON.stringify({status:'PASS',projectId:migrated.projectId,schema:migrated.schema,stages:migrated.stages.length,executions:migrated.executions.length,verificationRecords:migrated.verificationRecords.length},null,2));
+console.log(JSON.stringify({status:'PASS',migrationRequired:true,projectId:migrated.projectId,schema:migrated.schema,stages:migrated.stages.length,executions:migrated.executions.length,verificationRecords:migrated.verificationRecords.length},null,2));
