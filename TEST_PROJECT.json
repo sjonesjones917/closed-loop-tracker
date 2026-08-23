@@ -1,1 +1,435 @@
-{"schema":"mobile-closed-loop-project/2","testProjectId":"TEST-PROJECT-REAL-001","jobId":"TEST-JOB-001","title":"Existing application human-facing audit","description":"Populated project using the same persisted project model and 30-stage workflow as ordinary projects. Sources and finished product are actual files in this repository.","date":"2026-08-23T13:00:00Z","userEnteredData":{"requester":"Application owner","requestedOutput":"Audit the existing application as a human-facing closed-loop reliability product.","constraints":["One existing application only","30 stages remain semantic workflow","Appendices operate contextually","Test project is a project, not the app","Prompts, outputs, evidence and history remain inspectable"]},"objective":{"exactUserObjective":"Audit the existing Closed-Loop Reliability application as a real project and produce a human-readable audit artifact verifying the one-app constraint, compact human-facing project UI, inspectable project work/history, 30-stage preservation, contextual appendix behavior, and a genuine populated test project.","exactFilename":"test-project/TEST-JOB-001__UX-AUDIT.md","expectedByteLength":2084,"expectedSha256":"c783ad8b37417fa6ad88ca69d32fa5e9103ad50408bcaab43aa78b7997042b10"},"sourceInventory":[{"sourceId":"SRC-001","type":"APPLICATION SOURCE","title":"index.html","reference":"index.html","authorityLevel":1,"role":"EVIDENTIARY","actualSourceInspected":true},{"sourceId":"SRC-002","type":"APPLICATION SOURCE","title":"workbook.js","reference":"workbook.js","authorityLevel":1,"role":"EVIDENTIARY","actualSourceInspected":true},{"sourceId":"SRC-003","type":"APPLICATION SOURCE","title":"human-ui.js","reference":"human-ui.js","authorityLevel":1,"role":"EVIDENTIARY","actualSourceInspected":true},{"sourceId":"SRC-004","type":"USER REQUIREMENT","title":"Controlling application description","reference":"current specification","authorityLevel":0,"role":"MANDATORY","actualSourceInspected":true}],"requirements":[{"reqId":"REQ-001","requirement":"One application entry point; the test project is data inside that application.","mandatoryStatus":"MANDATORY","verificationMethod":"Repository and runtime-state inspection","failureCondition":"A second or parallel app exists.","severity":"CRITICAL"},{"reqId":"REQ-002","requirement":"The normal project interface is compact and human-facing rather than a developer or agent console.","mandatoryStatus":"MANDATORY","verificationMethod":"Rendered interface inspection","failureCondition":"Primary UI is dominated by oversized controls or implementation bookkeeping.","severity":"MAJOR"},{"reqId":"REQ-003","requirement":"The populated project exposes user data, sources, requirements, generated prompts/instructions, outputs, runs, evidence, defects, corrections, release data and complete history.","mandatoryStatus":"MANDATORY","verificationMethod":"Project-view inspection","failureCondition":"Substantive work is hidden behind summaries.","severity":"CRITICAL"},{"reqId":"REQ-004","requirement":"Stages 01 through 30 remain available as workflow semantics and stage-specific records/actions.","mandatoryStatus":"MANDATORY","verificationMethod":"Stage-count and workflow inspection","failureCondition":"A required stage is deleted.","severity":"CRITICAL"},{"reqId":"REQ-005","requirement":"Appendices A-F operate contextually as fresh-context, blocker, change/invalidation, release, new-project and output-receipt capabilities.","mandatoryStatus":"MANDATORY","verificationMethod":"Behavior and UI inspection","failureCondition":"Appendix semantics are deleted or rendered only as permanent checklist walls.","severity":"MAJOR"}],"tests":[{"testId":"TEST-001","reqId":"REQ-001","testType":"STRUCTURAL","procedure":"Inspect repository entry points and project-loading state.","expectedResult":"One application; test project uses ordinary project state."},{"testId":"TEST-002","reqId":"REQ-002","testType":"REPRESENTATION","procedure":"Inspect control dimensions, hierarchy and project navigation.","expectedResult":"Compact mobile controls and human project hierarchy."},{"testId":"TEST-003","reqId":"REQ-003","testType":"SEMANTIC","procedure":"Open the populated project and inspect each substantive work category.","expectedResult":"All required project information is visible on demand."},{"testId":"TEST-004","reqId":"REQ-004","testType":"STRUCTURAL","procedure":"Count and inspect stage records and navigation.","expectedResult":"Exactly 30 semantically distinct stages remain."},{"testId":"TEST-005","reqId":"REQ-005","testType":"SEMANTIC","procedure":"Inspect fresh-run, blocker, change, release, new-project and output-receipt behavior.","expectedResult":"Appendix semantics are integrated contextually."}],"mutations":[{"mutationId":"MUT-001","reqId":"REQ-003","violationMode":"Hide project history and show only a completion badge.","expectedSystemResponse":"DETECT and REJECT","validatorResult":"EFFECTIVE"},{"mutationId":"MUT-002","reqId":"REQ-002","violationMode":"Render all controls as large full-width buttons.","expectedSystemResponse":"DETECT and REJECT","validatorResult":"EFFECTIVE"},{"mutationId":"MUT-003","reqId":"REQ-005","violationMode":"Render Appendix A-F as permanent checklist pages.","expectedSystemResponse":"DETECT and REJECT","validatorResult":"EFFECTIVE"}],"productionInstruction":{"instructionVersion":"INSTRUCTION-v002","objective":"Inspect the existing application and produce the audit artifact from observed application evidence.","authorizedInputs":["SRC-001","SRC-002","SRC-003","SRC-004"],"procedure":["Inspect the existing application entry point and runtime components.","Inspect the project UI and populated test project including complete retained history.","Verify every mandatory requirement.","Preserve violations and unknowns.","Write the requested audit artifact."],"completionCriteria":"All five mandatory requirements are SATISFIED with evidence and finished artifact identity is verified."},"generatedPrompts":[{"stage":8,"title":"Production instruction","prompt":"Using only authorized application sources and controlling requirements, inspect the existing application. Verify REQ-001 through REQ-005 and produce the audit. Record UNKNOWN when evidence is unavailable."},{"stage":11,"title":"Independent execution","prompt":"In a fresh context, inspect the frozen candidate and produce the audit independently. Do not inspect another run or reviewer feedback. Preserve the output separately."},{"stage":12,"title":"Independent verification","prompt":"Verify the assigned run against every active requirement. Return SATISFIED, VIOLATED, or UNDETERMINED with evidence. The generator is not its sole verifier."},{"stage":24,"title":"Adversarial review","prompt":"Attempt to disprove the finished audit. Search for hidden project work, missing stages, oversized or machine-facing UI, deleted appendix semantics, false test-project claims, stale evidence and unsupported release conclusions."}],"phases":{"initial":{"candidateId":"CANDIDATE-001","iterationId":"ITERATION-001","toolConfiguration":"REPOSITORY-AND-UI-INSPECTION","runCount":10,"expectedOutcome":"REJECTED","output":{"filename":"TEST-JOB-001__UX-AUDIT-draft.md","byteLength":1712,"sha256":"NOT-RELEASE-ARTIFACT","summary":"Initial audit omitted complete project-history inspection."},"requirementResults":{"REQ-001":"SATISFIED","REQ-002":"SATISFIED","REQ-003":"VIOLATED","REQ-004":"SATISFIED","REQ-005":"SATISFIED"},"defectIds":["DEFECT-001"]},"corrected":{"candidateId":"CANDIDATE-002","iterationId":"ITERATION-002","toolConfiguration":"REPOSITORY-AND-UI-INSPECTION","runCount":10,"expectedOutcome":"SATISFIED","output":{"filename":"test-project/TEST-JOB-001__UX-AUDIT.md","byteLength":2084,"sha256":"c783ad8b37417fa6ad88ca69d32fa5e9103ad50408bcaab43aa78b7997042b10","summary":"Corrected audit includes complete project-history inspection."},"requirementResults":{"REQ-001":"SATISFIED","REQ-002":"SATISFIED","REQ-003":"SATISFIED","REQ-004":"SATISFIED","REQ-005":"SATISFIED"},"defectIds":[]},"confirmation":{"candidateId":"CANDIDATE-002","iterationId":"CONFIRMATION-001","toolConfiguration":"REPOSITORY-AND-UI-INSPECTION","runCount":10,"zeroChange":true,"expectedOutcome":"CONFIRMED","output":{"filename":"test-project/TEST-JOB-001__UX-AUDIT.md","byteLength":2084,"sha256":"c783ad8b37417fa6ad88ca69d32fa5e9103ad50408bcaab43aa78b7997042b10","summary":"Unchanged confirmation reproduced corrected determinations."},"requirementResults":{"REQ-001":"SATISFIED","REQ-002":"SATISFIED","REQ-003":"SATISFIED","REQ-004":"SATISFIED","REQ-005":"SATISFIED"},"defectIds":[]}},"generatedOutputs":[{"stage":11,"iteration":"ITERATION-001","run":"RUN-001 through RUN-010","output":"Ten separately retained initial audit outputs; each omitted complete project-history inspection."},{"stage":12,"iteration":"ITERATION-001","output":"REQ-003 = VIOLATED in all ten runs; DEFECT-001 opened."},{"stage":17,"iteration":"ITERATION-002","run":"RUN-001 through RUN-010","output":"Ten corrected independent audits; REQ-001 through REQ-005 = SATISFIED."},{"stage":19,"iteration":"CONFIRMATION-001","run":"RUN-001 through RUN-010","output":"Ten unchanged confirmation executions; all mandatory determinations remained SATISFIED."},{"stage":21,"output":"test-project/TEST-JOB-001__UX-AUDIT.md"}],"defects":[{"defectId":"DEFECT-001","iterationId":"ITERATION-001","affectedRunIds":["RUN-001","RUN-002","RUN-003","RUN-004","RUN-005","RUN-006","RUN-007","RUN-008","RUN-009","RUN-010"],"affectedReqIds":["REQ-003"],"observedFailure":"Initial instruction did not explicitly require complete retained project-history inspection.","severity":"MAJOR","rootCauseCategory":"INSTRUCTION_DEFECT","correctionRequired":"Add complete-history inspection and rerun the full ten-execution iteration.","status":"CLOSED_VERIFIED"}],"regressions":[{"regId":"REG-001","originalDefectId":"DEFECT-001","reqIds":["REQ-003"],"failureFixture":"Audit without complete-history inspection.","preCorrectionResult":"VIOLATED","postCorrectionResult":"SATISFIED","permanentActiveStatus":"ACTIVE"}],"blockers":[],"changes":[{"changeId":"CHANGE-001","trigger":"DEFECT-001","earliestResponsibleLayer":"INSTRUCTION","exactChange":"Added complete project-history inspection.","downstreamInvalidated":["CANDIDATE-001","ITERATION-001 verification","comparison"],"requiredReruns":["preflight","freeze","10 executions","verification","comparison","convergence"],"status":"CLOSED_REVALIDATED"}],"convergence":{"mandatoryRequirementCoverage":"100%","mandatoryVerificationCoverage":"100%","regressionTestSuccess":"100%","criticalDefects":0,"majorDefects":0,"mandatoryUnresolvedUnknowns":0,"correctnessAffectingContradictions":0,"correctnessAffectingAmbiguities":0,"unexplainedCorrectnessAffectingVariance":0,"allConditionsSimultaneouslyTrue":true},"baseline":{"baselineId":"BASELINE-001","supportingConfirmationIteration":"CONFIRMATION-001","inputVersion":"INPUT-v001","sourceSetVersion":"SOURCE-SET-v002","requirementsVersion":"REQUIREMENTS-v001","instructionVersion":"INSTRUCTION-v002","testSuiteVersion":"TEST-SUITE-v001","mutationSuiteVersion":"MUTATION-SUITE-v001","toolConfigurationVersion":"REPOSITORY-AND-UI-INSPECTION","immutable":true},"product":{"productId":"PRODUCT-001","productVersion":"PRODUCT-v001","artifactId":"ARTIFACT-001","filename":"test-project/TEST-JOB-001__UX-AUDIT.md","encoding":"UTF-8","byteLength":2084,"sha256":"c783ad8b37417fa6ad88ca69d32fa5e9103ad50408bcaab43aa78b7997042b10","repositoryArtifact":true},"release":{"releaseGateId":"GATE-001","releaseState":"ACCEPTED","mandatoryRequirements":5,"mandatoryRequirementsWithAffirmativeEvidence":5,"mandatoryValidators":5,"mandatoryValidatorsSucceeded":5,"unresolvedCriticalDefects":0,"unresolvedMajorDefects":0,"mandatoryRequirementsNotEstablished":0,"hashAuditId":"HASH-AUDIT-001","auditedSha256":"c783ad8b37417fa6ad88ca69d32fa5e9103ad50408bcaab43aa78b7997042b10","releaseSha256":"c783ad8b37417fa6ad88ca69d32fa5e9103ad50408bcaab43aa78b7997042b10","byteSizeEqual":true,"hashesEqual":true,"deliveryAuthorization":"AUTHORIZED"},"evidenceChains":[{"chainRecordId":"CHAIN-001","reqId":"REQ-001","sourceId":"SRC-004","testId":"TEST-001","testResult":"SATISFIED","releaseGateState":"ACCEPTED","releaseHashMatch":true},{"chainRecordId":"CHAIN-002","reqId":"REQ-002","sourceId":"SRC-004","testId":"TEST-002","testResult":"SATISFIED","releaseGateState":"ACCEPTED","releaseHashMatch":true},{"chainRecordId":"CHAIN-003","reqId":"REQ-003","sourceId":"SRC-004","testId":"TEST-003","testResult":"SATISFIED","releaseGateState":"ACCEPTED","releaseHashMatch":true},{"chainRecordId":"CHAIN-004","reqId":"REQ-004","sourceId":"SRC-004","testId":"TEST-004","testResult":"SATISFIED","releaseGateState":"ACCEPTED","releaseHashMatch":true},{"chainRecordId":"CHAIN-005","reqId":"REQ-005","sourceId":"SRC-004","testId":"TEST-005","testResult":"SATISFIED","releaseGateState":"ACCEPTED","releaseHashMatch":true}]}
+{
+  "schema": "mobile-closed-loop-project/3",
+  "testProjectId": "TEST-PROJECT-REAL-001",
+  "jobId": "TEST-JOB-001",
+  "title": "Repair the existing Closed-Loop Reliability application",
+  "description": "A genuine project record for the current application repair. It records only work and evidence that actually exist. It intentionally stops at the first control that has not genuinely been satisfied instead of fabricating completed independent runs or release evidence.",
+  "date": "2026-08-23T14:00:00Z",
+  "currentStage": 11,
+  "currentState": "BLOCKED",
+  "currentIteration": "ITERATION-001",
+  "nextRequiredAction": "Create ten genuinely independent fresh execution contexts from the frozen candidate. Do not count synthetic or duplicated records as independent runs.",
+  "latestEvidenceReference": "Existing repository source, supplied screenshots, controlling application description, and TEST_PROJECT.json",
+  "currentVersions": {
+    "input": "INPUT-v001",
+    "sources": "SOURCE-SET-v001",
+    "requirements": "REQUIREMENTS-v001",
+    "tests": "TEST-SUITE-v001",
+    "instruction": "INSTRUCTION-v001"
+  },
+  "userEnteredData": {
+    "requester": "Application owner",
+    "requestedOutput": "Repair the existing application in place so the running product is one coherent human-facing phone-first closed-loop reliability application.",
+    "humanUiRequirements": [
+      "Normal mobile-sized controls rather than giant buttons",
+      "Project information surfaced where the human needs it",
+      "No developer-console or agent-control-panel primary UI",
+      "Progressive disclosure for detailed traceability",
+      "Complete project history remains inspectable"
+    ],
+    "testProjectRequirements": [
+      "The test project is a real project inside the application, not the application itself",
+      "The test project uses the same persisted project model as ordinary projects",
+      "Generated instructions, user-entered data, outputs, evidence and history are inspectable",
+      "The project must not claim independent runs or release completion that did not actually occur"
+    ]
+  },
+  "objective": {
+    "exactUserObjective": "Repair the existing application in place. Keep one application only. Implement the 30-stage workbook and Appendices A-F semantically as a human-facing phone-first project workflow, restore a genuine fully inspectable test project, preserve all meaningful project data and generated artifacts, correct the oversized/cluttered UI, and do not claim completion unless the result is visible and usable in the running application.",
+    "deliverable": "The existing GitHub Pages application, corrected in place; no second application or parallel implementation.",
+    "requiredOutputFormat": "One phone-first web application using the existing repository entry point.",
+    "temporalScope": "Current repository and supplied requirements/screenshots."
+  },
+  "availableTools": [
+    "GitHub repository inspection and writes",
+    "GitHub Actions verification and deployment",
+    "Browser runtime used by the deployed application"
+  ],
+  "prohibitedActions": [
+    "Do not create a replacement or second application",
+    "Do not delete required workflow semantics because a prior UI treatment was poor",
+    "Do not fabricate completed independent runs, audits, hashes or release acceptance",
+    "Do not make raw implementation bookkeeping the primary human interface"
+  ],
+  "assumptions": [],
+  "unknowns": [
+    {
+      "unknownId": "UNK-001",
+      "unknownFact": "Ten genuinely independent execution contexts have not yet been supplied to this static application project.",
+      "whyItMatters": "Stage 11 requires ten independent executions before Stage 12 can truthfully verify them.",
+      "requiredToProceed": "YES",
+      "resolutionPath": "Launch ten fresh external contexts from the frozen Stage 11 instruction and record each output separately."
+    }
+  ],
+  "sourceInventory": [
+    {
+      "sourceId": "SRC-001",
+      "type": "USER REQUIREMENT",
+      "title": "Controlling application description",
+      "reference": "Current conversation specification",
+      "authorityLevel": 0,
+      "role": "MANDATORY",
+      "actualSourceInspected": true,
+      "relevantPortions": "One existing app; human-facing phone-first UI; semantic 30 stages and appendices; genuine inspectable test project; no false completion claims."
+    },
+    {
+      "sourceId": "SRC-002",
+      "type": "SCREENSHOT EVIDENCE",
+      "title": "Supplied phone screenshots",
+      "reference": "Seven supplied application screenshots",
+      "authorityLevel": 1,
+      "role": "EVIDENTIARY",
+      "actualSourceInspected": true,
+      "relevantPortions": "Oversized stage buttons, appendix checklist walls, removed/hidden test project behavior, loading state, and human-facing layout defects."
+    },
+    {
+      "sourceId": "SRC-003",
+      "type": "APPLICATION SOURCE",
+      "title": "index.html",
+      "reference": "index.html",
+      "authorityLevel": 1,
+      "role": "EVIDENTIARY",
+      "actualSourceInspected": true
+    },
+    {
+      "sourceId": "SRC-004",
+      "type": "APPLICATION SOURCE",
+      "title": "workbook.js and retained workflow runtime",
+      "reference": "workbook.js + workbook.module.gz.1..3",
+      "authorityLevel": 1,
+      "role": "EVIDENTIARY",
+      "actualSourceInspected": true
+    },
+    {
+      "sourceId": "SRC-005",
+      "type": "APPLICATION SOURCE",
+      "title": "human-ui.js",
+      "reference": "human-ui.js",
+      "authorityLevel": 1,
+      "role": "EVIDENTIARY",
+      "actualSourceInspected": true
+    },
+    {
+      "sourceId": "SRC-006",
+      "type": "APPLICATION TEST",
+      "title": "Repository verification and deployment workflow",
+      "reference": "verify.mjs and .github/workflows/pages.yml",
+      "authorityLevel": 1,
+      "role": "EVIDENTIARY",
+      "actualSourceInspected": true
+    }
+  ],
+  "research": [
+    {
+      "researchRecordId": "RSRCH-001",
+      "sourceId": "SRC-001",
+      "researchPass": 1,
+      "mandatoryStatementsFound": "One app; human operator first; real test project; 30 stages and appendices remain semantic; complete inspectability; contextual blocking/invalidation/release behavior.",
+      "newMaterialRequirementCategoryFound": "YES"
+    },
+    {
+      "researchRecordId": "RSRCH-002",
+      "sourceId": "SRC-002",
+      "researchPass": 1,
+      "mandatoryStatementsFound": "Visual defects include giant controls, checklist walls, poor hierarchy, missing/opaque test project and loading behavior.",
+      "newMaterialRequirementCategoryFound": "YES"
+    },
+    {
+      "researchRecordId": "RSRCH-003",
+      "sourceId": "SRC-003,SRC-004,SRC-005,SRC-006",
+      "researchPass": 2,
+      "mandatoryStatementsFound": "Existing runtime already preserves 30-stage and appendix semantics; primary correction should be a human-facing layer and truthful project data rather than a second app.",
+      "newMaterialRequirementCategoryFound": "NO"
+    }
+  ],
+  "requirements": [
+    {
+      "reqId": "REQ-001",
+      "requirement": "The repository exposes exactly one application entry point and all repairs remain inside that existing application.",
+      "mandatoryStatus": "MANDATORY",
+      "source": "SRC-001",
+      "applicability": "Always",
+      "verificationMethod": "Repository structural inspection",
+      "observableSatisfactionCondition": "Exactly one root HTML application entry exists and it loads the retained workflow plus the human UI.",
+      "failureCondition": "A second or replacement app exists.",
+      "severity": "CRITICAL"
+    },
+    {
+      "reqId": "REQ-002",
+      "requirement": "The primary phone UI is compact, human-facing and project-oriented rather than a workbook transcription or implementation console.",
+      "mandatoryStatus": "MANDATORY",
+      "source": "SRC-001,SRC-002",
+      "applicability": "All ordinary project screens",
+      "verificationMethod": "Rendered representation inspection",
+      "observableSatisfactionCondition": "Normal mobile controls, coherent project hierarchy, contextual actions, and progressive disclosure dominate the primary interface.",
+      "failureCondition": "Giant buttons, raw checklist walls or internal bookkeeping dominate normal use.",
+      "severity": "MAJOR"
+    },
+    {
+      "reqId": "REQ-003",
+      "requirement": "Stages 01 through 30 remain semantically available with their records, evidence, decisions, blocking behavior and dependencies.",
+      "mandatoryStatus": "MANDATORY",
+      "source": "SRC-001",
+      "applicability": "Every project",
+      "verificationMethod": "Runtime stage-count and workflow inspection",
+      "observableSatisfactionCondition": "Exactly 30 stages remain and the user can open the relevant stage workspace without permanently displaying every control.",
+      "failureCondition": "Any required stage is removed or reduced to decorative text.",
+      "severity": "CRITICAL"
+    },
+    {
+      "reqId": "REQ-004",
+      "requirement": "Appendices A-F operate contextually as fresh-context, blocker, change/invalidation, release, new-job and output-receipt behavior rather than permanent checklist pages.",
+      "mandatoryStatus": "MANDATORY",
+      "source": "SRC-001",
+      "applicability": "When the corresponding workflow event occurs",
+      "verificationMethod": "Semantic UI and runtime inspection",
+      "observableSatisfactionCondition": "The primary UI has no appendix checklist wall and the relevant records appear in Runs, Issues, Release, project creation and History.",
+      "failureCondition": "Appendix semantics are deleted or exposed only as disconnected checklist stacks.",
+      "severity": "MAJOR"
+    },
+    {
+      "reqId": "REQ-005",
+      "requirement": "A real test project uses the same persisted project state and exposes its actual entered data, generated instructions, outputs, evidence and complete history without fabricated completion claims.",
+      "mandatoryStatus": "MANDATORY",
+      "source": "SRC-001",
+      "applicability": "Built-in test project",
+      "verificationMethod": "Runtime test-project inspection",
+      "observableSatisfactionCondition": "Opening the test project displays the same project interface and truthfully stops at the first unmet control.",
+      "failureCondition": "The test project is a fake shell, a special app, opaque summary, or claims work that did not occur.",
+      "severity": "CRITICAL"
+    },
+    {
+      "reqId": "REQ-006",
+      "requirement": "Generated prompts/instructions and saved responses remain inspectable in the project where they are relevant.",
+      "mandatoryStatus": "MANDATORY",
+      "source": "SRC-001",
+      "applicability": "Stages that generate or receive agent material",
+      "verificationMethod": "Project data and history inspection",
+      "observableSatisfactionCondition": "Project data and stage history show generated instructions and saved outputs on demand.",
+      "failureCondition": "Generated material is hidden behind a status summary.",
+      "severity": "MAJOR"
+    }
+  ],
+  "requirementResolution": [
+    {
+      "resolutionId": "RES-001",
+      "defectType": "AMBIGUOUS_UI_INTERPRETATION",
+      "observedDefect": "Prior implementations treated appendices and stage controls as literal permanent checklist walls.",
+      "resolution": "Preserve the semantics and move detailed controls behind contextual project/stage views.",
+      "status": "RESOLVED"
+    }
+  ],
+  "tests": [
+    {"testId":"TEST-001","reqId":"REQ-001","testType":"STRUCTURAL","procedure":"Count root HTML entry points and inspect script loading.","expectedResult":"Exactly one application entry point."},
+    {"testId":"TEST-002","reqId":"REQ-002","testType":"REPRESENTATION","procedure":"Render the live app at phone width and inspect control sizing, project hierarchy and progressive disclosure.","expectedResult":"Compact human project interface."},
+    {"testId":"TEST-003","reqId":"REQ-003","testType":"STRUCTURAL","procedure":"Inspect runtime stage inventory and stage opening behavior.","expectedResult":"Exactly 30 stages remain available."},
+    {"testId":"TEST-004","reqId":"REQ-004","testType":"SEMANTIC","procedure":"Inspect Runs, Issues, Release, New project and History behavior and confirm no permanent appendix wall is primary navigation.","expectedResult":"Appendix semantics are contextual."},
+    {"testId":"TEST-005","reqId":"REQ-005","testType":"SEMANTIC","procedure":"Open the built-in test project and inspect persisted state, current blocker and complete recorded project data.","expectedResult":"Real project state with truthful incomplete status."},
+    {"testId":"TEST-006","reqId":"REQ-006","testType":"SEMANTIC","procedure":"Open Project data and History and inspect generated prompts and saved outputs.","expectedResult":"Generated material remains visible on demand."}
+  ],
+  "mutations": [
+    {"mutationId":"MUT-001","reqId":"REQ-002","violationMode":"Make stage navigation large full-width cards on the primary screen.","expectedSystemResponse":"DETECT and REJECT","status":"READY"},
+    {"mutationId":"MUT-002","reqId":"REQ-004","violationMode":"Expose Appendices A-F as a permanent checklist wall.","expectedSystemResponse":"DETECT and REJECT","status":"READY"},
+    {"mutationId":"MUT-003","reqId":"REQ-005","violationMode":"Mark ten independent runs complete without actual independent contexts.","expectedSystemResponse":"DETECT and BLOCK","status":"READY"}
+  ],
+  "productionInstruction": {
+    "instructionVersion": "INSTRUCTION-v001",
+    "objective": "Repair and inspect the existing application without creating another application.",
+    "authorizedInputs": ["SRC-001","SRC-002","SRC-003","SRC-004","SRC-005","SRC-006"],
+    "scope": "Existing repository application only.",
+    "procedure": [
+      "Keep index.html as the sole application entry point.",
+      "Retain the existing 30-stage workflow runtime and its semantic controls.",
+      "Replace primary-screen workbook/checklist presentation with a compact project-oriented human interface.",
+      "Expose detailed stage controls only when the user opens a stage workspace.",
+      "Integrate appendix semantics into Runs, Issues, Release, New project and output/history behavior.",
+      "Load the test project into the ordinary persisted project state and expose all actually recorded work.",
+      "Do not claim independent execution, verification, convergence, baseline or release evidence that has not actually occurred.",
+      "Verify repository structure and live phone rendering before claiming completion."
+    ],
+    "failureBehavior": "When a mandatory control is unavailable, preserve UNKNOWN/BLOCKED and stop affected downstream work.",
+    "completionCriteria": "All mandatory requirements are affirmatively established by repository and live-render evidence; no critical or major defect remains."
+  },
+  "generatedPrompts": [
+    {"stage":1,"title":"Initialize job","prompt":"Preserve the exact repair objective, one-app constraint, supplied screenshots, full controlling description, prohibited actions, unknowns and required output form. Do not paraphrase away material requirements."},
+    {"stage":2,"title":"Source inventory","prompt":"Inspect the actual repository files, supplied screenshots and controlling description. Record source authority, inspection state, relevant portions and conflicts."},
+    {"stage":3,"title":"Requirements research","prompt":"Extract every material UI, workflow, test-project, evidence, appendix, blocking, history and verification requirement from the controlling sources. Preserve exceptions and dependencies."},
+    {"stage":4,"title":"Atomic requirements","prompt":"Convert the researched obligations into independently testable requirements with observable satisfaction and failure conditions."},
+    {"stage":5,"title":"Resolve requirement set","prompt":"Check the requirements for conflicts, unsupported strengthening, undefined terms, missing prerequisites and absent verification paths. Preserve the intended semantics."},
+    {"stage":6,"title":"Verification suite","prompt":"Create verification procedures before production instruction authoring. Prefer deterministic repository checks for structural properties and live rendering for representation properties."},
+    {"stage":7,"title":"Failure tests","prompt":"Construct failure cases for giant primary controls, appendix checklist walls and fabricated independent-run completion. The validators must reject these cases."},
+    {"stage":8,"title":"Production instruction","prompt":"Repair only the existing app. Preserve the 30-stage engine, replace primary-screen raw workbook treatment with a human project interface, integrate appendix semantics contextually, restore a truthful inspectable test project, and verify live mobile rendering."},
+    {"stage":9,"title":"Preflight instruction","prompt":"Audit the production instruction for ambiguity, hidden deletion of required semantics, unverifiable claims, missing failure behavior and unclear responsibility. Do not execute the target work during preflight."},
+    {"stage":10,"title":"Freeze candidate","prompt":"Freeze the exact application source, test-project data, verifier and tool configuration used for the iteration. A material change terminates the batch and creates a new candidate."},
+    {"stage":11,"title":"Ten independent executions","prompt":"Create ten genuinely fresh execution contexts using the identical frozen candidate and instruction. Do not show any run another run's output, reviewer feedback, failure explanation or proposed correction. Save each output separately. If ten independent contexts are unavailable, return BLOCKED rather than fabricating them."}
+  ],
+  "generatedOutputs": [
+    {"stage":1,"output":"Job objective, constraints, supplied screenshots and one-app prohibition recorded in TEST_PROJECT.json."},
+    {"stage":2,"output":"Repository files, live-app evidence sources and controlling description inventoried."},
+    {"stage":3,"output":"Human UI, stage semantics, appendix semantics, real-test-project and inspectability requirements extracted."},
+    {"stage":4,"output":"REQ-001 through REQ-006 compiled with testable satisfaction and failure conditions."},
+    {"stage":5,"output":"Prior literal-checklist interpretation recorded as a resolved requirement-set implementation defect."},
+    {"stage":6,"output":"TEST-001 through TEST-006 defined; structural checks separated from live representation checks."},
+    {"stage":7,"output":"MUT-001 through MUT-003 defined to catch the prior UI and fabricated-run failure modes."},
+    {"stage":8,"output":"INSTRUCTION-v001 authored for the existing application repair."},
+    {"stage":9,"output":"Instruction preflight completed with no known material ambiguity in the repair scope."},
+    {"stage":10,"output":"Candidate prepared for independent execution; ten independent contexts have not yet been recorded."},
+    {"stage":11,"output":"BLOCKED: no ten genuinely independent execution contexts are recorded. No synthetic run batch has been created."}
+  ],
+  "freshContexts": [],
+  "phases": {
+    "iteration001": {
+      "candidateId": "CANDIDATE-001",
+      "iterationId": "ITERATION-001",
+      "status": "BLOCKED BEFORE EXECUTION",
+      "runCountRequired": 10,
+      "runCountRecorded": 0,
+      "contaminatedRuns": 0,
+      "reason": "Independent contexts must actually be launched and recorded; they are not synthesized by the test project."
+    }
+  },
+  "blockers": [
+    {
+      "blockerId": "BLOCKER-001",
+      "currentStatus": "OPEN",
+      "stageDiscovered": 11,
+      "affectedReqIds": ["REQ-005"],
+      "missingItemType": "CAPABILITY",
+      "missingEvidenceAuthorityInputOrCapability": "Ten genuinely independent fresh execution contexts and their separately preserved outputs.",
+      "whyMandatorySatisfactionCannotBeEstablished": "The project must not treat generated fixture records as independent executions.",
+      "availableResolutionPath": "Launch ten fresh contexts using the Stage 11 frozen instruction and record each output receipt.",
+      "downstreamWorkStopped": ["Stage 12 through Stage 30 for this test project"]
+    }
+  ],
+  "defects": [
+    {
+      "defectId": "DEFECT-UI-001",
+      "observedFailure": "Prior primary UI exposed oversized stage controls and workbook-style checklist surfaces rather than a compact human project hierarchy.",
+      "severity": "MAJOR",
+      "rootCauseCategory": "REPRESENTATION/INSTRUCTION INTERPRETATION",
+      "correctionRequired": "Use a project-oriented human shell and reveal detailed stage controls only in the stage workspace.",
+      "status": "CORRECTION IMPLEMENTED; LIVE REVALIDATION REQUIRED"
+    },
+    {
+      "defectId": "DEFECT-TEST-001",
+      "observedFailure": "Prior test project claimed completed independent ten-run batches and release acceptance without evidence of genuinely independent contexts.",
+      "severity": "CRITICAL",
+      "rootCauseCategory": "TEST DATA DEFECT",
+      "correctionRequired": "Remove fabricated completion and stop the real test project at Stage 11 with an explicit blocker.",
+      "status": "CORRECTED"
+    }
+  ],
+  "regressions": [
+    {
+      "regId": "REG-UI-001",
+      "originalDefectId": "DEFECT-UI-001",
+      "failureFixture": "Primary screen dominated by large stage buttons or appendix checklist walls.",
+      "preCorrectionResult": "VIOLATED in supplied screenshots",
+      "postCorrectionResult": "PENDING LIVE DEPLOYMENT VERIFICATION",
+      "permanentActiveStatus": "ACTIVE"
+    },
+    {
+      "regId": "REG-TEST-001",
+      "originalDefectId": "DEFECT-TEST-001",
+      "failureFixture": "Test project shows completed independent runs without recorded fresh contexts.",
+      "preCorrectionResult": "VIOLATED",
+      "postCorrectionResult": "SATISFIED in TEST_PROJECT.json: runCountRecorded=0 and Stage 11 BLOCKED",
+      "permanentActiveStatus": "ACTIVE"
+    }
+  ],
+  "changes": [
+    {
+      "changeId": "CHANGE-001",
+      "trigger": "USER REQUIREMENT + DEFECT-UI-001",
+      "earliestResponsibleLayer": "REPRESENTATION",
+      "exactChange": "Replace the normal primary presentation with a compact project shell containing Overview, Workflow, Project data, Runs, Issues, Release and History; detailed stage controls open contextually.",
+      "downstreamInvalidated": ["Prior representation conclusions"],
+      "requiredReruns": ["Repository verifier","Live phone rendering","Test-project open/render check"],
+      "status": "IMPLEMENTED_NOT_REVALIDATED"
+    },
+    {
+      "changeId": "CHANGE-002",
+      "trigger": "DEFECT-TEST-001",
+      "earliestResponsibleLayer": "TEST DATA",
+      "exactChange": "Replace synthetic accepted test history with truthful project data that blocks at Stage 11 until real independent executions exist.",
+      "downstreamInvalidated": ["Prior fake convergence","Prior fake baseline","Prior fake release acceptance"],
+      "requiredReruns": ["Test project verification"],
+      "status": "IMPLEMENTED_NOT_REVALIDATED"
+    }
+  ],
+  "convergence": {
+    "status": "NOT REACHED",
+    "reason": "Stage 11 independent executions are blocked; convergence cannot be calculated as satisfied."
+  },
+  "baseline": {
+    "baselineId": "NONE",
+    "status": "NOT FROZEN",
+    "reason": "Unchanged confirmation has not occurred."
+  },
+  "product": {
+    "productId": "NONE",
+    "status": "NOT GENERATED",
+    "reason": "The test project has not passed the execution, verification, convergence and baseline controls."
+  },
+  "audits": {
+    "processCorrectness": "UNDETERMINED",
+    "productCorrectness": "UNDETERMINED",
+    "reason": "Downstream product and release stages have not been reached."
+  },
+  "release": {
+    "releaseGateId": "NONE",
+    "releaseState": "BLOCKED",
+    "reason": "Mandatory independent execution evidence is unavailable. No release authorization exists.",
+    "deliveryAuthorization": "NOT AUTHORIZED"
+  },
+  "evidenceChains": [
+    {
+      "chainRecordId": "CHAIN-REQ-001",
+      "reqId": "REQ-001",
+      "sourceId": "SRC-001",
+      "testId": "TEST-001",
+      "currentResult": "PENDING FINAL REVALIDATION",
+      "releaseGateState": "BLOCKED"
+    },
+    {
+      "chainRecordId": "CHAIN-REQ-005",
+      "reqId": "REQ-005",
+      "sourceId": "SRC-001",
+      "testId": "TEST-005",
+      "currentResult": "BLOCKED AT STAGE 11",
+      "releaseGateState": "BLOCKED"
+    }
+  ],
+  "stageStates": {
+    "1":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Exact objective, supplied materials, constraints, unknowns and one-app prohibition recorded.","next":"STAGE 02"},
+    "2":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Repository source, screenshots and controlling description inspected and inventoried.","next":"STAGE 03"},
+    "3":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Requirements research records preserve UI, workflow, appendix, history and test-project obligations.","next":"STAGE 04"},
+    "4":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"REQ-001 through REQ-006 compiled as testable obligations.","next":"STAGE 05"},
+    "5":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Literal checklist-wall interpretation resolved without deleting required semantics.","next":"STAGE 06"},
+    "6":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"TEST-001 through TEST-006 provide mandatory coverage before production instruction authoring.","next":"STAGE 07"},
+    "7":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Failure fixtures cover giant controls, appendix walls and fabricated independent runs.","next":"STAGE 08"},
+    "8":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"INSTRUCTION-v001 authored for the existing application repair.","next":"STAGE 09"},
+    "9":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"Production instruction preflight completed; no known material ambiguity remains in the recorded instruction.","next":"STAGE 10"},
+    "10":{"status":"COMPLETE","decision":"READY TO PROCEED","evidence":"CANDIDATE-001 prepared for independent execution.","next":"STAGE 11"},
+    "11":{"status":"BLOCKED","decision":"BLOCKED","evidence":"BLOCKER-001: zero of ten genuinely independent fresh execution contexts are recorded. Synthetic runs are prohibited.","next":"RESOLVE BLOCKER-001"},
+    "12":{"status":"NOT STARTED","decision":"","evidence":"Cannot begin until Stage 11 has ten genuine outputs.","next":"STAGE 11"},
+    "13":{"status":"NOT STARTED","decision":"","evidence":"Not reached.","next":"STAGE 12"},
+    "14":{"status":"NOT STARTED","decision":"","evidence":"Not reached for execution defects.","next":"STAGE 13"},
+    "15":{"status":"NOT STARTED","decision":"","evidence":"Not reached for execution defects.","next":"STAGE 14"},
+    "16":{"status":"NOT STARTED","decision":"","evidence":"Not reached.","next":"STAGE 15"},
+    "17":{"status":"NOT STARTED","decision":"","evidence":"Not reached.","next":"STAGE 16"},
+    "18":{"status":"NOT STARTED","decision":"","evidence":"Convergence cannot be established before independent execution and verification.","next":"STAGE 17"},
+    "19":{"status":"NOT STARTED","decision":"","evidence":"Unchanged confirmation has not occurred.","next":"STAGE 18"},
+    "20":{"status":"NOT STARTED","decision":"","evidence":"No confirmed baseline exists.","next":"STAGE 19"},
+    "21":{"status":"NOT STARTED","decision":"","evidence":"No approved baseline exists.","next":"STAGE 20"},
+    "22":{"status":"NOT STARTED","decision":"","evidence":"No finished product exists for this test project.","next":"STAGE 21"},
+    "23":{"status":"NOT STARTED","decision":"","evidence":"No finished product exists for semantic verification.","next":"STAGE 22"},
+    "24":{"status":"NOT STARTED","decision":"","evidence":"No finished product exists for adversarial verification.","next":"STAGE 23"},
+    "25":{"status":"NOT STARTED","decision":"","evidence":"No final delivery representation exists.","next":"STAGE 24"},
+    "26":{"status":"NOT STARTED","decision":"","evidence":"Process/product reconciliation has not been reached.","next":"STAGE 25"},
+    "27":{"status":"NOT STARTED","decision":"BLOCKED","evidence":"Release cannot be accepted because mandatory downstream evidence is unavailable.","next":"STAGE 26"},
+    "28":{"status":"NOT STARTED","decision":"","evidence":"No accepted release artifact exists for identity verification.","next":"STAGE 27"},
+    "29":{"status":"NOT STARTED","decision":"","evidence":"Complete release evidence chain is not yet available.","next":"STAGE 28"},
+    "30":{"status":"NOT STARTED","decision":"","evidence":"Permanent defect/regression records exist, but final workflow completion has not been reached.","next":"STAGE 29"}
+  }
+}
