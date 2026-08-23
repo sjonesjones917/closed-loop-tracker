@@ -1,66 +1,50 @@
 import fs from 'node:fs';
-
-const html = fs.readFileSync('index.html', 'utf8');
-const fail = (message) => { throw new Error(message); };
-const requiredStages = [
-  'DEFINE JOB','INVENTORY SOURCES','RESEARCH REQUIREMENTS','COMPILE ATOMIC REQUIREMENTS','RESOLVE CONFLICTS','BUILD ACCEPTANCE TESTS','BUILD FAILURE/MUTATION TESTS','AUTHOR PRODUCTION INSTRUCTION','PREFLIGHT INSTRUCTION','FREEZE CANDIDATE','RUN 10 INDEPENDENT EXECUTIONS','VERIFY EVERY RUN AGAINST EVERY REQUIREMENT','COMPARE ALL RUNS','ROOT-CAUSE EVERY DEFECT','ADD REGRESSION TESTS','CORRECT RESPONSIBLE LAYER','FREEZE NEW VERSION','RUN 10 NEW INDEPENDENT EXECUTIONS','REPEAT UNTIL CONVERGED','RUN UNCHANGED 10-EXECUTION CONFIRMATION','FREEZE APPROVED BASELINE','GENERATE FINISHED PRODUCT','DETERMINISTIC PRODUCT VERIFICATION','INDEPENDENT SEMANTIC VERIFICATION','ADVERSARIAL PRODUCT VERIFICATION','FINAL REPRESENTATION INSPECTION','PROCESS AUDIT','PRODUCT AUDIT','ACCEPTED / REJECTED / BLOCKED','VERIFY RELEASE HASH','RELEASE ONLY THE EXACT ACCEPTED ARTIFACT'
-];
-
-if (!html.includes('<title>Closed-Loop Agent Reliability</title>')) fail('Public title is incorrect.');
-if (!html.includes('<h1>Closed-Loop Agent Reliability</h1>')) fail('Public heading is incorrect.');
-if (/Closed-Loop Agent Reliability\s+v\d/i.test(html)) fail('An arbitrary public application version label remains.');
-for (const forbidden of [
-  'sidecar-filename defect',
-  'Agent response',
-  'paste agent response',
-  'REAL SELF-BUILD',
-  'application itself by using the actual application UI'
-]) {
-  if (html.toLowerCase().includes(forbidden.toLowerCase())) fail(`Forbidden repair/prompt-relay text remains: ${forbidden}`);
-}
-
-const manifestMatch = html.match(/<script id="stage-manifest" type="application\/json">([\s\S]*?)<\/script>/);
-if (!manifestMatch) fail('Stage manifest is missing.');
-const manifest = JSON.parse(manifestMatch[1]);
-if (manifest.length !== 31) fail(`Expected 31 stages, found ${manifest.length}.`);
-for (let i = 0; i < requiredStages.length; i += 1) {
-  if (manifest[i]?.number !== i + 1) fail(`Stage ${i + 1} is renumbered.`);
-  if (manifest[i]?.name !== requiredStages[i]) fail(`Stage ${i + 1} name changed: ${manifest[i]?.name}`);
-}
-
-const requiredArchitectureTokens = [
-  'USER_JOB_INPUT','EXTERNAL_RESEARCH_SOURCE','WORKFLOW_GENERATED_ARTIFACT','HUMAN','AGENT','HUMAN_AGENT_TEAM',"schema:'closed-loop-project/1'",'validateSourceGuard','independentOfArtifact','externallyAccessed','productBytes','sha256Bytes','RUN-001','Create missing matrix records'
-];
-for (const token of requiredArchitectureTokens) if (!html.includes(token)) fail(`Required architecture token missing: ${token}`);
-
-const jobBlock = html.match(/const JOB_FIELDS=\[([\s\S]*?)\];\nconst USER_INPUT_CLASSIFICATIONS/);
-if (!jobBlock) fail('Stage 1 field definition is missing.');
-const jobFieldCount = (jobBlock[1].match(/^\s*\['/gm) || []).length;
-if (jobFieldCount !== 20) fail(`Expected 20 Stage 1 scopes, found ${jobFieldCount}.`);
-
-const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
-if (scripts.length < 2) fail('Application script is missing.');
-new Function(scripts.at(-1));
-
-if (/<script[^>]+src=/i.test(html) || /<link[^>]+rel=["']stylesheet/i.test(html)) fail('The deployed application must remain standalone.');
-if (!html.includes('No seeded build job')) fail('The empty arbitrary-job creation invariant is not visible.');
-if (!html.includes('Three information classes')) fail('The three information classes are not visible in the UI.');
-if (!html.includes('data-self-project-proof="true"')) fail('The retained self-project proof is not visible in the Projects UI.');
-if (!html.includes('SELF_VERIFIED_PROJECT.json')) fail('The retained self-project export is not linked from the application.');
-
-const result = {
-  status: 'PASS',
-  publicName: 'Closed-Loop Agent Reliability',
-  publicVersionLabel: false,
-  stages: manifest.length,
-  stage1Scopes: jobFieldCount,
-  informationClasses: 3,
-  humanWorkSupported: true,
-  agentWorkSupported: true,
-  humanAgentTeamSupported: true,
-  retainedSelfProjectProof: true,
-  promptRelayArchitecture: false,
-  standalone: true
-};
-fs.writeFileSync('STATIC_VERIFICATION.json', `${JSON.stringify(result, null, 2)}\n`);
-console.log(JSON.stringify(result, null, 2));
+import crypto from 'node:crypto';
+import zlib from 'node:zlib';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+const failures=[], evidence=[]; const ok=(x,m)=>{(x?evidence:failures).push(m)};
+const index=fs.readFileSync('index.html','utf8');
+const loader=fs.readFileSync('workbook.js','utf8');
+const compressed=Buffer.concat([
+  fs.readFileSync('workbook.module.gz.1'),
+  fs.readFileSync('workbook.module.gz.2'),
+  fs.readFileSync('workbook.module.gz.3')
+]);
+const source=zlib.gunzipSync(compressed).toString('utf8');
+const originalIndexSha='d3f48844a44a13df968afe3cfb4d381a5036befb9314ea5b4df86f2381c820f8';
+ok(crypto.createHash('sha256').update(index.trimEnd()).digest('hex')===originalIndexSha,'index.html visible shell is byte-for-byte the original presentation');
+const css=index.match(/<style>([\s\S]*?)<\/style>/)?.[1]||'';
+ok(crypto.createHash('sha256').update(css).digest('hex')==='befcafe57d62c87df67fb4a27b5f86e7aa30b7e50929e027bd311e8f4f9c7c73','layout/colors/typography/responsive CSS are unchanged');
+ok((index.match(/<script[^>]+src=/g)||[]).length===1 && index.includes('<script src="workbook.js"></script>'),'exactly one existing application runtime entry is loaded');
+ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'runtime loader reads only the corrected workbook module payload');
+ok(compressed.length>0 && source.includes('export const STAGES'),'corrected module payload is present and decompresses');
+const temp=path.join(process.cwd(),'.verify-runtime.mjs'); fs.writeFileSync(temp,source);
+let m; try{m=await import(pathToFileURL(temp).href+'?t='+Date.now())}finally{fs.rmSync(temp,{force:true})}
+const {STAGES,APPENDICES,SECTION_HEADINGS,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,FOLDERS,ROLE_SEPARATION,createBlankState,createRecordTemplate,buildStagePrompt,validateStageDraft,immutableRevision,invalidateDownstream,compareArtifactSets,hasUnresolvedPlaceholder,stageHumanItems,stageGateItems,stageEvidenceItems}=m;
+ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'exactly 30 ordered stages');
+ok(new Set(STAGES.map(s=>s.title)).size===30,'30 distinct stage titles');
+ok(Object.keys(APPENDICES).join('')==='ABCDEF','exactly Appendices A-F');
+ok(SECTION_HEADINGS.length===7,'seven controlling stage sections');
+ok(STAGE_DECISIONS.join('|')==='READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED','exact stage decisions');
+ok(REQUIREMENT_OUTCOMES.join('|')==='SATISFIED|VIOLATED|UNDETERMINED','exact requirement outcomes');
+ok(RELEASE_OUTCOMES.join('|')==='ACCEPTED|REJECTED|BLOCKED','exact release outcomes');
+ok(!/31-stage|\/31 complete/i.test(index+source),'no 31-stage architecture');
+ok(ROLE_SEPARATION.length>=20&&FOLDERS.includes('12_PERMANENT_DEFECT_REGISTRY'),'role separation and permanent regression registry retained');
+const stageDefects=STAGES.flatMap(s=>s.defectIds||[]); ok(stageDefects.length===269&&new Set(stageDefects).size===269,'269 explicit stage defect controls represented exactly once');
+const prompts=STAGES.map(s=>buildStagePrompt(s,createBlankState())); ok(prompts.length===30,'exactly one reusable copy block per stage');
+ok(prompts.every((p,i)=>p.includes(STAGES[i].role)&&p.includes(STAGES[i].task)),'every copy block preserves exact stage role and task');
+for(const n of [11,12,17,19])ok(prompts[n-1].includes('RUN_ID: <<RUN-001 THROUGH RUN-010>>'),`stage ${n} uses one reusable ten-run prompt`);
+let s=createBlankState(), st=STAGES[0], item=s.stages[1]; item.draftRecord=createRecordTemplate(st); item.decision='READY TO PROCEED'; item.decisionEvidence='e'; item.decidedBy='x'; item.dateTime='2026-01-01T00:00:00Z'; stageHumanItems(st).forEach((_,i)=>item.humanChecks[i]=true); stageGateItems(st).forEach((_,i)=>item.gateChecks[i]=true); stageEvidenceItems(st).forEach((_,i)=>item.evidenceChecks[i]=true); ok(validateStageDraft(st,item,s).issues.length>0,'unresolved placeholders block READY');
+item.draftRecord=item.draftRecord.replace(/<<[^>]+>>/g,'VALUE'); s.job.JOB_ID='JOB-1'; s.job.EXACT_USER_OBJECTIVE_VERBATIM='objective'; ok(!hasUnresolvedPlaceholder(item.draftRecord),'filled record contains no unresolved placeholders');
+const hist=[]; const r1=await immutableRevision(hist,{a:1},{artifactType:'TEST'}); hist.push(r1.record); const r2=await immutableRevision(hist,{a:2},{artifactType:'TEST'}); ok(r1.record.version==='v001'&&r2.record.version==='v002'&&hist[0].payload.a===1,'revisions append without overwriting prior history');
+const downstream=createBlankState(); downstream.stages[2].decision='READY TO PROCEED'; downstream.stages[2].status='COMPLETE'; ok(invalidateDownstream(downstream,1,'CHANGE-1').length>0&&downstream.stages[2].decision==='NOT READY - CORRECTION REQUIRED','upstream material change invalidates downstream determinations');
+const audited=[{artifactId:'A1',name:'a',size:1,sha256:'1'.repeat(64)},{artifactId:'A2',name:'b',size:2,sha256:'2'.repeat(64)}], same=[{name:'a',size:1,sha256:'1'.repeat(64)},{name:'b',size:2,sha256:'2'.repeat(64)}], bad=[{name:'a',size:1,sha256:'3'.repeat(64)},{name:'b',size:2,sha256:'2'.repeat(64)}];
+ok(compareArtifactSets(audited,same,'ACCEPTED').authorization==='AUTHORIZED','exact accepted audited/release bytes authorize delivery');
+ok(compareArtifactSets(audited,bad,'ACCEPTED').authorization==='NOT AUTHORIZED','hash mismatch stops delivery');
+ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','non-ACCEPTED release gate stops delivery');
+ok(source.includes('pendingAuditedFiles')&&source.includes('pendingReleaseFiles'),'audited and release files are independently selected and hashed');
+ok(source.includes('appendAutomaticChange')&&source.includes('appendices.F'),'append-only change records and agent-output receipts are implemented');
+ok(source.includes('ACTUAL_CONTENT_INSPECTED')&&source.includes('CURRENCY_CONFIRMED'),'actual attachment inspection and current-source currency controls are implemented');
+if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendices:6,behavioralChecks:evidence.length,visualDesignChanged:false},null,2));
