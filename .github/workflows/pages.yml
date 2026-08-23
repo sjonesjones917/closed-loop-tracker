@@ -159,6 +159,13 @@ jobs:
           grep -q 'BLOCKED' live-proof/test-project.html
           grep -q 'genuinely independent fresh execution contexts' live-proof/test-project.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/test-project.html
+      - name: Preserve rendered live proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-proof-${{ github.run_id }}
+          path: live-proof
+          if-no-files-found: error
       - name: Publish granular live status
         if: always()
         env:
