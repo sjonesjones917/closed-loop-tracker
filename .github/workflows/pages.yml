@@ -6,13 +6,16 @@ on:
       - main
     paths-ignore:
       - LIVE_DEPLOYMENT_VERIFIED.json
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: closed-loop-pages-deployment
+  group: closed-loop-pages-deployment-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,6 +38,8 @@ jobs:
           node-version: '22'
       - name: Normalize the retained application project to the complete application scope
         run: node migrate-self-project.mjs
+      - name: Sanitize retained historical records without deleting their evidence
+        run: node sanitize-self-project-history.mjs
       - name: Build the human-first application
         run: node build-app.mjs
       - name: Keep the retained application project in the normal Projects UI
@@ -91,15 +96,18 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
         with:
           enablement: true
       - name: Upload verified Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
