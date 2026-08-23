@@ -151,6 +151,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: 'live-proof-${{ github.run_id }}', path: live-proof, if-no-files-found: error}
+      - name: Publish live verification statuses
+        if: always()
+        env: {GH_TOKEN: '${{ github.token }}', IDENTITY: '${{ steps.identity.outcome }}', RENDER: '${{ steps.render.outcome }}', INTERACTION: '${{ steps.interaction.outcome }}'}
+        run: |
+          for pair in "live-file-identity:$IDENTITY" "live-phone-render:$RENDER" "live-controls:$INTERACTION"; do
+            context="${pair%%:*}"; result="${pair#*:}"; state=failure; [ "$result" = success ] && state=success
+            gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $result"
+          done
       - name: Enforce live verification
         run: |
           test '${{ steps.identity.outcome }}' = success
