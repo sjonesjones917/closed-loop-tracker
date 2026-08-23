@@ -77,4 +77,11 @@ async function main(){
   console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],retainedProject:true,stage1Instruction:true,stage1Output:true,records:true,stage2Persistence:true,newProjectCoexists:true,horizontalOverflow:false,oversizedButtons:false,runtimeErrors:0},null,2));
   cdp.close();
 }
-try{await main();}finally{proc.kill('SIGTERM');fs.rmSync(userData,{recursive:true,force:true});}
+async function cleanup(){
+  if(!proc.killed)proc.kill('SIGTERM');
+  await Promise.race([new Promise(resolve=>proc.once('exit',resolve)),sleep(2000)]);
+  for(let attempt=0;attempt<5;attempt++){
+    try{fs.rmSync(userData,{recursive:true,force:true,maxRetries:3,retryDelay:100});return;}catch(e){if(attempt===4)console.warn(`Browser profile cleanup warning: ${e.message}`);else await sleep(200);}
+  }
+}
+try{await main();}finally{await cleanup();}
