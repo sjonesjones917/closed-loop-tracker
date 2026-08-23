@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 3,
+  "application": {
+    "output": "dist/index.html",
+    "size": 435547,
+    "sha256": "135d5dc42ecc1ea9dc60797ef48e963cb1a1df585e7540be2ee0757915f6f808",
+    "packaging": "gzip+base64 ordered parts"
+  },
+  "workflow": {
+    "stageCount": 30,
+    "realE2EProjectTitle": "REAL E2E JOB — Inventory Reconciliation"
+  },
+  "payload": {
+    "encodedLength": 60052,
+    "partCount": 8,
+    "parts": [
+      {"file":"payload/v8-part-00.txt","length":8000,"sha256":"0d21c2e0a1afbdd8633ebeec85cf2735b93f1f9f0ee634dfcb6f40b0b8e35d6e"},
+      {"file":"payload/v8-part-01.txt","length":8000,"sha256":"e34395d6f5e425e71e5d43fcd63041376c8236d8ba394581e5c1f18dc7fcf531"},
+      {"file":"payload/v8-part-02.txt","length":8000,"sha256":"d437e58429861858a5aa5de4c48e62e6fffcf531bf66db6799e637991ac82eb7"},
+      {"file":"payload/v8-part-03.txt","length":8000,"sha256":"1370c90dfa2bd39a72df5c8ba5ca122a1887a9065e6022e7381f8aff91eab5e5"},
+      {"file":"payload/v8-part-04.txt","length":8000,"sha256":"6a7ae641d8a60f645ec362c3803b8a2fcc63a9f3b71dc83f639c319086e98dbe"},
+      {"file":"payload/v8-part-05.txt","length":8000,"sha256":"69fe25b7c085a4ea6ac1c641c1d3aeaf961adcd83e517380d398240f5851fae6"},
+      {"file":"payload/v8-part-06.txt","length":8000,"sha256":"9dca06d85a9fb9543922ba43d9be18b7cbd0ca829a0623a9b281420c2e39d2e3"},
+      {"file":"payload/v8-part-07.txt","length":4052,"sha256":"c522399f2e438a5adff2fef77b61df1a3ea62d6508f2574727034c53b88215f8"}
+    ]
+  }
+}

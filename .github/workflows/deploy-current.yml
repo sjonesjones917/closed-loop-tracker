@@ -1,0 +1,14 @@
+name: Legacy deployment path disabled
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain authoritative deployment path
+        run: echo 'Deployment is performed only by .github/workflows/pages.yml after the complete 31-stage self-build, independent verification, exact hash checks, and matching project export.'

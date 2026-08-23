@@ -1,0 +1,52 @@
+{};for(const key of keys)if(value[key]!==undefined&&value[key]!==null&&String(value[key])!=='')result[key]=value[key];return result;
+}
+function retainedStagePromptSnapshot(project,n){
+  const spec=RETAINED_STAGE_PROMPT_SPECS[n],stage=project.stages[n-1];
+  const currentStage={number:stage.number,name:stage.name,status:stage.status,assignedActorType:stage.assignedActorType,assignedActorName:stage.assignedActorName,completionEvidence:stage.completionEvidence,blocker:stage.blocker};
+  const data={projectId:project.projectId,projectName:project.name,job:project.job,currentStage,authorizedCollections:{}};
+  for(const name of spec.inputs||[]){if(name==='job')continue;const value=project[name];if(Array.isArray(value))data.authorizedCollections[name]={count:value.length,records:value.slice(0,40).map(compactPromptRecord),omittedAfter40:Math.max(0,value.length-40)};}
+  if(n>1){const prior=project.stages[n-2];data.priorStage={number:prior.number,name:prior.name,status:prior.status,completionEvidence:prior.completionEvidence};}
+  return data;
+}
+function buildRetainedStagePrompt(project,n,snapshot){
+  const spec=RETAINED_STAGE_PROMPT_SPECS[n],stage=project.stages[n-1];
+  return[
+    'CLOSED-LOOP AGENT RELIABILITY — STAGE EXECUTION PROMPT',
+    \`STAGE \${n} OF 31 — \${STAGE_NAMES[n-1]}\`,
+    \`ROLE\\nYou are the \${spec.role}.\`,
+    \`JOB CONTROL\\nPROJECT_ID: \${project.projectId}\\nPROJECT_NAME: \${project.name}\\nWORK_OWNER: \${stage.assignedActorType} — \${stage.assignedActorName}\\nCURRENT_STAGE_STATUS: \${stage.status}\\nAUTHORIZED PROJECT COLLECTIONS: \${(spec.inputs||[]).join(', ')||'stage completion evidence'}\`,
+    spec.runTemplate?\`REUSABLE RUN TEMPLATE\\n\${spec.runTemplate}\`:'',
+    'AUTHORIZED INPUT RULE\\nUse only the exact authorized records and files listed here or attached with the exported current project. USER JOB INPUT establishes intent and supplied facts. EXTERNAL RESEARCH SOURCE establishes independent authority only when actually accessed. WORKFLOW-GENERATED ARTIFACT records workflow activity and never becomes retroactive external authority.',
+    \`TASK\\n\${spec.task}\`,
+    \`REQUIRED OUTPUT\\n\${spec.output}\`,
+    \`NATIVE RECORD SCHEMA TO POPULATE\\n\${RETAINED_STAGE_PROMPT_SCHEMAS[n]}\`,
+    'HUMAN / AGENT BOUNDARY\\nHumans, agents, human-agent teams, tools, and organizations remain first-class work owners. This prompt delegates only the assigned stage and does not replace the application records, gates, or independent reviewers.',
+    'UNIVERSAL OPERATING RULES\\n- Perform this stage now; do not return a plan for someone else.\\n- Do not perform a later stage.\\n- Do not invent facts, sources, tool use, execution, test results, evidence, file contents, or hashes.\\n- A mandatory unknown is BLOCKED.\\n- Do not silently resolve authoritative conflicts.\\n- Preserve exact IDs, versions, source locations, product locations, tools, evidence, and dependencies.\\n- Return completed stage work, not generic agent instructions.',
+    \`AUTHORIZED PROJECT DATA\\n\${JSON.stringify(snapshot,null,2)}\`,
+    'ATTACHMENTS\\nAttach the current exported project JSON and every exact external or product file referenced by the authorized records. The compact manifest above does not replace those exact files.'
+  ].filter(Boolean).join('\\n\\n');
+}
+`;
+if(!builder.includes('const RETAINED_STAGE_PROMPT_SPECS='))builder=builder.replace('const stages=STAGE_NAMES.map',retainedBuilderHelpers+'\\nconst stages=STAGE_NAMES.map');
+const oldReq3="'REQ-003':html.includes('HUMAN_AGENT_TEAM')&&!/Agent response|Copy stage prompt|Paste completed agent result/i.test(html),";
+const newReq3="'REQ-003':html.includes('HUMAN_AGENT_TEAM')&&html.includes('data-stage-prompt-system=\\\"true\\\"')&&html.includes('data-generate-stage-prompt')&&html.includes('data-copy-stage-prompt')&&!/Agent response|Paste completed agent result/i.test(html),";
+if(!builder.includes(oldReq3))throw new Error('Retained-project REQ-003 check was not found.');
+builder=builder.split(oldReq3).join(newReq3);
+builder=builder.replace(
+  "procedure:'Search exact product bytes for obsolete generic agent-response and instruction-copy controls.',expectedResult:'No prohibited interface text.',observedResult:'No prohibited interface text found.'",
+  "procedure:'Search exact product bytes for obsolete generic agent-response paste controls and verify stage-specific prompt generation.',expectedResult:'No generic response-paste interface; stage-specific prompt generation exists for all 31 stages.',observedResult:'No generic response-paste interface found; stage-specific prompt generation is present.'"
+);
+const productionRecordPatch=String.raw`
+const productionInstructionText=[
+  'PRODUCTION INSTRUCTION',
+  \`OBJECTIVE\\n\${job.exactUserObjective}\`,
+  \`DELIVERABLES\\n\${job.exactDeliverables}\`,
+  'AUTHORIZED INPUTS\\nINPUT-001 through INPUT-003; registered independent external sources; REQ-001 through REQ-008; TEST-001 through TEST-008; MUTATION-001 through MUTATION-008.',
+  \`SCOPE\\n\${job.scopeBoundaries}\`,
+  'ORDERED PROCEDURE\\nFollow Stages 1 through 31 in order using approved structured records, actual external research, real tools, independent contexts, correction, convergence, audits, exact bytes, and release controls.',
+  \`OUTPUT CONTRACT\\n\${job.requiredOutputProperties}\`,
+  \`FAILURE BEHAVIOR\\n\${job.prohibitedActions}\`,
+  \`COMPLETION CRITERIA\\n\${job.successConditions}\`
+].join('\\n\\n');
+productionInstructions[0].promptText=productionInstructionText;
+productionInstructions.push(record('INSTRUCTION-002',9,{instructionId:'INSTRUCTION-002',promptText:\`PREFLIGHTED PRODUCTION INSTRUCTION\\n\\n\${productionInstructionText}\`,objective:productionInstructions[0].objective,governingInputs:productionInstructions[0].governingInputs,s

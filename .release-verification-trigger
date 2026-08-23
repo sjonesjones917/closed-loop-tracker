@@ -1,0 +1,2 @@
+deployment verification requested 2026-08-23T02:30:00Z
+reason: deploy the verified Stage 8 production-prompt and Stage 9 preflighted-prompt generation build; preserve the retained native whole-application project and verify both live artifacts hash-match
