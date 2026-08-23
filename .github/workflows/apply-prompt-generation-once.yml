@@ -1,131 +1,14 @@
-name: Finalize generated instruction stages and retained application project
+name: Obsolete prompt-injection path disabled
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/apply-prompt-generation-once.yml
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: prompt-generation-correction
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  correct:
+  notice:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Use current Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Build the application and apply only the Stage 8/9 generation correction
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --check apply-prompt-generation.mjs
-          node build-app.mjs
-          node apply-prompt-generation.mjs
-          node attach-self-project.mjs
-          cp index.html app-v13.html
-      - name: Normalize the retained project to the complete application-build scope
-        shell: bash
-        run: |
-          set -euo pipefail
-          node normalize-retained-project-scope.mjs
-          if grep -Eqi 'self-verification' rebuild-self-project.mjs; then
-            echo 'Residual self-verification terminology remains in the generator.' >&2
-            exit 1
-          fi
-      - name: Install browser driver
-        run: npm install --no-save --ignore-scripts playwright-core
-      - name: Rebuild the retained application project against the corrected application
-        shell: bash
-        run: |
-          set -euo pipefail
-          node patch-retained-prompt-model.mjs
-          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          test -n "$CHROME_PATH"
-          CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
-      - name: Make prompt parity part of the permanent retained-project verifier
-        shell: bash
-        run: |
-          set -euo pipefail
-          node - <<'NODE'
-          const fs=require('node:fs');
-          const file='verify-self-project.mjs';
-          let source=fs.readFileSync(file,'utf8');
-          if(!source.includes('Retained Stage 8 generated production prompt is missing.')){
-            const anchor="const productionInstructions=requireArray('productionInstructions');\n";
-            const count=source.split(anchor).length-1;
-            if(count!==1)throw new Error(`verify-self-project production-instruction anchor count ${count}.`);
-            const addition=[
-              "const productionInstructions=requireArray('productionInstructions');",
-              "if(html.includes('data-generate-production-instruction')){",
-              "  const stage8Instruction=productionInstructions.find(record=>Number(record.stageNumber)===8);",
-              "  const stage9Instruction=productionInstructions.find(record=>Number(record.stageNumber)===9);",
-              "  if(!String(stage8Instruction?.promptText||'').startsWith('PRODUCTION INSTRUCTION'))fail('Retained Stage 8 generated production prompt is missing.');",
-              "  if(!String(stage9Instruction?.promptText||'').startsWith('PREFLIGHTED PRODUCTION INSTRUCTION'))fail('Retained Stage 9 preflighted production prompt is missing.');",
-              "  if(!String(stage8Instruction?.instructionId||'').trim()||stage8Instruction.instructionId===stage9Instruction.instructionId)fail('Retained Stage 8 and Stage 9 instructions are not independently versioned.');",
-              "  for(const record of [stage8Instruction,stage9Instruction])for(const required of ['OBJECTIVE','INDEPENDENT EXTERNAL AUTHORITY','MANDATORY ATOMIC REQUIREMENTS','ACCEPTANCE TESTS','FAILURE / MUTATION TESTS','TRUTH SEMANTICS','COMPLETION CRITERIA'])if(!String(record.promptText||'').includes(required))fail((record.instructionId||record.id)+' is missing '+required+'.');",
-              "}",
-              ""
-            ].join('\n');
-            source=source.replace(anchor,addition);
-            fs.writeFileSync(file,source);
-          }
-          NODE
-      - name: Verify application, retained project, and rendered phone operation
-        shell: bash
-        run: |
-          set -euo pipefail
-          node verify-app.mjs
-          node verify-prompt-generation.mjs
-          node verify-self-project.mjs
-          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
-          CHROME_PATH="$CHROME_PATH" node prompt-generation-smoke.mjs
-          cmp -s index.html app-v13.html
-          grep -Fq 'data-generate-production-instruction' index.html
-          grep -Fq 'data-generate-preflighted-instruction' index.html
-          grep -Fq 'Stage 8 requires an actual generated production prompt.' index.html
-          grep -Fq 'Stage 9 requires a separately versioned preflighted production prompt.' index.html
-          node - <<'NODE'
-          const fs=require('node:fs');
-          const project=JSON.parse(fs.readFileSync('SELF_VERIFIED_PROJECT.json','utf8'));
-          const stage8=project.productionInstructions?.find(record=>Number(record.stageNumber)===8);
-          const stage9=project.productionInstructions?.find(record=>Number(record.stageNumber)===9);
-          if(project.name!=='CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD')throw new Error('Retained project is not the complete application build.');
-          if(!String(project.job?.exactUserObjective||'').startsWith('Build and deploy the complete phone-first, domain-general Closed-Loop Agent Reliability application'))throw new Error('Stage 1 objective is not the complete application build.');
-          if(!String(project.job?.requestedActions||'').startsWith('Build the application defined by the corrected complete build instruction'))throw new Error('Stage 1 requested actions do not begin with the actual build.');
-          if(/self-verification|\bv13\b|version 13|sidecar-filename defect|fix stage/i.test(JSON.stringify(project)))throw new Error('Residual version, repair, sidecar, or self-verification framing remains in the retained project.');
-          if(project.stages?.[0]?.assignedActorType!=='HUMAN')throw new Error('Stage 1 is not human-owned.');
-          if(project.stages?.[26]?.assignedActorType!=='HUMAN'||project.stages?.[27]?.assignedActorType!=='HUMAN')throw new Error('Process and product audits are not human-owned.');
-          if(!Array.isArray(project.stages)||project.stages.length!==31||project.stages.some((stage,index)=>stage.number!==index+1||stage.status!=='COMPLETE'))throw new Error('The retained project does not contain all 31 completed stages in order.');
-          if(!stage8?.promptText?.startsWith('PRODUCTION INSTRUCTION'))throw new Error('Retained Stage 8 generated production prompt is missing.');
-          if(!stage9?.promptText?.startsWith('PREFLIGHTED PRODUCTION INSTRUCTION'))throw new Error('Retained Stage 9 preflighted production prompt is missing.');
-          if(stage8.instructionId===stage9.instructionId)throw new Error('Retained Stage 8 and 9 instruction identities are not independently versioned.');
-          for(const record of [stage8,stage9])for(const required of ['OBJECTIVE','INDEPENDENT EXTERNAL AUTHORITY','MANDATORY ATOMIC REQUIREMENTS','ACCEPTANCE TESTS','FAILURE / MUTATION TESTS','TRUTH SEMANTICS','COMPLETION CRITERIA'])if(!record.promptText.includes(required))throw new Error(`${record.instructionId} is missing ${required}.`);
-          NODE
-      - name: Commit exact verified application and retained project
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -f .github/workflows/apply-prompt-generation-once.yml patch-retained-prompt-model.mjs normalize-retained-project-scope.mjs
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Finalize generated instruction stages and retained application project'
-          git pull --rebase origin main
-          git push origin HEAD:main
+      - name: Explain current architecture
+        run: echo 'The application is deployed from its human-operable structured workflow. Deployment does not inject generated-prompt controls into Stage 8 or Stage 9.'
