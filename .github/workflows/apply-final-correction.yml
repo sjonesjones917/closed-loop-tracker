@@ -1,5 +1,6 @@
 name: Apply final application correction
 
+# Apply the existing one-shot correction to the checked-in application and retained project.
 on:
   push:
     branches:
