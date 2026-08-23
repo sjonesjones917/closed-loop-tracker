@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs
+      - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
       - run: node verify.mjs
       - name: Verify single application source
         run: |
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify-live.mjs
-      - name: Verify phone views at 320 and 393 CSS pixels
+      - name: Verify rendered phone views
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -89,3 +89,5 @@ jobs:
             ! grep -q '0/31 complete' "live-${WIDTH}.html"
             ! grep -q 'Loading the workflow' "live-${WIDTH}.html"
           done
+      - name: Exercise deployed project and persistence in Chromium
+        run: node verify-browser.mjs
