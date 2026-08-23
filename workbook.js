@@ -1,7 +1,7 @@
 (async()=>{
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
-    const cacheKey="stage-native-controls";
+    const cacheKey="stage-native-controls-2";
     const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
     const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
     for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
@@ -22,23 +22,14 @@
 (()=>{
   "use strict";
   const STORE="mclarw";
-  const BAD_NAV=/^(?:Appendices A[–-]F|Appendix controls|Operational controls A[–-]F)$/i;
+  const BAD_NAV=/^(?:Appendices A[–-]F|Control records|Appendix controls|Operational controls A[–-]F|[A-F]\s+(?:FRESH AGENT CONTEXT LAUNCH CHECKLIST|UNIVERSAL BLOCKER RECORD|UNIVERSAL CHANGE AND INVALIDATION LOG|EXACT FINAL RELEASE CHECKLIST|NEW-JOB RESET CHECKLIST|UNIVERSAL AGENT-OUTPUT RECEIPT))$/i;
   const APPENDIX_HEADING=/^APPENDIX\s+[A-F]\s*[-–—]/i;
   const STYLE_ID="stage-native-control-style";
   const PURPOSE_ID="appendix-operational-purpose";
-  const DEFINITIONS=[
-    ["A","Fresh-context launch","When a fresh independent execution or review context is required, record its identity, exact frozen inputs, contamination checks, tool availability, output identity, and usability."],
-    ["B","Mandatory blocker","When mandatory evidence, authority, input, capability, or a decision rule is unavailable, record the blocker, stop affected downstream work, and prohibit READY until resolution and revalidation are established."],
-    ["C","Material change and invalidation","For every material change, record the responsible layer, exact change, artifact identity, downstream invalidation, and every required rerun. Historical versions remain preserved."],
-    ["D","Exact final release","At release, require an ACCEPTED Stage 27 gate and exact SHA-256 plus byte-size identity between the audited artifact and the exact artifact selected for delivery."],
-    ["E","New-job reset","When a different job begins, create clean job state and prevent silent inheritance of an old baseline, release decision, requirement, test, defect disposition, or job-specific evidence."],
-    ["F","Agent-output receipt","Immediately after every agent response or generated artifact, preserve the exact context, inputs, output identity, files, hashes, deviations, defects or blockers, and next verification route."]
-  ];
   let queued=false;
 
   function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
   function state(){try{return JSON.parse(localStorage.getItem(STORE)||"null")}catch{return null}}
-  function records(s,letter){if(Array.isArray(s?.operationalRecords?.[letter]))return s.operationalRecords[letter];if(Array.isArray(s?.appendices?.[letter]?.records))return s.appendices[letter].records;return[]}
 
   function addStyles(){
     if(document.getElementById(STYLE_ID))return;
@@ -55,39 +46,100 @@
       [data-control-records="true"] .record-id{color:#666;font-weight:400}
       [data-contextual-controls="true"] [data-hash-control="true"]{margin-top:10px}
       [data-appendix-reference-hidden="true"]{display:none!important}
-      #${PURPOSE_ID} .appendix-row{border-top:1px solid #ddd;padding:9px 0}
-      #${PURPOSE_ID} .appendix-meta{margin-top:4px}
     `;
     document.head.appendChild(style);
   }
 
-  function removeDuplicateNavigation(){document.querySelectorAll("button,a,[role='button']").forEach(element=>{if(BAD_NAV.test((element.textContent||"").trim()))element.remove()})}
-  function keepWorkbookSurface(event){const control=event.target.closest?.("button,a,[role='button']");if(!control||!BAD_NAV.test((control.textContent||"").trim()))return;event.preventDefault();event.stopImmediatePropagation();if("view" in globalThis)globalThis.view="workbook";if(typeof globalThis.render==="function")globalThis.render()}
-  function hideStandaloneAppendixReferences(){document.querySelectorAll("h1,h2,h3,h4,summary").forEach(heading=>{if(!APPENDIX_HEADING.test((heading.textContent||"").trim()))return;if(heading.closest('[data-contextual-controls="true"]')||heading.closest(`#${PURPOSE_ID}`))return;const box=heading.closest("section,article,details,.card,.panel")||heading.parentElement;if(!box)return;box.dataset.appendixReferenceHidden="true";box.hidden=true;box.setAttribute("aria-hidden","true")})}
-
-  function renderPurpose(){
-    const master=document.getElementById("master");if(!master)return;
-    let panel=document.getElementById(PURPOSE_ID);
-    if(!panel){panel=document.createElement("details");panel.id=PURPOSE_ID;panel.className="card";panel.dataset.appendixOperationalPurpose="true";master.appendChild(panel)}
-    const s=state();
-    const rows=DEFINITIONS.map(([letter,title,meaning])=>{const list=records(s,letter),last=list[list.length-1],latest=last?(last.id||last.FRESH_CONTEXT_LAUNCH_RECORD_ID||last.BLOCKER_ID||last.CHANGE_ID||last.HASH_AUDIT_ID||last.NEW_JOB_INITIALIZATION_RECORD_ID||last.RECEIPT_ID||"recorded"):"none yet";return `<div class="appendix-row"><strong>Appendix ${letter} — ${escapeHtml(title)}</strong><div class="muted appendix-meta">${escapeHtml(meaning)}</div><div class="muted appendix-meta">Preserved records: ${list.length}. Latest: ${escapeHtml(latest)}</div></div>`}).join("");
-    panel.innerHTML=`<summary><strong>APPENDIX A–F — OPERATIONAL CONTROLS</strong></summary><p class="muted">These are part of the existing 30-stage application. They are reusable event-driven controls, not six extra stages and not six permanent checklist stacks. A control appears inside the stage only when its triggering event requires a record; completed records remain preserved in the same job.</p>${rows}`;
+  function removeDuplicateNavigation(){
+    document.querySelectorAll("button,a,[role='button']").forEach(element=>{
+      if(BAD_NAV.test((element.textContent||"").trim()))element.remove();
+    });
+    document.getElementById(PURPOSE_ID)?.remove();
   }
 
-  function recordState(record){const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;return unresolved?`${unresolved} unresolved`:"recorded"}
-  function normalizeRecord(record){record.open=false;record.removeAttribute("open");record.dataset.stageNativeRecord="true";const summary=record.querySelector(":scope > summary");if(!summary)return;const raw=(summary.textContent||"").trim(),separator=raw.lastIndexOf("—"),title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record",id=(separator>=0?raw.slice(separator+1):"").trim(),status=recordState(record),signature=`${title}|${id}|${status}`;if(summary.dataset.compactSignature===signature)return;summary.dataset.compactSignature=signature;summary.innerHTML=`<strong>${escapeHtml(title)}</strong>${id?` <span class="record-id">— ${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(status)}</span>`}
+  function keepWorkbookSurface(event){
+    const control=event.target.closest?.("button,a,[role='button']");
+    if(!control||!BAD_NAV.test((control.textContent||"").trim()))return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    try{if("view" in globalThis)globalThis.view="workbook"}catch{}
+    if(typeof globalThis.render==="function")globalThis.render();
+  }
+
+  function hideStandaloneAppendixReferences(){
+    document.querySelectorAll("h1,h2,h3,h4,summary").forEach(heading=>{
+      if(!APPENDIX_HEADING.test((heading.textContent||"").trim()))return;
+      if(heading.closest('[data-contextual-controls="true"]'))return;
+      const box=heading.closest("section,article,details,.card,.panel")||heading.parentElement;
+      if(!box)return;
+      box.dataset.appendixReferenceHidden="true";
+      box.hidden=true;
+      box.setAttribute("aria-hidden","true");
+    });
+  }
+
+  function recordState(record){
+    const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
+    const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
+    return unresolved?`${unresolved} unresolved`:"recorded";
+  }
+
+  function normalizeRecord(record){
+    record.open=false;
+    record.removeAttribute("open");
+    record.dataset.stageNativeRecord="true";
+    const summary=record.querySelector(":scope > summary");
+    if(!summary)return;
+    const raw=(summary.textContent||"").trim(),separator=raw.lastIndexOf("—"),title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record",id=(separator>=0?raw.slice(separator+1):"").trim(),status=recordState(record),signature=`${title}|${id}|${status}`;
+    if(summary.dataset.compactSignature===signature)return;
+    summary.dataset.compactSignature=signature;
+    summary.innerHTML=`<strong>${escapeHtml(title)}</strong>${id?` <span class="record-id">— ${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(status)}</span>`;
+  }
+
   function compactContextualControls(){
     document.querySelectorAll('[data-integrated-operational-controls="true"]').forEach(panel=>panel.remove());
     document.querySelectorAll('[data-contextual-controls="true"]').forEach(root=>{
       root.dataset.stageNativeOperationalControls="true";
-      const all=[...root.querySelectorAll("details[data-record]")];all.forEach(normalizeRecord);
-      let group=root.querySelector(':scope > details[data-control-records="true"]');const direct=all.filter(record=>record.parentElement===root);
-      if(!group&&direct.length){group=document.createElement("details");group.className="card";group.dataset.controlRecords="true";group.appendChild(document.createElement("summary"));root.insertBefore(group,direct[0]);direct.forEach(record=>group.appendChild(record))}
-      if(group){group.open=false;group.removeAttribute("open");const count=group.querySelectorAll("details[data-record]").length,unresolved=[...group.querySelectorAll("details[data-record]")].filter(record=>recordState(record)!=="recorded").length,summary=group.querySelector(":scope > summary");if(summary){const signature=`${count}|${unresolved}`;if(summary.dataset.compactSignature!==signature){summary.dataset.compactSignature=signature;summary.innerHTML=`Required stage control records <span class="control-count">(${count}; ${unresolved} need evidence)</span>`}}}
-    })
+      const all=[...root.querySelectorAll("details[data-record]")];
+      all.forEach(normalizeRecord);
+      let group=root.querySelector(':scope > details[data-control-records="true"]');
+      const direct=all.filter(record=>record.parentElement===root);
+      if(!group&&direct.length){
+        group=document.createElement("details");
+        group.className="card";
+        group.dataset.controlRecords="true";
+        group.appendChild(document.createElement("summary"));
+        root.insertBefore(group,direct[0]);
+        direct.forEach(record=>group.appendChild(record));
+      }
+      if(group){
+        group.open=false;
+        group.removeAttribute("open");
+        const count=group.querySelectorAll("details[data-record]").length,unresolved=[...group.querySelectorAll("details[data-record]")].filter(record=>recordState(record)!=="recorded").length,summary=group.querySelector(":scope > summary");
+        if(summary){
+          const signature=`${count}|${unresolved}`;
+          if(summary.dataset.compactSignature!==signature){
+            summary.dataset.compactSignature=signature;
+            summary.innerHTML=`Required stage control records <span class="control-count">(${count}; ${unresolved} need evidence)</span>`;
+          }
+        }
+      }
+    });
   }
 
-  function refine(){queued=false;addStyles();removeDuplicateNavigation();hideStandaloneAppendixReferences();compactContextualControls();renderPurpose()}
+  function refine(){
+    queued=false;
+    addStyles();
+    removeDuplicateNavigation();
+    hideStandaloneAppendixReferences();
+    compactContextualControls();
+  }
+
   function queue(){if(queued)return;queued=true;requestAnimationFrame(refine)}
-  document.addEventListener("click",keepWorkbookSurface,true);document.addEventListener("change",queue,true);window.addEventListener("storage",queue);new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});setInterval(renderPurpose,600);queue();
+
+  document.addEventListener("click",keepWorkbookSurface,true);
+  document.addEventListener("change",queue,true);
+  window.addEventListener("storage",queue);
+  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});
+  queue();
 })();
