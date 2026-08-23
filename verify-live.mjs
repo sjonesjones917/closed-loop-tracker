@@ -31,11 +31,11 @@ try{
     ok(promptButtonHeight<=36,`Copy prompt button oversized: ${promptButtonHeight}`);
     ok(await ev("document.body.innerText.includes('Current agent work')&&document.body.innerText.includes('Copy prompt')"),'Project does not expose the current agent prompt');
     await screenshot('phone-overview-393x852');
-    await ev("document.querySelector('[data-view=workflow]').click()");
+    await ev("document.querySelector('[data-view=\"workflow\"]').click()");
     await waitFor("document.querySelectorAll('[data-operation]').length===31");
     const count=await ev("document.querySelectorAll('[data-operation]').length");
     ok(count===31,`Expected 31 operation controls, found ${count}`);
-    await ev("document.querySelector('[data-operation=2]').click()");
+    await ev("document.querySelector('[data-operation=\"2\"]').click()");
     await waitFor("document.body.innerText.includes('Discover independent external authorities')&&!!document.querySelector('.agent-prompt-visible')");
     ok(await ev("document.body.innerText.includes('Generated instruction / prompt')"),'Generated prompt history is not inspectable');
     ok(await ev("document.body.innerText.includes('Uploaded/project/generated files are not promoted')"),'Authority-separation guidance is not visible at Operation 02');
@@ -58,13 +58,13 @@ try{
   if(mode==='history'){
     const persistedRuns=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.runRecords.length");
     ok(persistedRuns===0,`Retained project contains ${persistedRuns} run records; expected zero`);
-    await ev("document.querySelector('[data-view=runs]').click()");
+    await ev("document.querySelector('[data-view=\"runs\"]').click()");
     await waitFor("document.body.innerText.includes('Executions and independent review')");
     ok(await ev("document.body.innerText.includes('Independent run records')"),'Run records section is not visible');
-    await ev("document.querySelector('[data-view=history]').click()");
+    await ev("document.querySelector('[data-view=\"history\"]').click()");
     await waitFor("document.body.innerText.includes('Complete history')");
-    ok(await ev("document.body.innerText.includes('Generated instruction')"),'Generated instructions are not inspectable in History');
-    ok(await ev("document.body.innerText.includes('Lossless application-repair job definition preserved.')"),'Preserved generated output is not inspectable in History');
+    ok(await ev("document.querySelector('#project-view').textContent.includes('Generated instruction')"),'Generated instructions are not inspectable in History');
+    ok(await ev("document.querySelector('#project-view').textContent.includes('Lossless application-repair job definition preserved.')"),'Preserved generated output is not inspectable in History');
     ok(await ev("!!document.querySelector('.agent-fab')"),'Agent prompt is not accessible while reviewing history');
     await screenshot('phone-history-393x852');
     fs.writeFileSync('live-proof/history-interaction.json',JSON.stringify({ok:true,runRecords:persistedRuns,historyVisible:true,promptAccessible:true},null,2));
