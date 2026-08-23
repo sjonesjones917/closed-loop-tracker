@@ -17,12 +17,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build and diagnose
+      - name: Build, migrate, and diagnose
         shell: bash
         run: |
           set +e
           : > RETAINED_PROJECT_DIAGNOSTIC.txt
           echo "SOURCE_COMMIT=$GITHUB_SHA" >> RETAINED_PROJECT_DIAGNOSTIC.txt
+          node migrate-self-project.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
+          echo "MIGRATE_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
           node build-app.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
           echo "BUILD_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
           node attach-self-project.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
@@ -37,11 +39,11 @@ jobs:
           echo "IMPORT_PROBE_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
           CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
           echo "BROWSER_SMOKE_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
-      - name: Commit diagnostic
+      - name: Commit migrated project and diagnostic
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add RETAINED_PROJECT_DIAGNOSTIC.txt
-          git commit -m 'Record retained project diagnostic [skip ci]' || exit 0
+          git add SELF_VERIFIED_PROJECT.json RETAINED_PROJECT_DIAGNOSTIC.txt
+          git commit -m 'Migrate retained self-project into current app schema [skip ci]' || exit 0
           git push origin HEAD:main
