@@ -26,6 +26,7 @@ jobs:
       - run: |
           test -f index.html
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f test-project/TEST-JOB-001__UX-AUDIT.md
       - name: Publish test status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
@@ -66,29 +67,36 @@ jobs:
           for attempt in $(seq 1 48); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
             good=true
-            for f in index.html workbook.js human-ui.js TEST_PROJECT.json test-project/TEST-JOB-001__UX-AUDIT.md; do
-              mkdir -p "live-proof/$(dirname "$f")"
+            for f in index.html workbook.js human-ui.js TEST_PROJECT.json; do
               curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false
             done
             if $good && [[ "$(sha256sum index.html|awk '{print $1}')" == "$(sha256sum live-proof/index.html|awk '{print $1}')" && "$(sha256sum workbook.js|awk '{print $1}')" == "$(sha256sum live-proof/workbook.js|awk '{print $1}')" && "$(sha256sum human-ui.js|awk '{print $1}')" == "$(sha256sum live-proof/human-ui.js|awk '{print $1}')" && "$(sha256sum TEST_PROJECT.json|awk '{print $1}')" == "$(sha256sum live-proof/TEST_PROJECT.json|awk '{print $1}')" ]]; then verified=true; break; fi
             sleep 5
           done
           test "$verified" = true
-      - name: Render phone UI
+      - name: Render phone UI and real test project
         run: |
           set -euo pipefail
           BROWSER="$(command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
-          URL="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
-          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=16000 --window-size=393,852 --dump-dom "$URL" > live-proof/blank.html
+          BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
+          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=18000 --window-size=393,852 --dump-dom "$BASE" > live-proof/blank.html
           grep -q 'Closed-Loop Reliability' live-proof/blank.html
           grep -qi 'Open test project' live-proof/blank.html
-          grep -q 'Overview' live-proof/blank.html
-          grep -q 'History' live-proof/blank.html
-          grep -q '01 INITIALIZE THE JOB' live-proof/blank.html
+          grep -q '30-stage workflow' live-proof/blank.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/blank.html
+          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=22000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
+          grep -q 'Repair the existing Closed-Loop Reliability application' live-proof/test-project.html
+          grep -q 'Project data' live-proof/test-project.html
+          grep -q 'Runs' live-proof/test-project.html
+          grep -q 'Issues' live-proof/test-project.html
+          grep -q 'Release' live-proof/test-project.html
+          grep -q 'History' live-proof/test-project.html
+          grep -q 'Stage 11' live-proof/test-project.html
+          grep -q 'BLOCKED' live-proof/test-project.html
+          grep -q 'Test project' live-proof/test-project.html
       - name: Publish live status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='live-workbook-ui' -f description='Rendered live phone UI verified'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='live-workbook-ui' -f description='Rendered live phone UI and real test project verified'
