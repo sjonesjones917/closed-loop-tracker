@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - LIVE_DEPLOYMENT_VERIFIED.json
   workflow_dispatch:
 
 permissions:
@@ -94,12 +96,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      contents: write
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Check out the exact verified source revision
+        uses: actions/checkout@v4
+
       - name: Deploy the verified application
         id: deployment
         uses: actions/deploy-pages@v4
@@ -134,3 +140,22 @@ jobs:
             echo 'A public version label appeared in the live application.' >&2
             exit 1
           fi
+
+      - name: Record the verified live deployment
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_SHA256: ${{ needs.verify.outputs.app_sha256 }}
+        run: |
+          set -euo pipefail
+          LIVE_SHA256="$(sha256sum live-check/index.html | awk '{print $1}')"
+          test "$LIVE_SHA256" = "$EXPECTED_SHA256"
+          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"seededSelfBuildProject":false,"promptRelayArchitecture":false,"appSha256":"%s","liveSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_SHA256" "$LIVE_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add LIVE_DEPLOYMENT_VERIFIED.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Record verified live application deployment [skip ci]'
+          git push origin HEAD:main
