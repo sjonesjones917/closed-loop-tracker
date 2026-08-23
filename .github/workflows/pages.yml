@@ -92,23 +92,22 @@ jobs:
           done
       - name: Exercise deployed project and persistence in Chromium
         run: node verify-browser.mjs
-      - name: Preserve successful live-verification evidence
+      - name: Publish live-verification status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
         run: |
-          mkdir -p .github
-          cat > .github/LIVE_VERIFICATION.json <<'JSON'
-          {
-            "status": "VERIFIED",
-            "application": "Mobile Closed-Loop Agent Reliability Workbook",
-            "pageUrl": "https://sjonesjones917.github.io/closed-loop-tracker/",
-            "checks": ["deployed resources","retained project identity and truthful Stage 01/Stage 02 state","320 CSS pixel rendering","393 CSS pixel rendering","1280 CSS pixel rendering","no horizontal overflow","no oversized buttons","Stage 01 generated instruction","complete Operation 01 output","Records visibility","Stage 02 structured editing and refresh persistence","contextual supporting records","new project coexistence","zero browser/runtime errors"]
-          }
-          JSON
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout -B main origin/main
-          if ! git diff --quiet -- .github/LIVE_VERIFICATION.json || ! git ls-files --error-unmatch .github/LIVE_VERIFICATION.json >/dev/null 2>&1; then
-            git add .github/LIVE_VERIFICATION.json
-            git commit -m "Record successful deployed browser verification"
-            git push origin HEAD:main
+          if [ "$RESULT" = success ]; then
+            STATE=success
+            DESCRIPTION='Source, deployment, mobile/desktop UI, persistence, and browser verification passed'
+          else
+            STATE=failure
+            DESCRIPTION='Live deployment verification failed; inspect workflow run'
           fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions\"}"
