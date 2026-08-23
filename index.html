@@ -48,7 +48,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#071525;
     <button class="btn" data-view="release">Release</button>
   </nav>
 
-  <section id="projectsView" class="view active"><div class="card" data-self-project-proof="true"><h2>Verified application project</h2><p>This completed project was created using this application, is about the application itself, and uses the same 31-stage project model as every other project. It is workflow evidence only; it is never external authority for its own requirements.</p><div class="actions"><a class="btn" href="SELF_VERIFIED_PROJECT.json" download="SELF_VERIFIED_PROJECT.json">Download project JSON</a></div></div></section>
+  <section id="projectsView" class="view active"><div class="card" data-self-project-proof="true"><h2>Completed application-build project</h2><p>This project was created with this application, is about building the application itself, and uses the same 31-stage project model as every other project. It remains workflow evidence and never becomes external authority for its own requirements.</p><div class="actions"><a class="btn" href="SELF_VERIFIED_PROJECT.json" download="SELF_VERIFIED_PROJECT.json">Download project JSON</a></div></div></section>
   <section id="jobView" class="view"></section>
   <section id="workflowView" class="view"></section>
   <section id="recordsView" class="view"></section>
@@ -280,7 +280,7 @@ function infoBadge(infoClass){if(infoClass===INFORMATION_CLASSES.USER)return'<sp
 function statusBadge(status){const s=String(status||'NOT_STARTED');const tone=s==='COMPLETE'||s==='PASS'||s==='ACCEPTED'||s==='RELEASED'||s==='SATISFIED'||s==='YES'?'good':s==='BLOCKED'||s==='FAIL'||s==='REJECTED'||s==='VIOLATED'||s==='NO'?'bad':s==='STALE'||s==='IN_PROGRESS'||s==='UNDETERMINED'?'warn':'';return`<span class="pill ${tone}">${esc(s)}</span>`}
 function switchView(view){currentView=view;document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===`${view}View`));document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===view));renderAll()}
 function renderAll(){renderProjects();renderJob();renderWorkflow();renderRecords();renderRelease();document.querySelectorAll('[data-view]:not([data-view="projects"])').forEach(btn=>btn.disabled=!cur())}
-function renderProjects(){const root=$('projectsView');const projectCards=projects.map(project=>{const done=completedCount(project),pct=Math.round(done/31*100);return`<article class="panel projectCard"><div class="stageHeaderTop"><div><h2>${esc(project.name)}</h2><div class="fine muted">${esc(project.projectId)} · Updated ${esc(new Date(project.updatedAt).toLocaleString())}</div></div>${selectedProjectId===project.projectId?'<span class="badge good">OPEN</span>':''}</div><div class="objective">${esc(project.job.exactUserObjective||'No objective entered.')}</div><div class="progress"><i style="width:${pct}%"></i></div><div class="projectMeta"><span class="pill">${done}/31 complete</span><span class="pill">${project.userInputs.length} inputs</span><span class="pill">${project.externalSources.length} external sources</span><span class="pill">${project.workflowArtifacts.length} registered artifacts</span></div><div class="actions"><button class="btn primary" data-open-project="${esc(project.projectId)}">Open project</button><button class="btn" data-export-project="${esc(project.projectId)}">Export JSON</button><button class="btn danger" data-delete-project="${esc(project.projectId)}">Delete</button></div></article>`}).join('');root.innerHTML=`<div class="panel"><div class="stageHeaderTop"><div><h2>Projects</h2><div class="muted lead">New user-created projects begin from the user’s actual arbitrary job at Stage 1. The retained completed application project below is preserved as proof that this application executed its own 31-stage workflow.</div></div></div><div class="actions"><button id="newProjectBtn" class="btn primary">New project</button><button id="importProjectBtn" class="btn">Import project JSON</button></div></div>${projectCards||'<div class="empty">No current project exists. Create a project for the real job to begin Stage 1.</div>'}`}
+function renderProjects(){const root=$('projectsView');const projectCards=projects.map(project=>{const done=completedCount(project),pct=Math.round(done/31*100);return`<article class="panel projectCard"><div class="stageHeaderTop"><div><h2>${esc(project.name)}</h2><div class="fine muted">${esc(project.projectId)} · Updated ${esc(new Date(project.updatedAt).toLocaleString())}</div></div>${selectedProjectId===project.projectId?'<span class="badge good">OPEN</span>':''}</div><div class="objective">${esc(project.job.exactUserObjective||'No objective entered.')}</div><div class="progress"><i style="width:${pct}%"></i></div><div class="projectMeta"><span class="pill">${done}/31 complete</span><span class="pill">${project.userInputs.length} inputs</span><span class="pill">${project.externalSources.length} external sources</span><span class="pill">${project.workflowArtifacts.length} registered artifacts</span></div><div class="actions"><button class="btn primary" data-open-project="${esc(project.projectId)}">Open project</button><button class="btn" data-export-project="${esc(project.projectId)}">Export JSON</button><button class="btn danger" data-delete-project="${esc(project.projectId)}">Delete</button></div></article>`}).join('');root.innerHTML=`<div class="panel"><div class="stageHeaderTop"><div><h2>Projects</h2><div class="muted lead">New user-created projects begin from the user’s actual arbitrary job at Stage 1. The retained completed application-build project remains visible as proof that this application executed its own 31-stage workflow.</div></div></div><div class="actions"><button id="newProjectBtn" class="btn primary">New project</button><button id="importProjectBtn" class="btn">Import project JSON</button><button class="btn" type="button" data-restore-retained-project>Restore application project</button></div></div>${projectCards||'<div class="empty">No current project exists. Create a project for the real job to begin Stage 1.</div>'}`}
 function renderJob(){const root=$('jobView'),project=cur();if(!project){root.innerHTML='<div class="empty">Select or create a project.</div>';return}const fields=JOB_FIELDS.map(([key,label,help],i)=>`<section class="scopeItem ${project.job[key].trim()?'':'invalid'}"><h3><span class="scopeNo">${i+1}.</span>${esc(label)}</h3><div class="fine muted">${esc(help)}</div><div class="field"><textarea data-job-field="${esc(key)}" aria-label="${esc(label)}">${esc(project.job[key])}</textarea></div></section>`).join('');root.innerHTML=`<div class="panel"><div class="stageHeaderTop"><div><h2>Stage 1 — Define Job</h2><div class="muted">Lossless intake only. External research belongs to Stage 2.</div></div>${statusBadge(project.stages[0].status)}</div><div class="boundary"><strong>Information class: USER JOB INPUT</strong>These fields preserve what the user wants, supplied, requires, forbids, and expects. They do not become external authority merely because they were supplied.</div><div class="actions" style="margin-top:9px"><button class="btn" data-add-record="userInputs" data-stage="1">Add supplied input</button><button class="btn primary" id="saveJobBtn">Save all 20 scopes</button><button class="btn good" data-complete-stage="1">Validate and complete Stage 1</button></div></div><div class="grid two">${fields}</div><div class="panel">${renderCollectionGroup(project,'userInputs',1,true)}</div>`}
 function renderWorkflow(){const root=$('workflowView'),project=cur();if(!project){root.innerHTML='<div class="empty">Select or create a project.</div>';return}selectedStage=Math.max(1,Math.min(31,Number(project.selectedStage||selectedStage||1)));const stageButtons=project.stages.map(stage=>`<button class="stageButton ${esc(stage.status)} ${stage.number===selectedStage?'active':''}" data-select-stage="${stage.number}"><span class="stageNumber">${stage.number}</span><span class="stageName">${esc(stage.name)}</span><span class="stageStatus">${esc(stage.status)}</span></button>`).join('');root.innerHTML=`<div class="panel"><div class="stageHeaderTop"><div><h2>${esc(project.name)}</h2><div class="fine muted">${esc(project.projectId)}</div></div><span class="pill">${completedCount(project)}/31 complete</span></div><div class="progress"><i style="width:${Math.round(completedCount(project)/31*100)}%"></i></div></div><div class="workflowLayout"><aside class="panel"><div class="stageList">${stageButtons}</div></aside><section class="panel stagePanel">${renderStagePanel(project,selectedStage)}</section></div>`}
 function stageBoundary(stageNumber){if(stageNumber===1)return'<strong>USER JOB INPUT only</strong>Capture user intent and supplied facts without researching the solution.';if(stageNumber===2)return'<strong>EXTERNAL RESEARCH SOURCES only</strong>Register independent outside authorities. Internal files, generated project state, tests, candidates, and prior workflow output are prohibited as research authority.';if(stageNumber===3)return'<strong>External findings traced to Stage 2 sources</strong>Do not derive externally governed requirements from the unfinished artifact.';return'<strong>Workflow-generated work</strong>This stage may use approved prior-stage records for production, testing, verification, correction, provenance, or release. It may not retroactively turn those records into external authority.'}
@@ -370,28 +370,112 @@ load();renderAll();
 })();
 </script>
 <script data-retained-self-project-loader="true">
-window.addEventListener('load',()=>{setTimeout(async()=>{
-  try{
-    const response=await fetch('./SELF_VERIFIED_PROJECT.json',{cache:'no-store'});
-    if(!response.ok)throw new Error('Retained application project retrieval failed: '+response.status);
-    const project=await response.json();
-    const view=document.querySelector('#projectsView');
-    const identity=String(project.projectId||project.name||'');
-    if(identity&&view&&view.textContent.includes(identity))return;
-    const inputs=[...document.querySelectorAll('input[type="file"]')];
-    const input=inputs.find(el=>/json/i.test(el.accept||'')||/import|project/i.test((el.id||'')+' '+(el.name||'')+' '+(el.getAttribute('aria-label')||'')));
-    if(!input)throw new Error('The application project-import control was not found.');
-    const file=new File([JSON.stringify(project)],'SELF_VERIFIED_PROJECT.json',{type:'application/json'});
-    const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;
-    input.dispatchEvent(new Event('change',{bubbles:true}));
-    await new Promise(resolve=>setTimeout(resolve,250));
-    const stored=JSON.parse(localStorage.getItem('closedLoopReliability.projects')||'[]');
-    if(!stored.some(item=>item.projectId===project.projectId))throw new Error('The retained application project was not accepted by the application project importer.');
-  }catch(error){
-    console.error(error);
-    const host=document.querySelector('[data-self-project-proof="true"]');
-    if(host){const p=document.createElement('p');p.className='error';p.textContent='Retained application project load failed: '+error.message;host.appendChild(p);}
+(()=>{'use strict';
+const STORE_KEY='closedLoopReliability.projects';
+const SELECTED_KEY='closedLoopReliability.selectedProject';
+const QUARANTINE_KEY='closedLoopReliability.quarantinedProjects';
+const RELOAD_KEY='closedLoopReliability.retainedProjectReload';
+let retainedProjectId='';
+const isLoadableProject=value=>Boolean(value&&value.schema==='closed-loop-project/1'&&typeof value.projectId==='string'&&value.projectId&&Array.isArray(value.stages)&&value.stages.length===31);
+const setStatus=(message,tone)=>{
+  const status=document.querySelector('#status');
+  if(status){status.textContent=message;status.className='status '+tone;}
+};
+const showError=error=>{
+  console.error(error);
+  const message='Retained application project load failed: '+error.message;
+  setStatus(message,'bad');
+  const view=document.querySelector('#projectsView');
+  if(view&&!view.querySelector('[data-retained-project-error]')){
+    const panel=document.createElement('div');
+    panel.className='panel error';
+    panel.dataset.retainedProjectError='true';
+    panel.textContent=message;
+    view.prepend(panel);
   }
-},0)});
+};
+const readQuarantine=()=>{
+  try{const value=JSON.parse(localStorage.getItem(QUARANTINE_KEY)||'[]');return Array.isArray(value)?value:[];}catch{return[];}
+};
+async function installRetainedProject(options={}){
+  const response=await fetch('./SELF_VERIFIED_PROJECT.json',{cache:'no-store'});
+  if(!response.ok)throw new Error('Project retrieval returned HTTP '+response.status+'.');
+  const project=await response.json();
+  if(!isLoadableProject(project))throw new Error('The retained project is not a valid current-schema 31-stage project.');
+  if(project.stages.some((stage,index)=>Number(stage?.number)!==index+1))throw new Error('The retained project stage numbering is invalid.');
+  retainedProjectId=project.projectId;
+
+  const originalStore=localStorage.getItem(STORE_KEY);
+  const originalQuarantine=localStorage.getItem(QUARANTINE_KEY);
+  let parsed=[];
+  let parseFailure='';
+  try{
+    const value=JSON.parse(originalStore||'[]');
+    if(!Array.isArray(value))throw new Error('Stored project collection is not an array.');
+    parsed=value;
+  }catch(error){
+    parseFailure=error.message;
+    parsed=[];
+  }
+
+  const valid=[];
+  const invalid=[];
+  for(const item of parsed){(isLoadableProject(item)?valid:invalid).push(item);}
+  const otherProjects=valid.filter(item=>item.projectId!==project.projectId);
+  const nextProjects=[project,...otherProjects];
+  const nextSerialized=JSON.stringify(nextProjects);
+  const changed=nextSerialized!==(originalStore||'[]');
+  const quarantineNeeded=Boolean(parseFailure||invalid.length);
+
+  try{
+    localStorage.setItem(STORE_KEY,nextSerialized);
+    if(quarantineNeeded){
+      const quarantine=readQuarantine();
+      quarantine.push({
+        quarantinedAt:new Date().toISOString(),
+        reason:parseFailure||'One or more stored projects did not match the current project schema.',
+        projects:invalid,
+        rawStore:parseFailure?originalStore:null
+      });
+      localStorage.setItem(QUARANTINE_KEY,JSON.stringify(quarantine.slice(-10)));
+    }
+    const selectedId=localStorage.getItem(SELECTED_KEY);
+    if(selectedId&&!nextProjects.some(item=>item.projectId===selectedId))localStorage.removeItem(SELECTED_KEY);
+  }catch(error){
+    try{
+      if(originalStore===null)localStorage.removeItem(STORE_KEY);else localStorage.setItem(STORE_KEY,originalStore);
+      if(originalQuarantine===null)localStorage.removeItem(QUARANTINE_KEY);else localStorage.setItem(QUARANTINE_KEY,originalQuarantine);
+    }catch{}
+    throw new Error('Project storage could not be updated without risking existing data: '+error.message);
+  }
+
+  const installed=JSON.parse(localStorage.getItem(STORE_KEY)||'[]');
+  if(!installed.some(item=>item.projectId===project.projectId))throw new Error('The retained project was not installed in application storage.');
+
+  const signature=String(project.projectId)+'|'+String(project.updatedAt||'');
+  if(changed&&options.reload!==false&&sessionStorage.getItem(RELOAD_KEY)!==signature){
+    sessionStorage.setItem(RELOAD_KEY,signature);
+    location.reload();
+    return project;
+  }
+  sessionStorage.removeItem(RELOAD_KEY);
+  return project;
+}
+window.installRetainedClosedLoopProject=installRetainedProject;
+document.addEventListener('click',event=>{
+  const deleteButton=event.target.closest('[data-delete-project]');
+  if(deleteButton&&retainedProjectId&&deleteButton.dataset.deleteProject===retainedProjectId){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setStatus('The completed application-build project is retained by this application. Export it or open it; it is not deleted from Projects.','warn');
+    return;
+  }
+  const restoreButton=event.target.closest('[data-restore-retained-project]');
+  if(!restoreButton)return;
+  restoreButton.disabled=true;
+  installRetainedProject({reload:true}).catch(showError).finally(()=>{restoreButton.disabled=false;});
+},true);
+window.addEventListener('load',()=>{installRetainedProject({reload:true}).catch(showError);});
+})();
 </script></body>
 </html>

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "selfProject": true,
+  "nativeCurrentSchema": true,
+  "aboutCompleteApplication": true,
+  "stageWorkflowMatchesCurrentApp": true,
+  "stages": 31,
+  "stage1Scopes": 20,
+  "externalSources": 40,
+  "requirements": 8,
+  "initialExecutions": 10,
+  "correctedExecutions": 10,
+  "confirmationExecutions": 10,
+  "verificationRows": 240,
+  "defectsCorrected": 1,
+  "releaseDecision": "ACCEPTED",
+  "appBytes": 110308,
+  "appSha256": "bb4232a89c4b8db6d8fa6db2ef3ee553f4b8a345244b872621924c2d2be3d0b9",
+  "projectSha256": "d7db677be6f8cb2aeb499b0d3e9207ee19d032b2d6efc9684ef804230cd60804"
+}

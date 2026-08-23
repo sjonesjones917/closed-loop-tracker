@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "sourceCommit": "3396254deebd8e05f7e4f27f047bd9f6f2941009",
+  "initialCandidateCommit": "24a17e953bf0494c59a53e3d8648672ac6fb4fef",
+  "initialCandidateSha256": "e279c5316829340ff50edbb4c898eb19a0ec0cd27efd72ce5c1c793449d3097e",
+  "correctedCandidateSha256": "bb4232a89c4b8db6d8fa6db2ef3ee553f4b8a345244b872621924c2d2be3d0b9",
+  "correctedCandidateBytes": 110308,
+  "projectId": "PROJECT-MT3M46X0-075JMP",
+  "projectName": "CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD",
+  "stagesComplete": 31,
+  "externalSources": 40,
+  "requirements": 8,
+  "initialExecutions": 10,
+  "initialVerifierContexts": 10,
+  "correctedExecutions": 10,
+  "correctedVerifierContexts": 10,
+  "confirmationExecutions": 10,
+  "confirmationVerifierContexts": 10,
+  "verificationRows": 240,
+  "initialViolations": [
+    "REQ-002",
+    "REQ-003",
+    "REQ-006",
+    "REQ-007"
+  ],
+  "correctedMandatoryResults": "ALL_SATISFIED",
+  "confirmationMandatoryResults": "ALL_SATISFIED",
+  "releaseDecision": "ACCEPTED",
+  "auditedHash": "bb4232a89c4b8db6d8fa6db2ef3ee553f4b8a345244b872621924c2d2be3d0b9",
+  "releaseHash": "bb4232a89c4b8db6d8fa6db2ef3ee553f4b8a345244b872621924c2d2be3d0b9",
+  "generatedAt": "2026-08-22T21:24:35-05:00"
+}
