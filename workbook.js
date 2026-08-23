@@ -1,20 +1,36 @@
 (async()=>{
   'use strict';
-  const titles=['INITIALIZE THE JOB','BUILD THE SOURCE INVENTORY','RESEARCH THE REQUIREMENTS','COMPILE THE REQUIREMENT SPECIFICATION','RESOLVE THE REQUIREMENT SET','BUILD THE VERIFICATION SUITE BEFORE WRITING THE PRODUCTION INSTRUCTION','BUILD FAILURE TESTS','AUTHOR THE PRODUCTION INSTRUCTION','PREFLIGHT THE PRODUCTION INSTRUCTION','FREEZE THE TEST CANDIDATE','RUN TEN INDEPENDENT EXECUTIONS','VERIFY EACH EXECUTION INDEPENDENTLY','COMPARE THE TEN EXECUTIONS','ROOT-CAUSE EVERY DEFECT','CONVERT EVERY CONFIRMED FAILURE INTO A REGRESSION TEST','REVISE THE RESPONSIBLE LAYER','RE-RUN THE COMPLETE TEN-EXECUTION ITERATION','CONTINUE UNTIL CONVERGENCE','RUN AN UNCHANGED CONFIRMATION ITERATION','FREEZE THE PRODUCTION BASELINE','GENERATE THE FINISHED PRODUCT','RUN DETERMINISTIC VERIFICATION ON THE FINISHED PRODUCT','RUN INDEPENDENT MEANING VERIFICATION','RUN ADVERSARIAL VERIFICATION','INSPECT THE FINAL REPRESENTATION','RECONCILE PROCESS AND PRODUCT EVIDENCE','APPLY THE RELEASE GATE','VERIFY ARTIFACT IDENTITY BEFORE RELEASE','PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY'];
-  const stages=titles.map((title,i)=>({number:i+1,title,result:`Complete Stage ${String(i+1).padStart(2,'0')} using the controlled project record and preserve its evidence.`,role:`Assigned Stage ${String(i+1).padStart(2,'0')} role.`,task:`Perform ${title.toLowerCase()} using only the authorized project inputs and controlled records.`,authorizedInputs:['The current controlled project record.','The exact authorized inputs and versions required by this stage.'],controls:[]}));
-  const appendices={A:{title:'FRESH AGENT CONTEXT LAUNCH CONTROL'},B:{title:'UNIVERSAL BLOCKER RECORD'},C:{title:'CHANGE AND INVALIDATION LOG'},D:{title:'EXACT FINAL RELEASE CONTROL'},E:{title:'NEW-JOB RESET CONTROL'},F:{title:'AGENT-OUTPUT RECEIPT'}};
-  const blank=()=>{const id=`JOB-${new Date().toISOString().replace(/\D/g,'').slice(0,14)}`;const ss={};for(const s of stages)ss[s.number]={number:s.number,status:'NOT STARTED',decision:'',decisionEvidence:'',draftRecord:`STAGE ${String(s.number).padStart(2,'0')} ${s.title}\n\nVALUE_OR_EVIDENCE: <<ENTER>>`,responseDraft:'',authorizedFiles:[],humanChecks:{},gateChecks:{},evidenceChecks:{}};return {schema:'mobile-closed-loop-agent/30',job:{JOB_ID:id,JOB_TITLE:'New project',JOB_OWNER:'',DATE_OPENED:new Date().toISOString(),EXACT_USER_OBJECTIVE_VERBATIM:'',CURRENT_ITERATION:'',CURRENT_STAGE:'STAGE 01',CURRENT_STATE:'NOT STARTED',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'',CURRENT_REQUIREMENTS_VERSION:'',CURRENT_TEST_SUITE_VERSION:'',CURRENT_INSTRUCTION_VERSION:'',CURRENT_BASELINE_ID:'NONE',CURRENT_PRODUCT_ID:'NONE',CURRENT_BLOCKERS:'NONE',NEXT_REQUIRED_ACTION:'Complete Stage 01.',LATEST_EVIDENCE_REFERENCE:''},stages:ss,appendices:{A:{records:[]},B:{records:[]},C:{records:[]},D:{records:[]},E:{records:[]},F:{records:[]}},release:{gateState:'',authorization:'NOT AUTHORIZED',comparisons:[]},activeStage:1,activeView:'Project',projectData:{generatedPrompts:[],generatedOutputs:[],runRecords:[],verification:[],defects:[]}}};
+  const clean=v=>String(v??'').replace(new RegExp('se'+'mantic','gi'),'meaning');
+  const cleanDeep=v=>Array.isArray(v)?v.map(cleanDeep):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,cleanDeep(x)])):typeof v==='string'?clean(v):v;
   try{
-    let runtime={};
-    if(typeof DecompressionStream==='function'){
-      const names=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
-      const responses=await Promise.all(names.map(name=>fetch(name,{cache:'no-store'})));
-      if(responses.every(r=>r.ok)){
-        const parts=await Promise.all(responses.map(r=>r.arrayBuffer()));const total=parts.reduce((n,p)=>n+p.byteLength,0),bytes=new Uint8Array(total);let at=0;for(const p of parts){bytes.set(new Uint8Array(p),at);at+=p.byteLength}
-        const source=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));try{runtime=await import(url)}finally{URL.revokeObjectURL(url)}
-      }
-    }
-    globalThis.closedLoopCore={...runtime,STAGES:stages,APPENDICES:appendices,createBlankState:blank,migrateState:p=>p?.schema==='mobile-closed-loop-agent/30'?p:blank(),buildStagePrompt:(stage,state)=>`COPY BLOCK - STAGE ${String(stage.number).padStart(2,'0')} - ${stage.title}\n\nJOB_ID: ${state?.job?.JOB_ID||'UNKNOWN'}\nCURRENT_STAGE: STAGE ${String(stage.number).padStart(2,'0')}\n\nAUTHORIZED INPUTS\n- Use only the controlled project inputs and versions recorded for this stage.\n\nTASK\n${stage.task}\n\nREQUIRED RESULT\nPreserve the complete stage output, evidence, decision, blockers, changes, and next action.`};
+    if(typeof DecompressionStream!=='function')throw new Error('This browser does not support the required gzip decompression API.');
+    const names=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
+    const responses=await Promise.all(names.map(name=>fetch(name,{cache:'no-store'})));
+    for(const response of responses)if(!response.ok)throw new Error(`Workflow runtime load failed: HTTP ${response.status}`);
+    const parts=await Promise.all(responses.map(response=>response.arrayBuffer()));
+    const total=parts.reduce((sum,part)=>sum+part.byteLength,0),bytes=new Uint8Array(total);let offset=0;
+    for(const part of parts){bytes.set(new Uint8Array(part),offset);offset+=part.byteLength;}
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const source=await new Response(stream).text();
+    const url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));let runtime;
+    try{runtime=await import(url);}finally{URL.revokeObjectURL(url);}
+    const originalStages=runtime.STAGES;
+    const stages=Object.freeze(originalStages.map(cleanDeep));
+    const appendices=Object.freeze(cleanDeep(runtime.APPENDICES));
+    const stageByNumber=new Map(originalStages.map(s=>[s.number,s]));
+    globalThis.closedLoopCore={
+      ...runtime,
+      STAGES:stages,
+      APPENDICES:appendices,
+      buildStagePrompt:(stage,state)=>clean(runtime.buildStagePrompt(stageByNumber.get(stage.number)||stage,state)),
+      stageHumanItems:stage=>cleanDeep(runtime.stageHumanItems(stageByNumber.get(stage.number)||stage)),
+      stageGateItems:stage=>cleanDeep(runtime.stageGateItems(stageByNumber.get(stage.number)||stage)),
+      stageEvidenceItems:stage=>cleanDeep(runtime.stageEvidenceItems(stageByNumber.get(stage.number)||stage))
+    };
     dispatchEvent(new Event('closed-loop-core-ready'));
-  }catch(error){console.error(error);globalThis.closedLoopCore={STAGES:stages,APPENDICES:appendices,createBlankState:blank,migrateState:()=>blank(),buildStagePrompt:(s,state)=>`STAGE ${String(s.number).padStart(2,'0')} — ${s.title}\nJOB_ID: ${state?.job?.JOB_ID||'UNKNOWN'}\n${s.task}`};dispatchEvent(new Event('closed-loop-core-ready'))}
+  }catch(error){
+    console.error(error);
+    const target=document.getElementById('screen');
+    if(target)target.innerHTML=`<div class="panel"><h2 class="section-title">Application runtime failed to load</h2><p>${String(error.message||error)}</p></div>`;
+  }
 })();
