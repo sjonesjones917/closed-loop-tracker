@@ -37,6 +37,15 @@ jobs:
           node apply-prompt-generation.mjs
           node attach-self-project.mjs
           cp index.html app-v13.html
+      - name: Normalize the retained project to the complete application-build scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          node normalize-retained-project-scope.mjs
+          if grep -Eqi 'self-verification' rebuild-self-project.mjs; then
+            echo 'Residual self-verification terminology remains in the generator.' >&2
+            exit 1
+          fi
       - name: Install browser driver
         run: npm install --no-save --ignore-scripts playwright-core
       - name: Rebuild the retained application project against the corrected application
@@ -111,7 +120,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/apply-prompt-generation-once.yml patch-retained-prompt-model.mjs
+          rm -f .github/workflows/apply-prompt-generation-once.yml patch-retained-prompt-model.mjs normalize-retained-project-scope.mjs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
