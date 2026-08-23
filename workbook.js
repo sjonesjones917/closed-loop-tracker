@@ -1,6 +1,6 @@
 (async()=>{
   const STATE_STORE="mobile-closed-loop-agent";
-  const TEST_SPEC_REVISION="app-repair-self-test-20260823-001";
+  const TEST_SPEC_REVISION="app-repair-self-test-20260823-002";
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
     const cacheKey="human-workbook-20260823-r15";
