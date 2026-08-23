@@ -16,13 +16,13 @@ let chrome=process.env.CHROME_PATH;
 for(const p of ['/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium','/usr/bin/chromium-browser'])if(!chrome&&fs.existsSync(p))chrome=p;
 if(!chrome)throw new Error('System Chromium/Chrome is required for the real UI self-build test.');
 
-const objective="Create, verify, and release the Closed-Loop Agent Reliability v13 application itself by using the actual application UI from an empty project through every one of the 31 sequential operations. The released application must automatically load and display the exact project JSON exported through the app's visible Export this project control after this run; the project must not be hardcoded into the HTML.";
-const deliverable="The exact standalone HTML file app-v13.html, the exact UI-downloaded SELF_VERIFIED_PROJECT.json project export, and reproducible browser evidence showing 31/31 stages complete, 30 producer responses, 30 verifier responses, a real candidate defect and correction, an ACCEPTED decision, and exact audited/release hash identity.";
+const objective="Build, verify, release, and deploy one phone-first, domain-general Closed-Loop Agent Reliability application that accepts an arbitrary user job and drives it through the exact 31-stage forward pipeline from lossless user intent through independent external research, external authority, atomic requirements, tests, production, independent verification, correction, acceptance, release-hash verification, and release, while keeping user job input, external research sources, and workflow-generated artifacts strictly separate and prohibiting circular authority.";
+const deliverable="A working deployed Closed-Loop Agent Reliability web application at https://sjonesjones917.github.io/closed-loop-tracker/; the exact standalone UTF-8 release HTML; the exact project JSON exported through the application's visible Export this project control and automatically reloaded as a separate sidecar; and reproducible browser, process, audit, and SHA-256 evidence establishing the complete 31-stage workflow, the required independent execution and verification cycles, an ACCEPTED decision, and byte-identical release.";
 const candidateHtml=fs.readFileSync(path.join(root,'app-v13-candidate1.html'),'utf8');
 const finalHtml=fs.readFileSync(path.join(root,'app-v13.html'),'utf8');
-assert.ok(!candidateHtml.includes('SELF_VERIFIED_PROJECT.json'),'The first candidate must contain the real sidecar filename defect.');
-assert.ok(candidateHtml.includes('SELF_VERIFIED_PROJEC.json'),'The first candidate defect is not present.');
-assert.ok(finalHtml.includes('SELF_VERIFIED_PROJECT.json'),'The corrected app must use the exact sidecar filename.');
+assert.doesNotMatch(candidateHtml,/const SELF_PROJECT_PATH=\"SELF_VERIFIED_PROJECT\.json\";/,'The first candidate sidecar path is already corrected, so the required defect is absent.');
+assert.match(candidateHtml,/const SELF_PROJECT_PATH=\"SELF_VERIFIED_PROJEC\.json\";/,'The first candidate does not contain the required misspelled sidecar path defect.');
+assert.match(finalHtml,/const SELF_PROJECT_PATH=\"SELF_VERIFIED_PROJECT\.json\";/,'The corrected app does not use the exact sidecar path.');
 assert.ok(!finalHtml.includes('HARDCODED_COMPLETED_PROJECT'),'The corrected HTML must not embed a completed project object.');
 
 const browser=await chromium.launch({headless:true,executablePath:chrome,args:['--no-sandbox']});
@@ -49,16 +49,20 @@ try{
   assert.match(await page.locator('#projects').textContent(),/No projects/,'The unseeded app must not contain a pre-completed project.');
 
   await page.locator('#newBtn').click();
-  await page.locator('#name').fill('REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13');
+  await page.locator('#projectId').fill('PROJECT-MT3M46X0-075JMP');
+  await page.locator('#jobId').fill('JOB-MT3M46X0-M0LIB9');
+  await page.locator('#name').fill('CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD');
   await page.locator('#objective').fill(objective);
   await page.locator('#deliverable').fill(deliverable);
-  await page.locator('#inputs').fill('Actual inputs: app-v11.html; build-v13-self.mjs; self-browser-e2e.mjs; self-e2e-agent.mjs; generated app-v13-candidate1.html; generated app-v13.html; system Chromium; SHA-256; GitHub Actions; visible app export and download controls.');
-  await page.locator('#constraints').fill('No hardcoded completed project. No skipped stage. Every required standard, producer, and verifier field must receive an actual completed external-process response. The first candidate must be tested with a real sidecar filename defect, corrected, rerun, confirmed unchanged, audited, and released only when exact hashes match.');
+  await page.locator('#inputs').fill('The complete user-issued application build instruction; the existing repository implementation as an EXISTING_WORK_PRODUCT to be corrected only after independent requirements are established; the exact 31-stage names and order; GitHub Pages deployment at https://sjonesjones917.github.io/closed-loop-tracker/; browser automation; external research capability; visible project import/export controls; SHA-256; and reproducible evidence tooling.');
+  await page.locator('#constraints').fill('Implement the complete domain-general application, not a repair-task tracker or a narrow self-test. Preserve exactly the 31 stage numbers, names, and order. Keep USER JOB INPUT, EXTERNAL RESEARCH SOURCES, and WORKFLOW-GENERATED ARTIFACTS separate. Never use the product, its code, tests, generated project state, candidates, or prior workflow conclusions as authority for its own requirements. Start real projects at 0/31, require actual completed responses, preserve independent producer/verifier execution, keep completed project state outside the HTML, remain phone-first, and release only exact accepted bytes after audit and hash equality. Do not invent a public application version merely because defects were corrected.');
   await page.locator('#format').fill('Standalone UTF-8 HTML application plus exact visible-UI JSON project export');
   await page.locator('#deadline').fill('Current verified release');
   await page.locator('#createBtn').click();
-  assert.match(await page.locator('#pTitle').textContent(),/REAL SELF-BUILD/);
+  assert.match(await page.locator('#pTitle').textContent(),/CLOSED-LOOP AGENT RELIABILITY APPLICATION/);
   assert.match(await page.locator('#pct').textContent(),/0\/31/);
+  assert.match(await page.locator('#pIds').textContent(),/PROJECT-MT3M46X0-075JMP/);
+  assert.match(await page.locator('#pIds').textContent(),/JOB-MT3M46X0-M0LIB9/);
 
   await page.locator('[data-stage="2"]').click();
   assert.match(await page.locator('#stagePanel').textContent(),/LOCKED: Stage 1 must be COMPLETE before Stage 2/);
@@ -129,9 +133,20 @@ try{
   assert.match(await page.locator('#pct').textContent(),/31\/31/);
   await page.locator('[data-view="release"]').click();
   assert.match(await page.locator('#release').textContent(),/Release gate\s*PASS/);
-  const project=await page.evaluate(()=>window.__CLR_V13__.getCurrent());
+  await page.locator('[data-view="workflow"]').click();
+  const projectDownloadPromise=page.waitForEvent('download');
+  await page.locator('#exportBtn').click();
+  const projectDownload=await projectDownloadPromise;
+  const projectDownloadPath=await projectDownload.path();
+  const projectExportBytes=fs.readFileSync(projectDownloadPath);
+  fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),projectExportBytes);
+  const project=JSON.parse(projectExportBytes.toString('utf8'));
+  await page.locator('[data-view="release"]').click();
+  await page.locator('[data-view="release"]').click();
   const finalBytes=fs.readFileSync(path.join(root,'app-v13.html'));
   const finalHash=crypto.createHash('sha256').update(finalBytes).digest('hex');
+  assert.equal(project.projectId,'PROJECT-MT3M46X0-075JMP');
+  assert.equal(project.jobId,'JOB-MT3M46X0-M0LIB9');
   assert.equal(project.stages.filter(s=>s.status==='COMPLETE').length,31);
   assert.equal(project.releaseDecision,'ACCEPTED');
   assert.equal(project.stages[10].producers.filter(Boolean).length,10);
@@ -160,14 +175,9 @@ try{
   const artifactDownloadPath=await artifactDownload.path();
   assert.equal(Buffer.compare(fs.readFileSync(artifactDownloadPath),finalBytes),0,'Visible exact-artifact download differs from audited app bytes.');
 
-  await page.locator('[data-view="workflow"]').click();
-  const projectDownloadPromise=page.waitForEvent('download');
-  await page.locator('#exportBtn').click();
-  const projectDownload=await projectDownloadPromise;
-  const projectDownloadPath=await projectDownload.path();
-  const exportedBytes=fs.readFileSync(projectDownloadPath);
-  fs.writeFileSync(path.join(root,'SELF_VERIFIED_PROJECT.json'),exportedBytes);
-  const exported=JSON.parse(exportedBytes.toString('utf8'));
+  const exported=project;
+  assert.equal(exported.projectId,'PROJECT-MT3M46X0-075JMP');
+  assert.equal(exported.jobId,'JOB-MT3M46X0-M0LIB9');
   assert.equal(exported.projectId,project.projectId);
   assert.equal(exported.stages.filter(s=>s.status==='COMPLETE').length,31);
   assert.equal(exported.stages[10].producers.filter(Boolean).length,10);
@@ -186,14 +196,30 @@ try{
   freshPage.on('pageerror',e=>freshErrors.push(String(e)));
   freshPage.on('console',m=>{if(m.type()==='error')freshErrors.push(m.text())});
   await freshPage.goto(`${origin}/app-v13.html?fresh=${Date.now()}`,{waitUntil:'networkidle'});
-  await freshPage.locator('[data-open]').waitFor({state:'visible'});
+  await freshPage.waitForTimeout(3000);
+  const freshAutoloadDiagnostics=await freshPage.evaluate(async()=>{
+    const status=document.querySelector('#status')?.textContent||'';
+    const projectsText=document.querySelector('#projects')?.textContent||'';
+    const storage={};
+    for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);storage[key]=String(localStorage.getItem(key)||'').length}
+    let sidecar;
+    try{
+      const response=await fetch(`SELF_VERIFIED_PROJECT.json?diagnostic=${Date.now()}`,{cache:'no-store'});
+      const text=await response.text();
+      let parsed=null,parseError='';
+      try{parsed=JSON.parse(text)}catch(error){parseError=String(error?.message||error)}
+      sidecar={ok:response.ok,status:response.status,url:response.url,bytes:new TextEncoder().encode(text).length,projectId:parsed?.projectId||null,jobId:parsed?.jobId||null,stageCount:Array.isArray(parsed?.stages)?parsed.stages.length:null,parseError};
+    }catch(error){sidecar={fetchError:String(error?.message||error)}}
+    return{status,projectsText,openCount:document.querySelectorAll('[data-open]').length,storage,sidecar};
+  });
+  if(!freshAutoloadDiagnostics.openCount)throw new Error(`Fresh published-sidecar autoload failed: ${JSON.stringify(freshAutoloadDiagnostics)}`);
   assert.match(await freshPage.locator('#status').textContent(),/1 project/);
   assert.doesNotMatch(await freshPage.locator('#projects').textContent(),/No projects/);
-  assert.match(await freshPage.locator('#projects').textContent(),/REAL SELF-BUILD/);
+  assert.match(await freshPage.locator('#projects').textContent(),/CLOSED-LOOP AGENT RELIABILITY APPLICATION/);
   await freshPage.screenshot({path:path.join(root,'SELF_PROJECT_AUTOLOADED_393.png'),fullPage:true});
   await freshPage.locator('[data-open]').click();
   assert.match(await freshPage.locator('#pct').textContent(),/31\/31/);
-  assert.match(await freshPage.locator('#workflow').textContent(),/REAL SELF-BUILD/);
+  assert.match(await freshPage.locator('#workflow').textContent(),/CLOSED-LOOP AGENT RELIABILITY APPLICATION/);
   await freshPage.setViewportSize({width:320,height:568});
   assert.ok((await freshPage.locator('body').evaluate(el=>el.scrollWidth))<=320,'320px completed-project view overflows horizontally.');
   await freshPage.screenshot({path:path.join(root,'SELF_PROJECT_AUTOLOADED_320.png'),fullPage:true});
@@ -219,7 +245,7 @@ try{
     artifactBytes:finalBytes.length,
     artifactVisibleDownloadVerified:true,
     projectVisibleExport:'SELF_VERIFIED_PROJECT.json',
-    projectExportSha256:crypto.createHash('sha256').update(exportedBytes).digest('hex'),
+    projectExportSha256:crypto.createHash('sha256').update(projectExportBytes).digest('hex'),
     hardcodedProject:false,
     freshBrowserSidecarAutoload:true,
     mobileWidthsVerified:[393,320],

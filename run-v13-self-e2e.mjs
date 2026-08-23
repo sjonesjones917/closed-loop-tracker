@@ -10,6 +10,8 @@ const build=spawnSync(process.execPath,['build-v13-self.mjs'],{encoding:'utf8',s
 if(build.status!==0)process.exit(build.status??1);
 const replayPatch=spawnSync(process.execPath,['v13-state-replay.mjs'],{encoding:'utf8',stdio:'inherit'});
 if(replayPatch.status!==0)process.exit(replayPatch.status??1);
+const scopeCorrection=spawnSync(process.execPath,['correct-project-scope.mjs','--generated-only'],{encoding:'utf8',stdio:'inherit'});
+if(scopeCorrection.status!==0)process.exit(scopeCorrection.status??1);
 
 for(const file of ['app-v13-candidate1.html','app-v13.html']){
   if(!fs.existsSync(file)||fs.statSync(file).size===0)throw new Error(`${file} was not generated.`);
@@ -31,7 +33,7 @@ for(const file of ['app-v13-candidate1.html','app-v13.html']){
 }
 
 const corrected=fs.readFileSync('app-v13.html','utf8');
-if(!corrected.includes("a.download=p.name==='REAL SELF-BUILD — CLOSED-LOOP RELIABILITY V13'?'SELF_VERIFIED_PROJECT.json':`${p.jobId}.json`"))throw new Error('The existing v13 app does not permanently use SELF_VERIFIED_PROJECT.json for its visible self-project export.');
+if(!corrected.includes("a.download=p.name==='CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD'?'SELF_VERIFIED_PROJECT.json':`${p.jobId}.json`"))throw new Error('The application does not permanently use SELF_VERIFIED_PROJECT.json for the visible complete-build project export.');
 
 fs.writeFileSync('SELF_VERIFIED_PROJECT.json','{}\n');
 fs.writeFileSync('favicon.ico','');
