@@ -37,7 +37,7 @@ jobs:
         continue-on-error: true
         run: |
           node - <<'NODE'
-          const fs=require('fs'),b=fs.readFileSync('workbook.js','utf8');if(!b.includes('runtime.STAGES')||!b.includes('runtime.buildStagePrompt'))throw new Error('runtime bridge');
+          const fs=require('fs'),b=fs.readFileSync('workbook.js','utf8');if(!b.includes('runtime.STAGES')||!b.includes('runtime.buildStagePrompt')||!b.includes('expose(fallback)'))throw new Error('runtime bridge');
           NODE
       - id: terms
         continue-on-error: true
@@ -52,8 +52,8 @@ jobs:
           test ! -f human-ui.js
           test ! -f agent-workflow.js
           test ! -f prompt-center.js
-          grep -q '<script src="workbook.js"></script>' index.html
-          grep -q '<script src="app.js"></script>' index.html
+          grep -q 'src="workbook.js' index.html
+          grep -q 'src="app.js' index.html
       - name: Publish exact source results
         if: always()
         env:
@@ -102,10 +102,12 @@ jobs:
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           for WIDTH in 320 393; do
-            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=6000 --dump-dom "${PAGE_URL}" > "live-${WIDTH}.html"
+            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?verify=${GITHUB_SHA}-${WIDTH}" > "live-${WIDTH}.html"
             grep -q 'GEN-042' "live-${WIDTH}.html"
             grep -q '30/30' "live-${WIDTH}.html"
             grep -q 'Overview' "live-${WIDTH}.html"
+            ! grep -q 'Loading the workflow' "live-${WIDTH}.html"
+            ! grep -q 'Application runtime failed to load' "live-${WIDTH}.html"
           done
 
   report:
