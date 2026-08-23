@@ -5,7 +5,7 @@ const REGISTRY='closed-loop-project-registry-v2';
 const ACTIVE='closed-loop-active-project';
 const WORKING='working',TEST='retained';
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>[...r.querySelectorAll(q)];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const clone=v=>JSON.parse(JSON.stringify(v));
 const readState=()=>{try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch{return null}};
 const writeState=s=>localStorage.setItem(STORE,JSON.stringify(s));
@@ -21,12 +21,7 @@ const stateClass=v=>/BLOCK|VIOLAT|REJECT|OPEN|FAIL/i.test(v||'')?'blocked':/SATI
 const completeCount=s=>entries(s).filter(([,st])=>/COMPLETE|ACCEPTED|CONFIRMED|FROZEN/i.test(`${st?.status||''} ${st?.decision||''}`)).length;
 const specOf=s=>s?.projectData||s?.testProject?.spec||null;
 const openBlockers=spec=>(spec?.blockers||[]).filter(b=>String(b.currentStatus||b.status||'').toUpperCase()==='OPEN');
-function value(v,depth=0){
-  if(v===null||v===undefined||v==='')return '<span class="muted">None recorded</span>';
-  if(Array.isArray(v))return v.length?`<div class="record-stack">${v.map((x,i)=>`<details class="record-card"><summary>${esc(x?.title||x?.outputId||x?.receiptId||x?.reqId||x?.testId||x?.mutationId||x?.defectId||x?.regId||x?.sourceId||x?.artifactId||x?.runId||x?.changeId||x?.blockerId||x?.chainRecordId||`Record ${i+1}`)}</summary><div class="record-body">${value(x,depth+1)}</div></details>`).join('')}</div>`:'<span class="muted">None recorded</span>';
-  if(typeof v==='object')return `<div class="data-list">${Object.entries(v).map(([k,x])=>`<div class="data-row"><div class="data-key">${esc(label(k))}</div><div class="data-value">${typeof x==='object'&&x!==null?(depth>4?`<pre class="copy">${esc(JSON.stringify(x,null,2))}</pre>`:value(x,depth+1)):esc(x)}</div></div>`).join('')}</div>`;
-  return esc(v);
-}
+function value(v,depth=0){if(v===null||v===undefined||v==='')return '<span class="muted">None recorded</span>';if(Array.isArray(v))return v.length?`<div class="record-stack">${v.map((x,i)=>`<details class="record-card"><summary>${esc(x?.title||x?.outputId||x?.receiptId||x?.reqId||x?.testId||x?.mutationId||x?.defectId||x?.regId||x?.sourceId||x?.artifactId||x?.runId||x?.changeId||x?.blockerId||x?.chainRecordId||`Record ${i+1}`)}</summary><div class="record-body">${value(x,depth+1)}</div></details>`).join('')}</div>`:'<span class="muted">None recorded</span>';if(typeof v==='object')return `<div class="data-list">${Object.entries(v).map(([k,x])=>`<div class="data-row"><div class="data-key">${esc(label(k))}</div><div class="data-value">${typeof x==='object'&&x!==null?(depth>4?`<pre class="copy">${esc(JSON.stringify(x,null,2))}</pre>`:value(x,depth+1)):esc(x)}</div></div>`).join('')}</div>`;return esc(v)}
 const section=(title,body,open=false)=>`<details class="record-card" ${open?'open':''}><summary>${esc(title)}</summary><div class="record-body">${body}</div></details>`;
 function saveActive(){const s=readState();if(!s)return;const r=readRegistry();r[activeKey()]=clone(s);writeRegistry(r)}
 function current(s){return entries(s).find(([n])=>n===Number(s?.activeStage))||entries(s)[0]||[1,{}]}
@@ -48,6 +43,6 @@ function newProject(){saveActive();const r=readRegistry(),template=clone(r[WORKI
 function exportProject(){saveActive();const data=JSON.stringify(readState(),null,2),blob=new Blob([data],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${readState()?.job?.JOB_ID||'project'}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function importProject(file){const fr=new FileReader();fr.onload=()=>{try{const s=JSON.parse(fr.result);if(!s||typeof s!=='object')throw new Error('Invalid project');const r=readRegistry();r[WORKING]=s;writeRegistry(r);setActive(WORKING);writeState(clone(s));location.reload()}catch(e){alert(`Import failed: ${e.message}`)}};fr.readAsText(file)}
 function wire(){$('#project-picker').onchange=e=>switchProject(e.target.value);$('#new-job-button').onclick=newProject;$('#project-data-button').onclick=()=>{renderProject('overview');showWorkspace('project')};$('#guide-button').onclick=()=>{renderGuide();showWorkspace('guide')};$('#export-button').onclick=exportProject;$('#import-button').onclick=()=>$('#imp').click();$('#imp').onchange=e=>{if(e.target.files?.[0])importProject(e.target.files[0])};syncStagePicker();humanizeStage();updateHeader();setInterval(()=>{saveActive();updateHeader()},1200);addEventListener('pagehide',saveActive);addEventListener('beforeunload',saveActive)}
-async function init(){let tries=0;while(!readState()&&tries++<80)await new Promise(r=>setTimeout(r,100));if(!readState())return;await ensureProjects();wire();if(new URLSearchParams(location.search).get('test')==='1'){renderProject('overview');showWorkspace('project')}else showWorkspace('workbook')}
+async function init(){let tries=0;while(!readState()&&tries++<80)await new Promise(r=>setTimeout(r,100));if(!readState())return;await ensureProjects();wire();renderProject('overview');showWorkspace('project')}
 addEventListener('closed-loop-core-ready',()=>init(),{once:true});setTimeout(()=>{if(readState())init()},700);
 })();
