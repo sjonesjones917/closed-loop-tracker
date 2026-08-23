@@ -20,7 +20,11 @@ The account-root URL (`https://sjonesjones917.github.io/`) is a different GitHub
 
 ## Stage 1 behavior
 
-Stage 1 is an executable instruction, not a generic schema description. Its prompt orders the agent to read the actual request and supplied inputs, create the authoritative job record, preserve the exact objective and requested deliverable, inventory inputs/constraints/unknowns, separate assumptions from requirements, use the app-supplied JOB_ID, assign `INPUT-v001`, and return the completed record.
+Stage 1 performs lossless intake across the complete 20-scope user-job definition. It preserves the objective, deliverables, requested actions, targets, complete question set, scope boundaries, supplied inputs and provenance classes, prior-conversation dependencies, user terminology, constraints, prohibitions, required methods, output properties, time and jurisdiction, acceptance conditions, priorities, unresolved intake issues, and the external research questions handed to Stage 2.
+
+## Stage 2 behavior
+
+Stage 2 receives the complete Stage 1 job definition as research scope, searches independent external authorities, and is prohibited from promoting supplied implementation files or workflow-generated artifacts into the external-source registry.
 
 ## Tests
 
@@ -30,4 +34,6 @@ A real workflow test is performed through the app by selecting **Create real E2E
 
 ## Deployment
 
-`.github/workflows/pages.yml` syntax-checks the app core, runs the state-machine regression test, builds `dist/`, and deploys the tested files with GitHub Pages.
+`.github/workflows/pages.yml` regenerates the existing v13 application, runs the state-machine and real browser self-build workflow, independently verifies the exact UI export and released bytes, publishes the verified files to `main`, and serves the repository through GitHub Pages.
+
+Deployment regeneration requested after the lossless Stage 1 and external-authority Stage 2 correction on 2026-08-22.
