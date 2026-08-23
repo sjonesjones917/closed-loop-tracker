@@ -28,8 +28,8 @@ ok(testProject.testProjectId==='TEST-PROJECT-30-STAGE-001','the retained test-pr
 ok(testProject.autoload===false&&testProject.externalAuthority===false,'the test project never autoloads and is not authority for real jobs');
 ok(loader.includes('loadTestJob')&&loader.includes('buildTestJobState')&&loader.includes('TEST_PROJECT.json'),'the retained test project loads as an actual job in the existing workbook');
 ok(loader.includes('button.textContent="Test job"'),'the human-facing test-job action is concise');
-ok(!loader.includes('function runBrowserTestProject')&&!loader.includes('id="test-project-results"')&&!loader.includes('Verifier coverage</strong>'),'repository diagnostics are not rendered in the human application');
-ok(loader.includes('INTERNAL_TEXT')&&loader.includes('removeInternalPanels'),'developer and deployment prose is explicitly detected and removed from the primary UI');
+ok(!loader.includes('runBrowserTestProject')&&!loader.includes('test-project-results')&&!loader.includes('renderReport(')&&!loader.includes('TEST_PANEL_ID=')&&!loader.includes('Open retained test project'),'no in-app diagnostic test runner or report panel is built');
+ok(loader.includes('GLOBAL_INTERNAL_TEXT')&&loader.includes('removeInternalPanels'),'legacy diagnostic prose is recognized only for removal from the primary UI');
 
 ok(loader.includes('removeInternalPanels')&&loader.includes('GLOBAL_INTERNAL_HEADING'),'global Appendix and diagnostic panels are removed');
 ok(loader.includes('humanizeContextualControls')&&loader.includes('data-human-stage-records'),'Appendix records remain available only as stage-native human records');
