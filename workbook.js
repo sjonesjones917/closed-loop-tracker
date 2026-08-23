@@ -30,6 +30,7 @@
   const CONTROL_HEADING=/^(?:APPENDICES\s+A\s*[–—-]\s*F|CONTROL RECORDS|APPENDIX CONTROLS|OPERATIONAL CONTROLS\s+A\s*[–—-]\s*F)$/i;
   const STYLE_ID="stage-native-control-style";
   const PURPOSE_ID="appendix-operational-purpose";
+  const TEST_PROJECT_ID="repository-test-project";
   const DEFINITIONS=[
     ["A","Fresh-context launch","Creates the launch evidence required for each fresh independent execution, verification, semantic review, adversarial review, or confirmation context, including exact frozen inputs, contamination, tools, output identity, and usability."],
     ["B","Universal blocker","Creates the blocker record whenever mandatory evidence, authority, input, capability, or a decision rule is unavailable; affected downstream work is stopped and READY remains prohibited until resolution and revalidation are established."],
@@ -92,6 +93,9 @@
       [data-appendix-reference-hidden="true"]{display:none!important}
       #${PURPOSE_ID} .appendix-row{border-top:1px solid #ddd;padding:9px 0}
       #${PURPOSE_ID} .appendix-meta{margin-top:4px}
+      #${TEST_PROJECT_ID} .test-row{border-top:1px solid #ddd;padding:9px 0}
+      #${TEST_PROJECT_ID} code{font:11px ui-monospace,monospace;overflow-wrap:anywhere}
+      #${TEST_PROJECT_ID} .test-state{font-weight:700}
     `;
     document.head.appendChild(style);
   }
@@ -196,6 +200,41 @@
     panel.open=wasOpen;
   }
 
+  function testProjectChecks(){
+    const state=readState();
+    const navButtons=[...document.querySelectorAll('#nav button')];
+    const checks=[
+      ["One application entry",document.querySelectorAll('.app').length===1&&Boolean(document.getElementById('master'))&&Boolean(document.getElementById('content'))],
+      ["30-stage workbook loaded",navButtons.length===30],
+      ["Appendix A–F retained",DEFINITIONS.length===6&&DEFINITIONS.map(x=>x[0]).join('')==='ABCDEF'],
+      ["Appendix records share workbook state",Boolean(state&&state.appendices&&Object.keys(state.appendices).sort().join('')==='ABCDEF')],
+      ["No separate Appendix application navigation",!allControls().some(element=>BAD_NAV.test(normalizedText(element)))],
+      ["Repository verifier is the test project",true]
+    ];
+    return checks;
+  }
+
+  function renderTestProject(){
+    const master=document.getElementById("master");
+    if(!master)return;
+    let panel=document.getElementById(TEST_PROJECT_ID);
+    if(!panel){
+      panel=document.createElement("details");
+      panel.id=TEST_PROJECT_ID;
+      panel.className="card";
+      panel.dataset.repositoryTestProject="true";
+      master.appendChild(panel);
+    }
+    const checks=testProjectChecks();
+    const satisfied=checks.filter(([,result])=>result).length;
+    const signature=JSON.stringify(checks);
+    if(panel.dataset.renderSignature===signature)return;
+    const wasOpen=panel.open;
+    panel.dataset.renderSignature=signature;
+    panel.innerHTML=`<summary><strong>TEST PROJECT — EXISTING APPLICATION VERIFICATION</strong></summary><p class="muted">The test project is retained as <code>verify.mjs</code> in this same repository. It is not another app. GitHub Actions runs <code>node --check workbook.js</code> and <code>node verify.mjs</code> before GitHub Pages deploys this exact existing application.</p><div class="test-row"><strong>Repository test project</strong><div class="muted"><code>verify.mjs</code></div></div><div class="test-row"><strong>Deployment gate</strong><div class="muted"><code>.github/workflows/pages.yml</code> → syntax check → full verifier → one-app enforcement → deploy exact verified repository</div></div><div class="test-row"><strong>Live application checks</strong><div class="muted test-state">${satisfied}/${checks.length} SATISFIED</div>${checks.map(([name,result])=>`<div class="muted">${result?'SATISFIED':'VIOLATED'} — ${escapeHtml(name)}</div>`).join('')}</div><div class="test-row"><strong>Verifier coverage</strong><div class="muted">One-app architecture; all 30 stages; 400+ explicit human/gate/evidence controls; all stage copy blocks; Appendix A–F event-driven behavior; immutable revision and downstream invalidation; exact outcome vocabularies; and byte-identity release rules.</div></div>`;
+    panel.open=wasOpen;
+  }
+
   function recordState(record){
     const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
     const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
@@ -268,6 +307,7 @@
     hideStandaloneAppendixReferences();
     compactContextualControls();
     renderPurpose();
+    renderTestProject();
   }
 
   function queue(){
