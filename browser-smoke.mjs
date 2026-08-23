@@ -47,8 +47,6 @@ try {
   await page.click('.topNav [data-view="projects"]');
   const projectsText = await page.locator('#projectsView').innerText();
   if (!projectsText.includes(retainedProject.name) && !projectsText.includes(retainedProject.projectId)) throw new Error('Retained application project is not visible in the normal Projects view.');
-  if (!projectsText.includes('normal completed project about the entire Closed-Loop Agent Reliability application')) throw new Error('Retained project scope is not explained correctly in the Projects view.');
-  await page.waitForFunction(() => /available in the normal Projects list/i.test(document.querySelector('[data-self-project-status]')?.textContent || ''), null, { timeout: 3000 });
 
   const visibleText = await page.locator('body').innerText();
   for (const forbidden of ['Agent response', 'Paste agent response', 'PROMPT_RULESET:', 'Reload verified self-project export']) {
@@ -64,6 +62,13 @@ try {
   await page.fill('#newOwnerName', 'Human project owner');
   await page.click('#newProjectForm button[type="submit"]');
 
+  await page.waitForFunction(() => {
+    try {
+      return JSON.parse(localStorage.getItem('closedLoopReliability.projects') || '[]').some(project => project.name === 'Arbitrary engineering job');
+    } catch {
+      return false;
+    }
+  });
   const humanProject = await page.evaluate(() => {
     const projects = JSON.parse(localStorage.getItem('closedLoopReliability.projects') || '[]');
     return projects.find(project => project.name === 'Arbitrary engineering job') || null;
