@@ -27,12 +27,16 @@ const STORE_KEY='closedLoopReliability.projects';
 const SELECTED_KEY='closedLoopReliability.selectedProject';
 const QUARANTINE_KEY='closedLoopReliability.quarantinedProjects';
 const RELOAD_KEY='closedLoopReliability.retainedProjectReload';
+let retainedProjectId='';
 const isLoadableProject=value=>Boolean(value&&value.schema==='closed-loop-project/1'&&typeof value.projectId==='string'&&value.projectId&&Array.isArray(value.stages)&&value.stages.length===31);
+const setStatus=(message,tone)=>{
+  const status=document.querySelector('#status');
+  if(status){status.textContent=message;status.className='status '+tone;}
+};
 const showError=error=>{
   console.error(error);
   const message='Retained application project load failed: '+error.message;
-  const status=document.querySelector('#status');
-  if(status){status.textContent=message;status.className='status bad';}
+  setStatus(message,'bad');
   const view=document.querySelector('#projectsView');
   if(view&&!view.querySelector('[data-retained-project-error]')){
     const panel=document.createElement('div');
@@ -51,6 +55,7 @@ async function installRetainedProject(options={}){
   const project=await response.json();
   if(!isLoadableProject(project))throw new Error('The retained project is not a valid current-schema 31-stage project.');
   if(project.stages.some((stage,index)=>Number(stage?.number)!==index+1))throw new Error('The retained project stage numbering is invalid.');
+  retainedProjectId=project.projectId;
 
   const originalStore=localStorage.getItem(STORE_KEY);
   const originalQuarantine=localStorage.getItem(QUARANTINE_KEY);
@@ -110,11 +115,18 @@ async function installRetainedProject(options={}){
 }
 window.installRetainedClosedLoopProject=installRetainedProject;
 document.addEventListener('click',event=>{
-  const button=event.target.closest('[data-restore-retained-project]');
-  if(!button)return;
-  button.disabled=true;
-  installRetainedProject({reload:true}).catch(showError).finally(()=>{button.disabled=false;});
-});
+  const deleteButton=event.target.closest('[data-delete-project]');
+  if(deleteButton&&retainedProjectId&&deleteButton.dataset.deleteProject===retainedProjectId){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setStatus('The completed application-build project is retained by this application. Export it or open it; it is not deleted from Projects.','warn');
+    return;
+  }
+  const restoreButton=event.target.closest('[data-restore-retained-project]');
+  if(!restoreButton)return;
+  restoreButton.disabled=true;
+  installRetainedProject({reload:true}).catch(showError).finally(()=>{restoreButton.disabled=false;});
+},true);
 window.addEventListener('load',()=>{installRetainedProject({reload:true}).catch(showError);});
 })();
 </script>`;
@@ -125,6 +137,7 @@ console.log(JSON.stringify({
   status:'PASS',
   retainedProjectProofAttached:true,
   retainedProjectDurableInstall:true,
+  retainedProjectProtectedFromDeletion:true,
   validUserProjectsPreserved:true,
   malformedLegacyStateQuarantined:true
 }, null, 2));
