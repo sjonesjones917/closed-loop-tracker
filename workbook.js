@@ -1,25 +1,17 @@
 (async()=>{
   try{
     if(typeof DecompressionStream!=="function")throw new Error("This browser does not support the required gzip decompression API.");
-    const cacheKey="single-workbook-stage-native-controls-test-project-final";
+    const cacheKey="human-workbook-20260823-r3";
     const names=["workbook.module.gz.1","workbook.module.gz.2","workbook.module.gz.3"];
     const responses=await Promise.all(names.map(name=>fetch(`${name}?${cacheKey}`,{cache:"no-store"})));
     for(const response of responses)if(!response.ok)throw new Error(`Runtime load failed: HTTP ${response.status}`);
     const parts=await Promise.all(responses.map(response=>response.arrayBuffer()));
-    const total=parts.reduce((sum,part)=>sum+part.byteLength,0);
-    const bytes=new Uint8Array(total);
-    let offset=0;
+    const total=parts.reduce((sum,part)=>sum+part.byteLength,0),bytes=new Uint8Array(total);let offset=0;
     for(const part of parts){bytes.set(new Uint8Array(part),offset);offset+=part.byteLength;}
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
     const source=await new Response(stream).text();
     const url=URL.createObjectURL(new Blob([source],{type:"text/javascript"}));
-    try{
-      const workbook=await import(url);
-      globalThis.ClosedLoopWorkbook=workbook;
-      window.dispatchEvent(new CustomEvent("closed-loop-workbook-ready"));
-    }finally{
-      URL.revokeObjectURL(url);
-    }
+    try{await import(url);}finally{URL.revokeObjectURL(url);}
   }catch(error){
     console.error(error);
     const target=document.getElementById("content");
@@ -28,329 +20,291 @@
 })();
 
 (()=>{
-  "use strict";
+"use strict";
+const STORE="mclarw";
+const STYLE_ID="human-stage-controls-r3";
+const GLOBAL_INTERNAL_HEADING=/^(?:APPENDIX(?:ES)?\s+A\s*[–—-]\s*F(?:\s*[–—-].*)?|APPENDIX\s+[A-F]\s*[–—-].*|TEST PROJECT\s*[–—-]\s*EXISTING APPLICATION VERIFICATION|OPERATIONAL CONTROLS\s+A\s*[–—-]\s*F)$/i;
+const GLOBAL_INTERNAL_TEXT=/(?:Repository test project|Deployment gate|Live application checks|Verifier coverage|Preserved records:\s*\d+\.\s*Latest:)/i;
+const NAV_INTERNAL=/^(?:Appendices?\s+A\s*[–—-]\s*F|Appendix controls|Operational controls(?:\s+A\s*[–—-]\s*F)?|Control records|Test project)$/i;
+const RECORD_TITLES=[
+  [/Fresh[- ]context launch/i,"Independent run setup"],
+  [/Universal blocker/i,"Blocked stage"],
+  [/Change and invalidation/i,"Change impact"],
+  [/Exact final release/i,"Final release"],
+  [/New[- ]job/i,"New job setup"],
+  [/Agent[- ]output receipt/i,"Response record"]
+];
+const RECORD_HELP=[
+  [/Fresh[- ]context launch/i,"Complete this before starting the independent run or review."],
+  [/Universal blocker/i,"Record what is missing, why the stage cannot continue, and what work must stop."],
+  [/Change and invalidation/i,"Record what changed and which later work must be repeated."],
+  [/Exact final release/i,"Complete this only after the release gate and exact file-identity checks."],
+  [/New[- ]job/i,"Confirm this job starts clean and does not inherit decisions or evidence from an older job."],
+  [/Agent[- ]output receipt/i,"Save the response identity, files, problems, and next verification step."]
+];
+let queued=false;
+const cleanText=element=>String(element?.textContent||"").replace(/\s+/g," ").trim();
+const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 
-  const TEST_PANEL_ID="repository-test-project";
-  const TEST_BUTTON_ID="run-repository-test-project";
-  const STYLE_ID="single-workbook-stage-native-ui";
-  const TEST_STORAGE_KEY="mclarw-repository-test-project";
-  const BAD_NAV=/^(?:Appendices\s+A\s*[–—-]\s*F|Control records|Appendix controls|Operational controls\s+A\s*[–—-]\s*F|[A-F]\s+(?:FRESH AGENT CONTEXT LAUNCH CHECKLIST|UNIVERSAL BLOCKER RECORD|UNIVERSAL CHANGE AND INVALIDATION LOG|EXACT FINAL RELEASE CHECKLIST|NEW-JOB RESET CHECKLIST|UNIVERSAL AGENT-OUTPUT RECEIPT))$/i;
-  const WORKBOOK_NAV=/^30\s*[–—-]\s*stage workbook$/i;
-  let running=false;
-  let scheduled=false;
-  let forcingWorkbook=false;
-  let latestReport=null;
+function installStyles(){
+  if(document.getElementById(STYLE_ID))return;
+  const style=document.createElement("style");
+  style.id=STYLE_ID;
+  style.textContent=`
+    :root{--human-ink:#171717;--human-muted:#666;--human-line:#d9d9d4;--human-soft:#f5f5f2}
+    body{background:var(--human-soft);color:var(--human-ink);font-size:15px;line-height:1.45}
+    .app{max-width:760px;box-shadow:0 0 0 1px #e8e8e3}
+    header,main{padding:14px}
+    header{background:#fff;position:static}
+    h1{font-size:20px;line-height:1.2;margin:0 0 5px}
+    #job{font-size:13px;color:var(--human-muted);overflow-wrap:anywhere}
+    .tools{display:grid;grid-template-columns:1.45fr repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+    .tools button{min-height:44px;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:650;line-height:1.2}
+    .nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .nav button{min-height:52px;border-radius:10px;padding:8px;font-size:12px;line-height:1.25}
+    .card{border-color:var(--human-line);border-radius:12px;padding:14px;margin:12px 0}
+    .card h2{font-size:18px;line-height:1.25;margin-top:0}
+    .card h3{font-size:12px;margin:16px 0 6px}
+    .muted{font-size:13px;line-height:1.4;color:var(--human-muted)}
+    .copy{font-size:12px;line-height:1.45;max-height:360px}
+    textarea,input,select{font-size:16px;min-height:44px}
+    textarea{min-height:92px}
+    #appendix-operational-purpose,#repository-test-project,#human-test-project,#run-test-project,[data-integrated-operational-controls="true"],[data-hidden-internal-ui="true"]{display:none!important}
+    [data-human-stage-records="true"]{margin-top:12px}
+    [data-human-stage-records="true"]>summary{cursor:pointer;font-weight:750;list-style-position:outside}
+    [data-human-stage-records="true"] .record-count{color:#666;font-weight:500;font-size:12px}
+    [data-human-stage-records="true"] details[data-record]{border:1px solid #ddd;border-radius:10px;padding:10px;margin:10px 0;background:#fff}
+    [data-human-stage-records="true"] details[data-record]>summary{cursor:pointer;font-weight:700}
+    [data-human-stage-records="true"] .record-state{float:right;color:#666;font-size:11px;font-weight:600}
+    [data-human-stage-records="true"] .record-id{color:#777;font-size:11px;font-weight:500}
+    [data-human-stage-records="true"] p.muted{margin:6px 0 10px}
+    [data-human-stage-records="true"] [data-save-record]{width:100%;margin-top:12px}
+    #load-test-job{background:#fff}
+    @media(max-width:520px){header,main{padding:12px}.tools{grid-template-columns:repeat(2,minmax(0,1fr))}.nav{grid-template-columns:repeat(2,minmax(0,1fr))}.nav button{min-height:50px}.card{padding:13px}}
+    @media(max-width:350px){.nav{grid-template-columns:1fr}}
+  `;
+  document.head.appendChild(style);
+}
 
-  const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-  const normalizedText=element=>String(element?.textContent||"").replace(/\s+/g," ").trim();
-  const controls=()=>[...document.querySelectorAll("button,a,[role='button']")];
-  const isActive=element=>Boolean(element&&(element.classList.contains("active")||element.getAttribute("aria-current")==="page"||element.getAttribute("aria-selected")==="true"||element.getAttribute("aria-pressed")==="true"));
-  const isVisible=element=>Boolean(element&&!element.hidden&&element.getAttribute("aria-hidden")!=="true");
-
-  function addStyles(){
-    if(document.getElementById(STYLE_ID))return;
-    const style=document.createElement("style");
-    style.id=STYLE_ID;
-    style.textContent=`
-      #${TEST_PANEL_ID}{margin:10px 0;border-width:2px}
-      #${TEST_PANEL_ID}>summary{cursor:pointer}
-      #${TEST_PANEL_ID} .test-project-summary{margin:8px 0 0}
-      #${TEST_PANEL_ID} .test-project-state{font-weight:800}
-      #${TEST_PANEL_ID} code{font:11px ui-monospace,monospace;overflow-wrap:anywhere}
-      #${TEST_PANEL_ID} [data-test-evidence]>summary{cursor:pointer;margin-top:8px}
-      #${TEST_PANEL_ID} .test-project-check{border-top:1px solid #ddd;padding:7px 0}
-      [data-contextual-controls="true"]>[data-control-records="true"]{margin:10px 0}
-      [data-control-records="true"]>summary{cursor:pointer;font-weight:700}
-      [data-control-records="true"] .control-count{font-weight:400;color:#666}
-      [data-control-records="true"] details[data-record]{display:block;margin:8px 0;padding:10px;border:1px solid #ddd;border-radius:8px}
-      [data-control-records="true"] details[data-record]>summary{cursor:pointer}
-      [data-control-records="true"] details[data-record]>p.muted{display:none}
-      [data-control-records="true"] .record-state{float:right;color:#666;font-size:11px;font-weight:400}
-      [data-control-records="true"] .record-id{color:#666;font-weight:400}
-    `;
-    document.head.appendChild(style);
+function removeInternalPanels(){
+  for(const id of ["appendix-operational-purpose","repository-test-project","human-test-project","run-test-project"]){
+    document.getElementById(id)?.remove();
   }
-
-  function activateWorkbookSurface(){
-    const legacyActive=controls().find(element=>BAD_NAV.test(normalizedText(element))&&isActive(element));
-    if(!legacyActive)return false;
-    const workbook=controls().find(element=>WORKBOOK_NAV.test(normalizedText(element))&&isVisible(element));
-    if(workbook&&!forcingWorkbook){
-      forcingWorkbook=true;
-      try{workbook.click();}
-      finally{queueMicrotask(()=>{forcingWorkbook=false;queue();});}
-      return true;
-    }
-    try{
-      if("view" in globalThis)globalThis.view="workbook";
-      if(typeof globalThis.render==="function")globalThis.render();
-      return true;
-    }catch(error){console.error(error);return false;}
-  }
-
-  function removeDuplicateNavigation(){
-    const containers=new Set();
-    for(const element of controls()){
-      if(!BAD_NAV.test(normalizedText(element)))continue;
-      if(element.closest('[data-contextual-controls="true"]'))continue;
-      const container=element.closest(".tabs,[data-view-tabs],[role='tablist']")||element.parentElement;
-      if(container)containers.add(container);
-      element.remove();
-    }
-    for(const container of containers){
-      if(!container?.isConnected)continue;
-      const remaining=[...container.querySelectorAll("button,a,[role='button']")].filter(isVisible);
-      if(!remaining.length||(remaining.length===1&&WORKBOOK_NAV.test(normalizedText(remaining[0]))))container.remove();
-    }
-  }
-
-  function recordState(record){
-    const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
-    const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
-    return unresolved?`${unresolved} unresolved`:"recorded";
-  }
-
-  function compactRecord(record){
-    if(record.dataset.stageNativeInitialized!=="true"){
-      record.open=false;
-      record.removeAttribute("open");
-      record.dataset.stageNativeInitialized="true";
-    }
-    const summary=record.querySelector(":scope > summary");
-    if(!summary)return;
-    const raw=normalizedText(summary);
-    const separator=raw.lastIndexOf("—");
-    const title=(separator>=0?raw.slice(0,separator):raw).trim()||"Required workflow record";
-    const id=(separator>=0?raw.slice(separator+1):"").trim();
-    const state=recordState(record);
-    const signature=`${title}|${id}|${state}`;
-    if(summary.dataset.compactSignature===signature)return;
-    summary.dataset.compactSignature=signature;
-    summary.innerHTML=`<strong>${escapeHtml(title)}</strong>${id?` <span class="record-id">— ${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(state)}</span>`;
-  }
-
-  function compactStageRecords(){
-    document.querySelectorAll('[data-integrated-operational-controls="true"]').forEach(panel=>panel.remove());
-    document.getElementById("appendix-operational-purpose")?.remove();
-    for(const root of document.querySelectorAll('[data-contextual-controls="true"]')){
-      root.dataset.stageNativeOperationalControls="true";
-      const records=[...root.querySelectorAll("details[data-record]")];
-      records.forEach(compactRecord);
-      let group=root.querySelector(':scope > details[data-control-records="true"]');
-      const direct=records.filter(record=>record.parentElement===root);
-      if(!group&&direct.length){
-        group=document.createElement("details");
-        group.className="card";
-        group.dataset.controlRecords="true";
-        group.dataset.stageNativeInitialized="true";
-        group.appendChild(document.createElement("summary"));
-        root.insertBefore(group,direct[0]);
-        direct.forEach(record=>group.appendChild(record));
-      }
-      if(!group)continue;
-      if(group.dataset.stageNativeInitialized!=="true"){
-        group.open=false;
-        group.removeAttribute("open");
-        group.dataset.stageNativeInitialized="true";
-      }
-      const grouped=[...group.querySelectorAll("details[data-record]")];
-      const unresolved=grouped.filter(record=>recordState(record)!=="recorded").length;
-      const summary=group.querySelector(":scope > summary");
-      if(summary){
-        const signature=`${grouped.length}|${unresolved}`;
-        if(summary.dataset.compactSignature!==signature){
-          summary.dataset.compactSignature=signature;
-          summary.innerHTML=`Required event records <span class="control-count">(${grouped.length}; ${unresolved} need evidence)</span>`;
-        }
-      }
+  for(const control of document.querySelectorAll("button,a,[role='button']")){
+    if(NAV_INTERNAL.test(cleanText(control))){
+      control.remove();
     }
   }
-
-  function ensureButton(){
-    const toolRow=document.querySelector("header .tools");
-    if(!toolRow||document.getElementById(TEST_BUTTON_ID))return;
-    const button=document.createElement("button");
-    button.id=TEST_BUTTON_ID;
-    button.type="button";
-    button.textContent="Run test project";
-    button.addEventListener("click",()=>runTestProject(true));
-    toolRow.appendChild(button);
+  for(const heading of document.querySelectorAll("h1,h2,h3,h4,summary")){
+    if(!GLOBAL_INTERNAL_HEADING.test(cleanText(heading)))continue;
+    if(heading.closest('[data-contextual-controls="true"],[data-human-stage-records="true"]'))continue;
+    const box=heading.closest("section,article,details,.card,.panel")||heading.parentElement;
+    box?.remove();
   }
+  for(const box of document.querySelectorAll("section,article,details,.card,.panel")){
+    if(box.closest('[data-contextual-controls="true"],[data-human-stage-records="true"]'))continue;
+    if(GLOBAL_INTERNAL_TEXT.test(cleanText(box)))box.remove();
+  }
+}
 
-  function ensurePanel(){
-    const master=document.getElementById("master");
-    if(!master)return null;
-    let panel=document.getElementById(TEST_PANEL_ID);
-    if(!panel){
-      panel=document.createElement("details");
-      panel.id=TEST_PANEL_ID;
-      panel.className="card";
-      panel.open=true;
-      master.insertBefore(panel,master.firstChild);
-    }else if(panel.parentElement!==master){
-      master.insertBefore(panel,master.firstChild);
+function readableFieldName(name){
+  return String(name||"")
+    .replace(/SHA256/g,"SHA-256")
+    .replace(/_/g," ")
+    .toLowerCase()
+    .replace(/\b(id|sha-256|url|utc|api)\b/g,word=>word.toUpperCase())
+    .replace(/^./,char=>char.toUpperCase());
+}
+
+function mappedTitle(raw){
+  for(const [pattern,title] of RECORD_TITLES)if(pattern.test(raw))return title;
+  return raw.replace(/\s+[—-]\s+\S+$/," ").trim()||"Stage record";
+}
+
+function mappedHelp(raw){
+  for(const [pattern,help] of RECORD_HELP)if(pattern.test(raw))return help;
+  return "Complete and save this record before the stage can rely on it.";
+}
+
+function recordStatus(record){
+  const values=[...record.querySelectorAll("[data-rfield]")].map(field=>(field.value||"").trim());
+  const unresolved=values.filter(value=>!value||/^(?:UNKNOWN|NOT RESOLVED|NOT COMPLETE|PENDING)/i.test(value)).length;
+  return {unresolved,label:unresolved?"Needs information":"Saved"};
+}
+
+function humanizeRecord(record){
+  record.dataset.humanStageRecord="true";
+  const summary=record.querySelector(":scope > summary");
+  const rendered=cleanText(summary);
+  const raw=record.dataset.originalRecordTitle||rendered;
+  if(!record.dataset.originalRecordTitle)record.dataset.originalRecordTitle=raw;
+  const id=record.dataset.originalRecordId||(raw.match(/(?:—|-)\s*([A-Z][A-Z0-9-]*-\d+)\s*$/)||[])[1]||"";
+  if(id&&!record.dataset.originalRecordId)record.dataset.originalRecordId=id;
+  const title=mappedTitle(raw);
+  const status=recordStatus(record);
+  if(summary){
+    summary.innerHTML=`<span>${escapeHtml(title)}</span>${id?` <span class="record-id">${escapeHtml(id)}</span>`:""}<span class="record-state">${escapeHtml(status.label)}</span>`;
+  }
+  const help=record.querySelector(":scope > p.muted");
+  if(help)help.textContent=mappedHelp(raw);
+  for(const field of record.querySelectorAll("[data-rfield]")){
+    const label=field.previousElementSibling;
+    if(label?.tagName==="LABEL")label.textContent=readableFieldName(field.dataset.rfield);
+  }
+  const save=record.querySelector("[data-save-record]");
+  if(save)save.textContent="Save this record";
+  record.open=true;
+  return status.unresolved;
+}
+
+function humanizeContextualControls(){
+  for(const root of document.querySelectorAll('[data-contextual-controls="true"]')){
+    root.dataset.workflowNative="true";
+    let group=root.querySelector(':scope > details[data-human-stage-records="true"]');
+    const direct=[...root.querySelectorAll(':scope > details[data-record]')];
+    if(!group&&direct.length){
+      group=document.createElement("details");
+      group.className="card";
+      group.dataset.humanStageRecords="true";
+      group.appendChild(document.createElement("summary"));
+      root.insertBefore(group,direct[0]);
+      direct.forEach(record=>group.appendChild(record));
     }
-    return panel;
-  }
-
-  function readStoredReport(){
-    try{return JSON.parse(localStorage.getItem(TEST_STORAGE_KEY)||"null");}
-    catch{return null;}
-  }
-
-  function saveReport(report){
-    latestReport=report;
-    try{localStorage.setItem(TEST_STORAGE_KEY,JSON.stringify(report));}
-    catch(error){console.error(error);}
-  }
-
-  function renderReport(report){
-    const panel=ensurePanel();
-    if(!panel)return;
-    const result=report?.determination||"NOT RUN";
-    const checks=Array.isArray(report?.checks)?report.checks:[];
-    const satisfied=checks.filter(check=>check.result==="SATISFIED").length;
-    const signature=JSON.stringify([result,report?.completedAt,checks.map(check=>[check.id,check.result,check.observed])]);
-    if(panel.dataset.signature===signature)return;
-    const wasOpen=panel.open;
-    panel.dataset.signature=signature;
-    panel.innerHTML=`<summary><strong>TEST PROJECT — ${escapeHtml(result)}</strong></summary>
-      <p class="muted">Deterministic verification for this existing application. It runs against isolated in-memory state and does not replace, reset, or modify the active job.</p>
-      <div class="test-project-summary"><span class="test-project-state">${escapeHtml(result)}</span> — ${satisfied}/${checks.length||0} checks SATISFIED</div>
-      <div class="muted">Repository test: <code>verify.mjs</code>. Retained project: <code>TEST_PROJECT.json</code>. Deployment gate: <code>.github/workflows/pages.yml</code>. Last run: ${escapeHtml(report?.completedAt||"not run")}</div>
-      <div class="tools"><button type="button" data-run-test-project>Run test project</button><button type="button" data-open-retained-test-project>Open retained test project</button><button type="button" data-download-test-project ${report?"":"disabled"}>Download test evidence</button></div>
-      <details data-test-evidence><summary>Test evidence (${checks.length})</summary>${checks.map(check=>`<div class="test-project-check"><strong>${escapeHtml(check.result)} — ${escapeHtml(check.name)}</strong><div class="muted">${escapeHtml(check.observed||"")}</div></div>`).join("")}</details>`;
-    panel.open=wasOpen||!panel.dataset.initialized;
-    panel.dataset.initialized="true";
-    panel.querySelector("[data-run-test-project]")?.addEventListener("click",()=>runTestProject(true));
-    panel.querySelector("[data-open-retained-test-project]")?.addEventListener("click",()=>window.open("TEST_PROJECT.json","_blank","noopener"));
-    panel.querySelector("[data-download-test-project]")?.addEventListener("click",()=>downloadReport(report));
-  }
-
-  function downloadReport(report){
-    if(!report)return;
-    const blob=new Blob([JSON.stringify(report,null,2)+"\n"],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const link=document.createElement("a");
-    link.href=url;
-    link.download="WORKBOOK_TEST_PROJECT_EVIDENCE.json";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  async function runTestProject(userInitiated=false){
-    if(running)return;
-    const workbook=globalThis.ClosedLoopWorkbook;
-    if(!workbook){
-      if(userInitiated)renderReport({determination:"BLOCKED",completedAt:new Date().toISOString(),checks:[{id:"TP-000",name:"Workbook runtime available",result:"UNDETERMINED",observed:"The workbook module has not finished loading."}]});
-      return;
+    if(!group)continue;
+    const records=[...group.querySelectorAll(":scope > details[data-record]")];
+    let unresolved=0;
+    records.forEach(record=>{unresolved+=humanizeRecord(record)});
+    const summary=group.querySelector(":scope > summary");
+    if(summary){
+      const noun=records.length===1?"record":"records";
+      const state=unresolved?`${unresolved} field${unresolved===1?"":"s"} need information`:"all saved";
+      summary.innerHTML=`Additional information for this stage <span class="record-count">(${records.length} ${noun}; ${escapeHtml(state)})</span>`;
     }
-    running=true;
-    const checks=[];
-    const record=(id,name,condition,observed)=>checks.push({id,name,result:condition?"SATISFIED":"VIOLATED",observed:String(observed??"")});
-    try{
-      const {
-        STAGES,APPENDICES,SECTION_HEADINGS,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,
-        createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,
-        immutableRevision,invalidateDownstream,compareArtifactSets
-      }=workbook;
-      record("TP-001","Single application shell",document.querySelectorAll(".app").length===1,`${document.querySelectorAll(".app").length} application shell(s)`);
-      record("TP-002","Exactly 30 ordered stages",Array.isArray(STAGES)&&STAGES.length===30&&STAGES.every((stage,index)=>stage.number===index+1),`${STAGES?.length??0} stages`);
-      record("TP-003","Thirty distinct stage titles",new Set((STAGES||[]).map(stage=>stage.title)).size===30,`${new Set((STAGES||[]).map(stage=>stage.title)).size} distinct titles`);
-      record("TP-004","Appendix control families A–F",Object.keys(APPENDICES||{}).sort().join("")==="ABCDEF",Object.keys(APPENDICES||{}).sort().join("")||"none");
-      const blank=createBlankState();
-      record("TP-005","Every job retains A–F record stores",Object.keys(blank?.appendices||{}).sort().join("")==="ABCDEF",Object.keys(blank?.appendices||{}).sort().join("")||"none");
-      record("TP-006","Seven controlling stage sections",SECTION_HEADINGS?.length===7,`${SECTION_HEADINGS?.length??0} sections`);
-      record("TP-007","Exact stage-decision vocabulary",STAGE_DECISIONS?.join("|")==="READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED",STAGE_DECISIONS?.join(" | ")||"missing");
-      record("TP-008","Exact requirement-outcome vocabulary",REQUIREMENT_OUTCOMES?.join("|")==="SATISFIED|VIOLATED|UNDETERMINED",REQUIREMENT_OUTCOMES?.join(" | ")||"missing");
-      record("TP-009","Exact release-outcome vocabulary",RELEASE_OUTCOMES?.join("|")==="ACCEPTED|REJECTED|BLOCKED",RELEASE_OUTCOMES?.join(" | ")||"missing");
-      const controlCount=(STAGES||[]).reduce((sum,stage)=>sum+stageHumanItems(stage).length+stageGateItems(stage).length+stageEvidenceItems(stage).length,0);
-      record("TP-010","At least 400 explicit workbook controls",controlCount>=400,`${controlCount} human/gate/evidence controls`);
-      record("TP-011","Every stage has human, gate, and evidence controls",(STAGES||[]).every(stage=>stageHumanItems(stage).length&&stageGateItems(stage).length&&stageEvidenceItems(stage).length),"all 30 stage control groups evaluated");
-      const prompts=(STAGES||[]).map(stage=>buildStagePrompt(stage,createBlankState()));
-      record("TP-012","One reusable agent block per stage",prompts.length===30,`${prompts.length} copy blocks`);
-      record("TP-013","Every agent block preserves role and task",prompts.every((prompt,index)=>prompt.includes(STAGES[index].role)&&prompt.includes(STAGES[index].task)),"all generated blocks compared to stage definitions");
-      record("TP-014","Every agent block carries universal rules and outcomes",prompts.every(prompt=>prompt.includes("Do not invent a missing fact")&&prompt.includes("SATISFIED")&&prompt.includes("VIOLATED")&&prompt.includes("UNDETERMINED")&&prompt.includes("ACCEPTED")&&prompt.includes("REJECTED")&&prompt.includes("BLOCKED")),"all 30 generated blocks evaluated");
-      const history=[];
-      const first=await immutableRevision(history,{value:1},{artifactType:"TEST"});
-      history.push(first.record);
-      const second=await immutableRevision(history,{value:2},{artifactType:"TEST"});
-      record("TP-015","Material revisions are append-only",first.record.version==="v001"&&second.record.version==="v002"&&history[0].payload.value===1,`${first.record.version} → ${second.record.version}; prior payload ${history[0].payload.value}`);
-      const downstream=createBlankState();
-      downstream.stages[2].decision="READY TO PROCEED";
-      downstream.stages[2].status="COMPLETE";
-      const invalidated=invalidateDownstream(downstream,1,"CHANGE-TEST-001");
-      record("TP-016","Upstream material change invalidates downstream determinations",invalidated.length>0&&downstream.stages[2].decision==="NOT READY - CORRECTION REQUIRED",`${invalidated.length} downstream stage(s) invalidated`);
-      const audited=[{artifactId:"A1",name:"artifact",size:1,sha256:"1".repeat(64)}];
-      const identical=[{name:"artifact",size:1,sha256:"1".repeat(64)}];
-      const different=[{name:"artifact",size:1,sha256:"2".repeat(64)}];
-      record("TP-017","Accepted byte-identical artifact is authorized",compareArtifactSets(audited,identical,"ACCEPTED").authorization==="AUTHORIZED","ACCEPTED + identical bytes");
-      record("TP-018","Hash mismatch stops release",compareArtifactSets(audited,different,"ACCEPTED").authorization==="NOT AUTHORIZED","ACCEPTED + mismatched hash");
-      record("TP-019","Non-ACCEPTED gate stops release",compareArtifactSets(audited,identical,"BLOCKED").authorization==="NOT AUTHORIZED","BLOCKED + identical bytes");
-      record("TP-020","Operational Appendix controls are integrated into the application",Boolean(document.querySelector('script[data-integrated-appendix-controls="true"]')),"integrated Appendix control runtime located in index.html");
-      record("TP-021","Appendix records are stage-native and actionable",Boolean(document.querySelector('[data-contextual-controls="true"] [data-workflow-actions="true"]')),"active stage workflow actions rendered");
-      record("TP-022","No static Appendix description panel replaces the controls",!document.getElementById("appendix-operational-purpose"),"static purpose panel absent");
-      record("TP-023","No separate Appendix application navigation",!controls().some(element=>BAD_NAV.test(normalizedText(element))),"obsolete Appendix/control navigation absent");
-      const retainedResponse=await fetch("TEST_PROJECT.json",{cache:"no-store"});
-      const retained=retainedResponse.ok?await retainedResponse.json():null;
-      record("TP-024","Retained test-project file is available",Boolean(retainedResponse.ok&&retained),`HTTP ${retainedResponse.status}`);
-      record("TP-025","Retained test project covers all 30 stages",Array.isArray(retained?.stageEvidence)&&retained.stageEvidence.length===30,`${retained?.stageEvidence?.length??0} stage evidence records`);
-      record("TP-026","Retained test-project release evidence is internally consistent",retained?.release?.releaseState==="ACCEPTED"&&retained.release.auditedSha256===retained.release.releaseSha256&&retained.release.hashesEqual===true,retained?.release?.releaseState||"missing release evidence");
-    }catch(error){
-      checks.push({id:"TP-999",name:"Test project execution",result:"VIOLATED",observed:error?.stack||error?.message||String(error)});
-    }
-    const report={
-      testProject:"Mobile Closed-Loop Agent Reliability Workbook",
-      application:"index.html",
-      activeJobModified:false,
-      completedAt:new Date().toISOString(),
-      determination:checks.every(check=>check.result==="SATISFIED")?"SATISFIED":"VIOLATED",
-      checks
-    };
-    saveReport(report);
-    renderReport(report);
-    running=false;
+    group.open=records.length===1&&unresolved>0;
   }
+}
 
-  function refine(){
-    scheduled=false;
-    addStyles();
-    activateWorkbookSurface();
-    removeDuplicateNavigation();
-    compactStageRecords();
-    ensureButton();
-    const stored=latestReport||readStoredReport();
-    if(stored)renderReport(stored);
-    else renderReport({determination:"NOT RUN",completedAt:null,checks:[]});
+function readState(){
+  try{return JSON.parse(localStorage.getItem(STORE)||"null")}catch{return null}
+}
+
+function stageEntries(state){
+  const stages=state?.stages;
+  if(Array.isArray(stages))return stages.map((stage,index)=>[Number(stage?.number||index+1),stage]).filter(([,stage])=>stage);
+  if(stages&&typeof stages==="object")return Object.entries(stages).map(([key,stage])=>[Number(stage?.number||key),stage]).filter(([number,stage])=>Number.isFinite(number)&&stage);
+  return [];
+}
+
+function clearRecordStores(state){
+  for(const key of ["defects","regressions","blockers","changes","agentOutputReceipts","freshContextLaunches","releaseIdentityRecords","finalReleaseRecords","newJobResets"]){
+    if(Array.isArray(state[key]))state[key]=[];
   }
-
-  function queue(){
-    if(scheduled)return;
-    scheduled=true;
-    requestAnimationFrame(refine);
+  if(state.operationalRecords&&typeof state.operationalRecords==="object"){
+    for(const letter of ["A","B","C","D","E","F"])state.operationalRecords[letter]=[];
   }
+  if(state.appendices&&typeof state.appendices==="object"){
+    for(const letter of ["A","B","C","D","E","F"])if(state.appendices[letter])state.appendices[letter].records=[];
+  }
+}
 
-  document.addEventListener("click",event=>{
-    const clicked=event.target.closest("button,a,[role='button']");
-    if(!clicked||!BAD_NAV.test(normalizedText(clicked)))return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    activateWorkbookSurface();
-    queue();
-  },true);
-  window.addEventListener("closed-loop-workbook-ready",()=>{
-    queue();
-    setTimeout(()=>runTestProject(false),250);
+function buildTestJobState(template,spec){
+  const state=structuredClone(template);
+  clearRecordStores(state);
+  state.currentStage=1;
+  state.jobId=spec.jobId;
+  state.testProject={id:spec.testProjectId,source:"TEST_PROJECT.json",loadedAt:new Date().toISOString(),autoload:false};
+  state.job=state.job&&typeof state.job==="object"?state.job:{};
+  Object.assign(state.job,{
+    id:spec.jobId,
+    JOB_ID:spec.jobId,
+    title:spec.title,
+    JOB_TITLE:spec.title,
+    owner:"Workbook user",
+    dateOpened:new Date().toISOString(),
+    currentStage:1,
+    currentIteration:spec.phases?.confirmation?.iterationId||"CONFIRMATION-001",
+    currentState:"ACCEPTED",
+    inputVersion:spec.baseline?.inputVersion||"INPUT-v001",
+    sourceSetVersion:spec.baseline?.sourceSetVersion||"SOURCE-SET-v001",
+    requirementsVersion:spec.baseline?.requirementsVersion||"REQUIREMENTS-v001",
+    testSuiteVersion:spec.baseline?.testSuiteVersion||"TEST-SUITE-v001",
+    instructionVersion:spec.baseline?.instructionVersion||"INSTRUCTION-v001",
+    toolConfigurationVersion:spec.baseline?.toolConfigurationVersion||"TOOL-CONFIGURATION-v002",
+    baselineId:spec.baseline?.baselineId||"BASELINE-TEST-001",
+    productId:spec.product?.productId||"PRODUCT-TEST-001",
+    blockers:"NONE",
+    nextAction:"Review the retained completed test job or start a new clean job.",
+    latestEvidence:"TEST_PROJECT.json"
   });
-  window.addEventListener("pageshow",queue);
-  window.addEventListener("storage",queue);
-  document.addEventListener("change",queue,true);
-  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});
-  setInterval(()=>{
-    if(!document.getElementById(TEST_PANEL_ID)||!document.getElementById(TEST_BUTTON_ID)||controls().some(element=>BAD_NAV.test(normalizedText(element))))queue();
-  },500);
-  globalThis.runClosedLoopTestProject=()=>runTestProject(true);
-  queue();
+  const evidence=Array.isArray(spec.stageEvidence)?spec.stageEvidence:[];
+  for(const [number,stage] of stageEntries(state)){
+    const line=evidence[number-1]||`STAGE ${String(number).padStart(2,"0")}: Retained test evidence.`;
+    stage.status="COMPLETE";
+    stage.decision="READY TO PROCEED";
+    stage.evidence=line;
+    stage.decisionEvidence=line;
+    stage.decidedBy="Retained test project";
+    stage.dateTime=spec.date||new Date().toISOString();
+    stage.draftRecord=`TEST PROJECT — STAGE ${String(number).padStart(2,"0")}\nJOB_ID: ${spec.jobId}\nSTATUS: COMPLETE\nEVIDENCE: ${line}`;
+    if(stage.fields&&typeof stage.fields==="object")stage.fields={TEST_PROJECT_EVIDENCE:line};
+    for(const key of ["humanChecks","gateChecks","evidenceChecks"]){
+      if(Array.isArray(stage[key]))stage[key]=stage[key].map(()=>true);
+    }
+  }
+  state.defects=Array.isArray(spec.defects)?structuredClone(spec.defects):[];
+  state.regressions=Array.isArray(spec.regressions)?structuredClone(spec.regressions):[];
+  return state;
+}
+
+async function loadTestJob(){
+  const current=readState();
+  if(!current){alert("The workbook is still loading. Try again in a moment.");return;}
+  if(!confirm("Load the retained test job into this workbook? Export the current job first if it must be kept."))return;
+  try{
+    const response=await fetch(`TEST_PROJECT.json?t=${Date.now()}`,{cache:"no-store"});
+    if(!response.ok)throw new Error(`HTTP ${response.status}`);
+    const spec=await response.json();
+    if(spec?.testProjectId!=="TEST-PROJECT-30-STAGE-001"||spec?.autoload!==false)throw new Error("The retained test project is invalid.");
+    const state=buildTestJobState(current,spec);
+    localStorage.setItem(STORE,JSON.stringify(state));
+    location.reload();
+  }catch(error){
+    console.error(error);
+    alert(`The test job could not be loaded: ${error.message}`);
+  }
+}
+
+function ensureLoadTestJobButton(){
+  const tools=document.querySelector("header .tools");
+  if(!tools||document.getElementById("load-test-job"))return;
+  const button=document.createElement("button");
+  button.id="load-test-job";
+  button.type="button";
+  button.textContent="Test job";
+  button.title="Load the retained completed test project into this workbook";
+  button.addEventListener("click",loadTestJob);
+  const importButton=[...tools.querySelectorAll("button")].find(item=>cleanText(item)==="Import");
+  if(importButton)tools.insertBefore(button,importButton);
+  else tools.appendChild(button);
+}
+
+function render(){
+  installStyles();
+  removeInternalPanels();
+  humanizeContextualControls();
+  ensureLoadTestJobButton();
+  removeInternalPanels();
+}
+
+function queue(){
+  if(queued)return;
+  queued=true;
+  requestAnimationFrame(()=>{queued=false;render()});
+}
+
+document.addEventListener("click",queue,true);
+document.addEventListener("change",queue,true);
+window.addEventListener("pageshow",queue);
+new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true});
+queue();
 })();
