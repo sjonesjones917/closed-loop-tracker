@@ -1,8 +1,6 @@
 name: Diagnose retained project loading
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -37,7 +35,7 @@ jobs:
           CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
           echo "BROWSER_SMOKE_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
-      - name: Commit normalized project and diagnostic
+      - name: Commit diagnostic when manually requested
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
