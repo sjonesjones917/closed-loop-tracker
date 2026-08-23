@@ -19,7 +19,7 @@ ok(rootHtml.length===1&&rootHtml[0]==='index.html','exactly one application HTML
 ok(!rootFiles.some(name=>/^(?:app[-_]|v\d|index[-_]).*\.html$/i.test(name)),'no alternate or versioned application HTML exists');
 ok((index.match(/<script[^>]+src=/g)||[]).length===1&&index.includes('<script src="workbook.js"></script>'),'the single application loads exactly one external runtime entry');
 ok(runtimeParts.every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'the existing workbook runtime payload is loaded');
-ok(!loader.includes('localStorage')&&!loader.includes('sessionStorage'),'the loader creates no second application state store');
+ok(!loader.includes('sessionStorage')&&loader.includes('const STORE="mclarw"'),'the loader reads the same controlling workbook store and creates no second application state store');
 ok(compressed.length>0&&source.includes('export const STAGES'),'the workbook module payload exists and decompresses');
 
 ok(index.includes('data-integrated-appendix-controls="true"'),'Appendix A-F behavior is integrated into the existing application');
@@ -36,13 +36,15 @@ ok(index.includes('blockerRecord(state,n)')&&index.includes('openBlockers(state,
 ok(index.includes('changeRecordFromStage16')&&index.includes('invalidateAfter'),'Appendix C records material change and downstream invalidation');
 ok(index.includes('verifyIdentity(state,n,gate,audited,release)')&&index.includes("crypto.subtle.digest('SHA-256'"),'Appendix D performs deterministic exact-byte identity verification');
 ok(index.includes('resetRecord(state,old)')&&index.includes("OLD_BASELINE_STATUS_CARRIED_FORWARD:'FALSE'")&&index.includes("OLD_RELEASE_DECISION_CARRIED_FORWARD:'FALSE'"),'Appendix E creates a clean Stage 01 reset without inheriting baseline or release status');
-ok(index.includes('receiptRecord(state,n)')&&index.includes('NEXT_REQUIRED_VERIFICATION_STAGE'),'Appendix F records every agent output and routes it to verification');
+ok(index.includes('receiptRecord(state,n)')&&index.includes('NEXT_REQUIRED_VERIFICATION_STAGE'),'Appendix F records agent outputs and routes them to verification');
 
 ok(loader.includes('BAD_NAV')&&loader.includes('removeDuplicateNavigation'),'obsolete appendix/control navigation is removed');
 ok(loader.includes('keepWorkbookSurface')&&loader.includes('globalThis.view="workbook"'),'obsolete appendix navigation cannot replace the workbook surface');
 ok(loader.includes('hideStandaloneAppendixReferences')&&loader.includes('appendixReferenceHidden'),'standalone appendix reference/checklist panels are suppressed without deleting their records');
 ok(loader.includes('compactContextualControls')&&loader.includes('data-control-records')&&loader.includes('record.open=false'),'required appendix records are retained as collapsed stage-native records instead of open checklist stacks');
-ok(loader.includes('data-stage-native-operational-controls')||loader.includes('stageNativeOperationalControls'),'contextual controls remain inside the current stage surface');
+ok(loader.includes('stageNativeOperationalControls'),'contextual controls remain inside the current stage surface');
+ok(loader.includes('APPENDIX A–F — OPERATIONAL CONTROLS')&&loader.includes('Preserved records:'),'Appendices A-F remain visibly explained and their preserved operational records are countable in the workbook');
+ok(loader.includes('not six permanent checklist stacks')&&loader.includes('event-driven controls'),'the UI states the correct appendix semantics rather than presenting extra checklist stages');
 ok(!loader.includes('createIntegratedPanel')&&!loader.includes('ACTION_LABELS'),'the loader does not create a second operational-control application or parallel A-F button panel');
 
 const requiredShellText=[
@@ -159,5 +161,6 @@ console.log(JSON.stringify({
   separateAppendixChecklistView:false,
   openAppendixChecklistStacks:false,
   stageNativeAppendixRecords:true,
+  visibleAppendixPurpose:true,
   behavioralChecks:evidence.length
 },null,2));
