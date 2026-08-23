@@ -10,6 +10,8 @@ const projectBytes = fs.readFileSync('SELF_VERIFIED_PROJECT.json');
 const project = JSON.parse(projectBytes.toString('utf8'));
 const htmlBytes = fs.readFileSync('index.html');
 const html = htmlBytes.toString('utf8');
+const appSha256 = crypto.createHash('sha256').update(htmlBytes).digest('hex');
+const projectSha256 = crypto.createHash('sha256').update(projectBytes).digest('hex');
 
 const manifestMatch = html.match(/<script id="stage-manifest" type="application\/json">([\s\S]*?)<\/script>/);
 if (!manifestMatch) fail('Current application stage manifest is missing.');
@@ -29,6 +31,7 @@ project.stages.forEach((stage, index) => {
 const job = project.job || {};
 const stage1 = String(project.stages[0]?.completionEvidence || '');
 const stage2 = String(project.stages[1]?.completionEvidence || '');
+const stage22 = String(project.stages[21]?.completionEvidence || '');
 const definition = `${project.name || ''}\n${Object.values(job).join('\n')}\n${stage1}`;
 
 if (!/Closed-Loop Agent Reliability application/i.test(`${project.name || ''} ${job.exactUserObjective || ''} ${job.exactDeliverables || ''}`)) fail('Retained project is not about the complete application itself.');
@@ -78,18 +81,52 @@ for (const record of project.verificationRecords || []) verifierCounts.set(Numbe
 for (const stageNumber of [11, 18, 20]) if ((executionCounts.get(stageNumber) || 0) < 10) fail(`Stage ${stageNumber} must retain at least 10 independent execution records.`);
 for (const stageNumber of [12, 19, 20]) if ((verifierCounts.get(stageNumber) || 0) < 10) fail(`Stage ${stageNumber} must retain at least 10 independent verifier records.`);
 
+const finalArtifactMarker = 'FINAL_ARTIFACT:\n';
+const markerIndex = stage22.indexOf(finalArtifactMarker);
+if (markerIndex < 0) fail('Stage 22 does not contain FINAL_ARTIFACT.');
+const embeddedProduct = stage22.slice(markerIndex + finalArtifactMarker.length);
+if (embeddedProduct !== html) fail('Stage 22 finished product is not byte-for-byte identical to the current application.');
+if (!stage22.includes(`SHA-256: ${appSha256}`) || !stage22.includes(`BYTE_LENGTH: ${htmlBytes.length}`)) fail('Stage 22 product identity does not match the current application.');
+
+for (let number = 23; number <= 31; number += 1) {
+  const completionEvidence = String(project.stages[number - 1]?.completionEvidence || '');
+  if (!completionEvidence.includes(appSha256)) fail(`Stage ${number} is not bound to the current application SHA-256.`);
+}
+
+const requiredCurrentCollections = [
+  ['baselines', project.baselines],
+  ['products', project.products],
+  ['deterministicChecks', project.deterministicChecks],
+  ['semanticChecks', project.semanticChecks],
+  ['adversarialChecks', project.adversarialChecks],
+  ['representationInspections', project.representationInspections],
+  ['processAudits', project.processAudits],
+  ['productAudits', project.productAudits],
+  ['decisions', project.decisions],
+  ['hashVerifications', project.hashVerifications],
+  ['releases', project.releases]
+];
+for (const [name, value] of requiredCurrentCollections) if (!Array.isArray(value) || value.length === 0) fail(`Retained project current ${name} records are missing.`);
+
+const product = project.products[0];
+if (product.artifactName !== 'index.html' || product.byteLength !== htmlBytes.length || product.sha256 !== appSha256 || product.status !== 'COMPLETE') fail('Current product record does not match the application bytes.');
+const hashVerification = project.hashVerifications[0];
+if (hashVerification.auditedHash !== appSha256 || hashVerification.releaseHash !== appSha256 || hashVerification.independentlyComputedHash !== appSha256 || hashVerification.equal !== true || hashVerification.status !== 'SATISFIED') fail('Current release-hash verification is invalid.');
+const decision = project.decisions[0];
+if (decision.releaseDecision !== 'ACCEPTED') fail('Current release decision is not ACCEPTED.');
+const release = project.releases[0];
+if (release.artifactName !== 'index.html' || release.sha256 !== appSha256 || release.byteLength !== htmlBytes.length || release.status !== 'RELEASED_EXACT_ACCEPTED_ARTIFACT') fail('Current release record does not identify the exact accepted application.');
+
 const metadata = project.legacyProjectMetadata || {};
 if (metadata.releaseDecision !== 'ACCEPTED') fail('Retained project release decision is not ACCEPTED.');
-if (!/^[0-9a-f]{64}$/i.test(String(metadata.auditedHash || ''))) fail('Retained project audited hash is invalid.');
-if (metadata.auditedHash !== metadata.releaseHash) fail('Retained project audited and release hashes differ.');
+if (metadata.auditedHash !== appSha256 || metadata.releaseHash !== appSha256) fail('Retained project metadata hashes do not equal the current application hash.');
+if (metadata.artifactName !== 'index.html') fail('Retained project metadata identifies the wrong release artifact.');
 
 if (html.includes(project.projectId) || html.includes(stage1.slice(0, 120))) fail('Completed retained-project state is embedded in the application HTML.');
 if (!html.includes('data-self-project-proof="true"')) fail('Application does not show the retained project proof in the Projects view.');
 if (!html.includes('data-self-project-status')) fail('Application does not expose retained-project load status.');
 if (!html.includes('SELF_VERIFIED_PROJECT.json')) fail('Application does not expose the retained project export.');
 
-const appSha256 = crypto.createHash('sha256').update(htmlBytes).digest('hex');
-const projectSha256 = crypto.createHash('sha256').update(projectBytes).digest('hex');
 console.log(JSON.stringify({
   status: 'PASS',
   retainedProject: true,
@@ -99,6 +136,9 @@ console.log(JSON.stringify({
   normalProjectBehavior: true,
   stageWorkflowMatchesCurrentApp: true,
   stages: 31,
+  currentFinishedProductExact: true,
+  currentVerificationAndAuditRecords: true,
+  currentReleaseHashExact: true,
   independentExecutionStagesVerified: [11, 18, 20],
   independentVerifierStagesVerified: [12, 19, 20],
   appSha256,
