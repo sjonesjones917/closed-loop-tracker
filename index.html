@@ -15,7 +15,6 @@
 <div><span id="count"></span><div class="bar"><i id="bar"></i></div></div>
 </header>
 <main>
-<p class="muted">Appendices A–F operate inside the stages that require them. They are reusable enforcement records, not additional stages and not a second checklist application.</p>
 <div id="master"></div>
 <div id="nav" class="nav"></div>
 <div id="content"></div>
@@ -28,493 +27,79 @@
 'use strict';
 const STORE='mclarw';
 const LETTERS=['A','B','C','D','E','F'];
-const ID_KEYS={A:'FRESH_CONTEXT_LAUNCH_RECORD_ID',B:'BLOCKER_ID',C:'CHANGE_ID',D:'HASH_AUDIT_ID',E:'NEW_JOB_INITIALIZATION_RECORD_ID',F:'RECEIPT_ID'};
-const META={
- A:{title:'Fresh-agent context launch',mirror:'freshContextLaunches'},
- B:{title:'Universal blocker',mirror:'blockers'},
- C:{title:'Change and invalidation',mirror:'changes'},
- D:{title:'Exact final release and artifact identity',mirror:'releaseIdentityRecords'},
- E:{title:'New-job reset',mirror:'newJobResets'},
- F:{title:'Universal agent-output receipt',mirror:'agentOutputReceipts'}
-};
-const FRESH_CONTEXT_STAGES=new Set([9,11,12,13,14,15,17,19,21,22,23,24,25,26,27,28,29,30]);
-const MASTER_FIELDS=[
- ['id','JOB_ID'],['title','JOB_TITLE'],['owner','JOB_OWNER'],['dateOpened','DATE_OPENED'],
- ['currentIteration','CURRENT_ITERATION'],['currentState','CURRENT_STATE'],['inputVersion','CURRENT_INPUT_VERSION'],
- ['sourceSetVersion','CURRENT_SOURCE_SET_VERSION'],['requirementsVersion','CURRENT_REQUIREMENTS_VERSION'],
- ['testSuiteVersion','CURRENT_TEST_SUITE_VERSION'],['instructionVersion','CURRENT_INSTRUCTION_VERSION'],
- ['baselineId','CURRENT_BASELINE_ID'],['productId','CURRENT_PRODUCT_ID'],['blockers','CURRENT_BLOCKERS'],
- ['nextAction','NEXT_REQUIRED_ACTION'],['latestEvidence','LATEST_EVIDENCE_REFERENCE']
+const FRESH_STAGES=new Set([9,11,12,13,14,15,17,19,21,22,23,24,25,26,27,28,29,30]);
+const FIELD_ID={A:'FRESH_CONTEXT_LAUNCH_RECORD_ID',B:'BLOCKER_ID',C:'CHANGE_ID',D:'HASH_AUDIT_ID',E:'NEW_JOB_INITIALIZATION_RECORD_ID',F:'RECEIPT_ID'};
+const MIRROR={A:'freshContextLaunches',B:'blockers',C:'changes',D:'releaseIdentityRecords',E:'newJobResets',F:'agentOutputReceipts'};
+const TITLES={A:'Fresh-context launch record',B:'Universal blocker record',C:'Universal change and invalidation record',D:'Artifact identity verification',E:'New-job initialization record',F:'Agent-output receipt'};
+const PHONE_USE=[
+ 'Save the master DOCX and prompts-only TXT source material in a controlled phone location.',
+ 'For each new job, create a clean job and assign the JOB_ID before entering job-specific information.',
+ 'Use the stage navigator to jump directly to a stage; the application is one column and phone-first.',
+ 'Replace every placeholder. Use UNKNOWN when a fact is not established, NONE only when evidence proves none exists, and NOT APPLICABLE only under an objective applicability rule.',
+ 'Complete the stage Human checklist, fill the Stage record, replace Copy block placeholders, and then copy the block into the assigned agent.',
+ 'Attach or link the exact files named in AUTHORIZED INPUTS; never rely on prior-chat memory.',
+ 'Use a fresh context for independent runs and reviewers; never continue an earlier execution conversation.',
+ 'Save every agent response immediately under the required artifact identity and version.',
+ 'Never overwrite an existing artifact version; material change creates the next version.',
+ 'Do not continue past a stage gate marked BLOCKED or NOT READY.'
 ];
 const OPERATING_RULES=[
- 'Do not begin production before requirements and acceptance tests exist.',
- 'Do not invent missing facts.',
- 'Do not silently resolve authoritative conflicts.',
- 'Do not allow the generator to be its sole validator.',
- 'Use deterministic verification whenever the property is deterministically testable.',
- 'Require affirmative evidence for every mandatory requirement.',
- 'Treat mandatory unknowns as BLOCKED.',
- 'Root-cause every material failure before changing anything.',
- 'Correct the earliest defective layer rather than patching only the final output.',
- 'Convert every confirmed defect into a permanent regression test.',
- 'Re-run independent executions after every material upstream change.',
- 'Do not allow independent iterations to see one another’s outputs.',
- 'Do not freeze a baseline merely because ten runs completed.',
- 'Require an unchanged confirmation iteration.',
- 'Validate the actual finished artifact, not merely its source representation.',
- 'Invalidate affected downstream verification whenever an upstream artifact changes materially.',
- 'Do not release any product containing an unresolved critical or major defect.',
- 'Do not release a product whose mandatory requirement cannot be verified.',
- 'Do not release bytes different from the bytes that were audited.',
- 'Preserve enough evidence to reproduce every acceptance decision.'
+ 'Do not begin production before requirements and acceptance tests exist.','Do not invent missing facts.','Do not silently resolve authoritative conflicts.','Do not allow the generator to be its sole validator.','Use deterministic verification whenever the property is deterministically testable.','Require affirmative evidence for every mandatory requirement.','Treat mandatory unknowns as BLOCKED.','Root-cause every material failure before changing anything.','Correct the earliest defective layer rather than merely patching the final output.','Convert every confirmed defect into a permanent regression test.','Re-run independent executions after every material upstream change.','Do not allow independent iterations to see one another’s outputs.','Do not freeze a baseline merely because ten runs completed.','Require an unchanged confirmation iteration.','Validate the actual finished artifact, not merely its source representation.','Invalidate affected downstream verification whenever an upstream artifact changes materially.','Do not release any product containing an unresolved critical or major defect.','Do not release a product whose mandatory requirement cannot be verified.','Do not release bytes different from the bytes that were audited.','Preserve enough evidence to reproduce every acceptance decision.'
 ];
-const EXECUTION_LOOP='DEFINE JOB → INVENTORY SOURCES → RESEARCH REQUIREMENTS → COMPILE ATOMIC REQUIREMENTS → RESOLVE CONFLICTS → BUILD ACCEPTANCE TESTS → BUILD FAILURE AND MUTATION TESTS → AUTHOR PRODUCTION INSTRUCTION → PREFLIGHT INSTRUCTION → FREEZE CANDIDATE → RUN 10 INDEPENDENT EXECUTIONS → VERIFY EVERY RUN AGAINST EVERY REQUIREMENT → COMPARE ALL RUNS → ROOT-CAUSE EVERY DEFECT → ADD REGRESSION TESTS → CORRECT RESPONSIBLE LAYER → FREEZE NEW VERSION → RUN 10 NEW INDEPENDENT EXECUTIONS → REPEAT UNTIL CONVERGED → RUN UNCHANGED CONFIRMATION → FREEZE APPROVED BASELINE → GENERATE FINISHED PRODUCT → DETERMINISTIC PRODUCT VERIFICATION → INDEPENDENT SEMANTIC VERIFICATION → ADVERSARIAL PRODUCT VERIFICATION → FINAL REPRESENTATION INSPECTION → PROCESS AUDIT → PRODUCT AUDIT → ACCEPTED / REJECTED / BLOCKED → VERIFY RELEASE HASH → RELEASE ONLY THE EXACT ACCEPTED ARTIFACT';
-const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const ROLE_MAP=['Job-control analyst — Stages 01 and job status maintenance','Source-authority analyst — Stage 02','Requirements-research analyst — Stage 03','Requirement-specification engineer — Stages 04–05','Verification architect — Stages 06–07','Production-instruction engineer — Stage 08','Independent preflight reviewer — Stage 09','Production execution agents — Stages 11, 17, 19, 21','Independent run verifier — Stage 12','Cross-run comparison analyst — Stage 13','Root-cause analyst — Stage 14','Regression-test engineer — Stage 15','Change-control engineer — Stages 16–17','Convergence and confirmation auditor — Stages 18–20','Deterministic verifier — Stage 22','Independent semantic evaluator — Stage 23','Adversarial reviewer — Stage 24','Representation inspector — Stage 25','Release auditor — Stages 26–29','Defect-registry custodian — Stage 30'];
+const FOLDERS='JOB_ID/\n  00_JOB_CONTROL/\n  01_INPUTS/\n  02_SOURCES/\n  03_RESEARCH/\n  04_REQUIREMENTS/\n  05_TESTS/\n  06_INSTRUCTIONS/\n  07_ITERATIONS/\n      ITERATION-001/\n          RUN-001/ ... RUN-010/\n          VERIFICATION/\n          COMPARISON/\n          DEFECTS/\n  08_BASELINE/\n  09_PRODUCT/\n  10_FINAL_AUDIT/\n  11_RELEASE/\n  12_PERMANENT_DEFECT_REGISTRY/';
+const LOOP='DEFINE JOB → INVENTORY SOURCES → RESEARCH REQUIREMENTS → COMPILE ATOMIC REQUIREMENTS → RESOLVE CONFLICTS → BUILD ACCEPTANCE TESTS → BUILD FAILURE AND MUTATION TESTS → AUTHOR PRODUCTION INSTRUCTION → PREFLIGHT INSTRUCTION → FREEZE CANDIDATE → RUN 10 INDEPENDENT EXECUTIONS → VERIFY EVERY RUN AGAINST EVERY REQUIREMENT → COMPARE ALL RUNS → ROOT-CAUSE EVERY DEFECT → ADD REGRESSION TESTS → CORRECT RESPONSIBLE LAYER → FREEZE NEW VERSION → RUN 10 NEW INDEPENDENT EXECUTIONS → REPEAT UNTIL CONVERGED → RUN UNCHANGED 10-EXECUTION CONFIRMATION → FREEZE APPROVED BASELINE → GENERATE FINISHED PRODUCT → DETERMINISTIC PRODUCT VERIFICATION → INDEPENDENT SEMANTIC VERIFICATION → ADVERSARIAL PRODUCT VERIFICATION → FINAL REPRESENTATION INSPECTION → PROCESS AUDIT → PRODUCT AUDIT → ACCEPTED / REJECTED / BLOCKED → VERIFY RELEASE HASH → RELEASE ONLY THE EXACT ACCEPTED ARTIFACT';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>new Date().toISOString();
-const pad=value=>String(value).padStart(2,'0');
-let paintTimer=0;
-let lastPaintSignature='';
-let applyingState=false;
-function readState(){try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch{return null}}
-function recordId(letter,record){return String(record?.id||record?.[ID_KEYS[letter]]||'')}
-function normalizeState(state){
+const pad=n=>String(n).padStart(2,'0');
+let applying=false,paintTimer=0,lastSignature='';
+function read(){try{return JSON.parse(localStorage.getItem(STORE)||'null')}catch{return null}}
+function normalize(state){
  if(!state||typeof state!=='object')return null;
- if(!state.job||typeof state.job!=='object')state.job={};
- if(!state.operationalRecords||typeof state.operationalRecords!=='object')state.operationalRecords={};
+ state.job=state.job&&typeof state.job==='object'?state.job:{};
+ state.operationalRecords=state.operationalRecords&&typeof state.operationalRecords==='object'?state.operationalRecords:{};
  for(const letter of LETTERS){
-  const meta=META[letter];
-  if(!Array.isArray(state.operationalRecords[letter]))state.operationalRecords[letter]=[];
-  if(!Array.isArray(state[meta.mirror]))state[meta.mirror]=[];
-  const lists=[state[meta.mirror]];
-  if(state.appendices?.[letter]){
-   if(!Array.isArray(state.appendices[letter].records))state.appendices[letter].records=[];
-   lists.push(state.appendices[letter].records);
-  }
-  for(const list of lists)for(const record of list){
-   const id=recordId(letter,record);
-   if(id&&!state.operationalRecords[letter].some(item=>recordId(letter,item)===id))state.operationalRecords[letter].push(record);
-  }
+  state.operationalRecords[letter]=Array.isArray(state.operationalRecords[letter])?state.operationalRecords[letter]:[];
+  state[MIRROR[letter]]=Array.isArray(state[MIRROR[letter]])?state[MIRROR[letter]]:[];
+  if(state.appendices?.[letter])state.appendices[letter].records=Array.isArray(state.appendices[letter].records)?state.appendices[letter].records:[];
+  const sources=[state[MIRROR[letter]],state.appendices?.[letter]?.records||[]];
+  for(const source of sources)for(const r of source){const id=recordId(letter,r);if(id&&!state.operationalRecords[letter].some(x=>recordId(letter,x)===id))state.operationalRecords[letter].push(r)}
  }
  return state;
 }
-function stageEntries(state){
- const stages=state?.stages;
- if(Array.isArray(stages))return stages.map((stage,index)=>[Number(stage?.number||index+1),stage]).filter(([,stage])=>stage);
- if(stages&&typeof stages==='object')return Object.entries(stages).map(([key,stage])=>[Number(stage?.number||key),stage]).filter(([number,stage])=>Number.isFinite(number)&&stage);
- return[];
-}
-function stageAt(state,number){return stageEntries(state).find(([candidate])=>candidate===Number(number))?.[1]||null}
-function currentStageNumber(state){
- const stored=Number(state?.job?.currentStage??state?.currentStage);
- if(Number.isFinite(stored)&&stored>=1&&stored<=30)return stored;
- const active=document.querySelector('#nav button.active');
- const match=active?.textContent?.match(/\b(\d{1,2})\b/);
- return match?Math.max(1,Math.min(30,Number(match[1]))):1;
-}
-function stageTitle(number){
- const active=document.querySelector('#nav button.active');
- const text=active?.textContent?.trim();
- if(text)return text.replace(/^\d+\s*/,'');
- const heading=document.querySelector('#content h2')?.textContent||'';
- return heading.replace(/^STAGE\s+\d+\s*[-–—]\s*/i,'')||`STAGE ${pad(number)}`;
-}
+function recordId(letter,r){return String(r?.id||r?.[FIELD_ID[letter]]||'')}
+function stageEntries(state){const s=state?.stages;if(Array.isArray(s))return s.map((x,i)=>[Number(x?.number||i+1),x]).filter(([,x])=>x);if(s&&typeof s==='object')return Object.entries(s).map(([k,x])=>[Number(x?.number||k),x]).filter(([n,x])=>Number.isFinite(n)&&x);return[]}
+function stageAt(state,n){return stageEntries(state).find(([x])=>x===Number(n))?.[1]||null}
+function stageNumber(state){const stored=Number(state?.job?.currentStage??state?.currentStage);if(stored>=1&&stored<=30)return stored;const m=document.querySelector('#nav button.active')?.textContent?.match(/\b(\d{1,2})\b/);return m?Number(m[1]):1}
 function jobId(state){return String(state?.job?.id||state?.job?.JOB_ID||state?.jobId||'UNKNOWN')}
-function nextId(state,letter,prefix){
- const used=new Set((state.operationalRecords?.[letter]||[]).map(record=>recordId(letter,record)));
- let number=(state.operationalRecords?.[letter]?.length||0)+1;
- let id='';
- do{id=`${prefix}-${String(number++).padStart(3,'0')}`}while(used.has(id));
- return id;
-}
-function appendRecord(state,letter,record){
- normalizeState(state);
- const id=recordId(letter,record)||nextId(state,letter,letter);
- record.id=id;
- record[ID_KEYS[letter]]=record[ID_KEYS[letter]]||id;
- const targets=[state.operationalRecords[letter],state[META[letter].mirror]];
- if(state.appendices?.[letter])targets.push(state.appendices[letter].records);
- for(const target of targets)if(!target.some(item=>recordId(letter,item)===id))target.push(record);
- return record;
-}
-function replaceRecord(state,letter,id,replacement){
- normalizeState(state);
- replacement.id=id;
- replacement[ID_KEYS[letter]]=replacement[ID_KEYS[letter]]||id;
- const targets=[state.operationalRecords[letter],state[META[letter].mirror]];
- if(state.appendices?.[letter])targets.push(state.appendices[letter].records);
- for(const target of targets){
-  const index=target.findIndex(item=>recordId(letter,item)===id);
-  if(index>=0)target[index]=replacement;
- }
-}
-function applyState(state){
- const payload=JSON.stringify(state);
- localStorage.setItem(STORE,payload);
- if(applyingState)return;
- applyingState=true;
- if(typeof globalThis.importProject==='function'){
-  try{
-   const file=new File([payload],'INTEGRATED-WORKBOOK.json',{type:'application/json'});
-   globalThis.importProject({files:[file],value:''});
-   setTimeout(()=>{applyingState=false;schedulePaint()},120);
-   return;
-  }catch(error){console.error(error)}
- }
- applyingState=false;
- location.reload();
-}
-function transact(mutator){
- const state=normalizeState(readState());
- if(!state)return alert('The workbook state is not initialized yet.');
- const result=mutator(state);
- if(result===false)return;
- applyState(state);
-}
-function invalidateAfter(state,stageNumber,controlId){
- const affected=[];
- for(const[number,stage]of stageEntries(state)){
-  if(number<=stageNumber)continue;
-  const previousStatus=String(stage.status||'NOT STARTED');
-  const previousDecision=String(stage.decision||'NOT READY - CORRECTION REQUIRED');
-  if(!Array.isArray(stage.invalidations))stage.invalidations=[];
-  stage.invalidations.push({controlId,invalidatedAt:now(),previousStatus,previousDecision});
-  stage.status='NOT STARTED';
-  stage.decision='NOT READY - CORRECTION REQUIRED';
-  stage.invalidatedBy=controlId;
-  stage.evidence=`${String(stage.evidence||'').trim()}\nINVALIDATED_BY: ${controlId}`.trim();
-  affected.push(`STAGE ${pad(number)}`);
- }
- return affected;
-}
-function versionSnapshot(state){
- const job=state.job||{};
- return{
-  input:job.inputVersion||state.versions?.input||'UNKNOWN',
-  source:job.sourceSetVersion||state.versions?.sourceSet||'UNKNOWN',
-  requirements:job.requirementsVersion||state.versions?.requirements||'UNKNOWN',
-  tests:job.testSuiteVersion||state.versions?.testSuite||'UNKNOWN',
-  instruction:job.instructionVersion||state.versions?.instruction||'UNKNOWN',
-  tools:job.toolConfigurationVersion||state.versions?.toolConfiguration||'UNKNOWN'
- };
-}
-function createFreshContextRecord(state,stageNumber,origin='MANUAL'){
- const versions=versionSnapshot(state);
- const id=nextId(state,'A','CONTEXT');
- return appendRecord(state,'A',{
-  id,FRESH_CONTEXT_LAUNCH_RECORD_ID:id,JOB_ID:jobId(state),STAGE:`STAGE ${pad(stageNumber)}`,ROLE:stageTitle(stageNumber),
-  ITERATION_ID:state.job?.currentIteration||'UNKNOWN',RUN_ID:'UNKNOWN',CONTEXT_ID:'UNKNOWN',
-  CONTEXT_NAME:`${jobId(state)}__STAGE-${pad(stageNumber)}__${stageTitle(stageNumber)}`,
-  CONTEXT_START_DATE_AND_TIME:now(),STAGE_COPY_BLOCK_VERSION_OR_HASH:'UNKNOWN',
-  AUTHORIZED_FILES_AND_VERSIONS_ATTACHED:'UNKNOWN',FROZEN_INPUT_VERSION:versions.input,
-  FROZEN_SOURCE_SET_VERSION:versions.source,FROZEN_REQUIREMENTS_VERSION:versions.requirements,
-  FROZEN_INSTRUCTION_VERSION:versions.instruction,FROZEN_TEST_SUITE_VERSION:versions.tests,
-  FROZEN_TOOL_CONFIGURATION_VERSION:versions.tools,OTHER_RUN_OUTPUT_VISIBLE:'UNKNOWN',
-  REVIEWER_COMMENT_VISIBLE:'UNKNOWN',PRIOR_FAILURE_EXPLANATION_VISIBLE:'UNKNOWN',
-  PROPOSED_CORRECTION_VISIBLE:'UNKNOWN',REQUIRED_TOOLS_AVAILABLE:'UNKNOWN',EXECUTION_DEVIATIONS:'NONE',
-  OUTPUT_ID:'UNKNOWN',OUTPUT_FILENAME:'UNKNOWN',OUTPUT_VERSION:'UNKNOWN',OUTPUT_SHA256:'UNKNOWN',
-  CONTEXT_CONTAMINATED:'UNKNOWN',DEFECT_ID:'NONE',RUN_USABLE:'UNKNOWN',CONTROLLING_EVIDENCE:'UNKNOWN',
-  CREATED_BY_CONTROL:origin,STATUS:'OPEN'
- });
-}
-function createPendingReceipt(state,stageNumber,origin='COPY BLOCK'){
- const versions=versionSnapshot(state);
- const id=nextId(state,'F','RECEIPT');
- return appendRecord(state,'F',{
-  id,RECEIPT_ID:id,JOB_ID:jobId(state),STAGE:`STAGE ${pad(stageNumber)}`,AGENT_ROLE:stageTitle(stageNumber),
-  AGENT_OR_SYSTEM_IDENTIFIER:'UNKNOWN',CONTEXT_ID:'UNKNOWN',ITERATION_ID:state.job?.currentIteration||'NOT APPLICABLE',
-  RUN_ID:'NOT APPLICABLE',REQUEST_DATE_AND_TIME:now(),RESPONSE_DATE_AND_TIME:'UNKNOWN',
-  COPY_BLOCK_VERSION_OR_HASH:'UNKNOWN',INPUT_VERSIONS:versions.input,SOURCE_SET_VERSION:versions.source,
-  REQUIREMENTS_VERSION:versions.requirements,INSTRUCTION_VERSION:versions.instruction,
-  TEST_SUITE_VERSION:versions.tests,TOOL_CONFIGURATION_VERSION:versions.tools,
-  OUTPUT_ARTIFACT_ID:'UNKNOWN',OUTPUT_VERSION:'UNKNOWN',OUTPUT_FILES:'UNKNOWN',OUTPUT_HASHES:'UNKNOWN',
-  COMPLETE_RESPONSE_SAVED:'UNKNOWN',AGENT_CLAIMED_COMPLETION:'UNKNOWN',INDEPENDENT_COMPLETION_ESTABLISHED:'UNKNOWN',
-  TRUNCATION_DETECTED:'UNKNOWN',REFUSAL_OR_PARTIAL_REFUSAL:'UNKNOWN',TOOL_FAILURES:'UNKNOWN',
-  MISSING_OR_UNREADABLE_ATTACHMENTS:'UNKNOWN',MALFORMED_OUTPUT_FILES:'UNKNOWN',OTHER_DEVIATIONS:'UNKNOWN',
-  DEFECT_IDS:'NONE',BLOCKER_IDS:'NONE',NEXT_REQUIRED_VERIFICATION_STAGE:stageNumber<30?`STAGE ${pad(stageNumber+1)}`:'STAGE 30 / FINAL PRESERVATION',
-  RECEIPT_COMPLETED_BY:'UNKNOWN',RECEIPT_EVIDENCE:'UNKNOWN',CREATED_BY_CONTROL:origin,STATUS:'AWAITING OUTPUT'
- });
-}
-function openWorkflowBlocker(stageNumber,missingType,missingItem,why){
- transact(state=>{
-  const id=nextId(state,'B','BLOCKER');
-  const affected=invalidateAfter(state,stageNumber,id);
-  const stage=stageAt(state,stageNumber);
-  if(stage){stage.status='BLOCKED';stage.decision='BLOCKED'}
-  const record=appendRecord(state,'B',{
-   id,BLOCKER_ID:id,JOB_ID:jobId(state),DATE_OPENED:now(),CURRENT_STATUS:'OPEN',STAGE_DISCOVERED:`STAGE ${pad(stageNumber)}`,
-   AFFECTED_REQ_IDS:'UNKNOWN',AFFECTED_TEST_IDS:'NONE',AFFECTED_ARTIFACTS_AND_VERSIONS:'UNKNOWN',
-   MISSING_ITEM_TYPE:missingType||'OTHER',MISSING_EVIDENCE_AUTHORITY_INPUT_OR_CAPABILITY:missingItem||'UNKNOWN',
-   WHY_MANDATORY_SATISFACTION_CANNOT_BE_ESTABLISHED:why||'UNKNOWN',KNOWN_SOURCE_OR_OWNER_OF_MISSING_ITEM:'UNKNOWN',
-   ATTEMPTS_TO_RESOLVE:'NONE RECORDED',AVAILABLE_RESOLUTION_PATH:'UNKNOWN',DOWNSTREAM_WORK_STOPPED:affected.join(', ')||'NONE',
-   BLOCKER_OWNER:state.job?.owner||'UNKNOWN',TARGET_RESOLUTION_DATE:'UNKNOWN',RESOLUTION:'NOT RESOLVED',
-   RESOLUTION_EVIDENCE:'NOT RESOLVED',DATE_RESOLVED:'NOT RESOLVED',REQUIREMENTS_AND_TESTS_REEVALUATED:'NOT RESOLVED',
-   DOWNSTREAM_VALIDATION_RERUN:'NOT RESOLVED',CLOSURE_AUTHORIZED_BY:'NOT RESOLVED'
-  });
-  state.job.currentState='BLOCKED';
-  state.job.blockers=(state.operationalRecords.B||[]).filter(item=>String(item.CURRENT_STATUS||'').toUpperCase()==='OPEN').map(item=>recordId('B',item)).join(', ')||record.BLOCKER_ID;
- });
-}
-function updateVersionForChange(state,artifactType,newVersion){
- const type=String(artifactType||'').toUpperCase();
- if(type.includes('SOURCE'))state.job.sourceSetVersion=newVersion;
- else if(type.includes('REQUIREMENT'))state.job.requirementsVersion=newVersion;
- else if(type.includes('TEST')||type.includes('VALIDATOR'))state.job.testSuiteVersion=newVersion;
- else if(type.includes('INSTRUCTION'))state.job.instructionVersion=newVersion;
- else if(type.includes('INPUT'))state.job.inputVersion=newVersion;
- else if(type.includes('BASELINE'))state.job.baselineId=newVersion;
- else if(type.includes('PRODUCT')||type.includes('REPRESENTATION'))state.job.productId=newVersion;
-}
-function recordMaterialChange(stageNumber,values){
- if(!values.artifact||!values.oldVersion||!values.newVersion||!values.change||!values.reason)return alert('Artifact, old version, new version, exact change, and reason are required.');
- if(values.oldVersion===values.newVersion)return alert('A material change requires a new version; old and new versions cannot be identical.');
- transact(state=>{
-  const id=nextId(state,'C','CHANGE');
-  const affected=invalidateAfter(state,stageNumber,id);
-  appendRecord(state,'C',{
-   id,CHANGE_ID:id,DATE_AND_TIME:now(),JOB_ID:jobId(state),ITERATION_ID:state.job?.currentIteration||'NOT APPLICABLE',
-   TRIGGER:values.trigger||'DEFECT',EARLIEST_RESPONSIBLE_LAYER:values.layer||'UNKNOWN',AFFECTED_ARTIFACT_ID:values.artifact,
-   OLD_VERSION:values.oldVersion,OLD_SHA256:'UNKNOWN',NEW_VERSION:values.newVersion,NEW_SHA256:'UNKNOWN',
-   EXACT_CHANGE:values.change,REASON:values.reason,ROOT_CAUSE_ID_OR_AUTHORITY:values.authority||'UNKNOWN',MATERIAL_CHANGE:'TRUE',
-   DOWNSTREAM_ARTIFACTS_INVALIDATED:affected.join(', ')||'NONE',DOWNSTREAM_DETERMINATIONS_INVALIDATED:affected.join(', ')||'NONE',
-   TESTS_TO_RERUN:'ALL AFFECTED TESTS',ITERATIONS_TO_RERUN:'NEW TEN-EXECUTION ITERATION WHEN UPSTREAM MATERIAL CHANGED',
-   AUDITS_TO_RERUN:'ALL AFFECTED DOWNSTREAM AUDITS',RELEASE_GATE_MUST_BE_RERUN:stageNumber<=27?'TRUE':'UNKNOWN',
-   HASH_IDENTITY_MUST_BE_RERUN:stageNumber<=28?'TRUE':'UNKNOWN',AUTHORIZED_BY:'UNKNOWN',CHANGE_IMPLEMENTED_BY:'UNKNOWN',
-   IMPLEMENTATION_EVIDENCE:'UNKNOWN',REVALIDATION_COMPLETE:'FALSE',REVALIDATION_EVIDENCE:'NOT COMPLETE',
-   CHANGE_STATUS:'IMPLEMENTED_NOT_REVALIDATED'
-  });
-  updateVersionForChange(state,values.artifact,values.newVersion);
-  state.job.currentState='IN PROGRESS';
-  state.job.nextAction=affected.length?`Revalidate from ${affected[0]}`:'Complete change revalidation';
- });
-}
-function recordAgentOutputReceipt(stageNumber,values){
- if(!values.outputId||!values.outputVersion)return alert('Output artifact ID and output version are required.');
- transact(state=>{
-  const versions=versionSnapshot(state);
-  const id=nextId(state,'F','RECEIPT');
-  appendRecord(state,'F',{
-   id,RECEIPT_ID:id,JOB_ID:jobId(state),STAGE:`STAGE ${pad(stageNumber)}`,AGENT_ROLE:stageTitle(stageNumber),
-   AGENT_OR_SYSTEM_IDENTIFIER:values.agent||'UNKNOWN',CONTEXT_ID:values.context||'UNKNOWN',
-   ITERATION_ID:state.job?.currentIteration||'NOT APPLICABLE',RUN_ID:values.run||'NOT APPLICABLE',
-   REQUEST_DATE_AND_TIME:values.requested||'UNKNOWN',RESPONSE_DATE_AND_TIME:now(),COPY_BLOCK_VERSION_OR_HASH:values.copyBlock||'UNKNOWN',
-   INPUT_VERSIONS:versions.input,SOURCE_SET_VERSION:versions.source,REQUIREMENTS_VERSION:versions.requirements,
-   INSTRUCTION_VERSION:versions.instruction,TEST_SUITE_VERSION:versions.tests,TOOL_CONFIGURATION_VERSION:versions.tools,
-   OUTPUT_ARTIFACT_ID:values.outputId,OUTPUT_VERSION:values.outputVersion,OUTPUT_FILES:values.files||'UNKNOWN',OUTPUT_HASHES:values.hashes||'UNKNOWN',
-   COMPLETE_RESPONSE_SAVED:values.saved||'UNKNOWN',AGENT_CLAIMED_COMPLETION:values.claimed||'UNKNOWN',
-   INDEPENDENT_COMPLETION_ESTABLISHED:values.independent||'UNKNOWN',TRUNCATION_DETECTED:values.truncation||'UNKNOWN',
-   REFUSAL_OR_PARTIAL_REFUSAL:values.refusal||'UNKNOWN',TOOL_FAILURES:values.toolFailures||'NONE',
-   MISSING_OR_UNREADABLE_ATTACHMENTS:values.attachments||'NONE',MALFORMED_OUTPUT_FILES:values.malformed||'NONE',
-   OTHER_DEVIATIONS:values.deviations||'NONE',DEFECT_IDS:values.defects||'NONE',BLOCKER_IDS:values.blockers||'NONE',
-   NEXT_REQUIRED_VERIFICATION_STAGE:values.next||'UNKNOWN',RECEIPT_COMPLETED_BY:values.completedBy||state.job?.owner||'UNKNOWN',
-   RECEIPT_EVIDENCE:values.evidence||'UNKNOWN',STATUS:'RECORDED'
-  });
- });
-}
-async function sha256File(file){
- const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
- return Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
-}
-async function compareReleaseArtifacts(stageNumber,auditedFile,releaseFile,gateState){
- if(!auditedFile||!releaseFile)return alert('Select the audited file and the exact file selected for delivery.');
- const[auditedHash,releaseHash]=await Promise.all([sha256File(auditedFile),sha256File(releaseFile)]);
- const hashesEqual=auditedHash===releaseHash;
- const sizesEqual=auditedFile.size===releaseFile.size;
- const authorized=gateState==='ACCEPTED'&&hashesEqual&&sizesEqual;
- transact(state=>{
-  const id=nextId(state,'D','HASH-AUDIT');
-  appendRecord(state,'D',{
-   id,HASH_AUDIT_ID:id,RELEASE_GATE_ID:'UNKNOWN',RELEASE_GATE_STATE:gateState,
-   GATE_STATE_ALLOWS_HASH_VERIFICATION_TOWARD_DELIVERY:gateState==='ACCEPTED'?'TRUE':'FALSE',HASH_ALGORITHM:'SHA-256',
-   HASH_TOOL_AND_VERSION:'Web Crypto API / SHA-256',HASH_OPERATOR:state.job?.owner||'UNKNOWN',ARTIFACT_ID:'UNKNOWN',
-   AUDITED_FILENAME:auditedFile.name,AUDITED_PRODUCT_VERSION:state.job?.productId||'UNKNOWN',AUDITED_FILE_PATH_OR_STORAGE_ID:'LOCAL SELECTED FILE',
-   AUDITED_FILE_SIZE_BYTES:auditedFile.size,AUDIT_HASH_DATE_AND_TIME:now(),AUDITED_SHA256:auditedHash,
-   AUDITED_HASH_EVIDENCE:'CALCULATED IN APPLICATION',RELEASE_FILENAME:releaseFile.name,
-   RELEASE_PRODUCT_VERSION:state.job?.productId||'UNKNOWN',RELEASE_FILE_PATH_OR_STORAGE_ID:'LOCAL SELECTED FILE',
-   RELEASE_FILE_SIZE_BYTES:releaseFile.size,RELEASE_HASH_DATE_AND_TIME:now(),RELEASE_SHA256:releaseHash,
-   RELEASE_HASH_EVIDENCE:'CALCULATED IMMEDIATELY IN APPLICATION',RELEASE_HASH_EQUALS_AUDITED_HASH:hashesEqual?'TRUE':'FALSE',
-   BYTE_SIZE_EQUALS_AUDITED_BYTE_SIZE:sizesEqual?'TRUE':'FALSE',POST_AUDIT_MODIFICATION_DETECTED:hashesEqual&&sizesEqual?'FALSE':'TRUE',
-   MISMATCH_OR_MODIFICATION_RESPONSE:authorized?'NONE':'STOP RELEASE; CREATE A NEW PRODUCT VERSION AND RERUN AFFECTED VALIDATION',
-   ARTIFACT_RELEASE_ELIGIBILITY:authorized?'ELIGIBLE':'NOT ELIGIBLE',DELIVERY_AUTHORIZATION:authorized?'AUTHORIZED':'NOT AUTHORIZED',
-   EXACT_AUTHORIZED_FILENAMES:authorized?releaseFile.name:'NONE',AUTHORIZATION_EVIDENCE:`AUDITED_SHA256=${auditedHash}; RELEASE_SHA256=${releaseHash}`,
-   AUTHORIZED_BY:authorized?(state.job?.owner||'UNKNOWN'):'NONE',AUTHORIZATION_DATE_AND_TIME:authorized?now():'NOT AUTHORIZED'
-  });
-  if(!authorized){
-   const stage=stageAt(state,stageNumber);
-   if(stage){stage.status='BLOCKED';stage.decision='BLOCKED'}
-   state.job.currentState='BLOCKED';
-  }
- });
- alert(authorized?'Artifact identity established. Delivery is authorized for the exact matching file only.':'Release stopped. The gate is not ACCEPTED or the audited and release bytes do not match.');
-}
-function createResetRecord(state,oldState){
- const id=nextId(state,'E','RESET');
- return appendRecord(state,'E',{
-  id,NEW_JOB_INITIALIZATION_RECORD_ID:id,NEW_JOB_ID:jobId(state),NEW_JOB_TITLE:state.job?.title||'UNKNOWN',
-  JOB_OWNER:state.job?.owner||'UNKNOWN',DATE_OPENED:state.job?.dateOpened||now(),MASTER_TEMPLATE_VERSION:'CURRENT APPLICATION',
-  MASTER_TEMPLATE_SHA256:'NOT CALCULATED',NEW_WORKBOOK_FILENAME:`${jobId(state)}__WORKBOOK.json`,NEW_WORKBOOK_VERSION:'v001',
-  NEW_FOLDER_ROOT:'UNKNOWN',SUPPLIED_INPUT_FILES:'NONE RECORDED',SUPPLIED_INPUT_HASHES:'NONE RECORDED',
-  EXACT_USER_REQUEST_CAPTURED_IN_STAGE_01:'UNKNOWN',OLD_JOB_MATERIAL_REUSED:'FALSE',
-  AUTHORIZED_REUSED_ARTIFACT_RECORD:'NONE',OLD_BASELINE_STATUS_CARRIED_FORWARD:'FALSE',OLD_RELEASE_DECISION_CARRIED_FORWARD:'FALSE',
-  OLD_REQUIREMENT_OR_TEST_CARRIED_FORWARD_WITHOUT_REVALIDATION:'FALSE',NEW_JOB_START_STAGE:'STAGE 01',
-  RESET_COMPLETED_BY:state.job?.owner||'UNKNOWN',RESET_DATE_AND_TIME:now(),
-  RESET_EVIDENCE:`Previous job ${oldState?.job?.id||oldState?.jobId||'UNKNOWN'} was not carried forward.`
- });
-}
-function hasOpenBlocker(state,stageNumber){
- return(state.operationalRecords?.B||[]).some(record=>String(record.CURRENT_STATUS||record.status||'').toUpperCase()==='OPEN'&&String(record.STAGE_DISCOVERED||'').includes(pad(stageNumber)));
-}
-function synchronizeBlockedGate(stageNumber){
- transact(state=>{
-  const stage=stageAt(state,stageNumber);
-  if(!stage||!(String(stage.decision).toUpperCase()==='BLOCKED'||String(stage.status).toUpperCase()==='BLOCKED'))return false;
-  if(hasOpenBlocker(state,stageNumber))return false;
-  const id=nextId(state,'B','BLOCKER');
-  const affected=invalidateAfter(state,stageNumber,id);
-  appendRecord(state,'B',{
-   id,BLOCKER_ID:id,JOB_ID:jobId(state),DATE_OPENED:now(),CURRENT_STATUS:'OPEN',STAGE_DISCOVERED:`STAGE ${pad(stageNumber)}`,
-   AFFECTED_REQ_IDS:'UNKNOWN',AFFECTED_TEST_IDS:'UNKNOWN',AFFECTED_ARTIFACTS_AND_VERSIONS:'UNKNOWN',MISSING_ITEM_TYPE:'OTHER',
-   MISSING_EVIDENCE_AUTHORITY_INPUT_OR_CAPABILITY:'UNKNOWN — complete this record',
-   WHY_MANDATORY_SATISFACTION_CANNOT_BE_ESTABLISHED:stage.evidence||'UNKNOWN — complete this record',
-   KNOWN_SOURCE_OR_OWNER_OF_MISSING_ITEM:'UNKNOWN',ATTEMPTS_TO_RESOLVE:'NONE RECORDED',AVAILABLE_RESOLUTION_PATH:'UNKNOWN',
-   DOWNSTREAM_WORK_STOPPED:affected.join(', ')||'NONE',BLOCKER_OWNER:state.job?.owner||'UNKNOWN',TARGET_RESOLUTION_DATE:'UNKNOWN',
-   RESOLUTION:'NOT RESOLVED',RESOLUTION_EVIDENCE:'NOT RESOLVED',DATE_RESOLVED:'NOT RESOLVED',
-   REQUIREMENTS_AND_TESTS_REEVALUATED:'NOT RESOLVED',DOWNSTREAM_VALIDATION_RERUN:'NOT RESOLVED',CLOSURE_AUTHORIZED_BY:'NOT RESOLVED'
-  });
-  state.job.currentState='BLOCKED';
- });
-}
-function afterCopyBlock(stageNumber){
- transact(state=>{
-  normalizeState(state);
-  const recent=(letter)=>state.operationalRecords[letter].some(record=>String(record.STAGE||record.STAGE_DISCOVERED||'').includes(pad(stageNumber))&&Date.now()-Date.parse(record.REQUEST_DATE_AND_TIME||record.CONTEXT_START_DATE_AND_TIME||0)<5000);
-  if(!recent('F'))createPendingReceipt(state,stageNumber,'COPY BLOCK');
-  if(FRESH_CONTEXT_STAGES.has(stageNumber)&&!recent('A'))createFreshContextRecord(state,stageNumber,'COPY BLOCK');
- });
-}
-function field(panel,name){return panel.querySelector(`[data-field="${name}"]`)?.value?.trim()||''}
-function recordStage(record){
- const text=String(record.STAGE||record.STAGE_DISCOVERED||record.CURRENT_STAGE||'');
- const match=text.match(/\b(\d{1,2})\b/);
- return match?Number(match[1]):null;
-}
-function recordsForStage(state,letter,stageNumber){
- const all=state.operationalRecords?.[letter]||[];
- const exact=all.filter(record=>recordStage(record)===stageNumber);
- const source=exact.length?exact:all;
- return source.slice(-2).reverse();
-}
-function applicableLetters(state,stageNumber){
- const result=['F'];
- if(FRESH_CONTEXT_STAGES.has(stageNumber))result.unshift('A');
- if(stageNumber===1)result.push('E');
- if(hasOpenBlocker(state,stageNumber)||String(stageAt(state,stageNumber)?.status||'').toUpperCase()==='BLOCKED')result.push('B');
- if((state.operationalRecords?.C||[]).some(record=>recordStage(record)===stageNumber)||stageNumber>=14&&stageNumber<=20)result.push('C');
- if(stageNumber>=27&&stageNumber<=29)result.push('D');
- return[...new Set(result)];
-}
-function renderRecordEditors(state,stageNumber){
- return applicableLetters(state,stageNumber).map(letter=>{
-  const records=recordsForStage(state,letter,stageNumber);
-  if(!records.length)return'';
-  return`<details><summary><strong>Appendix ${letter}</strong> — ${esc(META[letter].title)} records (${state.operationalRecords[letter].length})</summary>${records.map(record=>`<label>${esc(recordId(letter,record))}</label><textarea class="record" spellcheck="false" data-record-letter="${letter}" data-record-id="${esc(recordId(letter,record))}">${esc(JSON.stringify(record,null,2))}</textarea>`).join('')}</details>`;
- }).join('');
-}
-function renderMaster(state){
- const target=document.getElementById('master');
- if(!target)return;
- const job=state.job||{};
- const tracker=stageEntries(state).sort((a,b)=>a[0]-b[0]).map(([number,stage])=>`${pad(number)} ${String(stage.title||stage.name||'').trim()} | ${stage.status||'NOT STARTED'} | ${String(stage.evidence||'NO EVIDENCE').replace(/\s+/g,' ').slice(0,100)}`).join('\n');
- target.innerHTML=`<details class="card"><summary><strong>MASTER JOB CONTROL</strong> — ${esc(job.id||'UNASSIGNED JOB')}</summary>${MASTER_FIELDS.map(([key,label])=>`<label>${label}</label><input data-master-key="${key}" value="${esc(job[key]??'')}">`).join('')}<details><summary>Master 30-stage tracker</summary><div class="copy">${esc(tracker)}</div></details><details><summary>Mandatory operating rules</summary><ul>${OPERATING_RULES.map(rule=>`<li>${esc(rule)}</li>`).join('')}</ul></details><details><summary>Quick execution loop</summary><div class="copy">${esc(EXECUTION_LOOP)}</div></details></details>`;
- target.querySelectorAll('[data-master-key]').forEach(input=>input.addEventListener('change',()=>transact(nextState=>{nextState.job[input.dataset.masterKey]=input.value.trim()})));
-}
-function operationalPanel(state,stageNumber){
- const freshButton=FRESH_CONTEXT_STAGES.has(stageNumber)?'<button type="button" data-action="fresh-context">Create fresh-context launch record</button>':'';
- const release=stageNumber>=27&&stageNumber<=29?`<details><summary>Exact artifact identity control</summary><label>Release gate state</label><select data-field="release-gate"><option>BLOCKED</option><option>REJECTED</option><option>ACCEPTED</option></select><label>Audited artifact</label><input type="file" data-field="audited-file"><label>Exact file selected for delivery</label><input type="file" data-field="release-file"><button type="button" class="primary" data-action="compare-release">Calculate SHA-256 and apply identity gate</button></details>`:'';
- return`<section class="card" data-integrated-operational-controls="true"><h3>Operational records applied by this stage</h3><p class="muted">Appendices A–F are invoked here as record creation, blocking, invalidation, reset, receipt, and release-identity behavior. They are not a parallel checklist.</p><div class="tools">${freshButton}<button type="button" data-action="show-blocker">Open blocker</button><button type="button" data-action="show-change">Record material change</button><button type="button" data-action="show-receipt">Record agent output receipt</button></div><details data-form="blocker"><summary>Universal blocker record</summary><label>Missing item type</label><select data-field="blocker-type"><option>EVIDENCE</option><option>AUTHORITY</option><option>INPUT</option><option>CAPABILITY</option><option>DECISION_RULE</option><option>OTHER</option></select><label>Missing evidence, authority, input, or capability</label><textarea data-field="blocker-missing"></textarea><label>Why mandatory satisfaction cannot be established</label><textarea data-field="blocker-why"></textarea><button type="button" class="primary" data-action="save-blocker">Open blocker and stop downstream work</button></details><details data-form="change"><summary>Append-only change and invalidation record</summary><label>Affected artifact ID or type</label><input data-field="change-artifact"><label>Old version</label><input data-field="change-old"><label>New version</label><input data-field="change-new"><label>Earliest responsible layer</label><select data-field="change-layer"><option>SOURCE</option><option>RESEARCH</option><option>REQUIREMENT</option><option>TEST</option><option>INSTRUCTION</option><option>INPUT</option><option>EXECUTION</option><option>TOOL</option><option>AUDIT</option><option>PRODUCT</option><option>REPRESENTATION</option></select><label>Exact change</label><textarea data-field="change-exact"></textarea><label>Reason / root-cause authority</label><textarea data-field="change-reason"></textarea><button type="button" class="primary" data-action="save-change">Append change and invalidate downstream determinations</button></details><details data-form="receipt"><summary>Universal agent-output receipt</summary><label>Agent or system identifier</label><input data-field="receipt-agent"><label>Context ID</label><input data-field="receipt-context"><label>Run ID</label><input data-field="receipt-run"><label>Output artifact ID</label><input data-field="receipt-output"><label>Output version</label><input data-field="receipt-version"><label>Output files</label><textarea data-field="receipt-files"></textarea><label>Output hashes</label><textarea data-field="receipt-hashes"></textarea><label>Deviations, failures, missing attachments, or malformed outputs</label><textarea data-field="receipt-deviations"></textarea><label>Next required verification stage</label><input data-field="receipt-next"><label>Receipt evidence</label><textarea data-field="receipt-evidence"></textarea><button type="button" class="primary" data-action="save-receipt">Append agent-output receipt</button></details>${release}${renderRecordEditors(state,stageNumber)}</section>`;
-}
-function bindPanel(panel,stageNumber){
- panel.querySelector('[data-action="fresh-context"]')?.addEventListener('click',()=>transact(state=>createFreshContextRecord(state,stageNumber,'MANUAL')));
- panel.querySelector('[data-action="show-blocker"]')?.addEventListener('click',()=>panel.querySelector('[data-form="blocker"]')?.setAttribute('open',''));
- panel.querySelector('[data-action="show-change"]')?.addEventListener('click',()=>panel.querySelector('[data-form="change"]')?.setAttribute('open',''));
- panel.querySelector('[data-action="show-receipt"]')?.addEventListener('click',()=>panel.querySelector('[data-form="receipt"]')?.setAttribute('open',''));
- panel.querySelector('[data-action="save-blocker"]')?.addEventListener('click',()=>openWorkflowBlocker(stageNumber,field(panel,'blocker-type'),field(panel,'blocker-missing'),field(panel,'blocker-why')));
- panel.querySelector('[data-action="save-change"]')?.addEventListener('click',()=>recordMaterialChange(stageNumber,{artifact:field(panel,'change-artifact'),oldVersion:field(panel,'change-old'),newVersion:field(panel,'change-new'),layer:field(panel,'change-layer'),change:field(panel,'change-exact'),reason:field(panel,'change-reason'),authority:field(panel,'change-reason'),trigger:'DEFECT'}));
- panel.querySelector('[data-action="save-receipt"]')?.addEventListener('click',()=>recordAgentOutputReceipt(stageNumber,{agent:field(panel,'receipt-agent'),context:field(panel,'receipt-context'),run:field(panel,'receipt-run'),outputId:field(panel,'receipt-output'),outputVersion:field(panel,'receipt-version'),files:field(panel,'receipt-files'),hashes:field(panel,'receipt-hashes'),deviations:field(panel,'receipt-deviations'),next:field(panel,'receipt-next'),evidence:field(panel,'receipt-evidence')}));
- panel.querySelector('[data-action="compare-release"]')?.addEventListener('click',()=>compareReleaseArtifacts(stageNumber,panel.querySelector('[data-field="audited-file"]')?.files?.[0],panel.querySelector('[data-field="release-file"]')?.files?.[0],field(panel,'release-gate')));
- panel.querySelectorAll('[data-record-letter]').forEach(textarea=>textarea.addEventListener('change',()=>{
-  try{
-   const replacement=JSON.parse(textarea.value);
-   transact(state=>replaceRecord(state,textarea.dataset.recordLetter,textarea.dataset.recordId,replacement));
-  }catch{alert('The operational record must remain valid JSON. No change was saved.');schedulePaint()}
- }));
-}
-function paint(){
- clearTimeout(paintTimer);
- const state=normalizeState(readState());
- const target=document.getElementById('content');
- if(!state||!target)return;
- const stageNumber=currentStageNumber(state);
- renderMaster(state);
- target.querySelector('[data-integrated-operational-controls]')?.remove();
- target.insertAdjacentHTML('beforeend',operationalPanel(state,stageNumber));
- const panel=target.querySelector('[data-integrated-operational-controls]');
- if(panel)bindPanel(panel,stageNumber);
- const counts=LETTERS.map(letter=>state.operationalRecords[letter].length).join(',');
- lastPaintSignature=`${stageNumber}|${counts}|${String(stageAt(state,stageNumber)?.status||'')}`;
-}
-function schedulePaint(){clearTimeout(paintTimer);paintTimer=setTimeout(paint,80)}
-function stateSignature(){
- const state=normalizeState(readState());
- if(!state)return'';
- const stageNumber=currentStageNumber(state);
- const counts=LETTERS.map(letter=>state.operationalRecords[letter].length).join(',');
- return`${stageNumber}|${counts}|${String(stageAt(state,stageNumber)?.status||'')}`;
-}
-function installRenderGuard(){
- if(typeof globalThis.render!=='function'||globalThis.render.__singleWorkbookGuard)return;
- const original=globalThis.render;
- const guarded=function(...args){try{globalThis.view='workbook'}catch{}const result=original.apply(this,args);schedulePaint();return result};
- guarded.__singleWorkbookGuard=true;
- globalThis.render=guarded;
-}
-let resetBefore=null;
-document.addEventListener('click',event=>{
- const button=event.target.closest('button');
- if(!button)return;
- const label=button.textContent.trim();
- const state=normalizeState(readState());
- const stageNumber=state?currentStageNumber(state):1;
- if(label==='Apply gate'&&state){
-  const stage=stageAt(state,stageNumber);
-  if(String(stage?.decision||'').toUpperCase()==='READY TO PROCEED'&&hasOpenBlocker(state,stageNumber)){
-   event.preventDefault();event.stopImmediatePropagation();alert('This stage has an open mandatory blocker. Resolve the blocker and preserve evidence before READY TO PROCEED.');return;
-  }
-  setTimeout(()=>synchronizeBlockedGate(stageNumber),120);
- }
- if(label==='Copy stage block')setTimeout(()=>afterCopyBlock(stageNumber),120);
- if(label==='New clean job'){
-  resetBefore=state;
-  setTimeout(()=>{
-   const current=normalizeState(readState());
-   if(!current||!resetBefore)return;
-   const changed=JSON.stringify(current)!==JSON.stringify(resetBefore)&&currentStageNumber(current)===1;
-   if(changed)transact(nextState=>createResetRecord(nextState,resetBefore));
-   resetBefore=null;
-  },250);
- }
-},true);
-globalThis.createFreshContextRecord=(stageNumber=currentStageNumber(readState()))=>transact(state=>createFreshContextRecord(state,stageNumber,'MANUAL'));
-globalThis.openWorkflowBlocker=openWorkflowBlocker;
-globalThis.recordMaterialChange=recordMaterialChange;
-globalThis.recordAgentOutputReceipt=recordAgentOutputReceipt;
-globalThis.compareReleaseArtifacts=compareReleaseArtifacts;
-setInterval(()=>{
- installRenderGuard();
- const target=document.getElementById('content');
- if(!target)return;
- const signature=stateSignature();
- if(!target.querySelector('[data-integrated-operational-controls]')||signature!==lastPaintSignature)schedulePaint();
-},250);
+function nextId(state,letter,prefix){const used=new Set(state.operationalRecords[letter].map(r=>recordId(letter,r)));let n=state.operationalRecords[letter].length+1,id;do{id=`${prefix}-${String(n++).padStart(3,'0')}`}while(used.has(id));return id}
+function append(state,letter,record){normalize(state);const id=recordId(letter,record)||nextId(state,letter,letter);record.id=id;record[FIELD_ID[letter]]=record[FIELD_ID[letter]]||id;for(const target of [state.operationalRecords[letter],state[MIRROR[letter]],state.appendices?.[letter]?.records].filter(Boolean))if(!target.some(x=>recordId(letter,x)===id))target.push(record);return record}
+function replace(state,letter,id,record){record.id=id;record[FIELD_ID[letter]]=record[FIELD_ID[letter]]||id;for(const target of [state.operationalRecords[letter],state[MIRROR[letter]],state.appendices?.[letter]?.records].filter(Boolean)){const i=target.findIndex(x=>recordId(letter,x)===id);if(i>=0)target[i]=record}}
+function write(state){const payload=JSON.stringify(state);localStorage.setItem(STORE,payload);if(applying)return;applying=true;if(typeof globalThis.importProject==='function'){try{globalThis.importProject({files:[new File([payload],'WORKBOOK.json',{type:'application/json'})],value:''});setTimeout(()=>{applying=false;schedulePaint()},140);return}catch(e){console.error(e)}}applying=false;location.reload()}
+function transact(fn){const state=normalize(read());if(!state)return;const result=fn(state);if(result!==false)write(state)}
+function versions(state){const j=state.job||{};return{input:j.inputVersion||'UNKNOWN',source:j.sourceSetVersion||'UNKNOWN',requirements:j.requirementsVersion||'UNKNOWN',tests:j.testSuiteVersion||'UNKNOWN',instruction:j.instructionVersion||'UNKNOWN',tools:j.toolConfigurationVersion||'UNKNOWN'}}
+function invalidateAfter(state,n,id){const affected=[];for(const[number,stage]of stageEntries(state)){if(number<=n)continue;if(!Array.isArray(stage.invalidations))stage.invalidations=[];stage.invalidations.push({controlId:id,invalidatedAt:now(),previousStatus:stage.status||'NOT STARTED',previousDecision:stage.decision||'NOT READY - CORRECTION REQUIRED'});stage.status='NOT STARTED';stage.decision='NOT READY - CORRECTION REQUIRED';stage.invalidatedBy=id;affected.push(`STAGE ${pad(number)}`)}return affected}
+function freshRecord(state,n){const v=versions(state),id=nextId(state,'A','CONTEXT');return append(state,'A',{id,FRESH_CONTEXT_LAUNCH_RECORD_ID:id,JOB_ID:jobId(state),STAGE:`STAGE ${pad(n)}`,ROLE:`STAGE ${pad(n)} INDEPENDENT CONTEXT`,ITERATION_ID:state.job?.currentIteration||'NOT APPLICABLE',RUN_ID:'NOT APPLICABLE',CONTEXT_ID:'UNKNOWN',CONTEXT_NAME:`${jobId(state)}__STAGE-${pad(n)}__FRESH`,CONTEXT_START_DATE_AND_TIME:now(),STAGE_COPY_BLOCK_VERSION_OR_HASH:'UNKNOWN',AUTHORIZED_FILES_AND_VERSIONS_ATTACHED:'UNKNOWN',FROZEN_INPUT_VERSION:v.input,FROZEN_SOURCE_SET_VERSION:v.source,FROZEN_REQUIREMENTS_VERSION:v.requirements,FROZEN_INSTRUCTION_VERSION:v.instruction,FROZEN_TEST_SUITE_VERSION:v.tests,FROZEN_TOOL_CONFIGURATION_VERSION:v.tools,OTHER_RUN_OUTPUT_VISIBLE:'UNKNOWN',REVIEWER_COMMENT_VISIBLE:'UNKNOWN',PRIOR_FAILURE_EXPLANATION_VISIBLE:'UNKNOWN',PROPOSED_CORRECTION_VISIBLE:'UNKNOWN',REQUIRED_TOOLS_AVAILABLE:'UNKNOWN',EXECUTION_DEVIATIONS:'NONE',OUTPUT_ID:'UNKNOWN',OUTPUT_FILENAME:'UNKNOWN',OUTPUT_VERSION:'UNKNOWN',OUTPUT_SHA256:'UNKNOWN',CONTEXT_CONTAMINATED:'UNKNOWN',DEFECT_ID:'NONE',RUN_USABLE:'UNKNOWN',CONTROLLING_EVIDENCE:'UNKNOWN',STATUS:'PENDING COMPLETION'})}
+function receiptRecord(state,n){const v=versions(state),id=nextId(state,'F','RECEIPT');return append(state,'F',{id,RECEIPT_ID:id,JOB_ID:jobId(state),STAGE:`STAGE ${pad(n)}`,AGENT_ROLE:`STAGE ${pad(n)} ASSIGNED AGENT`,AGENT_OR_SYSTEM_IDENTIFIER:'UNKNOWN',CONTEXT_ID:'UNKNOWN',ITERATION_ID:state.job?.currentIteration||'NOT APPLICABLE',RUN_ID:'NOT APPLICABLE',REQUEST_DATE_AND_TIME:now(),RESPONSE_DATE_AND_TIME:'UNKNOWN',COPY_BLOCK_VERSION_OR_HASH:'UNKNOWN',INPUT_VERSIONS:v.input,SOURCE_SET_VERSION:v.source,REQUIREMENTS_VERSION:v.requirements,INSTRUCTION_VERSION:v.instruction,TEST_SUITE_VERSION:v.tests,TOOL_CONFIGURATION_VERSION:v.tools,OUTPUT_ARTIFACT_ID:'UNKNOWN',OUTPUT_VERSION:'UNKNOWN',OUTPUT_FILES:'UNKNOWN',OUTPUT_HASHES:'UNKNOWN',COMPLETE_RESPONSE_SAVED:'UNKNOWN',AGENT_CLAIMED_COMPLETION:'UNKNOWN',INDEPENDENT_COMPLETION_ESTABLISHED:'UNKNOWN',TRUNCATION_DETECTED:'UNKNOWN',REFUSAL_OR_PARTIAL_REFUSAL:'UNKNOWN',TOOL_FAILURES:'NONE',MISSING_OR_UNREADABLE_ATTACHMENTS:'NONE',MALFORMED_OUTPUT_FILES:'NONE',OTHER_DEVIATIONS:'NONE',DEFECT_IDS:'NONE',BLOCKER_IDS:'NONE',NEXT_REQUIRED_VERIFICATION_STAGE:n<30?`STAGE ${pad(n+1)}`:'STAGE 30',RECEIPT_COMPLETED_BY:'UNKNOWN',RECEIPT_EVIDENCE:'UNKNOWN',STATUS:'PENDING COMPLETION'})}
+function blockerRecord(state,n){const id=nextId(state,'B','BLOCKER'),affected=invalidateAfter(state,n,id);const stage=stageAt(state,n);if(stage){stage.status='BLOCKED';stage.decision='BLOCKED'}state.job.currentState='BLOCKED';return append(state,'B',{id,BLOCKER_ID:id,JOB_ID:jobId(state),DATE_OPENED:now(),CURRENT_STATUS:'OPEN',STAGE_DISCOVERED:`STAGE ${pad(n)}`,AFFECTED_REQ_IDS:'UNKNOWN',AFFECTED_TEST_IDS:'NONE',AFFECTED_ARTIFACTS_AND_VERSIONS:'UNKNOWN',MISSING_ITEM_TYPE:'OTHER',MISSING_EVIDENCE_AUTHORITY_INPUT_OR_CAPABILITY:'UNKNOWN',WHY_MANDATORY_SATISFACTION_CANNOT_BE_ESTABLISHED:stage?.decisionEvidence||stage?.evidence||'UNKNOWN',KNOWN_SOURCE_OR_OWNER_OF_MISSING_ITEM:'UNKNOWN',ATTEMPTS_TO_RESOLVE:'NONE',AVAILABLE_RESOLUTION_PATH:'UNKNOWN',DOWNSTREAM_WORK_STOPPED:affected.join(', ')||'NONE',BLOCKER_OWNER:state.job?.owner||'UNKNOWN',TARGET_RESOLUTION_DATE:'UNKNOWN',RESOLUTION:'NOT RESOLVED',RESOLUTION_EVIDENCE:'NOT RESOLVED',DATE_RESOLVED:'NOT RESOLVED',REQUIREMENTS_AND_TESTS_REEVALUATED:'NOT RESOLVED',DOWNSTREAM_VALIDATION_RERUN:'NOT RESOLVED',CLOSURE_AUTHORIZED_BY:'NOT RESOLVED',STATUS:'PENDING COMPLETION'})}
+function changeRecordFromStage16(state){const n=16,stage=stageAt(state,n),text=String(stage?.draftRecord||'');if(!text||/<<[^>]+>>/.test(text))return null;const id=nextId(state,'C','CHANGE'),affected=invalidateAfter(state,n,id);return append(state,'C',{id,CHANGE_ID:id,DATE_AND_TIME:now(),JOB_ID:jobId(state),ITERATION_ID:state.job?.currentIteration||'NOT APPLICABLE',TRIGGER:'DEFECT',EARLIEST_RESPONSIBLE_LAYER:'UNKNOWN',AFFECTED_ARTIFACT_ID:'SEE STAGE 16 CHANGESET',OLD_VERSION:'SEE STAGE 16 RECORD',OLD_SHA256:'UNKNOWN',NEW_VERSION:'SEE STAGE 16 RECORD',NEW_SHA256:'UNKNOWN',EXACT_CHANGE:'SEE STAGE 16 CHANGESET',REASON:'Stage 16 responsible-layer revision',ROOT_CAUSE_ID_OR_AUTHORITY:'SEE STAGE 16 RCA LINK',MATERIAL_CHANGE:'TRUE',DOWNSTREAM_ARTIFACTS_INVALIDATED:affected.join(', ')||'NONE',DOWNSTREAM_DETERMINATIONS_INVALIDATED:affected.join(', ')||'NONE',TESTS_TO_RERUN:'ALL AFFECTED TESTS',ITERATIONS_TO_RERUN:'NEW TEN-EXECUTION ITERATION',AUDITS_TO_RERUN:'ALL AFFECTED DOWNSTREAM AUDITS',RELEASE_GATE_MUST_BE_RERUN:'TRUE',HASH_IDENTITY_MUST_BE_RERUN:'TRUE',AUTHORIZED_BY:'UNKNOWN',CHANGE_IMPLEMENTED_BY:'UNKNOWN',IMPLEMENTATION_EVIDENCE:stage?.decisionEvidence||'UNKNOWN',REVALIDATION_COMPLETE:'FALSE',REVALIDATION_EVIDENCE:'NOT COMPLETE',CHANGE_STATUS:'IMPLEMENTED_NOT_REVALIDATED',STATUS:'PENDING COMPLETION'})}
+function resetRecord(state,old){const id=nextId(state,'E','RESET');return append(state,'E',{id,NEW_JOB_INITIALIZATION_RECORD_ID:id,NEW_JOB_ID:jobId(state),NEW_JOB_TITLE:state.job?.title||'UNKNOWN',JOB_OWNER:state.job?.owner||'UNKNOWN',DATE_OPENED:state.job?.dateOpened||now(),MASTER_TEMPLATE_VERSION:'CURRENT APPLICATION',MASTER_TEMPLATE_SHA256:'NOT CALCULATED',NEW_WORKBOOK_FILENAME:`${jobId(state)}__WORKBOOK.json`,NEW_WORKBOOK_VERSION:'v001',NEW_FOLDER_ROOT:'UNKNOWN',SUPPLIED_INPUT_FILES:'UNKNOWN',SUPPLIED_INPUT_HASHES:'UNKNOWN',EXACT_USER_REQUEST_CAPTURED_IN_STAGE_01:'UNKNOWN',OLD_JOB_MATERIAL_REUSED:'FALSE',OLD_JOB_ID:old?.job?.id||'NONE',ARTIFACT_ID:'NONE',ARTIFACT_VERSION:'NONE',ARTIFACT_SHA256:'NONE',AUTHORITY_FOR_REUSE:'NONE',APPLICABILITY_REESTABLISHED_FOR_NEW_JOB:'NOT APPLICABLE',OLD_BASELINE_STATUS_CARRIED_FORWARD:'FALSE',OLD_RELEASE_DECISION_CARRIED_FORWARD:'FALSE',OLD_REQUIREMENT_OR_TEST_CARRIED_FORWARD_WITHOUT_REVALIDATION:'FALSE',NEW_JOB_START_STAGE:'STAGE 01',RESET_COMPLETED_BY:state.job?.owner||'UNKNOWN',RESET_DATE_AND_TIME:now(),RESET_EVIDENCE:`Clean reset from ${old?.job?.id||'UNKNOWN'}; old baseline and release state were not carried forward.`,STATUS:'PENDING COMPLETION'})}
+function openBlockers(state,n){return state.operationalRecords.B.filter(r=>String(r.CURRENT_STATUS||'').toUpperCase()==='OPEN'&&String(r.STAGE_DISCOVERED||'').includes(pad(n)))}
+function pendingForStage(state,n){const pending=[];for(const letter of LETTERS)for(const r of state.operationalRecords[letter]){const stageText=String(r.STAGE||r.STAGE_DISCOVERED||'');const m=stageText.match(/\b(\d{1,2})\b/);if((m&&Number(m[1])===n)||(!m&&letter==='E'&&n===1)||(!m&&letter==='D'&&n===28)){if(String(r.STATUS||'').startsWith('PENDING'))pending.push([letter,r])}}return pending}
+function renderMaster(state){const target=document.getElementById('master');if(!target)return;const j=state.job||{},tracker=stageEntries(state).sort((a,b)=>a[0]-b[0]).map(([n,s])=>`${pad(n)} ${s.title||s.name||''} | ${s.status||'NOT STARTED'} | ${String(s.evidence||s.decisionEvidence||'NO EVIDENCE').replace(/\s+/g,' ').slice(0,110)}`).join('\n');target.innerHTML=`<details class="card"><summary><strong>WORKBOOK CONTROL</strong> — ${esc(j.id||'UNASSIGNED JOB')}</summary><details><summary>How to use this workbook on a phone</summary><ul>${PHONE_USE.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details><details><summary>Placeholder and outcome rules</summary><div class="copy">&lt;&lt;ENTER&gt;&gt; = replace with a known value\n&lt;&lt;PASTE&gt;&gt; = paste exact source text or evidence\nUNKNOWN = fact not established\nNONE = evidence establishes no item exists\nNOT APPLICABLE = objective applicability rule excludes the field\n\nREQUIREMENT OUTCOMES: SATISFIED | VIOLATED | UNDETERMINED\nRELEASE OUTCOMES: ACCEPTED | REJECTED | BLOCKED</div></details><details><summary>Mobile file/version naming and folder structure</summary><div class="copy">JOB_ID__ARTIFACT_TYPE__vNNN__YYYY-MM-DD.ext\nNever overwrite an existing artifact version. A material upstream change invalidates affected downstream verification. Use SHA-256 for immutable identity where practical.\n\n${esc(FOLDERS)}</div></details><details><summary>Agent-role separation map</summary><ul>${ROLE_MAP.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details><details><summary>Master job control</summary>${[['id','JOB_ID'],['title','JOB_TITLE'],['owner','JOB_OWNER'],['dateOpened','DATE_OPENED'],['currentIteration','CURRENT_ITERATION'],['currentStage','CURRENT_STAGE'],['currentState','CURRENT_STATE'],['inputVersion','CURRENT_INPUT_VERSION'],['sourceSetVersion','CURRENT_SOURCE_SET_VERSION'],['requirementsVersion','CURRENT_REQUIREMENTS_VERSION'],['testSuiteVersion','CURRENT_TEST_SUITE_VERSION'],['instructionVersion','CURRENT_INSTRUCTION_VERSION'],['baselineId','CURRENT_BASELINE_ID'],['productId','CURRENT_PRODUCT_ID'],['blockers','CURRENT_BLOCKERS'],['nextAction','NEXT_REQUIRED_ACTION'],['latestEvidence','LATEST_EVIDENCE_REFERENCE']].map(([k,l])=>`<label>${l}</label><input data-master="${k}" value="${esc(j[k]??'')}">`).join('')}</details><details><summary>Master 30-stage tracker</summary><div class="copy">${esc(tracker)}</div></details><details><summary>Mandatory operating rules</summary><ul>${OPERATING_RULES.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details><details><summary>Quick execution loop</summary><div class="copy">${esc(LOOP)}</div></details></details>`;target.querySelectorAll('[data-master]').forEach(el=>el.addEventListener('change',()=>transact(s=>{s.job[el.dataset.master]=el.value.trim()})))}
+function recordEditor(letter,r){const id=recordId(letter,r);const fields=Object.entries(r).filter(([k])=>k!=='id'&&k!=='STATUS');return`<details open class="card" data-record="${esc(id)}"><summary><strong>${esc(TITLES[letter])}</strong> — ${esc(id)}</summary><p class="muted">This record is required by the current workflow event. Complete it here; it is not an additional stage or checklist.</p>${fields.map(([k,v])=>`<label>${esc(k)}</label>${String(v??'').length>90?`<textarea data-rfield="${esc(k)}">${esc(v)}</textarea>`:`<input data-rfield="${esc(k)}" value="${esc(v)}">`}`).join('')}<button class="primary" type="button" data-save-record="${letter}" data-record-id="${esc(id)}">Save required record</button></details>`}
+function stageControls(state,n){const pending=pendingForStage(state,n);let html=pending.map(([l,r])=>recordEditor(l,r)).join('');if(n===28)html+=`<section class="card" data-hash-control="true"><h3>Stage 28 exact artifact identity</h3><label>Stage 27 release state</label><select data-gate-state><option>BLOCKED</option><option>REJECTED</option><option>ACCEPTED</option></select><label>Audited artifact</label><input type="file" data-audited><label>Exact file selected for delivery</label><input type="file" data-release><button class="primary" type="button" data-compare-hash>Calculate SHA-256 and verify byte identity</button></section>`;return html}
+async function sha(file){const d=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());return[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function verifyIdentity(state,n,gate,audited,release){if(!audited||!release){alert('Select both the audited artifact and the exact release artifact.');return}const[a,b]=await Promise.all([sha(audited),sha(release)]),match=a===b&&audited.size===release.size,authorized=gate==='ACCEPTED'&&match;const id=nextId(state,'D','HASH-AUDIT');append(state,'D',{id,HASH_AUDIT_ID:id,RELEASE_GATE_ID:'UNKNOWN',RELEASE_GATE_STATE:gate,GATE_STATE_ALLOWS_HASH_VERIFICATION_TOWARD_DELIVERY:gate==='ACCEPTED'?'TRUE':'FALSE',HASH_ALGORITHM:'SHA-256',HASH_TOOL_AND_VERSION:'Web Crypto API',HASH_OPERATOR:state.job?.owner||'UNKNOWN',ARTIFACT_ID:'UNKNOWN',AUDITED_FILENAME:audited.name,AUDITED_PRODUCT_VERSION:state.job?.productId||'UNKNOWN',AUDITED_FILE_PATH_OR_STORAGE_ID:'LOCAL SELECTED FILE',AUDITED_FILE_SIZE_BYTES:audited.size,AUDIT_HASH_DATE_AND_TIME:now(),AUDITED_SHA256:a,AUDITED_HASH_EVIDENCE:'CALCULATED IN APPLICATION',RELEASE_FILENAME:release.name,RELEASE_PRODUCT_VERSION:state.job?.productId||'UNKNOWN',RELEASE_FILE_PATH_OR_STORAGE_ID:'LOCAL SELECTED FILE',RELEASE_FILE_SIZE_BYTES:release.size,RELEASE_HASH_DATE_AND_TIME:now(),RELEASE_SHA256:b,RELEASE_HASH_EVIDENCE:'CALCULATED IMMEDIATELY BEFORE DELIVERY',RELEASE_HASH_EQUALS_AUDITED_HASH:match?'TRUE':'FALSE',BYTE_SIZE_EQUALS_AUDITED_BYTE_SIZE:audited.size===release.size?'TRUE':'FALSE',POST_AUDIT_MODIFICATION_DETECTED:match?'FALSE':'TRUE',MISMATCH_OR_MODIFICATION_RESPONSE:authorized?'NONE':'STOP RELEASE; CREATE NEW PRODUCT VERSION; INVALIDATE AND RERUN AFFECTED VALIDATION',ARTIFACT_RELEASE_ELIGIBILITY:authorized?'ELIGIBLE':'NOT ELIGIBLE',TOTAL_ARTIFACTS_REQUIRED_FOR_RELEASE:1,TOTAL_ARTIFACTS_WITH_AUDITED_HASH:1,TOTAL_ARTIFACTS_REHASHED_IMMEDIATELY_BEFORE_DELIVERY:1,TOTAL_EXACT_HASH_MATCHES:match?1:0,TOTAL_HASH_MISMATCHES:match?0:1,TOTAL_UNKNOWN_HASH_COMPARISONS:0,ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES:match?'TRUE':'FALSE',ANY_POST_AUDIT_MODIFICATION:match?'FALSE':'TRUE',DELIVERY_AUTHORIZATION:authorized?'AUTHORIZED':'NOT AUTHORIZED',EXACT_AUTHORIZED_ARTIFACT_IDS:authorized?'CURRENT ARTIFACT':'NONE',EXACT_AUTHORIZED_FILENAMES:authorized?release.name:'NONE',AUTHORIZATION_EVIDENCE:`AUDITED_SHA256=${a}; RELEASE_SHA256=${b}`,AUTHORIZED_BY:authorized?(state.job?.owner||'UNKNOWN'):'NONE',AUTHORIZATION_DATE_AND_TIME:authorized?now():'NOT AUTHORIZED',STATUS:'RECORDED'});if(!authorized){const stage=stageAt(state,n);if(stage){stage.status='BLOCKED';stage.decision='BLOCKED'}state.job.currentState='BLOCKED'}write(state);alert(authorized?'Exact audited bytes verified for delivery.':'Release stopped: gate not ACCEPTED or bytes/size differ.')}
+function bindControls(state,n){document.querySelectorAll('[data-save-record]').forEach(btn=>btn.onclick=()=>transact(s=>{const letter=btn.dataset.saveRecord,id=btn.dataset.recordId,card=btn.closest('[data-record]'),old=s.operationalRecords[letter].find(r=>recordId(letter,r)===id);if(!old)return false;const next={...old};card.querySelectorAll('[data-rfield]').forEach(el=>next[el.dataset.rfield]=el.value.trim()||'UNKNOWN');if(letter==='A'&&(next.CONTEXT_CONTAMINATED==='TRUE'||next.REQUIRED_TOOLS_AVAILABLE==='FALSE'))next.RUN_USABLE='FALSE';if(letter==='B'&&next.CURRENT_STATUS==='RESOLVED'&&(next.RESOLUTION_EVIDENCE==='NOT RESOLVED'||next.RESOLUTION_EVIDENCE==='UNKNOWN')){alert('A blocker cannot close without preserved resolution evidence.');return false}next.STATUS='RECORDED';replace(s,letter,id,next);if(letter==='B'){s.job.blockers=s.operationalRecords.B.filter(x=>String(x.CURRENT_STATUS).toUpperCase()==='OPEN').map(x=>recordId('B',x)).join(', ')||'NONE';if(!s.job.blockers||s.job.blockers==='NONE')s.job.currentState='IN PROGRESS'}}));document.querySelector('[data-compare-hash]')?.addEventListener('click',()=>verifyIdentity(state,n,document.querySelector('[data-gate-state]')?.value,document.querySelector('[data-audited]')?.files?.[0],document.querySelector('[data-release]')?.files?.[0]))}
+function paint(){clearTimeout(paintTimer);const state=normalize(read()),target=document.getElementById('content');if(!state||!target)return;const n=stageNumber(state);renderMaster(state);target.querySelector('[data-contextual-controls]')?.remove();const html=stageControls(state,n);if(html)target.insertAdjacentHTML('beforeend',`<div data-contextual-controls="true">${html}</div>`);bindControls(state,n);lastSignature=`${n}|${LETTERS.map(l=>state.operationalRecords[l].length).join(',')}|${pendingForStage(state,n).length}|${stageAt(state,n)?.status||''}`}
+function schedulePaint(){clearTimeout(paintTimer);paintTimer=setTimeout(paint,90)}
+function signature(){const s=normalize(read());if(!s)return'';const n=stageNumber(s);return`${n}|${LETTERS.map(l=>s.operationalRecords[l].length).join(',')}|${pendingForStage(s,n).length}|${stageAt(s,n)?.status||''}`}
+function hasRecent(state,letter,n){return state.operationalRecords[letter].some(r=>String(r.STAGE||r.STAGE_DISCOVERED||'').includes(pad(n))&&Date.now()-Date.parse(r.REQUEST_DATE_AND_TIME||r.CONTEXT_START_DATE_AND_TIME||r.DATE_OPENED||0)<5000)}
+function installGuard(){if(typeof globalThis.render!=='function'||globalThis.render.__workbookGuard)return;const original=globalThis.render;const guarded=function(...args){const result=original.apply(this,args);schedulePaint();return result};guarded.__workbookGuard=true;globalThis.render=guarded}
+let beforeReset=null;
+document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;const label=button.textContent.trim(),state=normalize(read()),n=state?stageNumber(state):1;if(label==='Copy stage block'&&state)setTimeout(()=>transact(s=>{if(FRESH_STAGES.has(n)&&!hasRecent(s,'A',n))freshRecord(s,n);if(!hasRecent(s,'F',n))receiptRecord(s,n)}),80);if(label==='Apply gate'&&state){const stage=stageAt(state,n),decision=String(stage?.decision||'').toUpperCase();if(decision==='READY TO PROCEED'&&openBlockers(state,n).length){event.preventDefault();event.stopImmediatePropagation();alert('READY is prohibited while a mandatory blocker is open.');return}setTimeout(()=>transact(s=>{const st=stageAt(s,n),d=String(st?.decision||'').toUpperCase();if(d==='BLOCKED'&&!openBlockers(s,n).length)blockerRecord(s,n);if(n===16&&d==='READY TO PROCEED'&&!s.operationalRecords.C.some(r=>String(r.STAGE||'').includes('16')))changeRecordFromStage16(s)}),100)}if(label==='New clean job'){beforeReset=state;setTimeout(()=>{const current=normalize(read());if(current&&beforeReset&&jobId(current)!==jobId(beforeReset))transact(s=>resetRecord(s,beforeReset));beforeReset=null},260)}},true);
+setInterval(()=>{installGuard();if(signature()!==lastSignature)schedulePaint()},300);
 schedulePaint();
 })();
 </script>
