@@ -145,6 +145,8 @@ try{
   await page.locator('[data-view="release"]').click();
   await page.locator('[data-view="release"]').click();
   await page.locator('[data-view="release"]').click();
+  await page.locator('[data-view="release"]').click();
+  await page.locator('[data-view="release"]').click();
   const finalBytes=fs.readFileSync(path.join(root,'app-v13.html'));
   const finalHash=crypto.createHash('sha256').update(finalBytes).digest('hex');
   assert.equal(project.projectId,'PROJECT-MT3M46X0-075JMP');
