@@ -41,17 +41,26 @@ jobs:
         run: node attach-self-project.mjs
       - name: Verify application architecture
         run: node verify-app.mjs
-      - name: Verify the retained application project against the current 31-stage workflow
-        run: node verify-self-project.mjs
       - name: Install the browser driver
         run: npm install --no-save --ignore-scripts playwright-core
-      - name: Execute rendered phone UI smoke test with retained project and human project ownership
+      - name: Exercise the rendered application before release synchronization
         shell: bash
         run: |
           set -euo pipefail
           CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_PATH"
           CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+      - name: Synchronize retained project product, audit, hash, and release evidence to exact app bytes
+        run: node synchronize-self-project.mjs
+      - name: Exercise the rendered application with the synchronized retained project
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_PATH"
+          CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+      - name: Verify the synchronized retained application project against the current application
+        run: node verify-self-project.mjs
       - name: Build exact static Pages payload
         id: package
         shell: bash
@@ -65,7 +74,7 @@ jobs:
           cp index.html dist/404.html
           cp SELF_VERIFIED_PROJECT.json dist/SELF_VERIFIED_PROJECT.json
           : > dist/.nojekyll
-          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectNormalProject":true,"retainedProjectVisible":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
+          printf '{"status":"VERIFIED_AND_READY_TO_DEPLOY","sourceCommit":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectNormalProject":true,"retainedProjectVisible":true,"retainedProjectReleaseSynchronized":true,"promptRelayArchitecture":false,"appSha256":"%s","projectSha256":"%s"}\n' "$GITHUB_SHA" "$APP_SHA256" "$PROJECT_SHA256" > dist/deployment.json
           echo "app_sha256=$APP_SHA256" >> "$GITHUB_OUTPUT"
           echo "project_sha256=$PROJECT_SHA256" >> "$GITHUB_OUTPUT"
       - name: Preserve exact verification and publication evidence
@@ -142,7 +151,7 @@ jobs:
           grep -Fq 'data-self-project-proof="true"' live-check/index.html
           grep -Fq 'data-self-project-status' live-check/index.html
           grep -Fq 'SELF_VERIFIED_PROJECT.json' live-check/index.html
-          node -e "const p=require('./live-check/SELF_VERIFIED_PROJECT.json'); if(p.schema!=='closed-loop-project/1'||!Array.isArray(p.stages)||p.stages.length!==31||p.stages.some((s,i)=>s.number!==i+1||s.status!=='COMPLETE')||p.stages[0]?.assignedActorType!=='HUMAN_AGENT_TEAM'||p.legacyProjectMetadata?.releaseDecision!=='ACCEPTED') process.exit(1)"
+          node -e "const fs=require('fs'),crypto=require('crypto');const app=fs.readFileSync('./live-check/index.html');const hash=crypto.createHash('sha256').update(app).digest('hex');const p=require('./live-check/SELF_VERIFIED_PROJECT.json');if(p.schema!=='closed-loop-project/1'||!Array.isArray(p.stages)||p.stages.length!==31||p.stages.some((s,i)=>s.number!==i+1||s.status!=='COMPLETE')||p.stages[0]?.assignedActorType!=='HUMAN_AGENT_TEAM'||p.legacyProjectMetadata?.releaseDecision!=='ACCEPTED'||p.legacyProjectMetadata?.auditedHash!==hash||p.legacyProjectMetadata?.releaseHash!==hash||p.products?.[0]?.sha256!==hash||p.releases?.[0]?.sha256!==hash)process.exit(1)"
           if grep -Eqi 'Closed-Loop Agent Reliability[[:space:]]+v[0-9]+' live-check/index.html; then exit 1; fi
       - name: Materialize the live-verified application, project, and deployment receipt
         shell: bash
@@ -163,7 +172,7 @@ jobs:
           cp verified-source/index.html index.html
           cp verified-source/index.html app-v13.html
           cp verified-source/SELF_VERIFIED_PROJECT.json SELF_VERIFIED_PROJECT.json
-          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectNormalProject":true,"retainedProjectVisible":true,"promptRelayArchitecture":false,"repositoryMatchesLiveBytes":true,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
+          printf '{"status":"VERIFIED_LIVE","sourceCommit":"%s","pageUrl":"%s","publicName":"Closed-Loop Agent Reliability","publicVersionLabel":false,"stages":31,"stage1Scopes":20,"informationClasses":3,"humanWorkSupported":true,"agentWorkSupported":true,"humanAgentTeamSupported":true,"retainedApplicationProject":true,"retainedProjectNormalProject":true,"retainedProjectVisible":true,"retainedProjectReleaseSynchronized":true,"promptRelayArchitecture":false,"repositoryMatchesLiveBytes":true,"appSha256":"%s","projectSha256":"%s","liveAppSha256":"%s","liveProjectSha256":"%s","verifiedAt":"%s"}\n' "$GITHUB_SHA" "$PAGE_URL" "$EXPECTED_APP_SHA256" "$EXPECTED_PROJECT_SHA256" "$LIVE_APP_SHA256" "$LIVE_PROJECT_SHA256" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > LIVE_DEPLOYMENT_VERIFIED.json
 
           test "$(sha256sum index.html | awk '{print $1}')" = "$LIVE_APP_SHA256"
           test "$(sha256sum app-v13.html | awk '{print $1}')" = "$LIVE_APP_SHA256"
