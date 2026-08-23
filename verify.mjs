@@ -26,11 +26,7 @@ if(prompt.includes('[object Object]'))throw new Error('Saved Stage 01 instructio
 if(!project.generatedPrompts[0]?.originalPrompt)throw new Error('The original Stage 01 instruction summary was not preserved.');
 const savedOutput=project.generatedOutputs?.[0]?.output||'';
 if((project.generatedOutputs||[]).length!==1||savedOutput!==operation01||project.stageRecords['1'].output!==operation01)throw new Error('The complete authorized Operation 01 output is not preserved identically.');
-for(const token of ['SUBJECTS','QUESTIONS THE WORKFLOW MUST RESOLVE','REQUIRED METHODS','OUTPUT PROPERTIES','TEMPORAL SCOPE','GEOGRAPHIC SCOPE','ACCEPTANCE CONDITIONS','UNRESOLVED UNKNOWS','OPERATION 01 COMPLETION EVIDENCE','Proceed to Operation 02 — Build the Source Inventory.']){
-  if(token==='UNRESOLVED UNKNOWS')continue;
-  if(!operation01.includes(token))throw new Error(`Authorized Operation 01 record is missing ${token}.`);
-}
-if(!operation01.includes('UNRESOLVED UNKNOWNS'))throw new Error('Authorized Operation 01 record is missing unresolved unknowns.');
+for(const token of ['SUBJECTS','QUESTIONS THE WORKFLOW MUST RESOLVE','REQUIRED METHODS','OUTPUT PROPERTIES','TEMPORAL SCOPE','GEOGRAPHIC SCOPE','ACCEPTANCE CONDITIONS','UNRESOLVED UNKNOWNS','OPERATION 01 COMPLETION EVIDENCE','Proceed to Operation 02 — Build the Source Inventory.'])if(!operation01.includes(token))throw new Error(`Authorized Operation 01 record is missing ${token}.`);
 if((project.outputReceipts||[]).length!==1||project.outputReceipts[0]?.completeResponseSaved!==true)throw new Error('The Stage 01 output receipt is missing or incomplete.');
 for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`${name} contains fabricated downstream records.`);
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Unrelated generator project content remains.');
