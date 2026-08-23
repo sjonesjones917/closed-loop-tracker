@@ -14,7 +14,7 @@ Project data keeps three classes structurally distinct: **User Job Input**, **Ex
 
 Appendices A-F operate as cross-cutting application services: fresh-context isolation, blockers, change/invalidation control, computed release readiness, clean new-project initialization, and generated-output receipts. They surface where the operator needs them rather than as permanent appendix checklist pages.
 
-`TEST_PROJECT.json` is a retained end-user project using the same project schema, persistence, workflow views, controls, prompts, records, blockers, and history mechanisms as ordinary projects. It is a Chicago renter energy-saving guide based on independent energy authorities and ordinary user constraints. It contains no application-development objective.
+`TEST_PROJECT.json` is the retained application-focused project. It uses the same project schema, persistence, workflow views, controls, prompts, records, blockers, and history mechanisms as ordinary projects. Its subject is the Closed-Loop Reliability application as an operator-facing product. It evaluates workflow behavior, prompt usability, project-history visibility, independence controls, release controls, persistence, and phone-sized use without embedding development-task instructions or treating implementation files as requirement authority.
 
 The retained project truthfully stops at **Operation 11**. Ten genuinely independent execution contexts have not been performed, so it records zero runs, an open blocker, and Operations 12–31 as not started. It does not fabricate run outputs, convergence, an approved baseline, a finished product, audits, acceptance, or release identity.
 
