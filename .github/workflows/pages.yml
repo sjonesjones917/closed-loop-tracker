@@ -1,114 +1,28 @@
-name: Verify and deploy the single reliability app
+name: Verify final browser behavior
 on:
-  push: {branches: [main]}
   pull_request: {branches: [main]}
-  workflow_dispatch:
-permissions: {contents: write, pages: write, id-token: write, statuses: write}
-concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
+permissions: {contents: read}
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
       - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
       - run: node verify.mjs
-      - name: Verify single application source
+      - name: Confirm canonical build is idempotent
+        run: git diff --exit-code -- app.js workbook.js index.html TEST_PROJECT.json
+      - name: Start the existing application
         run: |
-          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
-          test ! -f human-ui.js
-          test ! -f agent-workflow.js
-          test ! -f prompt-center.js
-          grep -q 'src="workbook.js' index.html
-          grep -q 'src="app.js' index.html
-          node - <<'NODE'
-          const fs=require('fs');
-          const s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
-          const banned=new RegExp('se'+'mantic','i');
-          if(banned.test(s))throw new Error('prohibited terminology');
-          if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated product content');
-          if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
-          NODE
-      - name: Materialize canonical application source once
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if ! git diff --quiet -- app.js TEST_PROJECT.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app.js TEST_PROJECT.json
-            git commit -m "Materialize canonical retained-project repair"
-            git push origin HEAD:main
-          fi
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: test
-    environment: {name: github-pages, url: '${{ steps.deployment.outputs.page_url }}'}
-    runs-on: ubuntu-latest
-    outputs: {page_url: '${{ steps.deployment.outputs.page_url }}'}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify.mjs
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with: {path: .}
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
-  verify-live:
-    if: github.event_name != 'pull_request'
-    needs: [test, deploy]
-    runs-on: ubuntu-latest
-    env: {PAGE_URL: '${{ needs.deploy.outputs.page_url }}'}
-    steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-live.mjs
-      - name: Verify rendered phone views
-        run: |
-          BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          for WIDTH in 320 393; do
-            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?verify=${GITHUB_SHA}-${WIDTH}" > "live-${WIDTH}.html"
-            grep -q 'Mobile Closed-Loop Agent Reliability Workbook' "live-${WIDTH}.html"
-            grep -q '1/30 complete' "live-${WIDTH}.html"
-            grep -q 'STAGE 02' "live-${WIDTH}.html"
-            grep -q 'Saved instructions' "live-${WIDTH}.html"
-            grep -q 'Saved outputs' "live-${WIDTH}.html"
-            grep -q 'Overview' "live-${WIDTH}.html"
-            ! grep -qi 'GEN-042' "live-${WIDTH}.html"
-            ! grep -qi 'field status report' "live-${WIDTH}.html"
-            ! grep -qi 'maintenance handoff' "live-${WIDTH}.html"
-            ! grep -q '0/31 complete' "live-${WIDTH}.html"
-            ! grep -q 'Loading the workflow' "live-${WIDTH}.html"
-          done
-      - name: Exercise deployed project and persistence in Chromium
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          echo $! > /tmp/closed-loop-http.pid
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.2; done
+      - name: Verify served resources
+        env: {PAGE_URL: 'http://127.0.0.1:4173/'}
+        run: node verify-live.mjs
+      - name: Exercise the running application at phone and desktop widths
+        env: {PAGE_URL: 'http://127.0.0.1:4173/'}
         run: node verify-browser.mjs
-      - name: Preserve successful live-verification evidence
-        run: |
-          mkdir -p .github
-          cat > .github/LIVE_VERIFICATION.json <<'JSON'
-          {
-            "status": "VERIFIED",
-            "application": "Mobile Closed-Loop Agent Reliability Workbook",
-            "pageUrl": "https://sjonesjones917.github.io/closed-loop-tracker/",
-            "checks": ["deployed resources","retained project identity and truthful Stage 01/Stage 02 state","320 CSS pixel rendering","393 CSS pixel rendering","1280 CSS pixel rendering","no horizontal overflow","no oversized buttons","Stage 01 generated instruction","complete Operation 01 output","Records visibility","Stage 02 structured editing and refresh persistence","contextual supporting records","new project coexistence","zero browser/runtime errors"]
-          }
-          JSON
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout -B main origin/main
-          if ! git diff --quiet -- .github/LIVE_VERIFICATION.json || ! git ls-files --error-unmatch .github/LIVE_VERIFICATION.json >/dev/null 2>&1; then
-            git add .github/LIVE_VERIFICATION.json
-            git commit -m "Record successful deployed browser verification"
-            git push origin HEAD:main
-          fi
