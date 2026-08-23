@@ -95,6 +95,8 @@ jobs:
     env: {PAGE_URL: '${{ needs.deploy.outputs.page_url }}'}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
       - name: Install Chrome for phone rendering
         uses: browser-actions/setup-chrome@v1
       - id: live_identity
@@ -128,6 +130,7 @@ jobs:
           BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
           BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --dump-dom "$BASE" > live-proof/blank.html
+          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --screenshot=live-proof/working.png "$BASE"
           grep -q 'Closed-Loop Reliability' live-proof/blank.html
           grep -q 'Current working job' live-proof/blank.html
           grep -q 'New project' live-proof/blank.html
@@ -143,6 +146,7 @@ jobs:
           BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
           BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=45000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
+          "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=45000 --window-size=393,852 --screenshot=live-proof/test-project.png "${BASE}&test=1"
           grep -q 'Portable generator service handoff' live-proof/test-project.html
           grep -q 'GEN-042' live-proof/test-project.html
           grep -q 'Test project.' live-proof/test-project.html
@@ -159,6 +163,62 @@ jobs:
           grep -q 'BLOCKED' live-proof/test-project.html
           grep -q 'genuinely independent fresh execution contexts' live-proof/test-project.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/test-project.html
+      - id: interaction
+        continue-on-error: true
+        name: Exercise deployed human controls
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
+          rm -rf /tmp/live-e2e /tmp/live-downloads; mkdir -p /tmp/live-downloads
+          "$BROWSER" --headless --no-sandbox --disable-gpu --remote-debugging-port=9222 --user-data-dir=/tmp/live-e2e --window-size=393,852 about:blank >/tmp/live-chrome.log 2>&1 &
+          for n in $(seq 1 50); do curl -fsS http://127.0.0.1:9222/json/version >/dev/null && break; sleep .2; done
+          cat > /tmp/live-e2e.mjs <<'NODE'
+          import fs from 'node:fs';
+          const port=9222,base=process.env.PAGE_URL.replace(/\/$/,'')+'/?e2e='+Date.now(),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          const targets=await (await fetch(`http://127.0.0.1:${port}/json/list`)).json(),target=targets.find(x=>x.type==='page');
+          if(!target)throw new Error('No Chrome page target');
+          const ws=new WebSocket(target.webSocketDebuggerUrl);let id=0;const pending=new Map();
+          ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(JSON.stringify(m.error))):p.resolve(m.result)}};
+          await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject});
+          const send=(method,params={})=>new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}))});
+          async function ev(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.text||JSON.stringify(r.exceptionDetails));return r.result.value}
+          async function waitFor(expression,ms=12000){const end=Date.now()+ms;while(Date.now()<end){try{if(await ev(expression))return}catch{}await sleep(100)}throw new Error(`Timed out: ${expression}`)}
+          async function nav(url){await send('Page.enable');await send('Page.navigate',{url});await waitFor("document.readyState==='complete'");await waitFor("!!document.querySelector('#project-data-button') && document.body.innerText.includes('Project overview')",20000)}
+          const ok=(c,m)=>{if(!c)throw new Error(m)};
+          await send('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:'/tmp/live-downloads'}).catch(()=>{});
+          await nav(base);
+          ok((await ev("document.querySelector('#new-job-button').getBoundingClientRect().height"))<=36,'New project button is oversized');
+          ok((await ev("document.querySelector('#project-data-button').getBoundingClientRect().height"))<=36,'Project data button is oversized');
+          await ev("document.querySelector('#guide-button').click()");await waitFor("document.body.innerText.includes('How this application uses the workbook')");
+          await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");
+          await ev("document.querySelector('[data-project-view=workflow]').click()");await waitFor("document.body.innerText.includes('30-stage workflow')");
+          await ev("document.querySelector('[data-stage-open=1]').click()");await waitFor("!document.querySelector('#workspace-workbook').hasAttribute('hidden')");
+          ok((await ev("document.querySelector('#stage-select').value"))==='1','Stage 01 did not open');
+          await ev("document.querySelector('#next-stage').click()");await waitFor("document.querySelector('#stage-select').value==='2'");
+          await ev("document.querySelector('#previous-stage').click()");await waitFor("document.querySelector('#stage-select').value==='1'");
+          await ev("document.querySelector('#project-data-button').click()");await waitFor("document.body.innerText.includes('Project overview')");
+          await ev("document.querySelector('#export-button').click()");await sleep(700);
+          ok(fs.readdirSync('/tmp/live-downloads').some(x=>x.endsWith('.json')),'Export did not produce project JSON');
+          await ev("(()=>{const s=document.querySelector('#project-picker');s.value='retained';s.dispatchEvent(new Event('change',{bubbles:true}))})()");
+          await waitFor("document.body.innerText.includes('Portable generator service handoff')",20000);
+          ok(await ev("document.body.innerText.includes('GEN-042')"),'Test project data not visible');
+          ok(await ev("document.body.innerText.includes('Test project.')"),'Test project identity not visible');
+          for(const view of ['work','runs','issues','release','history']){
+            await ev(`document.querySelector('[data-project-view="${view}"]').click()`);await sleep(80);
+            ok((await ev('document.body.innerText.length'))>500,`${view} view is empty`);
+          }
+          ok(await ev("document.body.innerText.includes('Generated instruction')"),'Generated instructions not inspectable in history');
+          ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE"))==='Portable generator service handoff','Test project is not persisted through ordinary project state');
+          await ev("document.querySelector('#new-job-button').click()");
+          await waitFor("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE==='New project'",20000);
+          ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).activeStage"))===1,'New project did not reset to Stage 01');
+          const imported=await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent'))");imported.job.JOB_TITLE='Imported verification project';fs.writeFileSync('/tmp/import-project.json',JSON.stringify(imported));
+          await send('DOM.enable');const doc=await send('DOM.getDocument',{depth:1});const q=await send('DOM.querySelector',{nodeId:doc.root.nodeId,selector:'#imp'});await send('DOM.setFileInputFiles',{nodeId:q.nodeId,files:['/tmp/import-project.json']});await ev("document.querySelector('#imp').dispatchEvent(new Event('change',{bubbles:true}))");
+          await waitFor("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE==='Imported verification project'",20000);
+          fs.writeFileSync('live-proof/interaction.json',JSON.stringify({ok:true,controls:['Guide','Project data','Workflow','stage open','next stage','previous stage','Export','project switch','Work','Runs','Issues','Release','History','New project','Import'],compactButtonHeight:true,testProjectPersisted:true},null,2));
+          ws.close();
+          NODE
+          node /tmp/live-e2e.mjs
       - name: Preserve rendered live proof
         if: always()
         uses: actions/upload-artifact@v4
@@ -173,8 +233,9 @@ jobs:
           IDENTITY: ${{ steps.live_identity.outcome }}
           BLANK: ${{ steps.blank_render.outcome }}
           TEST: ${{ steps.test_render.outcome }}
+          INTERACTION: ${{ steps.interaction.outcome }}
         run: |
-          for pair in "live-file-identity:$IDENTITY" "live-working-ui:$BLANK" "live-test-project-ui:$TEST"; do
+          for pair in "live-file-identity:$IDENTITY" "live-working-ui:$BLANK" "live-test-project-ui:$TEST" "live-controls:$INTERACTION"; do
             context="${pair%%:*}"; outcome="${pair#*:}"
             if [ "$outcome" = success ]; then state=success; else state=failure; fi
             gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $outcome"
@@ -185,9 +246,10 @@ jobs:
           test '${{ steps.live_identity.outcome }}' = success
           test '${{ steps.blank_render.outcome }}' = success
           test '${{ steps.test_render.outcome }}' = success
+          test '${{ steps.interaction.outcome }}' = success
       - name: Publish live status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='live-workbook-ui' -f description='Rendered phone UI and truthful test project verified'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='live-workbook-ui' -f description='Rendered phone UI, controls, and truthful test project verified'
