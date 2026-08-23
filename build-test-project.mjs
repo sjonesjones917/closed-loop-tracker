@@ -14,7 +14,9 @@ const appPath='app.js';
 let app=fs.readFileSync(appPath,'utf8');
 
 function replaceFunction(source,name,replacement,nextMarker){
-  const start=source.indexOf(`function ${name}(`);
+  const pattern=new RegExp(`(?:async\\s+)*function\\s+${name}\\s*\\(`);
+  const match=pattern.exec(source);
+  const start=match?.index??-1;
   const end=start<0?-1:source.indexOf(nextMarker,start);
   if(start<0||end<0)throw new Error(`Cannot locate ${name}.`);
   return source.slice(0,start)+replacement+'\n'+source.slice(end);
@@ -79,7 +81,7 @@ const wire=`function wire(){document.querySelectorAll('[data-view]').forEach(b=>
 app=replaceFunction(app,'wire',wire,'function createUniqueJobId');
 
 const addNew=`function createUniqueJobId(){const base=new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,17);let suffix=0,id;do{id=\`JOB-\${base}\${suffix?\`-\${String(suffix).padStart(2,'0')}\`:''}\`;suffix++;}while(projects.some(p=>p.job?.JOB_ID===id));return id;}\nasync function addNew(){const p=ensureState(core.createBlankState(createUniqueJobId()));p.activeView='Project';const now=new Date().toISOString();p.job.DATE_OPENED=now;const fields={NEW_JOB_ID:p.job.JOB_ID,NEW_JOB_TITLE:p.job.JOB_TITLE,JOB_OWNER:'UNKNOWN',DATE_OPENED:now,MASTER_TEMPLATE_VERSION:'CURRENT 30-STAGE WORKFLOW',MASTER_TEMPLATE_SHA256:'NOT CALCULATED',NEW_WORKBOOK_FILENAME:'NOT APPLICABLE',NEW_WORKBOOK_VERSION:'v001',NEW_FOLDER_ROOT:'BROWSER PROJECT STORAGE',SUPPLIED_INPUT_FILES:'NONE',SUPPLIED_INPUT_HASHES:'NONE',EXACT_USER_REQUEST_CAPTURED_IN_STAGE_01:'FALSE',OLD_JOB_MATERIAL_REUSED:'FALSE',AUTHORIZED_REUSED_ARTIFACTS:'NONE',OLD_BASELINE_STATUS_CARRIED_FORWARD:'FALSE',OLD_RELEASE_DECISION_CARRIED_FORWARD:'FALSE',OLD_REQUIREMENT_OR_TEST_CARRIED_FORWARD_WITHOUT_REVALIDATION:'FALSE',NEW_JOB_START_STAGE:'STAGE 01',RESET_COMPLETED_BY:'APPLICATION',RESET_DATE_AND_TIME:now,RESET_EVIDENCE:'A clean 30-stage project was created without prior job state.'};const text=core.APPENDICES.E.fields.map(k=>\`\${k}: \${fields[k]??'UNKNOWN'}\`).join('\\n'),record={id:p.job.JOB_ID,createdAt:now,fields,text,sha256:await core.sha256Text(text)};p.appendices.E.records.push(record);p.projectData.newJobResets.push(record);projects.unshift(p);current=p;save();render();}`;
-app=replaceFunction(app,'addNew',addNew,'function readStored');
+app=replaceFunction(app,'createUniqueJobId',addNew,'function readStored');
 
 fs.writeFileSync(appPath,app);
 
