@@ -46,7 +46,7 @@ ok(chunks.every(name=>loader.includes(name)),'loader reads all three existing ru
 ok(loader.includes('DecompressionStream("gzip")')&&loader.includes('cache:"no-store"'),'loader decompresses runtime and bypasses stale cache');
 ok(loader.includes('BAD_NAV')&&loader.includes('Control records')&&loader.includes('removeDuplicateNavigation'),'workbook.js removes the duplicate appendix/control navigation surface');
 ok(loader.includes('compactContextualControls')&&loader.includes('stageNativeOperationalControls'),'workbook.js preserves Appendix records as stage-native controls in the same application');
-ok(loader.includes('document.getElementById(PURPOSE_ID)?.remove()'),'workbook.js removes the parallel appendix-purpose panel');
+ok(loader.includes('renderPurpose')&&loader.includes('APPENDIX A–F — OPERATIONAL CONTROLS')&&loader.includes('not permanent checklist stacks'),'workbook.js keeps the Appendix purpose visible without restoring duplicate checklist stacks');
 ok(!loader.includes('renderOperationalControl')&&!loader.includes('controlPanel('),'workbook.js does not create a second application');
 ok(compressed.length>0&&source.includes('export const STAGES'),'runtime payload is present and decompresses');
 
@@ -95,4 +95,4 @@ ok(compareArtifactSets(audited,bad,'ACCEPTED').authorization==='NOT AUTHORIZED',
 ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','non-ACCEPTED release gate stops release');
 
 if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
-console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',applicationEntries:1,stages:30,stageDefectIds:stageDefects.length,stageControls:stageControls.length,appendixControlFamilies:6,separateAppendixChecklistView:false,contextualAppendixControls:true,exactFinalReleaseControl:true,behavioralChecks:evidence.length},null,2));
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',applicationEntries:1,stages:30,stageDefectIds:stageDefects.length,stageControls:stageControls.length,appendixControlFamilies:6,separateAppendixChecklistView:false,contextualAppendixControls:true,visibleAppendixPurpose:true,exactFinalReleaseControl:true,behavioralChecks:evidence.length},null,2));
