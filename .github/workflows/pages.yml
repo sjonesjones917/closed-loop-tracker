@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node --check workbook.js
+      - run: node --check human-ui.js
       - run: node verify.mjs
       - run: |
           test -f index.html
@@ -30,7 +31,7 @@ jobs:
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='workbook-test-project' -f description='Workbook verification'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='workbook-test-project' -f description='Closed-loop project verification'
   deploy:
     if: github.event_name != 'pull_request'
     needs: test-project
@@ -51,7 +52,7 @@ jobs:
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='single-workbook-pages' -f description='Exact tested workbook deployed'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='single-workbook-pages' -f description='Exact tested application deployed'
   verify-live:
     if: github.event_name != 'pull_request'
     needs: [test-project, deploy]
@@ -64,19 +65,25 @@ jobs:
           set -euo pipefail; mkdir -p live-proof; verified=false
           for attempt in $(seq 1 48); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
-            if curl -fsSL "${PAGE_URL%/}/index.html?verify=$nonce" -o live-proof/index.html && curl -fsSL "${PAGE_URL%/}/workbook.js?verify=$nonce" -o live-proof/workbook.js && curl -fsSL "${PAGE_URL%/}/TEST_PROJECT.json?verify=$nonce" -o live-proof/TEST_PROJECT.json; then
-              if [[ "$(sha256sum index.html|awk '{print $1}')" == "$(sha256sum live-proof/index.html|awk '{print $1}')" && "$(sha256sum workbook.js|awk '{print $1}')" == "$(sha256sum live-proof/workbook.js|awk '{print $1}')" && "$(sha256sum TEST_PROJECT.json|awk '{print $1}')" == "$(sha256sum live-proof/TEST_PROJECT.json|awk '{print $1}')" ]]; then verified=true; break; fi
-            fi
+            good=true
+            for f in index.html workbook.js human-ui.js TEST_PROJECT.json test-project/TEST-JOB-001__UX-AUDIT.md; do
+              mkdir -p "live-proof/$(dirname "$f")"
+              curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false
+            done
+            if $good && [[ "$(sha256sum index.html|awk '{print $1}')" == "$(sha256sum live-proof/index.html|awk '{print $1}')" && "$(sha256sum workbook.js|awk '{print $1}')" == "$(sha256sum live-proof/workbook.js|awk '{print $1}')" && "$(sha256sum human-ui.js|awk '{print $1}')" == "$(sha256sum live-proof/human-ui.js|awk '{print $1}')" && "$(sha256sum TEST_PROJECT.json|awk '{print $1}')" == "$(sha256sum live-proof/TEST_PROJECT.json|awk '{print $1}')" ]]; then verified=true; break; fi
             sleep 5
           done
           test "$verified" = true
-      - name: Render phone UI and open test project
+      - name: Render phone UI
         run: |
           set -euo pipefail
           BROWSER="$(command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
           URL="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=16000 --window-size=393,852 --dump-dom "$URL" > live-proof/blank.html
-          grep -q 'Test project' live-proof/blank.html
+          grep -q 'Closed-Loop Reliability' live-proof/blank.html
+          grep -qi 'Open test project' live-proof/blank.html
+          grep -q 'Overview' live-proof/blank.html
+          grep -q 'History' live-proof/blank.html
           grep -q '01 INITIALIZE THE JOB' live-proof/blank.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/blank.html
       - name: Publish live status
