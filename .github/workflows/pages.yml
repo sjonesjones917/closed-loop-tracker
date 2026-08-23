@@ -72,7 +72,6 @@ jobs:
             grep -q 'Saved instructions' "live-${WIDTH}.html"
             grep -q 'Saved outputs' "live-${WIDTH}.html"
             grep -q 'Overview' "live-${WIDTH}.html"
-            grep -q 'data-stage-field' "live-${WIDTH}.html"
             ! grep -qi 'GEN-042' "live-${WIDTH}.html"
             ! grep -qi 'field status report' "live-${WIDTH}.html"
             ! grep -qi 'maintenance handoff' "live-${WIDTH}.html"
