@@ -37,6 +37,7 @@ jobs:
           test -f test-project/inputs/REQUEST.md
           test -f test-project/inputs/SITE_POLICY.md
           test -f test-project/inputs/WORKFLOW_RULES.md
+          test -f test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md
           test ! -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
       - name: Publish granular verification status
         if: always()
@@ -96,7 +97,7 @@ jobs:
       - name: Wait for exact deployed files
         run: |
           set -euo pipefail; mkdir -p live-proof; verified=false
-          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md)
+          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md)
           for attempt in $(seq 1 48); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
             good=true
@@ -139,7 +140,7 @@ jobs:
           grep -q '>Release<' live-proof/test-project.html
           grep -q '>History<' live-proof/test-project.html
           grep -q 'BLOCKED' live-proof/test-project.html
-          grep -q 'zero are recorded' live-proof/test-project.html
+          grep -q 'genuinely independent fresh execution contexts' live-proof/test-project.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/test-project.html
       - name: Publish live status
         if: always()
