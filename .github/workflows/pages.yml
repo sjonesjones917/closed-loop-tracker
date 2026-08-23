@@ -156,7 +156,7 @@ jobs:
           await ev("document.querySelector('[data-stage=1]').click()");await waitFor("document.body.innerText.includes('Capture stage work')");
           await ev("document.querySelector('#stage-response').value='Captured Stage 01 response';document.querySelector('#stage-evidence').value='Evidence 01';document.querySelector('#stage-status').value='IN PROGRESS';document.querySelector('#save-stage').click()");await sleep(100);
           ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.generatedOutputs.length"))===1,'Output receipt not created');
-          await ev("document.querySelector('[data-stage=1]').click();document.querySelector('#open-stage-controls').click()");await waitFor("!document.querySelector('#workspace-workbook').hasAttribute('hidden')");
+          await ev("document.querySelector('#open-stage-controls').click()");await waitFor("!document.querySelector('#workspace-workbook').hasAttribute('hidden')");
           await ev("document.querySelector('#project-data-button').click();document.querySelector('[data-view=workflow]').click();document.querySelector('[data-stage=11]').click()");await waitFor("!!document.querySelector('#prepare-context')");await ev("document.querySelector('#prepare-context').click()");await sleep(100);
           ok((await ev("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).projectData.freshContexts.length"))===1,'Fresh context not recorded');
           await ev("document.querySelector('#project-data-button').click();document.querySelector('#new-job-button').click()");await waitFor("JSON.parse(localStorage.getItem('mobile-closed-loop-agent')).job.JOB_TITLE==='New project'");
