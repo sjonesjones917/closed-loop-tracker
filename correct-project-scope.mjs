@@ -88,6 +88,8 @@ function patchRunner(){
     if(!s.includes(anchor))throw new Error('run wrapper scope-correction anchor missing');
     s=s.replace(anchor,addition);
   }
+  s=s.replaceAll(OLD_PROJECT_NAME,PROJECT_NAME);
+  s=s.replaceAll('The existing v13 app does not permanently use SELF_VERIFIED_PROJECT.json for its visible self-project export.','The application does not permanently use SELF_VERIFIED_PROJECT.json for the visible complete-build project export.');
   writeIfChanged(file,s);
 }
 
@@ -107,4 +109,4 @@ for(const file of syntaxFiles){
     if(result.status!==0)throw new Error(`${file} syntax failure: ${result.stderr||result.stdout}`);
   }
 }
-console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true,publishedProjectMetadata:true,originParserMatchesAnywhere:true}));
+console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true,publishedProjectMetadata:true,originParserMatchesAnywhere:true,selfBuildWrapperProjectIdentityCorrected:true}));
