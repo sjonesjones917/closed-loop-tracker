@@ -1,32 +1,15 @@
-# Mobile Closed-Loop Agent Reliability Workbook
+# Closed-Loop Reliability
 
-Live application:
+Live application: https://sjonesjones917.github.io/closed-loop-tracker/
 
-https://sjonesjones917.github.io/closed-loop-tracker/
+This repository contains one application with one HTML entry point: `index.html`.
 
-This repository contains one application: `index.html`.
+The application is a phone-first human interface for the 30-stage Mobile Closed-Loop Agent Reliability workflow. The workbook is implemented as workflow semantics, project records, evidence, validation, blockers, changes, independent runs, convergence, baseline control, product verification, release gating, traceability and permanent regression history—not as a literal wall of workbook checkboxes.
 
-The application is the phone-first implementation of the controlling 30-stage Mobile Closed-Loop Agent Reliability Workbook. The Human checklist, fill-in Stage record, copy-ready agent block, completion gate, evidence preservation, exact outcome vocabulary, immutable job-artifact versioning, blocker handling, downstream invalidation, ten-run iteration controls, convergence, final-product verification, release identity, evidence-chain preservation, and permanent defect/regression controls belong to that one application.
+`workbook.js` and the compressed workbook modules retain the existing 30-stage workflow engine. `human-ui.js` presents that state as a human project with Overview, Work, Runs, Issues, Release and History views. Both use the same persisted project state.
 
-Appendices A–F are cross-cutting operational controls of the same 30-stage workflow. They are not extra stages, not another application, and not permanent checklist stacks. Appendix A is used when a fresh independent context is required; Appendix B when a mandatory blocker exists; Appendix C when a material change invalidates downstream work; Appendix D at final release; Appendix E when starting a clean new job; and Appendix F when an agent output is received. Their records belong at the workflow event and stage where they apply.
+Appendices A-F remain cross-cutting behavior of the same workflow: fresh independent contexts, blockers, change/invalidation control, final release readiness, clean new-project creation, and generated-output receipts. They are surfaced where relevant rather than as permanent appendix checklist pages.
 
-The global workbook control area retains the phone-use instructions, placeholder and outcome rules, mobile naming and folder structure, role-separation map, Master Job Control, 30-stage tracker, mandatory operating rules, and quick execution loop.
+`TEST_PROJECT.json` is one populated project inside the application, not another application. Its sources include actual application files, and its finished product is the real repository artifact `test-project/TEST-JOB-001__UX-AUDIT.md`. The project preserves an initial failed ten-run iteration, independent verification, root cause, regression, correction, a second ten-run iteration, an unchanged ten-run confirmation, baseline, finished product, release evidence and evidence chains. Generated prompts and captured outputs are part of the project data and are visible in the project interface.
 
-## Existing application and test project
-
-- `index.html` is the only application entry point.
-- `workbook.js` and `workbook.module.gz.1` through `workbook.module.gz.3` are runtime files for that same application.
-- `TEST_PROJECT.json` is the retained completed test project. It can be loaded from the app with **Test project** and is displayed as a normal project in the same workbook. The app exposes its user-entered project data, requested deliverable, inputs and sources, requirements, generated production instruction, verification and failure tests, every execution batch and output, defects and corrections, convergence, baseline, finished product, release evidence, evidence chains, and all 30 stage records.
-- `verify.mjs` is the repository verifier. It is not the test project and it is not presented as application content.
-- `.github/workflows/pages.yml` runs `node --check workbook.js` and `node verify.mjs` before deploying the exact verified repository to GitHub Pages.
-
-There are no numbered application versions, alternate application entry points, retained legacy apps, or substitute apps.
-
-Repository verification:
-
-```sh
-node --check workbook.js
-node verify.mjs
-```
-
-Requirement outcomes are `SATISFIED`, `VIOLATED`, or `UNDETERMINED`. Release outcomes are `ACCEPTED`, `REJECTED`, or `BLOCKED`.
+Repository verification is `node verify.mjs`. It checks the one-app structure, shared project state, human project views, inspectable prompts/outputs/history, actual test-project artifact identity, ten-run iteration records, 30 stages, Appendix A-F semantics, immutable revision behavior, invalidation and release byte-identity controls.
