@@ -12,6 +12,20 @@ Appendices A–F are cross-cutting operational controls of the same 30-stage wor
 
 The global workbook control area retains the phone-use instructions, placeholder and outcome rules, mobile naming and folder structure, role-separation map, Master Job Control, 30-stage tracker, mandatory operating rules, and quick execution loop.
 
-Repository runtime files support that same application. There are no numbered application versions, alternate application entry points, retained legacy apps, substitute apps, or separate test project.
+## Existing application and test project
+
+- `index.html` is the only application entry point.
+- `workbook.js` and `workbook.module.gz.1` through `workbook.module.gz.3` are the runtime files for that same application.
+- `verify.mjs` is the repository test project. It verifies the one-app architecture, all 30 stages, the 400-plus explicit human/gate/evidence controls, the complete copy blocks, Appendix A–F event-driven behavior, immutable revision and downstream invalidation behavior, release-gate vocabulary, and byte-identity release rules.
+- `.github/workflows/pages.yml` runs `node --check workbook.js` and `node verify.mjs` before deploying the exact verified repository to GitHub Pages.
+
+There are no numbered application versions, alternate application entry points, retained legacy apps, or substitute apps. The test project validates the existing application; it is not another application.
+
+Run the test project with:
+
+```sh
+node --check workbook.js
+node verify.mjs
+```
 
 Requirement outcomes are `SATISFIED`, `VIOLATED`, or `UNDETERMINED`. Release outcomes are `ACCEPTED`, `REJECTED`, or `BLOCKED`.
