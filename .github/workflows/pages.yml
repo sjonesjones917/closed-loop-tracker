@@ -53,6 +53,7 @@ jobs:
             if [ "$outcome" = success ]; then state=success; else state=failure; fi
             gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$state" -f context="$context" -f description="$context $outcome"
           done
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state=success -f context='pages-run-${{ github.run_id }}' -f description='GitHub Actions run identifier for verification diagnostics'
       - name: Enforce verification results
         if: always()
         run: |
