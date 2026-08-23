@@ -12,8 +12,13 @@
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
     const source=await new Response(stream).text();
     const url=URL.createObjectURL(new Blob([source],{type:"text/javascript"}));
-    try{await import(url);}finally{URL.revokeObjectURL(url);}
-    if(!localStorage.getItem(STATE_STORE))throw new Error("The core workflow loaded without establishing project state.");
+    let runtime;
+    try{runtime=await import(url);}finally{URL.revokeObjectURL(url);}
+    if(!localStorage.getItem(STATE_STORE)){
+      if(typeof runtime.createBlankState!=="function"||typeof runtime.mount!=="function")throw new Error("The core workflow cannot initialize persisted project state.");
+      localStorage.setItem(STATE_STORE,JSON.stringify(runtime.createBlankState()));
+      runtime.mount();
+    }
     dispatchEvent(new Event("closed-loop-core-ready"));
   }catch(error){
     console.error(error);
