@@ -30,7 +30,52 @@ jobs:
           const banned=new RegExp('se'+'mantic','i');
           if(banned.test(s))throw new Error('prohibited terminology');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
+          if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated demonstration terminology');
           NODE
+      - name: Verify built human-facing views at 320 and 393 CSS pixels
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          for WIDTH in 320 393; do
+            "$BROWSER" --headless --no-sandbox --disable-gpu --user-data-dir="/tmp/clr-test-overview-${WIDTH}" --window-size=${WIDTH},852 --virtual-time-budget=10000 --dump-dom "http://127.0.0.1:4173/?verify=${GITHUB_SHA}-${WIDTH}-overview" > "test-overview-${WIDTH}.html"
+            grep -q 'Mobile Closed-Loop Agent Reliability Workbook' "test-overview-${WIDTH}.html"
+            grep -q '1/30 complete' "test-overview-${WIDTH}.html"
+            grep -q 'STAGE 02' "test-overview-${WIDTH}.html"
+            grep -q 'Saved instructions' "test-overview-${WIDTH}.html"
+            grep -q 'Saved outputs' "test-overview-${WIDTH}.html"
+            ! grep -q '\[object Object\]' "test-overview-${WIDTH}.html"
+
+            "$BROWSER" --headless --no-sandbox --disable-gpu --user-data-dir="/tmp/clr-test-workflow-${WIDTH}" --window-size=${WIDTH},1200 --virtual-time-budget=10000 --dump-dom "http://127.0.0.1:4173/?view=Workflow&stage=2&verify=${GITHUB_SHA}-${WIDTH}-workflow" > "test-workflow-${WIDTH}.html"
+            grep -q 'Stage 02' "test-workflow-${WIDTH}.html"
+            grep -q 'SOURCE_SET_VERSION' "test-workflow-${WIDTH}.html"
+            grep -q 'AUTHORITY_HIERARCHY' "test-workflow-${WIDTH}.html"
+            grep -q 'Generated instruction' "test-workflow-${WIDTH}.html"
+            ! grep -q '\[object Object\]' "test-workflow-${WIDTH}.html"
+
+            "$BROWSER" --headless --no-sandbox --disable-gpu --user-data-dir="/tmp/clr-test-records-${WIDTH}" --window-size=${WIDTH},1200 --virtual-time-budget=10000 --dump-dom "http://127.0.0.1:4173/?view=Records&verify=${GITHUB_SHA}-${WIDTH}-records" > "test-records-${WIDTH}.html"
+            grep -q 'Complete project record' "test-records-${WIDTH}.html"
+            grep -q 'Original user-entered data' "test-records-${WIDTH}.html"
+            grep -q 'Generated instructions' "test-records-${WIDTH}.html"
+            grep -q 'Generated outputs' "test-records-${WIDTH}.html"
+            grep -q 'OPERATION 01 — DEFINE JOB' "test-records-${WIDTH}.html"
+            ! grep -q '\[object Object\]' "test-records-${WIDTH}.html"
+          done
+      - name: Preserve the verified built app for review
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-built-app
+          path: |
+            index.html
+            app.js
+            workbook.js
+            TEST_PROJECT.json
+          if-no-files-found: error
+          retention-days: 1
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -59,21 +104,36 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node verify-live.mjs
-      - name: Verify phone views at 320 and 393 CSS pixels
+      - name: Verify live human-facing views at 320 and 393 CSS pixels
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           for WIDTH in 320 393; do
-            "$BROWSER" --headless --no-sandbox --disable-gpu --window-size=${WIDTH},852 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?verify=${GITHUB_SHA}-${WIDTH}" > "live-${WIDTH}.html"
-            grep -q 'Mobile Closed-Loop Agent Reliability Workbook' "live-${WIDTH}.html"
-            grep -q '1/30 complete' "live-${WIDTH}.html"
-            grep -q 'STAGE 02' "live-${WIDTH}.html"
-            grep -q 'Saved instructions' "live-${WIDTH}.html"
-            grep -q 'Saved outputs' "live-${WIDTH}.html"
-            grep -q 'Overview' "live-${WIDTH}.html"
-            ! grep -qi 'GEN-042' "live-${WIDTH}.html"
-            ! grep -qi 'field status report' "live-${WIDTH}.html"
-            ! grep -qi 'maintenance handoff' "live-${WIDTH}.html"
-            ! grep -q '0/31 complete' "live-${WIDTH}.html"
-            ! grep -q 'Loading the workflow' "live-${WIDTH}.html"
+            "$BROWSER" --headless --no-sandbox --disable-gpu --user-data-dir="/tmp/clr-live-overview-${WIDTH}" --window-size=${WIDTH},852 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?verify=${GITHUB_SHA}-${WIDTH}-overview" > "live-overview-${WIDTH}.html"
+            grep -q 'Mobile Closed-Loop Agent Reliability Workbook' "live-overview-${WIDTH}.html"
+            grep -q '1/30 complete' "live-overview-${WIDTH}.html"
+            grep -q 'STAGE 02' "live-overview-${WIDTH}.html"
+            grep -q 'Saved instructions' "live-overview-${WIDTH}.html"
+            grep -q 'Saved outputs' "live-overview-${WIDTH}.html"
+            ! grep -qi 'GEN-042' "live-overview-${WIDTH}.html"
+            ! grep -qi 'field status report' "live-overview-${WIDTH}.html"
+            ! grep -qi 'maintenance handoff' "live-overview-${WIDTH}.html"
+            ! grep -q '0/31 complete' "live-overview-${WIDTH}.html"
+            ! grep -q 'Loading the workflow' "live-overview-${WIDTH}.html"
+            ! grep -q '\[object Object\]' "live-overview-${WIDTH}.html"
+
+            "$BROWSER" --headless --no-sandbox --disable-gpu --user-data-dir="/tmp/clr-live-workflow-${WIDTH}" --window-size=${WIDTH},1200 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?view=Workflow&stage=2&verify=${GITHUB_SHA}-${WIDTH}-workflow" > "live-workflow-${WIDTH}.html"
+            grep -q 'Stage 02' "live-workflow-${WIDTH}.html"
+            grep -q 'SOURCE_SET_VERSION' "live-workflow-${WIDTH}.html"
+            grep -q 'AUTHORITY_HIERARCHY' "live-workflow-${WIDTH}.html"
+            grep -q 'Generated instruction' "live-workflow-${WIDTH}.html"
+            ! grep -q '\[object Object\]' "live-workflow-${WIDTH}.html"
+
+            "$BROWSER" --headless --no-sandbox --disable-gpu --user-data-dir="/tmp/clr-live-records-${WIDTH}" --window-size=${WIDTH},1200 --virtual-time-budget=10000 --dump-dom "${PAGE_URL}?view=Records&verify=${GITHUB_SHA}-${WIDTH}-records" > "live-records-${WIDTH}.html"
+            grep -q 'Complete project record' "live-records-${WIDTH}.html"
+            grep -q 'Original user-entered data' "live-records-${WIDTH}.html"
+            grep -q 'Generated instructions' "live-records-${WIDTH}.html"
+            grep -q 'Generated outputs' "live-records-${WIDTH}.html"
+            grep -q 'OPERATION 01 — DEFINE JOB' "live-records-${WIDTH}.html"
+            ! grep -q '\[object Object\]' "live-records-${WIDTH}.html"
           done
