@@ -16,10 +16,10 @@ ok(human.includes('Complete project history')&&human.includes('Generated instruc
 ok(human.includes('Blockers')&&human.includes('Changes and invalidated work')&&human.includes('Permanent regression tests'),'blocker, change/invalidation, and regression semantics are first-class project views');
 ok(human.includes('Independent executions')&&human.includes('No independent run is counted unless a genuinely fresh context'),'fresh-context/run independence is retained and explained contextually');
 ok(human.includes('Release readiness')&&human.includes('Evidence chains'),'release controls and traceability are integrated as project evidence');
-ok(human.includes('Cross-cutting controls')&&human.includes('Output receipts'),'Appendix A-F semantics are explained contextually rather than as permanent checklist walls');
+ok(['Fresh independent work','Blockers','Changes and invalidation','Final release','New projects','Output receipts'].every(t=>human.includes(t)),'Appendix A-F semantics are represented as contextual project capabilities rather than checklist walls');
 ok(!index.includes('APPENDIX A–F — OPERATIONAL CONTROLS'),'appendix checklist wall is absent from the primary application shell');
 ok(index.includes('min-height:32px')&&index.includes('project-tabs button{flex:0 0 auto;min-height:30px'),'mobile controls are compact rather than giant full-screen buttons');
-ok(human.includes('buildTestState')&&human.includes("source:'TEST_PROJECT.json'")&&human.includes('write(buildTestState'),'test project is loaded into the ordinary persisted project state');
+ok(human.includes('buildTestState')&&human.includes("source:'TEST_PROJECT.json'")&&human.includes('writeState'),'test project is loaded into the ordinary persisted project state');
 ok(testProject.schema==='mobile-closed-loop-project/3','test project uses current project schema');
 ok(testProject.title==='Portable generator service handoff','test project is a real domain project, not an application self-test');
 ok(testProject.description.includes('genuine project')&&testProject.description.includes('No runs, audits, baseline, product, or release acceptance are fabricated'),'test project explicitly rejects fabricated downstream work');
