@@ -1,8 +1,16 @@
 # Closed-Loop Agent Reliability
 
-Live application:
+## Open the application
 
-https://sjonesjones917.github.io/closed-loop-tracker/
+**[Open the live Closed-Loop Agent Reliability app](https://sjonesjones917.github.io/closed-loop-tracker/)**
+
+## Open the verified test project
+
+**[Open/download the retained verified project that demonstrates the application](https://sjonesjones917.github.io/closed-loop-tracker/SELF_VERIFIED_PROJECT.json)**
+
+Repository copy: **[SELF_VERIFIED_PROJECT.json](./SELF_VERIFIED_PROJECT.json)**
+
+The verified project is intentionally retained as application evidence and must remain available. It is not a second application; it is the completed project record used to demonstrate and verify the one application.
 
 ## Purpose
 
