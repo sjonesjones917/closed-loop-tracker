@@ -25,7 +25,15 @@ jobs:
           node --check workbook.module.js
       - uses: actions/upload-artifact@v4
         with:
-          name: existing-workbook-runtime-source
-          path: workbook.module.js
+          name: existing-workbook-app-source
+          path: |
+            index.html
+            workbook.js
+            workbook.module.js
+            TEST_PROJECT.json
+            RETAINED_TEST_PROJECT.json
+            verify.mjs
+            verify-retained-project.mjs
+            README.md
           if-no-files-found: error
           retention-days: 1
