@@ -3,7 +3,7 @@ on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
   workflow_dispatch:
-permissions: {contents: write, pages: write, id-token: write, statuses: write}
+permissions: {contents: read, pages: write, id-token: write, statuses: write}
 concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 
 jobs:
@@ -11,23 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - name: Materialize the targeted repair on main
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if ! git diff --quiet -- app.js workbook.js index.html TEST_PROJECT.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app.js workbook.js index.html TEST_PROJECT.json
-            git commit -m "Materialize verified existing-app repair"
-            git push origin HEAD:main
-          fi
-      - run: node --check app.js && node --check workbook.js && node --check verify.mjs && node --check verify-live.mjs && node --check build-test-project.mjs
+      - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check verify.mjs && node --check verify-live.mjs
       - run: node verify.mjs
-      - name: Verify single app and source terminology
+      - name: Verify single application source
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
@@ -83,6 +72,7 @@ jobs:
             grep -q 'Saved instructions' "live-${WIDTH}.html"
             grep -q 'Saved outputs' "live-${WIDTH}.html"
             grep -q 'Overview' "live-${WIDTH}.html"
+            grep -q 'data-stage-field' "live-${WIDTH}.html"
             ! grep -qi 'GEN-042' "live-${WIDTH}.html"
             ! grep -qi 'field status report' "live-${WIDTH}.html"
             ! grep -qi 'maintenance handoff' "live-${WIDTH}.html"
