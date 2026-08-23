@@ -33,6 +33,14 @@ function patchGenerated(file){
   s=s.replaceAll(OLD_PROJECT_NAME,PROJECT_NAME);
   writeIfChanged(file,s);
 }
+function patchReadme(){
+  const file='README.md';
+  if(!fs.existsSync(file))return;
+  let s=fs.readFileSync(file,'utf8');
+  s=s.replaceAll('Closed-Loop Agent Reliability v13','Closed-Loop Agent Reliability');
+  s=s.replaceAll('- Keeps the application identity at v13; correcting an implementation defect does not create an arbitrary new application version.','- Exposes no arbitrary public application version; workflow candidate identifiers are provenance records only.');
+  writeIfChanged(file,s);
+}
 function patchBrowser(){
   const file='self-browser-e2e.mjs';
   let s=fs.readFileSync(file,'utf8');
@@ -70,15 +78,17 @@ function patchRunner(){
 
 if(!generatedOnly){
   patchBrowser();
-  patchAgentBase();
   patchRunner();
 }
+patchAgentBase();
+patchReadme();
 for(const file of ['app-v13-candidate1.html','app-v13.html','index.html'])patchGenerated(file);
 
-for(const file of generatedOnly?['app-v13-candidate1.html','app-v13.html']:['self-browser-e2e.mjs','self-e2e-agent-base.mjs','run-v13-self-e2e.mjs']){
-  if(fs.existsSync(file)&&file.endsWith('.mjs')){
+const syntaxFiles=generatedOnly?['self-e2e-agent-base.mjs']:['self-browser-e2e.mjs','self-e2e-agent-base.mjs','run-v13-self-e2e.mjs'];
+for(const file of syntaxFiles){
+  if(fs.existsSync(file)){
     const result=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
     if(result.status!==0)throw new Error(`${file} syntax failure: ${result.stderr||result.stdout}`);
   }
 }
-console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD'}));
+console.log(JSON.stringify({status:'PROJECT_SCOPE_CORRECTED',publicName:PUBLIC_NAME,projectName:PROJECT_NAME,generatedOnly,publicVersionLabelRemoved:true,objectiveScope:'DOMAIN_GENERAL_COMPLETE_APPLICATION_BUILD',agentBaseReappliedAfterBuild:true}));
