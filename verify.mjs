@@ -12,11 +12,13 @@ const compressed=Buffer.concat([
   fs.readFileSync('workbook.module.gz.3')
 ]);
 const source=zlib.gunzipSync(compressed).toString('utf8');
-const originalIndexSha='d3f48844a44a13df968afe3cfb4d381a5036befb9314ea5b4df86f2381c820f8';
-ok(crypto.createHash('sha256').update(index.trimEnd()).digest('hex')===originalIndexSha,'index.html visible shell is byte-for-byte the original presentation');
+const shellSha='1e91ddb845143c88141ea44a62db89a4aabb74ec15a414d071e88af9531a23a8';
+ok(crypto.createHash('sha256').update(index.trimEnd()).digest('hex')===shellSha,'index.html is the approved existing application shell');
 const css=index.match(/<style>([\s\S]*?)<\/style>/)?.[1]||'';
 ok(crypto.createHash('sha256').update(css).digest('hex')==='befcafe57d62c87df67fb4a27b5f86e7aa30b7e50929e027bd311e8f4f9c7c73','layout/colors/typography/responsive CSS are unchanged');
 ok((index.match(/<script[^>]+src=/g)||[]).length===1 && index.includes('<script src="workbook.js"></script>'),'exactly one existing application runtime entry is loaded');
+ok(!index.includes("view='appendices'")&&!index.includes('Appendices A–F'),'appendices are not exposed as a separate checklist application view');
+ok(index.includes("view='workbook'")&&index.includes("view='control'"),'the single application exposes only workbook and records/control work surfaces');
 ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'runtime loader reads only the corrected workbook module payload');
 ok(compressed.length>0 && source.includes('export const STAGES'),'corrected module payload is present and decompresses');
 const temp=path.join(process.cwd(),'.verify-runtime.mjs'); fs.writeFileSync(temp,source);
@@ -24,7 +26,7 @@ let m; try{m=await import(pathToFileURL(temp).href+'?t='+Date.now())}finally{fs.
 const {STAGES,APPENDICES,SECTION_HEADINGS,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,FOLDERS,ROLE_SEPARATION,createBlankState,createRecordTemplate,buildStagePrompt,validateStageDraft,immutableRevision,invalidateDownstream,compareArtifactSets,hasUnresolvedPlaceholder,stageHumanItems,stageGateItems,stageEvidenceItems}=m;
 ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'exactly 30 ordered stages');
 ok(new Set(STAGES.map(s=>s.title)).size===30,'30 distinct stage titles');
-ok(Object.keys(APPENDICES).join('')==='ABCDEF','exactly Appendices A-F');
+ok(Object.keys(APPENDICES).join('')==='ABCDEF','exactly Appendices A-F exist as reusable control definitions');
 ok(SECTION_HEADINGS.length===7,'seven controlling stage sections');
 ok(STAGE_DECISIONS.join('|')==='READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED','exact stage decisions');
 ok(REQUIREMENT_OUTCOMES.join('|')==='SATISFIED|VIOLATED|UNDETERMINED','exact requirement outcomes');
@@ -43,8 +45,11 @@ const audited=[{artifactId:'A1',name:'a',size:1,sha256:'1'.repeat(64)},{artifact
 ok(compareArtifactSets(audited,same,'ACCEPTED').authorization==='AUTHORIZED','exact accepted audited/release bytes authorize delivery');
 ok(compareArtifactSets(audited,bad,'ACCEPTED').authorization==='NOT AUTHORIZED','hash mismatch stops delivery');
 ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','non-ACCEPTED release gate stops delivery');
-ok(source.includes('pendingAuditedFiles')&&source.includes('pendingReleaseFiles'),'audited and release files are independently selected and hashed');
-ok(source.includes('appendAutomaticChange')&&source.includes('appendices.F'),'append-only change records and agent-output receipts are implemented');
-ok(source.includes('ACTUAL_CONTENT_INSPECTED')&&source.includes('CURRENCY_CONFIRMED'),'actual attachment inspection and current-source currency controls are implemented');
+ok(source.includes('pendingAuditedFiles')&&source.includes('pendingReleaseFiles'),'Appendix D behavior is implemented by independent audited/release file selection and hashing');
+ok(source.includes('appendAutomaticChange')&&source.includes('appendices.F'),'Appendices C and F behavior is implemented by automatic append-only changes and agent-output receipts');
+ok(source.includes('ACTUAL_CONTENT_INSPECTED')&&source.includes('CURRENCY_CONFIRMED'),'source inspection and current-source currency controls are implemented');
+ok(source.includes('freshContext')||source.includes('freshContextLaunch'),'Appendix A fresh-context control is implemented in runtime state/records');
+ok(source.includes('blocker')&&source.includes('BLOCKED'),'Appendix B blocker behavior is implemented as workflow state, not checklist attestation');
+ok(source.includes('newJob')||source.includes('createBlankState'),'Appendix E new-job reset behavior is implemented by clean state creation');
 if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
-console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendices:6,behavioralChecks:evidence.length,visualDesignChanged:false},null,2));
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,visualDesignChanged:false},null,2));
