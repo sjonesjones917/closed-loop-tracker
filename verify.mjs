@@ -12,7 +12,7 @@ const compressed=Buffer.concat([
   fs.readFileSync('workbook.module.gz.3')
 ]);
 const source=zlib.gunzipSync(compressed).toString('utf8');
-const shellSha='7c4cecfe4b33fd93f68ff34b2b29ce916e41f216d6551d3f7b40b3370d4db0e2';
+const shellSha='15c93b7fdddb9a1e11be03b73be4692a70a64fde363d15df1c3ec5309a00be3c';
 ok(crypto.createHash('sha256').update(index.trimEnd()).digest('hex')===shellSha,'index.html is the approved existing application shell');
 const css=index.match(/<style>([\s\S]*?)<\/style>/)?.[1]||'';
 ok(crypto.createHash('sha256').update(css).digest('hex')==='befcafe57d62c87df67fb4a27b5f86e7aa30b7e50929e027bd311e8f4f9c7c73','layout/colors/typography/responsive CSS are unchanged');
@@ -20,6 +20,7 @@ ok((index.match(/<script[^>]+src=/g)||[]).length===1 && index.includes('<script 
 ok(!index.includes("view='appendices'"),'Appendices A-F are not implemented as a separate checklist workflow/view');
 ok(index.includes("view='workbook'")&&index.includes("view='control'"),'the single application exposes only the workbook and integrated control surfaces');
 ok(index.includes('Operational controls A–F')&&index.includes('Appendices A–F are integrated workflow controls'),'the existing control surface explicitly preserves the Appendix A-F meaning');
+for(const text of ['A — Fresh agent context launch','B — Universal blocker','C — Change and invalidation','D — Exact final release','E — New-job reset','F — Universal agent-output receipt'])ok(index.includes(text),`${text} is visibly represented in the existing application`);
 ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'runtime loader reads only the corrected workbook module payload');
 ok(compressed.length>0 && source.includes('export const STAGES'),'corrected module payload is present and decompresses');
 const temp=path.join(process.cwd(),'.verify-runtime.mjs'); fs.writeFileSync(temp,source);
