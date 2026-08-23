@@ -1,61 +1,20 @@
 import fs from 'node:fs';
-import crypto from 'node:crypto';
 
 const path='TEST_PROJECT.json';
+if(!fs.existsSync(path)) throw new Error('Missing TEST_PROJECT.json');
 const project=JSON.parse(fs.readFileSync(path,'utf8'));
 
-function rewrite(value){
-  if(Array.isArray(value)) return value.map(rewrite);
-  if(value&&typeof value==='object') return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v)]));
-  if(typeof value!=='string') return value;
-  return value
-    .replace(/maintenance[- ]handoff/gi,'field status report')
-    .replace(/maintenance handoff/gi,'field status report')
-    .replace(/handoff file/gi,'status report file')
-    .replace(/handoff/gi,'status report');
-}
-
-const out=rewrite(project);
-out.schema='human-project/30';
-out.title='GEN-042 field status report';
-out.specRevision='retained-complete-field-status-job';
-out.userJobInput={
-  ...(out.userJobInput||{}),
-  objective:'Create a concise six-line field status report for generator GEN-042 using only the supplied telemetry snapshot.',
-  deliverable:'One UTF-8 plain-text status report file named GEN-042__STATUS__v001.txt.',
-  requiredOutputFormat:'Six lines of plain text in the requested order.',
-  deadlineOrTemporalScope:'Use the supplied 2026-08-23 telemetry snapshot only.',
-  knownAuthorities:'The exact user request, supplied telemetry snapshot, supplied output contract, and the operating rules included with the job.',
-  availableTools:'Text processing, exact arithmetic, SHA-256 hashing, file inspection.',
-  prohibitedActions:'Do not invent missing telemetry. Do not expose another independent run output to a run. Do not release bytes different from the verified product.',
-  explicitRequirements:[
-    'Identify generator GEN-042.',
-    'Report runtime, fuel, battery voltage, oil pressure, coolant temperature, transfer-switch state, and service-due point from supplied evidence.',
-    'Produce exactly six lines of plain text.',
-    'Preserve source-to-requirement, requirement-to-test, execution, product, verification, and release evidence.'
-  ]
-};
-
-if(out.product?.files?.[0]){
-  const file=out.product.files[0];
-  file.fileName='GEN-042__STATUS__v001.txt';
-  file.sha256=crypto.createHash('sha256').update(file.content||'').digest('hex');
-  file.size=Buffer.byteLength(file.content||'','utf8');
-}
-for(const a of out.artifacts||[]){
-  if(a.kind==='FINISHED_PRODUCT'){
-    a.fileName='GEN-042__STATUS__v001.txt';
-    if(typeof a.inlineContent==='string'){
-      a.sha256=crypto.createHash('sha256').update(a.inlineContent).digest('hex');
-      a.size=Buffer.byteLength(a.inlineContent,'utf8');
-    }
-  }
-}
-
-if(Object.keys(out.stageRecords||{}).length!==30) throw new Error('Retained test project must contain exactly 30 stage records.');
-if((out.generatedPrompts||[]).length!==30||(out.generatedOutputs||[]).length!==30||(out.outputReceipts||[]).length!==30) throw new Error('Retained test project must expose all 30 instructions, outputs, and receipts.');
-if((out.runRecords||[]).length<20||(out.runRecords||[]).length%10!==0) throw new Error('Retained test project must preserve complete ten-run sets.');
-if(/maintenance[- ]handoff/i.test(JSON.stringify(out))) throw new Error('Incorrect maintenance-handoff framing remains in the retained project.');
-
-fs.writeFileSync(path,JSON.stringify(out,null,2)+'\n');
-console.log(`materialized preserved 30-stage test project: ${out.title}`);
+if(project.schema!=='human-project/30') throw new Error(`Unexpected project schema ${project.schema}`);
+if(project.jobId!=='JOB-20260823144121') throw new Error('Retained test project JOB_ID is wrong.');
+if(project.title!=='Mobile Closed-Loop Agent Reliability Workbook') throw new Error('Retained test project title is wrong.');
+if(project.currentStage!==2||project.currentState!=='READY') throw new Error('Retained test project must preserve completed Operation 01 and be ready for Operation 02.');
+if(Object.keys(project.stageRecords||{}).length!==30) throw new Error('Retained test project must contain exactly 30 stage records.');
+if(project.stageRecords?.['1']?.status!=='COMPLETE') throw new Error('Operation 01 must be preserved as complete.');
+for(let n=2;n<=30;n++) if(project.stageRecords?.[String(n)]?.status!=='NOT STARTED') throw new Error(`Stage ${n} must remain not started in the retained Operation 01 project.`);
+if((project.generatedPrompts||[]).length!==1||(project.generatedOutputs||[]).length!==1||(project.outputReceipts||[]).length!==1) throw new Error('Retained project must preserve the one instruction, one completed output, and one receipt that actually exist after Operation 01.');
+if(!project.generatedOutputs[0]?.output?.includes('OPERATION 01 — DEFINE JOB')) throw new Error('Authorized Operation 01 output is missing.');
+if(!project.generatedOutputs[0]?.output?.includes('Proceed to Operation 02 — Build the Source Inventory.')) throw new Error('Operation 01 next action is missing.');
+if((project.runRecords||[]).length!==0||(project.verificationRecords||[]).length!==0) throw new Error('Later execution evidence must not be fabricated before those stages run.');
+if((project.requirements||[]).length!==0||(project.tests||[]).length!==0) throw new Error('Requirements and tests must not be fabricated before their workflow stages run.');
+if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project))) throw new Error('Unrelated generator test-project content remains.');
+console.log(`preserved authorized retained project: ${project.jobId} · ${project.title}`);
