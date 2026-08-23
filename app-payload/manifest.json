@@ -1,0 +1,10 @@
+{
+  "format": "closed-loop-app-payload/1",
+  "encoding": "gzip+base64",
+  "partCount": 5,
+  "partPattern": "part-%02d.txt",
+  "htmlBytes": 104483,
+  "compressedBytes": 28466,
+  "htmlSha256": "084701c511050e5aed3bdfae0cd6911e2655e713c0c733cc3e1a64882a90f30f",
+  "compressedSha256": "d82383525cdb816602cf48616cdfcd00010ba524ff9758868f7babd228cf27c5"
+}
