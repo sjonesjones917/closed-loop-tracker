@@ -121,13 +121,19 @@ jobs:
           exit 1
       - id: workflow_interaction
         continue-on-error: true
-        run: node verify-live.mjs workflow 2>&1 | tee live-proof/workflow-interaction.log
+        run: |
+          set -o pipefail
+          node verify-live.mjs workflow 2>&1 | tee live-proof/workflow-interaction.log
       - id: history_interaction
         continue-on-error: true
-        run: node verify-live.mjs history 2>&1 | tee live-proof/history-interaction.log
+        run: |
+          set -o pipefail
+          node verify-live.mjs history 2>&1 | tee live-proof/history-interaction.log
       - id: reset_interaction
         continue-on-error: true
-        run: node verify-live.mjs reset 2>&1 | tee live-proof/reset-interaction.log
+        run: |
+          set -o pipefail
+          node verify-live.mjs reset 2>&1 | tee live-proof/reset-interaction.log
       - uses: actions/upload-artifact@v4
         if: always()
         with: {name: 'live-proof-${{ github.run_id }}', path: live-proof, if-no-files-found: error}
