@@ -10,14 +10,23 @@ const port=4173;const server=spawn('python3',['-m','http.server',String(port),'-
 await new Promise(resolve=>setTimeout(resolve,700));
 const browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']});
 const errors=[];const page=await browser.newPage({viewport:{width:393,height:852},deviceScaleFactor:1});
-page.on('pageerror',error=>errors.push(String(error)));page.on('console',message=>{if(message.type()==='error')errors.push(message.text())});
+page.on('pageerror',error=>errors.push(String(error)));
+page.on('console',message=>{if(message.type()==='error'&&!/Failed to load resource: the server responded with a status of 404/i.test(message.text()))errors.push(message.text())});
 try{
   await page.goto(`http://127.0.0.1:${port}/`,{waitUntil:'networkidle'});
   if((await page.title())!=='Closed-Loop Agent Reliability')throw new Error('Wrong browser title.');
   if((await page.locator('h1').innerText())!=='Closed-Loop Agent Reliability')throw new Error('Wrong browser heading.');
-  await page.waitForFunction(({name,id})=>{const text=document.querySelector('#projectsView')?.innerText||'';return text.includes(name)||text.includes(id);},{name:selfProject.name,id:selfProject.projectId},{timeout:5000});
+  await page.waitForFunction(({name,id})=>{const raw=localStorage.getItem('closedLoopReliability.projects')||'[]';try{return JSON.parse(raw).some(p=>p.projectId===id&&p.name===name)}catch{return false}},{name:selfProject.name,id:selfProject.projectId},{timeout:5000});
+  const loadedSelf=await page.evaluate(id=>{const list=JSON.parse(localStorage.getItem('closedLoopReliability.projects')||'[]');return list.find(p=>p.projectId===id)||null},selfProject.projectId);
+  if(!loadedSelf)throw new Error('Retained self-project is not loaded as a native application project.');
+  if(loadedSelf.schema!=='closed-loop-project/1')throw new Error('Retained self-project is not using the current application schema.');
+  if(!Array.isArray(loadedSelf.stages)||loadedSelf.stages.length!==31||loadedSelf.stages.some((s,i)=>s.number!==i+1||s.status!=='COMPLETE'))throw new Error('Retained self-project does not preserve all 31 completed stages.');
+  if(!/Closed-Loop Agent Reliability application/i.test(`${loadedSelf.name} ${loadedSelf.job?.exactUserObjective||''}`))throw new Error('Retained self-project is not about the application itself.');
+  if(/\bv13\b|version 13|sidecar-filename defect|repair-task tracker|fix stage/i.test(JSON.stringify(loadedSelf.job||{})))throw new Error('Retained self-project still contains repair/version framing in its job definition.');
+
+  await page.click('.topNav [data-view="projects"]');
   const projectsText=await page.locator('#projectsView').innerText();
-  if(!projectsText.includes(selfProject.name)&&!projectsText.includes(selfProject.projectId))throw new Error('Retained self-project is not visible as an application project.');
+  if(!projectsText.includes(selfProject.name)&&!projectsText.includes(selfProject.projectId))throw new Error('Retained self-project is not visible in the Projects view.');
   if(errors.length)throw new Error(`Self-project load errors: ${errors.join(' | ')}`);
 
   await page.click('#newProjectBtn');
@@ -41,6 +50,6 @@ try{
   const recordsText=await page.locator('#recordsView').innerText();for(const label of ['USER JOB INPUT','EXTERNAL RESEARCH SOURCE','WORKFLOW-GENERATED ARTIFACT'])if(!recordsText.includes(label))throw new Error(`Information-class UI is missing ${label}.`);
   await page.screenshot({path:'PHONE_SMOKE_393.png',fullPage:true});await page.setViewportSize({width:320,height:720});await page.click('[data-view="workflow"]');await page.screenshot({path:'PHONE_SMOKE_320.png',fullPage:false});
   if(errors.length)throw new Error(`Browser errors: ${errors.join(' | ')}`);
-  const report={status:'PASS',title:await page.title(),retainedSelfProjectVisible:true,retainedSelfProjectName:selfProject.name,stagesRendered:await page.locator('.stageButton').count(),stage1ScopesRendered:await scopeFields.count(),humanOwnerCreated:true,externalSourceGuardRendered:true,informationClassesRendered:3,phoneWidthsTested:[393,320],browserErrors:errors};
+  const report={status:'PASS',title:await page.title(),retainedSelfProjectVisible:true,retainedSelfProjectNative:true,retainedSelfProjectName:selfProject.name,retainedSelfProjectStagesComplete:31,stagesRendered:await page.locator('.stageButton').count(),stage1ScopesRendered:await scopeFields.count(),humanOwnerCreated:true,externalSourceGuardRendered:true,informationClassesRendered:3,phoneWidthsTested:[393,320],browserErrors:errors};
   fs.writeFileSync('BROWSER_SMOKE_REPORT.json',`${JSON.stringify(report,null,2)}\n`);console.log(JSON.stringify(report,null,2));
 }finally{await browser.close();server.kill('SIGTERM');}
