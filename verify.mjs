@@ -4,19 +4,31 @@ for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${fi
 const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8'),core=fs.readFileSync('workbook.js','utf8'),project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
 if((html.match(/<html\b/g)||[]).length!==1)throw new Error('There must be one application shell.');
+if(!html.includes('closed-loop-30-runtime-4'))throw new Error('The repaired application cache identity is missing.');
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Authorized retained project identity is wrong.');
 if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Test project must contain exactly 30 stage records.');
 if(project.currentStage!==2||project.currentState!=='READY')throw new Error('Test project must preserve completed Operation 01 and be ready for Operation 02.');
 if(project.stageRecords?.['1']?.status!=='COMPLETE')throw new Error('Operation 01 must be complete.');
 for(let n=2;n<=30;n++)if(project.stageRecords?.[String(n)]?.status!=='NOT STARTED')throw new Error(`Stage ${n} must remain not started.`);
+for(let n=1;n<=30;n++){
+  const record=project.stageRecords?.[String(n)]?.record;
+  if(typeof record!=='string'||!record.trim())throw new Error(`Stage ${n} does not have a readable stage record.`);
+  if(record.includes('[object Object]'))throw new Error(`Stage ${n} contains an object-display failure.`);
+}
+if(!project.stageRecords['2'].record.includes('STAGE 02 — BUILD THE SOURCE INVENTORY')||!project.stageRecords['2'].record.includes('SOURCE_SET_VERSION'))throw new Error('Stage 02 is not initialized as a usable source-inventory record.');
 if((project.generatedPrompts||[]).length!==1)throw new Error('Exactly one generated instruction should exist after Operation 01.');
-if((project.generatedOutputs||[]).length!==1||!project.generatedOutputs[0]?.output?.includes('OPERATION 01 — DEFINE JOB'))throw new Error('Authorized Operation 01 output is missing.');
+const prompt=project.generatedPrompts[0]?.prompt||'';
+if(!prompt.includes('COPY BLOCK — STAGE 01 — INITIALIZE THE JOB')||!prompt.includes('JOB_ID: JOB-20260823144121')||!prompt.includes('AUTHORIZED STAGE RECORD')||prompt.includes('[object Object]'))throw new Error('The saved Stage 01 instruction is incomplete or unreadable.');
+if(!project.generatedPrompts[0]?.originalPrompt)throw new Error('The original Stage 01 instruction summary was not preserved.');
+const operation01=project.stageRecords['1'].output;
+if((project.generatedOutputs||[]).length!==1||project.generatedOutputs[0]?.output!==operation01||!operation01.includes('OPERATION 01 — DEFINE JOB')||!operation01.includes('Proceed to Operation 02 — Build the Source Inventory.'))throw new Error('The complete authorized Operation 01 output is not preserved consistently.');
 if((project.outputReceipts||[]).length!==1)throw new Error('Exactly one output receipt should exist after Operation 01.');
 for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`${name} contains fabricated downstream records.`);
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Unrelated generator project content remains.');
-for(const token of ['validateStageDraft','saveAppendix','sha256Bytes','compareArtifactSets','Complete project record','Generated outputs','Output receipts','currentStagePrompt','invalidateDownstream'])if(!app.includes(token))throw new Error(`Application control missing: ${token}`);
+for(const token of ['validateStageDraft','saveAppendix','sha256Bytes','compareArtifactSets','Complete project record','Generated instructions','Generated outputs','Output receipts','Original project input','Supporting records for this stage','currentStagePrompt','invalidateDownstream','stageRecordText','stageOutputText'])if(!app.includes(token))throw new Error(`Application control missing: ${token}`);
+if(app.includes("draftRecord:r.record||r.evidenceRecord"))throw new Error('The object-display stage-record defect remains in the application.');
 for(const token of ['PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY','RECONCILE PROCESS AND PRODUCT EVIDENCE','RUN INDEPENDENT MEANING VERIFICATION'])if(!core.includes(token))throw new Error(`30-stage workflow item missing: ${token}`);
 if(/human-project\/31|31 operations|Freeze New Version/i.test(app+html+core))throw new Error('Discarded 31-operation architecture remains.');
 const banned=new RegExp('se'+'mantic','i');if(banned.test(app+html+core))throw new Error('Prohibited terminology remains in application source.');
-console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length},null,2));
+console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,readableStageRecords:30},null,2));
