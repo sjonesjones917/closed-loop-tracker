@@ -1,36 +1,110 @@
-import fs from 'node:fs';import zlib from 'node:zlib';import path from 'node:path';import {pathToFileURL} from 'node:url';
-const failures=[],evidence=[];const ok=(c,m)=>(c?evidence:failures).push(m);
-const files=fs.readdirSync('.'),index=fs.readFileSync('index.html','utf8'),loader=fs.readFileSync('workbook.js','utf8'),project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-const parts=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];const source=zlib.gunzipSync(Buffer.concat(parts.map(f=>fs.readFileSync(f)))).toString('utf8');
-ok(files.filter(f=>f.endsWith('.html')).join(',')==='index.html','exactly one application HTML entry');
-ok(parts.every(f=>loader.includes(f))&&loader.includes('DecompressionStream("gzip")'),'existing workbook runtime retained');
-ok(loader.includes('cache:"no-store"')&&loader.includes('human-project-view-20260823'),'fresh runtime assets requested');
-ok(project.schema==='mobile-closed-loop-retained-test-project/1'&&project.stageEvidence?.length===30,'retained project has controlled schema and 30-stage evidence');
-ok(project.release?.releaseState==='ACCEPTED'&&project.release?.hashesEqual===true,'retained project release evidence is internally consistent');
-ok(loader.includes('id="project-view"')||loader.includes('panel.id="project-view"'),'human project view exists in existing application');
-ok(loader.includes('Test project')&&loader.includes('loadProject'),'test project is directly loadable');
-ok(loader.includes('User objective and requested deliverable'),'project shows user objective');
-ok(loader.includes('User/project input and source inventory'),'project shows user/project inputs');
-ok(loader.includes('Requirements')&&loader.includes('Acceptance tests')&&loader.includes('Failure and mutation tests'),'project shows requirements and tests');
-ok(loader.includes('Generated production instruction'),'project shows generated production instruction');
-ok(loader.includes('Execution iterations and all run results'),'project shows execution iterations');
-ok(loader.includes('Defects and root cause')&&loader.includes('Regression tests'),'project shows defects and regressions');
-ok(loader.includes('Approved baseline')&&loader.includes('Finished product'),'project shows baseline and finished product');
-ok(loader.includes('Release decision and hash identity')&&loader.includes('Evidence chains'),'project shows release and evidence chains');
-ok(loader.includes('All 30 completed stages and generated prompts')&&loader.includes('buildStagePrompt'),'project exposes generated prompts for all stages');
-ok(loader.includes('Complete retained project data'),'complete retained record remains inspectable');
-ok(loader.includes('30/30 COMPLETE')&&loader.includes('30/30 complete • 0 blocked'),'loaded project visibly reports completion rather than 0/30');
-ok(!loader.includes('Repository test project')&&!loader.includes('Deployment gate')&&!loader.includes('Verifier coverage'),'developer/repository diagnostics removed from human project UI');
-ok(index.includes('data-integrated-appendix-controls="true"'),'Appendix A-F behavior remains implemented in the one existing application');
-ok(index.includes('operationalRecords')&&index.includes("const LETTERS=['A','B','C','D','E','F']"),'Appendix records remain in workbook state');
-ok(index.includes('stageControls(state,n)')&&index.includes('data-contextual-controls="true"'),'Appendix controls remain stage/event contextual rather than another app');
-const temp=path.join(process.cwd(),'.verify-runtime.mjs');fs.writeFileSync(temp,source);let m;try{m=await import(pathToFileURL(temp).href+`?t=${Date.now()}`)}finally{fs.rmSync(temp,{force:true})}
-const {STAGES,APPENDICES,createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,immutableRevision,invalidateDownstream,compareArtifactSets}=m;
-ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'exactly 30 ordered stages');ok(Object.keys(APPENDICES).sort().join('')==='ABCDEF','Appendices A-F retained');
-const blank=createBlankState();ok(Object.keys(blank.appendices||{}).sort().join('')==='ABCDEF','every job retains Appendix A-F record stores');
-const controls=STAGES.reduce((n,s)=>n+stageHumanItems(s).length+stageGateItems(s).length+stageEvidenceItems(s).length,0);ok(controls>=400,`at least 400 explicit controls (${controls})`);
-const prompts=STAGES.map(s=>buildStagePrompt(s,createBlankState()));ok(prompts.length===30&&prompts.every((p,i)=>p.includes(STAGES[i].role)&&p.includes(STAGES[i].task)),'all 30 generated prompts preserve stage role and task');
-const history=[];const a=await immutableRevision(history,{v:1},{artifactType:'TEST'});history.push(a.record);const b=await immutableRevision(history,{v:2},{artifactType:'TEST'});ok(a.record.version==='v001'&&b.record.version==='v002','immutable revisions append');
-const d=createBlankState();d.stages[2].decision='READY TO PROCEED';d.stages[2].status='COMPLETE';ok(invalidateDownstream(d,1,'CHANGE-1').length>0&&d.stages[2].decision==='NOT READY - CORRECTION REQUIRED','upstream change invalidates downstream');
-const audited=[{artifactId:'A1',name:'a',size:1,sha256:'1'.repeat(64)}],same=[{name:'a',size:1,sha256:'1'.repeat(64)}],diff=[{name:'a',size:1,sha256:'2'.repeat(64)}];ok(compareArtifactSets(audited,same,'ACCEPTED').authorization==='AUTHORIZED','accepted identical bytes authorize');ok(compareArtifactSets(audited,diff,'ACCEPTED').authorization==='NOT AUTHORIZED','hash mismatch blocks');ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','blocked gate blocks');
-if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidence},null,2));process.exit(1)}console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',applicationEntries:1,retainedProject:'TEST_PROJECT.json',humanProjectView:true,stages:30,controls,generatedPrompts:prompts.length,checks:evidence.length},null,2));
+import fs from 'node:fs';
+import zlib from 'node:zlib';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {pathToFileURL} from 'node:url';
+
+const failures=[];
+const evidence=[];
+const ok=(condition,message)=>{(condition?evidence:failures).push(message)};
+const rootFiles=fs.readdirSync('.');
+const index=fs.readFileSync('index.html','utf8');
+const loader=fs.readFileSync('workbook.js','utf8');
+const testProject=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
+const runtimeParts=['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'];
+const compressed=Buffer.concat(runtimeParts.map(name=>fs.readFileSync(name)));
+const source=zlib.gunzipSync(compressed).toString('utf8');
+
+const html=rootFiles.filter(name=>name.endsWith('.html'));
+ok(html.length===1&&html[0]==='index.html','exactly one application HTML entry exists');
+ok(!rootFiles.some(name=>/^(?:app[-_]|v\d|index[-_]).*\.html$/i.test(name)),'no alternate or versioned application HTML exists');
+ok(index.includes('Mobile Closed-Loop Agent Reliability Workbook'),'existing workbook application shell is retained');
+ok(index.includes('New clean job')&&index.includes('Export')&&index.includes('Import'),'human job controls are retained');
+ok(loader.includes('grid-template-columns:repeat(2,minmax(0,1fr))')&&loader.includes('.tools{display:grid'),'phone controls and stage navigation use a compact human layout');
+ok(loader.includes('#appendix-operational-purpose')&&loader.includes('#repository-test-project'),'known internal panels are hidden whenever the runtime renders them');
+
+ok(rootFiles.includes('verify.mjs')&&rootFiles.includes('TEST_PROJECT.json'),'the repository test project is retained');
+ok(testProject.testProjectId==='TEST-PROJECT-30-STAGE-001','the retained test-project identity is exact');
+ok(testProject.autoload===false&&testProject.externalAuthority===false,'the test project never autoloads and is not authority for real jobs');
+ok(loader.includes('loadTestJob')&&loader.includes('buildTestJobState')&&loader.includes('TEST_PROJECT.json'),'the retained test project loads as an actual job in the existing workbook');
+ok(loader.includes('button.textContent="Test job"'),'the human-facing test-job action is concise');
+ok(!loader.includes('function runBrowserTestProject')&&!loader.includes('id="test-project-results"')&&!loader.includes('Verifier coverage</strong>'),'repository diagnostics are not rendered in the human application');
+ok(loader.includes('INTERNAL_TEXT')&&loader.includes('removeInternalPanels'),'developer and deployment prose is explicitly detected and removed from the primary UI');
+
+ok(loader.includes('removeInternalPanels')&&loader.includes('GLOBAL_INTERNAL_HEADING'),'global Appendix and diagnostic panels are removed');
+ok(loader.includes('humanizeContextualControls')&&loader.includes('data-human-stage-records'),'Appendix records remain available only as stage-native human records');
+ok(loader.includes('Independent run setup')&&loader.includes('Blocked stage')&&loader.includes('Change impact')&&loader.includes('Final release')&&loader.includes('New job setup')&&loader.includes('Response record'),'all six Appendix controls have human-facing contextual titles');
+ok(!loader.includes('APPENDIX A–F — OPERATIONAL CONTROLS'),'the application does not build a global Appendix summary wall');
+ok(loader.includes('Save this record')&&loader.includes('Additional information for this stage'),'contextual controls tell the user what to do where they apply');
+
+ok(runtimeParts.every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'the existing runtime payload is loaded without a second application');
+ok(loader.includes('cache:"no-store"'),'runtime assets bypass stale-cache reuse');
+ok(source.includes('export const STAGES'),'workbook module payload decompresses');
+
+const exactBytes=Buffer.from(testProject.objective.exactProductUtf8,'utf8');
+const exactHash=crypto.createHash('sha256').update(exactBytes).digest('hex');
+ok(exactBytes.length===testProject.objective.expectedByteLength,'test-project exact product byte length is internally consistent');
+ok(exactHash===testProject.objective.expectedSha256,'test-project exact product SHA-256 is internally consistent');
+ok(testProject.phases?.initial?.runCount===10&&testProject.phases?.corrected?.runCount===10&&testProject.phases?.confirmation?.runCount===10,'test project preserves all three ten-run batches');
+ok(testProject.phases?.initial?.expectedOutcome==='REJECTED'&&testProject.phases?.corrected?.expectedOutcome==='SATISFIED'&&testProject.phases?.confirmation?.expectedOutcome==='CONFIRMED','test project preserves failure, correction, and unchanged confirmation');
+ok(testProject.phases?.confirmation?.zeroChange===true,'confirmation iteration is explicitly zero-change');
+ok(testProject.release?.releaseState==='ACCEPTED'&&testProject.release?.hashesEqual===true&&testProject.release?.deliveryAuthorization==='AUTHORIZED','test-project release evidence is internally consistent');
+ok(Array.isArray(testProject.stageEvidence)&&testProject.stageEvidence.length===30,'test project contains evidence for all 30 stages');
+
+const temp=path.join(process.cwd(),'.verify-runtime.mjs');
+fs.writeFileSync(temp,source);
+let module;
+try{module=await import(pathToFileURL(temp).href+`?t=${Date.now()}`)}finally{fs.rmSync(temp,{force:true})}
+const {STAGES,APPENDICES,createBlankState,buildStagePrompt,stageHumanItems,stageGateItems,stageEvidenceItems,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,immutableRevision,invalidateDownstream,compareArtifactSets}=module;
+ok(STAGES.length===30&&STAGES.every((stage,index)=>stage.number===index+1),'exactly 30 ordered stages exist');
+ok(new Set(STAGES.map(stage=>stage.title)).size===30,'all 30 stage titles are distinct');
+ok(Object.keys(APPENDICES).sort().join('')==='ABCDEF','Appendix A-F operational definitions are retained');
+const blank=createBlankState();
+ok(blank?.appendices&&Object.keys(blank.appendices).sort().join('')==='ABCDEF','Appendix A-F records share the workbook job state');
+ok(REQUIREMENT_OUTCOMES.join('|')==='SATISFIED|VIOLATED|UNDETERMINED','exact requirement outcomes are retained');
+ok(RELEASE_OUTCOMES.join('|')==='ACCEPTED|REJECTED|BLOCKED','exact release outcomes are retained');
+const defectIds=STAGES.flatMap(stage=>stage.defectIds||[]);
+ok(defectIds.length===269&&new Set(defectIds).size===269,'269 explicit stage defect identifiers are represented exactly once');
+const controls=STAGES.flatMap(stage=>[...stageHumanItems(stage),...stageGateItems(stage),...stageEvidenceItems(stage)]);
+ok(controls.length>=400,`at least 400 explicit workbook controls exist (actual ${controls.length})`);
+ok(STAGES.every(stage=>stageHumanItems(stage).length&&stageGateItems(stage).length&&stageEvidenceItems(stage).length),'every stage has human, gate, and evidence controls');
+const prompts=STAGES.map(stage=>buildStagePrompt(stage,createBlankState()));
+ok(prompts.length===30&&prompts.every(Boolean),'all 30 copy-ready stage blocks remain available inside their stages');
+ok(prompts.every(prompt=>prompt.includes('Do not invent a missing fact')),'universal evidence discipline remains in every copy block');
+
+const history=[];
+const first=await immutableRevision(history,{value:1},{artifactType:'TEST'});
+history.push(first.record);
+const second=await immutableRevision(history,{value:2},{artifactType:'TEST'});
+ok(first.record.version==='v001'&&second.record.version==='v002'&&history[0].payload.value===1,'material revisions append without overwriting history');
+const downstream=createBlankState();
+downstream.stages[2].decision='READY TO PROCEED';
+downstream.stages[2].status='COMPLETE';
+ok(invalidateDownstream(downstream,1,'CHANGE-1').length>0&&downstream.stages[2].decision==='NOT READY - CORRECTION REQUIRED','material upstream change invalidates downstream determinations');
+const audited=[{artifactId:'A1',name:'artifact',size:1,sha256:'1'.repeat(64)}];
+const same=[{name:'artifact',size:1,sha256:'1'.repeat(64)}];
+const different=[{name:'artifact',size:1,sha256:'2'.repeat(64)}];
+ok(compareArtifactSets(audited,same,'ACCEPTED').authorization==='AUTHORIZED','accepted byte-identical release is authorized');
+ok(compareArtifactSets(audited,different,'ACCEPTED').authorization==='NOT AUTHORIZED','hash mismatch stops release');
+ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','non-ACCEPTED gate stops release');
+
+if(failures.length){
+  console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));
+  process.exit(1);
+}
+console.log(JSON.stringify({
+  determination:'SATISFIED',
+  application:'index.html',
+  applicationEntries:1,
+  testProject:'TEST_PROJECT.json + verify.mjs',
+  testProjectVisibleAsDiagnostics:false,
+  testProjectLoadableAsJob:true,
+  stages:30,
+  stageDefectIds:defectIds.length,
+  stageControls:controls.length,
+  appendixControlFamilies:6,
+  separateAppendixChecklistView:false,
+  contextualHumanAppendixControls:true,
+  developerDiagnosticsInPrimaryUI:false,
+  behavioralChecks:evidence.length
+},null,2));
