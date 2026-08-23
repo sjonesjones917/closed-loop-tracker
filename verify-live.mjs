@@ -18,7 +18,7 @@ async function ev(expression){const r=await send('Runtime.evaluate',{expression,
 async function waitFor(expression,ms=20000){const end=Date.now()+ms;while(Date.now()<end){try{if(await ev(expression))return true}catch{}await sleep(100)}throw new Error(`Timed out: ${expression}`)}
 const ok=(condition,message)=>{if(!condition)throw new Error(message)};
 async function screenshot(name){const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:true});fs.writeFileSync(`live-proof/${name}.png`,Buffer.from(r.data,'base64'));}
-async function fresh(){await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});await send('Page.navigate',{url:base+'&mode='+mode+'&t='+Date.now()});await waitFor("document.readyState==='complete'&&document.body.innerText.includes('Closed-Loop Reliability application repair')");await waitFor("!!document.querySelector('.agent-fab')&&!!document.querySelector('.agent-now')",20000);}
+async function fresh(){await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:393,height:852,deviceScaleFactor:1,mobile:true});await send('Page.navigate',{url:base+'&mode='+mode+'&t='+Date.now()});await waitFor("document.readyState==='complete'&&document.body.innerText.includes('Closed-Loop Reliability Application Evaluation')");await waitFor("!!document.querySelector('.agent-fab')&&!!document.querySelector('.agent-now')",20000);}
 
 try{
   await fresh();
@@ -30,6 +30,7 @@ try{
     ok(projectHeight<=36,`Project button oversized: ${projectHeight}`);
     ok(promptButtonHeight<=36,`Copy prompt button oversized: ${promptButtonHeight}`);
     ok(await ev("document.body.innerText.includes('Current agent work')&&document.body.innerText.includes('Copy prompt')"),'Project does not expose the current agent prompt');
+    ok(!(await ev("document.body.innerText.toLowerCase().includes('semantic')")),'Disallowed operator wording is visible');
     await screenshot('phone-overview-393x852');
     await ev("document.querySelector('[data-view=\"workflow\"]').click()");
     await waitFor("document.querySelectorAll('[data-operation]').length===31");
@@ -64,7 +65,7 @@ try{
     await ev("document.querySelector('[data-view=\"history\"]').click()");
     await waitFor("document.body.innerText.includes('Complete history')");
     ok(await ev("document.querySelector('#project-view').textContent.includes('Generated instruction')"),'Generated instructions are not inspectable in History');
-    ok(await ev("document.querySelector('#project-view').textContent.includes('Lossless application-repair job definition preserved.')"),'Preserved generated output is not inspectable in History');
+    ok(await ev("document.querySelector('#project-view').textContent.includes('Application-evaluation objective')"),'Preserved generated output is not inspectable in History');
     ok(await ev("!!document.querySelector('.agent-fab')"),'Agent prompt is not accessible while reviewing history');
     await screenshot('phone-history-393x852');
     fs.writeFileSync('live-proof/history-interaction.json',JSON.stringify({ok:true,runRecords:persistedRuns,historyVisible:true,promptAccessible:true},null,2));
