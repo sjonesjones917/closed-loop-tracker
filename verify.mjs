@@ -19,6 +19,11 @@ ok(crypto.createHash('sha256').update(css).digest('hex')==='befcafe57d62c87df67f
 ok((index.match(/<script[^>]+src=/g)||[]).length===1 && index.includes('<script src="workbook.js"></script>'),'exactly one existing application runtime entry is loaded');
 ok(!/view=['\"](?:appendices|control)['\"]/i.test(index),'Appendices A-F are not a separate workflow or control view');
 ok(index.includes('data-integrated-appendix-controls="true"')&&index.includes('data-integrated-operational-controls="true"'),'Appendix controls are integrated into the existing stage surface');
+const integrated=index.match(/<script data-integrated-appendix-controls="true">([\s\S]*?)<\/script>/)?.[1]||'';
+ok(integrated.length>0,'integrated Appendix A-F runtime is present');
+let inlineSyntax=true; try{new Function(integrated)}catch(error){inlineSyntax=false;failures.push(`integrated Appendix A-F runtime syntax error: ${error.message}`)}
+ok(inlineSyntax,'integrated Appendix A-F runtime parses as JavaScript');
+ok(!index.includes('closed-loop-workbook-operational-controls')&&!loader.includes('closed-loop-workbook-operational-controls'),'no disconnected appendix-only storage subsystem remains');
 ok(index.includes('Appendices A–F operate inside the stages that require them')&&index.includes('They are reusable enforcement records, not additional stages and not a second checklist application.'),'the existing shell states the intended appendix architecture');
 ok(index.includes('MASTER JOB CONTROL')&&index.includes('Master 30-stage tracker')&&index.includes('Mandatory operating rules')&&index.includes('Quick execution loop'),'master job control, tracker, rules, and execution loop are retained in the one app');
 ok(index.includes("const STORE='mclarw'")&&index.includes('operationalRecords'),'Appendix A-F records use the same controlling workbook state');
@@ -30,7 +35,7 @@ ok(index.includes('createResetRecord')&&index.includes("label==='New clean job'"
 ok(index.includes('recordAgentOutputReceipt')&&index.includes('createPendingReceipt'),'Appendix F records agent outputs and verification routing');
 ok(index.includes('installRenderGuard')&&index.includes("globalThis.view='workbook'"),'the runtime guard keeps the application on the single workbook surface');
 ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'runtime loader reads the existing compressed workbook module payload');
-ok(!loader.includes('closed-loop-workbook-operational-controls')&&!loader.includes('renderOperationalControl')&&!loader.includes('controlPanel('),'workbook.js contains no duplicate Appendix A-F subsystem');
+ok(!loader.includes('renderOperationalControl')&&!loader.includes('controlPanel(')&&!loader.includes('localStorage'),'workbook.js is only the existing module loader and contains no duplicate application state or appendix UI');
 ok(compressed.length>0 && source.includes('export const STAGES'),'workbook module payload is present and decompresses');
 const temp=path.join(process.cwd(),'.verify-runtime.mjs'); fs.writeFileSync(temp,source);
 let m; try{m=await import(pathToFileURL(temp).href+'?t='+Date.now())}finally{fs.rmSync(temp,{force:true})}
