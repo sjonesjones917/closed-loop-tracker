@@ -93,32 +93,56 @@ for (let number = 23; number <= 31; number += 1) {
   if (!completionEvidence.includes(appSha256)) fail(`Stage ${number} is not bound to the current application SHA-256.`);
 }
 
-const requiredCurrentCollections = [
-  ['baselines', project.baselines],
-  ['products', project.products],
-  ['deterministicChecks', project.deterministicChecks],
-  ['semanticChecks', project.semanticChecks],
-  ['adversarialChecks', project.adversarialChecks],
-  ['representationInspections', project.representationInspections],
-  ['processAudits', project.processAudits],
-  ['productAudits', project.productAudits],
-  ['decisions', project.decisions],
-  ['hashVerifications', project.hashVerifications],
-  ['releases', project.releases]
-];
-for (const [name, value] of requiredCurrentCollections) if (!Array.isArray(value) || value.length === 0) fail(`Retained project current ${name} records are missing.`);
+const nativeRecord = (record, collection, stageNumber) => {
+  if (!record || typeof record !== 'object') fail(`${collection} record is missing.`);
+  if (!String(record.id || '').trim()) fail(`${collection} record lacks native id.`);
+  if (record.informationClass !== 'WORKFLOW_GENERATED_ARTIFACT') fail(`${collection} record has the wrong information class.`);
+  if (Number(record.stageNumber) !== stageNumber) fail(`${collection} record has the wrong stage number.`);
+  if (!String(record.createdAt || '').trim() || !String(record.updatedAt || '').trim()) fail(`${collection} record lacks timestamps.`);
+  if (!String(record.performedByType || '').trim() || !String(record.performedByName || '').trim() || !String(record.performanceEvidence || '').trim()) fail(`${collection} record lacks native actor provenance.`);
+  return record;
+};
 
-const product = project.products[0];
-if (product.artifactName !== 'index.html' || product.byteLength !== htmlBytes.length || product.sha256 !== appSha256 || product.status !== 'COMPLETE') fail('Current product record does not match the application bytes.');
-const hashVerification = project.hashVerifications[0];
-if (hashVerification.auditedHash !== appSha256 || hashVerification.releaseHash !== appSha256 || hashVerification.independentlyComputedHash !== appSha256 || hashVerification.equal !== true || hashVerification.status !== 'SATISFIED') fail('Current release-hash verification is invalid.');
-const decision = project.decisions[0];
-if (decision.releaseDecision !== 'ACCEPTED') fail('Current release decision is not ACCEPTED.');
-const release = project.releases[0];
-if (release.artifactName !== 'index.html' || release.sha256 !== appSha256 || release.byteLength !== htmlBytes.length || release.status !== 'RELEASED_EXACT_ACCEPTED_ARTIFACT') fail('Current release record does not identify the exact accepted application.');
+const baseline = nativeRecord(project.baselines?.[0], 'baselines', 21);
+for (const field of ['baselineId','candidateId','inputSnapshot','sourceSet','requirementSet','productionInstruction','testSuite','toolConfiguration','convergenceEvidence','confirmationEvidence','componentHashes','frozenAt']) if (!String(baseline[field] || '').trim()) fail(`Native baseline record lacks ${field}.`);
+
+const product = nativeRecord(project.products?.[0], 'products', 22);
+if (product.productId === undefined || product.baselineId !== baseline.baselineId) fail('Current product is not linked to the approved baseline.');
+if (product.artifactKind !== 'TEXT' || product.artifactName !== 'index.html') fail('Current product is not the native standalone TEXT index.html product.');
+if (product.textContent !== html) fail('Native Stage 22 product textContent is not byte-for-byte identical to the current application.');
+if (Number(product.exactByteLength) !== htmlBytes.length || product.computedSha256 !== appSha256) fail('Native current product byte length or SHA-256 is incorrect.');
+if (!String(product.manifest || '').includes(appSha256)) fail('Native current product manifest is not bound to the current hash.');
+
+const deterministic = nativeRecord(project.deterministicChecks?.[0], 'deterministicChecks', 23);
+if (deterministic.productId !== product.productId || deterministic.checkType !== 'STRUCTURE' || deterministic.status !== 'PASS' || !deterministic.procedure || !deterministic.expectedResult || !deterministic.observedResult || !deterministic.evidence) fail('Native deterministic check is incomplete or failed.');
+
+const semantic = nativeRecord(project.semanticChecks?.[0], 'semanticChecks', 24);
+if (semantic.productId !== product.productId || semantic.result !== 'SATISFIED' || !semantic.requirementId || !semantic.requiredMeaning || !semantic.observedMeaning || !semantic.evidence || !semantic.independenceEvidence) fail('Native semantic check is incomplete or unsatisfied.');
+
+const adversarial = nativeRecord(project.adversarialChecks?.[0], 'adversarialChecks', 25);
+if (adversarial.productId !== product.productId || adversarial.status !== 'PASS' || !adversarial.attackType || !adversarial.attemptedDisproof || !adversarial.result || !adversarial.evidence) fail('Native adversarial check is incomplete or failed.');
+
+const representation = nativeRecord(project.representationInspections?.[0], 'representationInspections', 26);
+if (representation.productId !== product.productId || representation.status !== 'PASS' || !representation.representation || !representation.viewportOrMedium || !representation.checks || !representation.evidence) fail('Native representation inspection is incomplete or failed.');
+
+const processAudit = nativeRecord(project.processAudits?.[0], 'processAudits', 27);
+for (const field of ['scope','approvedInputs','freezeAndConfiguration','testAndIsolation','transitionsAndCorrections','traceability','findings','independenceEvidence']) if (!String(processAudit[field] || '').trim()) fail(`Native process audit lacks ${field}.`);
+if (processAudit.status !== 'PASS') fail('Native process audit did not pass.');
+
+const productAudit = nativeRecord(project.productAudits?.[0], 'productAudits', 28);
+if (productAudit.productId !== product.productId || productAudit.status !== 'PASS' || !productAudit.mandatoryRequirementEvidence || !productAudit.validatorEvidence || !productAudit.unresolvedDefects || !productAudit.independenceEvidence) fail('Native product audit is incomplete or failed.');
+
+const decision = nativeRecord(project.decisions?.[0], 'decisions', 29);
+if (decision.decision !== 'ACCEPTED' || !decision.basis || !decision.mandatoryEvidenceSummary || decision.unresolvedMandatoryItems !== 'NONE' || !decision.decidedBy || !decision.decidedAt) fail('Native release decision is incomplete or not ACCEPTED.');
+
+const hashVerification = nativeRecord(project.hashVerifications?.[0], 'hashVerifications', 30);
+if (hashVerification.productId !== product.productId || hashVerification.algorithm !== 'SHA-256' || hashVerification.auditedHash !== appSha256 || hashVerification.releaseHash !== appSha256 || Number(hashVerification.byteLength) !== htmlBytes.length || hashVerification.match !== 'YES' || !hashVerification.byteSource || !hashVerification.evidence) fail('Native release-hash verification is invalid.');
+
+const release = nativeRecord(project.releases?.[0], 'releases', 31);
+if (release.productId !== product.productId || release.decisionId !== decision.id || release.hashVerificationId !== hashVerification.id || release.releaseStatus !== 'RELEASED' || !String(release.artifactIdentity || '').includes(appSha256) || release.destination !== 'https://sjonesjones917.github.io/closed-loop-tracker/' || !release.releasedAt || !release.releaseEvidence || !release.traceabilityReference) fail('Native release record does not identify the exact accepted application.');
 
 const metadata = project.legacyProjectMetadata || {};
-if (metadata.releaseDecision !== 'ACCEPTED') fail('Retained project release decision is not ACCEPTED.');
+if (metadata.releaseDecision !== 'ACCEPTED') fail('Retained project metadata release decision is not ACCEPTED.');
 if (metadata.auditedHash !== appSha256 || metadata.releaseHash !== appSha256) fail('Retained project metadata hashes do not equal the current application hash.');
 if (metadata.artifactName !== 'index.html') fail('Retained project metadata identifies the wrong release artifact.');
 
@@ -136,6 +160,7 @@ console.log(JSON.stringify({
   normalProjectBehavior: true,
   stageWorkflowMatchesCurrentApp: true,
   stages: 31,
+  nativeRecordSchemas: true,
   currentFinishedProductExact: true,
   currentVerificationAndAuditRecords: true,
   currentReleaseHashExact: true,
