@@ -3,6 +3,19 @@ import fs from 'node:fs';
 const file='rebuild-self-project.mjs';
 let source=fs.readFileSync(file,'utf8');
 
+const scopeReplacements=[
+  ["const name=`Self-verification ${phase} ${role} ${runId(index)}`;","const name=`Application execution ${phase} ${role} ${runId(index)}`;"],
+  ['a visible retained self-verification project','a visible retained application-build project'],
+  ['completed application self-verification project','completed application-build project'],
+  ['whole-application self-verification project','complete application-build project'],
+  ['CURRENT-SELF-VERIFICATION','CURRENT-APPLICATION-BUILD'],
+  ['JOB-APPLICATION-SELF-VERIFICATION','JOB-APPLICATION-COMPLETE-BUILD'],
+  ['PROJECT-APPLICATION-SELF-VERIFICATION','PROJECT-APPLICATION-COMPLETE-BUILD']
+];
+for(const [oldText,newText] of scopeReplacements)source=source.split(oldText).join(newText);
+
+if(/self-verification/i.test(source))throw new Error('Residual self-verification framing remains in the durable retained-project generator.');
+
 if(!source.includes('promptText:selfProductionPrompt')){
   const anchor="const productionInstructions=[record('INSTRUCTION-001',8,{instructionId:'INSTRUCTION-001',objective:job.exactUserObjective,";
   if(!source.includes(anchor))throw new Error('Retained-project production instruction anchor was not found.');
@@ -37,8 +50,11 @@ const selfPreflightPrompt='PREFLIGHTED PRODUCTION INSTRUCTION\\n\\n'+selfProduct
   const after=source.slice(endIndex+3);
   const stage9=`\nproductionInstructions.push(record('INSTRUCTION-002',9,{instructionId:'INSTRUCTION-v002',promptText:selfPreflightPrompt,objective:job.exactUserObjective,governingInputs:'INSTRUCTION-v001 plus the approved Stage 1-8 records and preflight criteria.',scope:job.scopeBoundaries,orderedProcedure:'Use the reviewed production instruction only after checking ambiguity, missing inputs, contradictions, unavailable capabilities, unverifiable commands, responsibility/order gaps, traceability gaps, and wording-only compliance.',decisionRules:'Any material preflight defect must be corrected before candidate freeze; an unresolved mandatory issue is BLOCKED.',toolRules:'Use the same actual tools, external authority, and evidence rules established by INSTRUCTION-v001.',outputContract:job.requiredOutputProperties,failureBehavior:'Do not silently alter user intent or external authority. Return to the earliest responsible stage if a material preflight defect is found.',truthSemantics:'Preflight may clarify the generated instruction but cannot manufacture external authority or convert workflow artifacts into authority.',completionCriteria:job.successConditions}));\n`;
   source=before+stage9+after;
-  fs.writeFileSync(file,source);
 }
 
 if(!source.includes("instructionId:'INSTRUCTION-v001'")||!source.includes("instructionId:'INSTRUCTION-v002'")||!source.includes('promptText:selfProductionPrompt')||!source.includes('promptText:selfPreflightPrompt'))throw new Error('Retained prompt binding patch did not produce both prompt versions.');
-console.log(JSON.stringify({status:'PASS',stage8:'INSTRUCTION-v001',stage9:'INSTRUCTION-v002'},null,2));
+if(!source.includes('visible retained application-build project'))throw new Error('The durable Stage 1 output contract was not corrected to application-build scope.');
+if(!source.includes('Application execution ${phase} ${role} ${runId(index)}'))throw new Error('Rendered execution fixtures still use the obsolete project label.');
+
+fs.writeFileSync(file,source);
+console.log(JSON.stringify({status:'PASS',stage8:'INSTRUCTION-v001',stage9:'INSTRUCTION-v002',scope:'COMPLETE_APPLICATION_BUILD',residualSelfVerification:false},null,2));

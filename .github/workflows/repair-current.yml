@@ -58,21 +58,27 @@ jobs:
             node minimal-project-correction.mjs
             npm install --no-save --ignore-scripts playwright-core
             node build-app.mjs
+            node apply-prompt-generation.mjs
             node attach-self-project.mjs
             cp index.html app-v13.html
+            node verify-prompt-generation.mjs
             CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
             test -n "$CHROME_PATH"
             CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
             node verify-app.mjs
+            node verify-prompt-generation.mjs
             node verify-self-project.mjs
             node migrate-self-project.mjs
             CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
+            CHROME_PATH="$CHROME_PATH" node prompt-generation-smoke.mjs
             cmp -s index.html app-v13.html
             grep -Fq 'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD' SELF_VERIFIED_PROJECT.json
             grep -Fq 'Build the application defined by the corrected complete build instruction' SELF_VERIFIED_PROJECT.json
             grep -Fq 'assignedActorType": "HUMAN"' SELF_VERIFIED_PROJECT.json
             grep -Fq 'data-restore-retained-project' index.html
             grep -Fq 'closedLoopReliability.quarantinedProjects' index.html
+            grep -Fq 'data-generate-production-instruction' index.html
+            grep -Fq 'data-generate-preflighted-instruction' index.html
             if grep -Eqi 'sidecar-filename defect|app-arbitrary application version|External agent process|Visible UI evidence for Stage|executable prompt was copied|Modify the existing v13 application' SELF_VERIFIED_PROJECT.json; then
               echo 'Obsolete migrated project narrative remains.' >&2
               exit 1
@@ -88,8 +94,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if [[ "$STATUS" -eq 0 ]]; then
             rm -f "$LOG" .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml minimal-project-correction.mjs
-            git add -f index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json rebuild-self-project.mjs attach-self-project.mjs .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml minimal-project-correction.mjs
-            git commit -m 'Rebuild complete application project with durable Projects retention'
+            git add -f index.html app-v13.html app-payload/manifest.json app-payload/part-*.txt SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json PROMPT_GENERATION_SMOKE.json rebuild-self-project.mjs attach-self-project.mjs apply-prompt-generation.mjs verify-prompt-generation.mjs prompt-generation-smoke.mjs .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml minimal-project-correction.mjs
+            git commit -m 'Generate and verify production prompts in instruction stages'
           else
             printf '\nRECONSTRUCTION_EXIT_STATUS=%s\n' "$STATUS" >> "$LOG"
             git add -f "$LOG"

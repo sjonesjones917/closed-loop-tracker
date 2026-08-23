@@ -45,6 +45,48 @@ jobs:
           CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_PATH"
           CHROME_PATH="$CHROME_PATH" node rebuild-self-project.mjs
+      - name: Make prompt parity part of the permanent verifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('node:fs');
+          {
+            const file='verify-app.mjs';
+            let source=fs.readFileSync(file,'utf8');
+            if(!source.includes('Stage 8/9 instruction generation token missing')){
+              const anchor="for (const token of requiredArchitectureTokens) if (!html.includes(token)) fail(`Required architecture token missing: ${token}`);\n";
+              const count=source.split(anchor).length-1;
+              if(count!==1)throw new Error(`verify-app architecture anchor count ${count}.`);
+              const addition=anchor+"\nfor (const token of ['data-generate-production-instruction','data-generate-preflighted-instruction','buildProductionPrompt','createInstructionRecord']) if (!html.includes(token)) fail(`Stage 8/9 instruction generation token missing: ${token}`);\n";
+              source=source.replace(anchor,addition);
+              fs.writeFileSync(file,source);
+            }
+          }
+          {
+            const file='verify-self-project.mjs';
+            let source=fs.readFileSync(file,'utf8');
+            if(!source.includes('Retained Stage 8 generated production prompt is missing.')){
+              const anchor="const productionInstructions=requireArray('productionInstructions');\n";
+              const count=source.split(anchor).length-1;
+              if(count!==1)throw new Error(`verify-self-project production-instruction anchor count ${count}.`);
+              const addition=[
+                "const productionInstructions=requireArray('productionInstructions');",
+                "if(html.includes('data-generate-production-instruction')){",
+                "  const stage8Instruction=productionInstructions.find(record=>Number(record.stageNumber)===8);",
+                "  const stage9Instruction=productionInstructions.find(record=>Number(record.stageNumber)===9);",
+                "  if(!String(stage8Instruction?.promptText||'').startsWith('PRODUCTION INSTRUCTION'))fail('Retained Stage 8 generated production prompt is missing.');",
+                "  if(!String(stage9Instruction?.promptText||'').startsWith('PREFLIGHTED PRODUCTION INSTRUCTION'))fail('Retained Stage 9 preflighted production prompt is missing.');",
+                "  if(!String(stage8Instruction?.instructionId||'').trim()||stage8Instruction.instructionId===stage9Instruction.instructionId)fail('Retained Stage 8 and Stage 9 instructions are not independently versioned.');",
+                "  for(const record of [stage8Instruction,stage9Instruction])for(const required of ['OBJECTIVE','INDEPENDENT EXTERNAL AUTHORITY','MANDATORY ATOMIC REQUIREMENTS','ACCEPTANCE TESTS','FAILURE / MUTATION TESTS','TRUTH SEMANTICS','COMPLETION CRITERIA'])if(!String(record.promptText||'').includes(required))fail((record.instructionId||record.id)+' is missing '+required+'.');",
+                "}",
+                ""
+              ].join('\n');
+              source=source.replace(anchor,addition);
+              fs.writeFileSync(file,source);
+            }
+          }
+          NODE
       - name: Verify application and retained project
         shell: bash
         run: |
@@ -84,5 +126,3 @@ jobs:
           git commit -m 'Make Stage 8 and Stage 9 generate verified production instructions'
           git pull --rebase origin main
           git push origin HEAD:main
-
-# rerun: retained project must itself contain independently versioned Stage 8 and Stage 9 generated prompt records
