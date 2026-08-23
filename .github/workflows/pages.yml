@@ -26,16 +26,17 @@ jobs:
       - run: |
           test -f index.html
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
-          test -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
           test -f test-project/inputs/REQUEST.md
           test -f test-project/inputs/SITE_POLICY.md
           test -f test-project/inputs/WORKFLOW_RULES.md
+          test -f test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md
+          test ! -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
       - name: Publish test status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='workbook-test-project' -f description='Closed-loop project verification'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='workbook-test-project' -f description='Truthful closed-loop project verification'
   deploy:
     if: github.event_name != 'pull_request'
     needs: test-project
@@ -67,16 +68,17 @@ jobs:
       - name: Wait for exact deployed files
         run: |
           set -euo pipefail; mkdir -p live-proof; verified=false
+          FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md)
           for attempt in $(seq 1 48); do
             nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
             good=true
-            for f in index.html workbook.js human-ui.js TEST_PROJECT.json test-project/TEST-JOB-001__FIELD-HANDOFF.md test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md; do
+            for f in "${FILES[@]}"; do
               mkdir -p "live-proof/$(dirname "$f")"
               curl -fsSL "${PAGE_URL%/}/$f?verify=$nonce" -o "live-proof/$f" || good=false
             done
             if $good; then
               exact=true
-              for f in index.html workbook.js human-ui.js TEST_PROJECT.json test-project/TEST-JOB-001__FIELD-HANDOFF.md test-project/inputs/REQUEST.md test-project/inputs/SITE_POLICY.md test-project/inputs/WORKFLOW_RULES.md; do
+              for f in "${FILES[@]}"; do
                 [[ "$(sha256sum "$f"|awk '{print $1}')" == "$(sha256sum "live-proof/$f"|awk '{print $1}')" ]] || exact=false
               done
               if $exact; then verified=true; break; fi
@@ -97,18 +99,18 @@ jobs:
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=24000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
           grep -q 'Portable generator service handoff' live-proof/test-project.html
           grep -q 'GEN-042' live-proof/test-project.html
-          grep -q 'Preserved runs' live-proof/test-project.html
-          grep -q '>30<' live-proof/test-project.html
-          grep -q 'Overview' live-proof/test-project.html
-          grep -q 'Workflow' live-proof/test-project.html
-          grep -q 'Runs' live-proof/test-project.html
-          grep -q 'Issues' live-proof/test-project.html
-          grep -q 'Release' live-proof/test-project.html
-          grep -q 'History' live-proof/test-project.html
+          grep -q 'Project data' live-proof/test-project.html
+          grep -q 'Independent runs' live-proof/test-project.html
+          grep -q 'Failures, blockers and corrections' live-proof/test-project.html
+          grep -q 'Release readiness' live-proof/test-project.html
+          grep -q 'Complete project history' live-proof/test-project.html
+          grep -q 'Stage 11' live-proof/test-project.html
+          grep -q 'BLOCKED' live-proof/test-project.html
+          grep -q 'zero are recorded' live-proof/test-project.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/test-project.html
       - name: Publish live status
         if: always()
         env: {GH_TOKEN: '${{ github.token }}', RESULT: '${{ job.status }}'}
         run: |
           if [ "$RESULT" = success ]; then STATE=success; else STATE=failure; fi
-          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='live-workbook-ui' -f description='Rendered phone UI and real test project verified'
+          gh api --method POST repos/${{ github.repository }}/statuses/${{ github.sha }} -f state="$STATE" -f context='live-workbook-ui' -f description='Rendered phone UI and truthful test project verified'
