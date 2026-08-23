@@ -71,22 +71,32 @@ jobs:
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     steps:
-      - name: Publish exact repaired-app result
+      - name: Publish exact repair results
         env:
           GH_TOKEN: ${{ github.token }}
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           LIVE_RESULT: ${{ needs.verify-live.result }}
         run: |
+          post_status(){
+            local context="$1" result="$2"
+            local state=failure
+            [ "$result" = success ] && state=success
+            curl --fail-with-body -sS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              -d "{\"state\":\"$state\",\"context\":\"$context\",\"description\":\"$result\"}"
+          }
+          post_status repair-source "$TEST_RESULT"
+          post_status repair-deploy "$DEPLOY_RESULT"
+          post_status repair-live "$LIVE_RESULT"
           STATE=failure
-          DESCRIPTION="repair checks failed"
-          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
-            STATE=success
-            DESCRIPTION="source, deployment, live project, 320px and 393px checks succeeded"
-          fi
+          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then STATE=success; fi
           curl --fail-with-body -sS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d "{\"state\":\"$STATE\",\"context\":\"repaired-app\",\"description\":\"$DESCRIPTION\"}"
+            -d "{\"state\":\"$STATE\",\"context\":\"repaired-app\",\"description\":\"source=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT\"}"
