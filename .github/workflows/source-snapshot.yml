@@ -1,0 +1,43 @@
+name: Current source snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/source-snapshot.yml
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  snapshot:
+    name: Preserve current source for exact repair
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pack the exact current repository
+        run: |
+          set -euo pipefail
+          tar --exclude=.git -czf current-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: current-source-snapshot
+          path: current-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
+      - name: Publish snapshot status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Current source snapshot preserved'; else STATE=failure; DESCRIPTION='Current source snapshot failed'; fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"current-source-snapshot\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
