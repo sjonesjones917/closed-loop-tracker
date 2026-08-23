@@ -54,6 +54,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
@@ -77,3 +79,133 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             --data "{\"state\":\"$STATE\",\"context\":\"single-workbook-pages\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
+  verify-live:
+    if: github.event_name != 'pull_request'
+    needs: [test-project, deploy]
+    name: Verify the rendered live workbook
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact deployed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PAGE_URL"
+          mkdir -p live-proof
+          verified=false
+          for attempt in $(seq 1 48); do
+            nonce="${GITHUB_SHA}-${attempt}-$(date +%s)"
+            if curl -fsSL "${PAGE_URL%/}/index.html?verify=${nonce}" -o live-proof/index.html \
+              && curl -fsSL "${PAGE_URL%/}/workbook.js?verify=${nonce}" -o live-proof/workbook.js \
+              && curl -fsSL "${PAGE_URL%/}/TEST_PROJECT.json?verify=${nonce}" -o live-proof/TEST_PROJECT.json; then
+              if [[ "$(sha256sum index.html | awk '{print $1}')" == "$(sha256sum live-proof/index.html | awk '{print $1}')" \
+                && "$(sha256sum workbook.js | awk '{print $1}')" == "$(sha256sum live-proof/workbook.js | awk '{print $1}')" \
+                && "$(sha256sum TEST_PROJECT.json | awk '{print $1}')" == "$(sha256sum live-proof/TEST_PROJECT.json | awk '{print $1}')" ]]; then
+                verified=true
+                break
+              fi
+            fi
+            sleep 5
+          done
+          test "$verified" = true
+      - name: Render and inspect the live phone UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$BROWSER"
+          LIVE_URL="${PAGE_URL%/}/?verify=${GITHUB_SHA}-render"
+          "$BROWSER" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --run-all-compositor-stages-before-draw --virtual-time-budget=22000 \
+            --window-size=393,852 --dump-dom "$LIVE_URL" > live-proof/rendered-live.html
+          "$BROWSER" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=22000 \
+            --window-size=393,852 --screenshot=live-proof/LIVE_WORKBOOK_393.png "$LIVE_URL"
+          test -s live-proof/LIVE_WORKBOOK_393.png
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import os
+
+          class UIParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.stack=[]
+                  self.ids=set()
+                  self.visible=[]
+                  self.nav_depth=0
+                  self.nav_buttons=0
+              def handle_starttag(self, tag, attrs):
+                  a=dict(attrs)
+                  hidden=('hidden' in a or a.get('aria-hidden')=='true')
+                  ignored=tag in {'script','style','template'}
+                  parent_hidden=self.stack[-1][1] if self.stack else False
+                  effective=hidden or ignored or parent_hidden
+                  self.stack.append((tag,effective,a.get('id')))
+                  if a.get('id'):
+                      self.ids.add(a['id'])
+                  if a.get('id')=='nav':
+                      self.nav_depth=len(self.stack)
+                  elif tag=='button' and self.nav_depth and len(self.stack)>self.nav_depth and not effective:
+                      self.nav_buttons+=1
+              def handle_endtag(self, tag):
+                  if self.nav_depth and len(self.stack)==self.nav_depth and self.stack[-1][0]=='div':
+                      self.nav_depth=0
+                  if self.stack:
+                      self.stack.pop()
+              def handle_data(self, data):
+                  if self.stack and not self.stack[-1][1]:
+                      text=' '.join(data.split())
+                      if text:
+                          self.visible.append(text)
+
+          parser=UIParser()
+          parser.feed(Path('live-proof/rendered-live.html').read_text(errors='replace'))
+          visible=' '.join(parser.visible)
+          required=['Mobile Closed-Loop Agent Reliability Workbook','New clean job','Export','Test job','Import','01 INITIALIZE THE JOB']
+          forbidden=['TEST PROJECT — EXISTING APPLICATION VERIFICATION','Repository test project','Deployment gate','Live application checks','Verifier coverage','APPENDIX A–F — OPERATIONAL CONTROLS','Preserved records:']
+          missing=[item for item in required if item not in visible]
+          present=[item for item in forbidden if item in visible]
+          forbidden_ids={'repository-test-project','appendix-operational-purpose','human-test-project','run-test-project'} & parser.ids
+          assert not missing, f'missing visible UI: {missing}'
+          assert not present, f'forbidden visible diagnostics: {present}'
+          assert not forbidden_ids, f'forbidden panels remain: {sorted(forbidden_ids)}'
+          assert 'load-test-job' in parser.ids, 'Test job button is missing'
+          assert 'human-stage-controls-r3' in parser.ids, 'human-facing UI stylesheet is missing'
+          assert parser.nav_buttons==30, f'expected 30 stage buttons, observed {parser.nav_buttons}'
+          Path('live-proof/LIVE_UI_VERIFICATION.txt').write_text(
+              'LIVE UI SATISFIED\n'
+              f'page={os.environ.get("PAGE_URL", "UNKNOWN")}\n'
+              f'commit={os.environ.get("GITHUB_SHA", "UNKNOWN")}\n'
+              f'stage_buttons={parser.nav_buttons}\n'
+              'diagnostic_panels=0\n'
+              'global_appendix_wall=0\n'
+              'test_job_button=present\n'
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-workbook-phone-proof
+          path: |
+            live-proof/LIVE_WORKBOOK_393.png
+            live-proof/LIVE_UI_VERIFICATION.txt
+            live-proof/rendered-live.html
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish live UI status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Rendered live phone UI verified'; else STATE=failure; DESCRIPTION='Rendered live phone UI verification failed'; fi
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"live-workbook-ui\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
