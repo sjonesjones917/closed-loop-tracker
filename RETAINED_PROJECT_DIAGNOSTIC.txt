@@ -1,4 +1,4 @@
-SOURCE_COMMIT=9722ec727ac564f8c77ed559c93878a9316d2d4e
+SOURCE_COMMIT=75cb0b13a7a8300718503881e1e57119d89bcd58
 {
   "status": "PASS",
   "htmlBytes": 104483,
@@ -41,7 +41,23 @@ Error: Self-project is incorrectly framed as a v13/fix/fixture project.
 Node.js v22.23.2
 VERIFY_SELF_EXIT=1
 
-added 1 package in 3s
+added 1 package in 2s
+{
+  "projectsView": "Projects\nEach project begins with the user’s actual arbitrary job. No project is precompleted or defined as an application self-build.\nNew project\nImport project JSON\nNo current project exists. Create a project for the real job to begin Stage 1.",
+  "fileInputs": [
+    {
+      "id": "importInput",
+      "name": "",
+      "accept": "application/json,.json",
+      "aria": null
+    }
+  ],
+  "logs": [
+    "CONSOLE error Failed to load resource: the server responded with a status of 404 (File not found)",
+    "CONSOLE error Error: The retained self-project was not accepted by the application project importer.\n    at http://127.0.0.1:4174/:388:108"
+  ]
+}
+IMPORT_PROBE_EXIT=0
 node:internal/modules/run_main:123
     triggerUncaughtException(
     ^
