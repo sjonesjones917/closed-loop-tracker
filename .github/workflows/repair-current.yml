@@ -1,4 +1,4 @@
-name: Rebuild native retained application project
+name: Rebuild complete retained application project
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Execute reconstruction and commit verified output or exact failure
+      - name: Execute corrected reconstruction and commit verified output or exact failure
         shell: bash
         run: |
           set +e
@@ -49,10 +49,13 @@ jobs:
                 const projectsText=await page.locator('#projectsView').innerText();
                 retainedLoaded=retainedLoaded&&(projectsText.includes(currentProject.projectId)||projectsText.includes(currentProject.name));
                 await page.click('#newProjectBtn');"""
-          if old not in source:
+          if old in source:
+              source = source.replace(old, new, 1)
+          elif new not in source:
               raise SystemExit('Expected browser-navigation block was not found.')
-          path.write_text(source.replace(old, new, 1))
+          path.write_text(source)
           PY
+            node minimal-project-correction.mjs
             npm install --no-save --ignore-scripts playwright-core
             node build-app.mjs
             node attach-self-project.mjs
@@ -65,9 +68,17 @@ jobs:
             node migrate-self-project.mjs
             CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs
             cmp -s index.html app-v13.html
-            grep -Fq 'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE SELF-VERIFICATION' SELF_VERIFIED_PROJECT.json
-            if grep -Eqi 'sidecar-filename defect|app-arbitrary application version|External agent process|Visible UI evidence for Stage|executable prompt was copied' SELF_VERIFIED_PROJECT.json; then
+            grep -Fq 'CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD' SELF_VERIFIED_PROJECT.json
+            grep -Fq 'Build the application defined by the corrected complete build instruction' SELF_VERIFIED_PROJECT.json
+            grep -Fq 'assignedActorType": "HUMAN"' SELF_VERIFIED_PROJECT.json
+            grep -Fq 'data-restore-retained-project' index.html
+            grep -Fq 'closedLoopReliability.quarantinedProjects' index.html
+            if grep -Eqi 'sidecar-filename defect|app-arbitrary application version|External agent process|Visible UI evidence for Stage|executable prompt was copied|Modify the existing v13 application' SELF_VERIFIED_PROJECT.json; then
               echo 'Obsolete migrated project narrative remains.' >&2
+              exit 1
+            fi
+            if grep -Eqi 'new[[:space:]]+DataTransfer|new[[:space:]]+File[[:space:]]*\(' index.html; then
+              echo 'Synthetic file-input retained-project loading remains.' >&2
               exit 1
             fi
           } >"$LOG" 2>&1
@@ -76,13 +87,13 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           if [[ "$STATUS" -eq 0 ]]; then
-            rm -f "$LOG" .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml
-            git add -f index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json rebuild-self-project.mjs .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml
-            git commit -m 'Rebuild retained project as native whole-application self-verification'
+            rm -f "$LOG" .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml minimal-project-correction.mjs
+            git add -f index.html app-v13.html SELF_VERIFIED_PROJECT.json SELF_PROJECT_RUN_REPORT.json SELF_PROJECT_VERIFICATION.json rebuild-self-project.mjs attach-self-project.mjs .github/workflows/repair-current.yml .github/workflows/rebuild-retained-project-once.yml minimal-project-correction.mjs
+            git commit -m 'Rebuild complete application project with durable Projects retention'
           else
             printf '\nRECONSTRUCTION_EXIT_STATUS=%s\n' "$STATUS" >> "$LOG"
             git add -f "$LOG"
-            git commit -m 'Record exact retained-project reconstruction failure'
+            git commit -m 'Record exact complete-project reconstruction failure'
           fi
           git pull --rebase origin main
           git push origin HEAD:main
