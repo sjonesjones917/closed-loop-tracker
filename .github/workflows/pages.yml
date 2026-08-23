@@ -13,13 +13,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Build the retained ordinary project
+      - id: build
+        continue-on-error: true
         run: node build-test-project.mjs
-      - name: Check application code
+      - id: syntax
+        continue-on-error: true
         run: node --check app.js && node --check workbook.js && node --check verify-live.mjs
-      - name: Verify application structure and project records
+      - id: verify
+        continue-on-error: true
         run: node verify.mjs
-      - name: Enforce one application
+      - id: single
+        continue-on-error: true
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
@@ -27,6 +31,21 @@ jobs:
           test ! -f prompt-center.js
           grep -q '<script src="workbook.js"></script>' index.html
           grep -q '<script src="app.js"></script>' index.html
+      - name: Publish source-step results and enforce success
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD: ${{ steps.build.outcome }}
+          SYNTAX: ${{ steps.syntax.outcome }}
+          VERIFY: ${{ steps.verify.outcome }}
+          SINGLE: ${{ steps.single.outcome }}
+        run: |
+          post(){ local c="$1" r="$2" s=failure; [ "$r" = success ] && s=success; curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "{\"state\":\"$s\",\"context\":\"$c\",\"description\":\"$r\"}" >/dev/null; }
+          post source-build "$BUILD"
+          post source-syntax "$SYNTAX"
+          post source-verify "$VERIFY"
+          post source-single-app "$SINGLE"
+          [ "$BUILD" = success ] && [ "$SYNTAX" = success ] && [ "$VERIFY" = success ] && [ "$SINGLE" = success ]
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -78,25 +97,10 @@ jobs:
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           LIVE_RESULT: ${{ needs.verify-live.result }}
         run: |
-          post_status(){
-            local context="$1" result="$2"
-            local state=failure
-            [ "$result" = success ] && state=success
-            curl --fail-with-body -sS -X POST \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-              -d "{\"state\":\"$state\",\"context\":\"$context\",\"description\":\"$result\"}"
-          }
-          post_status repair-source "$TEST_RESULT"
-          post_status repair-deploy "$DEPLOY_RESULT"
-          post_status repair-live "$LIVE_RESULT"
-          STATE=failure
-          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then STATE=success; fi
-          curl --fail-with-body -sS -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d "{\"state\":\"$STATE\",\"context\":\"repaired-app\",\"description\":\"source=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT\"}"
+          post(){ local c="$1" r="$2" s=failure; [ "$r" = success ] && s=success; curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "{\"state\":\"$s\",\"context\":\"$c\",\"description\":\"$r\"}" >/dev/null; }
+          post repair-source "$TEST_RESULT"
+          post repair-deploy "$DEPLOY_RESULT"
+          post repair-live "$LIVE_RESULT"
+          ALL=failure
+          [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ] && ALL=success
+          post repaired-app "$ALL"
