@@ -27,12 +27,11 @@ jobs:
           fs.writeFileSync('workbook.module.source.js', source);
           NODE
           node --check workbook.module.source.js
-      - name: Commit the exact extracted source
+      - name: Publish the exact extracted source on an inspection branch
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -B runtime-source-extract
           git add workbook.module.source.js
           git commit -m "Expose current workbook module source for exact repair"
-          git push
-
-# Triggered for the current in-place repair.
+          git push --force origin HEAD:refs/heads/runtime-source-extract
