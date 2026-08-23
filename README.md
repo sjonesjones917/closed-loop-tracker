@@ -8,7 +8,7 @@ https://sjonesjones917.github.io/closed-loop-tracker/
 
 This repository contains one phone-first, domain-general application that takes an arbitrary user job through the exact 31-stage closed-loop research, production, verification, correction, acceptance, and release process.
 
-Every new user-created project begins at Stage 1 with the actual job entered by the user and zero completed stages. The application also retains one completed current-schema project about the application itself. That retained project is loaded as a separate JSON project through the same import path as any other project so it can demonstrate the application without becoming external authority for its own requirements.
+Every new user-created project begins at Stage 1 with the actual job entered by the user and zero completed stages. The application also retains one completed current-schema project about the entire application itself. That retained project is loaded as a separate JSON project through the same project system as any other project so it can demonstrate the application without becoming external authority for its own requirements.
 
 ## Required forward architecture
 
@@ -41,6 +41,7 @@ Humans, agents, human-agent teams, tools, and organizations are first-class work
 - Release gate that permits release only for the exact accepted artifact.
 - Local browser persistence plus explicit JSON import and export.
 - A separate retained `SELF_VERIFIED_PROJECT.json` that uses the current project schema, contains native structured records, remains visible in Projects, and never becomes external authority for the application.
+- A stale stored copy of the retained project is replaced by project ID while unrelated user projects remain unchanged.
 - New projects remain empty at 0/31 even when the retained completed project is present.
 
 ## Repository source of truth
@@ -61,6 +62,6 @@ The public application has no arbitrary version label. Historical implementation
 
 `verify-self-project.mjs` verifies that the retained project has all 31 completed stages, native sources, findings, requirements, tests, candidates, exactly ten isolated runs per execution phase, complete independent verification matrices, corrected defects and regressions, convergence, unchanged confirmation, exact product bytes, audits, an `ACCEPTED` decision, matching audited/release hashes, and the configured release destination.
 
-`browser-smoke.mjs` executes the rendered phone UI, confirms the retained project is loaded through the normal current-schema path, creates a separate human-owned arbitrary project at 0/31, completes Stage 1, verifies all 31 stages render, opens the external-source guard, checks all three information classes, and tests phone widths.
+`browser-smoke.mjs` executes the rendered phone UI, confirms the retained project is loaded through the normal current-schema path, proves that a stale retained-project copy is refreshed without deleting or duplicating unrelated projects, creates a separate human-owned arbitrary project at 0/31, completes Stage 1, verifies all 31 stages render, opens the external-source guard, checks all three information classes, and tests phone widths.
 
-`.github/workflows/pages.yml` rebuilds the standalone application, attaches the retained project loader, executes all verification gates, creates the exact static Pages payload, deploys it through GitHub Pages, retrieves the live HTML and JSON, compares both live SHA-256 values with the verified build values, and records the verified live deployment.
+`.github/workflows/pages.yml` runs the full verification suite on pull requests without deploying. On `main`, it rebuilds the standalone application, attaches the retained project loader, creates the exact static Pages payload, deploys it through GitHub Pages, retrieves the live HTML and JSON, compares both live files byte-for-byte and by SHA-256 with the verified build artifacts, then writes those same live-verified application and project files back to the repository together with the deployment receipt. The committed root files and the deployed files therefore remain one verified state.
