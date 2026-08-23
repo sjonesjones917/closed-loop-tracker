@@ -1,0 +1,27 @@
+name: Temporary repair inspection snapshot
+
+on:
+  push:
+    branches: [repair-authorized-workbook-project]
+    paths:
+      - .github/workflows/repair-snapshot.yml
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package repository source
+        run: |
+          mkdir -p /tmp/repair-snapshot
+          rsync -a --exclude='.git' --exclude='repository-snapshot.tar.gz' ./ /tmp/repair-snapshot/
+          tar -C /tmp/repair-snapshot -czf repository-snapshot.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repository-snapshot
+          path: repository-snapshot.tar.gz
+          if-no-files-found: error
+          retention-days: 1
