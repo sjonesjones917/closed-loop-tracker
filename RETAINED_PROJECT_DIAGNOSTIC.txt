@@ -1,11 +1,11 @@
-SOURCE_COMMIT=fc5a9cbe4cfd14fad0668b99a427bcdca9dd5756
+SOURCE_COMMIT=f95ce08d0907beec442bb1691db94ef56aed20e9
 {
   "status": "PASS",
+  "migrationRequired": false,
+  "normalized": true,
   "projectId": "PROJECT-MT3M46X0-075JMP",
   "schema": "closed-loop-project/1",
-  "stages": 31,
-  "executions": 30,
-  "verificationRecords": 30
+  "stages": 31
 }
 MIGRATE_EXIT=0
 {
@@ -43,63 +43,28 @@ VERIFY_APP_EXIT=0
   "aboutApplicationItself": true,
   "stageWorkflowMatchesCurrentApp": true,
   "stages": 31,
-  "appSha256": "3676f12df44499a58237db060909bb9a2e94c83f46c982bc1d1350457de75620",
-  "projectSha256": "75369eb8e2881c6241bfedeb30df9fac251ee1bf9c7ed26a0f0a441e87d48722"
+  "appSha256": "603a3334cec874ff7f5b962462bdfb9f6356821a06cede233183389983deb681",
+  "projectSha256": "0cbe3ca878c3961e2609c57e69a0e77bbb2197236542831207dfc2dafe0121f0"
 }
 VERIFY_SELF_EXIT=0
 
-added 1 package in 1s
-node:internal/modules/run_main:123
-    triggerUncaughtException(
-    ^
-
-page.click: Timeout 30000ms exceeded.
-Call log:
-  - waiting for locator('#newProjectBtn')
-    - locator resolved to <button id="newProjectBtn" class="btn primary">New project</button>
-  - attempting click action
-    2 × waiting for element to be visible, enabled and stable
-      - element is not visible
-    - retrying click action
-    - waiting 20ms
-    2 × waiting for element to be visible, enabled and stable
-      - element is not visible
-    - retrying click action
-      - waiting 100ms
-    58 × waiting for element to be visible, enabled and stable
-       - element is not visible
-     - retrying click action
-       - waiting 500ms
-
-    at /home/runner/work/closed-loop-tracker/closed-loop-tracker/probe-retained-project.mjs:17:13 {
-  log: [
-    "  - waiting for locator('#newProjectBtn')",
-    '    - locator resolved to <button id="newProjectBtn" class="btn primary">New project</button>',
-    '  - attempting click action',
-    '    2 × waiting for element to be visible, enabled and stable',
-    '      - element is not visible',
-    '    - retrying click action',
-    '    - waiting 20ms',
-    '    2 × waiting for element to be visible, enabled and stable',
-    '      - element is not visible',
-    '    - retrying click action',
-    '      - waiting 100ms',
-    '    58 × waiting for element to be visible, enabled and stable',
-    '       - element is not visible',
-    '     - retrying click action',
-    '       - waiting 500ms'
+added 1 package in 3s
+{
+  "status": "PASS",
+  "title": "Closed-Loop Agent Reliability",
+  "retainedSelfProjectVisible": true,
+  "retainedSelfProjectNative": true,
+  "retainedSelfProjectName": "CLOSED-LOOP AGENT RELIABILITY APPLICATION — COMPLETE BUILD",
+  "retainedSelfProjectStagesComplete": 31,
+  "stagesRendered": 31,
+  "stage1ScopesRendered": 20,
+  "humanOwnerCreated": true,
+  "externalSourceGuardRendered": true,
+  "informationClassesRendered": 3,
+  "phoneWidthsTested": [
+    393,
+    320
   ],
-  name: 'TimeoutError'
+  "browserErrors": []
 }
-
-Node.js v22.23.2
-IMPORT_PROBE_EXIT=1
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/browser-smoke.mjs:21
-  if(errors.length)throw new Error(`Self-project load errors: ${errors.join(' | ')}`);
-                         ^
-
-Error: Self-project load errors: Failed to load resource: the server responded with a status of 404 (File not found)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/browser-smoke.mjs:21:26
-
-Node.js v22.23.2
-BROWSER_SMOKE_EXIT=1
+BROWSER_SMOKE_EXIT=0
