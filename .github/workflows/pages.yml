@@ -94,6 +94,8 @@ jobs:
     env: {PAGE_URL: '${{ needs.deploy.outputs.page_url }}'}
     steps:
       - uses: actions/checkout@v4
+      - name: Install Chrome for phone rendering
+        uses: browser-actions/setup-chrome@v1
       - id: live_identity
         continue-on-error: true
         name: Verify exact deployed files
@@ -122,7 +124,7 @@ jobs:
         name: Render compact working project UI
         run: |
           set -euo pipefail
-          BROWSER="$(command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
+          BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
           BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=30000 --window-size=393,852 --dump-dom "$BASE" > live-proof/blank.html
           grep -q 'Closed-Loop Reliability' live-proof/blank.html
@@ -137,7 +139,7 @@ jobs:
         name: Render genuine test project UI
         run: |
           set -euo pipefail
-          BROWSER="$(command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
+          BROWSER="$(command -v chrome || command -v google-chrome || command -v chromium || true)"; test -n "$BROWSER"
           BASE="${PAGE_URL%/}/?verify=${GITHUB_SHA}"
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=45000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
           grep -q 'Portable generator service handoff' live-proof/test-project.html
