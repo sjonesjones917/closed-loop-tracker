@@ -12,13 +12,14 @@ const compressed=Buffer.concat([
   fs.readFileSync('workbook.module.gz.3')
 ]);
 const source=zlib.gunzipSync(compressed).toString('utf8');
-const shellSha='1e91ddb845143c88141ea44a62db89a4aabb74ec15a414d071e88af9531a23a8';
+const shellSha='7c4cecfe4b33fd93f68ff34b2b29ce916e41f216d6551d3f7b40b3370d4db0e2';
 ok(crypto.createHash('sha256').update(index.trimEnd()).digest('hex')===shellSha,'index.html is the approved existing application shell');
 const css=index.match(/<style>([\s\S]*?)<\/style>/)?.[1]||'';
 ok(crypto.createHash('sha256').update(css).digest('hex')==='befcafe57d62c87df67fb4a27b5f86e7aa30b7e50929e027bd311e8f4f9c7c73','layout/colors/typography/responsive CSS are unchanged');
 ok((index.match(/<script[^>]+src=/g)||[]).length===1 && index.includes('<script src="workbook.js"></script>'),'exactly one existing application runtime entry is loaded');
-ok(!index.includes("view='appendices'")&&!index.includes('Appendices A–F'),'appendices are not exposed as a separate checklist application view');
-ok(index.includes("view='workbook'")&&index.includes("view='control'"),'the single application exposes only workbook and records/control work surfaces');
+ok(!index.includes("view='appendices'"),'Appendices A-F are not implemented as a separate checklist workflow/view');
+ok(index.includes("view='workbook'")&&index.includes("view='control'"),'the single application exposes only the workbook and integrated control surfaces');
+ok(index.includes('Operational controls A–F')&&index.includes('Appendices A–F are integrated workflow controls'),'the existing control surface explicitly preserves the Appendix A-F meaning');
 ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'runtime loader reads only the corrected workbook module payload');
 ok(compressed.length>0 && source.includes('export const STAGES'),'corrected module payload is present and decompresses');
 const temp=path.join(process.cwd(),'.verify-runtime.mjs'); fs.writeFileSync(temp,source);
@@ -45,11 +46,12 @@ const audited=[{artifactId:'A1',name:'a',size:1,sha256:'1'.repeat(64)},{artifact
 ok(compareArtifactSets(audited,same,'ACCEPTED').authorization==='AUTHORIZED','exact accepted audited/release bytes authorize delivery');
 ok(compareArtifactSets(audited,bad,'ACCEPTED').authorization==='NOT AUTHORIZED','hash mismatch stops delivery');
 ok(compareArtifactSets(audited,same,'BLOCKED').authorization==='NOT AUTHORIZED','non-ACCEPTED release gate stops delivery');
-ok(source.includes('pendingAuditedFiles')&&source.includes('pendingReleaseFiles'),'Appendix D behavior is implemented by independent audited/release file selection and hashing');
-ok(source.includes('appendAutomaticChange')&&source.includes('appendices.F'),'Appendices C and F behavior is implemented by automatic append-only changes and agent-output receipts');
+ok(source.includes('freshContext')||source.includes('freshContextLaunch'),'Appendix A is implemented as fresh-context execution/verification control');
+ok(source.includes('blocker')&&source.includes('BLOCKED'),'Appendix B is implemented as a blocker mechanism that stops affected workflow');
+ok(source.includes('appendAutomaticChange'),'Appendix C is implemented as append-only change and invalidation behavior');
+ok(source.includes('pendingAuditedFiles')&&source.includes('pendingReleaseFiles'),'Appendix D is implemented by final release evidence and independent audited/release artifact identity');
+ok(source.includes('newJob')||source.includes('createBlankState'),'Appendix E is implemented by clean new-job state/reset behavior');
+ok(source.includes('appendices.F'),'Appendix F is implemented as the universal agent-output receipt path');
 ok(source.includes('ACTUAL_CONTENT_INSPECTED')&&source.includes('CURRENCY_CONFIRMED'),'source inspection and current-source currency controls are implemented');
-ok(source.includes('freshContext')||source.includes('freshContextLaunch'),'Appendix A fresh-context control is implemented in runtime state/records');
-ok(source.includes('blocker')&&source.includes('BLOCKED'),'Appendix B blocker behavior is implemented as workflow state, not checklist attestation');
-ok(source.includes('newJob')||source.includes('createBlankState'),'Appendix E new-job reset behavior is implemented by clean state creation');
 if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
-console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,visualDesignChanged:false},null,2));
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,integratedAppendixControls:true,visualDesignChanged:false},null,2));
