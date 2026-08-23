@@ -1,0 +1,523 @@
+OPERATION 01 — DEFINE JOB
+
+JOB CONTROL
+
+JOB_ID: JOB-20260823144121
+
+JOB_TITLE: Mobile Closed-Loop Agent Reliability Workbook
+
+CURRENT_OPERATION: 01 — Define Job
+
+CURRENT_STATE: READY
+
+NEXT_REQUIRED_ACTION: Proceed to Operation 02 using the complete authorized job definition below.
+
+INPUT_VERSION: INPUT-v001
+
+SOURCE_SET_VERSION: NOT APPLICABLE
+
+REQUIREMENTS_VERSION: NOT APPLICABLE
+
+TESTS_VERSION: NOT APPLICABLE
+
+INSTRUCTION_VERSION: NOT APPLICABLE
+
+ITERATION_VERSION: NOT APPLICABLE
+
+EXACT USER OBJECTIVE VERBATIM
+
+“==========================================================================================
+MOBILE CLOSED-LOOP AGENT
+RELIABILITY WORKBOOK
+
+Phone-first fill-in checklist, evidence record, and copy-ready agent blocks for all 30 stages
+
+MASTER TEMPLATE - DUPLICATE THIS FILE FOR EACH NEW JOB”
+
+The complete quoted workbook supplied by the user is the authoritative project job input and defines the requested system, workflow, controls, records, agent blocks, stage gates, appendices, terminology, and operating rules.
+
+OBJECTIVE
+
+Establish and use a phone-first, closed-loop agent reliability workbook that controls a job through 30 explicit stages from initial job definition through final release and permanent defect preservation.
+
+The system is intended to:
+
+• preserve the exact user objective;
+• establish source authority before deriving requirements;
+• research and compile atomic requirements;
+• resolve requirement defects and conflicts;
+• create verification and failure tests before production instructions;
+• author and independently preflight production instructions;
+• freeze exact candidate versions;
+• execute ten independent production runs;
+• independently verify every run;
+• compare all runs without selecting a preferred result;
+• root-cause every material defect at the earliest defective layer;
+• convert confirmed failures into permanent regression tests;
+• revise only the responsible layer and invalidate dependent downstream evidence;
+• repeat complete independent execution iterations until convergence;
+• perform an unchanged confirmation iteration;
+• freeze an immutable production baseline;
+• generate the actual finished product in a fresh production context;
+• verify the final product deterministically, by meaning, adversarially, and representationally;
+• reconcile process correctness separately from product correctness;
+• apply an explicit release gate;
+• verify that release bytes exactly match audited bytes;
+• preserve a complete evidence chain for every mandatory requirement; and
+• preserve defects and regression tests permanently.
+
+DELIVERABLES
+
+The authorized job requires a Mobile Closed-Loop Agent Reliability Workbook containing:
+
+1. Phone-first operating instructions.
+2. Placeholder and outcome rules.
+3. Mobile file and version naming rules.
+4. Recommended phone folder structure.
+5. Agent-role separation map.
+6. Master Job Control.
+7. Master 30-Stage Tracker.
+8. Mandatory Operating Rules.
+9. Quick Execution Loop.
+10. Stage Index.
+11. Stage 01 — Initialize the Job.
+12. Stage 02 — Build the Source Inventory.
+13. Stage 03 — Research the Requirements.
+14. Stage 04 — Compile the Requirement Specification.
+15. Stage 05 — Resolve the Requirement Set.
+16. Stage 06 — Build the Verification Suite Before Writing the Production Instruction.
+17. Stage 07 — Build Failure Tests.
+18. Stage 08 — Author the Production Instruction.
+19. Stage 09 — Preflight the Production Instruction.
+20. Stage 10 — Freeze the Test Candidate.
+21. Stage 11 — Run Ten Independent Executions.
+22. Stage 12 — Verify Each Execution Independently.
+23. Stage 13 — Compare the Ten Executions.
+24. Stage 14 — Root-Cause Every Defect.
+25. Stage 15 — Convert Every Confirmed Failure Into a Regression Test.
+26. Stage 16 — Revise the Responsible Layer.
+27. Stage 17 — Re-Run the Complete Ten-Execution Iteration.
+28. Stage 18 — Continue Until Convergence.
+29. Stage 19 — Run an Unchanged Confirmation Iteration.
+30. Stage 20 — Freeze the Production Baseline.
+31. Stage 21 — Generate the Finished Product.
+32. Stage 22 — Run Deterministic Verification on the Finished Product.
+33. Stage 23 — Run Independent Meaning-Based Verification.
+34. Stage 24 — Run Adversarial Verification.
+35. Stage 25 — Inspect the Final Representation.
+36. Stage 26 — Reconcile Process and Product Evidence.
+37. Stage 27 — Apply the Release Gate.
+38. Stage 28 — Verify Artifact Identity Before Release.
+39. Stage 29 — Preserve the Complete Evidence Chain.
+40. Stage 30 — Preserve Failures Permanently.
+41. Appendix A — Fresh Agent Context Launch Checklist.
+42. Appendix B — Universal Blocker Record.
+43. Appendix C — Universal Change and Invalidation Log.
+44. Appendix D — Exact Final Release Checklist.
+45. Appendix E — New-Job Reset Checklist.
+46. Appendix F — Universal Agent-Output Receipt.
+
+The workbook also specifies a master DOCX and a prompts-only TXT file as operating artifacts.
+
+REQUESTED ACTIONS
+
+The workflow must:
+
+• initialize every new job from a duplicated untouched master;
+• assign a unique JOB_ID before creating other job artifacts;
+• preserve exact user instructions;
+• inventory actual supplied materials;
+• inspect actual files rather than relying on filenames or previous summaries;
+• assign immutable versions;
+• preserve hashes where practical;
+• establish source authority;
+• research requirements from governing evidence;
+• compile atomic independently testable requirements;
+• resolve requirement conflicts and defects;
+• build verification tests before production instructions;
+• build adversarial failure and mutation tests;
+• author the production instruction from the resolved requirements;
+• independently preflight that instruction;
+• freeze an exact candidate;
+• run ten fresh independent executions;
+• independently verify every run against every active requirement;
+• compare the ten runs;
+• root-cause all material defects;
+• create regression tests from confirmed failures;
+• correct the earliest defective layer;
+• create new versions rather than modify old versions in place;
+• rerun complete ten-execution iterations after material upstream changes;
+• continue until all convergence conditions are simultaneously met;
+• run an unchanged ten-execution confirmation iteration;
+• freeze the approved baseline;
+• generate the actual product from the baseline;
+• verify the actual product bytes and representation;
+• separately audit process correctness and product correctness;
+• gate release using ACCEPTED, REJECTED, or BLOCKED;
+• rehash the exact delivery artifacts immediately before release;
+• preserve full requirement-level traceability;
+• permanently retain defect and regression history.
+
+SUBJECTS
+
+The authorized subjects include job control; source authority; source inventory; requirements research; requirement engineering; verification architecture; deterministic validation; meaning-based validation; adversarial validation; mutation testing; regression testing; instruction engineering; instruction preflight; configuration control; version control; independent agent execution; run isolation; cross-run comparison; root-cause analysis; change control; dependency invalidation; convergence; unchanged confirmation; immutable baselines; product generation; final artifact inspection; process auditing; product auditing; release gating; cryptographic artifact identity; chain of custody; evidence traceability; and permanent defect preservation.
+
+QUESTIONS THE WORKFLOW MUST RESOLVE
+
+The workflow must establish, as applicable:
+
+• What exactly did the user request?
+• What materials were supplied?
+• Which sources govern correctness?
+• What authority hierarchy controls conflicts?
+• What mandatory requirements apply?
+• What exceptions, dependencies, prohibitions, and applicability conditions exist?
+• Are requirements atomic, complete, consistent, supported, and verifiable?
+• What test establishes each mandatory requirement?
+• Can validators detect known-invalid cases?
+• Does the production instruction implement every mandatory requirement?
+• Is the instruction unambiguous and executable?
+• Are all candidate components frozen and version-identical?
+• Are execution contexts genuinely independent?
+• Does every run satisfy every requirement?
+• Where do runs vary and does that variance affect correctness?
+• What is the earliest defective layer for every material defect?
+• Does every confirmed defect have a permanent regression test?
+• Which downstream artifacts and determinations become invalid after a change?
+• Have all convergence criteria been met simultaneously?
+• Does an unchanged confirmation iteration reproduce convergence?
+• Is the production baseline exact and immutable?
+• Does the finished product satisfy deterministic requirements?
+• Does its meaning satisfy meaning-based requirements?
+• Can adversarial review disprove correctness?
+• Is the final rendered and packaged representation correct?
+• Is the process correct independently of the product?
+• Is the product correct independently of the process?
+• Is the release state ACCEPTED, REJECTED, or BLOCKED?
+• Are release bytes identical to audited bytes?
+• Is every mandatory requirement traceable from source through release evidence?
+• Are all historical failures preserved and still regression-tested when applicable?
+
+BOUNDARIES
+
+The workflow begins at Stage 01 and does not permit bypassing mandatory earlier stages.
+
+Production must not begin before requirements and acceptance tests exist.
+
+A stage marked BLOCKED or NOT READY may not be bypassed.
+
+Independent execution, review, confirmation, meaning-based evaluation, adversarial review, and other explicitly independent activities must use fresh contexts where required.
+
+Independent runs must not see another run’s output, reviewer comments, prior failure explanations, or proposed corrections.
+
+A production generator may not be its sole validator.
+
+Process correctness and product correctness are separate propositions.
+
+Upstream approval is not evidence that the final artifact representation is correct.
+
+A completed run count alone does not establish convergence.
+
+A release-gate decision alone does not authorize delivery; Stage 28 artifact-identity verification remains mandatory.
+
+Only exact audited and hash-matched release artifacts may be delivered.
+
+SUPPLIED INFORMATION AND PROVENANCE
+
+SUPPLIED ITEM: Complete Mobile Closed-Loop Agent Reliability Workbook.
+
+TYPE: User-supplied message content.
+
+PROVENANCE: Direct user input in the current conversation.
+
+AUTHORITY CLASS: User Job Input.
+
+CONTENT INSPECTED: YES.
+
+VERSION: UNKNOWN.
+
+HASH: NOT CALCULATED.
+
+The supplied workbook contains the complete 30-stage workflow, role map, job-control structures, operating rules, stage-specific checklists, stage records, agent copy blocks, completion gates, evidence requirements, and Appendices A through F.
+
+No external research source has been used in Operation 01.
+
+CONVERSATION DEPENDENCIES
+
+The authorized job definition depends on the original Operation 01 work order; the authorized project package for JOB-20260823144121; and the subsequently supplied Mobile Closed-Loop Agent Reliability Workbook text.
+
+No prior agent conclusion is treated as independent requirement authority.
+
+No implementation, generated artifact, previous workflow conclusion, or unfinished product behavior is treated as external requirement authority.
+
+TERMINOLOGY
+
+UNKNOWN = The fact is not established.
+NONE = Evidence establishes that no item exists.
+NOT APPLICABLE = An objective applicability rule excludes the field.
+SATISFIED = The requirement is affirmatively established by evidence.
+VIOLATED = Evidence shows that the requirement is not satisfied.
+UNDETERMINED = Available evidence cannot establish satisfaction or violation.
+ACCEPTED = Every mandatory requirement has affirmative evidence and every mandatory validator succeeds.
+REJECTED = At least one mandatory requirement is demonstrably violated.
+BLOCKED = At least one mandatory requirement cannot be established because required evidence, authority, input, capability, or required decision rule is unavailable.
+TRUE = A factual control has been affirmatively established.
+FALSE = A factual control has been disproved.
+INPUT-vN = Versioned complete authorized input set.
+SOURCE-SET-vN = Versioned governing-source inventory.
+REQUIREMENTS-vN = Versioned atomic requirements registry.
+TEST-SUITE-vN = Versioned verification suite.
+MUTATION-SUITE-vN = Versioned failure/mutation test suite.
+INSTRUCTION-vN = Approved production instruction version.
+CANDIDATE_ID = Frozen iteration candidate identity.
+ITERATION_ID = Identity for an independent ten-execution iteration.
+RUN_ID = Identity for an individual independent execution.
+DEFECT_ID = Stable defect identity.
+REG_ID = Stable regression-test identity.
+BASELINE_ID = Approved immutable production baseline identity.
+PRODUCT_ID = Finished-product identity.
+SHA-256 = Preferred immutable file-identity hash where practical.
+
+CONSTRAINTS
+
+• Preserve exact user objectives.
+• Do not invent missing facts.
+• Use UNKNOWN when facts are not established.
+• Use NONE only when evidence establishes absence.
+• Use NOT APPLICABLE only when an objective applicability rule excludes the field.
+• Preserve requirement and release states distinctly.
+• Require affirmative evidence for mandatory requirements.
+• Preserve exact versions.
+• Never overwrite an existing version.
+• Material changes require new versions.
+• Material upstream changes invalidate affected downstream verification.
+• Record old version, new version, reason, and dependent artifacts.
+• Use SHA-256 where practical.
+• Inspect actual files when available.
+• Preserve exact source locations for externally derived requirements.
+• Separate facts, requirements, assumptions, inferences, recommendations, and unresolved questions.
+• Prefer deterministic verification when a property is deterministically testable.
+• Maintain verifier independence from the generator.
+• Root-cause material failures before changing anything.
+• Correct the earliest defective layer.
+• Convert confirmed failures into permanent regression tests.
+• Rerun independent executions after material upstream changes.
+• Require ten independent runs for designated iteration stages.
+• Require an unchanged confirmation iteration after convergence.
+• Validate actual finished artifacts rather than only source representations.
+• Maintain append-only historical change, defect, and regression records.
+• Preserve sufficient evidence to reproduce acceptance decisions.
+
+PROHIBITIONS
+
+The workflow explicitly prohibits inventing missing facts; silently resolving authoritative conflicts; beginning production before requirements and acceptance tests exist; allowing a generator to act as its sole validator; using subjective judgment where deterministic verification is available; treating mandatory unknowns as satisfied; changing artifacts before root cause is established for material failures; patching only the final symptom when an earlier layer is defective; failing to convert confirmed defects into regression tests; allowing independent iterations to see one another’s outputs; freezing a baseline merely because ten runs completed; omitting the unchanged confirmation iteration; validating only an editable source instead of the actual finished artifact; preserving downstream validation as valid after a material upstream change; releasing a product containing unresolved critical or major defects; releasing a product with an unverifiable mandatory requirement; releasing bytes different from audited bytes; modifying versions in place; uncontrolled post-generation editing; continuing contaminated independent runs; automatically carrying old-job requirements, tests, baselines, or release decisions into new jobs; deleting or rewriting historical defect records; deleting applicable regression tests; treating absence of detected defects as affirmative proof; and using unsupported conclusions such as “pass,” “looks correct,” “good,” or “appears compliant.”
+
+REQUIRED METHODS
+
+The workflow requires explicit job initialization; source inventory and authority hierarchy; source-by-source research; multi-pass requirement discovery; atomic requirement engineering; consistency and dependency analysis; requirement-to-test coverage mapping; deterministic verification where possible; controlled mutation and negative testing; traceable production-instruction authoring; independent sentence-level instruction preflight; candidate freezing; immutable version manifests; fresh-context execution; ten-run independent iteration batches; requirement-by-run verification matrices; cross-run comparison; backward root-cause tracing; permanent regression-test conversion; dependency invalidation; complete reruns after material changes; explicit convergence metrics; zero-change confirmation; immutable production baseline; fresh-context product generation; final deterministic verification; independent meaning-based verification; adversarial verification; rendered and packaged representation inspection; separate process and product audits; explicit release-state gating; exact SHA-256 release identity verification; requirement-level end-to-end traceability; and append-only permanent defect and regression preservation.
+
+OUTPUT PROPERTIES
+
+The workbook and its generated stage artifacts must be phone-first; one-column rather than wide spreadsheet oriented; fill-in capable; copy-ready for stage-specific agent prompts; version controlled; evidence backed; traceable; reproducible; suitable for fresh independent contexts; explicit about unknowns; explicit about blockers; explicit about dependencies and invalidations; exact about artifact identity; non-destructive to historical versions; and capable of supporting later independent audit.
+
+TEMPORAL SCOPE
+
+The workflow is designed to operate across the complete lifetime of a job: job opening; requirement development; iterative execution and correction; convergence; confirmation; production; verification; release; post-release evidence preservation; and later baseline regression checks.
+
+Specific project deadlines or end dates: UNKNOWN.
+
+The workbook requires timestamps for applicable stage records, context launches, changes, executions, audits, releases, defects, and blocker events.
+
+GEOGRAPHIC SCOPE
+
+No specific geographic, national, regional, or jurisdictional scope is established by the supplied job input.
+
+GEOGRAPHIC_SCOPE: UNKNOWN.
+
+Any jurisdiction-specific source authority must be established during later source-inventory and requirements-research operations when applicable.
+
+ACCEPTANCE CONDITIONS
+
+The workflow’s release and convergence acceptance conditions include:
+
+• mandatory requirement coverage = 100%;
+• mandatory verification coverage = 100%;
+• regression-test success = 100%;
+• critical defects = 0;
+• major defects = 0;
+• mandatory unresolved unknowns = 0;
+• known correctness-affecting contradictions = 0;
+• known correctness-affecting ambiguities = 0;
+• unexplained correctness-affecting execution variance = 0;
+• unchanged confirmation succeeds;
+• every mandatory deterministic validator succeeds;
+• every mandatory meaning-based requirement has supported affirmative satisfaction evidence;
+• adversarial verification leaves no unresolved mandatory defect;
+• final representation inspection leaves no unresolved critical or major representation defect;
+• process correctness is affirmatively established;
+• product correctness is affirmatively established;
+• every mandatory evidence chain is complete;
+• the Stage 27 release gate is ACCEPTED;
+• every exact release SHA-256 matches the corresponding audited SHA-256;
+• no post-audit modification exists;
+• only the exact authorized artifact IDs and filenames are delivered.
+
+A checked control without preserved evidence does not satisfy the control.
+
+PRIORITIES
+
+1. Preserve reality and evidence over convenience.
+2. Preserve exact user authority.
+3. Preserve source authority and conflict rules.
+4. Prevent unsupported assumptions.
+5. Establish requirements before production.
+6. Establish verification before production instructions.
+7. Prefer deterministic proof over subjective evaluation where possible.
+8. Preserve execution and reviewer independence.
+9. Correct the earliest defective layer.
+10. Preserve all failures and regressions.
+11. Require convergence rather than merely repeated execution.
+12. Verify actual finished artifacts.
+13. Require affirmative evidence for release.
+14. Preserve exact audited artifact identity through delivery.
+
+ASSUMPTIONS
+
+NONE.
+
+UNRESOLVED UNKNOWNS
+
+UNK-001
+UNKNOWN_FACT: Exact workbook artifact version.
+WHY_IT_MATTERS: Required for immutable version control and later source/artifact identity.
+REQUIRED_TO_PROCEED: NO for Operation 01; must be resolved when the workbook itself becomes a controlled file artifact.
+RESOLUTION_PATH: Assign or identify the controlling workbook version.
+
+UNK-002
+UNKNOWN_FACT: Exact immutable hash of the supplied workbook.
+WHY_IT_MATTERS: Required if the workbook is to be treated as an immutable file artifact.
+REQUIRED_TO_PROCEED: NO for Operation 01.
+RESOLUTION_PATH: Calculate SHA-256 from the controlled source file when available.
+
+UNK-003
+UNKNOWN_FACT: Job owner.
+WHY_IT_MATTERS: Several workbook control records require an owner or responsible actor.
+REQUIRED_TO_PROCEED: NO for Operation 01.
+RESOLUTION_PATH: Establish from authorized job-control information.
+
+UNK-004
+UNKNOWN_FACT: Exact requested final physical delivery package for this particular job beyond the supplied workbook specification.
+WHY_IT_MATTERS: The workbook refers to a master DOCX and prompts-only TXT file, but the exact current-job delivery instruction must remain distinct from template content.
+REQUIRED_TO_PROCEED: NO for defining the job; required before final output-contract freeze.
+RESOLUTION_PATH: Establish from direct user instruction or controlling input.
+
+UNK-005
+UNKNOWN_FACT: Current tool-configuration version for the eventual workflow.
+WHY_IT_MATTERS: Later execution, verification, and candidate-freeze stages require exact tool configuration.
+REQUIRED_TO_PROCEED: NO for Operation 01.
+RESOLUTION_PATH: Establish before stages that depend on exact tools.
+
+UNK-006
+UNKNOWN_FACT: Domain-specific external authorities applicable to the eventual production job executed through the workbook.
+WHY_IT_MATTERS: Those authorities can govern requirements and correctness.
+REQUIRED_TO_PROCEED: NO for Operation 01.
+RESOLUTION_PATH: Operation 02 source inventory and subsequent research.
+
+EXTERNAL RESEARCH QUESTIONS
+
+No substantive external research is required to complete Operation 01.
+
+The later workflow must determine, when applicable, which current external authorities govern the target job; whether current law, standards, specifications, official guidance, datasets, technical documentation, or other external evidence affect correctness; what authority hierarchy controls any conflicts; whether any governing source has been superseded; whether current facts are time-sensitive; and whether any source required for mandatory verification is unavailable.
+
+EXTERNAL RESEARCH SOURCES USED IN OPERATION 01: NONE.
+
+EVIDENCE RECORD
+
+E-001
+Evidence: User-supplied complete Mobile Closed-Loop Agent Reliability Workbook.
+Provenance: Current user message.
+Data class: User Job Input.
+Use: Primary substantive authority for this job definition.
+
+E-002
+Evidence: Original Closed-Loop Reliability Work Order for Operation 01.
+Provenance: User instruction.
+Data class: User Job Input.
+Use: Controls the scope and required output of this operation.
+
+E-003
+Evidence: Authorized Project Package containing JOB-20260823144121.
+Provenance: User instruction.
+Data class: User Job Input / workflow-control metadata.
+Use: Establishes project identity and workflow operation.
+
+External Research Sources: NONE.
+
+Workflow-Generated Artifacts: This Operation 01 job-definition record.
+
+BLOCKERS
+
+NONE for completion of Operation 01.
+
+The unresolved unknowns listed above remain controlled unknowns and do not prevent the job from being defined sufficiently to advance to the source-inventory operation.
+
+DEFECTS
+
+NONE identified in the authorized User Job Input for purposes of Operation 01.
+
+This determination does not constitute a substantive audit of the workbook’s correctness, completeness, consistency, or reliability. Those are downstream activities.
+
+EXACT DECISIONS
+
+D-001
+The complete supplied workbook is accepted as authorized User Job Input for JOB-20260823144121.
+
+D-002
+The workbook’s explicit state definitions are preserved without substitution.
+
+D-003
+The workbook’s 30-stage ordering is preserved.
+
+D-004
+The workbook’s separation of generation, independent verification, adversarial review, release audit, and defect preservation is preserved.
+
+D-005
+No external research is performed during Operation 01.
+
+D-006
+No assumption is introduced to fill an unknown.
+
+D-007
+Operation 01 is READY because the objective, workflow, boundaries, controls, terminology, required methods, acceptance model, and unresolved unknowns can now be losslessly captured from authorized input.
+
+OPERATION 01 COMPLETION EVIDENCE
+
+Exact user objective captured: SATISFIED.
+Deliverables captured: SATISFIED.
+Requested actions captured: SATISFIED.
+Subjects and questions captured: SATISFIED.
+Boundaries captured: SATISFIED.
+Supplied information and provenance captured: SATISFIED.
+Conversation dependencies captured: SATISFIED.
+Terminology captured: SATISFIED.
+Constraints captured: SATISFIED.
+Prohibitions captured: SATISFIED.
+Required methods captured: SATISFIED.
+Output properties captured: SATISFIED.
+Temporal scope captured: SATISFIED, with project-specific dates remaining UNKNOWN.
+Geographic scope captured: SATISFIED, with jurisdiction remaining UNKNOWN.
+Acceptance conditions captured: SATISFIED.
+Priorities captured: SATISFIED.
+Material uncertainties captured: SATISFIED.
+External research questions captured at the level presently authorized: SATISFIED.
+Mandatory unresolved blocker preventing the next operation: NONE.
+
+STAGE DECISION
+
+READY TO PROCEED
+
+NEXT REQUIRED WORKFLOW ACTION
+
+Proceed to Operation 02 — Build the Source Inventory.
+
+Operation 02 must treat this completed job definition and the actual supplied workbook as authorized inputs, inventory every source capable of governing correctness, inspect actual source artifacts when available, establish the authority hierarchy, identify conflicts or supersession, assign SOURCE_ID values, and create SOURCE-SET-v001 without silently resolving unsupported conflicts.
