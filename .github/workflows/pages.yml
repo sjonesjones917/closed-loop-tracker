@@ -37,7 +37,6 @@ jobs:
           test -f test-project/inputs/REQUEST.md
           test -f test-project/inputs/SITE_POLICY.md
           test -f test-project/inputs/WORKFLOW_RULES.md
-          test -f test-project/fixtures/INVALID_ACCEPTED_HANDOFF.md
           test ! -f test-project/TEST-JOB-001__FIELD-HANDOFF.md
       - name: Publish granular verification status
         if: always()
@@ -124,8 +123,9 @@ jobs:
           grep -q 'Closed-Loop Reliability' live-proof/blank.html
           grep -q 'Current working job' live-proof/blank.html
           grep -q 'New project' live-proof/blank.html
-          grep -q 'Project data' live-proof/blank.html
-          grep -q 'Workflow' live-proof/blank.html
+          grep -q '>Overview<' live-proof/blank.html
+          grep -q '>Workflow<' live-proof/blank.html
+          grep -q '>Work<' live-proof/blank.html
           ! grep -q 'APPENDIX A–F — OPERATIONAL CONTROLS' live-proof/blank.html
           "$BROWSER" --headless --no-sandbox --disable-gpu --virtual-time-budget=24000 --window-size=393,852 --dump-dom "${BASE}&test=1" > live-proof/test-project.html
           grep -q 'Portable generator service handoff' live-proof/test-project.html
@@ -134,7 +134,9 @@ jobs:
           grep -q 'Current stage' live-proof/test-project.html
           grep -q 'Open blockers' live-proof/test-project.html
           grep -q 'Requirements' live-proof/test-project.html
+          grep -q '>Overview<' live-proof/test-project.html
           grep -q '>Workflow<' live-proof/test-project.html
+          grep -q '>Work<' live-proof/test-project.html
           grep -q '>Runs<' live-proof/test-project.html
           grep -q '>Issues<' live-proof/test-project.html
           grep -q '>Release<' live-proof/test-project.html
