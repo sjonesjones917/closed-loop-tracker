@@ -33,6 +33,8 @@ jobs:
           echo "VERIFY_SELF_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
           npm install --no-save --ignore-scripts playwright-core >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
           CHROME_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          CHROME_PATH="$CHROME_PATH" node probe-retained-project.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
+          echo "IMPORT_PROBE_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
           CHROME_PATH="$CHROME_PATH" node browser-smoke.mjs >> RETAINED_PROJECT_DIAGNOSTIC.txt 2>&1
           echo "BROWSER_SMOKE_EXIT=$?" >> RETAINED_PROJECT_DIAGNOSTIC.txt
       - name: Commit diagnostic
