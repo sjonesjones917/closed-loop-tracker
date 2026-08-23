@@ -16,5 +16,5 @@ const controls=['UNKNOWN','NONE','NOT APPLICABLE','SATISFIED | VIOLATED | UNDETE
 for(const c of controls)if(!j.includes(c))fail('missing mandatory control '+c);
 for(const section of ['Authorized inputs','Human checklist','Fill-in stage record','Copy into the assigned agent','Stage completion gate','Evidence to preserve'])if(!j.includes(section))fail('missing stage UI section '+section);
 for(const key of ['defects:[]','regressions:[]','blockers:[]','changes:[]','agentOutputReceipts:[]','freshContextLaunches:[]'])if(!j.includes(key))fail('missing persistent control collection '+key);
-if(!h.includes('30-stage workbook')||!h.includes('Appendices A–F')||!h.includes('Job control'))fail('single application navigation incomplete');
+if(!h.includes('30-stage workbook')||!h.includes('Appendices A–F')||!h.includes('Control records'))fail('single application navigation incomplete');
 console.log(JSON.stringify({status:'PASS',singleApp:'index.html',runtime:'workbook.js',stages:30,appendices:6,controls:'verified'}));
