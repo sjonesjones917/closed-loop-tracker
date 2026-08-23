@@ -24,7 +24,8 @@ window.addEventListener('load',()=>{setTimeout(async()=>{
   const status=document.querySelector('[data-self-project-status]');
   const setStatus=(text,bad=false)=>{if(status){status.textContent=text;status.className=bad?'error':'success';}};
   const readProjects=()=>{try{const value=JSON.parse(localStorage.getItem(PROJECTS_KEY)||'[]');return Array.isArray(value)?value:[];}catch{return [];}};
-  const isCurrent=(candidate,expected)=>Boolean(candidate&&candidate.projectId===expected.projectId&&candidate.name===expected.name&&candidate.schema===expected.schema&&candidate.job?.exactUserObjective===expected.job?.exactUserObjective&&candidate.stages?.[0]?.completionEvidence===expected.stages?.[0]?.completionEvidence);
+  const releaseIdentity=project=>String(project?.legacyProjectMetadata?.releaseHash||project?.products?.[0]?.computedSha256||'');
+  const isCurrent=(candidate,expected)=>Boolean(candidate&&candidate.projectId===expected.projectId&&candidate.name===expected.name&&candidate.schema===expected.schema&&candidate.updatedAt===expected.updatedAt&&candidate.job?.exactUserObjective===expected.job?.exactUserObjective&&candidate.stages?.[0]?.completionEvidence===expected.stages?.[0]?.completionEvidence&&releaseIdentity(candidate)===releaseIdentity(expected));
   const sleep=milliseconds=>new Promise(resolve=>setTimeout(resolve,milliseconds));
   try{
     const response=await fetch('./SELF_VERIFIED_PROJECT.json',{cache:'no-store'});
@@ -42,7 +43,7 @@ window.addEventListener('load',()=>{setTimeout(async()=>{
       stored[existingIndex]=project;
       localStorage.setItem(PROJECTS_KEY,JSON.stringify(stored));
       const reloadKey='closedLoopReliability.retainedProjectReload';
-      const revision=project.name+'|'+String(project.stages[0]?.completionEvidence||'').length;
+      const revision=String(project.updatedAt||'')+'|'+releaseIdentity(project)+'|'+String(project.stages[0]?.completionEvidence||'').length;
       if(sessionStorage.getItem(reloadKey)!==revision){
         sessionStorage.setItem(reloadKey,revision);
         location.reload();
@@ -96,5 +97,6 @@ console.log(JSON.stringify({
   retainedProjectProofAttached: true,
   nativeImportPreferred: true,
   staleRetainedProjectRefreshedByProjectId: true,
+  releaseIdentityRefresh: true,
   unrelatedProjectsPreserved: true
 }, null, 2));
