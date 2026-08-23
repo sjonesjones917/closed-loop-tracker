@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - repair/human-project-workflow
+  pull_request:
+    branches:
+      - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   extract:
@@ -14,23 +17,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: repair/human-project-workflow
-          fetch-depth: 0
       - name: Reconstruct the existing runtime source
         run: |
           set -euo pipefail
           cat workbook.module.gz.1 workbook.module.gz.2 workbook.module.gz.3 > /tmp/workbook.module.gz
           gzip -dc /tmp/workbook.module.gz > workbook.module.js
           node --check workbook.module.js
-      - name: Preserve the source on this repair branch
-        run: |
-          set -euo pipefail
-          if git diff --quiet -- workbook.module.js && git ls-files --error-unmatch workbook.module.js >/dev/null 2>&1; then
-            exit 0
-          fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workbook.module.js
-          git commit -m "Preserve existing runtime source for direct repair"
-          git push origin HEAD:repair/human-project-workflow
+      - uses: actions/upload-artifact@v4
+        with:
+          name: existing-workbook-runtime-source
+          path: workbook.module.js
+          if-no-files-found: error
+          retention-days: 1
