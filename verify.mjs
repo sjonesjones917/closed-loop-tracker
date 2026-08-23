@@ -12,15 +12,15 @@ const compressed=Buffer.concat([
   fs.readFileSync('workbook.module.gz.3')
 ]);
 const source=zlib.gunzipSync(compressed).toString('utf8');
-const shellSha='15c93b7fdddb9a1e11be03b73be4692a70a64fde363d15df1c3ec5309a00be3c';
+const shellSha='68afcc4faf94d5153e845ae4b7e858f0670efd13b672622d29d82a73a37a82ac';
 ok(crypto.createHash('sha256').update(index.trimEnd()).digest('hex')===shellSha,'index.html is the approved existing application shell');
 const css=index.match(/<style>([\s\S]*?)<\/style>/)?.[1]||'';
 ok(crypto.createHash('sha256').update(css).digest('hex')==='befcafe57d62c87df67fb4a27b5f86e7aa30b7e50929e027bd311e8f4f9c7c73','layout/colors/typography/responsive CSS are unchanged');
 ok((index.match(/<script[^>]+src=/g)||[]).length===1 && index.includes('<script src="workbook.js"></script>'),'exactly one existing application runtime entry is loaded');
 ok(!index.includes("view='appendices'"),'Appendices A-F are not implemented as a separate checklist workflow/view');
 ok(index.includes("view='workbook'")&&index.includes("view='control'"),'the single application exposes only the workbook and integrated control surfaces');
-ok(index.includes('Operational controls A–F')&&index.includes('Appendices A–F are integrated workflow controls'),'the existing control surface explicitly preserves the Appendix A-F meaning');
-for(const text of ['A — Fresh agent context launch','B — Universal blocker','C — Change and invalidation','D — Exact final release','E — New-job reset','F — Universal agent-output receipt'])ok(index.includes(text),`${text} is visibly represented in the existing application`);
+ok(index.includes('Operational controls A–F')&&index.includes('Appendices A–F are operational controls used by the 30-stage workflow'),'the shell directs the user to the operational Appendix A-F control records rather than substituting static descriptions');
+ok(!index.includes('A — Fresh agent context launch')&&!index.includes('B — Universal blocker'),'the shell does not replace Appendix A-F implementation with a static explanatory checklist/card');
 ok(['workbook.module.gz.1','workbook.module.gz.2','workbook.module.gz.3'].every(name=>loader.includes(name))&&loader.includes('DecompressionStream("gzip")'),'runtime loader reads only the corrected workbook module payload');
 ok(compressed.length>0 && source.includes('export const STAGES'),'corrected module payload is present and decompresses');
 const temp=path.join(process.cwd(),'.verify-runtime.mjs'); fs.writeFileSync(temp,source);
@@ -28,7 +28,7 @@ let m; try{m=await import(pathToFileURL(temp).href+'?t='+Date.now())}finally{fs.
 const {STAGES,APPENDICES,SECTION_HEADINGS,STAGE_DECISIONS,REQUIREMENT_OUTCOMES,RELEASE_OUTCOMES,FOLDERS,ROLE_SEPARATION,createBlankState,createRecordTemplate,buildStagePrompt,validateStageDraft,immutableRevision,invalidateDownstream,compareArtifactSets,hasUnresolvedPlaceholder,stageHumanItems,stageGateItems,stageEvidenceItems}=m;
 ok(STAGES.length===30&&STAGES.every((s,i)=>s.number===i+1),'exactly 30 ordered stages');
 ok(new Set(STAGES.map(s=>s.title)).size===30,'30 distinct stage titles');
-ok(Object.keys(APPENDICES).join('')==='ABCDEF','exactly Appendices A-F exist as reusable control definitions');
+ok(Object.keys(APPENDICES).join('')==='ABCDEF','exactly Appendices A-F exist as reusable operational control definitions');
 ok(SECTION_HEADINGS.length===7,'seven controlling stage sections');
 ok(STAGE_DECISIONS.join('|')==='READY TO PROCEED|BLOCKED|NOT READY - CORRECTION REQUIRED','exact stage decisions');
 ok(REQUIREMENT_OUTCOMES.join('|')==='SATISFIED|VIOLATED|UNDETERMINED','exact requirement outcomes');
@@ -55,4 +55,4 @@ ok(source.includes('newJob')||source.includes('createBlankState'),'Appendix E is
 ok(source.includes('appendices.F'),'Appendix F is implemented as the universal agent-output receipt path');
 ok(source.includes('ACTUAL_CONTENT_INSPECTED')&&source.includes('CURRENCY_CONFIRMED'),'source inspection and current-source currency controls are implemented');
 if(failures.length){console.error(JSON.stringify({determination:'VIOLATED',failures,evidenceCount:evidence.length},null,2));process.exit(1)}
-console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,integratedAppendixControls:true,visualDesignChanged:false},null,2));
+console.log(JSON.stringify({determination:'SATISFIED',application:'index.html',stages:30,stageDefectControls:269,appendixControlFamilies:6,behavioralChecks:evidence.length,separateAppendixChecklistView:false,integratedAppendixControls:true,staticAppendixSubstitute:false,visualDesignChanged:false},null,2));
