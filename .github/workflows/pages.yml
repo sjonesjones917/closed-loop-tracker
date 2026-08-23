@@ -1,6 +1,8 @@
-name: Verify and deploy the single workbook app
+name: Verify, test, and deploy the single workbook app
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
@@ -9,51 +11,56 @@ permissions:
   id-token: write
   statuses: write
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  verify:
+  test-project:
+    name: Test project — workbook reliability suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --check workbook.js
-      - run: node verify.mjs
-      - name: Enforce one application
+      - name: Syntax check existing app runtime
+        run: node --check workbook.js
+      - name: Run complete workbook reliability tests
+        run: node verify.mjs
+      - name: Enforce exactly one application
         run: |
           test -f index.html
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -e app.html
           test ! -e app-v1.html
           test ! -e app-v2.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - name: Publish verification status
+      - name: Publish test-project status
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ job.status }}
           TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Single workbook verification succeeded'; else STATE=failure; DESCRIPTION='Single workbook verification failed'; fi
+          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Workbook test project succeeded'; else STATE=failure; DESCRIPTION='Workbook test project failed'; fi
           curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Authorization: Bearer $GH_TOKEN" \
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data "{\"state\":\"$STATE\",\"context\":\"single-workbook-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
+            --data "{\"state\":\"$STATE\",\"context\":\"workbook-test-project\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$TARGET_URL\"}"
   deploy:
-    needs: verify
+    if: github.event_name != 'pull_request'
+    needs: test-project
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy exact verified repository
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Deploy exact tested repository
         id: deployment
         uses: actions/deploy-pages@v4
       - name: Publish deployment status
@@ -63,7 +70,7 @@ jobs:
           RESULT: ${{ job.status }}
           TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Exact verified workbook deployed'; else STATE=failure; DESCRIPTION='Workbook deployment failed'; fi
+          if [ "$RESULT" = success ]; then STATE=success; DESCRIPTION='Exact tested workbook deployed'; else STATE=failure; DESCRIPTION='Workbook deployment failed'; fi
           curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Authorization: Bearer $GH_TOKEN" \
