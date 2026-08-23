@@ -1,0 +1,112 @@
+name: Repair runtime once
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/repair-runtime-once.yml]
+permissions:
+  contents: write
+  actions: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply the in-place runtime repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re
+
+          index=Path('index.html')
+          text=index.read_text()
+          text=re.sub(r'agent-workflow\.js\?v=[^"\']+', 'agent-workflow.js?v=closed-loop-agent-workflow-20260823-r4', text)
+          index.write_text(text)
+
+          wf=Path('.github/workflows/pages.yml')
+          text=wf.read_text()
+          human="      - id: human\n        continue-on-error: true\n        run: node --check human-ui.js\n"
+          agent=human+"      - id: agent_workflow\n        continue-on-error: true\n        run: node --check agent-workflow.js\n"
+          if 'id: agent_workflow' not in text:
+              if human not in text: raise SystemExit('human-ui syntax anchor missing')
+              text=text.replace(human,agent,1)
+          if "AGENT: '${{ steps.agent_workflow.outcome }}'" not in text:
+              text=text.replace("LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER:","AGENT: '${{ steps.agent_workflow.outcome }}', LIVE: '${{ steps.live_verifier.outcome }}', VERIFIER:")
+          if '"agent-workflow-syntax:$AGENT"' not in text:
+              text=text.replace('"human-ui-syntax:$HUMAN" "live-verifier-syntax:$LIVE"','"human-ui-syntax:$HUMAN" "agent-workflow-syntax:$AGENT" "live-verifier-syntax:$LIVE"')
+          if "test '${{ steps.agent_workflow.outcome }}' = success" not in text:
+              text=text.replace("          test '${{ steps.human.outcome }}' = success\n          test '${{ steps.live_verifier.outcome }}' = success", "          test '${{ steps.human.outcome }}' = success\n          test '${{ steps.agent_workflow.outcome }}' = success\n          test '${{ steps.live_verifier.outcome }}' = success")
+          text=text.replace('FILES=(index.html workbook.js human-ui.js TEST_PROJECT.json verify-live.mjs)','FILES=(index.html workbook.js human-ui.js agent-workflow.js TEST_PROJECT.json verify-live.mjs)')
+          wf.write_text(text)
+
+          project=Path('TEST_PROJECT.json')
+          data=json.loads(project.read_text())
+          data['specRevision']='2026-08-23-r34-reliable-agent-workflow'
+          data['currentOperation']=11
+          data['currentStage']=11
+          data['currentState']='BLOCKED'
+          data['testProjectDefinition']={
+            'projectKind':'REAL RETAINED PROJECT',
+            'usesNormalProjectSchema':True,
+            'usesNormalPersistence':True,
+            'usesNormalWorkflowAndViews':True,
+            'specialFixture':False,
+            'applicationItself':False,
+            'subject':'Repair and verify the existing Closed-Loop Reliability application against the supplied human-facing workflow specification.',
+            'authorityBoundary':'The existing application and repository are implementation evidence. They do not establish externally governed requirements.',
+            'truthfulness':'The project preserves completed work through candidate freeze and stops before independent execution because ten genuinely independent external contexts have not yet been performed.'
+          }
+          data['dataClasses']={
+            'userJobInput':{'record':'userJobInput','description':'What the user supplied, asserted, requested, constrained, uploaded, or defined.'},
+            'externalResearchSources':{'record':'externalResearch.sources','description':'Independently discovered authorities used to establish externally governed facts and requirements.'},
+            'workflowGeneratedArtifacts':{'records':['requirements','tests','mutations','productionInstruction','generatedPrompts','generatedOutputs','runRecords','verificationRecords','defects','regressions','audits','release'],'description':'Workflow artifacts never become external authority merely because they exist.'}
+          }
+          states=data.setdefault('operationStates',{})
+          for n in range(1,32):
+              rec=states.get(str(n),{})
+              if n<=10:
+                  rec['status']='COMPLETE'; rec.setdefault('decision','READY TO PROCEED')
+              elif n==11:
+                  rec.update({'status':'BLOCKED','decision':'BLOCKED','evidence':'Ten genuinely independent external execution contexts and their complete outputs do not yet exist. Zero runs are retained; no result is fabricated.'})
+              else:
+                  rec.update({'status':'NOT STARTED','decision':'','evidence':''})
+              rec.setdefault('invalidatedBy',[])
+              states[str(n)]=rec
+          data['runRecords']=[]
+          data['freshContexts']=[]
+          data['verificationRecords']=[]
+          data['comparisons']=[]
+          data['convergence']={}
+          data['confirmation']={}
+          data['baseline']={}
+          data['product']={}
+          data['representation']={}
+          data['audits']={'process':{},'product':{}}
+          data['release']={}
+          data['evidenceChains']=[]
+          blockers=data.setdefault('blockers',[])
+          blocker=next((b for b in blockers if int(b.get('stageDiscovered') or b.get('operation') or 0)==11),None)
+          if blocker is None:
+              blocker={}; blockers.append(blocker)
+          blocker.update({'blockerId':'BLOCKER-EXECUTION-CONTEXTS-001','currentStatus':'OPEN','stageDiscovered':11,'operation':11,'missingItemType':'CAPABILITY / EXTERNAL ACTION','missingItem':'Ten genuinely independent agent execution contexts and their complete outputs.','whyMandatorySatisfactionCannotBeEstablished':'The ten external executions have not actually been performed. The workflow cannot truthfully claim execution, verification, convergence, baseline approval, product generation, or release.','downstreamWorkStopped':['Operations 12–31'],'availableResolutionPath':'Use the operation prompt for RUN-001 through RUN-010 in ten fresh independent contexts, save each complete response and context identity, then perform independent verification.','resolutionEvidence':'NOT RESOLVED'})
+          data['nextRequiredAction']='Use the copy-ready Operation 11 prompt for RUN-001 through RUN-010 in ten fresh independent contexts. Save every complete response and context identity separately; do not expose one run to another.'
+          project.write_text(json.dumps(data,indent=2)+'\n')
+          PY
+          node --check agent-workflow.js
+          node build-test-project.mjs
+          node verify.mjs
+          rm .github/workflows/repair-runtime-once.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html agent-workflow.js TEST_PROJECT.json .github/workflows/pages.yml .github/workflows/repair-runtime-once.yml
+          git diff --cached --check
+          git commit -m "Finish in-place prompt workflow and retained project repair"
+          git push origin HEAD:main
+      - name: Deploy and verify the repaired existing application
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main
