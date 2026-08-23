@@ -20,4 +20,14 @@ const overview=`function overview(){const d=current.projectData;return \`<div cl
 const next=app.slice(0,start)+overview+app.slice(end);
 if(next!==app)fs.writeFileSync(appPath,next);
 
-console.log('Retained project verified; 30-stage tracker uses compact explicit Open actions.');
+const htmlPath='index.html';
+let html=fs.readFileSync(htmlPath,'utf8');
+const icon=`<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23161616'/%3E%3Cpath d='M8 16h16M16 8v16' stroke='white' stroke-width='3'/%3E%3C/svg%3E">`;
+if(!/<link\s+rel=["']icon["']/i.test(html)){
+  const marker='<title>Closed-Loop Reliability</title>';
+  if(!html.includes(marker))throw new Error('Cannot locate application title for favicon insertion.');
+  html=html.replace(marker,`${marker}\n${icon}`);
+  fs.writeFileSync(htmlPath,html);
+}
+
+console.log('Retained project verified; compact 30-stage tracker and inline application icon are materialized.');
