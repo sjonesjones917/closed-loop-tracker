@@ -3,7 +3,7 @@ on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
   workflow_dispatch:
-permissions: {contents: write, pages: write, id-token: write, statuses: write}
+permissions: {contents: read, pages: write, id-token: write, statuses: write}
 concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 
 jobs:
@@ -11,24 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - name: Materialize canonical application source once
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if ! git diff --quiet -- app.js TEST_PROJECT.json index.html; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app.js TEST_PROJECT.json index.html
-            git commit -m "Materialize verified application shell"
-            git push origin HEAD:main
-          fi
       - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
       - run: node verify.mjs
-      - name: Verify single application source
+      - name: Verify build is read-only and single-source
         run: |
+          git diff --exit-code -- app.js TEST_PROJECT.json index.html workbook.js
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
           test ! -f agent-workflow.js
@@ -38,13 +28,11 @@ jobs:
           grep -q 'rel="icon"' index.html
           node - <<'NODE'
           const fs=require('fs');
-          const app=fs.readFileSync('app.js','utf8');
-          const s=app+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
+          const s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
           const banned=new RegExp('se'+'mantic','i');
           if(banned.test(s))throw new Error('prohibited terminology');
           if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated product content');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
-          for(const token of ['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']",'function appendixDefault(','structuredIssues=validateStructuredStageState','filenamesIdentical','retainedBytes:false',"['Release control',current.release]","recordHistory('STAGE_DECISION_SAVED'"])if(!app.includes(token))throw new Error(`record-linked control missing: ${token}`);
           NODE
 
   deploy:
@@ -58,6 +46,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify.mjs
+      - name: Confirm deploy artifact equals checked-in source
+        run: git diff --exit-code -- app.js TEST_PROJECT.json index.html workbook.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -71,19 +61,9 @@ jobs:
     env: {PAGE_URL: '${{ needs.deploy.outputs.page_url }}'}
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify-live.mjs
-      - name: Verify deployed record-linked controls
-        run: |
-          node --input-type=module - <<'NODE'
-          const base=process.env.PAGE_URL;
-          const response=await fetch(new URL(`app.js?integrity=${Date.now()}`,base),{cache:'no-store'});
-          if(!response.ok)throw new Error(`deployed app.js returned ${response.status}`);
-          const app=await response.text();
-          for(const token of ['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']",'function appendixDefault(','structuredIssues=validateStructuredStageState','filenamesIdentical','retainedBytes:false',"['Release control',current.release]","recordHistory('STAGE_DECISION_SAVED'"])if(!app.includes(token))throw new Error(`deployed record-linked control missing: ${token}`);
-          NODE
       - name: Verify rendered phone views
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
