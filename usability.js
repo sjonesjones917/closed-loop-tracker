@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const style=document.createElement('style');
 style.id='mobile-usability-scale';
-style.dataset.revision='closed-loop-usability-20260824-r2';
+style.dataset.revision='closed-loop-usability-20260824-r3';
 style.textContent=`
 /* Phone-first usability floor: readable supporting text and thumb-safe controls. */
 .brand-kicker{font-size:11px!important;line-height:1.2!important}
@@ -35,6 +35,9 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,sel
 `;
 const promote=()=>{if(document.head&&document.head.lastElementChild!==style)document.head.append(style);};
 promote();
-document.addEventListener('DOMContentLoaded',promote,{once:true});
-window.addEventListener('load',promote,{once:true});
+const headObserver=new MutationObserver(()=>{
+  const experience=document.getElementById('experience-layout-fix');
+  if(experience&&experience.nextElementSibling!==style)promote();
+});
+if(document.head)headObserver.observe(document.head,{childList:true});
 })();
