@@ -28,10 +28,10 @@ for(const token of [
   "recordHistory('STAGE_DECISION_SAVED'",
   "19:['runs']"
 ])if(!app.includes(token))throw new Error(`Committed application is missing ${token}`);
-for(const token of ['Mobile closed-loop control','Completed work','Continue current stage','Work for this stage','Completion controls','Find project information','Supporting records'])if(!experience.includes(token))throw new Error(`Human-facing experience is missing ${token}`);
+for(const token of ['Mobile closed-loop control','Current work','Completed work','Continue current stage','Work for this stage','Completion controls','Find project information','Supporting records'])if(!experience.includes(token))throw new Error(`Human-facing experience is missing ${token}`);
 if(!/<link\s+rel=["']icon["']/i.test(html))throw new Error('Application icon is missing.');
-if(!html.includes('experience.js?v=closed-loop-experience-20260823-2055'))throw new Error('Human-facing experience asset is not wired into the single application shell.');
-if(!html.includes('closed-loop-30-runtime-20260823-2045'))throw new Error('Expected deployed core cache identity is missing.');
+if(!html.includes('experience.js?v=closed-loop-runtime-20260823-2037-r1'))throw new Error('Human-facing experience asset is not wired into the single application shell.');
+if(!html.includes('closed-loop-runtime-20260823-2037-r1'))throw new Error('Expected deployed cache identity is missing.');
 if(html.includes('closed-loop-retained-project-refresh'))throw new Error('The app shell must not delete a retained project from browser storage during load.');
 
 console.log('Retained project, committed workflow controls, and cache-busted human-facing experience verified without rewriting source files.');
