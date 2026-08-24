@@ -1,0 +1,70 @@
+name: Temporary live proof for hardening
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: live-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node build-test-project.mjs
+      - run: node --check app.js && node --check app-core.js && node --check integrity-guard.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs && node --check verify-integrity-browser.mjs && node --check verify-hardening-browser.mjs && node --check verify-prompts-live.mjs
+      - run: node verify.mjs
+  deploy:
+    needs: test
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node build-test-project.mjs && node verify.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: .}
+      - id: deployment
+        uses: actions/deploy-pages@v4
+  verify-live:
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node build-test-project.mjs && node verify-live.mjs
+      - name: Verify deployed source identity
+        run: |
+          node --input-type=module - <<'NODE'
+          const base=process.env.PAGE_URL;
+          const expected={
+            'index.html':['closed-loop-integrity-20260824-r3','Reliability Workbook'],
+            'app.js':['app-core.js','integrity-guard.js','closed-loop-integrity-20260824-r3'],
+            'integrity-guard.js':['JOB_ID is immutable','invalidateDerivedRecords','deriveReleaseGate','sameFileSet','closedLoopIntegrityGuard'],
+            'TEST_PROJECT.json':['JOB-20260823144121','Mobile Closed-Loop Agent Reliability Workbook']
+          };
+          for(const [path,tokens] of Object.entries(expected)){
+            const response=await fetch(new URL(`${path}?proof=${Date.now()}`,base),{cache:'no-store'});
+            if(!response.ok)throw new Error(`${path} returned ${response.status}`);
+            const body=await response.text();
+            for(const token of tokens)if(!body.includes(token))throw new Error(`${path} missing deployed token: ${token}`);
+          }
+          NODE
+      - run: node verify-browser.mjs
+      - run: node verify-integrity-browser.mjs
+      - run: node verify-hardening-browser.mjs
+      - run: node verify-prompts-live.mjs
