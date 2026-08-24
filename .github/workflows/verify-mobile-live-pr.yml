@@ -34,6 +34,8 @@ jobs:
           NODE
       - name: Exercise deployed project and responsive behavior
         run: node verify-browser.mjs
+      - name: Diagnose viewport behavior
+        run: node diagnose-viewport.mjs
       - name: Prove reload/navigation integrity determinism three times
         run: |
           for i in 1 2 3; do
