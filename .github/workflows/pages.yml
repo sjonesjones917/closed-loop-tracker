@@ -74,7 +74,7 @@ jobs:
           node --input-type=module - <<'NODE'
           const base=process.env.PAGE_URL;
           const expected={
-            'index.html':['closed-loop-30-runtime-20260823-2030','experience.js'],
+            'index.html':['closed-loop-30-runtime-20260823-2045','experience.js','Reliability Workbook'],
             'experience.js':['Mobile closed-loop control','Completed work','Continue current stage','Find project information'],
             'app.js':['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']"],
             'TEST_PROJECT.json':['JOB-20260823144121','Mobile Closed-Loop Agent Reliability Workbook']
