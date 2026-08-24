@@ -1,11 +1,11 @@
 import fs from 'node:fs';
-const required=['index.html','app.js','workbook.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt'];
+const required=['index.html','app.js','workbook.js','experience.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
-const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8'),core=fs.readFileSync('workbook.js','utf8'),project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8')),operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
-if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
+const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8'),experience=fs.readFileSync('experience.js','utf8'),core=fs.readFileSync('workbook.js','utf8'),project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8')),operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
+if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="experience\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
 if((html.match(/<html\b/g)||[]).length!==1)throw new Error('There must be one application shell.');
-if(!html.includes('closed-loop-30-runtime-20260823-2025'))throw new Error('The repaired application cache identity is missing.');
-if(!html.includes('closed-loop-retained-project-refresh-20260823-2025')||!html.includes('JOB-20260823144121'))throw new Error('Retained-project refresh migration is missing.');
+if(!html.includes('closed-loop-30-runtime-20260823-2030'))throw new Error('The repaired application cache identity is missing.');
+if(html.includes('closed-loop-retained-project-refresh'))throw new Error('The app shell must not delete the retained project from browser storage.');
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(project.specRevision!=='authorized-operation-01-project-20260823-r2')throw new Error('Retained project revision was not materialized.');
 if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Authorized retained project identity is wrong.');
@@ -32,9 +32,10 @@ if((project.outputReceipts||[]).length!==1||project.outputReceipts[0]?.completeR
 for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`${name} contains fabricated downstream records.`);
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Unrelated generator project content remains.');
 for(const token of ['validateStageDraft','saveAppendix','sha256Bytes','compareArtifactSets','Complete project record','Generated instructions','Generated outputs','Output receipts','Original project input','Add supporting record','stageFieldsMarkup','stageRecordFromFields','appendixFieldsMarkup','saveStageWork','savePromptRecord','recordOutputRecord','retainedSpecRevision','invalidateDownstream','sourceConflicts','rootCauses','artifactIdentities','Complete stored project (advanced)','recordSchemas','structuredRecords','addStructuredRecord','data-add-record','createUniqueJobId','blockingRecord=openBlockers().find'])if(!app.includes(token))throw new Error(`Application control missing: ${token}`);
+for(const token of ['Mobile closed-loop control','Completed work','Continue current stage','View complete record','Project identity','Authorized job input','Workflow control','Work for this stage','Instruction to run','Returned output','Stage decision and evidence','Completion controls','Supporting records','Find project information'])if(!experience.includes(token))throw new Error(`Human-facing experience control missing: ${token}`);
 if(app.includes('id="stage-record"'))throw new Error('Raw stage textarea remains the primary stage interface.');
 if(app.includes("draftRecord:r.record||r.evidenceRecord"))throw new Error('The object-display stage-record defect remains.');
-if(/TEST-GEN-042|GEN-042/i.test(app))throw new Error('Legacy generator fallback remains in application code.');
+if(/TEST-GEN-042|GEN-042/i.test(app+experience))throw new Error('Legacy generator fallback remains in application code.');
 if(/async\s+async\s+function/.test(app))throw new Error('Invalid duplicate async function declaration remains.');
 if(/async\s+function\s+createUniqueJobId/.test(app))throw new Error('New-job identity generator must be synchronous.');
 if(!app.includes("while(projects.some(p=>p.job?.JOB_ID===id))"))throw new Error('New-job identity collision check is missing.');
@@ -50,7 +51,7 @@ for(const label of ['Baselines','Products','Deterministic verification','Indepen
 }
 for(const token of ['PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY','RECONCILE PROCESS AND PRODUCT EVIDENCE','RUN INDEPENDENT MEANING VERIFICATION'])if(!core.includes(token))throw new Error(`30-stage workflow item missing: ${token}`);
 if((core.match(/'[^']*'/g)||[]).filter(x=>x.includes('RUN INDEPENDENT MEANING VERIFICATION')).length<1)throw new Error('Stage 23 human-facing meaning label is missing.');
-if(/human-project\/31|31 operations|Freeze New Version/i.test(app+html+core))throw new Error('Discarded 31-operation architecture remains.');
-const banned=new RegExp('se'+'mantic','i');if(banned.test(app+html+core))throw new Error('Prohibited terminology remains in active application source.');
+if(/human-project\/31|31 operations|Freeze New Version/i.test(app+html+core+experience))throw new Error('Discarded 31-operation architecture remains.');
+const banned=new RegExp('se'+'mantic','i');if(banned.test(app+html+core+experience))throw new Error('Prohibited terminology remains in active application source.');
 if(fs.existsSync('.github/workflows/inspection-snapshot.yml'))throw new Error('Temporary inspection workflow remains.');
-console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,deduplicatedRecords:true,retainedProjectRefresh:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,deduplicatedRecords:true,humanFacingExperience:true,storageResetRemoved:true},null,2));
