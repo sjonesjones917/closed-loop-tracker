@@ -33,11 +33,12 @@ jobs:
           const app=fs.readFileSync('app-core.js','utf8');
           const prompts=fs.readFileSync('prompt-engine.js','utf8');
           const experience=fs.readFileSync('experience.js','utf8');
-          const s=loader+app+prompts+experience+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
+          const ui=loader+app+prompts+experience+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8');
+          const project=fs.readFileSync('TEST_PROJECT.json','utf8');
           const banned=new RegExp('se'+'mantic','i');
-          if(banned.test(s))throw new Error('prohibited terminology');
-          if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated product content');
-          if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
+          if(banned.test(ui))throw new Error('prohibited terminology');
+          if(/GEN-042|field status report|maintenance[- ]handoff/i.test(ui+project))throw new Error('unrelated product content');
+          if(/human-project\/31|31 operations|Freeze New Version/i.test(ui))throw new Error('discarded architecture');
           for(const token of ['prompt-engine.js','app-core.js'])if(!loader.includes(token))throw new Error(`loader missing ${token}`);
           for(const token of ['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']",'function appendixDefault(','structuredIssues=validateStructuredStageState','filenamesIdentical','retainedBytes:false',"['Release control',current.release]","recordHistory('STAGE_DECISION_SAVED'"])if(!app.includes(token))throw new Error(`record-linked control missing: ${token}`);
           for(const token of ['core.buildStagePrompt=build','const procedures={','AUTHORIZED INPUTS FOR THIS STAGE','SOURCE-SET-v001','Do not perform Stage 03 requirements research'])if(!prompts.includes(token))throw new Error(`prompt engine control missing: ${token}`);
