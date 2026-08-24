@@ -18,7 +18,7 @@ const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 async function waitExpr(cdp,expression,timeout=15000){return poll(async()=>{const result=await value(cdp,expression);if(!result)throw new Error(`Waiting: ${expression}`);return result;},timeout);}
 async function click(cdp,selector){assert(await value(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`),`Missing ${selector}`);}
 async function fill(cdp,selector,text){assert(await value(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(text)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`),`Missing ${selector}`);}
-async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(180);}
+async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});await waitExpr(cdp,`innerWidth===${width}`);}
 async function waitForAppShell(cdp){
   await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
   await waitExpr(cdp,`typeof globalThis.closedLoopIntegrityGuard==='object'&&typeof globalThis.closedLoopIntegrityGuard.deriveReleaseGate==='function'`);
@@ -33,6 +33,7 @@ async function main(){
   await value(cdp,`localStorage.clear();location.reload();true`);await waitForAppShell(cdp);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
 
   await setWidth(cdp,393,900);
+  assert(await value(cdp,`matchMedia('(max-width:620px)').matches`),'393px verifier viewport did not activate the mobile media query.');
   const mobile=await value(cdp,`(()=>{const visible=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};const controls=[...document.querySelectorAll('button,select,input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"])')].filter(e=>visible(e)&&!e.disabled);const text=[...document.querySelectorAll('.brand-kicker,.brand p,.project-select label,.view-tabs button,.fact span,.status,.field label,.field .help,.record-key,.record-value,.stage-number,.stage-name,.stage-meta,.record-card>summary')].filter(visible);return {minControl:Math.min(...controls.map(e=>e.getBoundingClientRect().height)),minText:Math.min(...text.map(e=>parseFloat(getComputedStyle(e).fontSize))),columns:getComputedStyle(document.querySelector('.facts')).gridTemplateColumns.split(' ').length};})()`);
   assert(mobile.minControl>=44,`Mobile touch target below 44px: ${mobile.minControl}`);
   assert(mobile.minText>=11,`Mobile supporting text below 11px: ${mobile.minText}`);
@@ -63,7 +64,7 @@ async function main(){
   const duplicateRejected=await value(cdp,`(async()=>{const p=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3')).find(x=>x.job?.JOB_ID===${JSON.stringify(retained)});const file=new File([JSON.stringify(p)],'duplicate.json',{type:'application/json'}),dt=new DataTransfer(),input=document.querySelector('#import-file');dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,300));return window.__integrityAlerts.some(x=>x.includes('already exists'));})()`);
   assert(duplicateRejected,'Duplicate imported JOB_ID was not rejected.');
   const countAfter=await value(cdp,`document.querySelectorAll('#project-picker option').length`);assert(countAfter===countBefore,'Rejected duplicate import changed the project set.');
-  console.log(JSON.stringify({integrityVerified:true,renderReadinessDeterministic:true,mobileTouchTargets:true,mobileReadableType:true,mobileDensityReduced:true,jobIdImmutable:true,duplicateImportRejected:true,stage1InvalidationConsistent:true,historicalEvidencePreserved:true},null,2));
+  console.log(JSON.stringify({integrityVerified:true,renderReadinessDeterministic:true,cssViewportVerified:true,mobileTouchTargets:true,mobileReadableType:true,mobileDensityReduced:true,jobIdImmutable:true,duplicateImportRejected:true,stage1InvalidationConsistent:true,historicalEvidencePreserved:true},null,2));
   cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1500)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
