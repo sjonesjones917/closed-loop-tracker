@@ -28,6 +28,7 @@ for(const token of [
   "19:['runs']"
 ])if(!app.includes(token))throw new Error(`Committed application is missing ${token}`);
 if(!/<link\s+rel=["']icon["']/i.test(html))throw new Error('Application icon is missing.');
-if(!html.includes('closed-loop-30-runtime-20260823-2001'))throw new Error('Expected deployed cache identity is missing.');
+if(!html.includes('closed-loop-30-runtime-20260823-2025'))throw new Error('Expected deployed cache identity is missing.');
+if(!html.includes('closed-loop-retained-project-refresh-20260823-2025'))throw new Error('Expected retained-project refresh migration is missing.');
 
 console.log('Retained project and committed application verified without rewriting source files.');
