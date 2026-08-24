@@ -28,7 +28,7 @@ for(const token of ['SUBJECTS','QUESTIONS THE WORKFLOW MUST RESOLVE','REQUIRED M
 for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`Live ${name} contains fabricated downstream records.`);
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Unrelated generator project content remains live.');
 const source=fetched['index.html']+fetched['app.js']+fetched['workbook.js'];
-if(!fetched['index.html'].includes('closed-loop-30-runtime-5'))throw new Error('Live repaired cache identity is missing.');
+if(!fetched['index.html'].includes('closed-loop-30-runtime-20260823-2001'))throw new Error('Live repaired cache identity is missing.');
 for(const token of ['stageRecordText','stageOutputText','stageFieldsMarkup','stageRecordFromFields','appendixFieldsMarkup','saveStageWork','savePromptRecord','recordOutputRecord','retainedSpecRevision','recordSchemas','structuredRecords','addStructuredRecord','data-add-record','createUniqueJobId','invalidateDownstream','blockingRecord=openBlockers().find'])if(!fetched['app.js'].includes(token))throw new Error(`Live application repair missing ${token}.`);
 if(fetched['app.js'].includes('id="stage-record"')||fetched['app.js'].includes("draftRecord:r.record||r.evidenceRecord"))throw new Error('Live raw stage-record defect remains.');
 if(/async\s+async\s+function/.test(fetched['app.js'])||/async\s+function\s+createUniqueJobId/.test(fetched['app.js']))throw new Error('Live new-job implementation contains an invalid async declaration.');
