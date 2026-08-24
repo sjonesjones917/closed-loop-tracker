@@ -81,9 +81,9 @@ async function main(){
   await openStage(cdp,2);
   assert(!await evalValue(cdp,`document.body.innerText.includes('Open blocker BROWSER-BLOCKER-001 stops downstream work.')`),'Resolved blocker continued to stop downstream work.');
   assert(await evalValue(cdp,`document.querySelectorAll('[data-record-collection="sources"]').length>=5`),'Stage 02 structured source-record editor is missing.');
-  await evalValue(cdp,`(()=>{for(const e of document.querySelectorAll('[data-record-collection="sources"]')){const f=e.dataset.recordField;e.value=f==='SOURCE_ID'?'SOURCE-BROWSER-001':f==='TYPE'?'User supplied input':f==='INSPECTION_STATE'?'INSPECTED':'UNKNOWN';}return true})()`);
+  await evalValue(cdp,`(()=>{for(const e of document.querySelectorAll('[data-record-collection="sources"]')){const f=e.dataset.recordField;e.value=f==='SOURCE_ID'?'SOURCE-BROWSER-001':f==='TYPE'?'OFFICIAL SPECIFICATION':f==='ORIGIN'?'WHATWG':f==='REFERENCE'?'https://html.spec.whatwg.org/':f==='INSPECTION_STATE'?'INSPECTED':f==='CURRENCY_STATE'?'CURRENT':f==='CONTROLLING_STATUS'?'CONTROLLING':f==='SOURCE_CLASS'?'EXTERNAL GOVERNING SOURCE':f==='INDEPENDENT_EXTERNAL_AUTHORITY'?'TRUE':f==='TARGET_PRODUCT_RELATIONSHIP'?'INDEPENDENT EXTERNAL AUTHORITY':f==='TITLE'?'HTML Standard':f==='ISSUING_ORGANIZATION_OR_AUTHOR'?'WHATWG':f==='PUBLICATION_ORIGIN'?'WHATWG Living Standard':f==='RELEVANCE'?'Independent browser-platform authority fixture':f==='APPLICABLE_PORTIONS'?'HTML platform requirements':'UNKNOWN';}return true})()`);
   await click(cdp,'[data-add-record="sources"]');
-  assert(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v3')?.includes('SOURCE-BROWSER-001')`),'Structured source record was not persisted.');
+  assert(await evalValue(cdp,`(()=>{const p=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3')||'[]').find(x=>x.job?.JOB_ID==='JOB-20260823144121'),r=p?.projectData?.sources?.find(x=>x.id==='SOURCE-BROWSER-001'||x.SOURCE_ID==='SOURCE-BROWSER-001');return !!r&&globalThis.closedLoopAuthorityGuard?.validExternalSource(r)===true;})()`),'Independent external source record was not persisted as valid authority.');
 
   const editable=await evalValue(cdp,`document.querySelector('[data-stage-field]')?.dataset.stageField||''`);assert(editable,'Stage 02 has no structured stage field.');
   await fill(cdp,`[data-stage-field="${editable}"]`,'BROWSER-PERSISTENCE-CHECK');
@@ -128,7 +128,7 @@ async function main(){
 
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));
   assert(errors.length===0,`Browser/runtime errors detected: ${errors.map(x=>JSON.stringify(x.params)).join('\n')}`);
-  console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],retainedProject:true,stage1Instruction:true,stage1Output:true,records:true,structuredRecords:true,humanFacingExperience:true,projectFieldGrouping:true,stageJumpNavigation:true,completionControlsCollapsed:true,recordSearch:true,blockerLifecycle:true,stage2Persistence:true,all30StagesReachable:true,uniqueNewJobs:true,importExport:true,newProjectCoexists:true,horizontalOverflow:false,oversizedButtons:false,runtimeErrors:0},null,2));
+  console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],retainedProject:true,stage1Instruction:true,stage1Output:true,records:true,structuredRecords:true,externalSourceAuthority:true,humanFacingExperience:true,projectFieldGrouping:true,stageJumpNavigation:true,completionControlsCollapsed:true,recordSearch:true,blockerLifecycle:true,stage2Persistence:true,all30StagesReachable:true,uniqueNewJobs:true,importExport:true,newProjectCoexists:true,horizontalOverflow:false,oversizedButtons:false,runtimeErrors:0},null,2));
   cdp.close();
 }
 async function cleanup(){
