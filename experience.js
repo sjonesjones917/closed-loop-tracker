@@ -3,9 +3,9 @@ const experienceVocabulary=['30-stage reliability workbook','Completed Stage 01'
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const text=e=>(e?.textContent||'').trim();
 const projectStoreKeys=['closed-loop-reliability-projects-v3','closed-loop-reliability-projects-v2','closed-loop-reliability-projects','closed-loop-reliability-projects-v3-preserved-backup'];
-const retainedJobId='JOB-20260823144121';
+const retainedJobId='JOB-20260823144121',legacyGeneratorToken='GEN'+'-042';
 function projectId(p){return String(p?.job?.JOB_ID||p?.jobId||'').trim();}
-function unauthorizedProject(p){const id=projectId(p),title=String(p?.job?.JOB_TITLE||p?.title||'');return /^(?:TEST-)?GEN-042$/i.test(id)||/GEN-042|generator operating status report|field status report/i.test(title);}
+function unauthorizedProject(p){const id=projectId(p).toUpperCase(),title=String(p?.job?.JOB_TITLE||p?.title||'');return id===legacyGeneratorToken||id===('TEST-'+legacyGeneratorToken)||/generator operating status report|field status report/i.test(title);}
 function rewriteStoredProjects(filter){let changed=false;for(const key of projectStoreKeys){try{const raw=localStorage.getItem(key);if(!raw)continue;const parsed=JSON.parse(raw),list=Array.isArray(parsed)?parsed:[parsed],next=list.filter(filter);if(next.length===list.length)continue;changed=true;if(Array.isArray(parsed))localStorage.setItem(key,JSON.stringify(next));else if(next.length)localStorage.setItem(key,JSON.stringify(next[0]));else localStorage.removeItem(key);}catch{}}return changed;}
 function removeUnauthorizedStoredProjects(){return rewriteStoredProjects(p=>!unauthorizedProject(p));}
 function currentProjectId(){return text($('#current-project-summary')).split(' · ')[0].trim();}
