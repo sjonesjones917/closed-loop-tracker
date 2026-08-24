@@ -18,7 +18,7 @@ try{
   await poll(()=>json(`http://127.0.0.1:${port}/json/version`));
   const target=await json(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?prompt-isolation=${Date.now()}`)}`,{method:'PUT'});
   const cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');
-  await poll(async()=>{const ok=await evaluate(cdp,`document.readyState==='complete'&&globalThis.closedLoopPromptEngine?.version==='2026-08-24-r2'&&globalThis.closedLoopCore?.STAGES?.length===30`);if(!ok)throw new Error('waiting for prompt engine r2');return true;});
+  await poll(async()=>{const ok=await evaluate(cdp,`document.readyState==='complete'&&globalThis.closedLoopPromptEngine?.version==='2026-08-24-r2'&&globalThis.closedLoopAuthorityGuard?.revision==='closed-loop-authority-20260824-r1'&&globalThis.closedLoopCore?.STAGES?.length===30`);if(!ok)throw new Error('waiting for corrected prompt engine and authority guard');return true;});
   const result=await evaluate(cdp,`(()=>{
     const core=globalThis.closedLoopCore;
     const forbidden=['JOB-20260823144121','Mobile Closed-Loop Agent Reliability Workbook','MASTER TEMPLATE - DUPLICATE THIS FILE FOR EACH NEW JOB'];
@@ -34,17 +34,18 @@ try{
       if(!prompt.includes('This instruction belongs only to JOB_ID '+id))throw new Error('Missing project-scope boundary at case '+i);
       for(const bad of forbidden)if(prompt.includes(bad))throw new Error('Cross-project retained-test contamination '+JSON.stringify(bad)+' at case '+i);
       if(n===1&&!prompt.includes('Do not create, prescribe, or instruct reuse of a master prompt'))throw new Error('Stage 01 reusable-template prohibition missing at case '+i);
-      if(n===2){for(const token of ['genuinely independent external authorities','Never use the target product, this operating application, its repository','User Job Input and Supplied Material remain authorized project inputs, but they are not automatically independent external governing sources'])if(!prompt.includes(token))throw new Error('Stage 02 authority boundary missing '+JSON.stringify(token)+' at case '+i);}
-      if(n===3&&!prompt.includes('Research only the legitimate Stage 02 external governing source set'))throw new Error('Stage 03 external-source boundary missing at case '+i);
+      if(n===2){for(const token of ['Build SOURCE-SET-vN exclusively from independent External Governing Sources','Categorically exclude the target product, this operating application, this repository','User Job Input controls scope and intent but is not automatically an independent external authority','SOURCE AUTHORITY BOUNDARY'])if(!prompt.includes(token))throw new Error('Stage 02 authority boundary missing '+JSON.stringify(token)+' at case '+i);}
+      if(n===3){for(const token of ['Research only SOURCE_ID records legitimately established as independent External Governing Sources in Stage 02','Do not research the target product, operating application, repository, prior implementation, or project-generated artifacts as requirement authority'])if(!prompt.includes(token))throw new Error('Stage 03 external-source boundary missing '+JSON.stringify(token)+' at case '+i);}
       checked++;
     }
     const a=core.createBlankState('JOB-A'),b=core.createBlankState('JOB-B');
     a.job.EXACT_USER_OBJECTIVE_VERBATIM='OBJECTIVE-A-ONLY';b.job.EXACT_USER_OBJECTIVE_VERBATIM='OBJECTIVE-B-ONLY';
     for(let n=1;n<=30;n++){
       const pa=core.buildStagePrompt(core.STAGES[n-1],a),pb=core.buildStagePrompt(core.STAGES[n-1],b);
-      if(pa.includes('OBJECTIVE-B-ONLY')||pb.includes('OBJECTIVE-A-ONLY'))throw new Error('Two-project isolation failed at stage '+n);
+      if(!pa.includes('JOB_ID: JOB-A')||!pb.includes('JOB_ID: JOB-B'))throw new Error('Two-project identity isolation failed at stage '+n);
+      if(pa.includes('OBJECTIVE-B-ONLY')||pb.includes('OBJECTIVE-A-ONLY'))throw new Error('Two-project objective isolation failed at stage '+n);
     }
-    return {promptIsolationVerified:true,syntheticPromptCases:checked,stagesCovered:30,crossProjectLeakage:0,stage1ReusableTemplateLeakage:0,stage2CircularAuthorityLeakage:0};
+    return {promptIsolationVerified:true,syntheticPromptCases:checked,stagesCovered:30,crossProjectLeakage:0,stage1ReusableTemplateLeakage:0,stage2CircularAuthorityLeakage:0,authorityWrappedPromptsVerified:true};
   })()`);
   console.log(JSON.stringify(result,null,2));
   cdp.close();
