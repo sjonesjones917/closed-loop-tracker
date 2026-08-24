@@ -3,7 +3,7 @@ on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
   workflow_dispatch:
-permissions: {contents: write, pages: write, id-token: write, statuses: write}
+permissions: {contents: read, pages: write, id-token: write, statuses: write}
 concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 
 jobs:
@@ -13,51 +13,31 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Commit final future-stage prompt gate
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          node - <<'NODE'
-          const fs=require('fs');
-          const appPath='app.js', indexPath='index.html', buildPath='build-test-project.mjs', verifyPath='verify.mjs';
-          let app=fs.readFileSync(appPath,'utf8');
-          const old='<div class="button-row"><button id="save-prompt">Save instruction</button><button id="copy-prompt">Copy instruction</button></div>';
-          const replacement='<div class="button-row"><button id="save-prompt"${lock?\' disabled\':\'\'}>Save instruction</button><button id="copy-prompt"${lock?\' disabled\':\'\'}>Copy instruction</button></div>';
-          if(app.includes(old))app=app.replace(old,replacement);
-          else if(!app.includes('id="save-prompt"${lock?\' disabled\':\'\'}'))throw new Error('Could not locate future-stage prompt controls.');
-          fs.writeFileSync(appPath,app);
-          for(const path of [indexPath,buildPath,verifyPath]){
-            let text=fs.readFileSync(path,'utf8');
-            text=text.replaceAll('closed-loop-30-runtime-20260823-2001','closed-loop-30-runtime-20260823-2020');
-            fs.writeFileSync(path,text);
-          }
-          NODE
-          if ! git diff --quiet -- app.js index.html build-test-project.mjs verify.mjs; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app.js index.html build-test-project.mjs verify.mjs
-            git commit -m "Gate future-stage prompt actions"
-            git push origin HEAD:main
-          fi
       - run: node build-test-project.mjs
-      - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
+      - run: node --check app.js && node --check workbook.js && node --check experience.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
       - run: node verify.mjs
       - name: Verify build is read-only and single-source
         run: |
-          git diff --exit-code -- app.js TEST_PROJECT.json index.html workbook.js
+          git diff --exit-code -- app.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
           test ! -f agent-workflow.js
           test ! -f prompt-center.js
           grep -q 'src="workbook.js' index.html
           grep -q 'src="app.js' index.html
+          grep -q 'src="experience.js' index.html
           grep -q 'rel="icon"' index.html
           node - <<'NODE'
           const fs=require('fs');
-          const s=fs.readFileSync('app.js','utf8')+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
+          const app=fs.readFileSync('app.js','utf8');
+          const experience=fs.readFileSync('experience.js','utf8');
+          const s=app+experience+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('TEST_PROJECT.json','utf8');
           const banned=new RegExp('se'+'mantic','i');
           if(banned.test(s))throw new Error('prohibited terminology');
           if(/GEN-042|field status report|maintenance[- ]handoff/i.test(s))throw new Error('unrelated product content');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(s))throw new Error('discarded architecture');
+          for(const token of ['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']",'function appendixDefault(','structuredIssues=validateStructuredStageState','filenamesIdentical','retainedBytes:false',"['Release control',current.release]","recordHistory('STAGE_DECISION_SAVED'"])if(!app.includes(token))throw new Error(`record-linked control missing: ${token}`);
+          for(const token of ['Mobile closed-loop control','Completed work','Continue current stage','Work for this stage','Completion controls','Find project information','Supporting records'])if(!experience.includes(token))throw new Error(`human-facing experience missing: ${token}`);
           NODE
 
   deploy:
@@ -72,7 +52,7 @@ jobs:
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify.mjs
       - name: Confirm deploy artifact equals checked-in source
-        run: git diff --exit-code -- app.js TEST_PROJECT.json index.html workbook.js
+        run: git diff --exit-code -- app.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -89,6 +69,23 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify-live.mjs
+      - name: Verify deployed source identity
+        run: |
+          node --input-type=module - <<'NODE'
+          const base=process.env.PAGE_URL;
+          const expected={
+            'index.html':['closed-loop-30-runtime-20260823-2030','experience.js'],
+            'experience.js':['Mobile closed-loop control','Completed work','Continue current stage','Find project information'],
+            'app.js':['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']"],
+            'TEST_PROJECT.json':['JOB-20260823144121','Mobile Closed-Loop Agent Reliability Workbook']
+          };
+          for(const [path,tokens] of Object.entries(expected)){
+            const response=await fetch(new URL(`${path}?integrity=${Date.now()}`,base),{cache:'no-store'});
+            if(!response.ok)throw new Error(`${path} returned ${response.status}`);
+            const body=await response.text();
+            for(const token of tokens)if(!body.includes(token))throw new Error(`${path} missing deployed token: ${token}`);
+          }
+          NODE
       - name: Verify rendered phone views
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -98,8 +95,9 @@ jobs:
             grep -q 'Mobile Closed-Loop Agent Reliability Workbook' "live-${WIDTH}.html"
             grep -q '1/30 complete' "live-${WIDTH}.html"
             grep -q 'STAGE 02' "live-${WIDTH}.html"
-            grep -q 'Saved instructions' "live-${WIDTH}.html"
-            grep -q 'Saved outputs' "live-${WIDTH}.html"
+            grep -q 'Reliability Workbook' "live-${WIDTH}.html"
+            grep -q 'Completed work' "live-${WIDTH}.html"
+            grep -q 'Continue current stage' "live-${WIDTH}.html"
             grep -q 'Overview' "live-${WIDTH}.html"
             ! grep -qi 'GEN-042' "live-${WIDTH}.html"
             ! grep -qi 'field status report' "live-${WIDTH}.html"
@@ -124,7 +122,7 @@ jobs:
         run: |
           if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
             STATE=success
-            DESCRIPTION='Source, deployment, mobile/desktop UI, persistence, and browser verification passed'
+            DESCRIPTION='Source, deployment, mobile UI, persistence, and browser verification passed'
           else
             STATE=failure
             DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
