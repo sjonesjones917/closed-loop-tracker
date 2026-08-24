@@ -21,7 +21,7 @@ async function fill(cdp,selector,text){assert(await value(cdp,`(()=>{const e=doc
 async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(180);}
 async function waitForAppShell(cdp){
   await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
-  await waitExpr(cdp,`globalThis.closedLoopIntegrityGuard===true`);
+  await waitExpr(cdp,`typeof globalThis.closedLoopIntegrityGuard==='object'&&typeof globalThis.closedLoopIntegrityGuard.deriveReleaseGate==='function'`);
   await waitExpr(cdp,`document.querySelectorAll('#view-tabs [data-view]').length>=6`);
   await waitExpr(cdp,`document.querySelector('[data-view="Project"]')`);
 }
