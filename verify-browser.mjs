@@ -23,9 +23,9 @@ const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
 async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(220);}
 async function fill(cdp,selector,value){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);}
-async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(150);}
+async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(180);}
 async function pageSnapshot(cdp){return evalValue(cdp,`(()=>({text:document.body.innerText,width:innerWidth,scrollWidth:document.documentElement.scrollWidth,maxButtonHeight:Math.max(0,...[...document.querySelectorAll('button')].map(x=>x.getBoundingClientRect().height)),title:document.title}))()`);}
-async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value=${JSON.stringify(String(n))};s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await sleep(180);await waitExpr(cdp,`document.body.innerText.includes('Stage ${String(n).padStart(2,'0')}')`);}
+async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value=${JSON.stringify(String(n))};s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await sleep(220);await waitExpr(cdp,`document.body.innerText.includes('Stage ${String(n).padStart(2,'0')}')`);}
 
 async function main(){
   await poll(()=>json(`http://127.0.0.1:${port}/json/version`));
@@ -33,11 +33,13 @@ async function main(){
   const cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
   await waitExpr(cdp,`document.readyState==='complete'`);
   await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
-  await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(600);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
+  await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(700);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
+  await waitExpr(cdp,`document.body.innerText.includes('Mobile closed-loop control')`);
   const clean=await pageSnapshot(cdp);
   assert(clean.text.includes('Mobile Closed-Loop Agent Reliability Workbook'),'Retained project title is not rendered.');
   assert(clean.text.includes('STAGE 02')||clean.text.includes('Stage 02'),'Stage 02 is not the current rendered workflow location.');
   assert(clean.text.includes('Proceed to Operation 02'),'Next action is not rendered.');
+  for(const text of ['Mobile closed-loop control','Completed work','Continue current stage','View complete record'])assert(clean.text.includes(text),`Overview is missing human-facing control: ${text}`);
 
   for(const width of [320,393,1280]){
     await setWidth(cdp,width,width<600?900:1000);const s=await pageSnapshot(cdp);
@@ -47,13 +49,19 @@ async function main(){
   }
 
   await click(cdp,'[data-view="Project"]');
+  await waitExpr(cdp,`document.querySelectorAll('details.project-field-group').length===3`);
+  const projectText=await pageSnapshot(cdp);for(const t of ['Project identity','Authorized job input','Workflow control'])assert(projectText.text.includes(t),`Grouped project interface is missing ${t}.`);
   await fill(cdp,'[data-job="JOB_OWNER"]','BROWSER OWNER CHECK');await click(cdp,'#save-job');
   await click(cdp,'[data-view="Overview"]');const preservedState=await pageSnapshot(cdp);
   assert(preservedState.text.includes('READY'),'Saving a non-controlling project field incorrectly changed READY state.');
   assert(preservedState.text.includes('STAGE 02'),'Saving a non-controlling project field incorrectly moved the current stage.');
 
   await openStage(cdp,1);
+  await waitExpr(cdp,`document.body.innerText.includes('Work for this stage')`);
   assert(await evalValue(cdp,`document.querySelectorAll('[data-stage-field]').length>5`),'Stage 01 structured fields are not rendered.');
+  const stageUi=await pageSnapshot(cdp);for(const t of ['Work for this stage','Instruction to run','Returned output','Stage decision and evidence','Completion controls','Supporting records'])assert(stageUi.text.includes(t),`Stage workspace is missing ${t}.`);
+  assert(await evalValue(cdp,`document.querySelectorAll('details.completion-controls').length===1`),'Completion checklists were not consolidated into one progressive-disclosure control.');
+  assert(await evalValue(cdp,`document.querySelectorAll('.stage-jumpbar button').length>=5`),'Stage jump navigation is missing.');
   const prompt=await evalValue(cdp,`document.querySelector('#generated-prompt')?.textContent||''`);
   assert(prompt.includes('COPY BLOCK — STAGE 01')&&prompt.includes('JOB_ID: JOB-20260823144121')&&prompt.includes('UNIVERSAL OPERATING RULES'),'Complete Stage 01 generated instruction is not rendered.');
   await click(cdp,'#copy-prompt');
@@ -81,14 +89,18 @@ async function main(){
   await fill(cdp,'#stage-output','BROWSER STAGE 02 OUTPUT RECEIPT CHECK');await click(cdp,'#record-output');
   await click(cdp,'#save-stage-work');
   await waitExpr(cdp,`localStorage.getItem('closed-loop-reliability-projects-v3')?.includes('BROWSER-PERSISTENCE-CHECK')`);
-  await evalValue(cdp,`location.reload();true`);await sleep(600);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
+  await evalValue(cdp,`location.reload();true`);await sleep(700);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
   await openStage(cdp,2);
   const persisted=await evalValue(cdp,`document.querySelector('[data-stage-field="${editable}"]')?.value||''`);assert(persisted==='BROWSER-PERSISTENCE-CHECK','Stage data did not survive refresh.');
-  assert(await evalValue(cdp,`document.body.innerText.includes('Add supporting record')`),'Contextual Appendix controls are not available.');
+  assert(await evalValue(cdp,`document.body.innerText.includes('Supporting records')`),'Contextual Appendix controls are not available in the repaired stage workspace.');
 
   await click(cdp,'[data-view="Records"]');await waitExpr(cdp,`document.body.innerText.includes('Complete project record')`);
+  await waitExpr(cdp,`document.querySelector('#record-filter')`);
   const records=await pageSnapshot(cdp);
-  for(const text of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Sources','Blockers'])assert(records.text.includes(text),`Records view is missing ${text}.`);
+  for(const text of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Sources','Blockers','Find project information'])assert(records.text.includes(text),`Records view is missing ${text}.`);
+  await fill(cdp,'#record-filter','generated outputs');
+  assert(await evalValue(cdp,`[...document.querySelectorAll('.record-stack>details.record-card')].some(x=>!x.hidden&&x.querySelector(':scope>summary')?.textContent.includes('Generated outputs'))`),'Record search did not surface generated outputs.');
+  await fill(cdp,'#record-filter','');
   const openedOutputs=await evalValue(cdp,`(()=>{const d=[...document.querySelectorAll('details.record-card')].find(x=>x.querySelector(':scope>summary')?.textContent.includes('Generated outputs'));if(!d)return false;d.open=true;d.querySelectorAll('details').forEach(x=>x.open=true);return true})()`);
   assert(openedOutputs,'Generated outputs record group could not be opened.');
   await waitExpr(cdp,`document.body.innerText.includes('BROWSER STAGE 02 OUTPUT RECEIPT CHECK')`);
@@ -109,13 +121,13 @@ async function main(){
   const exportOk=await evalValue(cdp,`(async()=>{let blob;const oldCreate=URL.createObjectURL,oldRevoke=URL.revokeObjectURL,oldClick=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>(blob=b,'blob:browser-test');URL.revokeObjectURL=()=>{};HTMLAnchorElement.prototype.click=function(){};document.querySelector('#export-project').click();await new Promise(r=>setTimeout(r,50));const text=blob?await blob.text():'';URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;HTMLAnchorElement.prototype.click=oldClick;const obj=JSON.parse(text);return obj.job.JOB_ID==='JOB-BROWSER-IMPORT-001'&&Object.keys(obj.stages||{}).length===30&&obj.extraPreserved?.unknownField==='PRESERVE-ME';})()`);
   assert(exportOk,'Export did not preserve the complete imported project.');
 
-  await evalValue(cdp,`location.reload();true`);await sleep(600);await waitExpr(cdp,`document.querySelectorAll('#project-picker option').length>=4`);
+  await evalValue(cdp,`location.reload();true`);await sleep(700);await waitExpr(cdp,`document.querySelectorAll('#project-picker option').length>=4`);
   const selectorText=await evalValue(cdp,`document.querySelector('#project-picker').innerText`);assert(selectorText.includes('Mobile Closed-Loop Agent Reliability Workbook'),'Retained project disappeared after creating/importing/reloading other projects.');
   const retainedCount=await evalValue(cdp,`[...document.querySelectorAll('#project-picker option')].filter(x=>x.textContent.includes('Mobile Closed-Loop Agent Reliability Workbook')).length`);assert(retainedCount===1,'Retained project was duplicated.');
 
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));
   assert(errors.length===0,`Browser/runtime errors detected: ${errors.map(x=>JSON.stringify(x.params)).join('\n')}`);
-  console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],retainedProject:true,stage1Instruction:true,stage1Output:true,records:true,structuredRecords:true,blockerLifecycle:true,stage2Persistence:true,all30StagesReachable:true,uniqueNewJobs:true,importExport:true,newProjectCoexists:true,horizontalOverflow:false,oversizedButtons:false,runtimeErrors:0},null,2));
+  console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],retainedProject:true,stage1Instruction:true,stage1Output:true,records:true,structuredRecords:true,humanFacingExperience:true,projectFieldGrouping:true,stageJumpNavigation:true,completionControlsCollapsed:true,recordSearch:true,blockerLifecycle:true,stage2Persistence:true,all30StagesReachable:true,uniqueNewJobs:true,importExport:true,newProjectCoexists:true,horizontalOverflow:false,oversizedButtons:false,runtimeErrors:0},null,2));
   cdp.close();
 }
 async function cleanup(){
