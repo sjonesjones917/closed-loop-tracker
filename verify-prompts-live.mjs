@@ -38,4 +38,8 @@ try{
   assert(new Set(generated.slice(1)).size===29,'Stages 02-30 did not render distinct project-specific instructions');
   console.log(JSON.stringify({renderedPromptsVerified:30,stage2ProjectSpecific:true,jobId:'JOB-20260823144121'},null,2));
   cdp.close();
-}finally{proc.kill('SIGTERM');fs.rmSync(userData,{recursive:true,force:true});}
+}finally{
+  proc.kill('SIGTERM');
+  // The CI runner owns /tmp. Chrome may still be flushing its profile after SIGTERM;
+  // do not let temporary-profile cleanup hide the actual verification result.
+}
