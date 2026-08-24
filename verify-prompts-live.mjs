@@ -31,7 +31,7 @@ try{
   await poll(async()=>{const ok=await evaluate(cdp,`document.readyState==='complete'&&document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);if(!ok)throw new Error('waiting for application');return true;});
   await evaluate(cdp,`localStorage.clear();location.reload();true`);await sleep(700);
   await poll(async()=>{const ok=await evaluate(cdp,`document.body.innerText.includes('1/30 complete')&&globalThis.closedLoopAuthorityGuard?.revision==='closed-loop-authority-20260824-r1'`);if(!ok)throw new Error('waiting for retained project and authority guard');return true;});
-  assert(await evaluate(cdp,`(()=>{const p=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3')||'[]').find(x=>x.job?.JOB_ID==='JOB-20260823144121');return p&&p.projectData.sources.length===0&&p.projectData.research.length===0&&p.projectData.requirements.length===0&&p.job.CURRENT_SOURCE_SET_VERSION==='';})()`),'Retained Stage 02 was pre-populated with fabricated downstream authority.');
+  assert(await evaluate(cdp,`(()=>{const p=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3')||'[]').find(x=>x.job?.JOB_ID==='JOB-20260823144121');return p&&p.projectData.sources.length===0&&p.projectData.research.length===0&&p.projectData.requirements.length===0&&p.job.CURRENT_SOURCE_SET_VERSION==='NOT APPLICABLE';})()`),'Retained Stage 02 must have no fabricated downstream authority and SOURCE_SET_VERSION must remain NOT APPLICABLE until Stage 02 creates one.');
   assert(await evaluate(cdp,`(()=>{const b=[...document.querySelectorAll('[data-view]')].find(x=>x.dataset.view==='Workflow');if(!b)return false;b.click();return true})()`),'Workflow tab missing');await sleep(250);
   const generated=[];
   for(let n=1;n<=30;n++){
@@ -60,7 +60,7 @@ try{
   await evaluate(cdp,`(()=>{for(const e of document.querySelectorAll('[data-record-collection="research"]')){const f=e.dataset.recordField;e.value=f==='RESEARCH_ID'?'RESEARCH-BAD-001':f==='SOURCE_ID'?'NO-SUCH-SOURCE':'UNKNOWN';}document.querySelector('[data-add-record="research"]').click();return true})()`);await sleep(100);
   assert(await evaluate(cdp,`(()=>{const p=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3')).find(x=>x.job?.JOB_ID==='JOB-20260823144121');return p.projectData.research.length===0&&window.__authorityAlerts.some(x=>x.includes('SOURCE_ID must resolve to a valid independent External Governing Source'));})()`),'Stage 03 accepted research against a non-authoritative or nonexistent SOURCE_ID.');
 
-  console.log(JSON.stringify({renderedPromptsVerified:30,stage2ProjectSpecific:true,nonCircularAuthorityBoundary:true,circularSourceRejected:true,externalSourceAccepted:true,stage3SourceLinkEnforced:true,jobId:'JOB-20260823144121'},null,2));
+  console.log(JSON.stringify({renderedPromptsVerified:30,stage2ProjectSpecific:true,retainedSourceSetNotApplicable:true,nonCircularAuthorityBoundary:true,circularSourceRejected:true,externalSourceAccepted:true,stage3SourceLinkEnforced:true,jobId:'JOB-20260823144121'},null,2));
   cdp.close();
 }finally{
   proc.kill('SIGTERM');
