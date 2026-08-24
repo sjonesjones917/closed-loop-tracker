@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - run: node --check app.js && node --check app-core.js && node --check integrity-guard.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs && node --check verify-integrity-browser.mjs && node --check verify-hardening-browser.mjs && node --check verify-prompts-live.mjs
+      - run: node --check app.js && node --check app-core.js && node --check integrity-guard.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs && node --check verify-integrity-browser.mjs && node --check verify-hardening-browser.mjs && node --check verify-hardening-live-proof.mjs && node --check verify-prompts-live.mjs
       - run: node verify.mjs
   verify-live:
     needs: test
@@ -46,5 +46,5 @@ jobs:
           NODE
       - run: node verify-browser.mjs
       - run: node verify-integrity-browser.mjs
-      - run: node verify-hardening-browser.mjs
+      - run: node verify-hardening-live-proof.mjs
       - run: node verify-prompts-live.mjs
