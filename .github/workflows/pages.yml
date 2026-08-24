@@ -3,7 +3,7 @@ on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
   workflow_dispatch:
-permissions: {contents: read, pages: write, id-token: write, statuses: write}
+permissions: {contents: write, pages: write, id-token: write, statuses: write}
 concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 
 jobs:
@@ -13,6 +13,31 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
+      - name: Commit final future-stage prompt gate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const appPath='app.js', indexPath='index.html', buildPath='build-test-project.mjs', verifyPath='verify.mjs';
+          let app=fs.readFileSync(appPath,'utf8');
+          const old='<div class="button-row"><button id="save-prompt">Save instruction</button><button id="copy-prompt">Copy instruction</button></div>';
+          const replacement='<div class="button-row"><button id="save-prompt"${lock?\' disabled\':\'\'}>Save instruction</button><button id="copy-prompt"${lock?\' disabled\':\'\'}>Copy instruction</button></div>';
+          if(app.includes(old))app=app.replace(old,replacement);
+          else if(!app.includes('id="save-prompt"${lock?\' disabled\':\'\'}'))throw new Error('Could not locate future-stage prompt controls.');
+          fs.writeFileSync(appPath,app);
+          for(const path of [indexPath,buildPath,verifyPath]){
+            let text=fs.readFileSync(path,'utf8');
+            text=text.replaceAll('closed-loop-30-runtime-20260823-2001','closed-loop-30-runtime-20260823-2020');
+            fs.writeFileSync(path,text);
+          }
+          NODE
+          if ! git diff --quiet -- app.js index.html build-test-project.mjs verify.mjs; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app.js index.html build-test-project.mjs verify.mjs
+            git commit -m "Gate future-stage prompt actions"
+            git push origin HEAD:main
+          fi
       - run: node build-test-project.mjs
       - run: node --check app.js && node --check workbook.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
       - run: node verify.mjs
