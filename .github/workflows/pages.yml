@@ -151,3 +151,5 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+
+# Explicit main-branch push used to prove production deployment and live verification.
