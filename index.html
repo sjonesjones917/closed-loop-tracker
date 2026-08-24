@@ -32,7 +32,10 @@ main{padding:9px 10px calc(26px + env(safe-area-inset-bottom))}.screen{display:g
 <nav class="view-tabs" id="view-tabs" aria-label="Project views"></nav>
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
-<script src="workbook.js?v=closed-loop-30-runtime-20260823-2001"></script>
-<script src="app.js?v=closed-loop-30-runtime-20260823-2001"></script>
+<script>
+(()=>{const migration='closed-loop-retained-project-refresh-20260823-2025';if(localStorage.getItem(migration))return;const target='JOB-20260823144121';for(const key of ['closed-loop-reliability-projects-v3','closed-loop-reliability-projects-v2','closed-loop-reliability-projects','closed-loop-reliability-projects-v3-preserved-backup']){try{const raw=JSON.parse(localStorage.getItem(key)||'null');if(!raw)continue;const list=Array.isArray(raw)?raw:[raw];const kept=list.filter(item=>String(item?.job?.JOB_ID||item?.jobId||'')!==target);if(kept.length!==list.length)localStorage.setItem(key,JSON.stringify(Array.isArray(raw)?kept:(kept[0]||null)));}catch{}}localStorage.setItem(migration,'1');})();
+</script>
+<script src="workbook.js?v=closed-loop-30-runtime-20260823-2025"></script>
+<script src="app.js?v=closed-loop-30-runtime-20260823-2025"></script>
 </body>
 </html>
