@@ -22,16 +22,16 @@ try{
   await poll(()=>json(`http://127.0.0.1:${port}/json/version`));
   const target=await json(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?storage-verify=${Date.now()}`)}`,{method:'PUT'});
   const cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('DOMStorage.enable');
-  await waitExpr(cdp,`document.readyState==='complete'&&globalThis.closedLoopStorageReliability?.revision==='closed-loop-storage-20260824-r1'`);
+  await waitExpr(cdp,`document.readyState==='complete'&&globalThis.closedLoopStorageReliability?.revision==='closed-loop-storage-20260824-r2'&&globalThis.closedLoopStorageReliability?.metrics().installed===true`);
   await evaluate(cdp,`window.__alerts=[];window.alert=m=>window.__alerts.push(String(m));localStorage.clear();location.reload();true`);await sleep(650);
-  await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')&&globalThis.closedLoopStorageReliability?.revision==='closed-loop-storage-20260824-r1'`);
+  await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')&&globalThis.closedLoopStorageReliability?.revision==='closed-loop-storage-20260824-r2'&&globalThis.closedLoopStorageReliability?.metrics().installed===true`);
   await evaluate(cdp,`window.__alerts=[];window.alert=m=>window.__alerts.push(String(m));true`);
   const storeKey='closed-loop-reliability-projects-v3',backupKey=`${storeKey}-preserved-backup`,origin=new URL(PAGE_URL).origin;
   const primary=await evaluate(cdp,`localStorage.getItem(${JSON.stringify(storeKey)})`);assert(primary&&primary.includes('JOB-20260823144121'),'Primary retained-project store is missing.');
 
   await cdp.send('DOMStorage.setDOMStorageItem',{storageId:{securityOrigin:origin,isLocalStorage:true},key:backupKey,value:primary});
   assert(await evaluate(cdp,`localStorage.getItem(${JSON.stringify(backupKey)})!==null`),'Could not seed a legacy redundant backup for recovery testing.');
-  await evaluate(cdp,`location.reload();true`);await sleep(650);await waitExpr(cdp,`globalThis.closedLoopStorageReliability?.revision==='closed-loop-storage-20260824-r1'`);
+  await evaluate(cdp,`location.reload();true`);await sleep(650);await waitExpr(cdp,`globalThis.closedLoopStorageReliability?.revision==='closed-loop-storage-20260824-r2'&&globalThis.closedLoopStorageReliability?.metrics().installed===true`);
   assert(await evaluate(cdp,`localStorage.getItem(${JSON.stringify(backupKey)})===null`),'Redundant full-store backup was not reclaimed on startup.');
   assert(await evaluate(cdp,`localStorage.getItem(${JSON.stringify(storeKey)})?.includes('JOB-20260823144121')`),'Backup reclamation damaged the retained project.');
 
@@ -52,7 +52,7 @@ try{
   assert(await evaluate(cdp,`localStorage.getItem(${JSON.stringify(storeKey)})?.includes(${JSON.stringify(owner)})`),'A real project save did not persist after quota pressure was removed.');
   assert((await evaluate(cdp,`window.__alerts.slice()`)).length===0,'Recovered real save still produced a storage error.');
 
-  console.log(JSON.stringify({storageReliabilityVerified:true,redundantBackupReclaimed:true,retainedProjectPreserved:true,quotaPressureApplied:true,navigationActions:1000,navigationAlerts:0,fullStoreNavigationWrites:0,realSaveAfterRecovery:true},null,2));
+  console.log(JSON.stringify({storageReliabilityVerified:true,revision:'closed-loop-storage-20260824-r2',outerGuardInstalled:true,redundantBackupReclaimed:true,retainedProjectPreserved:true,quotaPressureApplied:true,navigationActions:1000,navigationAlerts:0,fullStoreNavigationWrites:0,realSaveAfterRecovery:true},null,2));
   cdp.close();
 }finally{
   if(!proc.killed)proc.kill('SIGTERM');
