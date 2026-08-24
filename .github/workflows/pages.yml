@@ -14,11 +14,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - run: node --check app.js && node --check app-core.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs && node --check verify-prompts-live.mjs
+      - run: node --check app.js && node --check app-core.js && node --check integrity-guard.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs && node --check verify-integrity-browser.mjs && node --check verify-prompts-live.mjs
       - run: node verify.mjs
       - name: Verify build is read-only and single-app
         run: |
-          git diff --exit-code -- app.js app-core.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-prompts-live.mjs
+          git diff --exit-code -- app.js app-core.js integrity-guard.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-integrity-browser.mjs verify-prompts-live.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
           test ! -f agent-workflow.js
@@ -31,16 +31,18 @@ jobs:
           const fs=require('fs');
           const loader=fs.readFileSync('app.js','utf8');
           const app=fs.readFileSync('app-core.js','utf8');
+          const guard=fs.readFileSync('integrity-guard.js','utf8');
           const prompts=fs.readFileSync('prompt-engine.js','utf8');
           const experience=fs.readFileSync('experience.js','utf8');
-          const ui=loader+app+prompts+experience+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8');
+          const ui=loader+app+guard+prompts+experience+fs.readFileSync('index.html','utf8')+fs.readFileSync('workbook.js','utf8');
           const project=fs.readFileSync('TEST_PROJECT.json','utf8');
           const banned=new RegExp('se'+'mantic','i');
           if(banned.test(ui))throw new Error('prohibited terminology');
           if(/GEN-042|field status report|maintenance[- ]handoff/i.test(ui+project))throw new Error('unrelated product content');
           if(/human-project\/31|31 operations|Freeze New Version/i.test(ui))throw new Error('discarded architecture');
-          for(const token of ['prompt-engine.js','app-core.js'])if(!loader.includes(token))throw new Error(`loader missing ${token}`);
+          for(const token of ['prompt-engine.js','app-core.js','integrity-guard.js'])if(!loader.includes(token))throw new Error(`loader missing ${token}`);
           for(const token of ['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']",'function appendixDefault(','structuredIssues=validateStructuredStageState','filenamesIdentical','retainedBytes:false',"['Release control',current.release]","recordHistory('STAGE_DECISION_SAVED'"])if(!app.includes(token))throw new Error(`record-linked control missing: ${token}`);
+          for(const token of ['JOB_ID is immutable','repairInvalidatedStageOne','already exists. Import requires a unique project identity','closedLoopIntegrityGuard'])if(!guard.includes(token))throw new Error(`integrity guard missing: ${token}`);
           for(const token of ['core.buildStagePrompt=build','const procedures={','AUTHORIZED INPUTS FOR THIS STAGE','SOURCE-SET-v001','Do not perform Stage 03 requirements research'])if(!prompts.includes(token))throw new Error(`prompt engine control missing: ${token}`);
           for(let n=1;n<=30;n++)if(!prompts.includes(`${n}:'`))throw new Error(`stage prompt missing: ${n}`);
           for(const token of ['Mobile closed-loop control','Current work','Completed work','Continue current stage','Work for this stage','Completion controls','Find project information','Supporting records'])if(!experience.includes(token))throw new Error(`human-facing experience missing: ${token}`);
@@ -58,7 +60,7 @@ jobs:
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify.mjs
       - name: Confirm deploy artifact equals checked-in source
-        run: git diff --exit-code -- app.js app-core.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-prompts-live.mjs
+        run: git diff --exit-code -- app.js app-core.js integrity-guard.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-integrity-browser.mjs verify-prompts-live.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -82,8 +84,9 @@ jobs:
           const expected={
             'index.html':['closed-loop-runtime-20260823-2037-r2','experience.js','Reliability Workbook'],
             'experience.js':['Mobile closed-loop control','Current work','Completed work','Continue current stage','Find project information'],
-            'app.js':['prompt-engine.js','app-core.js'],
+            'app.js':['prompt-engine.js','app-core.js','integrity-guard.js'],
             'app-core.js':['function validateStructuredStageState(','globalThis.closedLoopIntegrity=',"19:['runs']"],
+            'integrity-guard.js':['JOB_ID is immutable','repairInvalidatedStageOne','closedLoopIntegrityGuard'],
             'prompt-engine.js':['core.buildStagePrompt=build','AUTHORIZED INPUTS FOR THIS STAGE','SOURCE-SET-v001','Do not perform Stage 03 requirements research'],
             'TEST_PROJECT.json':['JOB-20260823144121','Mobile Closed-Loop Agent Reliability Workbook']
           };
@@ -116,6 +119,8 @@ jobs:
           done
       - name: Exercise deployed project, persistence, all stages, and mobile overflow
         run: node verify-browser.mjs
+      - name: Exercise project identity and invalidation integrity regressions
+        run: node verify-integrity-browser.mjs
       - name: Exercise all 30 rendered stage prompts against the retained project
         run: node verify-prompts-live.mjs
 
