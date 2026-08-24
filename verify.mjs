@@ -1,22 +1,25 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const required=['index.html','app.js','app-core.js','prompt-engine.js','workbook.js','experience.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt'];
+const required=['index.html','app.js','app-core.js','prompt-engine.js','authority-guard.js','workbook.js','experience.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
 const html=fs.readFileSync('index.html','utf8');
 const loader=fs.readFileSync('app.js','utf8');
 const app=fs.readFileSync('app-core.js','utf8');
 const promptSource=fs.readFileSync('prompt-engine.js','utf8');
+const authoritySource=fs.readFileSync('authority-guard.js','utf8');
 const experience=fs.readFileSync('experience.js','utf8');
 const coreSource=fs.readFileSync('workbook.js','utf8');
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
+new vm.Script(authoritySource,{filename:'authority-guard.js'});
 
 if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="experience\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
 if((html.match(/<html\b/g)||[]).length!==1)throw new Error('There must be one application shell.');
 if(!html.includes('closed-loop-runtime-20260823-2037-r2'))throw new Error('The repaired application cache identity is missing.');
 if(html.includes('closed-loop-retained-project-refresh'))throw new Error('The app shell must not delete the retained project from browser storage.');
-for(const token of ['prompt-engine.js','app-core.js'])if(!loader.includes(token))throw new Error(`Application loader is missing ${token}.`);
+for(const token of ['prompt-engine.js','app-core.js','authority-guard.js'])if(!loader.includes(token))throw new Error(`Application loader is missing ${token}.`);
+for(const token of ['External governing sources only.','SOURCE_CLASS','INDEPENDENT_EXTERNAL_AUTHORITY','TARGET_PRODUCT_RELATIONSHIP','SOURCE_CLASSIFICATION_REJECTED','validExternalSource','Categorically exclude the target product','Do not research the target product'])if(!authoritySource.includes(token))throw new Error(`Non-circular authority control missing: ${token}.`);
 
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(project.specRevision!=='authorized-operation-01-project-20260823-r2')throw new Error('Retained project revision was not materialized.');
@@ -24,6 +27,7 @@ if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Age
 if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Test project must contain exactly 30 stage records.');
 if(project.currentStage!==2||project.currentState!=='READY')throw new Error('Test project must preserve completed Operation 01 and be ready for Operation 02.');
 if(project.currentVersions?.input!=='INPUT-v001')throw new Error('Input version is wrong.');
+if(project.currentVersions?.sources!=='NOT APPLICABLE'||project.currentVersions?.requirements!=='NOT APPLICABLE'||project.currentVersions?.tests!=='NOT APPLICABLE'||project.currentVersions?.instruction!=='NOT APPLICABLE')throw new Error('Future controlled versions were fabricated before Stage 02 work.');
 if(project.stageRecords?.['1']?.status!=='COMPLETE')throw new Error('Operation 01 must be complete.');
 for(let n=2;n<=30;n++)if(project.stageRecords?.[String(n)]?.status!=='NOT STARTED')throw new Error(`Stage ${n} must remain not started.`);
 for(let n=1;n<=30;n++){
@@ -32,6 +36,7 @@ for(let n=1;n<=30;n++){
   if(record.includes('[object Object]'))throw new Error(`Stage ${n} contains an object-display failure.`);
 }
 if(!project.stageRecords['2'].record.includes('STAGE 02 — BUILD THE SOURCE INVENTORY')||!project.stageRecords['2'].record.includes('SOURCE_SET_VERSION'))throw new Error('Stage 02 is not initialized as a usable source-inventory record.');
+for(const name of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if((project.projectData?.[name]||project[name]||[]).length!==0)throw new Error(`${name} contains fabricated downstream project records.`);
 
 if((project.generatedPrompts||[]).length!==1)throw new Error('Exactly one historical generated instruction should exist after Operation 01.');
 const historicalPrompt=project.generatedPrompts[0]?.prompt||'';
@@ -64,11 +69,11 @@ for(const label of ['Baselines','Products','Deterministic verification','Indepen
   if(count!==1)throw new Error(`Records group ${label} must appear exactly once; found ${count}.`);
 }
 for(const token of ['PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY','RECONCILE PROCESS AND PRODUCT EVIDENCE','RUN INDEPENDENT MEANING VERIFICATION'])if(!coreSource.includes(token))throw new Error(`30-stage workflow item missing: ${token}`);
-if(/human-project\/31|31 operations|Freeze New Version/i.test(loader+app+html+coreSource+experience+promptSource))throw new Error('Discarded 31-operation architecture remains.');
-const banned=new RegExp('se'+'mantic','i');if(banned.test(loader+app+html+coreSource+experience+promptSource))throw new Error('Prohibited terminology remains in active application source.');
+if(/human-project\/31|31 operations|Freeze New Version/i.test(loader+app+html+coreSource+experience+promptSource+authoritySource))throw new Error('Discarded 31-operation architecture remains.');
+const banned=new RegExp('se'+'mantic','i');if(banned.test(loader+app+html+coreSource+experience+promptSource+authoritySource))throw new Error('Prohibited terminology remains in active application source.');
 if(fs.existsSync('.github/workflows/inspection-snapshot.yml'))throw new Error('Temporary inspection workflow remains.');
 
-// Execute the real prompt engine against the authorized project state.
+// Execute the base prompt engine against the authorized project state. Runtime browser verification separately proves the authority guard transforms Stage 02/03 output.
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 vm.runInThisContext(coreSource,{filename:'workbook.js'});
@@ -110,7 +115,7 @@ for(const stage of core.STAGES){
 }
 if(new Set(generated).size!==30)throw new Error('The 30 stages did not generate 30 distinct stage-specific instructions.');
 const stage2=generated[1];
-for(const token of ['BUILD THE SOURCE INVENTORY','Source-authority analyst','STAGE 01 AUTHORIZED JOB DEFINITION','OPERATION 01 — DEFINE JOB','SOURCE-SET-v001','Assign stable SOURCE_ID values','explicit authority hierarchy','never silently resolve an unsupported conflict','Do not perform Stage 03 requirements research'])if(!stage2.includes(token))throw new Error(`Stage 02 generated instruction is missing ${token}.`);
+for(const token of ['BUILD THE SOURCE INVENTORY','Source-authority analyst','STAGE 01 AUTHORIZED JOB DEFINITION','OPERATION 01 — DEFINE JOB','SOURCE-SET-v001','Assign stable SOURCE_ID values','explicit authority hierarchy','never silently resolve an unsupported conflict','Do not perform Stage 03 requirements research'])if(!stage2.includes(token))throw new Error(`Base Stage 02 generated instruction is missing ${token}.`);
 for(const [n,token] of [[6,'Build the verification suite before any production instruction is authored'],[11,'Run exactly ten independent executions'],[12,'REQ_ID by RUN_ID combination'],[18,'Converged is permitted only when'],[19,'mandatory unchanged confirmation iteration'],[23,'actual product meaning'],[28,'verify exact artifact identity immediately before delivery'],[29,'SOURCE -> REQUIREMENT -> INSTRUCTION -> EXECUTION'],[30,'append-only permanent defect and regression history']])if(!generated[n-1].includes(token))throw new Error(`Stage ${n} generated instruction does not contain its controlling stage procedure.`);
 
-console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,historicalInstructions:project.generatedPrompts.length,generatedStageInstructionsVerified:generated.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,humanFacingExperience:true,storageResetRemoved:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,historicalInstructions:project.generatedPrompts.length,generatedStageInstructionsVerified:generated.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,nonCircularAuthorityModuleParsed:true,retainedDownstreamAuthorityEmpty:true,humanFacingExperience:true,storageResetRemoved:true},null,2));
