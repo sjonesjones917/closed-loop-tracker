@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const required=['index.html','app.js','app-core.js','prompt-engine.js','authority-guard.js','workbook.js','experience.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt'];
+const required=['index.html','app.js','app-core.js','prompt-engine.js','authority-guard.js','workbook.js','experience.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt','verify-prompt-isolation.mjs'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
 const html=fs.readFileSync('index.html','utf8');
 const loader=fs.readFileSync('app.js','utf8');
@@ -73,13 +73,14 @@ if(/human-project\/31|31 operations|Freeze New Version/i.test(loader+app+html+co
 const banned=new RegExp('se'+'mantic','i');if(banned.test(loader+app+html+coreSource+experience+promptSource+authoritySource))throw new Error('Prohibited terminology remains in active application source.');
 if(fs.existsSync('.github/workflows/inspection-snapshot.yml'))throw new Error('Temporary inspection workflow remains.');
 
-// Execute the base prompt engine against the authorized project state. Runtime browser verification separately proves the authority guard transforms Stage 02/03 output.
+// Execute the base prompt engine against both retained and synthetic project states.
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 vm.runInThisContext(coreSource,{filename:'workbook.js'});
 vm.runInThisContext(promptSource,{filename:'prompt-engine.js'});
 const core=globalThis.closedLoopCore;
 if(!core||core.STAGES.length!==30)throw new Error('Runtime core did not expose exactly 30 stages.');
+if(globalThis.closedLoopPromptEngine?.version!=='2026-08-24-r2')throw new Error('Corrected prompt engine revision is not active.');
 const state=core.createBlankState(project.jobId);
 Object.assign(state.job,{
   JOB_ID:project.jobId,
@@ -110,12 +111,23 @@ const generated=[];
 for(const stage of core.STAGES){
   const prompt=core.buildStagePrompt(stage,state);
   generated.push(prompt);
-  for(const token of [`COPY BLOCK — STAGE ${String(stage.number).padStart(2,'0')}`,`JOB_ID: ${project.jobId}`,'CONTROLLING PROJECT INPUT','AUTHORIZED INPUTS FOR THIS STAGE','STAGE-SPECIFIC TASK','REQUIRED OUTPUT','COMPLETION CONDITIONS','OPERATING RULES'])if(!prompt.includes(token))throw new Error(`Stage ${stage.number} generated prompt is missing ${token}.`);
+  for(const token of [`COPY BLOCK — STAGE ${String(stage.number).padStart(2,'0')}`,`JOB_ID: ${project.jobId}`,'PROJECT-SCOPE BOUNDARY','CONTROLLING PROJECT INPUT','AUTHORIZED INPUTS FOR THIS STAGE','STAGE-SPECIFIC TASK','REQUIRED OUTPUT','COMPLETION CONDITIONS','OPERATING RULES'])if(!prompt.includes(token))throw new Error(`Stage ${stage.number} generated prompt is missing ${token}.`);
   if(prompt.includes('[object Object]'))throw new Error(`Stage ${stage.number} generated prompt contains an object-display failure.`);
 }
 if(new Set(generated).size!==30)throw new Error('The 30 stages did not generate 30 distinct stage-specific instructions.');
-const stage2=generated[1];
-for(const token of ['BUILD THE SOURCE INVENTORY','Source-authority analyst','STAGE 01 AUTHORIZED JOB DEFINITION','OPERATION 01 — DEFINE JOB','SOURCE-SET-v001','Assign stable SOURCE_ID values','explicit authority hierarchy','never silently resolve an unsupported conflict','Do not perform Stage 03 requirements research'])if(!stage2.includes(token))throw new Error(`Base Stage 02 generated instruction is missing ${token}.`);
-for(const [n,token] of [[6,'Build the verification suite before any production instruction is authored'],[11,'Run exactly ten independent executions'],[12,'REQ_ID by RUN_ID combination'],[18,'Converged is permitted only when'],[19,'mandatory unchanged confirmation iteration'],[23,'actual product meaning'],[28,'verify exact artifact identity immediately before delivery'],[29,'SOURCE -> REQUIREMENT -> INSTRUCTION -> EXECUTION'],[30,'append-only permanent defect and regression history']])if(!generated[n-1].includes(token))throw new Error(`Stage ${n} generated instruction does not contain its controlling stage procedure.`);
+const stage1=generated[0],stage2=generated[1],stage3=generated[2];
+for(const token of ['Initialize only this current job','Do not create, prescribe, or instruct reuse of a master prompt','Do not infer requirements for unrelated jobs'])if(!stage1.includes(token))throw new Error(`Base Stage 01 generated instruction is missing project isolation control: ${token}.`);
+for(const token of ['BUILD THE SOURCE INVENTORY','Source-authority analyst','STAGE 01 AUTHORIZED JOB DEFINITION','OPERATION 01 — DEFINE JOB','genuinely independent external authorities','not automatically independent external governing sources','Never use the target product, this operating application, its repository','Create SOURCE-SET-vN only from legitimate external governing sources'])if(!stage2.includes(token))throw new Error(`Base Stage 02 generated instruction is missing ${token}.`);
+if(stage2.includes('Treat the completed Stage 01 job definition and the actual supplied workbook/materials as authorized inputs.'))throw new Error('Stage 02 still contains the prior circular source-inventory instruction.');
+for(const token of ['Research only the legitimate Stage 02 external governing source set','Do not research the target product, this operating application, repository source code, prior implementations'])if(!stage3.includes(token))throw new Error(`Base Stage 03 generated instruction is missing ${token}.`);
+for(const [n,token] of [[6,'Build this job’s verification suite before any production instruction is authored'],[11,'Run exactly ten independent executions for this job'],[12,'REQ_ID × RUN_ID'],[18,'Convergence exists only when'],[19,'unchanged confirmation iteration'],[23,'meaning/content verification'],[28,'verify exact artifact identity immediately before release'],[29,'EXTERNAL SOURCE / USER AUTHORITY AS APPLICABLE'],[30,'append-only defect and regression history']])if(!generated[n-1].includes(token))throw new Error(`Stage ${n} generated instruction does not contain its controlling stage procedure.`);
 
-console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,historicalInstructions:project.generatedPrompts.length,generatedStageInstructionsVerified:generated.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,nonCircularAuthorityModuleParsed:true,retainedDownstreamAuthorityEmpty:true,humanFacingExperience:true,storageResetRemoved:true},null,2));
+const a=core.createBlankState('JOB-A'),b=core.createBlankState('JOB-B');
+a.job.EXACT_USER_OBJECTIVE_VERBATIM='OBJECTIVE-A-ONLY';b.job.EXACT_USER_OBJECTIVE_VERBATIM='OBJECTIVE-B-ONLY';
+for(let n=1;n<=30;n++){
+  const pa=core.buildStagePrompt(core.STAGES[n-1],a),pb=core.buildStagePrompt(core.STAGES[n-1],b);
+  if(!pa.includes('JOB_ID: JOB-A')||!pb.includes('JOB_ID: JOB-B'))throw new Error(`Synthetic project identity missing at stage ${n}.`);
+  if(pa.includes('OBJECTIVE-B-ONLY')||pb.includes('OBJECTIVE-A-ONLY'))throw new Error(`Cross-project prompt leakage at stage ${n}.`);
+}
+
+console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,historicalInstructions:project.generatedPrompts.length,generatedStageInstructionsVerified:generated.length,syntheticProjectIsolationStages:30,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,nonCircularAuthorityModuleParsed:true,retainedDownstreamAuthorityEmpty:true,humanFacingExperience:true,storageResetRemoved:true},null,2));
