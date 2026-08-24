@@ -4,7 +4,8 @@ for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${fi
 const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8'),core=fs.readFileSync('workbook.js','utf8'),project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8')),operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
 if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
 if((html.match(/<html\b/g)||[]).length!==1)throw new Error('There must be one application shell.');
-if(!html.includes('closed-loop-30-runtime-20260823-2001'))throw new Error('The repaired application cache identity is missing.');
+if(!html.includes('closed-loop-30-runtime-20260823-2025'))throw new Error('The repaired application cache identity is missing.');
+if(!html.includes('closed-loop-retained-project-refresh-20260823-2025')||!html.includes('JOB-20260823144121'))throw new Error('Retained-project refresh migration is missing.');
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(project.specRevision!=='authorized-operation-01-project-20260823-r2')throw new Error('Retained project revision was not materialized.');
 if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Authorized retained project identity is wrong.');
@@ -52,4 +53,4 @@ if((core.match(/'[^']*'/g)||[]).filter(x=>x.includes('RUN INDEPENDENT MEANING VE
 if(/human-project\/31|31 operations|Freeze New Version/i.test(app+html+core))throw new Error('Discarded 31-operation architecture remains.');
 const banned=new RegExp('se'+'mantic','i');if(banned.test(app+html+core))throw new Error('Prohibited terminology remains in active application source.');
 if(fs.existsSync('.github/workflows/inspection-snapshot.yml'))throw new Error('Temporary inspection workflow remains.');
-console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,deduplicatedRecords:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,generatedInstructions:project.generatedPrompts.length,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,deduplicatedRecords:true,retainedProjectRefresh:true},null,2));
