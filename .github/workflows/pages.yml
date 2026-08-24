@@ -14,11 +14,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: node build-test-project.mjs
-      - run: node --check app.js && node --check app-core.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs
+      - run: node --check app.js && node --check app-core.js && node --check prompt-engine.js && node --check workbook.js && node --check experience.js && node --check build-test-project.mjs && node --check build-test-project-impl.mjs && node --check verify.mjs && node --check verify-live.mjs && node --check verify-browser.mjs && node --check verify-prompts-live.mjs
       - run: node verify.mjs
       - name: Verify build is read-only and single-app
         run: |
-          git diff --exit-code -- app.js app-core.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs
+          git diff --exit-code -- app.js app-core.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-prompts-live.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f human-ui.js
           test ! -f agent-workflow.js
@@ -57,7 +57,7 @@ jobs:
         with: {node-version: '22'}
       - run: node build-test-project.mjs && node verify.mjs
       - name: Confirm deploy artifact equals checked-in source
-        run: git diff --exit-code -- app.js app-core.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs
+        run: git diff --exit-code -- app.js app-core.js prompt-engine.js TEST_PROJECT.json index.html workbook.js experience.js build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-prompts-live.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -115,6 +115,8 @@ jobs:
           done
       - name: Exercise deployed project, persistence, all stages, and mobile overflow
         run: node verify-browser.mjs
+      - name: Exercise all 30 rendered stage prompts against the retained project
+        run: node verify-prompts-live.mjs
 
   publish-status:
     if: always() && github.event_name != 'pull_request'
