@@ -26,8 +26,6 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,sel
   .button-row{gap:6px!important}
   .button-row>button{flex:1 1 auto!important}
   .stage-jumpbar{gap:6px!important}
-}
-@media(max-width:420px){
   .facts,.overview-counts,.grid-2,.grid-3{grid-template-columns:1fr!important}
   .hero-top{display:block!important}
   .panel,.hero{padding:12px!important}
