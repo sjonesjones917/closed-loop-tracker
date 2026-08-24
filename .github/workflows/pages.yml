@@ -77,7 +77,7 @@ jobs:
       - run: node build-test-project.mjs && node verify-live.mjs
       - name: Verify deployed record-linked controls
         run: |
-          node - <<'NODE'
+          node --input-type=module - <<'NODE'
           const base=process.env.PAGE_URL;
           const response=await fetch(new URL(`app.js?integrity=${Date.now()}`,base),{cache:'no-store'});
           if(!response.ok)throw new Error(`deployed app.js returned ${response.status}`);
