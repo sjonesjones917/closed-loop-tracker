@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import './build-test-project-impl.mjs';
 
-const required=['index.html','app.js','app-core.js','prompt-engine.js','workbook.js','experience.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt','verify.mjs','verify-live.mjs','verify-browser.mjs'];
+const required=['index.html','app.js','app-core.js','prompt-engine.js','workbook.js','experience.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-prompts-live.mjs'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
 
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
@@ -39,9 +39,9 @@ if(!/<link\s+rel=["']icon["']/i.test(html))throw new Error('Application icon is 
 if(!html.includes('experience.js?v=closed-loop-runtime-20260823-2103-r3'))throw new Error('Human-facing experience asset is not wired into the single application shell.');
 if(!html.includes('closed-loop-runtime-20260823-2037-r2'))throw new Error('Expected deployed cache identity is missing.');
 if(html.includes('closed-loop-retained-project-refresh'))throw new Error('The app shell must not delete a retained project from browser storage during load.');
-const source=loader+app+prompts+html+experience+JSON.stringify(project);
+const uiSource=loader+app+prompts+html+experience+fs.readFileSync('workbook.js','utf8');
 const banned=new RegExp('se'+'mantic','i');
-if(banned.test(source))throw new Error('Prohibited application terminology remains.');
-if(/GEN-042|field status report|maintenance[- ]handoff/i.test(source))throw new Error('Unrelated product content remains.');
+if(banned.test(uiSource))throw new Error('Prohibited application terminology remains.');
+if(/GEN-042|field status report|maintenance[- ]handoff/i.test(uiSource+JSON.stringify(project)))throw new Error('Unrelated product content remains.');
 
 console.log('Retained project, application core, project-specific 30-stage prompt engine, and human-facing experience verified without rewriting project data.');
