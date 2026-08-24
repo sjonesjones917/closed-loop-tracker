@@ -1,0 +1,46 @@
+name: Final public Pages usability proof
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: mobile-live-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node build-test-project.mjs && node verify.mjs
+      - name: Verify deployed usability source identity
+        run: |
+          node --input-type=module - <<'NODE'
+          const base=process.env.PAGE_URL;
+          const expected={
+            'app.js':['usability.js','closed-loop-usability-20260824-r1'],
+            'usability.js':['Phone-first usability floor','min-height:44px','max-width:420px']
+          };
+          for(const [path,tokens] of Object.entries(expected)){
+            const response=await fetch(new URL(`${path}?proof=${Date.now()}`,base),{cache:'no-store'});
+            if(!response.ok)throw new Error(`${path} returned ${response.status}`);
+            const body=await response.text();
+            for(const token of tokens)if(!body.includes(token))throw new Error(`${path} missing deployed token: ${token}`);
+          }
+          NODE
+      - name: Exercise deployed project and responsive behavior
+        run: node verify-browser.mjs
+      - name: Prove reload/navigation integrity determinism three times
+        run: |
+          for i in 1 2 3; do
+            echo "Integrity pass $i"
+            node verify-integrity-browser.mjs
+          done
+      - name: Exercise hardening regressions
+        run: node verify-hardening-runner.mjs
+      - name: Exercise all 30 deployed prompts
+        run: node verify-prompts-live.mjs
