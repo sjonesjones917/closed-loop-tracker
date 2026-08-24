@@ -34,12 +34,13 @@ async function main(){
   await waitExpr(cdp,`document.readyState==='complete'`);
   await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
   await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(700);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
-  await waitExpr(cdp,`document.body.innerText.includes('Mobile closed-loop control')`);
+  await waitExpr(cdp,`document.querySelector('.brand-kicker')?.textContent.trim()==='Mobile closed-loop control'`);
   const clean=await pageSnapshot(cdp);
   assert(clean.text.includes('Mobile Closed-Loop Agent Reliability Workbook'),'Retained project title is not rendered.');
   assert(clean.text.includes('STAGE 02')||clean.text.includes('Stage 02'),'Stage 02 is not the current rendered workflow location.');
   assert(clean.text.includes('Proceed to Operation 02'),'Next action is not rendered.');
-  for(const text of ['Mobile closed-loop control','Completed work','Continue current stage','View complete record'])assert(clean.text.includes(text),`Overview is missing human-facing control: ${text}`);
+  assert(await evalValue(cdp,`document.querySelector('.brand-kicker')?.textContent.trim()==='Mobile closed-loop control'`),'Human-facing workbook identity is missing.');
+  for(const label of ['Completed work','Continue current stage','View complete record'])assert(clean.text.includes(label),`Overview is missing human-facing control: ${label}`);
 
   for(const width of [320,393,1280]){
     await setWidth(cdp,width,width<600?900:1000);const s=await pageSnapshot(cdp);
