@@ -4,7 +4,7 @@ for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${fi
 const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app.js','utf8'),experience=fs.readFileSync('experience.js','utf8'),core=fs.readFileSync('workbook.js','utf8'),project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8')),operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
 if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="experience\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
 if((html.match(/<html\b/g)||[]).length!==1)throw new Error('There must be one application shell.');
-if(!html.includes('closed-loop-runtime-20260823-2037-r1'))throw new Error('The repaired application cache identity is missing.');
+if(!html.includes('closed-loop-runtime-20260823-2037-r2'))throw new Error('The repaired application cache identity is missing.');
 if(html.includes('closed-loop-retained-project-refresh'))throw new Error('The app shell must not delete the retained project from browser storage.');
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(project.specRevision!=='authorized-operation-01-project-20260823-r2')throw new Error('Retained project revision was not materialized.');
