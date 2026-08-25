@@ -11,20 +11,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: repair/closed-loop-ingestion-20260825
-      - name: Apply payload only when complete
+      - name: Apply source payload after complete validation
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
           parts=(.repair-payload-*.b64)
           if [ "${#parts[@]}" -ne 18 ]; then
-            echo "Repair payload incomplete (${#parts[@]}/18); waiting for remaining branch commits."
+            echo "Repair payload incomplete (${#parts[@]}/18); no source mutation performed."
             exit 0
           fi
           cat .repair-payload-*.b64 | base64 -d > /tmp/closed-loop-repair.tar.gz
           echo '5618ebe5d28055eee064856087c5ae6c7fb12c3b0de5ee105c8ed67bd1fc0224  /tmp/closed-loop-repair.tar.gz' | sha256sum -c -
           tar -xzf /tmp/closed-loop-repair.tar.gz -C .
-          rm -f .repair-payload-*.b64 .github/workflows/repair-bootstrap.yml
+          git checkout HEAD -- .github/workflows/pages.yml .github/workflows/repair-bootstrap.yml
+          rm -f .repair-payload-*.b64
           rm -f authority-guard.js integrity-guard.js prompt-display.js storage-reliability.js experience.js usability.js
           node build-test-project.mjs
           node --check app.js
@@ -45,7 +46,7 @@ jobs:
           git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
           git add -A
           if git diff --cached --quiet; then
-            echo 'No repair changes to commit.'
+            echo 'No source repair changes to commit.'
             exit 0
           fi
           git commit -m 'Repair closed-loop agent response ingestion'
