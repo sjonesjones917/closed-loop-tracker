@@ -2,16 +2,64 @@
 
 Live application: https://sjonesjones917.github.io/closed-loop-tracker/
 
-This repository contains one application with one HTML entry point: `index.html`.
+This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages and retains `JOB-20260823144121` as the authorized Stage 01-complete, Stage 02-next project.
 
-The application is a phone-first human project interface over the 30-stage Mobile Closed-Loop Agent Reliability Workbook. The stages remain Stage 01 through Stage 30. No extra workflow operation is inserted and no supplied stage is removed.
+## Responsibility boundaries
 
-The application keeps user-entered job data, actual stage records, generated instructions, generated outputs, output receipts, files, runs, verification records, defects, changes, blockers, release records, evidence chains, history, and permanent defect/regression records available inside the project when those records actually exist.
+| Responsibility | Owner |
+|---|---|
+| Workflow stages, names, roles, declared completion conditions | `workbook.js` |
+| Field ownership, types, relationships, and stage contracts | `workflow-schema.js` |
+| Canonical serialization and SHA-256 | `hash.js` |
+| Prompt content, context selection, and prompt identity | `prompt-engine.js` |
+| Parsing, validation, proposal planning, and response disposition | `response-ingestion.js` |
+| Derived values, current-scope selection, gates, invalidation, and release logic | `workflow-engine.js` |
+| Projects, migration, import/export, and persistence | `project-store.js` |
+| Rendering and operator actions | `app-core.js` |
+| Static shell, CSS, and ordered module loading | `index.html` |
+| Source, lifecycle, browser, deployment, and live verification | `.github/workflows/pages.yml` |
 
-Appendices A-F are implemented as cross-cutting controls. Fresh-context, blocker, change/invalidation, release, new-job initialization, and output-receipt records are created where the corresponding workflow event occurs. Appendix E is tied to new-project creation rather than repeated inside an active stage.
+There is no second parser, store, workflow engine, prompt layer, application shell, runtime wrapper guard, MutationObserver patch, or framework runtime.
 
-`TEST_PROJECT.json` is the retained authorized project `JOB-20260823144121`, titled `Mobile Closed-Loop Agent Reliability Workbook`. It preserves the completed Operation 01 / Stage 01 job definition, shows 1/30 complete, sets Stage 02 as the current next stage, and leaves Stages 02-30 not started without fabricated downstream project records. The completed Operation 01 output, generated Stage 01 instruction, output receipt, user-entered job data, supplied-material record, controlled unknowns, decision evidence, and next action remain visible from the application.
+## Current contracts
 
-`workbook.js` contains the single 30-stage workflow definition, stage fields, prompt construction, gates, state definitions, hashing, invalidation, and release-file identity comparison. `app.js` contains the single human-facing controller, project persistence, structured stage-field editor, project record views, generated-content retention, contextual supporting records, and release controls.
+- Project schema: `human-project/30` (the deterministic `closed-loop-project/2` migration is the next schema change).
+- Response schema: `closed-loop-stage-response/1` (the version-2 scope-bound contract is the next response-contract change).
+- Workflow: exactly 30 stages; no Stage or Operation 31.
+- Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
+- Persistence: one `closedLoopProjectStore` adapter over verified browser storage. The application is browser-local and has no backend or multi-device synchronization.
 
-`build-test-project.mjs` is a non-mutating retained-project and source-integrity check. `verify.mjs` verifies the committed repository state. `verify-live.mjs` verifies the deployed state. The Pages workflow deploys the exact committed application and also renders the live interface at 320 and 393 CSS-pixel widths.
+## Data and backup responsibility
+
+Browser-local persistence is not protection against device destruction, browser-profile deletion, private-mode eviction, or an operator clearing site data. The operator must create and retain complete project exports. The application must fail closed when storage cannot preserve a response or canonical transaction.
+
+## Migration policy
+
+Migrations are deterministic, preserve unknown extension data and historical evidence, and never create a Stage 31. Original imported payloads remain auditable but must not act as current canonical state.
+
+## Verification
+
+Run the repository checks in this order:
+
+```bash
+node build-test-project.mjs
+node --check workbook.js
+node --check hash.js
+node --check workflow-schema.js
+node --check workflow-engine.js
+node --check prompt-engine.js
+node --check response-ingestion.js
+node --check project-store.js
+node --check app-core.js
+node --check verify.mjs
+node --check verify-ingestion.mjs
+node --check verify-complete.mjs
+node --check verify-live.mjs
+node --check verify-browser.mjs
+node --check verify-browser-extra.mjs
+node verify.mjs
+node verify-ingestion.mjs
+node verify-complete.mjs
+```
+
+Local and deployed Chromium verification additionally run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL.
