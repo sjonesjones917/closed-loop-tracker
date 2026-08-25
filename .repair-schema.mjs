@@ -1,0 +1,5 @@
+import fs from 'node:fs';
+let s=fs.readFileSync('workflow-schema.js','utf8');
+const n="  regressionExecutions:recordSchema({title:'Regression execution results',idField:'REGRESSION_EXECUTION_ID',prefix:'REGRESSION-EXECUTION',stage:17,fields:[\n    'REGRESSION_EXECUTION_ID','REG_ID','ITERATION_ID','RESULT','EVIDENCE'\n  ],required:['RESULT','EVIDENCE'],relationships:{REG_ID:'regressions',ITERATION_ID:'iterations'},appFields:['REGRESSION_EXECUTION_ID']}),\n";
+if(!s.includes(n)){const a="  changes:recordSchema({title:'Controlled changes and invalidations'";if(!s.includes(a))throw Error('schema anchor');s=s.replace(a,n+a);}
+s=s.replace("  17:['iterations','candidateFreezes','runs'],","  17:['iterations','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','regressionExecutions'],");s=s.replace("  19:['iterations','runs','confirmationRecords'],","  19:['iterations','runs','verification','comparisons','defects','confirmationRecords','regressionExecutions'],");fs.writeFileSync('workflow-schema.js',s);
