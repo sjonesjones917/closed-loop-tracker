@@ -15,12 +15,13 @@ jobs:
       - name: Apply minimum PR5 changes
         run: |
           sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
-          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py
+          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py
           python .practical100-pr5.py
           python .practical100-pr5-compat.py
           python .practical100-pr5-legacyfix.py
           python .practical100-pr5-browserfix.py
           python .practical100-pr5-assertfix.py
+          python .practical100-pr5-migrationstate.py
           sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
           python - <<'PY'
           from pathlib import Path
@@ -54,7 +55,7 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit verified source only
         run: |
-          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .github/workflows/practical100-pr5-inspect.yml
+          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py .github/workflows/practical100-pr5-inspect.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
