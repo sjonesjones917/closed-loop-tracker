@@ -13,6 +13,7 @@ const TEMP_KEY=`${STORE_KEY}-transaction`;
 const clone=value=>value===undefined?undefined:JSON.parse(JSON.stringify(value));
 const asList=value=>Array.isArray(value)?value:(value&&typeof value==='object'?[value]:[]);
 const projectIdentity=project=>String(project?.job?.JOB_ID||project?.jobId||'').trim();
+const isQuotaError=error=>error?.name==='QuotaExceededError'||error?.code===22||error?.code===1014||/quota|storage.*full|exceeded/i.test(String(error?.message||error||''));
 
 function fault(phase){
   const configured=globalThis.__closedLoopStorageFault;
@@ -50,22 +51,27 @@ function readAll(storage=globalThis.localStorage){
   return projects;
 }
 
+function restoreEntries(entries,storage){
+  for(const [key,value] of entries){
+    try{
+      if(value===null)storage.removeItem(key);
+      else storage.setItem(key,value);
+    }catch{}
+  }
+}
+
 function writeAll(projects,storage=globalThis.localStorage){
   if(!storage)throw new Error('Persistent browser storage is unavailable.');
   if(!Array.isArray(projects))throw new TypeError('Project storage payload must be an array.');
   const payload=JSON.stringify(projects);
   const prior=storage.getItem(STORE_KEY);
   if(prior===payload){
-    try{storage.removeItem(TEMP_KEY);storage.removeItem(BACKUP_KEY);}catch{}
+    try{storage.removeItem(TEMP_KEY);storage.removeItem(BACKUP_KEY);for(const key of LEGACY_KEYS)storage.removeItem(key);}catch{}
     return {changed:false,bytes:payload.length};
   }
 
-  // Web Storage setItem() is atomic: if quota is exceeded, the existing value at
-  // STORE_KEY is left unchanged. Do not duplicate the complete project payload into
-  // temporary/backup keys before replacing it; doing so can itself exhaust mobile
-  // browser quota even when the replacement would fit. readAll() has already folded
-  // any legacy backup into the canonical project list, so stale auxiliary copies can
-  // be released before the single canonical write.
+  // Auxiliary transaction copies are never required for Web Storage replacement:
+  // setItem() either stores the new value or leaves the prior value unchanged.
   try{storage.removeItem(TEMP_KEY);storage.removeItem(BACKUP_KEY);}catch{}
   let finalTouched=false;
   try{
@@ -76,8 +82,28 @@ function writeAll(projects,storage=globalThis.localStorage){
     finalTouched=true;
     fault('after-final-write');
     if(storage.getItem(STORE_KEY)!==payload)throw new Error('Committed project payload verification failed.');
+    try{for(const key of LEGACY_KEYS)storage.removeItem(key);}catch{}
     return {changed:true,bytes:payload.length};
   }catch(error){
+    // An existing installation can legitimately contain complete older store versions.
+    // readAll() has already merged those projects into `projects`. If those redundant
+    // legacy copies are the reason a canonical replacement cannot fit, temporarily
+    // reclaim only those bytes and retry the exact same lossless canonical payload.
+    if(!finalTouched&&isQuotaError(error)){
+      const legacyEntries=LEGACY_KEYS.map(key=>[key,storage.getItem(key)]).filter(([,value])=>value!==null);
+      if(legacyEntries.length){
+        try{
+          for(const [key] of legacyEntries)storage.removeItem(key);
+          storage.setItem(STORE_KEY,payload);
+          finalTouched=true;
+          if(storage.getItem(STORE_KEY)!==payload)throw new Error('Committed project payload verification failed after legacy-storage migration.');
+          return {changed:true,bytes:payload.length,reclaimedLegacy:true};
+        }catch(retryError){
+          restoreEntries(legacyEntries,storage);
+          error=retryError;
+        }
+      }
+    }
     try{
       if(finalTouched){
         if(prior===null)storage.removeItem(STORE_KEY);
