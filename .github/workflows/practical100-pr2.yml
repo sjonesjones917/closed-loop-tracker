@@ -1,0 +1,40 @@
+name: Practical 100 PR2 transformation
+on:
+  push:
+    branches: [practical-100/pr2-schema-response-v2]
+permissions:
+  contents: write
+jobs:
+  transform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Transform responsible modules
+        run: node .practical100-pr2.mjs
+      - name: Syntax checks
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check hash.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+      - name: Deterministic checks
+        run: |
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+      - name: Commit verified PR2 source only
+        run: |
+          rm .practical100-pr2.mjs .github/workflows/practical100-pr2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 2: explicit schema and response contract v2"
+          git push origin HEAD:practical-100/pr2-schema-response-v2
