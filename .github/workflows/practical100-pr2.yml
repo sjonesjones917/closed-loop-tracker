@@ -48,6 +48,8 @@ jobs:
               old_id="promptIdentity:{instructionId:promptRecord.instructionId,sha256:promptRecord.sha256}"
               new_id="operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope"
               t=t.replace(old_id,new_id)
+            if f.name == 'verify.mjs' and '// Practical-100 schema/ownership contract.' in t:
+              t=t.replace('// Practical-100 schema/ownership contract.','// Practical-100 schema/ownership contract.\nconst assert=(condition,message)=>{if(!condition)throw new Error(message);};',1)
             f.write_text(t)
       - name: Syntax checks
         run: |
