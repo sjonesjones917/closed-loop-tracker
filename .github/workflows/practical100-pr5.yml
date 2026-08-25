@@ -21,6 +21,11 @@ jobs:
         run: |
           python .practical100-pr5.py
           python .practical100-pr5-finalize.py
+      - name: Repair generated precedence
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('workflow-engine.js');s=p.read_text();bad="stage:stage??Number(project.activeStage||0)||null";good="stage:(stage??Number(project.activeStage||0))||null";assert bad in s;p.write_text(s.replace(bad,good,1))
       - name: Syntax
         run: |
           node --check project-store.js
