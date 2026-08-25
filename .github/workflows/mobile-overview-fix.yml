@@ -1,0 +1,51 @@
+name: Apply minimal mobile overview repair
+on:
+  push:
+    branches: [fix/mobile-overview-completed-only]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/mobile-overview-completed-only
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Limit Overview completed work to completed stages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="function stageList(){return `<div class=\"workflow-list\">${core.STAGES.map(d=>{"
+          new="function stageList(stages=core.STAGES){return `<div class=\"workflow-list\">${stages.map(d=>{"
+          if old not in s: raise SystemExit('stageList signature target not found')
+          s=s.replace(old,new,1)
+          old2="<div class=\"panel completed-work-panel\"><h2 class=\"section-title\">Completed work</h2>${stageList()}</div>"
+          new2="<div class=\"panel completed-work-panel\"><h2 class=\"section-title\">Completed work</h2>${stageList(core.STAGES.filter(d=>current.stages[d.number].status==='COMPLETE'))}</div>"
+          if old2 not in s: raise SystemExit('overview stageList target not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+          node build-test-project.mjs
+          node --check app.js
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
+          git add app-core.js
+          git diff --cached --exit-code && exit 0 || true
+          git commit -m 'Show only completed stages in Overview completed work'
+          git push origin HEAD:fix/mobile-overview-completed-only
