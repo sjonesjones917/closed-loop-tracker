@@ -16,7 +16,7 @@ jobs:
         run: node .pr3-transformer-fix.mjs
       - name: Transform ingestion and transaction rules
         run: node .practical100-pr3.mjs
-      - name: Align verification with disposition vocabulary
+      - name: Align verification with PR3 semantics
         shell: python
         run: |
           from pathlib import Path
@@ -24,6 +24,12 @@ jobs:
           s=p.read_text()
           assert 'ACCEPTED_CANONICAL_CHANGE' in s
           p.write_text(s.replace('ACCEPTED_CANONICAL_CHANGE','ACCEPTED_DATA_CHANGE'))
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="if(second.validation.valid||!second.validation.issues.some(x=>x.code==='DUPLICATE_RESPONSE'))throw new Error('Duplicate response was not rejected.');"
+          new="if(!second.duplicate||second.rawRecord.rawResponseId!==first.rawRecord.rawResponseId||second.receipt.receiptId!==first.receipt.receiptId)throw new Error('Duplicate canonical envelope did not return the existing response and receipt.');"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
       - name: Syntax
         run: |
           node --check workflow-engine.js
