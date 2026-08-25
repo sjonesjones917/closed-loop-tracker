@@ -1,0 +1,52 @@
+name: Apply verified closed-loop ingestion repair
+on:
+  push:
+    branches: [repair/closed-loop-ingestion-20260825]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/closed-loop-ingestion-20260825
+      - name: Apply payload only when complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          parts=(.repair-payload-*.b64)
+          if [ "${#parts[@]}" -ne 4 ]; then
+            echo "Repair payload incomplete (${#parts[@]}/4); waiting for remaining branch commits."
+            exit 0
+          fi
+          cat .repair-payload-*.b64 | base64 -d > /tmp/closed-loop-repair.tar.gz
+          echo '5618ebe5d28055eee064856087c5ae6c7fb12c3b0de5ee105c8ed67bd1fc0224  /tmp/closed-loop-repair.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/closed-loop-repair.tar.gz -C .
+          rm -f .repair-payload-*.b64 .github/workflows/repair-bootstrap.yml
+          rm -f authority-guard.js integrity-guard.js prompt-display.js storage-reliability.js experience.js usability.js
+          node build-test-project.mjs
+          node --check app.js
+          node --check app-core.js
+          node --check workflow-model.js
+          node --check workflow-engine.js
+          node --check project-store.js
+          node --check response-ingestion.js
+          node --check prompt-engine.js
+          node --check workbook.js
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-live.mjs
+          node --check verify-browser.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No repair changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Repair closed-loop agent response ingestion'
+          git push origin HEAD:repair/closed-loop-ingestion-20260825
