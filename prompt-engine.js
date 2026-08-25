@@ -42,36 +42,34 @@ const contextCollections={
 };
 const recordId=(record,collection)=>String(record?.id||record?.recordId||record?.[schema.RECORD_SCHEMAS[collection]?.idField]||record?.fields?.[schema.RECORD_SCHEMAS[collection]?.idField]||'UNKNOWN');
 function boundedCollection(state,collection){
- const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[];
- if(!list.length)return 'NONE';
+ const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[];if(!list.length)return 'NONE';
  const active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);
- const selected=active.slice(-50).map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',fields:record.fields||record,relationships:record.relationships||{},sha256:record.sha256||'UNKNOWN'}));
- return show({totalActive:active.length,records:selected,omitted:Math.max(0,active.length-selected.length),omittedRule:'Older records remain preserved in project storage and are referenced by identity; request exact artifacts separately when needed.'});
+ return show({totalActive:active.length,records:active.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})),omitted:0,selectionRule:'All active records selected by the explicit stage readCollections contract; large artifact bytes are referenced by canonical artifact identity.'});
 }
 function contextFor(stage,state){
  const parts=[];
- if(stage>1){const prior=state?.projectData?.stageRecords?.[stage-1]||state?.stages?.[stage-1]?.acceptedData||'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
+ if(stage>1){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:state.stages[stage-1].derivedData||{}}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
  const open=(state?.projectData?.blockers||[]).filter(x=>!x.invalidatedBy&&!['CLOSED','RESOLVED','RETIRED'].includes(String(x?.fields?.STATUS||x?.STATUS||x?.status||'OPEN').toUpperCase()));
  if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\n${show(open.slice(-20))}`);
  const questions=(state?.projectData?.humanInputRequests||[]).filter(x=>Number(x.stage)===stage&&String(x.status||'OPEN').toUpperCase()==='OPEN');
  if(questions.length)parts.push(`UNRESOLVED HUMAN INPUT REQUESTS\n${show(questions)}`);
+ const answered=(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({questionId:x.requestId,question:x.question,answer:x.answer,answerType:x.answerType||'UNKNOWN',inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||'UNKNOWN',operatorLabel:x.operatorLabel||x.operator||'UNSPECIFIED',affectedStageFields:x.affectedStageFields||[],affectedRecords:x.affectedRecords||[]}));
+ if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\n${show(answered)}`);
  for(const collection of contextCollections[stage]||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\n${boundedCollection(state,collection)}`);
  return parts.join('\n\n')||'No additional stage-specific canonical records are established.';
 }
-function responseContract(stage,instructionId,promptSha256){
- const contract=schema.STAGE_CONTRACTS[stage];
- const recordShape=Object.fromEntries(contract.allowedCollections.map(collection=>[collection,[{tempKey:'response-local-key',fields:Object.fromEntries(schema.recordAgentFields(collection).map(name=>[name,'<value>'])),relationships:{},evidenceRefs:['evidence-1']}]]));
- return JSON.stringify({
-   schema:schema.RESPONSE_SCHEMA,jobId:'<exact current JOB_ID>',stage,promptIdentity:{instructionId,sha256:promptSha256},responseType:'DATA_PROPOSAL',
-   humanInputRequests:[],stageData:Object.fromEntries(contract.allowedStageData.map(name=>[name,'<value>'])),records:recordShape,
-   evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Exact evidence supporting proposed values',location:'<source/output location>',content:'<exact evidence or faithful excerpt>'}],unresolved:[],warnings:[],attachments:[]
- },null,2);
+function scopeFor(stage,state,overrides={}){const j=state?.job||{};const value={projectRevision:Number(state?.revision||0),inputVersion:j.CURRENT_INPUT_VERSION||null,sourceSetVersion:j.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:j.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:j.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:j.CURRENT_INSTRUCTION_VERSION||null,iterationId:j.CURRENT_ITERATION||null,candidateId:state?.projectData?.candidateFreezes?.filter(x=>x?.active!==false&&!x?.invalidatedBy).at(-1)?.id||null,runId:overrides.runId||null,contextId:overrides.contextId||null,baselineId:j.CURRENT_BASELINE_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_BASELINE_ID))?j.CURRENT_BASELINE_ID:null,productId:j.CURRENT_PRODUCT_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_PRODUCT_ID))?j.CURRENT_PRODUCT_ID:null};return value;}
+function responseContractDescriptor(stage,operation){const contract=schema.STAGE_CONTRACTS[stage],op=schema.operationContract(stage,operation);return {schema:schema.RESPONSE_SCHEMA,stage,operation,responseTypes:schema.RESPONSE_TYPES,scopeRequirements:op?.scopeRequirements||contract.scopeRequirements,agentStageFields:contract.allowedStageData,agentWritableCollections:op?.agentWritableCollections||contract.agentWritableCollections,resourceLimits:contract.resourceLimits};}
+function responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope){
+ const contract=schema.STAGE_CONTRACTS[stage];const writable=contract.agentWritableCollections;
+ const recordShape=Object.fromEntries(writable.map(collection=>[collection,[{tempKey:'response-local-key',targetId:null,fields:Object.fromEntries(schema.recordAgentFields(collection).map(name=>[name,'<value>'])),relationships:{},evidenceRefs:['evidence-1']}]]));
+ return JSON.stringify({schema:schema.RESPONSE_SCHEMA,jobId:'<exact current JOB_ID>',stage,operation,promptIdentity:{instructionId,bodySha256,contractSha256,contextSignature},scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:Object.fromEntries(contract.allowedStageData.map(name=>[name,'<value>'])),records:recordShape,evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Exact evidence supporting proposed values',location:'<source/output location>',content:'<exact evidence or faithful excerpt>'}],unresolved:[],warnings:[],attachments:[]},null,2);
 }
 function body(stage,state){
  const d=core.STAGES[stage-1],j=state?.job||{};
  const contract=schema.STAGE_CONTRACTS[stage];
  const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>`- ${x}`).join('\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';
- const collections=contract.allowedCollections.length?contract.allowedCollections.map(c=>`- ${c}: ${schema.recordAgentFields(c).join(', ')||'no agent-owned fields'}`).join('\n'):'- NONE';
+ const collections=contract.agentWritableCollections.length?contract.agentWritableCollections.map(c=>`- ${c}: ${schema.recordAgentFields(c).join(', ')||'no agent-owned fields'}`).join('\n'):'- NONE';
  return `COPY BLOCK — STAGE ${String(stage).padStart(2,'0')} — ${d.title}
 
 ROLE
@@ -134,7 +132,7 @@ ${(d.completionGate||[]).map(x=>`- ${x}`).join('\n')}
 
 MANDATORY RESPONSE RULES
 - Return exactly one JSON object and no Markdown fence, preamble, or trailing prose.
-- Use schema ${schema.RESPONSE_SCHEMA}.
+- Use schema ${schema.RESPONSE_SCHEMA} and echo the exact operation, scope, instructionId, bodySha256, contractSha256, and contextSignature supplied below.
 - Use only DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as responseType.
 - Never assign canonical application IDs, versions, timestamps, counts, hashes, statuses, coverage values, release determinations, current stage/state, or other application-owned values. Use temporaryKey and response-local references where relationships are needed.
 - Never set a HUMAN or HUMAN_DECISION-owned field. When unavailable human information is required, return HUMAN_INPUT_REQUIRED and structured humanInputRequests. Do not convert a missing human decision into an assumption.
@@ -150,28 +148,17 @@ The application will provide the controlling prompt identity immediately after t
 
 END HASHED INSTRUCTION BODY`;
 }
-function buildPromptRecord(stageOrDefinition,state){
- const stage=Number(stageOrDefinition?.number||stageOrDefinition);
- if(!Number.isInteger(stage)||stage<1||stage>30)throw new Error('Stage must be 1 through 30.');
- const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage);
- const bodyText=body(stage,state),bodySha256=hash.sha256Text(bodyText);
- const contextSignature=hash.sha256Value({stage,jobId:state?.job?.JOB_ID||'UNKNOWN',input:state?.job?.CURRENT_INPUT_VERSION||'UNKNOWN',sources:state?.job?.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',requirements:state?.job?.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE',tests:state?.job?.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE',instruction:state?.job?.CURRENT_INSTRUCTION_VERSION||'NOT APPLICABLE',iteration:state?.job?.CURRENT_ITERATION||'NOT APPLICABLE',bodySha256});
- const same=existing.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256);
+function buildPromptRecord(stageOrDefinition,state,options={}){
+ const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);
+ const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);const operation=options.operation||schema.STAGE_CONTRACTS[stage].operations[0];if(!schema.STAGE_CONTRACTS[stage].operations.includes(operation))throw new Error(`Operation ${operation} is not valid for Stage ${stage}.`);
+ const scope=scopeFor(stage,state,options.scope||{}),contextManifest={stage,operation,scope,readCollections:Object.fromEntries((schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,(state?.projectData?.[collection]||[]).filter(x=>x?.active!==false&&!x?.invalidatedBy).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null}))};
+ const contextSignature=hash.sha256Value(contextManifest),bodyText=body(stage,state),bodySha256=hash.sha256Text(bodyText),descriptor=responseContractDescriptor(stage,operation),contractSha256=hash.sha256Value(descriptor);
+ const same=existing.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256&&x.contractSha256===contractSha256&&x.operation===operation);
  const instructionId=same?.instructionId||same?.promptId||`INSTRUCTION-${String(state?.job?.JOB_ID||'UNKNOWN').replace(/[^A-Za-z0-9-]/g,'')}-S${String(stage).padStart(2,'0')}-${String(existing.length+1).padStart(3,'0')}`;
- const identityBlock=`
-
-PROMPT IDENTITY — ECHO EXACTLY
-INSTRUCTION_ID: ${instructionId}
-SHA256_OF_HASHED_INSTRUCTION_BODY: ${bodySha256}
-
-STRICT RESPONSE CONTRACT
-${responseContract(stage,instructionId,bodySha256)}
-
-END COPY BLOCK — STAGE ${String(stage).padStart(2,'0')}`;
- const prompt=bodyText+identityBlock;
- return {instructionId,promptId:instructionId,stage,role:d.role,bodySha256,sha256:bodySha256,fullTextSha256:hash.sha256Text(prompt),contextSignature,prompt};
+ const identityBlock=`\n\nPROMPT IDENTITY — ECHO EXACTLY\nINSTRUCTION_ID: ${instructionId}\nBODY_SHA256: ${bodySha256}\nCONTRACT_SHA256: ${contractSha256}\nCONTEXT_SIGNATURE: ${contextSignature}\nOPERATION: ${operation}\nPROJECT_REVISION: ${scope.projectRevision}\n\nSTRICT RESPONSE CONTRACT\n${responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope)}\n\nEND COPY BLOCK — STAGE ${String(stage).padStart(2,'0')}`;
+ const prompt=bodyText+identityBlock;return {instructionId,promptId:instructionId,stage,operation,role:d.role,bodySha256,sha256:bodySha256,contractSha256,contextSignature,contextManifest,scope,scopeSha256:hash.sha256Value(scope),prompt,fullTextSha256:hash.sha256Text(prompt)};
 }
-function build(stageOrDefinition,state){return buildPromptRecord(stageOrDefinition,state).prompt;}
+function build(stageOrDefinition,state,options){return buildPromptRecord(stageOrDefinition,state,options).prompt;}
 core.buildStagePrompt=build;
-globalThis.closedLoopPromptEngine=Object.freeze({version:'closed-loop-prompt-engine/3',build,buildPromptRecord,procedures,contextCollections,contextFor,responseContract});
+globalThis.closedLoopPromptEngine=Object.freeze({version:'closed-loop-prompt-engine/4',build,buildPromptRecord,procedures,contextCollections,contextFor,scopeFor,responseContractDescriptor,responseContract});
 })();

@@ -6,11 +6,14 @@ const workflow=globalThis.closedLoopWorkflowEngine;
 const hash=globalThis.closedLoopHash;
 if(!schema||!workflow||!hash)throw new Error('workflow-schema.js, workflow-engine.js, and hash.js must load before response-ingestion.js.');
 
-const TOP_LEVEL_KEYS=Object.freeze(['schema','jobId','stage','promptIdentity','responseType','humanInputRequests','stageData','records','evidence','unresolved','warnings','attachments']);
-const RECORD_KEYS=Object.freeze(['tempKey','fields','relationships','evidenceRefs','notes']);
+const TOP_LEVEL_KEYS=Object.freeze(['schema','jobId','stage','operation','promptIdentity','scope','responseType','humanInputRequests','stageData','records','evidence','unresolved','warnings','attachments']);
+const RECORD_KEYS=Object.freeze(['tempKey','targetId','fields','relationships','evidenceRefs','notes']);
 const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes']);
 const QUESTION_KEYS=Object.freeze(['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking']);
-const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','filename','type','byteSize','sha256','availability','notes']);
+const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','filename','mediaType','byteSize','sha256','required']);
+const UNRESOLVED_KEYS=Object.freeze(['temporaryKey','kind','description','whyBlocking','affectedStageFields','affectedRecords','blocking']);
+const WARNING_KEYS=Object.freeze(['code','message','path']);
+const UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
 const ANSWER_TYPES=Object.freeze(['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']);
 
 const clone=workflow.clone;
@@ -25,10 +28,18 @@ const unknownKeys=(value,allowed,path,issues)=>{
   for(const key of Object.keys(value))if(!allowed.includes(key))issues.push(issue('UNKNOWN_PROPERTY',`${path}/${pointerEscape(key)}`,`Unknown property ${key}.`));
 };
 
-function strictParse(text){
+
+const byteLength=text=>new TextEncoder().encode(String(text??'')).byteLength;
+function scanJsonAmbiguity(raw,maxDepth){let i=0,depth=0;const stack=[];const ws=()=>{while(/\s/.test(raw[i]||''))i++;};const str=()=>{let out='';if(raw[i++]!=='"')throw new Error('Expected string.');while(i<raw.length){const c=raw[i++];if(c==='"')return out;if(c==='\\'){const e=raw[i++];if(e==='u'){out+=String.fromCharCode(parseInt(raw.slice(i,i+4),16));i+=4;}else out+=({n:'\n',r:'\r',t:'\t',b:'\b',f:'\f'}[e]??e);}else out+=c;}throw new Error('Unterminated string.');};const value=()=>{ws();const c=raw[i];if(c==='{')return obj();if(c==='[')return arr();if(c==='"'){str();return;}const m=raw.slice(i).match(/^(?:true|false|null|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?)/);if(!m)throw new Error('Invalid JSON token.');i+=m[0].length;};const obj=()=>{depth++;if(depth>maxDepth){const e=new Error('JSON nesting exceeds the stage resource limit.');e.code='EXCESSIVE_JSON_DEPTH';throw e;}i++;const keys=new Set();ws();if(raw[i]==='}'){i++;depth--;return;}while(i<raw.length){ws();const key=str();if(keys.has(key)){const e=new Error(`Duplicate JSON member ${key}.`);e.code='DUPLICATE_JSON_MEMBER';throw e;}keys.add(key);ws();if(raw[i++]!==':')throw new Error('Expected colon.');value();ws();if(raw[i]==='}'){i++;depth--;return;}if(raw[i++]!==',')throw new Error('Expected comma.');}throw new Error('Unterminated object.');};const arr=()=>{depth++;if(depth>maxDepth){const e=new Error('JSON nesting exceeds the stage resource limit.');e.code='EXCESSIVE_JSON_DEPTH';throw e;}i++;ws();if(raw[i]===']'){i++;depth--;return;}while(i<raw.length){value();ws();if(raw[i]===']'){i++;depth--;return;}if(raw[i++]!==',')throw new Error('Expected comma.');}throw new Error('Unterminated array.');};value();ws();if(i!==raw.length)throw new Error('Trailing material.');}
+function validateValue(definition,value,path,issues,{required=false}={}){if(value===null){if(!definition.nullable)issues.push(issue('PROHIBITED_NULL',path,'Null is not permitted.'));return;}const t=definition.valueType;const emptyString=typeof value==='string'&&!value.trim();if(required&&emptyString)issues.push(issue('EMPTY_REQUIRED_STRING',path,'Required string is empty.'));if(typeof value==='string'&&value.trim()==='<value>')issues.push(issue('PLACEHOLDER_VALUE',path,'Prompt placeholder <value> cannot be accepted as data.'));if(t==='STRING'&&typeof value!=='string')issues.push(issue('WRONG_VALUE_TYPE',path,'Expected STRING.'));else if(t==='INTEGER'&&(!Number.isInteger(value)||!Number.isFinite(value)))issues.push(issue('WRONG_VALUE_TYPE',path,'Expected finite INTEGER.'));else if(t==='NUMBER'&&(typeof value!=='number'||!Number.isFinite(value)))issues.push(issue('WRONG_VALUE_TYPE',path,'Expected finite NUMBER.'));else if(t==='BOOLEAN'&&typeof value!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',path,'Expected BOOLEAN.'));else if((t==='STRING_ARRAY'||t==='REFERENCE_ARRAY')&&!Array.isArray(value))issues.push(issue('WRONG_VALUE_TYPE',path,`Expected ${t}.`));else if(t==='STRING_ARRAY'&&Array.isArray(value)&&value.some(v=>typeof v!=='string'))issues.push(issue('WRONG_VALUE_TYPE',path,'STRING_ARRAY items must be strings.'));else if(t==='OBJECT'&&!object(value))issues.push(issue('WRONG_VALUE_TYPE',path,'Expected OBJECT.'));if(required&&Array.isArray(value)&&!value.length)issues.push(issue('EMPTY_REQUIRED_ARRAY',path,'Required array is empty.'));if(definition.enumValues?.length&&!definition.enumValues.includes(value))issues.push(issue('INVALID_ENUM_VALUE',path,`Value must be one of ${definition.enumValues.join(', ')}.`));if(typeof value==='string'&&value.length>200000)issues.push(issue('TEXT_FIELD_TOO_LARGE',path,'Text field exceeds the configured maximum length.'));if(t==='OBJECT'&&object(value)&&definition.closedProperties)for(const key of Object.keys(value))if(!definition.closedProperties.includes(key))issues.push(issue('UNKNOWN_NESTED_PROPERTY',`${path}/${pointerEscape(key)}`,`Unknown nested property ${key}.`));}
+function currentScope(project,promptRecord){return clone(promptRecord?.scope||{});}
+
+function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
   const raw=String(text??'');
   const trimmed=raw.trim();
   if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});
+  if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});
+  try{scanJsonAmbiguity(trimmed,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}
   if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
   let envelope;
   try{envelope=JSON.parse(trimmed);}catch(error){
@@ -58,16 +69,21 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
   if(envelope.schema!==schema.RESPONSE_SCHEMA)issues.push(issue('WRONG_SCHEMA','/schema',`Expected ${schema.RESPONSE_SCHEMA}.`));
   if(String(envelope.jobId||'')!==String(project.job.JOB_ID||''))issues.push(issue('WRONG_JOB_ID','/jobId',`Response JOB_ID ${envelope.jobId||'MISSING'} does not match ${project.job.JOB_ID}.`));
   if(Number(envelope.stage)!==stageNumber)issues.push(issue('WRONG_STAGE','/stage',`Response stage ${envelope.stage??'MISSING'} does not match Stage ${stageNumber}.`));
+  const expectedOperation=promptRecord?.operation||contract?.operations?.[0];if(String(envelope.operation||'')!==String(expectedOperation||''))issues.push(issue('WRONG_OPERATION','/operation',`Expected operation ${expectedOperation||'UNKNOWN'}.`));
+  if(!object(envelope.scope))issues.push(issue('INVALID_SCOPE','/scope','scope must be an object.'));else{unknownKeys(envelope.scope,['projectRevision','inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'],'/scope',issues);const expected=currentScope(project,promptRecord);for(const key of contract?.scopeRequirements||[])if(JSON.stringify(envelope.scope[key]??null)!==JSON.stringify(expected[key]??null))issues.push(issue('STALE_SCOPE',`/scope/${key}`,`Scope ${key} does not match the controlling prompt.`));}
   if(!schema.RESPONSE_TYPES.includes(envelope.responseType))issues.push(issue('INVALID_RESPONSE_TYPE','/responseType',`Response type must be one of ${schema.RESPONSE_TYPES.join(', ')}.`));
 
   if(!object(envelope.promptIdentity))issues.push(issue('MISSING_PROMPT_IDENTITY','/promptIdentity','promptIdentity must be an object.'));
   else{
-    unknownKeys(envelope.promptIdentity,['instructionId','sha256'],'/promptIdentity',issues);
+    unknownKeys(envelope.promptIdentity,['instructionId','bodySha256','contractSha256','contextSignature'],'/promptIdentity',issues);
     const expectedId=promptRecord?.instructionId||promptRecord?.promptId;
-    const expectedHash=promptRecord?.sha256||promptRecord?.bodySha256;
-    if(!expectedId||!expectedHash)issues.push(issue('PROMPT_NOT_SAVED','/promptIdentity','The controlling generated instruction is unavailable or has no canonical identity.'));
+    const expectedHash=promptRecord?.bodySha256||promptRecord?.sha256;
+    const expectedContractHash=promptRecord?.contractSha256;const expectedContextSignature=promptRecord?.contextSignature;
+    if(!expectedId||!expectedHash||!expectedContractHash||!expectedContextSignature)issues.push(issue('PROMPT_NOT_SAVED','/promptIdentity','The controlling generated instruction is unavailable or has no canonical identity.'));
     if(String(envelope.promptIdentity.instructionId||'')!==String(expectedId||''))issues.push(issue('STALE_PROMPT_IDENTITY','/promptIdentity/instructionId',`Expected instruction ${expectedId||'UNKNOWN'}.`));
-    if(String(envelope.promptIdentity.sha256||'')!==String(expectedHash||''))issues.push(issue('STALE_PROMPT_HASH','/promptIdentity/sha256',`Expected prompt SHA-256 ${expectedHash||'UNKNOWN'}.`));
+    if(String(envelope.promptIdentity.bodySha256||'')!==String(expectedHash||''))issues.push(issue('STALE_PROMPT_HASH','/promptIdentity/bodySha256',`Expected body SHA-256 ${expectedHash||'UNKNOWN'}.`));
+    if(String(envelope.promptIdentity.contractSha256||'')!==String(expectedContractHash||''))issues.push(issue('STALE_CONTRACT_HASH','/promptIdentity/contractSha256',`Expected contract SHA-256 ${expectedContractHash||'UNKNOWN'}.`));
+    if(String(envelope.promptIdentity.contextSignature||'')!==String(expectedContextSignature||''))issues.push(issue('STALE_CONTEXT_SIGNATURE','/promptIdentity/contextSignature',`Expected context signature ${expectedContextSignature||'UNKNOWN'}.`));
     const latest=safe(project.projectData.generatedPrompts).filter(record=>Number(record.stage)===stageNumber&&!record.invalidatedBy).at(-1);
     if(latest&&String(latest.instructionId||latest.promptId)!==String(expectedId||''))issues.push(issue('STALE_PROMPT_IDENTITY','/promptIdentity/instructionId','A newer generated instruction exists for this stage.'));
   }
@@ -92,12 +108,15 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
       const path=`/stageData/${pointerEscape(name)}`;
       const definition=schema.STAGE_FIELDS[stageNumber]?.[name];
       if(!definition){issues.push(issue('UNKNOWN_STAGE_FIELD',path,`Stage ${stageNumber} has no field ${name}.`));continue;}
+      validateValue(definition,value,path,issues);
       if(!allowedStageData.has(name))issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));
       if(value===undefined)issues.push(issue('UNDEFINED_VALUE',path,'Undefined values cannot be ingested.'));
     }
   }
 
-  const allowedCollections=new Set(contract?.allowedCollections||[]);
+  const allowedCollections=new Set(contract?.agentWritableCollections||contract?.allowedCollections||[]);
+  for(const [collection,list] of Object.entries(envelope.records||{}))if(Array.isArray(list)&&list.length>(contract?.resourceLimits?.maxRecordsPerCollection||250))issues.push(issue('RESOURCE_LIMIT_EXCEEDED',`/records/${pointerEscape(collection)}`,'Too many records in collection.'));
+  if(safe(envelope.evidence).length>(contract?.resourceLimits?.maxEvidenceRecords||500))issues.push(issue('RESOURCE_LIMIT_EXCEEDED','/evidence','Too many evidence records.'));if(safe(envelope.attachments).length>(contract?.resourceLimits?.maxAttachments||25))issues.push(issue('RESOURCE_LIMIT_EXCEEDED','/attachments','Too many attachments.'));
   const responseRecordIndex=new Map();
   if(object(envelope.records)){
     for(const [collection,list] of Object.entries(envelope.records)){
@@ -110,8 +129,9 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
         const path=`${collectionPath}/${index}`;
         if(!object(record)){issues.push(issue('INVALID_RECORD',path,'Each record proposal must be an object.'));return;}
         unknownKeys(record,RECORD_KEYS,path,issues);
-        const tempKey=registerTemp(record.tempKey,`${path}/tempKey`,collection);
-        if(tempKey)responseRecordIndex.set(tempKey,{collection,record,path});
+        const identityCount=Number(Boolean(record.tempKey))+Number(Boolean(record.targetId));if(identityCount!==1)issues.push(issue('INVALID_RECORD_IDENTITY',path,'Provide exactly one of tempKey or targetId.'));
+        let tempKey='';if(record.tempKey){tempKey=registerTemp(record.tempKey,`${path}/tempKey`,collection);if(tempKey)responseRecordIndex.set(tempKey,{collection,record,path});}
+        if(record.targetId){const target=workflow.records(project,collection,{active:true}).find(existing=>workflow.recordId(existing,collection)===String(record.targetId));if(!target)issues.push(issue('INVALID_RESERVED_TARGET',`${path}/targetId`,`Target ${record.targetId} does not exist as an active ${collection} record.`));else if(!['RESERVED','PENDING_AGENT','OPEN'].includes(upper(workflow.recordValue(target,'STATUS')||target.status||'RESERVED')))issues.push(issue('INVALID_RESERVED_TARGET',`${path}/targetId`,'Target record is not in an agent-completable reserved state.'));}
         if(!object(record.fields)){issues.push(issue('INVALID_RECORD_FIELDS',`${path}/fields`,'fields must be an object.'));return;}
         if(record.relationships!==undefined&&!object(record.relationships))issues.push(issue('INVALID_RELATIONSHIPS',`${path}/relationships`,'relationships must be an object.'));
         if(record.evidenceRefs!==undefined&&!Array.isArray(record.evidenceRefs))issues.push(issue('INVALID_EVIDENCE_REFS',`${path}/evidenceRefs`,'evidenceRefs must be an array.'));
@@ -120,6 +140,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
           const fieldPath=`${path}/fields/${pointerEscape(name)}`;
           const fieldDefinition=definition.fieldDefinitions[name];
           if(!fieldDefinition){issues.push(issue('UNKNOWN_RECORD_FIELD',fieldPath,`${collection} has no field ${name}.`));continue;}
+          validateValue(fieldDefinition,value,fieldPath,issues,{required:definition.required.includes(name)});
           if(!allowedFields.has(name))issues.push(issue('FIELD_OWNERSHIP_VIOLATION',fieldPath,`${name} is owned by ${fieldDefinition.producer}; the agent cannot set it.`));
           if(value===undefined)issues.push(issue('UNDEFINED_VALUE',fieldPath,'Undefined values cannot be ingested.'));
         }
@@ -127,7 +148,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
           const def=definition.fieldDefinitions[required];
           if(def?.producer!==schema.PRODUCER.AGENT)continue;
           const value=record.fields[required];
-          if(value===undefined||value===null||String(value).trim()==='')issues.push(issue('MISSING_REQUIRED_FIELD',`${path}/fields/${pointerEscape(required)}`,`${required} is required.`));
+          if(value===undefined||value===null||(typeof value==='string'&&!value.trim())||(Array.isArray(value)&&!value.length))issues.push(issue('MISSING_REQUIRED_FIELD',`${path}/fields/${pointerEscape(required)}`,`${required} is required.`));
         }
         if(object(record.relationships)){
           for(const [name,reference] of Object.entries(record.relationships)){
@@ -192,6 +213,10 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
     for(const collection of safe(request.affectedRecords))if(!allowedCollections.has(collection))issues.push(issue('STAGE_SCOPE_VIOLATION',`${path}/affectedRecords`,`${collection} is outside Stage ${stageNumber}.`));
   });
 
+
+  if(Array.isArray(envelope.unresolved))envelope.unresolved.forEach((item,index)=>{const path=`/unresolved/${index}`;if(!object(item)){issues.push(issue('INVALID_UNRESOLVED',path,'Unresolved item must be an object.'));return;}unknownKeys(item,UNRESOLVED_KEYS,path,issues);if(!UNRESOLVED_KINDS.includes(item.kind))issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));for(const key of ['temporaryKey','description','whyBlocking'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_UNRESOLVED_FIELD',`${path}/${key}`,`${key} is required.`));if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));});
+  if(Array.isArray(envelope.warnings))envelope.warnings.forEach((item,index)=>{const path=`/warnings/${index}`;if(!object(item)){issues.push(issue('INVALID_WARNING',path,'Warning must be an object.'));return;}unknownKeys(item,WARNING_KEYS,path,issues);for(const key of ['code','message','path'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_WARNING_FIELD',`${path}/${key}`,`${key} is required.`));});
+
   if(Array.isArray(envelope.attachments))envelope.attachments.forEach((attachment,index)=>{
     const path=`/attachments/${index}`;
     if(!object(attachment)){issues.push(issue('INVALID_ATTACHMENT',path,'Attachment metadata must be an object.'));return;}
@@ -211,9 +236,11 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
     if(!hasData)issues.push(issue('EMPTY_DATA_PROPOSAL','/','DATA_PROPOSAL contains no stage data or records.'));
     if(!safe(envelope.evidence).length)issues.push(issue('MISSING_PROVENANCE','/evidence','DATA_PROPOSAL requires evidence.'));
   }
-  if(envelope.responseType==='EXECUTION_FAILED'&&!safe(envelope.unresolved).length&&!safe(envelope.warnings).length)issues.push(issue('MISSING_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires unresolved or warning details.'));
-  if(envelope.responseType==='BLOCKED'&&!safe(envelope.unresolved).length&&!safe(envelope.records?.blockers).length)issues.push(issue('MISSING_BLOCKER_DETAIL','/unresolved','BLOCKED requires unresolved detail or a blocker proposal.'));
+  if(envelope.responseType==='BLOCKED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','BLOCKED must not contain stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length)issues.push(issue('MISSING_BLOCKER_DETAIL','/unresolved','BLOCKED requires structured unresolved detail.'));}
+  if(envelope.responseType==='EXECUTION_FAILED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length))issues.push(issue('MIXED_RESPONSE_TYPE','/','EXECUTION_FAILED must not contain canonical stageData or records.'));if(!safe(envelope.unresolved).length&&!safe(envelope.warnings).length)issues.push(issue('MISSING_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires failure detail.'));}
 
+  const canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);
+  const priorCanonicalEnvelope=safe(project.projectData.rawResponses).find(record=>record.canonicalEnvelopeSha256===canonicalEnvelopeSha256&&Number(record.stage)===stageNumber&&(record.promptInstructionId||'')===(promptRecord?.instructionId||promptRecord?.promptId||''));if(priorCanonicalEnvelope)issues.push(issue('DUPLICATE_RESPONSE','/',`This canonical envelope already exists as ${priorCanonicalEnvelope.rawResponseId}.`));
   const priorDuplicate=safe(project.projectData.rawResponses).find(record=>record.status!=='PRESERVED'&&record.sha256===rawSha256&&Number(record.stage)===stageNumber&&(record.promptInstructionId||'')===(promptRecord?.instructionId||promptRecord?.promptId||''));
   if(priorDuplicate)issues.push(issue('DUPLICATE_RESPONSE','/',`This exact response was already preserved as ${priorDuplicate.rawResponseId}.`));
 
@@ -226,7 +253,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
     responseSchema:envelope.schema,
     responseType:envelope.responseType,
     temporaryRecordIndex:responseRecordIndex,
-    temporaryEvidenceIndex:evidenceIndex
+    temporaryEvidenceIndex:evidenceIndex,canonicalEnvelopeSha256
   };
 }
 
@@ -288,7 +315,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
 
   return {
     proposalId,rawResponseId:rawRecord.rawResponseId,validationId:validationRecord.validationId,promptId:promptRecord.instructionId||promptRecord.promptId,
-    promptSha256:promptRecord.sha256||promptRecord.bodySha256,jobId:envelope.jobId,stage:Number(envelope.stage),responseSchemaVersion:envelope.schema,responseType:envelope.responseType,
+    bodySha256:promptRecord.bodySha256||promptRecord.sha256,promptSha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature,scopeSha256:promptRecord.scopeSha256,jobId:envelope.jobId,stage:Number(envelope.stage),responseSchemaVersion:envelope.schema,responseType:envelope.responseType,
     createdAt:now(),status:'PENDING_OPERATOR_REVIEW',envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
     humanInputRequests:clone(envelope.humanInputRequests||[]),unresolved:clone(envelope.unresolved||[]),warnings:clone(envelope.warnings||[]),attachments:clone(envelope.attachments||[])
   };
@@ -316,8 +343,8 @@ function prepare(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}=
   const rawResponseId=workflow.allocateInfrastructureId(next,'RAW-RESPONSE','rawResponses');
   const outputId=workflow.allocateInfrastructureId(next,`STAGE-${String(stageNumber).padStart(2,'0')}-OUTPUT`,'generatedOutputs');
   const rawText=String(text??'');
-  const rawSha256=hash.sha256Text(rawText);
-  const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId,iteration:next.job.CURRENT_ITERATION||'NOT APPLICABLE',promptInstructionId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',promptSha256:prompt?.sha256||prompt?.bodySha256||'UNKNOWN',createdAt:now(),sha256:rawSha256,completeRawResponse:rawText,files:clone(files),status:'PRESERVED'};
+  const rawSha256=hash.rawResponseSha256(rawText);
+  const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId,iteration:next.job.CURRENT_ITERATION||'NOT APPLICABLE',promptInstructionId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',promptSha256:prompt?.sha256||prompt?.bodySha256||'UNKNOWN',createdAt:now(),sha256:rawSha256,completeRawResponse:rawText,files:clone(files),status:'PRESERVED',projectRevision:Number(next.revision||0)};
   next.projectData.rawResponses.push(rawRecord);
   next.projectData.generatedOutputs.push({outputId,rawResponseId,stage:stageNumber,role:rawRecord.role,iteration:rawRecord.iteration,createdAt:rawRecord.createdAt,sha256:rawSha256,output:rawText,status:'RAW_RESPONSE_PRESERVED'});
   workflow.addHistory(next,'RAW_RESPONSE_PRESERVED',{stage:stageNumber,rawResponseId,outputId,sha256:rawSha256});
@@ -328,6 +355,7 @@ function prepare(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}=
   if(parseError){
     validation={valid:false,issues:[issue(parseError.code||'MALFORMED_JSON','/',parseError.message)],errorCount:1,warningCount:0,checkedAt:now(),responseSchema:null,responseType:null};
   }else validation=validateEnvelope(next,envelope,{stage:stageNumber,promptRecord:prompt,rawSha256});
+  if(envelope)rawRecord.canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);
   const validationId=workflow.allocateInfrastructureId(next,'VALIDATION','responseValidations');
   const validationRecord={validationId,rawResponseId,jobId:next.job.JOB_ID,stage:stageNumber,promptId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',promptSha256:prompt?.sha256||prompt?.bodySha256||'UNKNOWN',createdAt:now(),valid:validation.valid,issues:clone(validation.issues),errorCount:validation.errorCount,warningCount:validation.warningCount,responseSchema:validation.responseSchema,responseType:validation.responseType,status:validation.valid?'VALID':'REJECTED'};
   next.projectData.responseValidations.push(validationRecord);
@@ -478,7 +506,7 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
 }
 
 globalThis.closedLoopResponseIngestion=Object.freeze({
-  version:'closed-loop-response-ingestion/1',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,
-  strictParse,validateEnvelope,planProposal,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation
+  version:'closed-loop-response-ingestion/2',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,
+  strictParse,scanJsonAmbiguity,validateValue,validateEnvelope,planProposal,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation
 });
 })();

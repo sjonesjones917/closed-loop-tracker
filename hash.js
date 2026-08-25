@@ -72,9 +72,14 @@ function sha256Text(text){
 function sha256Value(value){return sha256Text(stableStringify(value));}
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
 async function sha256Bytes(bytes){
-  const view=bytes instanceof ArrayBuffer?bytes:bytes?.buffer instanceof ArrayBuffer?bytes.buffer:bytes;
+  let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');
   return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));
 }
+function rawResponseSha256(raw){return sha256Text(String(raw??''));}
+function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
+function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
+function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
+function recordSha256(record){return sha256Value(record);}
 
-globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/1',stableStringify,sha256Text,sha256Value,sha256Bytes});
+globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/2',stableStringify,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 })();
