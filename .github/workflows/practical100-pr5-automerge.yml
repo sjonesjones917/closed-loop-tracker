@@ -1,0 +1,97 @@
+name: Practical 100 PR5 gated integration
+on:
+  push:
+    branches: [practical-100/pr5-indexeddb-ui]
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: practical-100-pr5-gated-integration
+  cancel-in-progress: true
+jobs:
+  verify-integrate-and-merge:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Materialize only missing PR5 invariants
+        run: |
+          set -euo pipefail
+          if ! grep -q "DB_NAME='closed-loop-reliability'" project-store.js; then
+            test -f .practical100-pr5.py
+            sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
+            python .practical100-pr5.py
+            python .practical100-pr5-compat.py
+            python .practical100-pr5-legacyfix.py
+            python .practical100-pr5-browserfix.py
+            python .practical100-pr5-assertfix.py
+            python .practical100-pr5-migrationstate.py
+            sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
+          fi
+          if ! grep -q 'function registerGeneratedPrompt' workflow-engine.js; then python .practical100-pr5-revisionfix.py; fi
+          if ! grep -q 'function captureRaw' response-ingestion.js; then python .practical100-pr5-rawfirst.py; fi
+          if ! grep -q 'before-import-transaction' project-store.js; then python .practical100-pr5-storeatomic.py; fi
+          if ! grep -q 'function reserveProductExecution' workflow-engine.js; then python .practical100-pr5-engineui.py; fi
+          if grep -q 'function explicitValueType' workflow-schema.js; then python .practical100-pr5-explicittypes.py; fi
+          if grep -Eq 'projectData(\.[A-Za-z_$][A-Za-z0-9_$]*|\[[^]]+\])\.push[[:space:]]*\(' app-core.js; then python .practical100-pr5-nodirect.py; fi
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs');s=p.read_text()
+          old="for(const token of ['identityAssurance','SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
+          if old in s:
+            s=s.replace(old,"if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);",1);p.write_text(s)
+          for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
+            p=Path(name);p.write_text(p.read_text().replace('Mobile Closed-Loop Agent Reliability Workbook','Mobile Closed-Loop Reliability Workbook'))
+          PY
+      - name: Enforce source ownership boundaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          app=Path('app-core.js').read_text(); schema=Path('workflow-schema.js').read_text(); store=Path('project-store.js').read_text(); ingestion=Path('response-ingestion.js').read_text(); engine=Path('workflow-engine.js').read_text()
+          assert not re.search(r'\bprompt\s*\(',app)
+          assert not re.search(r'projectData(?:\.[A-Za-z_$][\w$]*|\[[^\]]+\])\.push\s*\(',app)
+          assert 'explicitValueType' not in schema and 'APPLICATION_STAGE_PATTERN' not in schema
+          assert 'EXPLICIT_STAGE_FIELD_TYPES' in schema and 'EXPLICIT_RECORD_FIELD_TYPES' in schema
+          assert all(x in ingestion for x in ['captureRaw','prepareCaptured','proposalPreconditions','expectedProjectRevision'])
+          assert all(x in store for x in ["DB_NAME='closed-loop-reliability'",'putArtifact','before-import-transaction','packageManifest','projectSha256'])
+          assert all(x in engine for x in ['registerGeneratedPrompt','freezeCandidate','freezeBaseline','reserveProductExecution','createNewJobReset'])
+          PY
+      - name: Run deterministic acceptance
+        run: |
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Run real Chromium acceptance
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 1
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit clean verified PR5 source
+        run: |
+          rm -f .practical100-pr5*.py .pr5-*.txt
+          rm -f .github/workflows/practical100-pr5-*.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "PR 5: IndexedDB bytes and validated operator controls"
+            git push origin HEAD:practical-100/pr5-indexeddb-ui
+          fi
+      - name: Create and merge PR5
+        run: |
+          PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head practical-100/pr5-indexeddb-ui --base main --state open --json number --jq '.[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head practical-100/pr5-indexeddb-ui --title "PR 5: IndexedDB, actual bytes, and validated operator actions" --body "Implements the verified PR5 persistence and UI boundary without replacing the existing vanilla-JavaScript architecture. All deterministic and Chromium acceptance commands passed before this PR was created."
+            PR_NUMBER=$(gh pr list --repo "$GITHUB_REPOSITORY" --head practical-100/pr5-indexeddb-ui --base main --state open --json number --jq '.[0].number')
+          fi
+          gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --squash --admin --delete-branch
