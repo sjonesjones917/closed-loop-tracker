@@ -1,0 +1,38 @@
+name: Apply browser dialog verification repair
+on:
+  push:
+    branches: [fix/browser-import-dialog]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/browser-import-dialog
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Handle expected malformed-import dialog in browser harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs')
+          s=p.read_text()
+          old="await sleep(250);const afterBad=JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));"
+          new="await sleep(250);try{await cdp.send('Page.handleJavaScriptDialog',{accept:true});}catch{}const afterBad=JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));"
+          if old not in s: raise SystemExit('malformed import harness target not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node --check verify-browser.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
+          git add verify-browser.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Handle malformed import dialog in browser verification'
+          git push origin HEAD:fix/browser-import-dialog
