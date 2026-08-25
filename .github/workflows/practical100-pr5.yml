@@ -12,6 +12,11 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: 22}
+      - name: Repair branch-local transformer syntax
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('.practical100-pr5.py');s=p.read_text();bad='if(\'http-equiv="Content-Security-Policy"\' not in s:';good='if \'http-equiv="Content-Security-Policy"\' not in s:';assert bad in s;p.write_text(s.replace(bad,good,1))
       - name: Apply IndexedDB and UI command integration
         run: |
           python .practical100-pr5.py
