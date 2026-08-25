@@ -72,7 +72,7 @@ jobs:
           node verify-ingestion.mjs
           node verify-complete.mjs
           node - <<'NODE'
-          global.window=global;global.location={href:'http://localhost/'};global.document={};
+          global.window=global;global.location={href:'http://localhost/'};global.document={};global.dispatchEvent=()=>{};global.Event=class Event{constructor(type){this.type=type;}};
           for(const f of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])await import('./'+f+'?pr4='+Math.random());
           const e=global.closedLoopWorkflowEngine;if(!e.DERIVATIONS||Object.keys(e.DERIVATIONS).length!==6)throw new Error('Derivation registry incomplete.');if(typeof e.recordsForCurrentScope!=='function'||typeof e.evaluateIteration!=='function'||typeof e.verificationMatrix!=='function')throw new Error('Current-scope/iteration helpers missing.');
           console.log(JSON.stringify({derivations:Object.keys(e.DERIVATIONS),scopeSelector:true,iterationEvaluator:true,verificationTriples:true},null,2));
