@@ -14,6 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Repair transformer interpolation
+        run: node .practical100-pr2-fix.mjs
       - name: Transform responsible modules
         run: node .practical100-pr2.mjs
       - name: Syntax checks
@@ -32,7 +34,7 @@ jobs:
           node verify-ingestion.mjs
       - name: Commit verified PR2 source only
         run: |
-          rm .practical100-pr2.mjs .github/workflows/practical100-pr2.yml
+          rm .practical100-pr2.mjs .practical100-pr2-fix.mjs .github/workflows/practical100-pr2.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
