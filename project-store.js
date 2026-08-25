@@ -58,26 +58,19 @@ function writeAll(projects,storage=globalThis.localStorage){
   if(prior===payload)return {changed:false,bytes:payload.length};
   let finalTouched=false;
   try{
+    // localStorage.setItem is atomic: if quota is exceeded, the existing value is unchanged.
+    // Do not duplicate the complete project payload into temporary/backup keys before commit;
+    // doing so can require roughly 2-3x the actual project size and fails on quota-limited mobile browsers.
     fault('before-temp-write');
-    storage.setItem(TEMP_KEY,payload);
     fault('after-temp-write');
-    if(storage.getItem(TEMP_KEY)!==payload)throw new Error('Transactional project payload verification failed.');
-
-    if(prior!==null){
-      try{storage.setItem(BACKUP_KEY,prior);}catch(error){
-        // A stale backup may consume the quota needed to preserve the current value.
-        try{storage.removeItem(BACKUP_KEY);storage.setItem(BACKUP_KEY,prior);}catch{
-          throw new Error(`Current project state could not be backed up: ${error.message||error}`);
-        }
-      }
-    }
-
     fault('before-final-write');
-    finalTouched=true;
     storage.setItem(STORE_KEY,payload);
+    finalTouched=true;
     fault('after-final-write');
     if(storage.getItem(STORE_KEY)!==payload)throw new Error('Committed project payload verification failed.');
-    storage.removeItem(TEMP_KEY);
+    try{storage.removeItem(TEMP_KEY);}catch{}
+    try{storage.removeItem(BACKUP_KEY);}catch{}
+    for(const key of LEGACY_KEYS)try{storage.removeItem(key);}catch{}
     return {changed:true,bytes:payload.length};
   }catch(error){
     try{
