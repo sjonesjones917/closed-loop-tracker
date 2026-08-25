@@ -28,12 +28,16 @@ jobs:
           node --check workbook.js
           node --check verify.mjs
           node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
           node --check verify-live.mjs
           node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
         run: node verify.mjs
       - name: Exercise all 30 stage prompt-response ingestion contracts and negative cases
-        run: node verify-ingestion.mjs
+        run: |
+          node verify-ingestion.mjs
+          node verify-complete.mjs
       - name: Enforce one application shell and responsible layers
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
@@ -56,7 +60,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify.mjs && node verify-ingestion.mjs
+      - run: node build-test-project.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -79,6 +83,7 @@ jobs:
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           node verify-browser.mjs
+          node verify-browser-extra.mjs
 
   publish-status:
     if: always() && github.event_name != 'pull_request'
