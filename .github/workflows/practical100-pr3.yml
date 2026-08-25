@@ -12,6 +12,8 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: 22}
+      - name: Repair transformer matcher
+        run: node .pr3-transformer-fix.mjs
       - name: Transform ingestion and transaction rules
         run: node .practical100-pr3.mjs
       - name: Syntax
@@ -27,7 +29,7 @@ jobs:
           node verify-complete.mjs
       - name: Commit verified PR3 source only
         run: |
-          rm .practical100-pr3.mjs .github/workflows/practical100-pr3.yml
+          rm .practical100-pr3.mjs .pr3-transformer-fix.mjs .github/workflows/practical100-pr3.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
