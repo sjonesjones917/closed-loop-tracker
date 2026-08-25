@@ -14,6 +14,8 @@ jobs:
         with: {node-version: 22}
       - name: Apply minimum PR5 changes
         run: |
+          sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
+          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py
           python .practical100-pr5.py
           python .practical100-pr5-compat.py
           python .practical100-pr5-legacyfix.py
