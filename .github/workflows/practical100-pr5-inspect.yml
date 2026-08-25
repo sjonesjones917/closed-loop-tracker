@@ -11,8 +11,9 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('app-core.js').read_text()
-          for term in ['projectStore=','function persistAll','function persistReplacement','function save','ingestion.prepare','ingestion.commit','prompt(','projectData[','addEventListener(\'DOMContentLoaded','closedLoopProjectStore','init()','function init']:
+          terms=['function canonicalSupportRecord','function addBlocker','function addFreshContext','function recordControlledChange','function render','async function load','save-job','save-human-stage','answer-human-input','accept-proposal','reject-proposal','request-correction','add-blocker','add-fresh-context','controlled-change','attach-files','release-audited','release-delivery']
+          for term in terms:
             i=s.find(term)
             print('\n###',term,i)
-            print(s[max(0,i-600):i+1800] if i>=0 else 'NOT FOUND')
+            print(s[max(0,i-500):i+3500] if i>=0 else 'NOT FOUND')
           PY
