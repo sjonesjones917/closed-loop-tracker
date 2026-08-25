@@ -15,7 +15,7 @@ jobs:
       - name: Apply minimum PR5 changes
         run: |
           sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
-          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py .practical100-pr5-revisionfix.py
+          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py .practical100-pr5-revisionfix.py .practical100-pr5-diagnostic.py
           python .practical100-pr5.py
           python .practical100-pr5-compat.py
           python .practical100-pr5-legacyfix.py
@@ -23,6 +23,7 @@ jobs:
           python .practical100-pr5-assertfix.py
           python .practical100-pr5-migrationstate.py
           python .practical100-pr5-revisionfix.py
+          python .practical100-pr5-diagnostic.py
           sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
           python - <<'PY'
           from pathlib import Path
@@ -52,11 +53,11 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           sleep 1
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          timeout 150s node verify-browser.mjs
+          timeout 150s node verify-browser-extra.mjs
       - name: Commit verified source only
         run: |
-          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py .practical100-pr5-revisionfix.py .github/workflows/practical100-pr5-inspect.yml
+          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py .practical100-pr5-revisionfix.py .practical100-pr5-diagnostic.py .github/workflows/practical100-pr5-inspect.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
