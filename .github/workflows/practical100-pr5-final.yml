@@ -65,7 +65,7 @@ jobs:
           p=Path('verify-browser-extra.mjs');t=p.read_text()
           t=t.replace('this.pending=new Map();this.events=[];','this.pending=new Map();this.events=[];this.dialogs=[];',1)
           old="}else this.events.push(m);};}async send"
-          new="}else{this.events.push(m);if(m.method==='Page.javascriptDialogOpening'){this.dialogs.push(String(m.params?.message||''));this.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>{});}};}async send"
+          new="}else{this.events.push(m);if(m.method==='Page.javascriptDialogOpening'){this.dialogs.push(String(m.params?.message||''));this.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>{});}}};}async send"
           assert old in t;t=t.replace(old,new,1)
           for marker,label in [
             ('  // Exact saved prompt is the exact copied prompt.','extra:prompt-copy'),
