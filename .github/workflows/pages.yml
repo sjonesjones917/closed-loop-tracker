@@ -37,7 +37,9 @@ jobs:
             > /tmp/closed-loop-repair.b64
           base64 --decode /tmp/closed-loop-repair.b64 > /tmp/closed-loop-repair.tgz
           echo '65bf240d9639832e11f1e13e77dd06d356458ff9dc518ae73783c08fe909922c  /tmp/closed-loop-repair.tgz' | sha256sum --check --strict
+          cp .github/workflows/pages.yml /tmp/bootstrap-pages.yml
           tar -xzf /tmp/closed-loop-repair.tgz
+          cp /tmp/bootstrap-pages.yml .github/workflows/pages.yml
           rm -rf .repair-bundle
           rm -f authority-guard.js experience.js integrity-guard.js prompt-display.js storage-reliability.js usability.js \
             verify-hardening-browser.mjs verify-hardening-runner.mjs verify-integrity-browser.mjs \
