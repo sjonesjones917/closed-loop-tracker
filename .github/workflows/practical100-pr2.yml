@@ -18,7 +18,7 @@ jobs:
         run: node .practical100-pr2-fix.mjs
       - name: Transform responsible modules
         run: node .practical100-pr2.mjs
-      - name: Correct generated validator syntax
+      - name: Correct generated validator syntax and schema references
         shell: python
         run: |
           from pathlib import Path
@@ -28,6 +28,11 @@ jobs:
           new="issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));"
           assert old in s
           p.write_text(s.replace(old,new,1))
+          for f in list(Path('.').glob('*.mjs'))+[Path('README.md')]:
+            if not f.exists(): continue
+            t=f.read_text()
+            if 'closed-loop-stage-response/1' in t:
+              f.write_text(t.replace('closed-loop-stage-response/1','closed-loop-stage-response/2'))
       - name: Syntax checks
         run: |
           node --check workbook.js
