@@ -18,7 +18,7 @@ jobs:
         run: node .practical100-pr2-fix.mjs
       - name: Transform responsible modules
         run: node .practical100-pr2.mjs
-      - name: Correct generated validator syntax and schema references
+      - name: Correct generated source and schema references
         shell: python
         run: |
           from pathlib import Path
@@ -29,6 +29,12 @@ jobs:
           assert old in s
           s=s.replace(old,new,1).replace('priorSemantic','priorCanonicalEnvelope').replace('This semantic response','This canonical envelope')
           p.write_text(s)
+          p=Path('workflow-schema.js')
+          s=p.read_text()
+          old="derivationKey:options.derivationKey??options.derivation??null,normalizerKey:options.normalizerKey??null"
+          new="derivation:options.derivation??options.derivationKey??null,derivationKey:options.derivationKey??options.derivation??null,normalizerKey:options.normalizerKey??null"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
           for f in list(Path('.').glob('*.mjs'))+[Path('README.md')]:
             if not f.exists(): continue
             t=f.read_text()
