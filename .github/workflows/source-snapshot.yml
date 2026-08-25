@@ -1,0 +1,20 @@
+name: Source snapshot
+on:
+  push:
+    branches:
+      - reliability/snapshot-main-current
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package tracked source
+        run: git ls-files -z | tar --null -T - -czf source-snapshot.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-snapshot
+          path: source-snapshot.tgz
+          if-no-files-found: error
+          retention-days: 1
