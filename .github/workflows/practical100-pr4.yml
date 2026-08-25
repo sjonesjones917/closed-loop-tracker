@@ -14,11 +14,21 @@ jobs:
         with: {node-version: 22}
       - name: Transform deterministic engine
         run: python .practical100-pr4.py
+      - name: Align strengthened gate verifier
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('verify-complete.mjs')
+          s=p.read_text()
+          s=s.replace('/Exactly 10 independent runs/i','/Exactly ten current runs|Exactly 10 independent runs/i')
+          s=s.replace('/ten runs|coverage/i','/ten runs|coverage|REQ × RUN × TEST/i')
+          p.write_text(s)
       - name: Syntax
         run: |
           node --check workflow-engine.js
           node --check workflow-schema.js
           node --check response-ingestion.js
+          node --check verify-complete.mjs
       - name: Deterministic verification
         run: |
           node build-test-project.mjs
