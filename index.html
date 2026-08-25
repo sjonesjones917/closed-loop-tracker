@@ -4,12 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
 <meta name="theme-color" content="#f4f5f3">
 <link rel="icon" href="data:,">
 <title>Mobile Closed-Loop Reliability Workbook</title>
 <style>
 :root{--ink:#151817;--muted:#626965;--line:#d8ddd9;--soft:#f4f5f3;--panel:#fff;--accent:#164f45;--accent-soft:#e8f3f0;--danger:#a1261c;--danger-soft:#fff0ee;--success:#17643a;--success-soft:#eaf7ef;--warn:#825500;--warn-soft:#fff4d8;--radius:10px;--shadow:0 1px 2px rgba(0,0,0,.04)}
-*{box-sizing:border-box}html{background:var(--soft);color-scheme:light}body{margin:0;max-width:100%;overflow-x:hidden;color:var(--ink);background:var(--soft);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:disabled,input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;opacity:.58}[hidden]{display:none!important}
+*{box-sizing:border-box}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.storage-status{margin:4px 0 0;font-size:11px;color:var(--muted);overflow-wrap:anywhere}html{background:var(--soft);color-scheme:light}body{margin:0;max-width:100%;overflow-x:hidden;color:var(--ink);background:var(--soft);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:disabled,input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;opacity:.58}[hidden]{display:none!important}
 .app{width:100%;max-width:100%;min-height:100vh;margin:0;background:var(--panel);box-shadow:0 0 0 1px rgba(0,0,0,.03)}
 .app-header{position:sticky;top:0;z-index:20;padding:max(8px,env(safe-area-inset-top)) 10px 7px;background:rgba(255,255,255,.98);border-bottom:1px solid var(--line);backdrop-filter:blur(10px)}
 .header-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,280px);gap:9px;align-items:start}.brand-kicker{font-size:8.5px;line-height:1;font-weight:850;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}.brand h1{font-size:17px;line-height:1.15;margin:0}.brand p{font-size:10.5px;color:var(--muted);margin:3px 0 0;overflow-wrap:anywhere}.project-select label{display:block;margin:0 0 3px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.project-select select{width:100%;height:36px;border:1px solid #9faaa4;border-radius:8px;background:#fff;padding:5px 28px 5px 8px;font-weight:700;font-size:11px}
@@ -29,11 +30,18 @@ main{padding:9px 10px calc(26px + env(safe-area-inset-bottom))}.screen{display:g
 </head>
 <body>
 <div class="app" id="app">
-<header class="app-header"><div class="header-main"><div class="brand"><div class="brand-kicker">Mobile closed-loop control</div><h1>Closed-Loop Reliability</h1><p id="current-project-summary" aria-live="polite">Loading the current project…</p></div><div class="project-select"><label for="project-picker">Project</label><select id="project-picker"></select></div></div><div class="header-actions"><button class="primary" id="new-project" type="button">New project</button><button id="export-project" type="button">Export</button><button id="import-project" type="button">Import</button><input id="import-file" type="file" hidden accept=".json,application/json"></div><div class="progress-line"><strong id="progress-label">0/30 complete</strong><div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div></div></header>
+<header class="app-header"><div class="header-main"><div class="brand"><div class="brand-kicker">Mobile closed-loop control</div><h1>Closed-Loop Reliability</h1><p id="current-project-summary" aria-live="polite">Loading the current project…</p><p id="storage-status" class="storage-status" role="status" aria-live="polite">Storage status pending.</p></div><div class="project-select"><label for="project-picker">Project</label><select id="project-picker"></select></div></div><div class="header-actions"><button class="primary" id="new-project" type="button">New project</button><button id="export-project" type="button">Export</button><button id="import-project" type="button">Import</button><input id="import-file" type="file" hidden accept=".json,application/json"></div><div class="progress-line"><strong id="progress-label">0/30 complete</strong><div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div></div></header>
 <nav class="view-tabs" id="view-tabs" aria-label="Project views"></nav>
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
-<script src="workbook.js?v=closed-loop-runtime-20260825-r2"></script>
-<script src="app.js?v=closed-loop-ingestion-20260825-r2"></script>
+<div id="app-status" class="sr-only" role="status" aria-live="polite"></div>
+<script defer src="workbook.js?v=practical-100-20260825"></script>
+<script defer src="hash.js?v=practical-100-20260825"></script>
+<script defer src="workflow-schema.js?v=practical-100-20260825"></script>
+<script defer src="workflow-engine.js?v=practical-100-20260825"></script>
+<script defer src="prompt-engine.js?v=practical-100-20260825"></script>
+<script defer src="response-ingestion.js?v=practical-100-20260825"></script>
+<script defer src="project-store.js?v=practical-100-20260825"></script>
+<script defer src="app-core.js?v=practical-100-20260825"></script>
 </body>
 </html>

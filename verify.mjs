@@ -4,8 +4,17 @@ import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
-const files=['index.html','app.js','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];
+const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];
 for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
+
+const html=fs.readFileSync('index.html','utf8');
+const runtimeScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const directScripts=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"><\/script>/g)].map(match=>match[1]);
+if(JSON.stringify(directScripts.map(value=>value.split('?')[0]))!==JSON.stringify(runtimeScripts))throw new Error('Direct runtime module order is wrong.');
+if(new Set(directScripts.map(value=>value.split('?')[1])).size!==1)throw new Error('Direct runtime modules do not share a build token.');
+if(fs.existsSync('app.js')||/document\.write/.test(html))throw new Error('Dynamic script injection remains.');
+for(const name of runtimeScripts)if((html.match(new RegExp(name.replace('.', '\\.'),'g'))||[]).length!==1)throw new Error(`${name} must occur exactly once in index.html.`);
+for(const name of fs.readdirSync('.'))if(name.startsWith('.repair-'))throw new Error(`Repair scaffolding remains: ${name}.`);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');
