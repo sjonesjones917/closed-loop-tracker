@@ -12,161 +12,13 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Integrate verified UI repair and remove dynamic loading
+      - name: Apply, verify, and commit only permanent non-workflow changes
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          index=Path('index.html')
-          text=index.read_text(encoding='utf-8')
-          marker='/* Mobile readability and touch-target floor */'
-          if marker not in text:
-              block=r'''
-          /* Mobile readability and touch-target floor */
-          :root{--touch-target:44px;--ui-small:11px;--ui-body:12px}
-          body{font-size:15px;line-height:1.5}
-          .brand-kicker,.project-select label,.progress-line strong,.fact span,.field .help,.stage-number,.stage-meta,.record-key,.project-field-group>summary span:last-child,.stage-action-strip{font-size:var(--ui-small)}
-          .brand h1{font-size:18px}
-          .brand p,.field label,.group-label,.check span,.record-card>summary,.stage-name,.record-value,.section-intro,.notice,.empty-state,.project-field-group>summary,.record-tools label{font-size:var(--ui-body)}
-          .project-select select{height:var(--touch-target);min-height:var(--touch-target);font-size:13px}
-          button:not(.workflow-button),.file-button{min-height:var(--touch-target);font-size:12px}
-          .header-actions button,.view-tabs button,.button-row button,.compact-button,.record-card button,.stage-card button{min-height:var(--touch-target);font-size:12px}
-          .view-tabs{top:125px}
-          .status{min-height:26px;font-size:11px}
-          .fact strong{font-size:16px}
-          h2.section-title{font-size:16px}
-          input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,select{min-height:var(--touch-target)}
-          .stage-nav{grid-template-columns:44px minmax(0,1fr) 44px}
-          .stage-nav button{width:44px;height:44px}
-          .stage-nav select{height:44px;min-height:44px;font-size:12px}
-          .prompt,.code-text{font-size:12px}
-          .stage-jumpbar button{min-height:44px;max-height:44px;font-size:11px}
-          .workflow-list .stage-name{font-size:12px;line-height:1.25}
-          @media(max-width:620px){.workflow-list .stage-card{padding:6px}.workflow-list .status{font-size:11px;min-height:24px}.workflow-list .stage-head{row-gap:3px}}
-          '''
-              text=text.replace('</style>',block+'\n</style>',1)
-          old='<script src="workbook.js?v=closed-loop-runtime-20260825-r2"></script>\n<script src="app.js?v=closed-loop-ingestion-20260825-r2"></script>'
-          build='20260825-pr1'
-          direct='\n'.join([
-              f'<script defer src="workbook.js?v={build}"></script>',
-              f'<script defer src="hash.js?v={build}"></script>',
-              f'<script defer src="workflow-schema.js?v={build}"></script>',
-              f'<script defer src="workflow-engine.js?v={build}"></script>',
-              f'<script defer src="prompt-engine.js?v={build}"></script>',
-              f'<script defer src="response-ingestion.js?v={build}"></script>',
-              f'<script defer src="project-store.js?v={build}"></script>',
-              f'<script defer src="app-core.js?v={build}"></script>',
-          ])
-          if old in text:text=text.replace(old,direct,1)
-          assert direct in text
-          if 'http-equiv="Content-Security-Policy"' not in text:
-              csp='<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\'; style-src \'unsafe-inline\'; img-src \'self\' data:; connect-src \'self\'; object-src \'none\'; base-uri \'none\'; form-action \'self\'">\n'
-              text=text.replace('<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n','<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n'+csp,1)
-          index.write_text(text,encoding='utf-8')
-
-          selector='.brand-kicker,.project-select label,.progress-line strong,.header-actions button,.view-tabs button,.status,.fact span,.field label,.field .help,.button-row button,.stage-number,.stage-name,.stage-meta,.record-card>summary,.record-key,.record-value,.prompt,.empty-state,.stage-action-strip,.project-field-group>summary,.record-tools label'
-          for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
-              p=Path(name);source=p.read_text(encoding='utf-8')
-              source=source.replace('<=64','<=72').replace('>=32','>=44')
-              source=source.replace("const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');","const target=await getJson(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');await cdp.send('Page.navigate',{url:`${PAGE_URL}?browser=${Date.now()}`});")
-              source=source.replace("const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');","const target=await getJson(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');await cdp.send('Page.navigate',{url:`${PAGE_URL}?browserExtra=${Date.now()}`});")
-              if name=='verify-browser.mjs' and 'minimumUiTextPx' not in source:
-                  source=source.replace("const assert=(x,m)=>{if(!x)throw new Error(m);};",f"const assert=(x,m)=>{{if(!x)throw new Error(m);}};\nconst minimumUiTextSelector={selector!r};",1)
-                  old="assert(Math.min(...s.buttons.filter(b=>b.h>0).map(b=>b.h),40)>=44,`Unusably small button detected at ${width}px.`);}"
-                  new="assert(Math.min(...s.buttons.filter(b=>b.h>0).map(b=>b.h),44)>=44,`Touch target below 44px detected at ${width}px.`);const tinyText=await evalValue(cdp,`[...document.querySelectorAll(${JSON.stringify(minimumUiTextSelector)})].filter(e=>e.getClientRects().length&&parseFloat(getComputedStyle(e).fontSize)<11).map(e=>({text:e.textContent.trim().slice(0,80),size:getComputedStyle(e).fontSize,className:e.className}))`);assert(tinyText.length===0,`UI text below 11px at ${width}px: ${JSON.stringify(tinyText)}`);}"
-                  assert old in source
-                  source=source.replace(old,new,1).replace('buttonSizing:true,','buttonSizing:true,touchTargetFloor:44,minimumUiTextPx:11,',1)
-              p.write_text(source,encoding='utf-8')
-
-          for name in ['app.js','.repair-engine-a.mjs','.repair-engine-b.mjs','.repair-schema.mjs','.github/workflows/repair-readability.yml']:
-              p=Path(name)
-              if p.exists():p.unlink()
-
-          Path('README.md').write_text('''# Closed-Loop Reliability
-
-          Live application: https://sjonesjones917.github.io/closed-loop-tracker/
-
-          This repository contains one static, phone-first vanilla-JavaScript application and one HTML entry point: `index.html`. The workflow contains exactly 30 stages and no Stage 31.
-
-          ## Responsibility boundaries
-
-          | Responsibility | Owner |
-          | --- | --- |
-          | Workflow stages, names, roles, declared completion conditions | `workbook.js` |
-          | Field ownership, types, enums, relationships, stage contracts | `workflow-schema.js` |
-          | Canonical serialization and SHA-256 | `hash.js` |
-          | Prompt content, context selection, prompt identity | `prompt-engine.js` |
-          | Parsing, validation, proposal planning, response disposition | `response-ingestion.js` |
-          | Derived values, current-scope selection, gates, invalidation, release logic | `workflow-engine.js` |
-          | Projects, revisions, artifact bytes, migration, import/export | `project-store.js` |
-          | Rendering and operator actions | `app-core.js` |
-          | Static shell, CSS, ordered module loading | `index.html` |
-          | Source, lifecycle, browser, deployment, and live verification | `.github/workflows/pages.yml` |
-
-          `index.html` loads each responsible module directly, once, in dependency order, with one shared cache-build token. There is no dynamic script loader, runtime wrapper guard, MutationObserver repair, monkey patch, alternate store, alternate parser, alternate workflow engine, or second application shell.
-
-          ## Current contracts
-
-          - Project schema: `human-project/30` pending the deterministic `closed-loop-project/2` migration.
-          - Workflow identity: represented by the exact 30-stage workbook pending separation into `mobile-closed-loop/30`.
-          - Response schema: `closed-loop-stage-response/1` pending the version-2 scope and prompt-contract binding.
-          - Persistence: one browser-local project-store adapter using Web Storage at this revision; IndexedDB and actual artifact-Blob persistence are the next responsible-layer migration.
-          - Backend: none. This is a single-device browser-local application and does not claim multi-device synchronization.
-
-          ## Retained project
-
-          `TEST_PROJECT.json` is the retained project `JOB-20260823144121`, titled `Mobile Closed-Loop Agent Reliability Workbook`. Stage 01 is preserved as completed history, Stage 02 is current/next, and Stages 02–30 contain no fabricated downstream project data.
-
-          ## Verification
-
-          Run `node build-test-project.mjs`, all `node --check` commands listed by `.github/workflows/pages.yml`, then `node verify.mjs`, `node verify-ingestion.mjs`, and `node verify-complete.mjs`. Browser verification uses `verify-browser.mjs` and `verify-browser-extra.mjs` against the served application at 320, 393, and desktop widths.
-
-          The Pages workflow runs source checks before deployment, deploys only `main`, verifies exact deployed source identity, and executes the deployed browser tests.
-
-          ## Migration and backup policy
-
-          Schema migrations must preserve unknown extension fields, raw responses, receipts, historical records, project identity, and all 30 stages. A failed migration must leave the prior project available and preserve the original payload for audit/recovery. Browser-local persistence is not a substitute for an exported backup; device loss or user-deleted browser data cannot be prevented by this static application.
-          '''.replace('\n          ','\n').lstrip(),encoding='utf-8')
-
-          p=Path('verify.mjs');source=p.read_text(encoding='utf-8')
-          source=source.replace("const files=['index.html','app.js','app-core.js'","const files=['index.html','app-core.js'",1)
-          anchor="for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);\n"
-          insert="""for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
-          if(fs.existsSync('app.js'))throw new Error('app.js dynamic loader must not exist.');
-          const repairScaffolding=fs.readdirSync('.').filter(name=>name.startsWith('.repair-'));
-          if(repairScaffolding.length)throw new Error(`Repair scaffolding remains: ${repairScaffolding.join(', ')}`);
-          const html=fs.readFileSync('index.html','utf8');
-          if(/document\\.write\\s*\\(/.test(html))throw new Error('document.write runtime injection remains.');
-          const expectedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
-          const scripts=[...html.matchAll(/<script\\s+defer\\s+src=\"([^\"]+)\"\\s*><\\/script>/g)].map(match=>match[1]);
-          if(scripts.length!==expectedScripts.length)throw new Error(`Expected ${expectedScripts.length} direct deferred scripts; found ${scripts.length}.`);
-          const names=scripts.map(value=>value.split('?')[0]);
-          if(names.join('|')!==expectedScripts.join('|'))throw new Error(`Runtime script order mismatch: ${names.join(', ')}`);
-          if(new Set(names).size!==names.length)throw new Error('A runtime script is loaded more than once.');
-          const tokens=scripts.map(value=>new URLSearchParams(value.split('?')[1]||'').get('v'));
-          if(tokens.some(value=>!value)||new Set(tokens).size!==1)throw new Error('All runtime scripts must use one nonempty build token.');
-          """
-          assert anchor in source
-          source=source.replace(anchor,insert,1)
-          p.write_text(source,encoding='utf-8')
-
-          p=Path('build-test-project.mjs');source=p.read_text(encoding='utf-8')
-          source=source.replace("const required=['index.html','app.js','app-core.js'","const required=['index.html','app-core.js'",1)
-          source=source.replace("const html=fs.readFileSync('index.html','utf8'),loader=fs.readFileSync('app.js','utf8'),app=","const html=fs.readFileSync('index.html','utf8'),loader='',app=",1)
-          source=source.replace("for(const token of ['workbook.js','app.js'])if(!html.includes(token))throw new Error(`Application shell is missing ${token}.`);\nfor(const token of ['hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'])if(!loader.includes(token))throw new Error(`Application loader is missing ${token}.`);","const runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];\nconst scripts=[...html.matchAll(/<script\\s+defer\\s+src=\"([^\"]+)\"\\s*><\\/script>/g)].map(match=>match[1]);\nif(scripts.length!==runtime.length||scripts.map(value=>value.split('?')[0]).join('|')!==runtime.join('|'))throw new Error('Application shell direct runtime order is wrong.');\nif(new Set(scripts.map(value=>value.split('?')[0])).size!==runtime.length)throw new Error('Application shell loads a runtime module more than once.');\nconst tokens=scripts.map(value=>new URLSearchParams(value.split('?')[1]||'').get('v'));if(tokens.some(value=>!value)||new Set(tokens).size!==1)throw new Error('Application shell runtime build token is not shared.');\nif(fs.existsSync('app.js')||/document\\.write\\s*\\(/.test(html))throw new Error('Dynamic runtime loader remains.');",1)
-          p.write_text(source,encoding='utf-8')
-
-          p=Path('verify-live.mjs');source=p.read_text(encoding='utf-8')
-          source=source.replace("const deployed=['index.html','app.js','app-core.js'","const deployed=['index.html','app-core.js'",1)
-          source=source.replace("for(const file of deployed){","{const r=await fetch(new URL(`app.js?live=${Date.now()}-${Math.random()}`,base),{cache:'no-store'});if(r.status!==404)throw new Error(`Deleted app.js must return 404; received ${r.status}.`);}\nfor(const file of deployed){",1)
-          p.write_text(source,encoding='utf-8')
-
-          p=Path('.github/workflows/pages.yml');source=p.read_text(encoding='utf-8')
-          source=source.replace('          node --check app.js\n','')
-          source=source.replace("          test ! -f usability.js\n","          test ! -f usability.js\n          test ! -f app.js\n          test ! -f .github/workflows/repair-readability.yml\n          test \"$(find . -maxdepth 1 -type f -name '.repair-*' | wc -l)\" -eq 0\n          ! grep -R \"document.write\" --include='*.js' --include='*.html' .\n",1)
-          p.write_text(source,encoding='utf-8')
-          PY
-      - name: Run complete deterministic and browser verification
-        run: |
+          if [ ! -f pr1-apply.mjs ]; then
+            echo 'PR1 transformation already committed.'
+            exit 0
+          fi
+          node pr1-apply.mjs
           node build-test-project.mjs
           for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
           node verify.mjs
@@ -180,11 +32,9 @@ jobs:
           test -n "$BROWSER"
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
-      - name: Commit only permanent PR1 changes
-        run: |
-          git rm .github/workflows/pr1-apply.yml
-          git add -A
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add README.md index.html build-test-project.mjs verify.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs
+          git rm app.js .repair-engine-a.mjs .repair-engine-b.mjs .repair-schema.mjs pr1-apply.mjs
           git commit -m "Clean runtime loading and integrate verified mobile repair"
           git push origin HEAD:repair/pr1-architecture-cleanup
