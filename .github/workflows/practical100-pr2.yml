@@ -27,7 +27,8 @@ jobs:
           old="issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.');"
           new="issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));"
           assert old in s
-          p.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1).replace('priorSemantic','priorCanonicalEnvelope').replace('This semantic response','This canonical envelope')
+          p.write_text(s)
           for f in list(Path('.').glob('*.mjs'))+[Path('README.md')]:
             if not f.exists(): continue
             t=f.read_text()
