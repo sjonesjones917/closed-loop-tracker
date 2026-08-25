@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="theme-color" content="#f4f5f3">
 <link rel="icon" href="data:,">
 <title>Mobile Closed-Loop Reliability Workbook</title>
@@ -25,6 +26,29 @@ main{padding:9px 10px calc(26px + env(safe-area-inset-bottom))}.screen{display:g
 @media(max-width:620px){.header-main{grid-template-columns:1fr}.project-select{margin-top:3px}.view-tabs{position:static;flex-wrap:wrap;overflow-x:visible}.facts{grid-template-columns:1fr 1fr}.hero-top{display:block}.status{margin-top:6px}.grid-2,.grid-3,.overview-counts{grid-template-columns:1fr 1fr}.record-row{grid-template-columns:1fr;gap:2px}.header-actions{display:flex;flex-wrap:nowrap;overflow-x:auto;padding-bottom:1px;scrollbar-width:none}.header-actions::-webkit-scrollbar{display:none}.header-actions button{width:auto;flex:0 0 auto}.button-row>button{flex:0 0 auto}.stage-record{min-height:380px}.stage-output{min-height:240px}.workflow-list .stage-meta{display:none}.workflow-list .stage-card{padding:6px 7px}.workflow-list .stage-head{grid-template-columns:minmax(0,1fr) auto;gap:3px 6px;align-items:center}.workflow-list .stage-number{grid-column:1;grid-row:1}.workflow-list .stage-head>div{grid-column:1/-1;grid-row:2}.workflow-list .stage-head>.status{grid-column:2;grid-row:1;margin:0;min-height:18px;padding:2px 6px;font-size:8px}.workflow-list .stage-name{font-size:10px;line-height:1.25}.project-field-grid{grid-template-columns:1fr}.project-field-grid .field.full{grid-column:auto}.stage-jumpbar{margin-left:-2px;margin-right:-2px}}
 @media(max-width:360px){.app-header{padding-left:8px;padding-right:8px}.view-tabs{padding-left:8px;padding-right:8px}.view-tabs button{padding-left:7px;padding-right:7px}main{padding-left:8px;padding-right:8px}.facts,.overview-counts{grid-template-columns:1fr 1fr}.stage-head{grid-template-columns:30px minmax(0,1fr)}.stage-head .status{grid-column:2}.completed-work-panel .button-row{gap:4px}}
 @media print{.app-header,.view-tabs,.button-row,.stage-jumpbar,.record-tools{display:none!important}.app{width:100%;box-shadow:none}main{padding:0}.record-card{break-inside:avoid}}
+
+/* Mobile readability and touch-target floor */
+:root{--touch-target:44px;--ui-small:11px;--ui-body:12px}
+body{font-size:15px;line-height:1.5}
+.brand-kicker,.project-select label,.progress-line strong,.fact span,.field .help,.stage-number,.stage-meta,.record-key,.project-field-group>summary span:last-child,.stage-action-strip{font-size:var(--ui-small)}
+.brand h1{font-size:18px}
+.brand p,.field label,.group-label,.check span,.record-card>summary,.stage-name,.record-value,.section-intro,.notice,.empty-state,.project-field-group>summary,.record-tools label{font-size:var(--ui-body)}
+.project-select select{height:var(--touch-target);min-height:var(--touch-target);font-size:13px}
+button:not(.workflow-button),.file-button{min-height:var(--touch-target);font-size:12px}
+.header-actions button,.view-tabs button,.button-row button,.compact-button,.record-card button,.stage-card button{min-height:var(--touch-target);font-size:12px}
+.view-tabs{top:125px}
+.status{min-height:26px;font-size:11px}
+.fact strong{font-size:16px}
+h2.section-title{font-size:16px}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,select{min-height:var(--touch-target)}
+.stage-nav{grid-template-columns:44px minmax(0,1fr) 44px}
+.stage-nav button{width:44px;height:44px}
+.stage-nav select{height:44px;min-height:44px;font-size:12px}
+.prompt,.code-text{font-size:12px}
+.stage-jumpbar button{min-height:44px;max-height:44px;font-size:11px}
+.workflow-list .stage-name{font-size:12px;line-height:1.25}
+@media(max-width:620px){.workflow-list .stage-card{padding:6px}.workflow-list .stage-head>.status{font-size:11px;min-height:24px}.workflow-list .stage-head{row-gap:3px}}
+
 </style>
 </head>
 <body>
@@ -33,7 +57,13 @@ main{padding:9px 10px calc(26px + env(safe-area-inset-bottom))}.screen{display:g
 <nav class="view-tabs" id="view-tabs" aria-label="Project views"></nav>
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
-<script src="workbook.js?v=closed-loop-runtime-20260825-r2"></script>
-<script src="app.js?v=closed-loop-ingestion-20260825-r2"></script>
+<script defer src="workbook.js?v=20260825-pr1"></script>
+<script defer src="hash.js?v=20260825-pr1"></script>
+<script defer src="workflow-schema.js?v=20260825-pr1"></script>
+<script defer src="workflow-engine.js?v=20260825-pr1"></script>
+<script defer src="prompt-engine.js?v=20260825-pr1"></script>
+<script defer src="response-ingestion.js?v=20260825-pr1"></script>
+<script defer src="project-store.js?v=20260825-pr1"></script>
+<script defer src="app-core.js?v=20260825-pr1"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@ import './build-test-project-impl.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
-const required=['index.html','app.js','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-ingestion.mjs'];
+const required=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-ingestion.mjs'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
 const retired=['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'];
 for(const file of retired)if(fs.existsSync(file))throw new Error(`Obsolete runtime wrapper remains: ${file}`);
@@ -18,10 +18,14 @@ for(let n=2;n<=30;n++)if(project.stageRecords?.[String(n)]?.status!=='NOT STARTE
 if(project.currentVersions?.sources!=='NOT APPLICABLE')throw new Error('Stage 02 source set must remain NOT APPLICABLE until substantive Stage 02 work occurs.');
 for(const name of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if((project.projectData?.[name]||project[name]||[]).length)throw new Error(`${name} contains fabricated downstream project data.`);
 
-const html=fs.readFileSync('index.html','utf8'),loader=fs.readFileSync('app.js','utf8'),app=fs.readFileSync('app-core.js','utf8'),prompts=fs.readFileSync('prompt-engine.js','utf8'),schema=fs.readFileSync('workflow-schema.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8');
+const html=fs.readFileSync('index.html','utf8'),loader='',app=fs.readFileSync('app-core.js','utf8'),prompts=fs.readFileSync('prompt-engine.js','utf8'),schema=fs.readFileSync('workflow-schema.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8');
 if((html.match(/<html\b/gi)||[]).length!==1)throw new Error('Exactly one application shell is required.');
-for(const token of ['workbook.js','app.js'])if(!html.includes(token))throw new Error(`Application shell is missing ${token}.`);
-for(const token of ['hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'])if(!loader.includes(token))throw new Error(`Application loader is missing ${token}.`);
+const runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const scripts=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+if(scripts.length!==runtime.length||scripts.map(value=>value.split('?')[0]).join('|')!==runtime.join('|'))throw new Error('Application shell direct runtime order is wrong.');
+if(new Set(scripts.map(value=>value.split('?')[0])).size!==runtime.length)throw new Error('Application shell loads a runtime module more than once.');
+const tokens=scripts.map(value=>new URLSearchParams(value.split('?')[1]||'').get('v'));if(tokens.some(value=>!value)||new Set(tokens).size!==1)throw new Error('Application shell runtime build token is not shared.');
+if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('Dynamic runtime loader remains.');
 for(const retiredToken of ['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'])if(loader.includes(retiredToken)||html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
 for(const token of ['closed-loop-stage-response/1','PRODUCER','STAGE_CONTRACTS','sourceClassificationIssues','HUMAN_INTAKE_FIELDS'])if(!schema.includes(token))throw new Error(`Ownership/response schema control missing: ${token}`);
 for(const token of ['strictParse','validateEnvelope','PENDING_OPERATOR_REVIEW','ACCEPTED_CANONICAL_CHANGE','extractionManifests','answerHumanInput'])if(!ingestion.includes(token))throw new Error(`Transactional ingestion control missing: ${token}`);

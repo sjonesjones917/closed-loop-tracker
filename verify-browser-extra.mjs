@@ -23,7 +23,7 @@ async function activeProject(cdp){return (await projects(cdp))[0];}
 
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');await cdp.send('Page.navigate',{url:`${PAGE_URL}?browserExtra=${Date.now()}`});
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
   await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
 
