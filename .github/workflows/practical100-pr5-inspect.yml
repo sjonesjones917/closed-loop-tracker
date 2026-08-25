@@ -39,6 +39,9 @@ jobs:
           node verify-complete.mjs
       - name: Browser acceptance
         run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
           node verify-browser.mjs
           node verify-browser-extra.mjs
       - name: Commit verified source only
