@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 
 p=Path('response-ingestion.js');s=p.read_text()
-block=re.search(r"function prepare\(project,\{stage,text,promptRecord,contextId='UNKNOWN',files=\[\],expectedCommittedRevision=null\}=\{\}\)\{.*?\n\}\n\nfunction findProposal",s,re.S)
+block=re.search(r"function prepare\(project,.*?\n\}\n\nfunction findProposal",s,re.S)
 assert block
 replacement=r'''function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}={}){
   const next=clone(project);workflow.ensureShape(next);const stageNumber=Number(stage),prompt=promptRecordFor(next,promptRecord);
@@ -37,7 +37,7 @@ function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommit
   return {project:next,rawRecord,validation:validationRecord,proposal,receipt,disposition:responseDisposition};
 }
 
-function prepare(project,options={}){const captured=captureRaw(project,options);return prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:captured.promptRecord,expectedCommittedRevision:options.expectedCommittedRevision??null});}
+function prepare(project,options={}){const captured=captureRaw(project,options);return prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:captured.promptRecord,expectedCommittedRevision:options.expectedProjectRevision??options.expectedCommittedRevision??null});}
 
 function findProposal'''
 s=s[:block.start()]+replacement+s[block.end():]
