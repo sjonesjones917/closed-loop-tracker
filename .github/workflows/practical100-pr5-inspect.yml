@@ -20,6 +20,13 @@ jobs:
           python .practical100-pr5-compat.py
           python .practical100-pr5-legacyfix.py
           sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs');s=p.read_text()
+          old="for(const token of ['identityAssurance','SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
+          new="if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
+          assert old in s;s=s.replace(old,new,1);p.write_text(s)
+          PY
       - name: Syntax and deterministic verification
         run: |
           node --check project-store.js
