@@ -30,6 +30,9 @@ jobs:
           assert a in s; s=s.replace(a,b,1)
           p.write_text(s)
           p=Path('workflow-engine.js'); s=p.read_text()
+          old="function scopeMatches(record,scopeRule={}){const rs=record?.scope||{};for(const [key,expected] of Object.entries(scopeRule)){if(expected===undefined)continue;if((rs[key]??null)!==(expected??null))return false;}return true;}"
+          new="function scopeMatches(record,scopeRule={}){const rs=record?.scope||{};for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}"
+          assert old in s; s=s.replace(old,new,1)
           old="if(fields.AUTHORIZATION!=='AUTHORIZED')throw new Error('Artifact '+left.artifactId+' does not exactly match audited identity.');"
           assert old in s; s=s.replace(old,'',1); p.write_text(s)
       - name: Align and extend strengthened gate verifier
@@ -41,22 +44,19 @@ jobs:
           s=s.replace('/ten runs|coverage/i','/ten runs|coverage|REQ × RUN × TEST/i')
           marker="// Material upstream change invalidates downstream records and release authorization."
           extra="""
-          // Current-scope selection excludes historical scoped records, and triple verification counts TEST_ID.
+          // Current-scope selection excludes historical scoped records.
           {
             const p=project('JOB-SCOPE');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v002';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v002';p.job.CURRENT_ITERATION='ITERATION-2';
             const current=record('requirements',4,{OBLIGATION:'current',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-CURRENT');current.scope={requirementsVersion:'REQUIREMENTS-v002'};
             const stale=record('requirements',4,{OBLIGATION:'stale',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-STALE');stale.scope={requirementsVersion:'REQUIREMENTS-v001'};p.projectData.requirements.push(current,stale);
-            assert(engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements')).includes('REQ-CURRENT')&&!engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements')).includes('REQ-STALE'),'Historical scope satisfied current selector.');
+            const ids=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(ids.includes('REQ-CURRENT')&&!ids.includes('REQ-STALE'),'Historical scope satisfied current selector.');
           }
-
-          // Artifact identity is independent of selection order while mismatches remain recorded as unauthorized.
+          // Artifact identity is independent of file-selection order.
           {
             const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));
-            const audited=[{artifactId:'A',name:'a.bin',size:1,sha256:'a'},{artifactId:'B',name:'b.bin',size:2,sha256:'b'}];
-            const delivery=[{artifactId:'B',name:'b.bin',size:2,sha256:'b'},{artifactId:'A',name:'a.bin',size:1,sha256:'a'}];
+            const audited=[{artifactId:'A',name:'a.bin',size:1,sha256:'a'},{artifactId:'B',name:'b.bin',size:2,sha256:'b'}];const delivery=[{artifactId:'B',name:'b.bin',size:2,sha256:'b'},{artifactId:'A',name:'a.bin',size:1,sha256:'a'}];
             const r=engine.verifyArtifactIdentity(p,audited,delivery);assert(r.length===2&&p.release.authorization==='AUTHORIZED','Artifact identity depends on file-selection order.');
           }
-
           """
           assert marker in s; s=s.replace(marker,extra+marker,1); p.write_text(s)
       - name: Syntax
@@ -74,9 +74,7 @@ jobs:
           node - <<'NODE'
           global.window=global;global.location={href:'http://localhost/'};global.document={};
           for(const f of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])await import('./'+f+'?pr4='+Math.random());
-          const e=global.closedLoopWorkflowEngine;
-          if(!e.DERIVATIONS||Object.keys(e.DERIVATIONS).length!==6)throw new Error('Derivation registry incomplete.');
-          if(typeof e.recordsForCurrentScope!=='function'||typeof e.evaluateIteration!=='function'||typeof e.verificationMatrix!=='function')throw new Error('Current-scope/iteration helpers missing.');
+          const e=global.closedLoopWorkflowEngine;if(!e.DERIVATIONS||Object.keys(e.DERIVATIONS).length!==6)throw new Error('Derivation registry incomplete.');if(typeof e.recordsForCurrentScope!=='function'||typeof e.evaluateIteration!=='function'||typeof e.verificationMatrix!=='function')throw new Error('Current-scope/iteration helpers missing.');
           console.log(JSON.stringify({derivations:Object.keys(e.DERIVATIONS),scopeSelector:true,iterationEvaluator:true,verificationTriples:true},null,2));
           NODE
       - name: Commit verified PR4 source only
