@@ -18,6 +18,16 @@ jobs:
         run: node .practical100-pr2-fix.mjs
       - name: Transform responsible modules
         run: node .practical100-pr2.mjs
+      - name: Correct generated validator syntax
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('response-ingestion.js')
+          s=p.read_text()
+          old="issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.');"
+          new="issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
       - name: Syntax checks
         run: |
           node --check workbook.js
