@@ -74,6 +74,9 @@ jobs:
             ('  // Contextual blocker and fresh-context controls create canonical support records.','extra:support-controls')
           ]:
             assert marker in t;t=t.replace(marker,f"  console.log('{label}');\n{marker}",1)
+          old="await click(cdp,'#accept-proposal');await waitExpr(cdp,`document.body.innerText.includes('SOURCE-')`);retained=await activeProject(cdp);assert(retained.projectData.sources.length===1,'Reloaded proposal could not be committed.');"
+          new="await click(cdp,'#accept-proposal');await waitExpr(cdp,`globalThis.closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'&&(p.projectData?.sources||[]).length===1))`,12000);retained=await activeProject(cdp);assert(retained.projectData.sources.length===1,'Reloaded proposal could not be committed.');"
+          assert old in t;t=t.replace(old,new,1)
           marker="  const errors=cdp.events.filter"
           assert marker in t;t=t.replace(marker,"  assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);\n"+marker,1)
           p.write_text(t)
