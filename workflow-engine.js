@@ -465,8 +465,8 @@ function recalculate(project){
   ensureShape(project);
   let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
-    const state=project.stages[stage];
     const result=gate(stage,project);
+    const state=project.stages[stage];
     state.gate=result;
     const retainedStageOne=stage===1&&project.isRetainedTestProject&&state.status==='COMPLETE'&&project.projectData.stageRecords?.[1]&&!state.invalidatedBy;
     if(retainedStageOne){state.status='COMPLETE';state.gate={...result,complete:true,reasons:[]};previousComplete=true;continue;}
