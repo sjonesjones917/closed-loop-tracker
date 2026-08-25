@@ -41,6 +41,9 @@ jobs:
           anchor='  const validationId='
           at=s.index(anchor,start)
           s=s[:at]+"  if(envelope&&!rawRecord.canonicalEnvelopeSha256)rawRecord.canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);\n"+s[at:]
+          old="return {project:next,rawRecord,validation:prior.validationId?findValidation(next,prior.validationId):null,proposal:prior.proposalId?findProposal(next,prior.proposalId):null,receipt:prior.receiptId?findReceipt(next,prior.receiptId):null,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===prior.rawResponseId)||null,duplicate:true};"
+          new="return {project:next,rawRecord:prior,validation:prior.validationId?findValidation(next,prior.validationId):null,proposal:prior.proposalId?findProposal(next,prior.proposalId):null,receipt:prior.receiptId?findReceipt(next,prior.receiptId):null,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===prior.rawResponseId)||null,duplicate:true};"
+          assert old in s;s=s.replace(old,new,1)
           p.write_text(s)
           PY
           python .practical100-pr5-storeatomic.py
