@@ -28,7 +28,10 @@ jobs:
           new="issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));"
           assert old in s
           s=s.replace(old,new,1).replace('priorSemantic','priorCanonicalEnvelope').replace('This semantic response','This canonical envelope')
-          p.write_text(s)
+          old="bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256"
+          new="bodySha256:promptRecord.bodySha256||promptRecord.sha256,promptSha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
           p=Path('workflow-schema.js')
           s=p.read_text()
           old="derivationKey:options.derivationKey??options.derivation??null,normalizerKey:options.normalizerKey??null"
