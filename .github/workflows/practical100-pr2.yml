@@ -42,7 +42,13 @@ jobs:
             if not f.exists(): continue
             t=f.read_text()
             if 'closed-loop-stage-response/1' in t:
-              f.write_text(t.replace('closed-loop-stage-response/1','closed-loop-stage-response/2'))
+              t=t.replace('closed-loop-stage-response/1','closed-loop-stage-response/2')
+            if f.name == 'verify-ingestion.mjs':
+              t=t.replace("e.promptIdentity.sha256='0'.repeat(64)","e.promptIdentity.bodySha256='0'.repeat(64)")
+              old_id="promptIdentity:{instructionId:promptRecord.instructionId,sha256:promptRecord.sha256}"
+              new_id="operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope"
+              t=t.replace(old_id,new_id)
+            f.write_text(t)
       - name: Syntax checks
         run: |
           node --check workbook.js
