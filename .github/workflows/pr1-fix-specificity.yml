@@ -1,0 +1,28 @@
+name: Fix PR1 mobile status selector
+on:
+  push:
+    branches: [repair/pr1-architecture-cleanup]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Correct only the conflicting selector
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.github/workflows/pr1-apply.yml')
+          text=path.read_text(encoding='utf-8')
+          old='.workflow-list .status{font-size:11px;min-height:24px}'
+          new='.workflow-list .stage-head>.status{font-size:11px;min-height:24px}'
+          assert old in text
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+          rm .github/workflows/pr1-fix-specificity.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Fix mobile status readability selector"
+          git push origin HEAD:repair/pr1-architecture-cleanup
