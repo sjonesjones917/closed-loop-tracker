@@ -1,9 +1,9 @@
-name: Apply final verification coverage
+name: Final requirement verification
 on:
   push:
     branches: [verify/final-requirement-ledger]
 permissions:
-  contents: write
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -13,50 +13,34 @@ jobs:
           ref: verify/final-requirement-ledger
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Extend browser acceptance coverage minimally
-        shell: bash
+      - name: Run complete source and deterministic regressions
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('verify-browser.mjs');s=p.read_text()
-          old="retained=await activeProject(cdp);const promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.instructionId&&promptRecord?.sha256,'Saved prompt identity missing.');"
-          new=old+"\n await evalValue(cdp,`(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedPrompt=text;}}});return true})()`);await click(cdp,'#copy-prompt');assert(await evalValue(cdp,`window.__copiedPrompt`)===promptRecord.prompt,'Copy Instruction did not copy the exact saved prompt.');"
-          if old not in s: raise SystemExit('prompt-copy insertion target not found')
-          s=s.replace(old,new,1)
-          old="retained=await activeProject(cdp);assert(retained.projectData.sources.length===0,'Proposal mutated canonical source before acceptance.');await click(cdp,'#accept-proposal');"
-          new="retained=await activeProject(cdp);assert(retained.projectData.sources.length===0,'Proposal mutated canonical source before acceptance.');await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);await openStage(cdp,2);await waitExpr(cdp,`document.body.innerText.includes('Proposed extracted changes')`);retained=await activeProject(cdp);assert(retained.projectData.sources.length===0,'Reload during proposal review committed canonical data.');await click(cdp,'#accept-proposal');"
-          if old not in s: raise SystemExit('proposal-reload insertion target not found')
-          s=s.replace(old,new,1)
-          old="assert(newest.stages['1'].status==='NOT STARTED'&&(newest.projectData.sources||[]).length===0,'New job carried prior active project records.');\n // Malformed import does not destroy projects."
-          new="""assert(newest.stages['1'].status==='NOT STARTED'&&(newest.projectData.sources||[]).length===0,'New job carried prior active project records.');
- // Export the complete current project, then import it with an unknown field and verify round-trip preservation.
- await evalValue(cdp,`(()=>{window.__exportBlob=null;window.__exportDownload='';URL.createObjectURL=b=>{window.__exportBlob=b;return 'blob:closed-loop-verify';};URL.revokeObjectURL=()=>{};HTMLAnchorElement.prototype.click=function(){window.__exportDownload=this.download;};return true})()`);await click(cdp,'#export-project');const exported=await evalValue(cdp,`window.__exportBlob&&window.__exportBlob.text()`);assert(typeof exported==='string'&&exported.includes(newest.job.JOB_ID),'Complete project export was not produced.');const roundTrip=JSON.parse(exported);roundTrip.unknownRoundTripField={preserved:true};roundTrip.job.JOB_TITLE='Imported Round Trip Project';await evalValue(cdp,`(()=>{const input=document.querySelector('#import-file'),dt=new DataTransfer();dt.items.add(new File([${JSON.stringify(JSON.stringify(roundTrip))}],'roundtrip.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await sleep(350);const afterImport=JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));const imported=afterImport.find(p=>p.job?.JOB_ID===${JSON.stringify(roundTrip.job.JOB_ID)});assert(imported?.unknownRoundTripField?.preserved===true&&imported.job.JOB_TITLE==='Imported Round Trip Project','Successful import/export round trip lost supported or unknown project data.');assert(afterImport.filter(p=>p.job?.JOB_ID==='JOB-20260823144121').length===1,'Successful import duplicated the retained project.');
- // Contextual supporting controls create canonical records and blocker gating without a separate application surface.
- await openStage(cdp,1);await evalValue(cdp,`(()=>{window.prompt=message=>message.includes('External fresh-context')?'CTX-BROWSER-FRESH':'Controlled missing human input';return true})()`);await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not create a blocking canonical record.');await click(cdp,'#add-fresh-context');support=await activeProject(cdp);assert((support.projectData.freshContexts||[]).length>=1,'Fresh Context control did not create a canonical context record.');
- // Malformed import does not destroy projects."""
-          if old not in s: raise SystemExit('import/export insertion target not found')
-          s=s.replace(old,new,1)
-          old="nextPromptConsumesAcceptedData:true,existingProjectPreserved:true,newJobReset:true,malformedImportNonDestructive:true,runtimeErrors:0"
-          new="nextPromptConsumesAcceptedData:true,pendingProposalReload:true,exactPromptCopy:true,existingProjectPreserved:true,newJobReset:true,importExportRoundTrip:true,blockerControl:true,freshContextControl:true,malformedImportNonDestructive:true,runtimeErrors:0"
-          if old not in s: raise SystemExit('browser summary target not found')
-          p.write_text(s.replace(old,new,1))
-          PY
-          node --check verify-browser.mjs
-          node --check verify-complete.mjs
           node build-test-project.mjs
+          node --check app.js
+          node --check app-core.js
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-live.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
+      - name: Run complete browser acceptance regressions locally
+        shell: bash
+        run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           server=$!
           trap 'kill $server 2>/dev/null || true' EXIT
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
-          git config user.name 'closed-loop-repair-bot'
-          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
-          git add verify-browser.mjs verify-complete.mjs
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Complete acceptance regression coverage'
-          git push origin HEAD:verify/final-requirement-ledger
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
