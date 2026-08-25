@@ -19,6 +19,7 @@ jobs:
           python .practical100-pr5.py
           python .practical100-pr5-compat.py
           python .practical100-pr5-legacyfix.py
+          sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
       - name: Syntax and deterministic verification
         run: |
           node --check project-store.js
