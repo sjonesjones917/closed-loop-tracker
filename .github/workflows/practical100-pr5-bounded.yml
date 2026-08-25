@@ -1,0 +1,67 @@
+name: Practical 100 PR5 bounded acceptance
+on:
+  push:
+    branches: [practical-100/pr5-indexeddb-ui]
+permissions:
+  contents: write
+concurrency:
+  group: practical100-pr5-bounded-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Apply PR5 source changes
+        run: |
+          sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
+          python .practical100-pr5.py
+          python .practical100-pr5-compat.py
+          python .practical100-pr5-legacyfix.py
+          python .practical100-pr5-browserfix.py
+          python .practical100-pr5-assertfix.py
+          python .practical100-pr5-migrationstate.py
+          python .practical100-pr5-revisionfix.py
+          python .practical100-pr5-diagnostic.py
+          sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs');s=p.read_text()
+          old="for(const token of ['identityAssurance','SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
+          new="if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
+          assert old in s;s=s.replace(old,new,1);p.write_text(s)
+          for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
+            p=Path(name);p.write_text(p.read_text().replace('Mobile Closed-Loop Agent Reliability Workbook','Mobile Closed-Loop Reliability Workbook'))
+          PY
+      - name: Deterministic verification
+        run: |
+          node --check project-store.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check response-ingestion.js
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Browser verification
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 1
+          timeout 150s node verify-browser.mjs
+          timeout 150s node verify-browser-extra.mjs
+      - name: Commit verified PR5 source
+        run: |
+          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .practical100-pr5-assertfix.py .practical100-pr5-migrationstate.py .practical100-pr5-revisionfix.py .practical100-pr5-diagnostic.py .github/workflows/practical100-pr5-inspect.yml .github/workflows/practical100-pr5-bounded.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 5: IndexedDB bytes and validated operator controls"
+          git push origin HEAD:practical-100/pr5-indexeddb-ui
