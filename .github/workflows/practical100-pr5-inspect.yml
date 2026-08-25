@@ -15,10 +15,11 @@ jobs:
       - name: Apply minimum PR5 changes
         run: |
           sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
-          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py
+          python -m py_compile .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py
           python .practical100-pr5.py
           python .practical100-pr5-compat.py
           python .practical100-pr5-legacyfix.py
+          python .practical100-pr5-browserfix.py
           sed -i 's/stage:stage??Number(project.activeStage||0)||null/stage:(stage??Number(project.activeStage||0))||null/' workflow-engine.js
           python - <<'PY'
           from pathlib import Path
@@ -28,10 +29,6 @@ jobs:
           assert old in s;s=s.replace(old,new,1);p.write_text(s)
           for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
             p=Path(name);t=p.read_text().replace('Mobile Closed-Loop Agent Reliability Workbook','Mobile Closed-Loop Reliability Workbook')
-            t=t.replace("document.body.innerText.includes('Mobile Closed-Loop Reliability Workbook')","Boolean(globalThis.closedLoopProjectStore&&globalThis.closedLoopResponseIngestion&&document.querySelector('#project-picker'))")
-            t=t.replace("async function projects(cdp){return JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));}","async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}")
-            t=t.replace("async function activeProject(cdp){return evalValue(cdp,`JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v4'))[0]`);}","async function activeProject(cdp){return (await evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`))[0];}")
-            t=t.replace("await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);","await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);")
             p.write_text(t)
           PY
       - name: Syntax and deterministic verification
@@ -56,7 +53,7 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit verified source only
         run: |
-          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .github/workflows/practical100-pr5-inspect.yml
+          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .practical100-pr5-browserfix.py .github/workflows/practical100-pr5-inspect.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
