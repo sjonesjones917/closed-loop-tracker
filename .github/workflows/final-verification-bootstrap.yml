@@ -18,11 +18,10 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('workflow-engine.js');s=p.read_text();old="const state=project.stages[stage];\n    const result=gate(stage,project);";new="const result=gate(stage,project);\n    const state=project.stages[stage];";
-          if old in s:s=s.replace(old,new,1)
-          p.write_text(s)
+          p=Path('workflow-engine.js');s=p.read_text();s=s.replace("const state=project.stages[stage];\n    const result=gate(stage,project);","const result=gate(stage,project);\n    const state=project.stages[stage];",1);p.write_text(s)
           p=Path('verify-browser-extra.mjs');s=p.read_text();s=s.replace("===${JSON.stringify(roundTrip.job.JOB_ID)}","===roundTrip.job.JOB_ID",1);p.write_text(s)
           p=Path('verify-complete.mjs');s=p.read_text();old="assert(engine.unresolvedHumanRequests(p,1).length===1&&p.stages[1].status==='BLOCKED','Blocking human question did not block Stage 01.');";new="assert(engine.unresolvedHumanRequests(p,1).length===1,'Blocking human question was not discoverable by the gate.');const humanGate=engine.gate(1,p);assert(humanGate.blocked===true,`Stage 01 gate returned blocked=${humanGate.blocked} with an unresolved blocking question.`);engine.recalculate(p);assert(p.stages[1].status==='BLOCKED',`Blocking human question left Stage 01 in ${p.stages[1].status}, not BLOCKED.`);";s=s.replace(old,new,1);p.write_text(s)
+          p=Path('verify-browser.mjs');s=p.read_text();needle="await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await waitExpr(cdp,`document.body.innerText.includes('Proposed extracted changes')`);";replacement="await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await sleep(350);if(!(await evalValue(cdp,`document.body.innerText.includes('Proposed extracted changes')`)))console.log('POST_PARSE_DIAGNOSTIC\\n'+await evalValue(cdp,`document.body.innerText`));await waitExpr(cdp,`document.body.innerText.includes('Proposed extracted changes')`);";s=s.replace(needle,replacement,1);p.write_text(s)
           PY
       - name: Run complete source and deterministic regressions
         run: |
@@ -45,7 +44,7 @@ jobs:
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
-      - name: Run complete browser acceptance regressions locally
+      - name: Run browser diagnostic
         shell: bash
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -54,13 +53,3 @@ jobs:
           server=$!
           trap 'kill $server 2>/dev/null || true' EXIT
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
-          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
-      - name: Commit only verified repairs
-        shell: bash
-        run: |
-          if git diff --quiet -- workflow-engine.js verify-browser-extra.mjs verify-complete.mjs; then exit 0; fi
-          git config user.name 'closed-loop-repair-bot'
-          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
-          git add workflow-engine.js verify-browser-extra.mjs verify-complete.mjs
-          git commit -m 'Fix derived stage-state recalculation and complete regressions'
-          git push origin HEAD:verify/final-requirement-ledger
