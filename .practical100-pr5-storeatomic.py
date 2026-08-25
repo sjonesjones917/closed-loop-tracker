@@ -1,8 +1,8 @@
 from pathlib import Path
 import re
 p=Path('project-store.js');s=p.read_text()
-old="const verified=await getArtifact(artifactId);if(!verified||verified.byteSize!==byteSize||await hash.sha256Bytes(verified.blob)!==sha256)throw new Error('Artifact byte read-back verification failed.');return verified;"
-new="const verified=await getArtifact(artifactId);if(!verified||verified.byteSize!==byteSize||await hash.sha256Bytes(verified.blob)!==sha256){const cleanup=await openDatabase(),cleanupTx=cleanup.transaction(ARTIFACTS,'readwrite');cleanupTx.objectStore(ARTIFACTS).delete(String(artifactId));await complete(cleanupTx);throw new Error('Artifact byte read-back verification failed; the unverified artifact was removed.');}return verified;"
+old="const verified=await getArtifact(artifactId);if(!verified||verified.byteSize!==byteSize||await hash.sha256Bytes(await verified.blob.arrayBuffer())!==sha256)throw new Error('Artifact byte read-back verification failed.');return verified;"
+new="const verified=await getArtifact(artifactId);if(!verified||verified.byteSize!==byteSize||await hash.sha256Bytes(await verified.blob.arrayBuffer())!==sha256){const cleanup=await openDatabase(),cleanupTx=cleanup.transaction(ARTIFACTS,'readwrite');cleanupTx.objectStore(ARTIFACTS).delete(String(artifactId));await complete(cleanupTx);throw new Error('Artifact byte read-back verification failed; the unverified artifact was removed.');}return verified;"
 assert old in s
 s=s.replace(old,new,1)
 
