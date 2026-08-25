@@ -31,6 +31,18 @@ jobs:
           python .practical100-pr5-migrationstate.py
           python .practical100-pr5-revisionfix.py
           python .practical100-pr5-rawfirst.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('response-ingestion.js');s=p.read_text()
+          old="rawRecord.canonicalEnvelopeSha256=envelopeHash;\n    if(prior){"
+          new="if(prior){rawRecord.canonicalEnvelopeSha256=envelopeHash;"
+          assert old in s;s=s.replace(old,new,1)
+          start=s.index('function prepareCaptured')
+          anchor='  const validationId='
+          at=s.index(anchor,start)
+          s=s[:at]+"  if(envelope&&!rawRecord.canonicalEnvelopeSha256)rawRecord.canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);\n"+s[at:]
+          p.write_text(s)
+          PY
           python .practical100-pr5-storeatomic.py
           python .practical100-pr5-engineui.py
           python .practical100-pr5-explicittypes.py
