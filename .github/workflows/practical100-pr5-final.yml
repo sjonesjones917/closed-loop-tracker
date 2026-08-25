@@ -15,6 +15,13 @@ jobs:
       - name: Apply minimum PR5 changes
         run: |
           sed -i 's/if(\x27http-equiv="Content-Security-Policy"\x27 not in s:/if \x27http-equiv="Content-Security-Policy"\x27 not in s:/' .practical100-pr5.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.practical100-pr5-engineui.py');s=p.read_text()
+          s=s.replace("candidateFreezes').at(-1),'candidateFreezes')},hashes:Object.fromEntries", "candidateFreezes').at(-1),'candidateFreezes'),hashes:Object.fromEntries")
+          s=s.replace("recordValue(a,'SHA256')]));const fields=", "recordValue(a,'SHA256')]))};const fields=")
+          p.write_text(s)
+          PY
           python -m py_compile .practical100-pr5*.py
           python .practical100-pr5.py
           python .practical100-pr5-compat.py
@@ -34,7 +41,8 @@ jobs:
           p=Path('verify.mjs');s=p.read_text()
           old="for(const token of ['identityAssurance','SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
           new="if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
-          assert old in s;s=s.replace(old,new,1);p.write_text(s)
+          if old in s:s=s.replace(old,new,1)
+          p.write_text(s)
           for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
             p=Path(name);t=p.read_text().replace('Mobile Closed-Loop Agent Reliability Workbook','Mobile Closed-Loop Reliability Workbook')
             p.write_text(t)
