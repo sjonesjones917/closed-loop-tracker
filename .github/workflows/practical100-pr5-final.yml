@@ -7,6 +7,7 @@ permissions:
 jobs:
   verify-and-integrate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -83,14 +84,26 @@ jobs:
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
-      - name: Browser acceptance
+      - name: Primary browser acceptance
         run: |
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          set -o pipefail
+          python3 -m http.server 4173 >/tmp/closed-loop-http-primary.log 2>&1 &
           SERVER_PID=$!
-          trap 'kill $SERVER_PID || true' EXIT
+          trap 'kill $SERVER_PID || true; cat /tmp/closed-loop-http-primary.log || true' EXIT
           sleep 1
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          timeout --signal=TERM --kill-after=10s 240s node verify-browser.mjs
+      - name: Extended browser acceptance
+        run: |
+          set -o pipefail
+          python3 -m http.server 4173 >/tmp/closed-loop-http-extra.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true; cat /tmp/closed-loop-http-extra.log || true' EXIT
+          sleep 1
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          timeout --signal=TERM --kill-after=10s 240s node verify-browser-extra.mjs
       - name: Commit verified PR5 source only
         run: |
           rm -f .practical100-pr5*.py
