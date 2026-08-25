@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'">
 <meta name="theme-color" content="#f4f5f3">
 <link rel="icon" href="data:,">
 <title>Mobile Closed-Loop Reliability Workbook</title>
@@ -48,11 +49,14 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,sel
 .workflow-list .stage-name{font-size:12px;line-height:1.25}
 @media(max-width:620px){.workflow-list .stage-card{padding:6px}.workflow-list .stage-head>.status{font-size:11px;min-height:24px}.workflow-list .stage-head{row-gap:3px}}
 
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 </head>
 <body>
+<div id="app-live-status" aria-live="polite" class="sr-only"></div>
+
 <div class="app" id="app">
-<header class="app-header"><div class="header-main"><div class="brand"><div class="brand-kicker">Mobile closed-loop control</div><h1>Closed-Loop Reliability</h1><p id="current-project-summary" aria-live="polite">Loading the current project…</p></div><div class="project-select"><label for="project-picker">Project</label><select id="project-picker"></select></div></div><div class="header-actions"><button class="primary" id="new-project" type="button">New project</button><button id="export-project" type="button">Export</button><button id="import-project" type="button">Import</button><input id="import-file" type="file" hidden accept=".json,application/json"></div><div class="progress-line"><strong id="progress-label">0/30 complete</strong><div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div></div></header>
+<header class="app-header"><div class="header-main"><div class="brand"><div class="brand-kicker">Mobile closed-loop control</div><h1>Closed-Loop Reliability</h1><p id="current-project-summary" aria-live="polite">Loading the current project…</p></div><div class="project-select"><label for="project-picker">Project</label><select id="project-picker"></select></div></div><div class="header-actions"><button class="primary" id="new-project" type="button">New project</button><button id="export-project" type="button">Export</button><button id="import-project" type="button">Import</button><input id="import-file" type="file" hidden accept=".json,application/json"></div><div id="storage-status" class="brand p" role="status">Storage status loading…</div><div class="progress-line"><strong id="progress-label">0/30 complete</strong><div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div></div></header>
 <nav class="view-tabs" id="view-tabs" aria-label="Project views"></nav>
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>

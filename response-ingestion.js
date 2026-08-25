@@ -56,7 +56,7 @@ function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
 
 function disposition(project,type,{stage,rawResponseId,promptId,validationId,proposalId=null,receiptId=null,details={}}){const dispositionId=workflow.allocateInfrastructureId(project,'DISPOSITION','responseDispositions');const history=workflow.addHistory(project,type,{stage,rawResponseId,promptId,validationId,proposalId,...clone(details)});const record={dispositionId,type,jobId:project.job.JOB_ID,stage:Number(stage),rawResponseId,promptId,validationId,proposalId,receiptId,eventSequence:history.eventSequence,deviceTimestamp:history.deviceTimestamp,createdAt:history.deviceTimestamp,...clone(details)};project.projectData.responseDispositions.push(record);return record;}
 function referencedRecordHashes(project,envelope){const out={};for(const [collection,list] of Object.entries(envelope.records||{}))for(const record of safe(list)){if(record.targetId){const target=workflow.records(project,collection,{active:true}).find(x=>workflow.recordId(x,collection)===String(record.targetId));if(target)out[`${collection}:${record.targetId}`]=target.recordSha256||target.sha256||hash.recordSha256(target);}for(const [name,ref] of Object.entries(record.relationships||{}))if(ref?.recordId){const expected=schema.RECORD_SCHEMAS[collection]?.relationships?.[name];const target=workflow.records(project,expected,{active:true}).find(x=>workflow.recordId(x,expected)===String(ref.recordId));if(target)out[`${expected}:${ref.recordId}`]=target.recordSha256||target.sha256||hash.recordSha256(target);}}return out;}
-function proposalPreconditions(project,envelope,promptRecord){return {projectRevision:Number(project.revision||0),instructionId:promptRecord?.instructionId||promptRecord?.promptId||null,bodySha256:promptRecord?.bodySha256||promptRecord?.sha256||null,contractSha256:promptRecord?.contractSha256||null,contextSignature:promptRecord?.contextSignature||null,scopeSha256:hash.sha256Value(envelope.scope||{}),referencedRecordHashes:referencedRecordHashes(project,envelope)};}
+function proposalPreconditions(project,envelope,promptRecord,expectedProjectRevision=Number(project.revision||0)){return {projectRevision:Number(expectedProjectRevision),instructionId:promptRecord?.instructionId||promptRecord?.promptId||null,bodySha256:promptRecord?.bodySha256||promptRecord?.sha256||null,contractSha256:promptRecord?.contractSha256||null,contextSignature:promptRecord?.contextSignature||null,scopeSha256:hash.sha256Value(envelope.scope||{}),referencedRecordHashes:referencedRecordHashes(project,envelope)};}
 function validateHumanAnswer(request,value,project){const type=request.answerType;const fail=m=>{const e=new Error(m);e.code='INVALID_HUMAN_ANSWER';e.requestId=request.requestId;throw e;};if(request.blocking!==false&&(value===undefined||value===null||value===''))fail(`Answer is required for ${request.requestId}.`);if(value===undefined||value===null||value==='')return true;if(type==='TEXT'||type==='LONG_TEXT'){if(typeof value!=='string'||!value.trim())fail('A non-empty string is required.');}else if(type==='BOOLEAN'){if(typeof value!=='boolean')fail('A Boolean answer is required.');}else if(type==='NUMBER'){if(typeof value!=='number'||!Number.isFinite(value))fail('A finite numeric answer is required.');}else if(type==='CHOICE'){if(!request.allowedValues.includes(value))fail('The answer must be one allowed value.');}else if(type==='MULTI_CHOICE'){if(!Array.isArray(value)||value.some(v=>!request.allowedValues.includes(v)))fail('Every selected answer must be an allowed value.');}else if(type==='DATE'){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||Number.isNaN(Date.parse(value+'T00:00:00Z')))fail('An ISO YYYY-MM-DD date is required.');}else if(type==='FILE_REFERENCE'){if(typeof value!=='string'||!workflow.records(project,'artifacts',{active:true}).some(a=>workflow.recordId(a,'artifacts')===value))fail('A current canonical artifact ID is required.');}else fail(`Unsupported answer type ${type}.`);return true;}
 
 function promptRecordFor(project,prompt){
@@ -263,7 +263,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
   };
 }
 
-function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}){
+function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0)}){
   const proposalId=workflow.allocateInfrastructureId(project,'PARSED-PROPOSAL','responseProposals');
   const tempToCanonical={};
   const evidence=[];
@@ -316,7 +316,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
   return {
     proposalId,rawResponseId:rawRecord.rawResponseId,validationId:validationRecord.validationId,promptId:promptRecord.instructionId||promptRecord.promptId,
     bodySha256:promptRecord.bodySha256||promptRecord.sha256,promptSha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature,scopeSha256:promptRecord.scopeSha256,jobId:envelope.jobId,stage:Number(envelope.stage),responseSchemaVersion:envelope.schema,responseType:envelope.responseType,
-    createdAt:now(),status:'PENDING_OPERATOR_REVIEW',scope:clone(promptRecord.scope||{}),canonicalEnvelopeSha256:hash.canonicalEnvelopeSha256(envelope),preconditions:proposalPreconditions(project,envelope,promptRecord),envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
+    createdAt:now(),status:'PENDING_OPERATOR_REVIEW',scope:clone(promptRecord.scope||{}),canonicalEnvelopeSha256:hash.canonicalEnvelopeSha256(envelope),preconditions:proposalPreconditions(project,envelope,promptRecord,expectedProjectRevision),envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
     humanInputRequests:clone(envelope.humanInputRequests||[]),unresolved:clone(envelope.unresolved||[]),warnings:clone(envelope.warnings||[]),attachments:clone(envelope.attachments||[])
   };
 }
@@ -335,49 +335,40 @@ function createReceipt(project,{stage,promptRecord,rawRecord,validationRecord,pr
   return receipt;
 }
 
-function prepare(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}={}){
-  const next=clone(project);
-  workflow.ensureShape(next);
-  const stageNumber=Number(stage);
-  const prompt=promptRecordFor(next,promptRecord);
-  const rawResponseId=workflow.allocateInfrastructureId(next,'RAW-RESPONSE','rawResponses');
-  const outputId=workflow.allocateInfrastructureId(next,`STAGE-${String(stageNumber).padStart(2,'0')}-OUTPUT`,'generatedOutputs');
-  const rawText=String(text??'');
-  const rawSha256=hash.rawResponseSha256(rawText);
-  const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId,iteration:next.job.CURRENT_ITERATION||'NOT APPLICABLE',promptInstructionId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',promptSha256:prompt?.sha256||prompt?.bodySha256||'UNKNOWN',createdAt:now(),sha256:rawSha256,completeRawResponse:rawText,files:clone(files),status:'PRESERVED',projectRevision:Number(next.revision||0)};
-  next.projectData.rawResponses.push(rawRecord);
-  next.projectData.generatedOutputs.push({outputId,rawResponseId,stage:stageNumber,role:rawRecord.role,iteration:rawRecord.iteration,createdAt:rawRecord.createdAt,sha256:rawSha256,output:rawText,status:'RAW_RESPONSE_PRESERVED'});
-  workflow.addHistory(next,'RAW_RESPONSE_PRESERVED',{stage:stageNumber,rawResponseId,outputId,sha256:rawSha256});
+function captureRaw(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}={}){
+  const next=clone(project);workflow.ensureShape(next);const stageNumber=Number(stage),prompt=promptRecordFor(next,promptRecord);
+  if(!Number.isInteger(stageNumber)||stageNumber<1||stageNumber>schema.STAGE_COUNT)throw new Error('A valid stage is required for raw capture.');
+  if(!prompt)throw new Error('The controlling persisted prompt is required for raw capture.');
+  const rawResponseId=workflow.allocateInfrastructureId(next,'RAW-RESPONSE','rawResponses'),outputId=workflow.allocateInfrastructureId(next,`STAGE-${String(stageNumber).padStart(2,'0')}-OUTPUT`,'generatedOutputs'),rawText=String(text??''),rawSha256=hash.rawResponseSha256(rawText),createdAt=now();
+  const rawRecord={rawResponseId,outputId,jobId:next.job.JOB_ID,stage:stageNumber,role:globalThis.closedLoopCore?.STAGES?.[stageNumber-1]?.role||'UNKNOWN',contextId,iteration:next.job.CURRENT_ITERATION||'NOT APPLICABLE',promptInstructionId:prompt.instructionId||prompt.promptId,promptBodySha256:prompt.bodySha256||prompt.sha256,promptContractSha256:prompt.contractSha256,promptContextSignature:prompt.contextSignature,promptScope:clone(prompt.scope||{}),createdAt,sha256:rawSha256,completeRawResponse:rawText,files:clone(files),status:'PRESERVED',projectRevisionAtCapture:Number(next.revision||0)};
+  next.projectData.rawResponses.push(rawRecord);next.projectData.generatedOutputs.push({outputId,rawResponseId,stage:stageNumber,role:rawRecord.role,iteration:rawRecord.iteration,createdAt,sha256:rawSha256,output:rawText,status:'RAW_RESPONSE_PRESERVED'});workflow.addHistory(next,'RAW_RESPONSE_PRESERVED',{stage:stageNumber,rawResponseId,outputId,sha256:rawSha256,promptInstructionId:rawRecord.promptInstructionId});
+  return {project:next,rawRecord,promptRecord:prompt};
+}
 
-  let envelope=null,parseError=null;
-  try{envelope=strictParse(rawText);}catch(error){parseError=error;}
-  if(envelope){const envelopeHash=hash.canonicalEnvelopeSha256(envelope);const prior=safe(next.projectData.rawResponses).find(r=>r.canonicalEnvelopeSha256===envelopeHash&&Number(r.stage)===stageNumber&&r.promptInstructionId===(prompt?.instructionId||prompt?.promptId));if(prior){const receipt=findReceipt(next,prior.receiptId);const proposal=prior.proposalId?findProposal(next,prior.proposalId):null;const validation=prior.validationId?findValidation(next,prior.validationId):null;return {project:next,rawRecord:prior,validation,proposal,receipt,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===prior.rawResponseId)||null,duplicate:true};}}
-  let validation;
-  if(parseError){
-    validation={valid:false,issues:[issue(parseError.code||'MALFORMED_JSON','/',parseError.message)],errorCount:1,warningCount:0,checkedAt:now(),responseSchema:null,responseType:null};
-  }else validation=validateEnvelope(next,envelope,{stage:stageNumber,promptRecord:prompt,rawSha256});
-  if(envelope)rawRecord.canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);
-  const validationId=workflow.allocateInfrastructureId(next,'VALIDATION','responseValidations');
-  const validationRecord={validationId,rawResponseId,jobId:next.job.JOB_ID,stage:stageNumber,promptId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',promptSha256:prompt?.sha256||prompt?.bodySha256||'UNKNOWN',createdAt:now(),valid:validation.valid,issues:clone(validation.issues),errorCount:validation.errorCount,warningCount:validation.warningCount,responseSchema:validation.responseSchema,responseType:validation.responseType,status:validation.valid?'VALID':'REJECTED'};
-  next.projectData.responseValidations.push(validationRecord);
-  rawRecord.validationId=validationId;
-  rawRecord.status=validation.valid?'VALIDATED_PENDING_REVIEW':'VALIDATION_FAILED';
-
-  let proposal=null;
-  if(validation.valid){
-    proposal=planProposal(next,envelope,{rawRecord,promptRecord:prompt,validationRecord});
-    next.projectData.responseProposals.push(proposal);
-    rawRecord.proposalId=proposal.proposalId;
+function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommittedRevision=null}={}){
+  const next=clone(project);workflow.ensureShape(next);const rawRecord=findRaw(next,rawResponseId);if(!rawRecord)throw new Error('Preserved raw response does not exist.');
+  if(rawRecord.status!=='PRESERVED'&&rawRecord.status!=='VALIDATION_FAILED'&&rawRecord.status!=='VALIDATED_PENDING_REVIEW'){
+    const priorReceipt=rawRecord.receiptId?findReceipt(next,rawRecord.receiptId):null,priorProposal=rawRecord.proposalId?findProposal(next,rawRecord.proposalId):null,priorValidation=rawRecord.validationId?findValidation(next,rawRecord.validationId):null;
+    return {project:next,rawRecord,validation:priorValidation,proposal:priorProposal,receipt:priorReceipt,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===rawRecord.rawResponseId)||null,idempotent:true};
   }
-  const receipt=createReceipt(next,{stage:stageNumber,promptRecord:prompt||{},rawRecord,validationRecord,proposal});
-  let responseDisposition=null;if(!validation.valid){responseDisposition=disposition(next,'VALIDATION_FAILED_RESPONSE',{stage:stageNumber,rawResponseId,promptId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',validationId,receiptId:receipt.receiptId,details:{issueCodes:validation.issues.map(x=>x.code)}});receipt.rejectedResponseId=responseDisposition.dispositionId;receipt.completionState='VALIDATION_FAILED_RESPONSE';rawRecord.dispositionId=responseDisposition.dispositionId;}
-  rawRecord.receiptId=receipt.receiptId;
-  validationRecord.receiptId=receipt.receiptId;
-  if(proposal)proposal.receiptId=receipt.receiptId;
-  workflow.addHistory(next,validation.valid?'RESPONSE_VALIDATED':'RESPONSE_VALIDATION_FAILED',{stage:stageNumber,rawResponseId,validationId,proposalId:proposal?.proposalId||'NONE',issueCodes:validation.issues.map(item=>item.code)});
-  workflow.recalculate(next);
+  const stageNumber=Number(rawRecord.stage),prompt=promptRecordFor(next,promptRecord||{instructionId:rawRecord.promptInstructionId});if(!prompt)throw new Error('The controlling persisted prompt is unavailable.');const rawText=String(rawRecord.completeRawResponse??'');
+  let envelope=null,parseError=null;try{envelope=strictParse(rawText);}catch(error){parseError=error;}
+  if(envelope){
+    const envelopeHash=hash.canonicalEnvelopeSha256(envelope),prior=safe(next.projectData.rawResponses).find(r=>r.rawResponseId!==rawRecord.rawResponseId&&r.canonicalEnvelopeSha256===envelopeHash&&Number(r.stage)===stageNumber&&r.promptInstructionId===(prompt.instructionId||prompt.promptId));
+    if(prior){rawRecord.canonicalEnvelopeSha256=envelopeHash;rawRecord.status='DUPLICATE_RESPONSE';rawRecord.duplicateOfRawResponseId=prior.rawResponseId;rawRecord.receiptId=prior.receiptId||null;rawRecord.validationId=prior.validationId||null;rawRecord.proposalId=prior.proposalId||null;workflow.addHistory(next,'DUPLICATE_RESPONSE_RETURNED',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,duplicateOfRawResponseId:prior.rawResponseId});return {project:next,rawRecord:prior,validation:prior.validationId?findValidation(next,prior.validationId):null,proposal:prior.proposalId?findProposal(next,prior.proposalId):null,receipt:prior.receiptId?findReceipt(next,prior.receiptId):null,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===prior.rawResponseId)||null,duplicate:true};}
+  }
+  let validation;if(parseError)validation={valid:false,issues:[issue(parseError.code||'MALFORMED_JSON','/',parseError.message)],errorCount:1,warningCount:0,checkedAt:now(),responseSchema:null,responseType:null};else validation=validateEnvelope(next,envelope,{stage:stageNumber,promptRecord:prompt,rawSha256:rawRecord.sha256});
+  if(envelope&&!rawRecord.canonicalEnvelopeSha256)rawRecord.canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);
+  const validationId=workflow.allocateInfrastructureId(next,'VALIDATION','responseValidations'),validationRecord={validationId,rawResponseId:rawRecord.rawResponseId,jobId:next.job.JOB_ID,stage:stageNumber,promptId:prompt.instructionId||prompt.promptId,promptSha256:prompt.bodySha256||prompt.sha256,createdAt:now(),valid:validation.valid,issues:clone(validation.issues),errorCount:validation.errorCount,warningCount:validation.warningCount,responseSchema:validation.responseSchema,responseType:validation.responseType,status:validation.valid?'VALID':'REJECTED'};
+  next.projectData.responseValidations.push(validationRecord);rawRecord.validationId=validationId;rawRecord.status=validation.valid?'VALIDATED_PENDING_REVIEW':'VALIDATION_FAILED';
+  let proposal=null;if(validation.valid){proposal=planProposal(next,envelope,{rawRecord,promptRecord:prompt,validationRecord,expectedProjectRevision:expectedCommittedRevision===null?Number(next.revision||0):Number(expectedCommittedRevision)});next.projectData.responseProposals.push(proposal);rawRecord.proposalId=proposal.proposalId;}
+  const receipt=createReceipt(next,{stage:stageNumber,promptRecord:prompt,rawRecord,validationRecord,proposal});let responseDisposition=null;
+  if(!validation.valid){responseDisposition=disposition(next,'VALIDATION_FAILED_RESPONSE',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,promptId:prompt.instructionId||prompt.promptId,validationId,receiptId:receipt.receiptId,details:{issueCodes:validation.issues.map(x=>x.code)}});receipt.rejectedResponseId=responseDisposition.dispositionId;receipt.completionState='VALIDATION_FAILED_RESPONSE';rawRecord.dispositionId=responseDisposition.dispositionId;}
+  rawRecord.receiptId=receipt.receiptId;validationRecord.receiptId=receipt.receiptId;if(proposal)proposal.receiptId=receipt.receiptId;workflow.addHistory(next,validation.valid?'RESPONSE_VALIDATED':'RESPONSE_VALIDATION_FAILED',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,validationId,proposalId:proposal?.proposalId||'NONE',issueCodes:validation.issues.map(item=>item.code)});workflow.recalculate(next);
   return {project:next,rawRecord,validation:validationRecord,proposal,receipt,disposition:responseDisposition};
 }
+
+function prepare(project,options={}){const captured=captureRaw(project,options);return prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:captured.promptRecord,expectedCommittedRevision:options.expectedProjectRevision??options.expectedCommittedRevision??null});}
 
 function findProposal(project,proposalId){return safe(project?.projectData?.responseProposals).find(item=>item.proposalId===proposalId);}
 function findReceipt(project,receiptId){return safe(project?.projectData?.outputReceipts).find(item=>item.receiptId===receiptId);}
@@ -428,6 +419,6 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
 
 globalThis.closedLoopResponseIngestion=Object.freeze({
   version:'closed-loop-response-ingestion/3',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,
-  strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation
+  strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,prepareCaptured,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation
 });
 })();
