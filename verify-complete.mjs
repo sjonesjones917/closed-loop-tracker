@@ -13,12 +13,10 @@ function project(jobId='JOB-FINAL-VERIFY'){
 }
 function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
 
-// Formal-state meanings remain exact and no Stage 31 exists.
 assert(JSON.stringify(engine.STAGE_STATES)===JSON.stringify(['NOT STARTED','IN PROGRESS','BLOCKED','READY','COMPLETE']),'Stage tracker states changed.');
 assert(JSON.stringify(engine.FORMAL_STATES)===JSON.stringify(['UNKNOWN','NONE','NOT APPLICABLE','TRUE','FALSE','SATISFIED','VIOLATED','UNDETERMINED','ACCEPTED','REJECTED','BLOCKED']),'Formal states changed.');
 assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
-// Invalid canonical relationship is rejected before mutation.
 {
   const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);
   const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,promptIdentity:{instructionId:pr.instructionId,sha256:pr.sha256},responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
@@ -27,7 +25,6 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(prepared.project.projectData.research.length===0&&prepared.project.projectData.acceptedChanges.length===0,'Invalid relationship partially mutated canonical state.');
 }
 
-// Structured blocking human question blocks the stage until answered and versions User Job Input.
 {
   let p=project('JOB-HUMAN-GATE'),stage=1,pr=prompt(p,stage);
   const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,promptIdentity:{instructionId:pr.instructionId,sha256:pr.sha256},responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-1',question:'Which jurisdiction controls this job?',whyRequired:'Jurisdiction is human-authority input.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
@@ -39,7 +36,6 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(engine.unresolvedHumanRequests(p,1).length===0&&p.job.CURRENT_INPUT_VERSION!==before,'Human answer did not resolve question and version User Job Input.');
 }
 
-// Explicit workflow gates cannot be bypassed by manual assertions.
 {
   const p=project('JOB-GATES');
   assert(!engine.gate(8,p).complete&&engine.gate(8,p).reasons.some(r=>/Stage 7|verification|accepted/i.test(r)),'Stage 08 can complete without prerequisite evidence.');
@@ -50,11 +46,9 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(!engine.gate(20,p).complete&&engine.gate(20,p).reasons.some(r=>/unchanged confirmation/i.test(r)),'Stage 20 does not require unchanged confirmation.');
 }
 
-// Material upstream change invalidates downstream records and release authorization.
 {
   const p=project('JOB-INVALIDATION');
-  p.stages[2].status='COMPLETE';p.stages[2].acceptedResponseIds=['RAW-1'];
-  p.stages[3].status='COMPLETE';p.stages[3].acceptedResponseIds=['RAW-2'];
+  p.stages[2].status='COMPLETE';p.stages[2].acceptedResponseIds=['RAW-1'];p.stages[3].status='COMPLETE';p.stages[3].acceptedResponseIds=['RAW-2'];
   const src=record('sources',2,{TITLE:'Synthetic independent source',ISSUING_ORGANIZATION_OR_AUTHOR:'Authority',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'Authority',URL_REFERENCE:'https://example.invalid/source',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'fixture',APPLICABLE_PORTIONS:'fixture',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING'},'SOURCE-TEST');
   const res=record('research',3,{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'evidence'},'RESEARCH-TEST');
   p.projectData.sources.push(src);p.projectData.research.push(res);p.release.authorization='AUTHORIZED';p.release.authorizedArtifactIds=['FILE-1'];
@@ -63,7 +57,6 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(p.release.authorization==='NOT AUTHORIZED'&&p.release.authorizedArtifactIds.length===0,'Upstream invalidation did not revoke release authorization.');
 }
 
-// Release identity is prohibited before ACCEPTED and exact mismatches remain unauthorized.
 {
   const p=project('JOB-IDENTITY');let threw=false;try{engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}]);}catch{threw=true;}assert(threw,'Stage 28 ran before an ACCEPTED Stage 27 determination.');
   p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST'));
@@ -71,13 +64,11 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(result.length===1&&result[0].AUTHORIZATION==='NOT AUTHORIZED'&&p.release.authorization==='NOT AUTHORIZED','Mismatched release bytes were authorized.');
 }
 
-// Missing evidence-chain links remain missing; the application does not invent them.
 {
   const p=project('JOB-CHAIN');p.projectData.requirements.push(record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User Job Input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'deterministic',EXPECTED_EVIDENCE:'evidence',FAILURE_CONDITION:'missing',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-TEST'));
   const chains=engine.constructEvidenceChains(p);assert(chains.length===1&&chains[0].STATUS==='INCOMPLETE'&&chains[0].MISSING_LINKS.length>0,'Missing evidence links were fabricated as complete.');
 }
 
-// Persistence failure after a fully prepared accepted project rolls back exact prior bytes.
 {
   class MemoryStorage{constructor(){this.m=new Map();}getItem(k){return this.m.has(k)?this.m.get(k):null;}setItem(k,v){this.m.set(k,String(v));}removeItem(k){this.m.delete(k);}}
   const storage=new MemoryStorage(),priorProject=project('JOB-STORAGE'),prior=[priorProject];store.writeAll(prior,storage);const priorBytes=storage.getItem(store.STORE_KEY);
@@ -86,4 +77,20 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(failed&&storage.getItem(store.STORE_KEY)===priorBytes,'Storage failure during accepted-state persistence did not roll back exact prior state.');
 }
 
-console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
+// A quota-limited browser must not require duplicate full-payload transaction copies.
+{
+  class QuotaStorage{
+    constructor(limit){this.limit=limit;this.m=new Map();}
+    getItem(k){return this.m.has(k)?this.m.get(k):null;}
+    removeItem(k){this.m.delete(k);}
+    setItem(k,v){v=String(v);const next=new Map(this.m);next.set(k,v);const bytes=[...next].reduce((n,[key,value])=>n+key.length+value.length,0);if(bytes>this.limit){const e=new Error('The quota has been exceeded.');e.name='QuotaExceededError';throw e;}this.m=next;}
+  }
+  const initial=[project('JOB-MOBILE-QUOTA')],payload=JSON.stringify(initial),storage=new QuotaStorage(payload.length+store.STORE_KEY.length+512);
+  store.writeAll(initial,storage);
+  const changed=JSON.parse(JSON.stringify(initial));changed[0].job.JOB_TITLE='Quota-safe update';
+  store.writeAll(changed,storage);
+  assert(JSON.parse(storage.getItem(store.STORE_KEY))[0].job.JOB_TITLE==='Quota-safe update','Quota-safe canonical replacement failed.');
+  assert(storage.getItem(store.TEMP_KEY)===null&&storage.getItem(store.BACKUP_KEY)===null,'Full-payload transaction copies remain in persistent storage.');
+}
+
+console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true,mobileQuotaSafePersistence:true},null,2));
