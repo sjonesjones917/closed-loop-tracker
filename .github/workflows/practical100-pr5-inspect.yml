@@ -1,0 +1,18 @@
+name: Practical 100 PR5 inspect
+on:
+  push:
+    branches: [practical-100/pr5-indexeddb-ui]
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('app-core.js').read_text()
+          for term in ['projectStore=','function persistAll','function persistReplacement','function save','ingestion.prepare','ingestion.commit','prompt(','projectData[','addEventListener(\'DOMContentLoaded','closedLoopProjectStore']:
+            i=s.find(term)
+            print('\n###',term,i)
+            print(s[max(0,i-500):i+1400] if i>=0 else 'NOT FOUND')
+          PY
