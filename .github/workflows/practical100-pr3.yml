@@ -16,11 +16,20 @@ jobs:
         run: node .pr3-transformer-fix.mjs
       - name: Transform ingestion and transaction rules
         run: node .practical100-pr3.mjs
+      - name: Align verification with disposition vocabulary
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('build-test-project.mjs')
+          s=p.read_text()
+          assert 'ACCEPTED_CANONICAL_CHANGE' in s
+          p.write_text(s.replace('ACCEPTED_CANONICAL_CHANGE','ACCEPTED_DATA_CHANGE'))
       - name: Syntax
         run: |
           node --check workflow-engine.js
           node --check response-ingestion.js
           node --check verify-ingestion.mjs
+          node --check build-test-project.mjs
       - name: Deterministic verification
         run: |
           node build-test-project.mjs
