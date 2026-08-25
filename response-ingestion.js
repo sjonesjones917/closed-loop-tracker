@@ -53,6 +53,12 @@ function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
   return envelope;
 }
 
+
+function disposition(project,type,{stage,rawResponseId,promptId,validationId,proposalId=null,receiptId=null,details={}}){const dispositionId=workflow.allocateInfrastructureId(project,'DISPOSITION','responseDispositions');const history=workflow.addHistory(project,type,{stage,rawResponseId,promptId,validationId,proposalId,...clone(details)});const record={dispositionId,type,jobId:project.job.JOB_ID,stage:Number(stage),rawResponseId,promptId,validationId,proposalId,receiptId,eventSequence:history.eventSequence,deviceTimestamp:history.deviceTimestamp,createdAt:history.deviceTimestamp,...clone(details)};project.projectData.responseDispositions.push(record);return record;}
+function referencedRecordHashes(project,envelope){const out={};for(const [collection,list] of Object.entries(envelope.records||{}))for(const record of safe(list)){if(record.targetId){const target=workflow.records(project,collection,{active:true}).find(x=>workflow.recordId(x,collection)===String(record.targetId));if(target)out[`${collection}:${record.targetId}`]=target.recordSha256||target.sha256||hash.recordSha256(target);}for(const [name,ref] of Object.entries(record.relationships||{}))if(ref?.recordId){const expected=schema.RECORD_SCHEMAS[collection]?.relationships?.[name];const target=workflow.records(project,expected,{active:true}).find(x=>workflow.recordId(x,expected)===String(ref.recordId));if(target)out[`${expected}:${ref.recordId}`]=target.recordSha256||target.sha256||hash.recordSha256(target);}}return out;}
+function proposalPreconditions(project,envelope,promptRecord){return {projectRevision:Number(project.revision||0),instructionId:promptRecord?.instructionId||promptRecord?.promptId||null,bodySha256:promptRecord?.bodySha256||promptRecord?.sha256||null,contractSha256:promptRecord?.contractSha256||null,contextSignature:promptRecord?.contextSignature||null,scopeSha256:hash.sha256Value(envelope.scope||{}),referencedRecordHashes:referencedRecordHashes(project,envelope)};}
+function validateHumanAnswer(request,value,project){const type=request.answerType;const fail=m=>{const e=new Error(m);e.code='INVALID_HUMAN_ANSWER';e.requestId=request.requestId;throw e;};if(request.blocking!==false&&(value===undefined||value===null||value===''))fail(`Answer is required for ${request.requestId}.`);if(value===undefined||value===null||value==='')return true;if(type==='TEXT'||type==='LONG_TEXT'){if(typeof value!=='string'||!value.trim())fail('A non-empty string is required.');}else if(type==='BOOLEAN'){if(typeof value!=='boolean')fail('A Boolean answer is required.');}else if(type==='NUMBER'){if(typeof value!=='number'||!Number.isFinite(value))fail('A finite numeric answer is required.');}else if(type==='CHOICE'){if(!request.allowedValues.includes(value))fail('The answer must be one allowed value.');}else if(type==='MULTI_CHOICE'){if(!Array.isArray(value)||value.some(v=>!request.allowedValues.includes(v)))fail('Every selected answer must be an allowed value.');}else if(type==='DATE'){if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||Number.isNaN(Date.parse(value+'T00:00:00Z')))fail('An ISO YYYY-MM-DD date is required.');}else if(type==='FILE_REFERENCE'){if(typeof value!=='string'||!workflow.records(project,'artifacts',{active:true}).some(a=>workflow.recordId(a,'artifacts')===value))fail('A current canonical artifact ID is required.');}else fail(`Unsupported answer type ${type}.`);return true;}
+
 function promptRecordFor(project,prompt){
   if(!prompt)return null;
   const id=prompt.instructionId||prompt.promptId;
@@ -109,7 +115,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
       const definition=schema.STAGE_FIELDS[stageNumber]?.[name];
       if(!definition){issues.push(issue('UNKNOWN_STAGE_FIELD',path,`Stage ${stageNumber} has no field ${name}.`));continue;}
       validateValue(definition,value,path,issues);
-      if(!allowedStageData.has(name))issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));
+      if(!allowedStageData.has(name)||!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));
       if(value===undefined)issues.push(issue('UNDEFINED_VALUE',path,'Undefined values cannot be ingested.'));
     }
   }
@@ -141,7 +147,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
           const fieldDefinition=definition.fieldDefinitions[name];
           if(!fieldDefinition){issues.push(issue('UNKNOWN_RECORD_FIELD',fieldPath,`${collection} has no field ${name}.`));continue;}
           validateValue(fieldDefinition,value,fieldPath,issues,{required:definition.required.includes(name)});
-          if(!allowedFields.has(name))issues.push(issue('FIELD_OWNERSHIP_VIOLATION',fieldPath,`${name} is owned by ${fieldDefinition.producer}; the agent cannot set it.`));
+          if(!allowedFields.has(name)||!schema.authorizeMutation({fieldDefinition:fieldDefinition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',fieldPath,`${name} is owned by ${fieldDefinition.producer}; the agent cannot set it.`));
           if(value===undefined)issues.push(issue('UNDEFINED_VALUE',fieldPath,'Undefined values cannot be ingested.'));
         }
         for(const required of definition.required){
@@ -174,7 +180,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
     const tempKey=registerTemp(evidence.temporaryKey,`${path}/temporaryKey`,'evidence');
     if(tempKey)evidenceIndex.set(tempKey,{evidence,path});
     for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));
-    if(evidence.sourceRef!==undefined&&!object(evidence.sourceRef))issues.push(issue('INVALID_EVIDENCE_SOURCE_REF',`${path}/sourceRef`,'sourceRef must be a relationship object.'));
+    if(evidence.sourceRef!==undefined){if(!object(evidence.sourceRef))issues.push(issue('INVALID_EVIDENCE_SOURCE_REF',`${path}/sourceRef`,'sourceRef must be a relationship object.'));else{unknownKeys(evidence.sourceRef,['tempKey','recordId'],`${path}/sourceRef`,issues);const count=Number(Boolean(evidence.sourceRef.tempKey))+Number(Boolean(evidence.sourceRef.recordId));if(count!==1)issues.push(issue('INVALID_EVIDENCE_SOURCE_REF',`${path}/sourceRef`,'Provide exactly one of tempKey or recordId.'));else if(evidence.sourceRef.tempKey){const target=responseRecordIndex.get(String(evidence.sourceRef.tempKey));if(!target||target.collection!=='sources')issues.push(issue('UNRESOLVED_EVIDENCE_SOURCE',`${path}/sourceRef`,'Evidence source must resolve to a response source record.'));}else if(!workflow.records(project,'sources',{active:true}).some(x=>workflow.recordId(x,'sources')===String(evidence.sourceRef.recordId)))issues.push(issue('UNRESOLVED_EVIDENCE_SOURCE',`${path}/sourceRef`,'Evidence source must resolve to a current active source.'));}}if(evidence.attachmentRef!==undefined){if(!object(evidence.attachmentRef))issues.push(issue('INVALID_EVIDENCE_ATTACHMENT_REF',`${path}/attachmentRef`,'attachmentRef must be a relationship object.'));else{const count=Number(Boolean(evidence.attachmentRef.tempKey))+Number(Boolean(evidence.attachmentRef.recordId));if(count!==1)issues.push(issue('INVALID_EVIDENCE_ATTACHMENT_REF',`${path}/attachmentRef`,'Provide exactly one of tempKey or recordId.'));else if(evidence.attachmentRef.tempKey&&!safe(envelope.attachments).some(a=>a.temporaryKey===evidence.attachmentRef.tempKey))issues.push(issue('UNRESOLVED_EVIDENCE_ATTACHMENT',`${path}/attachmentRef`,'Attachment declaration does not exist.'));else if(evidence.attachmentRef.recordId&&!workflow.records(project,'artifacts',{active:true}).some(x=>workflow.recordId(x,'artifacts')===String(evidence.attachmentRef.recordId)))issues.push(issue('UNRESOLVED_EVIDENCE_ATTACHMENT',`${path}/attachmentRef`,'Canonical attachment does not exist or is inactive.'));}}
   });
 
   if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{
@@ -191,7 +197,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
         if(!target)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Temporary relationship ${reference.tempKey} does not exist.`));
         else if(target.collection!==expectedCollection)issues.push(issue('WRONG_RELATIONSHIP_TYPE',`${path}/relationships/${pointerEscape(name)}`,`${name} must refer to ${expectedCollection}, not ${target.collection}.`));
       }else if(reference.recordId){
-        const exists=workflow.records(project,expectedCollection,{active:false}).some(existing=>workflow.recordId(existing,expectedCollection)===String(reference.recordId));
+        const exists=workflow.records(project,expectedCollection,{active:true}).some(existing=>workflow.recordId(existing,expectedCollection)===String(reference.recordId));
         if(!exists)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Canonical ${expectedCollection} record ${reference.recordId} does not exist.`));
       }
     }
@@ -268,17 +274,14 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
       EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'UNKNOWN',
       SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'
     };
-    evidence.push({id,stage:Number(envelope.stage),createdAt:now(),active:true,fields,...fields,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:source.temporaryKey,sourceReference:clone(source.sourceRef||null),attachmentReference:source.attachmentRef||null});
+    evidence.push({id,stage:Number(envelope.stage),createdAt:now(),active:true,fields,...fields,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:source.temporaryKey,sourceReference:clone(source.sourceRef||null),attachmentReference:clone(source.attachmentRef||null)});
   }
-  for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){
-    const id=workflow.allocateId(project,collection);
-    tempToCanonical[proposed.tempKey]={collection,id};
-  }
+  for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):workflow.allocateId(project,collection);if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}
   const canonicalRecords={};
   for(const [collection,list] of Object.entries(envelope.records||{})){
     canonicalRecords[collection]=safe(list).map(proposed=>{
       const definition=schema.RECORD_SCHEMAS[collection];
-      const id=tempToCanonical[proposed.tempKey].id;
+      const id=proposed.targetId?String(proposed.targetId):tempToCanonical[proposed.tempKey].id;
       const fields=clone(proposed.fields||{});
       fields[definition.idField]=id;
       const relationships={};
@@ -290,7 +293,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
       const evidenceRefs=safe(proposed.evidenceRefs).map(ref=>tempToCanonical[ref]?.id).filter(Boolean);
       return {
         id,stage:Number(envelope.stage),createdAt:now(),active:true,fields,...fields,relationships,evidenceRefs,
-        notes:proposed.notes||'',temporaryKey:proposed.tempKey,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId
+        notes:proposed.notes||'',temporaryKey:proposed.tempKey||null,targetId:proposed.targetId||null,updateTargetId:proposed.targetId||null,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId
       };
     });
   }
@@ -298,25 +301,22 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
     const source=evidenceRecord.sourceReference;
     if(source?.tempKey)evidenceRecord.fields.SOURCE_ID=evidenceRecord.SOURCE_ID=tempToCanonical[source.tempKey]?.id||'UNKNOWN';
     else if(source?.recordId)evidenceRecord.fields.SOURCE_ID=evidenceRecord.SOURCE_ID=String(source.recordId);
-    if(evidenceRecord.attachmentReference)evidenceRecord.fields.ATTACHMENT_ID=evidenceRecord.ATTACHMENT_ID=tempToCanonical[evidenceRecord.attachmentReference]?.id||'UNKNOWN';
+    if(evidenceRecord.attachmentReference?.tempKey)evidenceRecord.fields.ATTACHMENT_ID=evidenceRecord.ATTACHMENT_ID=tempToCanonical[evidenceRecord.attachmentReference.tempKey]?.id||null;else if(evidenceRecord.attachmentReference?.recordId)evidenceRecord.fields.ATTACHMENT_ID=evidenceRecord.ATTACHMENT_ID=String(evidenceRecord.attachmentReference.recordId);if(evidenceRecord.sourceReference&&(evidenceRecord.fields.SOURCE_ID==='UNKNOWN'||evidenceRecord.fields.SOURCE_ID===null))throw new Error('Validated evidence source failed canonical resolution.');if(evidenceRecord.attachmentReference&&(evidenceRecord.fields.ATTACHMENT_ID==='UNKNOWN'||evidenceRecord.fields.ATTACHMENT_ID===null))throw new Error('Validated evidence attachment failed canonical resolution.');
     evidenceRecord.fields.SHA256=evidenceRecord.SHA256=hash.sha256Text(String(evidenceRecord.CONTENT||''));
     evidenceRecord.sha256=hash.sha256Value(evidenceRecord.fields);
   }
-  for(const records of Object.values(canonicalRecords))for(const record of records)record.sha256=hash.sha256Value({fields:record.fields,relationships:record.relationships,evidenceRefs:record.evidenceRefs});
+  for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}
 
   const proposedStageData=clone(envelope.stageData||{});
   const changes=[];
-  for(const [name,value] of Object.entries(proposedStageData))changes.push({jsonPointer:`/stageData/${pointerEscape(name)}`,canonicalRecordType:'stageData',canonicalRecordId:`STAGE-${String(envelope.stage).padStart(2,'0')}`,canonicalField:name,normalizedValue:clone(value),temporaryResponseKey:null});
-  for(const [collection,list] of Object.entries(canonicalRecords))for(const record of list){
-    for(const [name,value] of Object.entries(record.fields))changes.push({jsonPointer:`/records/${pointerEscape(collection)}/${pointerEscape(record.temporaryKey)}/fields/${pointerEscape(name)}`,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:name,normalizedValue:clone(value),temporaryResponseKey:record.temporaryKey});
-    for(const evidenceId of record.evidenceRefs)changes.push({jsonPointer:`/records/${pointerEscape(collection)}/${pointerEscape(record.temporaryKey)}/evidenceRefs`,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:'evidenceRefs',normalizedValue:evidenceId,temporaryResponseKey:record.temporaryKey});
-  }
-  for(const record of evidence)for(const [name,value] of Object.entries(record.fields))changes.push({jsonPointer:`/evidence/${pointerEscape(record.temporaryKey)}/${pointerEscape(name)}`,canonicalRecordType:'evidenceRecords',canonicalRecordId:record.id,canonicalField:name,normalizedValue:clone(value),temporaryResponseKey:record.temporaryKey});
+  for(const [name,value] of Object.entries(proposedStageData))changes.push({origin:'AGENT_VALUE',jsonPointer:`/stageData/${pointerEscape(name)}`,rawValueHash:hash.sha256Value(value),normalizerUsed:null,canonicalCollection:'stageData',canonicalRecordType:'stageData',canonicalRecordId:`STAGE-${String(envelope.stage).padStart(2,'0')}`,canonicalField:name,relationshipTargetId:null,evidenceIds:[],normalizedValue:clone(value),temporaryResponseKey:null});
+  for(const [collection,list] of Object.entries(canonicalRecords))list.forEach((record,index)=>{const proposed=safe(envelope.records?.[collection])[index];const def=schema.RECORD_SCHEMAS[collection];changes.push({origin:record.updateTargetId?'APPLICATION_RELATIONSHIP_RESOLUTION':'APPLICATION_ID_ALLOCATION',jsonPointer:null,rawValueHash:null,normalizerUsed:null,canonicalCollection:collection,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:def.idField,relationshipTargetId:null,evidenceIds:record.evidenceRefs||[],normalizedValue:record.id,temporaryResponseKey:record.temporaryKey});for(const [name,value] of Object.entries(proposed?.fields||{}))changes.push({origin:'AGENT_VALUE',jsonPointer:`/records/${pointerEscape(collection)}/${index}/fields/${pointerEscape(name)}`,rawValueHash:hash.sha256Value(value),normalizerUsed:null,canonicalCollection:collection,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:name,relationshipTargetId:null,evidenceIds:record.evidenceRefs||[],normalizedValue:clone(value),temporaryResponseKey:record.temporaryKey});for(const [name,reference] of Object.entries(proposed?.relationships||{})){const target=reference.tempKey?tempToCanonical[reference.tempKey]?.id:String(reference.recordId);changes.push({origin:'APPLICATION_RELATIONSHIP_RESOLUTION',jsonPointer:`/records/${pointerEscape(collection)}/${index}/relationships/${pointerEscape(name)}`,rawValueHash:hash.sha256Value(reference),normalizerUsed:null,canonicalCollection:collection,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:name,relationshipTargetId:target,evidenceIds:record.evidenceRefs||[],normalizedValue:target,temporaryResponseKey:record.temporaryKey});}});
+  evidence.forEach((record,index)=>{const source=safe(envelope.evidence)[index];for(const [name,value] of Object.entries(source||{})){if(['temporaryKey','sourceRef','attachmentRef','notes'].includes(name))continue;changes.push({origin:'AGENT_VALUE',jsonPointer:`/evidence/${index}/${pointerEscape(name)}`,rawValueHash:hash.sha256Value(value),normalizerUsed:null,canonicalCollection:'evidenceRecords',canonicalRecordType:'evidenceRecords',canonicalRecordId:record.id,canonicalField:name,evidenceIds:[],normalizedValue:clone(value),temporaryResponseKey:record.temporaryKey});}changes.push({origin:'APPLICATION_ID_ALLOCATION',jsonPointer:null,rawValueHash:null,normalizerUsed:null,canonicalCollection:'evidenceRecords',canonicalRecordType:'evidenceRecords',canonicalRecordId:record.id,canonicalField:'EVIDENCE_ID',relationshipTargetId:null,evidenceIds:[],normalizedValue:record.id,temporaryResponseKey:record.temporaryKey});changes.push({origin:'APPLICATION_HASH',jsonPointer:null,rawValueHash:null,normalizerUsed:null,canonicalCollection:'evidenceRecords',canonicalRecordType:'evidenceRecords',canonicalRecordId:record.id,canonicalField:'SHA256',relationshipTargetId:null,evidenceIds:[],normalizedValue:record.SHA256,temporaryResponseKey:record.temporaryKey});});
 
   return {
     proposalId,rawResponseId:rawRecord.rawResponseId,validationId:validationRecord.validationId,promptId:promptRecord.instructionId||promptRecord.promptId,
     bodySha256:promptRecord.bodySha256||promptRecord.sha256,promptSha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature,scopeSha256:promptRecord.scopeSha256,jobId:envelope.jobId,stage:Number(envelope.stage),responseSchemaVersion:envelope.schema,responseType:envelope.responseType,
-    createdAt:now(),status:'PENDING_OPERATOR_REVIEW',envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
+    createdAt:now(),status:'PENDING_OPERATOR_REVIEW',canonicalEnvelopeSha256:hash.canonicalEnvelopeSha256(envelope),preconditions:proposalPreconditions(project,envelope,promptRecord),envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
     humanInputRequests:clone(envelope.humanInputRequests||[]),unresolved:clone(envelope.unresolved||[]),warnings:clone(envelope.warnings||[]),attachments:clone(envelope.attachments||[])
   };
 }
@@ -351,6 +351,7 @@ function prepare(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}=
 
   let envelope=null,parseError=null;
   try{envelope=strictParse(rawText);}catch(error){parseError=error;}
+  if(envelope){const envelopeHash=hash.canonicalEnvelopeSha256(envelope);const prior=safe(next.projectData.rawResponses).find(r=>r.canonicalEnvelopeSha256===envelopeHash&&Number(r.stage)===stageNumber&&r.promptInstructionId===(prompt?.instructionId||prompt?.promptId));if(prior){const receipt=findReceipt(next,prior.receiptId);const proposal=prior.proposalId?findProposal(next,prior.proposalId):null;const validation=prior.validationId?findValidation(next,prior.validationId):null;return {project:next,rawRecord:prior,validation,proposal,receipt,disposition:safe(next.projectData.responseDispositions).find(d=>d.rawResponseId===prior.rawResponseId)||null,duplicate:true};}}
   let validation;
   if(parseError){
     validation={valid:false,issues:[issue(parseError.code||'MALFORMED_JSON','/',parseError.message)],errorCount:1,warningCount:0,checkedAt:now(),responseSchema:null,responseType:null};
@@ -369,12 +370,13 @@ function prepare(project,{stage,text,promptRecord,contextId='UNKNOWN',files=[]}=
     rawRecord.proposalId=proposal.proposalId;
   }
   const receipt=createReceipt(next,{stage:stageNumber,promptRecord:prompt||{},rawRecord,validationRecord,proposal});
+  let responseDisposition=null;if(!validation.valid){responseDisposition=disposition(next,'VALIDATION_FAILED_RESPONSE',{stage:stageNumber,rawResponseId,promptId:prompt?.instructionId||prompt?.promptId||'UNKNOWN',validationId,receiptId:receipt.receiptId,details:{issueCodes:validation.issues.map(x=>x.code)}});receipt.rejectedResponseId=responseDisposition.dispositionId;receipt.completionState='VALIDATION_FAILED_RESPONSE';rawRecord.dispositionId=responseDisposition.dispositionId;}
   rawRecord.receiptId=receipt.receiptId;
   validationRecord.receiptId=receipt.receiptId;
   if(proposal)proposal.receiptId=receipt.receiptId;
   workflow.addHistory(next,validation.valid?'RESPONSE_VALIDATED':'RESPONSE_VALIDATION_FAILED',{stage:stageNumber,rawResponseId,validationId,proposalId:proposal?.proposalId||'NONE',issueCodes:validation.issues.map(item=>item.code)});
   workflow.recalculate(next);
-  return {project:next,rawRecord,validation:validationRecord,proposal,receipt};
+  return {project:next,rawRecord,validation:validationRecord,proposal,receipt,disposition:responseDisposition};
 }
 
 function findProposal(project,proposalId){return safe(project?.projectData?.responseProposals).find(item=>item.proposalId===proposalId);}
@@ -383,82 +385,21 @@ function findRaw(project,rawResponseId){return safe(project?.projectData?.rawRes
 function findValidation(project,validationId){return safe(project?.projectData?.responseValidations).find(item=>item.validationId===validationId);}
 
 function ensureProposalCurrent(project,proposal){
-  if(!proposal)throw new Error('Response proposal does not exist.');
-  if(proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Response proposal is ${proposal.status}, not pending review.`);
-  const latest=safe(project.projectData.generatedPrompts).filter(record=>Number(record.stage)===Number(proposal.stage)&&!record.invalidatedBy).at(-1);
-  if(!latest)throw new Error('The controlling generated instruction no longer exists.');
-  if((latest.instructionId||latest.promptId)!==proposal.promptId||(latest.sha256||latest.bodySha256)!==proposal.promptSha256)throw new Error('The response proposal is stale because a newer prompt identity exists.');
+  if(!proposal)throw new Error('Response proposal does not exist.');if(proposal.status==='ACCEPTED'||proposal.status==='QUESTIONS_CREATED'||proposal.status==='BLOCKER_ACCEPTED'||proposal.status==='EXECUTION_FAILURE_ACCEPTED')return {idempotent:true};if(['REJECTED','CORRECTION_REQUESTED'].includes(proposal.status)){const prior=safe(next.projectData.rejectedResponses).find(x=>x.proposalId===proposalId);return {project:next,rejected:prior,receipt:findReceipt(next,proposal.receiptId),idempotent:true};}if(proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Response proposal is ${proposal.status}, not pending review.`);
+  const latest=safe(project.projectData.generatedPrompts).filter(record=>Number(record.stage)===Number(proposal.stage)&&!record.invalidatedBy).at(-1);if(!latest)throw new Error('The controlling generated instruction no longer exists.');const p=proposal.preconditions||{};const current={projectRevision:Number(project.revision||0),instructionId:latest.instructionId||latest.promptId,bodySha256:latest.bodySha256||latest.sha256,contractSha256:latest.contractSha256,contextSignature:latest.contextSignature,scopeSha256:hash.sha256Value(proposal.envelope.scope||{}),referencedRecordHashes:referencedRecordHashes(project,proposal.envelope)};for(const key of ['projectRevision','instructionId','bodySha256','contractSha256','contextSignature','scopeSha256'])if(JSON.stringify(p[key])!==JSON.stringify(current[key])){const e=new Error(`The response proposal is stale: ${key} changed.`);e.code='STALE_PROPOSAL';throw e;}if(hash.sha256Value(p.referencedRecordHashes||{})!==hash.sha256Value(current.referencedRecordHashes||{})){const e=new Error('The response proposal is stale because a referenced record changed.');e.code='STALE_PROPOSAL';throw e;}
+  const shadow=clone(project);shadow.projectData.rawResponses=safe(shadow.projectData.rawResponses).filter(r=>r.rawResponseId!==proposal.rawResponseId);const raw=findRaw(project,proposal.rawResponseId);const validation=validateEnvelope(shadow,proposal.envelope,{stage:proposal.stage,promptRecord:latest,rawSha256:raw?.sha256||hash.rawResponseSha256(JSON.stringify(proposal.envelope))});if(!validation.valid){const e=new Error(`Proposal precommit revalidation failed: ${validation.issues.map(x=>x.code).join(', ')}.`);e.code='STALE_PROPOSAL';e.issues=validation.issues;throw e;}return {idempotent:false};
 }
 
 function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accepted after operator review.'}={}){
-  const next=clone(project);
-  workflow.ensureShape(next);
-  const proposal=findProposal(next,proposalId);
-  ensureProposalCurrent(next,proposal);
-  const validation=findValidation(next,proposal.validationId);
-  if(!validation?.valid)throw new Error('Only a fully valid response proposal can be committed.');
-  const stage=Number(proposal.stage);
-  const priorCommitted=workflow.acceptedChanges(next,stage).length>0;
-  const downstreamActive=Object.values(next.stages).some(state=>Number(state.number)>stage&&(state.status==='COMPLETE'||state.acceptedResponseIds?.length));
-  const changeId=workflow.allocateInfrastructureId(next,'ACCEPTED-CHANGE','acceptedChanges');
-  if(priorCommitted&&downstreamActive)workflow.invalidateDownstream(next,stage,changeId,'Accepted canonical response revised an upstream stage.');
-
-  const committedRecordIds=[];
-  for(const evidence of proposal.evidence){
-    if(next.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);
-    next.projectData.evidenceRecords.push(clone(evidence));committedRecordIds.push(evidence.id);
-  }
-  for(const [collection,list] of Object.entries(proposal.canonicalRecords)){
-    for(const canonical of list){
-      if(next.projectData[collection].some(record=>workflow.recordId(record,collection)===canonical.id))throw new Error(`Canonical ID collision: ${canonical.id}.`);
-      const contentDuplicate=next.projectData[collection].find(record=>record.sha256===canonical.sha256&&workflow.isActiveRecord(record));
-      if(contentDuplicate)throw new Error(`Canonical duplicate detected: ${collection} proposal duplicates ${workflow.recordId(contentDuplicate,collection)}.`);
-      next.projectData[collection].push(clone(canonical));committedRecordIds.push(canonical.id);
-    }
-  }
-
-  const state=next.stages[stage];
-  state.acceptedData={...state.acceptedData,...clone(proposal.proposedStageData)};
-  state.acceptedResponseIds.push(proposal.rawResponseId);
-  if(stage===1){
-    for(const name of schema.AGENT_JOB_FIELDS)if(Object.hasOwn(proposal.proposedStageData,name))next.job[name]=clone(proposal.proposedStageData[name]);
-  }
-
-  const acceptedChange={changeId,rawResponseId:proposal.rawResponseId,proposalId:proposal.proposalId,validationId:proposal.validationId,jobId:next.job.JOB_ID,stage,responseType:proposal.responseType,operator,reviewNote,committedAt:now(),status:'COMMITTED',canonicalRecordIds:committedRecordIds,stageFields:Object.keys(proposal.proposedStageData),promptId:proposal.promptId,promptSha256:proposal.promptSha256};
-  next.projectData.acceptedChanges.push(acceptedChange);
-  proposal.status='ACCEPTED';proposal.acceptedChangeId=changeId;proposal.reviewedAt=acceptedChange.committedAt;proposal.reviewedBy=operator;proposal.reviewNote=reviewNote;
-  validation.status='ACCEPTED';
-  const raw=findRaw(next,proposal.rawResponseId);if(raw){raw.status='ACCEPTED_CANONICAL_CHANGE';raw.acceptedChangeId=changeId;}
-
-  const manifestId=workflow.allocateInfrastructureId(next,'EXTRACTION-MANIFEST','extractionManifests');
-  const manifest={manifestId,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,promptSha256:proposal.promptSha256,jobId:next.job.JOB_ID,stage,responseSchemaVersion:proposal.responseSchemaVersion,acceptedChangeId:changeId,committedAt:acceptedChange.committedAt,entries:proposal.changes.map(entry=>({...clone(entry),validationRulesExecuted:['SCHEMA','IDENTITY','OWNERSHIP','STAGE_SCOPE','RELATIONSHIP','EVIDENCE','DUPLICATE'],validationResult:'SATISFIED',committedAt:acceptedChange.committedAt}))};
-  next.projectData.extractionManifests.push(manifest);
-  acceptedChange.extractionManifestId=manifestId;
-
-  if(proposal.responseType==='HUMAN_INPUT_REQUIRED'){
-    for(const request of proposal.humanInputRequests){
-      next.projectData.humanInputRequests.push({requestId:workflow.allocateInfrastructureId(next,'HUMAN-INPUT-REQUEST','humanInputRequests'),temporaryKey:request.temporaryKey,jobId:next.job.JOB_ID,stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,question:request.question,whyRequired:request.whyRequired,affectedStageFields:clone(request.affectedStageFields),affectedRecords:clone(request.affectedRecords),answerType:request.answerType,allowedValues:clone(request.allowedValues),blocking:request.blocking!==false,status:'OPEN',createdAt:acceptedChange.committedAt});
-    }
-    acceptedChange.status='QUESTIONS_CREATED';
-  }
-
-  const receipt=findReceipt(next,proposal.receiptId);
-  if(receipt){receipt.acceptedCanonicalChangeId=changeId;receipt.extractionManifestId=manifestId;receipt.completionState=proposal.responseType==='HUMAN_INPUT_REQUIRED'?'HUMAN_INPUT_REQUIRED':'ACCEPTED_CANONICAL_CHANGE';receipt.nextRequiredVerificationStage=proposal.responseType==='HUMAN_INPUT_REQUIRED'?`STAGE ${String(stage).padStart(2,'0')} HUMAN INPUT`:`STAGE ${String(stage).padStart(2,'0')} GATE RECALCULATION`;}
-
-  workflow.registerStageVersion(next,stage,changeId);
-  workflow.recalculate(next);
-  if(stage===27){workflow.recordReleaseDetermination(next);}
-  if(stage===29){workflow.constructEvidenceChains(next);}
-  if(stage===30){
-    const registry=next.projectData.permanentRegistry;
-    registry.appendOnly=true;registry.defects=safe(registry.defects);registry.regressions=safe(registry.regressions);
-    for(const record of workflow.records(next,'defects',{active:false}))if(!registry.defects.some(item=>item.id===workflow.recordId(record,'defects')))registry.defects.push({id:workflow.recordId(record,'defects'),sha256:record.sha256,record:clone(record)});
-    for(const record of workflow.records(next,'regressions',{active:false}))if(!registry.regressions.some(item=>item.id===workflow.recordId(record,'regressions')))registry.regressions.push({id:workflow.recordId(record,'regressions'),sha256:record.sha256,record:clone(record)});
-    registry.updatedAt=now();registry.sha256=hash.sha256Value({appendOnly:registry.appendOnly,defects:registry.defects,regressions:registry.regressions});
-  }
-  workflow.addHistory(next,'CANONICAL_RESPONSE_COMMITTED',{stage,rawResponseId:proposal.rawResponseId,proposalId,changeId,manifestId,canonicalRecordIds:committedRecordIds});
-  workflow.recalculate(next);
-  return {project:next,acceptedChange,manifest,receipt:findReceipt(next,proposal.receiptId)};
+  const next=clone(project);workflow.ensureShape(next);const proposal=findProposal(next,proposalId);if(!proposal)throw new Error('Response proposal does not exist.');if(['ACCEPTED','QUESTIONS_CREATED','BLOCKER_ACCEPTED','EXECUTION_FAILURE_ACCEPTED'].includes(proposal.status)){const existing=safe(next.projectData.responseDispositions).find(d=>d.proposalId===proposalId);return {project:next,acceptedChange:existing?.acceptedChangeId?safe(next.projectData.acceptedChanges).find(c=>c.changeId===existing.acceptedChangeId):null,disposition:existing,manifest:existing?.manifestId?safe(next.projectData.extractionManifests).find(m=>m.manifestId===existing.manifestId):null,receipt:findReceipt(next,proposal.receiptId),idempotent:true};}
+  ensureProposalCurrent(next,proposal);const validation=findValidation(next,proposal.validationId);if(!validation?.valid)throw new Error('Only a fully valid response proposal can be committed.');const stage=Number(proposal.stage),stamp=now(),receipt=findReceipt(next,proposal.receiptId),raw=findRaw(next,proposal.rawResponseId);
+  if(proposal.responseType!=='DATA_PROPOSAL'){let type,status,details={};if(proposal.responseType==='HUMAN_INPUT_REQUIRED'){type='ACCEPTED_HUMAN_QUESTION_SET';status='QUESTIONS_CREATED';for(const request of proposal.humanInputRequests){next.projectData.humanInputRequests.push({requestId:workflow.allocateInfrastructureId(next,'HUMAN-INPUT-REQUEST','humanInputRequests'),temporaryKey:request.temporaryKey,jobId:next.job.JOB_ID,stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,question:request.question,whyRequired:request.whyRequired,affectedStageFields:clone(request.affectedStageFields),affectedRecords:clone(request.affectedRecords),answerType:request.answerType,allowedValues:clone(request.allowedValues),blocking:request.blocking!==false,status:'OPEN',createdAt:stamp});}}else if(proposal.responseType==='BLOCKED'){type='ACCEPTED_BLOCKER_EVENT';status='BLOCKER_ACCEPTED';const blockerIds=[];for(const item of proposal.unresolved.filter(x=>x.blocking!==false)){const id=workflow.allocateId(next,'blockers');const fields={BLOCKER_ID:id,MISSING_ITEM_TYPE:item.kind,MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:item.description,AFFECTED_REQUIREMENTS:item.affectedRecords,AFFECTED_TESTS:[],AFFECTED_ARTIFACTS:item.affectedStageFields,WHY_WORK_CANNOT_CONTINUE:item.whyBlocking,ATTEMPTED_RESOLUTIONS:'NONE',DOWNSTREAM_WORK_STOPPED:`STAGE ${String(stage).padStart(2,'0')}`,OWNER:'UNASSIGNED',STATUS:'OPEN',RESOLUTION_EVIDENCE:'NONE',CLOSURE:'OPEN',REEVALUATION:'REQUIRED',REQUIRED_REVALIDATION:'REQUIRED'};next.projectData.blockers.push({id,stage,active:true,fields,...fields,contentSha256:hash.contentRecordSha256({fields},'BLOCKER_ID'),recordSha256:hash.recordSha256({fields}),source:'APPLICATION_DISPOSITION',rawResponseId:proposal.rawResponseId});blockerIds.push(id);}details.blockerIds=blockerIds;}else{type='ACCEPTED_EXECUTION_FAILURE';status='EXECUTION_FAILURE_ACCEPTED';const failureId=workflow.allocateInfrastructureId(next,'EXECUTION-FAILURE','executionFailures');next.projectData.executionFailures.push({failureId,stage,jobId:next.job.JOB_ID,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,scope:clone(proposal.envelope.scope||{}),unresolved:clone(proposal.unresolved),warnings:clone(proposal.warnings),createdAt:stamp});details.failureId=failureId;}const d=disposition(next,type,{stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,validationId:proposal.validationId,proposalId,receiptId:proposal.receiptId,details});proposal.status=status;proposal.reviewedAt=stamp;proposal.reviewedBy=operator;proposal.reviewNote=reviewNote;validation.status=type;if(raw){raw.status=type;raw.dispositionId=d.dispositionId;}next.stages[stage].acceptedControlEventIds.push(d.dispositionId);if(receipt){receipt.acceptedCanonicalChangeId='NONE';receipt.completionState=type;receipt.nextRequiredVerificationStage=type==='ACCEPTED_HUMAN_QUESTION_SET'?`STAGE ${String(stage).padStart(2,'0')} HUMAN INPUT`:`STAGE ${String(stage).padStart(2,'0')} BLOCKED`;}workflow.recalculate(next);return {project:next,acceptedChange:null,manifest:null,disposition:d,receipt,idempotent:false};}
+  const priorCommitted=workflow.acceptedChanges(next,stage).length>0,downstreamActive=Object.values(next.stages).some(state=>Number(state.number)>stage&&(state.status==='COMPLETE'||state.acceptedDataChangeIds?.length||state.acceptedResponseIds?.length));const changeId=workflow.allocateInfrastructureId(next,'ACCEPTED-CHANGE','acceptedChanges');if(priorCommitted){for(const [collection,items] of Object.entries(proposal.canonicalRecords)){const policy=schema.RECORD_SCHEMAS[collection]?.commitPolicy;if(policy==='REPLACE_CURRENT_STAGE_SET')for(const record of workflow.records(next,collection,{stage,active:true})){record.active=false;record.validity='SUPERSEDED';record.supersededBy=changeId;}}if(downstreamActive)workflow.invalidateDownstream(next,stage,changeId,'Accepted canonical response revised an upstream stage.');}
+  const committedRecordIds=[];for(const evidence of proposal.evidence){if(next.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);next.projectData.evidenceRecords.push(clone(evidence));committedRecordIds.push(evidence.id);}
+  for(const [collection,list] of Object.entries(proposal.canonicalRecords)){const policy=schema.RECORD_SCHEMAS[collection]?.commitPolicy;for(const canonical of list){if(policy==='APPLICATION_DERIVED')throw new Error(`External responses cannot commit application-derived collection ${collection}.`);if(canonical.updateTargetId){const target=next.projectData[collection].find(r=>workflow.recordId(r,collection)===canonical.id&&workflow.isActiveRecord(r));if(!target)throw new Error(`Reserved target disappeared: ${canonical.id}.`);target.fields={...(target.fields||{}),...clone(canonical.fields)};Object.assign(target,target.fields);target.relationships={...(target.relationships||{}),...clone(canonical.relationships||{})};target.evidenceRefs=[...new Set([...(target.evidenceRefs||[]),...(canonical.evidenceRefs||[])])];target.contentSha256=hash.contentRecordSha256(target,schema.RECORD_SCHEMAS[collection].idField);target.recordSha256=hash.recordSha256(target);target.sha256=target.recordSha256;target.status='COMPLETED';committedRecordIds.push(canonical.id);continue;}if(next.projectData[collection].some(record=>workflow.recordId(record,collection)===canonical.id))throw new Error(`Canonical ID collision: ${canonical.id}.`);const duplicate=next.projectData[collection].find(record=>record.contentSha256===canonical.contentSha256&&workflow.isActiveRecord(record));if(duplicate)throw new Error(`Canonical duplicate detected: ${collection} proposal duplicates ${workflow.recordId(duplicate,collection)}.`);next.projectData[collection].push(clone(canonical));committedRecordIds.push(canonical.id);}}
+  const state=next.stages[stage];state.agentData={...state.agentData,...clone(proposal.proposedStageData)};state.acceptedData=state.agentData;state.acceptedResponseIds.push(proposal.rawResponseId);if(stage===1)for(const name of schema.AGENT_JOB_FIELDS)if(Object.hasOwn(proposal.proposedStageData,name))next.job[name]=clone(proposal.proposedStageData[name]);
+  const history=workflow.addHistory(next,'CANONICAL_RESPONSE_COMMITTED',{stage,rawResponseId:proposal.rawResponseId,proposalId,changeId,canonicalRecordIds:committedRecordIds});const acceptedChange={changeId,rawResponseId:proposal.rawResponseId,proposalId:proposal.proposalId,validationId:proposal.validationId,jobId:next.job.JOB_ID,stage,responseType:'DATA_PROPOSAL',operatorLabel:operator,identityAssurance:'SELF_ASSERTED',reviewNote,committedAt:history.deviceTimestamp,eventSequence:history.eventSequence,deviceTimestamp:history.deviceTimestamp,status:'COMMITTED',canonicalRecordIds:committedRecordIds,stageFields:Object.keys(proposal.proposedStageData),promptId:proposal.promptId,bodySha256:proposal.bodySha256||proposal.promptSha256,contractSha256:proposal.contractSha256,contextSignature:proposal.contextSignature,canonicalEnvelopeSha256:proposal.canonicalEnvelopeSha256};next.projectData.acceptedChanges.push(acceptedChange);state.acceptedDataChangeIds.push(changeId);proposal.status='ACCEPTED';proposal.acceptedChangeId=changeId;proposal.reviewedAt=acceptedChange.committedAt;proposal.reviewedBy=operator;proposal.reviewNote=reviewNote;validation.status='ACCEPTED_DATA_CHANGE';if(raw){raw.status='ACCEPTED_DATA_CHANGE';raw.acceptedChangeId=changeId;}
+  const manifestId=workflow.allocateInfrastructureId(next,'EXTRACTION-MANIFEST','extractionManifests');const manifest={manifestId,rawResponseId:proposal.rawResponseId,promptIdentity:{instructionId:proposal.promptId,bodySha256:proposal.bodySha256||proposal.promptSha256,contractSha256:proposal.contractSha256,contextSignature:proposal.contextSignature},contextSignature:proposal.contextSignature,jobId:next.job.JOB_ID,stage,responseSchemaVersion:proposal.responseSchemaVersion,acceptedChangeId:changeId,projectRevision:Number(next.revision||0),commitSequence:history.eventSequence,commitTimestamp:history.deviceTimestamp,entries:proposal.changes.map(entry=>({...clone(entry),rawResponseId:proposal.rawResponseId,promptIdentity:{instructionId:proposal.promptId,bodySha256:proposal.bodySha256||proposal.promptSha256,contractSha256:proposal.contractSha256,contextSignature:proposal.contextSignature},contextSignature:proposal.contextSignature,validationRuleIds:['SCHEMA','IDENTITY','OWNERSHIP','STAGE_SCOPE','VALUE_TYPE','RELATIONSHIP','EVIDENCE','DUPLICATE','PRECONDITION'],validationResults:['SATISFIED'],projectRevision:Number(next.revision||0),commitSequence:history.eventSequence,commitTimestamp:history.deviceTimestamp}))};next.projectData.extractionManifests.push(manifest);acceptedChange.extractionManifestId=manifestId;const d=disposition(next,'ACCEPTED_DATA_CHANGE',{stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,validationId:proposal.validationId,proposalId,receiptId:proposal.receiptId,details:{acceptedChangeId:changeId,manifestId}});if(receipt){receipt.acceptedCanonicalChangeId=changeId;receipt.extractionManifestId=manifestId;receipt.completionState='ACCEPTED_DATA_CHANGE';receipt.nextRequiredVerificationStage=`STAGE ${String(stage).padStart(2,'0')} GATE RECALCULATION`;}workflow.registerStageVersion(next,stage,changeId);workflow.recalculate(next);return {project:next,acceptedChange,manifest,disposition:d,receipt,idempotent:false};
 }
 
 function reject(project,proposalId,{operator='HUMAN_OPERATOR',reason='Rejected after operator review.',requestCorrection=false}={}){
@@ -474,39 +415,19 @@ function reject(project,proposalId,{operator='HUMAN_OPERATOR',reason='Rejected a
   const validation=findValidation(next,proposal.validationId);if(validation)validation.status=rejected.status;
   const raw=findRaw(next,proposal.rawResponseId);if(raw)raw.status=rejected.status;
   const receipt=findReceipt(next,proposal.receiptId);if(receipt){receipt.rejectedResponseId=rejectedResponseId;receipt.completionState=rejected.status;receipt.nextRequiredVerificationStage=`REGENERATE STAGE ${String(proposal.stage).padStart(2,'0')} RESPONSE`;}
-  workflow.addHistory(next,rejected.status,{stage:proposal.stage,rawResponseId:proposal.rawResponseId,proposalId,rejectedResponseId,reason});
+  const d=disposition(next,'REJECTED_RESPONSE',{stage:proposal.stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,validationId:proposal.validationId,proposalId,receiptId:proposal.receiptId,details:{rejectedResponseId,reason,requestCorrection:Boolean(requestCorrection)}});rejected.dispositionId=d.dispositionId;workflow.addHistory(next,rejected.status,{stage:proposal.stage,rawResponseId:proposal.rawResponseId,proposalId,rejectedResponseId,reason});
   workflow.recalculate(next);
   return {project:next,rejected,receipt};
 }
 
 function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
-  const next=clone(project);
-  workflow.ensureShape(next);
-  const answerMap=object(answers)?answers:{};
-  const changed=[];
-  const clarifications=safe(next.projectData.userEntered.clarifications);
-  for(const request of safe(next.projectData.humanInputRequests).filter(item=>upper(item.status)==='OPEN')){
-    if(!Object.hasOwn(answerMap,request.requestId))continue;
-    const value=answerMap[request.requestId];
-    if(request.blocking!==false&&(value===undefined||value===null||String(value).trim()===''))throw new Error(`Answer is required for ${request.requestId}.`);
-    if(request.answerType==='CHOICE'&&request.allowedValues.length&&!request.allowedValues.includes(value))throw new Error(`${request.requestId} must use an allowed value.`);
-    const answerId=workflow.allocateInfrastructureId(next,'HUMAN-INPUT-ANSWER','humanInputAnswers');
-    const record={answerId,requestId:request.requestId,jobId:next.job.JOB_ID,stage:request.stage,question:request.question,answer:clone(value),operator,answeredAt:now(),authority:'User Job Input'};
-    next.projectData.humanInputAnswers.push(record);
-    request.status='ANSWERED';request.answerId=answerId;request.answeredAt=record.answeredAt;
-    clarifications.push({requestId:request.requestId,question:request.question,answer:clone(value),answerId,stage:request.stage,answeredAt:record.answeredAt});
-    changed.push(`CLARIFICATION:${request.requestId}`);
-  }
-  if(!changed.length)throw new Error('No open human-input request received an answer.');
-  next.projectData.userEntered.clarifications=clarifications;
-  const version=workflow.recordHumanInputVersion(next,changed,operator);
-  workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed});
-  workflow.recalculate(next);
-  return {project:next,version,answeredCount:changed.length};
+  const next=clone(project);workflow.ensureShape(next);const answerMap=object(answers)?answers:{},changed=[],newAnswers=[];const clarifications=safe(next.projectData.userEntered.clarifications);
+  for(const request of safe(next.projectData.humanInputRequests).filter(item=>upper(item.status)==='OPEN')){if(!Object.hasOwn(answerMap,request.requestId))continue;const value=answerMap[request.requestId];validateHumanAnswer(request,value,next);const answerId=workflow.allocateInfrastructureId(next,'HUMAN-INPUT-ANSWER','humanInputAnswers');const record={answerId,requestId:request.requestId,jobId:next.job.JOB_ID,stage:request.stage,question:request.question,answer:clone(value),answerType:request.answerType,operatorLabel:operator,identityAssurance:'SELF_ASSERTED',affectedStageFields:clone(request.affectedStageFields||[]),affectedRecords:clone(request.affectedRecords||[]),answeredAt:now(),authority:'User Job Input'};next.projectData.humanInputAnswers.push(record);newAnswers.push(record);request.status='ANSWERED';request.answerId=answerId;request.answeredAt=record.answeredAt;clarifications.push({requestId:request.requestId,question:request.question,answer:clone(value),answerType:request.answerType,answerId,stage:request.stage,operatorLabel:operator,affectedStageFields:clone(request.affectedStageFields||[]),affectedRecords:clone(request.affectedRecords||[]),answeredAt:record.answeredAt});changed.push(`CLARIFICATION:${request.requestId}`);}
+  if(!changed.length)throw new Error('No open human-input request received an answer.');next.projectData.userEntered.clarifications=clarifications;const version=workflow.recordHumanInputVersion(next,changed,operator);for(const answer of newAnswers)answer.inputVersion=version.version;const affectedStages=[...new Set(newAnswers.map(x=>Number(x.stage)))];for(const stage of affectedStages){for(const proposal of safe(next.projectData.responseProposals).filter(x=>Number(x.stage)===stage&&x.status==='PENDING_OPERATOR_REVIEW')){proposal.status='STALE';proposal.invalidatedBy=version.inputVersionId;}for(const prompt of safe(next.projectData.generatedPrompts).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy)){prompt.invalidatedBy=version.inputVersionId;}for(const confirmation of safe(next.projectData.stageConfirmations).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy))confirmation.invalidatedBy=version.inputVersionId;const promptEngine=globalThis.closedLoopPromptEngine;if(promptEngine){const generated={...promptEngine.buildPromptRecord(stage,next),generatedAt:now()};next.projectData.generatedPrompts.push(generated);next.stages[stage].currentPromptId=generated.instructionId;}}workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds:affectedStages.map(stage=>next.stages[stage].currentPromptId)};
 }
 
 globalThis.closedLoopResponseIngestion=Object.freeze({
-  version:'closed-loop-response-ingestion/2',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,
-  strictParse,scanJsonAmbiguity,validateValue,validateEnvelope,planProposal,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation
+  version:'closed-loop-response-ingestion/3',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,
+  strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation
 });
 })();
