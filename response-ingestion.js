@@ -274,7 +274,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
       EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'UNKNOWN',
       SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'
     };
-    evidence.push({id,stage:Number(envelope.stage),createdAt:now(),active:true,fields,...fields,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:source.temporaryKey,sourceReference:clone(source.sourceRef||null),attachmentReference:clone(source.attachmentRef||null)});
+    evidence.push({id,stage:Number(envelope.stage),createdAt:now(),active:true,scope:clone(promptRecord.scope||{}),fields,...fields,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:source.temporaryKey,sourceReference:clone(source.sourceRef||null),attachmentReference:clone(source.attachmentRef||null)});
   }
   for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):workflow.allocateId(project,collection);if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}
   const canonicalRecords={};
@@ -292,7 +292,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
       }
       const evidenceRefs=safe(proposed.evidenceRefs).map(ref=>tempToCanonical[ref]?.id).filter(Boolean);
       return {
-        id,stage:Number(envelope.stage),createdAt:now(),active:true,fields,...fields,relationships,evidenceRefs,
+        id,stage:Number(envelope.stage),createdAt:now(),active:true,scope:clone(promptRecord.scope||{}),fields,...fields,relationships,evidenceRefs,
         notes:proposed.notes||'',temporaryKey:proposed.tempKey||null,targetId:proposed.targetId||null,updateTargetId:proposed.targetId||null,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId
       };
     });
@@ -316,7 +316,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord}
   return {
     proposalId,rawResponseId:rawRecord.rawResponseId,validationId:validationRecord.validationId,promptId:promptRecord.instructionId||promptRecord.promptId,
     bodySha256:promptRecord.bodySha256||promptRecord.sha256,promptSha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature,scopeSha256:promptRecord.scopeSha256,jobId:envelope.jobId,stage:Number(envelope.stage),responseSchemaVersion:envelope.schema,responseType:envelope.responseType,
-    createdAt:now(),status:'PENDING_OPERATOR_REVIEW',canonicalEnvelopeSha256:hash.canonicalEnvelopeSha256(envelope),preconditions:proposalPreconditions(project,envelope,promptRecord),envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
+    createdAt:now(),status:'PENDING_OPERATOR_REVIEW',scope:clone(promptRecord.scope||{}),canonicalEnvelopeSha256:hash.canonicalEnvelopeSha256(envelope),preconditions:proposalPreconditions(project,envelope,promptRecord),envelope:clone(envelope),proposedStageData,canonicalRecords,evidence,tempToCanonical,changes,
     humanInputRequests:clone(envelope.humanInputRequests||[]),unresolved:clone(envelope.unresolved||[]),warnings:clone(envelope.warnings||[]),attachments:clone(envelope.attachments||[])
   };
 }

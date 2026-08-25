@@ -44,12 +44,26 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   const p=project('JOB-GATES');
   assert(!engine.gate(8,p).complete&&engine.gate(8,p).reasons.some(r=>/Stage 7|verification|accepted/i.test(r)),'Stage 08 can complete without prerequisite evidence.');
   for(let i=0;i<9;i++)p.projectData.runs.push(record('runs',11,{CONTEXT_ID:`CTX-${i}`,CONTAMINATION_CHECK:'NONE',CANDIDATE_ID:'CANDIDATE-X',COMPLETE_OUTPUT:'output'},`RUN-${i}`));
-  assert(engine.gate(11,p).reasons.some(r=>/Exactly 10 independent runs/i.test(r)),'Stage 11 does not enforce exactly ten runs.');
-  assert(!engine.gate(12,p).complete&&engine.gate(12,p).reasons.some(r=>/ten runs|coverage/i.test(r)),'Stage 12 verification matrix gate is bypassable.');
+  assert(engine.gate(11,p).reasons.some(r=>/Exactly ten current runs|Exactly 10 independent runs/i.test(r)),'Stage 11 does not enforce exactly ten runs.');
+  assert(!engine.gate(12,p).complete&&engine.gate(12,p).reasons.some(r=>/ten runs|coverage|REQ × RUN × TEST/i.test(r)),'Stage 12 verification matrix gate is bypassable.');
   assert(engine.convergenceMetrics(p).converged===false,'Run count/empty state incorrectly establishes convergence.');
   assert(!engine.gate(20,p).complete&&engine.gate(20,p).reasons.some(r=>/unchanged confirmation/i.test(r)),'Stage 20 does not require unchanged confirmation.');
 }
 
+
+// Current-scope selection excludes historical scoped records.
+{
+  const p=project('JOB-SCOPE');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v002';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v002';p.job.CURRENT_ITERATION='ITERATION-2';
+  const current=record('requirements',4,{OBLIGATION:'current',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-CURRENT');current.scope={requirementsVersion:'REQUIREMENTS-v002'};
+  const stale=record('requirements',4,{OBLIGATION:'stale',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-STALE');stale.scope={requirementsVersion:'REQUIREMENTS-v001'};p.projectData.requirements.push(current,stale);
+  const ids=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(ids.includes('REQ-CURRENT')&&!ids.includes('REQ-STALE'),'Historical scope satisfied current selector.');
+}
+// Artifact identity is independent of file-selection order.
+{
+  const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));
+  const audited=[{artifactId:'A',name:'a.bin',size:1,sha256:'a'},{artifactId:'B',name:'b.bin',size:2,sha256:'b'}];const delivery=[{artifactId:'B',name:'b.bin',size:2,sha256:'b'},{artifactId:'A',name:'a.bin',size:1,sha256:'a'}];
+  const r=engine.verifyArtifactIdentity(p,audited,delivery);assert(r.length===2&&p.release.authorization==='AUTHORIZED','Artifact identity depends on file-selection order.');
+}
 // Material upstream change invalidates downstream records and release authorization.
 {
   const p=project('JOB-INVALIDATION');
