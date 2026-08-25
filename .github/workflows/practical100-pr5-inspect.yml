@@ -11,9 +11,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           s=Path('app-core.js').read_text()
-          terms=['function canonicalSupportRecord','function addBlocker','function addFreshContext','function recordControlledChange','function render','async function load','save-job','save-human-stage','answer-human-input','accept-proposal','reject-proposal','request-correction','add-blocker','add-fresh-context','controlled-change','attach-files','release-audited','release-delivery']
-          for term in terms:
-            i=s.find(term)
-            print('\n###',term,i)
-            print(s[max(0,i-500):i+3500] if i>=0 else 'NOT FOUND')
+          for term in ['function clarificationMarkup','answerHumanInput','function recordControlledChange','function filesView','function proposalMarkup','id="add-blocker"','id="add-context"','async function savePromptRecord','function wire','load();']:
+            i=s.find(term);print('\n###',term,i);print(s[max(0,i-500):i+3000] if i>=0 else 'NOT FOUND')
+          h=Path('index.html').read_text();print('\n### INDEX TAIL\n',h[-3500:])
           PY
