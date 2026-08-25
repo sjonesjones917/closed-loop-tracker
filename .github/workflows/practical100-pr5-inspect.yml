@@ -1,17 +1,41 @@
-name: Practical 100 PR5 inspect
+name: Practical 100 PR5 transformation
 on:
   push:
     branches: [practical-100/pr5-indexeddb-ui]
+permissions:
+  contents: write
 jobs:
-  inspect:
+  transform:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('app-core.js').read_text()
-          for term in ['function clarificationMarkup','answerHumanInput','function recordControlledChange','function filesView','function proposalMarkup','id="add-blocker"','id="add-context"','async function savePromptRecord','function wire','load();']:
-            i=s.find(term);print('\n###',term,i);print(s[max(0,i-500):i+3000] if i>=0 else 'NOT FOUND')
-          h=Path('index.html').read_text();print('\n### INDEX TAIL\n',h[-3500:])
-          PY
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Apply minimum PR5 changes
+        run: |
+          python .practical100-pr5.py
+          python .practical100-pr5-compat.py
+          python .practical100-pr5-legacyfix.py
+      - name: Syntax and deterministic verification
+        run: |
+          node --check project-store.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Browser acceptance
+        run: |
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified source only
+        run: |
+          rm .practical100-pr5.py .practical100-pr5-compat.py .practical100-pr5-legacyfix.py .github/workflows/practical100-pr5-inspect.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 5: IndexedDB bytes and validated operator controls"
+          git push origin HEAD:practical-100/pr5-indexeddb-ui
