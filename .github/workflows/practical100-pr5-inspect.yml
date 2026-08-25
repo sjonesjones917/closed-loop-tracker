@@ -42,6 +42,11 @@ jobs:
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
+          sleep 1
+          BROWSER=$(command -v google-chrome || command -v chromium || true)
+          "$BROWSER" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=3000 --enable-logging=stderr --dump-dom http://127.0.0.1:4173/ >/tmp/dom.txt 2>/tmp/chrome.log || true
+          grep -o "Mobile Closed-Loop[^<]*" /tmp/dom.txt | head || true
+          tail -80 /tmp/chrome.log || true
           node verify-browser.mjs
           node verify-browser-extra.mjs
       - name: Commit verified source only
