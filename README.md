@@ -24,7 +24,7 @@ There is no second parser, store, workflow engine, prompt layer, application she
 ## Current contracts
 
 - Project schema: `human-project/30` (the deterministic `closed-loop-project/2` migration is the next schema change).
-- Response schema: `closed-loop-stage-response/1` (the version-2 scope-bound contract is the next response-contract change).
+- Response schema: `closed-loop-stage-response/2` (the version-2 scope-bound contract is the next response-contract change).
 - Workflow: exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
 - Persistence: one `closedLoopProjectStore` adapter over verified browser storage. The application is browser-local and has no backend or multi-device synchronization.
