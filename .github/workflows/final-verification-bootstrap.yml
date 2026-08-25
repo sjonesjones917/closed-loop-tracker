@@ -22,7 +22,6 @@ jobs:
           p=Path('verify-complete.mjs');s=p.read_text();old="assert(engine.unresolvedHumanRequests(p,1).length===1&&p.stages[1].status==='BLOCKED','Blocking human question did not block Stage 01.');";new="assert(engine.unresolvedHumanRequests(p,1).length===1,'Blocking human question was not discoverable by the gate.');const humanGate=engine.gate(1,p);assert(humanGate.blocked===true,`Stage 01 gate returned blocked=${humanGate.blocked} with an unresolved blocking question.`);engine.recalculate(p);assert(p.stages[1].status==='BLOCKED',`Blocking human question left Stage 01 in ${p.stages[1].status}, not BLOCKED.`);";s=s.replace(old,new,1);p.write_text(s)
           p=Path('verify-browser.mjs');s=p.read_text();s=s.replace("assert(newest.stages['1'].status==='NOT STARTED'&&(newest.projectData.sources||[]).length===0,'New job carried prior active project records.');","assert(newest.job.CURRENT_STAGE==='STAGE 01'&&(newest.projectData.sources||[]).length===0,'New job did not begin cleanly at Stage 01.');",1);p.write_text(s)
           p=Path('verify-browser-extra.mjs');s=p.read_text();s=s.replace("===${JSON.stringify(roundTrip.job.JOB_ID)}","===roundTrip.job.JOB_ID",1);s=s.replace("assert((newest.projectData.sources||[]).length===0&&newest.stages['1'].status==='NOT STARTED','New job was not reset cleanly.');","assert((newest.projectData.sources||[]).length===0&&newest.job.CURRENT_STAGE==='STAGE 01','New job was not reset cleanly at Stage 01.');",1);old="await click(cdp,'#add-fresh-context');support=await activeProject(cdp);assert((support.projectData.freshContexts||[]).length>=1,'Fresh Context control did not persist a canonical context record.');";new="await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');";s=s.replace(old,new,1);s=s.replace("freshContextControl:true","freshContextControlContextual:true",1);p.write_text(s)
-          p=Path('.github/workflows/pages.yml');s=p.read_text();s=s.replace("          node --check verify-ingestion.mjs\n          node --check verify-live.mjs\n          node --check verify-browser.mjs\n","          node --check verify-ingestion.mjs\n          node --check verify-complete.mjs\n          node --check verify-live.mjs\n          node --check verify-browser.mjs\n          node --check verify-browser-extra.mjs\n",1);s=s.replace("      - name: Exercise all 30 stage prompt-response ingestion contracts and negative cases\n        run: node verify-ingestion.mjs\n","      - name: Exercise all 30 stage prompt-response ingestion contracts and negative cases\n        run: |\n          node verify-ingestion.mjs\n          node verify-complete.mjs\n",1);s=s.replace("      - run: node build-test-project.mjs && node verify.mjs && node verify-ingestion.mjs\n","      - run: node build-test-project.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs\n",1);s=s.replace("          node verify-browser.mjs\n","          node verify-browser.mjs\n          node verify-browser-extra.mjs\n",1);p.write_text(s)
           PY
       - name: Run complete source and deterministic regressions
         run: |
@@ -55,13 +54,12 @@ jobs:
           trap 'kill $server 2>/dev/null || true' EXIT
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
-      - name: Commit only the verified permanent repair
+      - name: Commit only verified source and regression files
         shell: bash
         run: |
-          rm .github/workflows/final-verification-bootstrap.yml
           git config user.name 'sjonesjones917'
           git config user.email 'sjones.jones917@gmail.com'
-          git add workflow-engine.js verify-complete.mjs verify-browser.mjs verify-browser-extra.mjs .github/workflows/pages.yml .github/workflows/final-verification-bootstrap.yml
+          git add workflow-engine.js verify-complete.mjs verify-browser.mjs verify-browser-extra.mjs
           git diff --cached --check
           git commit -m 'Complete deterministic workflow and acceptance regressions'
           git push origin HEAD:verify/final-requirement-ledger
