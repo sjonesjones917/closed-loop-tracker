@@ -16,10 +16,20 @@ jobs:
         run: node .pr3-transformer-fix.mjs
       - name: Transform ingestion and transaction rules
         run: node .practical100-pr3.mjs
-      - name: Align verification with PR3 semantics
+      - name: Apply PR3 prompt-regeneration and verifier corrections
         shell: python
         run: |
           from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);"
+          new="const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),activeExisting=existing.filter(x=>!x.invalidatedBy);"
+          assert old in s
+          s=s.replace(old,new,1)
+          old="const same=existing.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256&&x.contractSha256===contractSha256&&x.operation===operation);"
+          new="const same=activeExisting.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256&&x.contractSha256===contractSha256&&x.operation===operation);"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
           p=Path('build-test-project.mjs')
           s=p.read_text()
           assert 'ACCEPTED_CANONICAL_CHANGE' in s
@@ -34,6 +44,7 @@ jobs:
         run: |
           node --check workflow-engine.js
           node --check response-ingestion.js
+          node --check prompt-engine.js
           node --check verify-ingestion.mjs
           node --check build-test-project.mjs
       - name: Deterministic verification
