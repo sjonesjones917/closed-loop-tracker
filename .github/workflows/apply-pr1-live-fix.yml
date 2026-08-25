@@ -1,0 +1,50 @@
+name: Apply PR1 live typography correction
+on:
+  push:
+    branches: [practical-100/pr1-live-status-floor]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply the single verified CSS correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('index.html')
+          text=path.read_text(encoding='utf-8')
+          old='.workflow-list .stage-head>.status{grid-column:2;grid-row:1;margin:0;min-height:18px;padding:2px 6px;font-size:8px}'
+          new='.workflow-list .stage-head>.status{grid-column:2;grid-row:1;margin:0;min-height:18px;padding:2px 6px;font-size:11px}'
+          if old in text:
+              path.write_text(text.replace(old,new,1),encoding='utf-8')
+          elif new not in text:
+              raise SystemExit('Expected narrow status rule not found.')
+          PY
+      - name: Verify source and browser behavior
+        run: |
+          node build-test-project.mjs
+          for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .1; done
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit only the permanent CSS correction
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Enforce mobile workflow status text floor"
+          git push origin HEAD:practical-100/pr1-live-status-floor
