@@ -11,7 +11,7 @@ const FORMAL_STATES=Object.freeze(['UNKNOWN','NONE','NOT APPLICABLE','TRUE','FAL
 const INFRA_COLLECTIONS=Object.freeze([
   'inputVersions','rawResponses','responseProposals','responseValidations','acceptedChanges','rejectedResponses','extractionManifests',
   'humanInputRequests','humanInputAnswers','stageConfirmations','artifactVersions','generatedPrompts','generatedOutputs','outputReceipts',
-  'history','newJobResets','reviews','recoveredProjects'
+  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures'
 ]);
 const ALL_COLLECTIONS=Object.freeze([...new Set([...Object.keys(schema.RECORD_SCHEMAS),...INFRA_COLLECTIONS])]);
 
@@ -39,16 +39,17 @@ function ensureShape(project){
   project.projectData.stageRecords=project.projectData.stageRecords&&typeof project.projectData.stageRecords==='object'?project.projectData.stageRecords:{};
   project.projectData.userEntered=project.projectData.userEntered&&typeof project.projectData.userEntered==='object'?project.projectData.userEntered:{};
   project.projectData.idCounters=project.projectData.idCounters&&typeof project.projectData.idCounters==='object'?project.projectData.idCounters:{};
+  project.projectData.eventSequence=Number.isInteger(project.projectData.eventSequence)?project.projectData.eventSequence:0;
   project.stages=project.stages&&typeof project.stages==='object'?project.stages:{};
   for(let stage=1;stage<=30;stage++){
     const prior=project.stages[stage]||project.stages[String(stage)]||{};
     project.stages[stage]={
       number:stage,status:'NOT STARTED',decision:'',decisionEvidence:'',nextStage:'',decidedBy:'',dateTime:'',
       draftRecord:prior.draftRecord||core.stageTemplate(core.STAGES[stage-1]),responseDraft:'',authorizedFiles:[],humanChecks:{},gateChecks:{},evidenceChecks:{},revisions:[],
-      acceptedData:{},humanData:{},acceptedResponseIds:[],gate:{complete:false,blocked:false,reasons:[]},invalidatedBy:null,
+      agentData:{},humanData:{},derivedData:{},acceptedData:{},acceptedDataChangeIds:[],acceptedControlEventIds:[],acceptedResponseIds:[],currentPromptId:null,gate:{complete:false,blocked:false,reasons:[]},invalidatedBy:null,
       ...prior,
       number:stage,
-      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),acceptedData:prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{},humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},acceptedResponseIds:safe(prior.acceptedResponseIds)
+      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)
     };
   }
   project.job=project.job&&typeof project.job==='object'?project.job:{};
@@ -59,7 +60,9 @@ function ensureShape(project){
 
 function addHistory(project,type,details={}){
   ensureShape(project);
-  const event={eventId:`EVENT-${String(project.projectData.history.length+1).padStart(6,'0')}`,createdAt:now(),type,...clone(details)};
+  const eventSequence=++project.projectData.eventSequence;
+  const deviceTimestamp=now();
+  const event={eventId:`EVENT-${String(eventSequence).padStart(9,'0')}`,eventSequence,deviceTimestamp,createdAt:deviceTimestamp,type,...clone(details)};
   project.projectData.history.push(event);
   return event;
 }
@@ -126,7 +129,9 @@ function openBlockers(project,stage){
     return new RegExp(`(?:STAGE\\s*0?${stage}\\b|\\b${stage}\\b)`,`i`).test(affected);
   });
 }
-function acceptedChanges(project,stage){return safe(project?.projectData?.acceptedChanges).filter(change=>Number(change.stage)===Number(stage)&&change.status==='COMMITTED'&&!change.invalidatedBy);}
+function acceptedChanges(project,stage){return safe(project?.projectData?.acceptedChanges).filter(change=>Number(change.stage)===Number(stage)&&change.status==='COMMITTED'&&change.responseType==='DATA_PROPOSAL'&&!change.invalidatedBy);}
+function acceptedControlEvents(project,stage){return safe(project?.projectData?.responseDispositions).filter(item=>Number(item.stage)===Number(stage)&&['ACCEPTED_HUMAN_QUESTION_SET','ACCEPTED_BLOCKER_EVENT','ACCEPTED_EXECUTION_FAILURE'].includes(item.type)&&!item.invalidatedBy);}
+
 function hasStageActivity(project,stage){
   if(acceptedChanges(project,stage).length)return true;
   if(safe(project?.projectData?.rawResponses).some(item=>Number(item.stage)===Number(stage)))return true;
@@ -528,13 +533,13 @@ function recordHumanInputVersion(project,changedFields,operator='HUMAN_OPERATOR'
   return record;
 }
 
-function recordStageConfirmation(project,stage,confirmed,statement,operator='HUMAN_OPERATOR'){
-  ensureShape(project);
-  const record={confirmationId:allocateInfrastructureId(project,'STAGE-CONFIRMATION','stageConfirmations'),stage:Number(stage),confirmed:Boolean(confirmed),statement:String(statement||''),operator,createdAt:now()};
-  project.projectData.stageConfirmations.push(record);
-  addHistory(project,'HUMAN_STAGE_CONFIRMATION',{stage:Number(stage),recordId:record.confirmationId,confirmed:Boolean(confirmed)});
-  recalculate(project);
-  return record;
+function recordStageConfirmation(project,stage,confirmed,statement,operatorLabel='HUMAN_OPERATOR',options={}){
+  ensureShape(project);const number=Number(stage);const latest=acceptedChanges(project,number).at(-1);if(number===1&&!latest)throw new Error('Stage 01 confirmation requires a current accepted DATA_PROPOSAL.');
+  for(const prior of safe(project.projectData.stageConfirmations).filter(x=>Number(x.stage)===number&&!x.invalidatedBy))prior.invalidatedBy=options.invalidatedBy||'SUPERSEDED_CONFIRMATION';
+  const history=addHistory(project,'HUMAN_STAGE_CONFIRMATION_RECORDED',{stage:number,confirmed:Boolean(confirmed)});
+  const prompt=safe(project.projectData.generatedPrompts).filter(x=>Number(x.stage)===number&&!x.invalidatedBy).at(-1);
+  const record={confirmationId:allocateInfrastructureId(project,'STAGE-CONFIRMATION','stageConfirmations'),stage:number,confirmed:Boolean(confirmed),statement:String(statement||''),acceptedChangeId:options.acceptedChangeId||latest?.changeId||null,inputVersion:options.inputVersion||project.job.CURRENT_INPUT_VERSION||null,instructionId:options.instructionId||prompt?.instructionId||prompt?.promptId||null,contextSignature:options.contextSignature||prompt?.contextSignature||null,operatorLabel:String(options.operatorLabel||operatorLabel||'UNSPECIFIED'),identityAssurance:'SELF_ASSERTED',eventSequence:history.eventSequence,deviceTimestamp:history.deviceTimestamp,createdAt:history.deviceTimestamp};
+  project.projectData.stageConfirmations.push(record);recalculate(project);return record;
 }
 
 function recordReleaseDetermination(project){
@@ -645,6 +650,6 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
   unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
   coverageMetrics,convergenceMetrics,releaseMetrics,gate,deriveStageData,recalculate,invalidateDownstream,
-  recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,constructEvidenceChains,verifyArtifactIdentity
+  recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
 })();
