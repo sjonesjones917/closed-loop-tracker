@@ -28,6 +28,7 @@ jobs:
           assert old in s;s=s.replace(old,new,1);p.write_text(s)
           for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
             p=Path(name);t=p.read_text().replace('Mobile Closed-Loop Agent Reliability Workbook','Mobile Closed-Loop Reliability Workbook')
+            t=t.replace("document.body.innerText.includes('Mobile Closed-Loop Reliability Workbook')","Boolean(globalThis.closedLoopProjectStore&&globalThis.closedLoopResponseIngestion&&document.querySelector('#project-picker'))")
             t=t.replace("async function projects(cdp){return JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));}","async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}")
             t=t.replace("async function activeProject(cdp){return evalValue(cdp,`JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v4'))[0]`);}","async function activeProject(cdp){return (await evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`))[0];}")
             t=t.replace("await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);","await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);")
