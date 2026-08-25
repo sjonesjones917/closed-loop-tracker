@@ -17,7 +17,6 @@ jobs:
         run: node build-test-project.mjs
       - name: Syntax checks
         run: |
-          node --check app.js
           node --check app-core.js
           node --check hash.js
           node --check workflow-schema.js
@@ -41,12 +40,17 @@ jobs:
       - name: Enforce one application shell and responsible layers
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
           test ! -f authority-guard.js
           test ! -f integrity-guard.js
           test ! -f storage-reliability.js
           test ! -f prompt-display.js
           test ! -f experience.js
           test ! -f usability.js
+          test ! -f .github/workflows/repair-readability.yml
+          test ! -f .github/workflows/pr1-apply.yml
+          test "$(find . -maxdepth 1 -type f -name '.repair-*' | wc -l)" -eq 0
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
           ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
           ! grep -REi "GEN-042|field status report|maintenance[- ]handoff|human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
 
