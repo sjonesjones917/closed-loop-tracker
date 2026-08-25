@@ -1,0 +1,44 @@
+name: Practical 100 PR4 transformation
+on:
+  push:
+    branches: [practical-100/pr4-deterministic-engine]
+permissions:
+  contents: write
+jobs:
+  transform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Transform deterministic engine
+        run: node .practical100-pr4.mjs
+      - name: Syntax
+        run: |
+          node --check workflow-engine.js
+          node --check workflow-schema.js
+          node --check response-ingestion.js
+      - name: Deterministic verification
+        run: |
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node - <<'NODE'
+          global.window=global;global.location={href:'http://localhost/'};global.document={};
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])await import('./'+f+'?pr4='+Math.random());
+          const e=global.closedLoopWorkflowEngine,s=global.closedLoopWorkflowSchema;
+          if(!e.DERIVATIONS||Object.keys(e.DERIVATIONS).length!==6)throw new Error('Derivation registry incomplete.');
+          for(const d of Object.values(s.STAGE_FIELDS))for(const f of Object.values(d))if(f.producer==='APPLICATION'&&f.derivationKey&&!e.DERIVATIONS[f.derivationKey]&&!f.derivationKey.startsWith('job.')&&!f.derivationKey.startsWith('record.'))throw new Error('Missing derivation '+f.derivationKey);
+          if(typeof e.recordsForCurrentScope!=='function'||typeof e.evaluateIteration!=='function'||typeof e.verificationMatrix!=='function')throw new Error('Current-scope/iteration helpers missing.');
+          console.log(JSON.stringify({derivations:Object.keys(e.DERIVATIONS),scopeSelector:true,iterationEvaluator:true,verificationTriples:true},null,2));
+          NODE
+      - name: Commit verified PR4 source only
+        run: |
+          rm .practical100-pr4.mjs .github/workflows/practical100-pr4.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 4: complete deterministic workflow engine"
+          git push origin HEAD:practical-100/pr4-deterministic-engine
