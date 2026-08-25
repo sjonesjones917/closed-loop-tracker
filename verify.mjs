@@ -1,133 +1,57 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
-
-const required=['index.html','app.js','app-core.js','prompt-engine.js','authority-guard.js','workbook.js','experience.js','TEST_PROJECT.json','build-test-project.mjs','AUTHORIZED_OPERATION_01.txt','verify-prompt-isolation.mjs'];
-for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
-const html=fs.readFileSync('index.html','utf8');
-const loader=fs.readFileSync('app.js','utf8');
-const app=fs.readFileSync('app-core.js','utf8');
-const promptSource=fs.readFileSync('prompt-engine.js','utf8');
-const authoritySource=fs.readFileSync('authority-guard.js','utf8');
-const experience=fs.readFileSync('experience.js','utf8');
-const coreSource=fs.readFileSync('workbook.js','utf8');
-const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
-new vm.Script(authoritySource,{filename:'authority-guard.js'});
-
-if(!/<script src="workbook\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="app\.js(?:\?[^\"]*)?"><\/script>/.test(html)||!/<script src="experience\.js(?:\?[^\"]*)?"><\/script>/.test(html))throw new Error('Single application shell is not wired correctly.');
-if((html.match(/<html\b/g)||[]).length!==1)throw new Error('There must be one application shell.');
-if(!html.includes('closed-loop-runtime-20260823-2037-r2'))throw new Error('The repaired application cache identity is missing.');
-if(html.includes('closed-loop-retained-project-refresh'))throw new Error('The app shell must not delete the retained project from browser storage.');
-for(const token of ['prompt-engine.js','app-core.js','authority-guard.js'])if(!loader.includes(token))throw new Error(`Application loader is missing ${token}.`);
-for(const token of ['External governing sources only.','SOURCE_CLASS','INDEPENDENT_EXTERNAL_AUTHORITY','TARGET_PRODUCT_RELATIONSHIP','SOURCE_CLASSIFICATION_REJECTED','validExternalSource','Categorically exclude the target product','Do not research the target product'])if(!authoritySource.includes(token))throw new Error(`Non-circular authority control missing: ${token}.`);
-
-if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
-if(project.specRevision!=='authorized-operation-01-project-20260823-r2')throw new Error('Retained project revision was not materialized.');
-if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Authorized retained project identity is wrong.');
-if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Test project must contain exactly 30 stage records.');
-if(project.currentStage!==2||project.currentState!=='READY')throw new Error('Test project must preserve completed Operation 01 and be ready for Operation 02.');
-if(project.currentVersions?.input!=='INPUT-v001')throw new Error('Input version is wrong.');
-if(project.currentVersions?.sources!=='NOT APPLICABLE'||project.currentVersions?.requirements!=='NOT APPLICABLE'||project.currentVersions?.tests!=='NOT APPLICABLE'||project.currentVersions?.instruction!=='NOT APPLICABLE')throw new Error('Future controlled versions were fabricated before Stage 02 work.');
-if(project.stageRecords?.['1']?.status!=='COMPLETE')throw new Error('Operation 01 must be complete.');
-for(let n=2;n<=30;n++)if(project.stageRecords?.[String(n)]?.status!=='NOT STARTED')throw new Error(`Stage ${n} must remain not started.`);
-for(let n=1;n<=30;n++){
-  const record=project.stageRecords?.[String(n)]?.record;
-  if(typeof record!=='string'||!record.trim())throw new Error(`Stage ${n} does not have a readable stage record.`);
-  if(record.includes('[object Object]'))throw new Error(`Stage ${n} contains an object-display failure.`);
-}
-if(!project.stageRecords['2'].record.includes('STAGE 02 — BUILD THE SOURCE INVENTORY')||!project.stageRecords['2'].record.includes('SOURCE_SET_VERSION'))throw new Error('Stage 02 is not initialized as a usable source-inventory record.');
-for(const name of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if((project.projectData?.[name]||project[name]||[]).length!==0)throw new Error(`${name} contains fabricated downstream project records.`);
-
-if((project.generatedPrompts||[]).length!==1)throw new Error('Exactly one historical generated instruction should exist after Operation 01.');
-const historicalPrompt=project.generatedPrompts[0]?.prompt||'';
-for(const token of ['COPY BLOCK — STAGE 01 — INITIALIZE THE JOB','JOB_ID: JOB-20260823144121','AUTHORIZED INPUTS','AUTHORIZED STAGE RECORD','REQUIRED OUTPUT','UNIVERSAL OPERATING RULES','END COPY BLOCK — STAGE 01'])if(!historicalPrompt.includes(token))throw new Error(`Saved Stage 01 instruction is missing ${token}.`);
-if(historicalPrompt.includes('[object Object]'))throw new Error('Saved Stage 01 instruction is unreadable.');
-if(!project.generatedPrompts[0]?.originalPrompt)throw new Error('The original Stage 01 instruction summary was not preserved.');
-const savedOutput=project.generatedOutputs?.[0]?.output||'';
-if((project.generatedOutputs||[]).length!==1||savedOutput!==operation01||project.stageRecords['1'].output!==operation01)throw new Error('The complete authorized Operation 01 output is not preserved identically.');
-for(const token of ['SUBJECTS','QUESTIONS THE WORKFLOW MUST RESOLVE','REQUIRED METHODS','OUTPUT PROPERTIES','TEMPORAL SCOPE','GEOGRAPHIC SCOPE','ACCEPTANCE CONDITIONS','UNRESOLVED UNKNOWNS','OPERATION 01 COMPLETION EVIDENCE','Proceed to Operation 02 — Build the Source Inventory.'])if(!operation01.includes(token))throw new Error(`Authorized Operation 01 record is missing ${token}.`);
-if((project.outputReceipts||[]).length!==1||project.outputReceipts[0]?.completeResponseSaved!==true)throw new Error('The Stage 01 output receipt is missing or incomplete.');
-for(const name of ['requirements','tests','runRecords','verificationRecords','comparisons','regressions','evidenceChains'])if((project[name]||[]).length!==0)throw new Error(`${name} contains fabricated downstream records.`);
-if(/GEN-042|field status report|maintenance[- ]handoff/i.test(JSON.stringify(project)))throw new Error('Unrelated generator project content remains.');
-
-for(const token of ['validateStageDraft','saveAppendix','sha256Bytes','compareArtifactSets','Complete project record','Generated instructions','Generated outputs','Output receipts','Original project input','Add supporting record','stageFieldsMarkup','stageRecordFromFields','appendixFieldsMarkup','saveStageWork','savePromptRecord','recordOutputRecord','retainedSpecRevision','invalidateDownstream','sourceConflicts','rootCauses','artifactIdentities','Complete stored project (advanced)','recordSchemas','structuredRecords','addStructuredRecord','data-add-record','createUniqueJobId','blockingRecord=openBlockers().find'])if(!app.includes(token))throw new Error(`Application control missing: ${token}`);
-for(const token of ['30-stage reliability workbook','Current work','Completed Stage 01','Continue current stage','Complete record','Project identity','Authorized job input','Workflow control','Work for this stage','Instruction to run','Returned output','Stage decision and evidence','Completion controls','Supporting records','Find project information'])if(!experience.includes(token))throw new Error(`Human-facing experience control missing: ${token}`);
-if(app.includes('id="stage-record"'))throw new Error('Raw stage textarea remains the primary stage interface.');
-if(app.includes("draftRecord:r.record||r.evidenceRecord"))throw new Error('The object-display stage-record defect remains.');
-if(/TEST-GEN-042|GEN-042/i.test(app+experience))throw new Error('Legacy generator fallback remains in application code.');
-if(/async\s+async\s+function/.test(app))throw new Error('Invalid duplicate async function declaration remains.');
-if(/async\s+function\s+createUniqueJobId/.test(app))throw new Error('New-job identity generator must be synchronous.');
-if(!app.includes("while(projects.some(p=>p.job?.JOB_ID===id))"))throw new Error('New-job identity collision check is missing.');
-if(!app.includes("previousState=current.job.CURRENT_STATE,previousStage=current.job.CURRENT_STAGE"))throw new Error('Project save state-preservation logic is missing.');
-for(const collection of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if(!app.includes(`${collection}:{title:`))throw new Error(`Structured record definition missing: ${collection}`);
-for(const name of ['syncStageRecordFromForm','savePromptRecord','recordOutputRecord','records','structuredRecords','addStructuredRecord']){
-  const count=(app.match(new RegExp(`(?:function|async function) ${name}\\(`,'g'))||[]).length;
-  if(count!==1)throw new Error(`Application helper ${name} must exist exactly once; found ${count}.`);
-}
-for(const label of ['Baselines','Products','Deterministic verification','Independent meaning review','Adversarial review','Representation inspections','Process reviews','Product reviews','Artifact identity records']){
-  const count=app.split(`['${label}'`).length-1;
-  if(count!==1)throw new Error(`Records group ${label} must appear exactly once; found ${count}.`);
-}
-for(const token of ['PRESERVE THE COMPLETE EVIDENCE CHAIN','PRESERVE FAILURES PERMANENTLY','RECONCILE PROCESS AND PRODUCT EVIDENCE','RUN INDEPENDENT MEANING VERIFICATION'])if(!coreSource.includes(token))throw new Error(`30-stage workflow item missing: ${token}`);
-if(/human-project\/31|31 operations|Freeze New Version/i.test(loader+app+html+coreSource+experience+promptSource+authoritySource))throw new Error('Discarded 31-operation architecture remains.');
-const banned=new RegExp('se'+'mantic','i');if(banned.test(loader+app+html+coreSource+experience+promptSource+authoritySource))throw new Error('Prohibited terminology remains in active application source.');
-if(fs.existsSync('.github/workflows/inspection-snapshot.yml'))throw new Error('Temporary inspection workflow remains.');
-
-// Execute the base prompt engine against both retained and synthetic project states.
+import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-vm.runInThisContext(coreSource,{filename:'workbook.js'});
-vm.runInThisContext(promptSource,{filename:'prompt-engine.js'});
-const core=globalThis.closedLoopCore;
-if(!core||core.STAGES.length!==30)throw new Error('Runtime core did not expose exactly 30 stages.');
-if(globalThis.closedLoopPromptEngine?.version!=='2026-08-24-r2')throw new Error('Corrected prompt engine revision is not active.');
-const state=core.createBlankState(project.jobId);
-Object.assign(state.job,{
-  JOB_ID:project.jobId,
-  JOB_TITLE:project.title,
-  CURRENT_STAGE:'STAGE 02',
-  CURRENT_STATE:project.currentState,
-  NEXT_REQUIRED_ACTION:project.nextRequiredAction,
-  CURRENT_INPUT_VERSION:project.currentVersions?.input||'INPUT-v001',
-  CURRENT_SOURCE_SET_VERSION:project.currentVersions?.sources||'',
-  CURRENT_REQUIREMENTS_VERSION:project.currentVersions?.requirements||'',
-  CURRENT_TEST_SUITE_VERSION:project.currentVersions?.tests||'',
-  CURRENT_INSTRUCTION_VERSION:project.currentVersions?.instruction||'',
-  EXACT_USER_OBJECTIVE_VERBATIM:project.userJobInput?.objective||operation01,
-  EXACT_DELIVERABLE_REQUESTED:project.userJobInput?.deliverable||'',
-  SUPPLIED_MATERIALS_INVENTORY:JSON.stringify(project.suppliedMaterials||[],null,2),
-  KNOWN_AUTHORITATIVE_SOURCES:project.userJobInput?.knownAuthorities||'',
-  AVAILABLE_TOOLS:project.userJobInput?.availableTools||'',
-  PROHIBITED_ACTIONS:project.userJobInput?.prohibitedActions||'',
-  EXPLICIT_USER_REQUIREMENTS:(project.userJobInput?.explicitRequirements||[]).join('\n'),
-  ASSUMPTIONS:JSON.stringify(project.assumptions||[],null,2),
-  UNKNOWN_INFORMATION:JSON.stringify(project.unknowns||[],null,2)
-});
-state.projectData.stageRecords=project.stageRecords;
-state.projectData.userEntered=project.userJobInput||{};
-state.projectData.artifacts=project.artifacts||[];
-for(let n=1;n<=30;n++)state.stages[n].draftRecord=project.stageRecords[String(n)]?.record||state.stages[n].draftRecord;
+
+const files=['index.html','app.js','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];
+for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
+if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');
+const expected=[
+'Initialize the Job','Build the Source Inventory','Research the Requirements','Compile the Requirement Specification','Resolve the Requirement Set','Build the Verification Suite Before Writing the Production Instruction','Build Failure Tests','Author the Production Instruction','Preflight the Production Instruction','Freeze the Test Candidate','Run Ten Independent Executions','Verify Each Execution Independently','Compare the Ten Executions','Root-Cause Every Defect','Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer','Re-Run the Complete Ten-Execution Iteration','Continue Until Convergence','Run an Unchanged Confirmation Iteration','Freeze the Production Baseline','Generate the Finished Product','Run Deterministic Verification on the Finished Product','Run Independent Meaning-Based Verification','Run Adversarial Verification','Inspect the Final Representation','Reconcile Process and Product Evidence','Apply the Release Gate','Verify Artifact Identity Before Release','Preserve the Complete Evidence Chain','Preserve Failures Permanently'];
+if(core.STAGES.length!==30)throw new Error(`Expected exactly 30 stages; found ${core.STAGES.length}.`);
+for(let i=0;i<30;i++)if(core.STAGES[i].title.toUpperCase()!==expected[i].toUpperCase())throw new Error(`Stage ${i+1} title/order mismatch: ${core.STAGES[i].title}`);
+
+function checkMeta(name,def){for(const key of ['producer','editable','requiredAtStage','derivation','responsePath','authority','conflictPolicy','provenanceRequired'])if(!Object.hasOwn(def,key))throw new Error(`${name} ownership metadata missing ${key}.`);}
+for(const [name,def] of Object.entries(schema.JOB_FIELDS))checkMeta(`job.${name}`,def);
+for(const [stage,defs] of Object.entries(schema.STAGE_FIELDS))for(const [name,def] of Object.entries(defs))checkMeta(`stage${stage}.${name}`,def);
+for(const [collection,record] of Object.entries(schema.RECORD_SCHEMAS))for(const [name,def] of Object.entries(record.fieldDefinitions||{}))checkMeta(`${collection}.${name}`,def);
+for(let stage=1;stage<=30;stage++){const c=schema.STAGE_CONTRACTS[stage];if(!c||c.responseSchema!==schema.RESPONSE_SCHEMA)throw new Error(`Stage ${stage} lacks the shared response contract.`);for(const collection of c.allowedCollections)if(!schema.RECORD_SCHEMAS[collection])throw new Error(`Stage ${stage} references unknown collection ${collection}.`);}
+
+const badSource={TITLE:'Current application repository',ISSUING_ORGANIZATION_OR_AUTHOR:'Project repository',SOURCE_TYPE:'repository source code',URL_REFERENCE:'https://github.com/sjonesjones917/closed-loop-tracker'};
+if(!schema.sourceClassificationIssues(badSource).length)throw new Error('Target-product/repository artifact was accepted as an external governing source.');
+const goodSource={TITLE:'Web Content Accessibility Guidelines (WCAG) 2.2',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/'};
+if(schema.sourceClassificationIssues(goodSource).length)throw new Error('Legitimate independent external source classification was rejected.');
+
+const retained=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
+if(retained.jobId!=='JOB-20260823144121'||retained.title!=='Mobile Closed-Loop Agent Reliability Workbook'||retained.currentStage!==2||retained.currentState!=='READY')throw new Error('Retained project identity/state mismatch.');
+if(retained.stageRecords['1'].status!=='COMPLETE')throw new Error('Retained Stage 01 is not COMPLETE.');
+for(let n=2;n<=30;n++)if(retained.stageRecords[String(n)].status!=='NOT STARTED')throw new Error(`Retained Stage ${n} is falsely started/completed.`);
+if(retained.currentVersions.sources!=='NOT APPLICABLE')throw new Error('Retained Stage 02 source set was fabricated.');
+for(const name of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if((retained.projectData?.[name]||retained[name]||[]).length)throw new Error(`Retained ${name} contains fabricated downstream data.`);
+const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
+if(retained.generatedOutputs?.[0]?.output!==operation01||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Authorized Operation 01 output was not preserved exactly.');
+if(retained.generatedPrompts?.length!==1||retained.outputReceipts?.length!==1)throw new Error('Actual Stage 01 instruction/output receipt history was not preserved.');
+
+function blank(jobId){const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Verification project';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Controlled verification objective';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;}
 const generated=[];
-for(const stage of core.STAGES){
-  const prompt=core.buildStagePrompt(stage,state);
-  generated.push(prompt);
-  for(const token of [`COPY BLOCK — STAGE ${String(stage.number).padStart(2,'0')}`,`JOB_ID: ${project.jobId}`,'PROJECT-SCOPE BOUNDARY','CONTROLLING PROJECT INPUT','AUTHORIZED INPUTS FOR THIS STAGE','STAGE-SPECIFIC TASK','REQUIRED OUTPUT','COMPLETION CONDITIONS','OPERATING RULES'])if(!prompt.includes(token))throw new Error(`Stage ${stage.number} generated prompt is missing ${token}.`);
-  if(prompt.includes('[object Object]'))throw new Error(`Stage ${stage.number} generated prompt contains an object-display failure.`);
-}
-if(new Set(generated).size!==30)throw new Error('The 30 stages did not generate 30 distinct stage-specific instructions.');
-const stage1=generated[0],stage2=generated[1],stage3=generated[2];
-for(const token of ['Initialize only this current job','Do not create, prescribe, or instruct reuse of a master prompt','Do not infer requirements for unrelated jobs'])if(!stage1.includes(token))throw new Error(`Base Stage 01 generated instruction is missing project isolation control: ${token}.`);
-for(const token of ['BUILD THE SOURCE INVENTORY','Source-authority analyst','STAGE 01 AUTHORIZED JOB DEFINITION','OPERATION 01 — DEFINE JOB','genuinely independent external authorities','not automatically independent external governing sources','Never use the target product, this operating application, its repository','Create SOURCE-SET-vN only from legitimate external governing sources'])if(!stage2.includes(token))throw new Error(`Base Stage 02 generated instruction is missing ${token}.`);
-if(stage2.includes('Treat the completed Stage 01 job definition and the actual supplied workbook/materials as authorized inputs.'))throw new Error('Stage 02 still contains the prior circular source-inventory instruction.');
-for(const token of ['Research only the legitimate Stage 02 external governing source set','Do not research the target product, this operating application, repository source code, prior implementations'])if(!stage3.includes(token))throw new Error(`Base Stage 03 generated instruction is missing ${token}.`);
-for(const [n,token] of [[6,'Build this job’s verification suite before any production instruction is authored'],[11,'Run exactly ten independent executions for this job'],[12,'REQ_ID × RUN_ID'],[18,'Convergence exists only when'],[19,'unchanged confirmation iteration'],[23,'meaning/content verification'],[28,'verify exact artifact identity immediately before release'],[29,'EXTERNAL SOURCE / USER AUTHORITY AS APPLICABLE'],[30,'append-only defect and regression history']])if(!generated[n-1].includes(token))throw new Error(`Stage ${n} generated instruction does not contain its controlling stage procedure.`);
+for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);const record=prompts.buildPromptRecord(stage,p);generated.push(record.prompt);for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/1','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);if(stage===2&&!record.prompt.includes('genuinely independent external governing sources'))throw new Error('Stage 02 non-circular authority rule missing.');if(stage===3&&!record.prompt.includes('Research only the legitimate Stage 02 external governing source set'))throw new Error('Stage 03 external-source research boundary missing.');}
+if(new Set(generated).size!==30)throw new Error('Prompts are not stage-specific.');
+const pa=prompts.buildPromptRecord(2,blank('JOB-A')).prompt,pb=prompts.buildPromptRecord(2,blank('JOB-B')).prompt;if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');
 
-const a=core.createBlankState('JOB-A'),b=core.createBlankState('JOB-B');
-a.job.EXACT_USER_OBJECTIVE_VERBATIM='OBJECTIVE-A-ONLY';b.job.EXACT_USER_OBJECTIVE_VERBATIM='OBJECTIVE-B-ONLY';
-for(let n=1;n<=30;n++){
-  const pa=core.buildStagePrompt(core.STAGES[n-1],a),pb=core.buildStagePrompt(core.STAGES[n-1],b);
-  if(!pa.includes('JOB_ID: JOB-A')||!pb.includes('JOB_ID: JOB-B'))throw new Error(`Synthetic project identity missing at stage ${n}.`);
-  if(pa.includes('OBJECTIVE-B-ONLY')||pb.includes('OBJECTIVE-A-ONLY'))throw new Error(`Cross-project prompt leakage at stage ${n}.`);
-}
+class MemoryStorage{constructor(seed={}){this.m=new Map(Object.entries(seed));}getItem(k){return this.m.has(k)?this.m.get(k):null;}setItem(k,v){this.m.set(k,String(v));}removeItem(k){this.m.delete(k);}clear(){this.m.clear();}}
+const oldProject={job:{JOB_ID:'JOB-LEGITIMATE-USER',JOB_TITLE:'Legitimate user project'},unknownFutureField:{preserve:true}};
+const storage=new MemoryStorage({'closed-loop-reliability-projects-v3':JSON.stringify([oldProject])});
+const migrated=store.readAll(storage);if(migrated.length!==1||migrated[0].unknownFutureField?.preserve!==true)throw new Error('Legacy user project was not preserved losslessly.');
+store.writeAll(migrated,storage);if(JSON.parse(storage.getItem(store.STORE_KEY))[0].unknownFutureField?.preserve!==true)throw new Error('Canonical store discarded an unknown project field.');
+const prior=storage.getItem(store.STORE_KEY);globalThis.__closedLoopStorageFault='after-final-write';let failed=false;try{store.writeAll([{job:{JOB_ID:'JOB-OTHER'}}],storage);}catch{failed=true;}finally{delete globalThis.__closedLoopStorageFault;}if(!failed||storage.getItem(store.STORE_KEY)!==prior)throw new Error('Transactional storage failure did not roll back exactly.');
+const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.job,JOB_TITLE:'Updated'}},storage);if(replaced.length!==1||replaced[0].job.JOB_TITLE!=='Updated')throw new Error('Stable JOB_ID reconciliation duplicated a project.');
 
-console.log(JSON.stringify({application:'single',stages:30,testProject:project.title,jobId:project.jobId,currentStage:project.currentStage,state:project.currentState,historicalInstructions:project.generatedPrompts.length,generatedStageInstructionsVerified:generated.length,syntheticProjectIsolationStages:30,generatedOutputs:project.generatedOutputs.length,outputReceipts:project.outputReceipts.length,structuredStageRenderer:true,structuredRepeatingRecords:true,contextualAppendices:true,blockerGate:true,uniqueNewJobs:true,truthfulLaterStages:true,nonCircularAuthorityModuleParsed:true,retainedDownstreamAuthorityEmpty:true,humanFacingExperience:true,storageResetRemoved:true},null,2));
+const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
+const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.readFileSync(f,'utf8')).join('\n');
+if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
+if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
+const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');
+console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allStagePromptsVerified:30,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));

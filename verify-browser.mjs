@@ -3,139 +3,59 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const PAGE_URL=process.env.PAGE_URL;
-if(!PAGE_URL)throw new Error('PAGE_URL is required');
+const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found');
-const port=9222+Math.floor(Math.random()*500);
-const userData=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-'));
-const proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu',`--remote-debugging-port=${port}`,`--user-data-dir=${userData}`,'about:blank'],{stdio:'ignore'});
+const port=9300+Math.floor(Math.random()*400),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-'));
+const proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function json(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
-async function poll(fn,timeout=15000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(150);}}throw last||new Error('Timed out');}
-class CDP{
-  constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else this.events.push(m);};}
-  async send(method,params={}){await this.ready;const id=++this.id;const p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return p;}
-  close(){this.ws.close();}
-}
-const evalValue=async(cdp,expression)=>{const r=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.text||'Evaluation failed');return r.result?.value;};
-const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
+async function poll(fn,timeout=15000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
+class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else this.events.push(m);};}async send(method,params={}){await this.ready;const id=++this.id,p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return p;}close(){this.ws.close();}}
+const assert=(x,m)=>{if(!x)throw new Error(m);};
+async function evalValue(cdp,expression){const r=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'Evaluation failed');return r.result?.value;}
 async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
-async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(220);}
+async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(160);}
 async function fill(cdp,selector,value){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);}
-async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(180);}
-async function pageSnapshot(cdp){return evalValue(cdp,`(()=>({text:document.body.innerText,width:innerWidth,scrollWidth:document.documentElement.scrollWidth,maxButtonHeight:Math.max(0,...[...document.querySelectorAll('button')].map(x=>x.getBoundingClientRect().height)),title:document.title}))()`);}
-async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');if(!s)return false;s.value=${JSON.stringify(String(n))};s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await sleep(220);await waitExpr(cdp,`document.body.innerText.includes('Stage ${String(n).padStart(2,'0')}')`);}
+async function setWidth(cdp,width,height=900){await cdp.send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<600});await sleep(120);}
+async function snapshot(cdp){return evalValue(cdp,`(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyScrollWidth:document.body.scrollWidth,text:document.body.innerText,buttons:[...document.querySelectorAll('button')].map(b=>({h:b.getBoundingClientRect().height,w:b.getBoundingClientRect().width,text:b.innerText})),overlap:[...document.querySelectorAll('button,input,textarea,select')].some(e=>{const r=e.getBoundingClientRect();return r.width>innerWidth+1||r.left<-1||r.right>innerWidth+1})}))()`);}
+async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.body.innerText.includes('Stage ${String(n).padStart(2,'0')}')`);}
+async function activeProject(cdp){return evalValue(cdp,`JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v4'))[0]`);}
 
 async function main(){
-  await poll(()=>json(`http://127.0.0.1:${port}/json/version`));
-  const target=await json(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser-verify=${Date.now()}`)}`,{method:'PUT'});
-  const cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
-  await waitExpr(cdp,`document.readyState==='complete'`);
-  await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
-  await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(700);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
-  await waitExpr(cdp,`document.querySelector('.brand-kicker')?.textContent.trim()==='Mobile closed-loop control'`);
-  const clean=await pageSnapshot(cdp);
-  assert(clean.text.includes('Mobile Closed-Loop Agent Reliability Workbook'),'Retained project title is not rendered.');
-  assert(clean.text.includes('STAGE 02')||clean.text.includes('Stage 02'),'Stage 02 is not the current rendered workflow location.');
-  assert(clean.text.includes('Proceed to Operation 02'),'Next action is not rendered.');
-  assert(await evalValue(cdp,`document.querySelector('.brand-kicker')?.textContent.trim()==='Mobile closed-loop control'`),'Human-facing workbook identity is missing.');
-  for(const label of ['Completed work','Continue current stage','View complete record'])assert(clean.text.includes(label),`Overview is missing human-facing control: ${label}`);
-
-  for(const width of [320,393,1280]){
-    await setWidth(cdp,width,width<600?900:1000);const s=await pageSnapshot(cdp);
-    assert(s.scrollWidth<=s.width+1,`Horizontal overflow at ${width}px: ${s.scrollWidth}>${s.width}`);
-    assert(s.maxButtonHeight<=72,`Oversized button at ${width}px: ${s.maxButtonHeight}px`);
-    assert(!s.text.includes('Loading current project'),'Application remained on loading state.');
-  }
-
-  await click(cdp,'[data-view="Project"]');
-  await waitExpr(cdp,`document.querySelectorAll('details.project-field-group').length===3`);
-  const projectText=await pageSnapshot(cdp);for(const t of ['Project identity','Authorized job input','Workflow control'])assert(projectText.text.includes(t),`Grouped project interface is missing ${t}.`);
-  await fill(cdp,'[data-job="JOB_OWNER"]','BROWSER OWNER CHECK');await click(cdp,'#save-job');
-  await click(cdp,'[data-view="Overview"]');const preservedState=await pageSnapshot(cdp);
-  assert(preservedState.text.includes('READY'),'Saving a non-controlling project field incorrectly changed READY state.');
-  assert(preservedState.text.includes('STAGE 02'),'Saving a non-controlling project field incorrectly moved the current stage.');
-
-  await openStage(cdp,1);
-  await waitExpr(cdp,`document.body.innerText.includes('Work for this stage')`);
-  assert(await evalValue(cdp,`document.querySelectorAll('[data-stage-field]').length>5`),'Stage 01 structured fields are not rendered.');
-  const stageUi=await pageSnapshot(cdp);for(const t of ['Work for this stage','Instruction to run','Returned output','Stage decision and evidence','Completion controls','Supporting records'])assert(stageUi.text.includes(t),`Stage workspace is missing ${t}.`);
-  assert(await evalValue(cdp,`document.querySelectorAll('details.completion-controls').length===1`),'Completion checklists were not consolidated into one progressive-disclosure control.');
-  assert(await evalValue(cdp,`document.querySelectorAll('.stage-jumpbar button').length>=5`),'Stage jump navigation is missing.');
-  const prompt=await evalValue(cdp,`document.querySelector('#generated-prompt')?.textContent||''`);
-  assert(prompt.includes('COPY BLOCK — STAGE 01')&&prompt.includes('JOB_ID: JOB-20260823144121')&&prompt.includes('UNIVERSAL OPERATING RULES'),'Complete Stage 01 generated instruction is not rendered.');
-  await click(cdp,'#copy-prompt');
-  const output=await evalValue(cdp,`document.querySelector('#stage-output')?.value||''`);
-  assert(output.includes('OPERATION 01 — DEFINE JOB')&&output.includes('OPERATION 01 COMPLETION EVIDENCE'),'Complete Operation 01 output is not rendered.');
-
-  await evalValue(cdp,`(()=>{for(const e of document.querySelectorAll('[data-appendix="B"]')){const f=e.dataset.appendixField;e.value=f==='BLOCKER_ID'?'BROWSER-BLOCKER-001':f==='CURRENT_STATUS'?'OPEN':f==='STAGE_DISCOVERED'?'STAGE 01':'UNKNOWN';}return true})()`);
-  await click(cdp,'[data-save-appendix="B"]');
-  await openStage(cdp,2);
-  assert(await evalValue(cdp,`document.body.innerText.includes('Open blocker BROWSER-BLOCKER-001 stops downstream work.')`),'Open blocker did not block downstream Stage 02.');
-  assert(await evalValue(cdp,`[...document.querySelectorAll('[data-stage-field]')].every(x=>x.disabled)`),'Blocked downstream stage still allowed stage editing.');
-
-  await openStage(cdp,1);
-  await evalValue(cdp,`(()=>{for(const e of document.querySelectorAll('[data-appendix="B"]')){const f=e.dataset.appendixField;e.value=f==='BLOCKER_ID'?'BROWSER-BLOCKER-001':f==='CURRENT_STATUS'?'RESOLVED':f==='STAGE_DISCOVERED'?'STAGE 01':f==='RESOLUTION_EVIDENCE'?'Browser verification resolution evidence':'UNKNOWN';}return true})()`);
-  await click(cdp,'[data-save-appendix="B"]');
-  await openStage(cdp,2);
-  assert(!await evalValue(cdp,`document.body.innerText.includes('Open blocker BROWSER-BLOCKER-001 stops downstream work.')`),'Resolved blocker continued to stop downstream work.');
-  assert(await evalValue(cdp,`document.querySelectorAll('[data-record-collection="sources"]').length>=5`),'Stage 02 structured source-record editor is missing.');
-  await evalValue(cdp,`(()=>{for(const e of document.querySelectorAll('[data-record-collection="sources"]')){const f=e.dataset.recordField;e.value=f==='SOURCE_ID'?'SOURCE-BROWSER-001':f==='TYPE'?'OFFICIAL SPECIFICATION':f==='ORIGIN'?'WHATWG':f==='REFERENCE'?'https://html.spec.whatwg.org/':f==='INSPECTION_STATE'?'INSPECTED':f==='CURRENCY_STATE'?'CURRENT':f==='CONTROLLING_STATUS'?'CONTROLLING':f==='SOURCE_CLASS'?'EXTERNAL GOVERNING SOURCE':f==='INDEPENDENT_EXTERNAL_AUTHORITY'?'TRUE':f==='TARGET_PRODUCT_RELATIONSHIP'?'INDEPENDENT EXTERNAL AUTHORITY':f==='TITLE'?'HTML Standard':f==='ISSUING_ORGANIZATION_OR_AUTHOR'?'WHATWG':f==='PUBLICATION_ORIGIN'?'WHATWG Living Standard':f==='RELEVANCE'?'Independent browser-platform authority fixture':f==='APPLICABLE_PORTIONS'?'HTML platform requirements':'UNKNOWN';}return true})()`);
-  await click(cdp,'[data-add-record="sources"]');
-  assert(await evalValue(cdp,`(()=>{const p=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3')||'[]').find(x=>x.job?.JOB_ID==='JOB-20260823144121'),r=p?.projectData?.sources?.find(x=>x.id==='SOURCE-BROWSER-001'||x.SOURCE_ID==='SOURCE-BROWSER-001');return !!r&&globalThis.closedLoopAuthorityGuard?.validExternalSource(r)===true;})()`),'Independent external source record was not persisted as valid authority.');
-
-  const editable=await evalValue(cdp,`document.querySelector('[data-stage-field]')?.dataset.stageField||''`);assert(editable,'Stage 02 has no structured stage field.');
-  await fill(cdp,`[data-stage-field="${editable}"]`,'BROWSER-PERSISTENCE-CHECK');
-  await fill(cdp,'#stage-output','BROWSER STAGE 02 OUTPUT RECEIPT CHECK');await click(cdp,'#record-output');
-  await click(cdp,'#save-stage-work');
-  await waitExpr(cdp,`localStorage.getItem('closed-loop-reliability-projects-v3')?.includes('BROWSER-PERSISTENCE-CHECK')`);
-  await evalValue(cdp,`location.reload();true`);await sleep(700);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
-  await openStage(cdp,2);
-  const persisted=await evalValue(cdp,`document.querySelector('[data-stage-field="${editable}"]')?.value||''`);assert(persisted==='BROWSER-PERSISTENCE-CHECK','Stage data did not survive refresh.');
-  assert(await evalValue(cdp,`document.body.innerText.includes('Supporting records')`),'Contextual Appendix controls are not available in the repaired stage workspace.');
-
-  await click(cdp,'[data-view="Records"]');await waitExpr(cdp,`document.body.innerText.includes('Complete project record')`);
-  await waitExpr(cdp,`document.querySelector('#record-filter')`);
-  const records=await pageSnapshot(cdp);
-  for(const text of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Sources','Blockers','Find project information'])assert(records.text.includes(text),`Records view is missing ${text}.`);
-  await fill(cdp,'#record-filter','generated outputs');
-  assert(await evalValue(cdp,`[...document.querySelectorAll('.record-stack>details.record-card')].some(x=>!x.hidden&&x.querySelector(':scope>summary')?.textContent.includes('Generated outputs'))`),'Record search did not surface generated outputs.');
-  await fill(cdp,'#record-filter','');
-  const openedOutputs=await evalValue(cdp,`(()=>{const d=[...document.querySelectorAll('details.record-card')].find(x=>x.querySelector(':scope>summary')?.textContent.includes('Generated outputs'));if(!d)return false;d.open=true;d.querySelectorAll('details').forEach(x=>x.open=true);return true})()`);
-  assert(openedOutputs,'Generated outputs record group could not be opened.');
-  await waitExpr(cdp,`document.body.innerText.includes('BROWSER STAGE 02 OUTPUT RECEIPT CHECK')`);
-
-  for(let n=1;n<=30;n++){
-    await openStage(cdp,n);
-    assert(await evalValue(cdp,`document.querySelector('#stage-picker')?.value===${JSON.stringify(String(n))}`),`Stage ${n} could not be reached.`);
-  }
-
-  await click(cdp,'#new-project');await sleep(250);const id1=await evalValue(cdp,`document.querySelector('[data-job="JOB_ID"]')?.value||''`);
-  await click(cdp,'#new-project');await sleep(250);const id2=await evalValue(cdp,`document.querySelector('[data-job="JOB_ID"]')?.value||''`);
-  assert(id1&&id2&&id1!==id2,'Rapid new-job creation produced duplicate JOB_ID values.');
-  const afterNew=await evalValue(cdp,`document.querySelectorAll('#project-picker option').length`);assert(afterNew>=3,'New projects did not coexist with retained project.');
-
-  const imported=await evalValue(cdp,`(async()=>{const stored=JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v3'));const src=stored.find(p=>p.job?.JOB_ID==='JOB-20260823144121');const copy=JSON.parse(JSON.stringify(src));copy.job.JOB_ID='JOB-BROWSER-IMPORT-001';copy.job.JOB_TITLE='Browser import preservation check';copy.extraPreserved={unknownField:'PRESERVE-ME'};const file=new File([JSON.stringify(copy)],'browser-import.json',{type:'application/json'});const dt=new DataTransfer();dt.items.add(file);const input=document.querySelector('#import-file');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,400));return document.querySelector('#project-picker').innerText.includes('Browser import preservation check')&&localStorage.getItem('closed-loop-reliability-projects-v3').includes('PRESERVE-ME');})()`);
-  assert(imported,'Import did not preserve complete project data and unknown fields.');
-
-  const exportOk=await evalValue(cdp,`(async()=>{let blob;const oldCreate=URL.createObjectURL,oldRevoke=URL.revokeObjectURL,oldClick=HTMLAnchorElement.prototype.click;URL.createObjectURL=b=>(blob=b,'blob:browser-test');URL.revokeObjectURL=()=>{};HTMLAnchorElement.prototype.click=function(){};document.querySelector('#export-project').click();await new Promise(r=>setTimeout(r,50));const text=blob?await blob.text():'';URL.createObjectURL=oldCreate;URL.revokeObjectURL=oldRevoke;HTMLAnchorElement.prototype.click=oldClick;const obj=JSON.parse(text);return obj.job.JOB_ID==='JOB-BROWSER-IMPORT-001'&&Object.keys(obj.stages||{}).length===30&&obj.extraPreserved?.unknownField==='PRESERVE-ME';})()`);
-  assert(exportOk,'Export did not preserve the complete imported project.');
-
-  await evalValue(cdp,`location.reload();true`);await sleep(700);await waitExpr(cdp,`document.querySelectorAll('#project-picker option').length>=4`);
-  const selectorText=await evalValue(cdp,`document.querySelector('#project-picker').innerText`);assert(selectorText.includes('Mobile Closed-Loop Agent Reliability Workbook'),'Retained project disappeared after creating/importing/reloading other projects.');
-  const retainedCount=await evalValue(cdp,`[...document.querySelectorAll('#project-picker option')].filter(x=>x.textContent.includes('Mobile Closed-Loop Agent Reliability Workbook')).length`);assert(retainedCount===1,'Retained project was duplicated.');
-
-  const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));
-  assert(errors.length===0,`Browser/runtime errors detected: ${errors.map(x=>JSON.stringify(x.params)).join('\n')}`);
-  console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],retainedProject:true,stage1Instruction:true,stage1Output:true,records:true,structuredRecords:true,externalSourceAuthority:true,humanFacingExperience:true,projectFieldGrouping:true,stageJumpNavigation:true,completionControlsCollapsed:true,recordSearch:true,blockerLifecycle:true,stage2Persistence:true,all30StagesReachable:true,uniqueNewJobs:true,importExport:true,newProjectCoexists:true,horizontalOverflow:false,oversizedButtons:false,runtimeErrors:0},null,2));
-  cdp.close();
+ await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
+ const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+ await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);
+ // Clean state: retained project is seeded exactly once and remains Stage 02 next.
+ await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);
+ assert(await evalValue(cdp,`[...document.querySelectorAll('#project-picker option')].filter(o=>o.textContent.includes('Mobile Closed-Loop Agent Reliability Workbook')).length===1`),'Retained project missing or duplicated in clean state.');
+ let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Retained Stage 01/02 state is wrong.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');
+ await openStage(cdp,1);assert((await snapshot(cdp)).text.includes('Stage 01 is preserved completed history'),'Stage 01 completed history is not inspectable.');
+ await click(cdp,'[data-view="Records"]');let recordText=(await snapshot(cdp)).text;for(const token of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Complete stored project'])assert(recordText.includes(token),`Retained Stage 01 record surface missing ${token}.`);
+ // Phone and desktop rendering checks.
+ for(const width of [320,393,1280]){await setWidth(cdp,width);await click(cdp,'[data-view="Overview"]');const s=await snapshot(cdp);assert(s.scrollWidth<=width+1&&s.bodyScrollWidth<=width+1,`Horizontal overflow at ${width}: ${s.scrollWidth}`);assert(!s.overlap,`Control leaves viewport at ${width}px.`);assert(Math.max(...s.buttons.map(b=>b.h),0)<=64,`Oversized button detected at ${width}px.`);assert(Math.min(...s.buttons.filter(b=>b.h>0).map(b=>b.h),40)>=32,`Unusably small button detected at ${width}px.`);}
+ await setWidth(cdp,393);
+ // All 30 stages reachable through the one workflow shell.
+ for(let n=1;n<=30;n++){await openStage(cdp,n);assert(await evalValue(cdp,`document.querySelector('#stage-picker')?.value==='${n}'`),`Stage ${n} not reachable.`);}
+ // Return retained project to Stage 02 and verify strict prompt contract.
+ await openStage(cdp,2);let text=(await snapshot(cdp)).text;for(const token of ['External governing sources only.','closed-loop-stage-response/1','PROMPT IDENTITY','Parse / validate response'])assert(text.includes(token),`Stage 02 UI/prompt missing ${token}.`);
+ await click(cdp,'#save-prompt');
+ retained=await activeProject(cdp);const promptRecord=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(promptRecord?.instructionId&&promptRecord?.sha256,'Saved prompt identity missing.');
+ // Malformed response preserves raw/validation and does not mutate canonical sources.
+ await fill(cdp,'#stage-output','{"schema":}');await click(cdp,'#parse-output');await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`);retained=await activeProject(cdp);assert(retained.projectData.sources.length===0,'Malformed response mutated canonical sources.');assert(retained.projectData.rawResponses.length>=1&&retained.projectData.responseValidations.at(-1).valid===false,'Malformed raw response/validation not preserved.');
+ // Valid Stage 02 response -> proposal -> atomic accept -> canonical SOURCE_ID/extraction manifest/receipt.
+ const envelope={schema:'closed-loop-stage-response/1',jobId:'JOB-20260823144121',stage:2,promptIdentity:{instructionId:promptRecord.instructionId,sha256:promptRecord.sha256},responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{sources:[{tempKey:'source-1',fields:{TITLE:'Web Content Accessibility Guidelines (WCAG) 2.2',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'W3C Recommendation',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/',PUBLICATION_UPDATE_DATE:'2024-12-12',RETRIEVAL_DATE:'2026-08-25',AUTHORITY_LEVEL:'PRIMARY TECHNICAL AUTHORITY',AUTHORITY_ROLE:'GOVERNING WHERE APPLICABLE',RELEVANCE:'Independent accessibility authority',APPLICABLE_PORTIONS:'Conformance requirements',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING WHERE APPLICABLE',NOTES:'Independent source fixture'},relationships:{},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled browser verification evidence',location:'browser fixture',content:'source inspected'}],unresolved:[],warnings:[],attachments:[]};
+ await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await waitExpr(cdp,`document.body.innerText.includes('Proposed extracted changes')`);retained=await activeProject(cdp);assert(retained.projectData.sources.length===0,'Proposal mutated canonical source before acceptance.');await click(cdp,'#accept-proposal');await waitExpr(cdp,`document.body.innerText.includes('SOURCE-')`);retained=await activeProject(cdp);assert(retained.projectData.sources.length===1,'Accepted source was not committed.');assert(/^SOURCE-/.test(retained.projectData.sources[0].SOURCE_ID||retained.projectData.sources[0].id),'Canonical SOURCE_ID was not application-assigned.');assert(retained.projectData.extractionManifests.length>=1,'Extraction manifest missing.');const receipt=retained.projectData.outputReceipts.at(-1);assert(receipt.acceptedCanonicalChangeId&&receipt.extractionManifestId,'Receipt does not link raw/proposal/change/manifest.');
+ // Reload persistence and next-stage prompt consumes accepted Stage 02 data.
+ await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);retained=await activeProject(cdp);assert(retained.projectData.sources.length===1,'Accepted source did not survive refresh.');await openStage(cdp,3);text=(await snapshot(cdp)).text;assert(text.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'),'Stage 03 prompt does not consume accepted prior data.');assert(text.includes(retained.projectData.sources[0].SOURCE_ID||retained.projectData.sources[0].id),'Stage 03 prompt does not reference accepted source identity.');
+ // Existing-state preservation: inject a legitimate user project, reload, and verify retained + user project coexist.
+ const userJob='JOB-BROWSER-LEGITIMATE';await evalValue(cdp,`(()=>{const key='closed-loop-reliability-projects-v4',a=JSON.parse(localStorage.getItem(key)||'[]'),p=structuredClone(a[0]);p.isRetainedTestProject=false;p.retainedSpecRevision='';p.job.JOB_ID='${userJob}';p.job.JOB_TITLE='Legitimate Browser Project';p.stages[1].status='NOT STARTED';p.job.CURRENT_STAGE='STAGE 01';p.projectData.sources=[];a.push(p);localStorage.setItem(key,JSON.stringify(a));location.reload();return true})()`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('Mobile Closed-Loop Agent Reliability Workbook')`);assert(await evalValue(cdp,`[...document.querySelectorAll('#project-picker option')].some(o=>o.textContent.includes('Legitimate Browser Project'))`),'Existing legitimate project was destroyed during retained-project reconciliation.');assert(await evalValue(cdp,`[...document.querySelectorAll('#project-picker option')].filter(o=>o.textContent.includes('Mobile Closed-Loop Agent Reliability Workbook')).length===1`),'Retained project duplicated after existing-state reload.');
+ // New project creates a unique JOB_ID and starts at Stage 01 without carrying source records.
+ await click(cdp,'#new-project');await waitExpr(cdp,`document.body.innerText.includes('Save User Job Input')`);const afterNew=JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));const newest=afterNew[0];assert(newest.job.JOB_ID!==userJob&&newest.job.JOB_ID!=='JOB-20260823144121','New JOB_ID was not unique.');assert(newest.stages['1'].status==='NOT STARTED'&&(newest.projectData.sources||[]).length===0,'New job carried prior active project records.');
+ // Malformed import does not destroy projects.
+ const beforeCount=afterNew.length;await evalValue(cdp,`(()=>{const input=document.querySelector('#import-file'),dt=new DataTransfer();dt.items.add(new File(['{"broken":true}'],'bad.json',{type:'application/json'}));input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await sleep(250);const afterBad=JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));assert(afterBad.length===beforeCount,'Malformed import destroyed or replaced existing projects.');
+ const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
+ console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],horizontalOverflow:false,controlsWithinViewport:true,buttonSizing:true,retainedCleanState:true,retainedStage1History:true,retainedStage2Next:true,all30StagesReachable:true,strictPromptContract:true,malformedResponseRejectedAtomically:true,proposalReview:true,canonicalCommit:true,canonicalIds:true,extractionManifest:true,receiptLinkage:true,reloadPersistence:true,nextPromptConsumesAcceptedData:true,existingProjectPreserved:true,newJobReset:true,malformedImportNonDestructive:true,runtimeErrors:0},null,2));cdp.close();
 }
-async function cleanup(){
-  if(!proc.killed)proc.kill('SIGTERM');
-  await Promise.race([new Promise(resolve=>proc.once('exit',resolve)),sleep(2000)]);
-  for(let attempt=0;attempt<5;attempt++){
-    try{fs.rmSync(userData,{recursive:true,force:true,maxRetries:3,retryDelay:100});return;}catch(e){if(attempt===4)console.warn(`Browser profile cleanup warning: ${e.message}`);else await sleep(200);}
-  }
-}
+async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
 try{await main();}finally{await cleanup();}

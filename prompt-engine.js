@@ -1,8 +1,10 @@
 (()=>{
 'use strict';
 const core=globalThis.closedLoopCore;
-if(!core||!Array.isArray(core.STAGES))return;
-const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE RECORDED';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
+const schema=globalThis.closedLoopWorkflowSchema;
+const hash=globalThis.closedLoopHash;
+if(!core||!schema||!hash)throw new Error('workbook.js, hash.js, and workflow-schema.js must load before prompt-engine.js.');
+const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
 const procedures={
 1:'Initialize only this current job from this current job’s exact user input. Preserve the verbatim objective, exact deliverable, supplied-material inventory and provenance, inspection state, format requirements, temporal and geographic scope, user-supplied authority, tools, prohibitions, explicit user requirements, assumptions, unresolved unknowns, and controlled INPUT-vN identity. Assign and preserve this job’s unique JOB_ID before downstream artifacts. Do not create, prescribe, or instruct reuse of a master prompt, master job, reusable job definition, reusable target specification, or template for other jobs. Do not infer requirements for unrelated jobs from this job. Do not begin substantive external-source research or downstream production work.',
 2:'Build the external governing source inventory for this current job only. Stage 01 User Job Input and Supplied Material remain authorized project inputs, but they are not automatically independent external governing sources and must not receive SOURCE_ID merely because they were supplied. Identify genuinely independent external authorities relevant to the not-yet-existing target product. Establish actual identity, issuing organization or author, source type, publication origin, URL/reference, version, date, retrieval date where applicable, authority level and role, relevance, applicable portions, inspection state, currency, supersession, controlling status, and actual SHA-256 only when controlled bytes exist. Establish an explicit authority hierarchy and separate source-conflict records. Never use the target product, this operating application, its repository, source code, UI, stored project state, screenshots, prior versions, previous generated targets, project outputs, generated prompts/instructions, or another implementation of the same target as governing source authority. Do not research requirements yet. Create SOURCE-SET-vN only from legitimate external governing sources actually established in this stage; if none are yet established, leave the source set uncreated and record UNKNOWN/BLOCKED as applicable.',
@@ -35,15 +37,141 @@ const procedures={
 29:'Preserve this job’s complete evidence chain for every mandatory requirement: EXTERNAL SOURCE / USER AUTHORITY AS APPLICABLE -> REQUIREMENT -> INSTRUCTION -> EXECUTION -> PRODUCT ELEMENT -> TEST -> TEST RESULT -> EVIDENCE -> RELEASE DECISION and, when released, ARTIFACT HASH IDENTITY. Preserve exact IDs, versions, locations, relationships, and evidence. Missing links remain missing and produce FALSE, UNKNOWN, UNDETERMINED, or BLOCKED as appropriate; never fabricate a chain link.',
 30:'Preserve this job’s failures permanently in append-only defect and regression history. Every defect record must retain stable identity, date, JOB_ID, ITERATION_ID, RUN_ID and/or PRODUCT_ID, REQ_ID, observed failure, expected condition, evidence, severity, root-cause category and cause, correction, changed artifacts, REG_ID, verification result, status, relationships, and append-only corrections. Every confirmed defect requires permanent regression information, and applicable regressions must be rerun for later baseline candidates; failed or UNDETERMINED applicable regressions block approval.'
 };
-const inputCollections={1:['userEntered','artifacts'],2:['userEntered','artifacts','stageRecords'],3:['sources','sourceConflicts','blockers'],4:['research','candidateRequirements','sources'],5:['requirements','sourceConflicts','research'],6:['requirements','blockers'],7:['requirements','tests'],8:['requirements','tests','failureTests','sourceConflicts'],9:['instructions','requirements','tests'],10:['instructions','requirements','tests','failureTests','preflightRecords'],11:['candidateFreezes','freshContexts','artifacts'],12:['runs','requirements','tests','freshContexts'],13:['verification','runs','requirements'],14:['defects','comparisons','verification'],15:['defects','rootCauses','tests'],16:['defects','rootCauses','regressions','changes'],17:['changes','candidateFreezes','tests','regressions'],18:['iterations','runs','verification','comparisons','defects','regressions','blockers'],19:['iterations','candidateFreezes','tests','regressions','freshContexts'],20:['iterations','candidateFreezes','baselines'],21:['baselines','freshContexts','artifacts'],22:['products','tests','artifacts'],23:['products','requirements','sources','meaningResults','freshContexts'],24:['products','requirements','regressions','adversarialResults','freshContexts'],25:['products','artifacts','representationInspections'],26:['products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits'],27:['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers'],28:['releaseRecords','artifactIdentities','artifacts'],29:['sources','requirements','instructions','runs','products','tests','verification','releaseRecords','artifactIdentities','evidenceChains'],30:['defects','rootCauses','regressions','changes','baselines','permanentRegistry']};
-function stageRecord(state,n){return state?.projectData?.stageRecords?.[n]??state?.projectData?.stageRecords?.[String(n)]??state?.stages?.[n]?.draftRecord??state?.stages?.[String(n)]?.draftRecord??'NONE RECORDED';}
-function authorizedInputs(stage,state){const d=state?.projectData||{},parts=[];if(stage.number>1)parts.push(`COMPLETED PRIOR STAGE RECORD\n${show(stageRecord(state,stage.number-1))}`);for(const key of inputCollections[stage.number]||[]){if(key==='stageRecords'){parts.push(`STAGE 01 AUTHORIZED JOB DEFINITION\n${show(stageRecord(state,1))}`);continue;}parts.push(`${key.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\n${show(d[key])}`);}return parts.join('\n\n');}
-function build(stage,state){
- const j=state?.job||{},s=state?.stages?.[stage.number]||state?.stages?.[String(stage.number)]||{};
- const outputs=(stage.fields||[]).map((f,i)=>`${i+1}. ${f.replaceAll('_',' ')}`).join('\n');
- const gates=(stage.completionGate||[]).map(x=>`- ${x}`).join('\n');
- return `COPY BLOCK — STAGE ${String(stage.number).padStart(2,'0')} — ${stage.title}\n\nROLE\nYou are the ${stage.role}. Perform only Stage ${String(stage.number).padStart(2,'0')} for the single current project identified below. Preserve every required role-separation and independence rule.\n\nPROJECT-SCOPE BOUNDARY\nThis instruction belongs only to JOB_ID ${j.JOB_ID||'UNKNOWN'}. Do not reuse this job’s objective, requirements, sources, target description, decisions, records, or generated instruction as authority for another job. Do not instruct the operator to reuse this prompt for other jobs. A different job must begin from that different job’s own Stage 01 User Job Input. The target product for this project is treated as not yet existing until Stage 21 generates it. Existing implementations of the target, including this operating application when applicable, are implementation-side artifacts only and never establish what the target ought to do.\n\nJOB CONTROL\nJOB_ID: ${j.JOB_ID||'UNKNOWN'}\nJOB_TITLE: ${j.JOB_TITLE||'UNKNOWN'}\nCURRENT_ITERATION: ${j.CURRENT_ITERATION||'NOT APPLICABLE'}\nCURRENT_STAGE: STAGE ${String(stage.number).padStart(2,'0')}\nCURRENT_STATE: ${j.CURRENT_STATE||'UNKNOWN'}\nNEXT_REQUIRED_ACTION: ${j.NEXT_REQUIRED_ACTION||'UNKNOWN'}\nINPUT_VERSION: ${j.CURRENT_INPUT_VERSION||'UNKNOWN'}\nSOURCE_SET_VERSION: ${j.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE'}\nREQUIREMENTS_VERSION: ${j.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE'}\nTEST_SUITE_VERSION: ${j.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE'}\nINSTRUCTION_VERSION: ${j.CURRENT_INSTRUCTION_VERSION||'NOT APPLICABLE'}\nBASELINE_ID: ${j.CURRENT_BASELINE_ID||'NOT APPLICABLE'}\nPRODUCT_ID: ${j.CURRENT_PRODUCT_ID||'NOT APPLICABLE'}\n\nCONTROLLING PROJECT INPUT\nEXACT USER OBJECTIVE:\n${show(j.EXACT_USER_OBJECTIVE_VERBATIM)}\n\nEXACT DELIVERABLE:\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\nSUPPLIED MATERIALS:\n${show(j.SUPPLIED_MATERIALS_INVENTORY)}\n\nUSER-SUPPLIED / KNOWN AUTHORITY:\n${show(j.KNOWN_AUTHORITATIVE_SOURCES)}\n\nAVAILABLE TOOLS:\n${show(j.AVAILABLE_TOOLS)}\n\nPROHIBITED ACTIONS:\n${show(j.PROHIBITED_ACTIONS)}\n\nEXPLICIT USER REQUIREMENTS:\n${show(j.EXPLICIT_USER_REQUIREMENTS)}\n\nASSUMPTIONS:\n${show(j.ASSUMPTIONS)}\n\nCONTROLLED UNKNOWNS:\n${show(j.UNKNOWN_INFORMATION)}\n\nAUTHORIZED INPUTS FOR THIS STAGE\n${authorizedInputs(stage,state)||'No additional stage-specific records are established.'}\n\nSTAGE-SPECIFIC TASK\n${procedures[stage.number]}\n\nCURRENT STAGE RECORD\n${show(s.draftRecord)}\n\nREQUIRED OUTPUT\nReturn a complete Stage ${String(stage.number).padStart(2,'0')} result for this project only, containing these controlled fields and the evidence needed to support them:\n${outputs}\n\nCOMPLETION CONDITIONS\n${gates}\n\nOPERATING RULES\n- Operate only on the current JOB_ID and current project state. Never generalize this job’s contents into requirements, prompts, templates, or authority for unrelated jobs.\n- User Job Input controls requested scope and intent. It is not automatically an independent external governing source.\n- External Governing Sources must be genuinely independent of the project and target product.\n- Project artifacts, generated prompts/instructions, outputs, repository files, current application behavior, screenshots, schemas, prior versions, and target-product artifacts cannot establish target correctness merely because they exist.\n- Use repository/implementation artifacts only for implementation-side work when the current task explicitly calls for it; never relabel them as Stage 02 governing sources.\n- Inspect actual files when available; never claim bytes, hashes, inspection, or evidence that do not exist.\n- Do not invent a missing fact. Use UNKNOWN when a fact is not established, NONE only when evidence establishes absence, and NOT APPLICABLE only when an objective applicability rule excludes the field.\n- Do not silently resolve authoritative conflicts. Record the conflict and return BLOCKED when required authority or evidence is unavailable.\n- Keep User Job Input, External Governing Sources, Supplied Material, Project Artifacts, Workflow Evidence, Requirement Evidence, and Target Product roles distinct.\n- Preserve exact artifact versions and identities. Never modify a controlled version in place.\n- Preserve evidence sufficient to reproduce every material determination.\n- Prefer deterministic verification whenever the property is deterministically testable.\n- A generator may not be its sole validator where independence is required.\n- Independent runs and reviews must remain uncontaminated by other runs, reviewer comments, prior failure explanations, or proposed corrections.\n- Material upstream changes invalidate affected downstream evidence and require the defined reruns or reviews.\n- Do not mark this stage ready merely because work was attempted; every completion condition must be affirmatively established.\n- If a mandatory fact, authority, input, capability, evidence item, or decision rule is unavailable, create a blocker rather than pretending completion.\n\nEND COPY BLOCK — STAGE ${String(stage.number).padStart(2,'0')}`;
+const contextCollections={
+1:[],2:[],3:['sources','sourceConflicts'],4:['research','candidateRequirements','sources'],5:['requirements','research','sourceConflicts'],6:['requirements','requirementResolutions'],7:['requirements','tests'],8:['requirements','tests','failureTests','requirementResolutions'],9:['instructions','requirements','tests'],10:['instructions','preflightRecords','tests','failureTests'],11:['candidateFreezes','iterations','freshContexts'],12:['runs','requirements','tests','freshContexts'],13:['verification','runs','requirements'],14:['defects','comparisons','verification'],15:['defects','rootCauses'],16:['defects','rootCauses','regressions'],17:['changes','candidateFreezes','iterations','tests','regressions'],18:['iterations','runs','verification','comparisons','defects','regressions','blockers'],19:['convergenceRecords','candidateFreezes','tests','regressions'],20:['confirmationRecords','candidateFreezes','iterations'],21:['baselines','freshContexts'],22:['products','tests','artifacts'],23:['products','requirements','sources'],24:['products','requirements','regressions'],25:['products','artifacts'],26:['products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections'],27:['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers'],28:['releaseRecords','artifactIdentities','artifacts'],29:['sources','requirements','instructions','runs','products','tests','verification','releaseRecords','artifactIdentities'],30:['defects','rootCauses','regressions','changes','baselines']
+};
+const recordId=(record,collection)=>String(record?.id||record?.recordId||record?.[schema.RECORD_SCHEMAS[collection]?.idField]||record?.fields?.[schema.RECORD_SCHEMAS[collection]?.idField]||'UNKNOWN');
+function boundedCollection(state,collection){
+ const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[];
+ if(!list.length)return 'NONE';
+ const active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);
+ const selected=active.slice(-50).map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',fields:record.fields||record,relationships:record.relationships||{},sha256:record.sha256||'UNKNOWN'}));
+ return show({totalActive:active.length,records:selected,omitted:Math.max(0,active.length-selected.length),omittedRule:'Older records remain preserved in project storage and are referenced by identity; request exact artifacts separately when needed.'});
 }
+function contextFor(stage,state){
+ const parts=[];
+ if(stage>1){const prior=state?.projectData?.stageRecords?.[stage-1]||state?.stages?.[stage-1]?.acceptedData||'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
+ const open=(state?.projectData?.blockers||[]).filter(x=>!x.invalidatedBy&&!['CLOSED','RESOLVED','RETIRED'].includes(String(x?.fields?.STATUS||x?.STATUS||x?.status||'OPEN').toUpperCase()));
+ if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\n${show(open.slice(-20))}`);
+ const questions=(state?.projectData?.humanInputRequests||[]).filter(x=>Number(x.stage)===stage&&String(x.status||'OPEN').toUpperCase()==='OPEN');
+ if(questions.length)parts.push(`UNRESOLVED HUMAN INPUT REQUESTS\n${show(questions)}`);
+ for(const collection of contextCollections[stage]||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\n${boundedCollection(state,collection)}`);
+ return parts.join('\n\n')||'No additional stage-specific canonical records are established.';
+}
+function responseContract(stage,instructionId,promptSha256){
+ const contract=schema.STAGE_CONTRACTS[stage];
+ const recordShape=Object.fromEntries(contract.allowedCollections.map(collection=>[collection,[{tempKey:'response-local-key',fields:Object.fromEntries(schema.recordAgentFields(collection).map(name=>[name,'<value>'])),relationships:{},evidenceRefs:['evidence-1']}]]));
+ return JSON.stringify({
+   schema:schema.RESPONSE_SCHEMA,jobId:'<exact current JOB_ID>',stage,promptIdentity:{instructionId,sha256:promptSha256},responseType:'DATA_PROPOSAL',
+   humanInputRequests:[],stageData:Object.fromEntries(contract.allowedStageData.map(name=>[name,'<value>'])),records:recordShape,
+   evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Exact evidence supporting proposed values',location:'<source/output location>',content:'<exact evidence or faithful excerpt>'}],unresolved:[],warnings:[],attachments:[]
+ },null,2);
+}
+function body(stage,state){
+ const d=core.STAGES[stage-1],j=state?.job||{};
+ const contract=schema.STAGE_CONTRACTS[stage];
+ const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>`- ${x}`).join('\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';
+ const collections=contract.allowedCollections.length?contract.allowedCollections.map(c=>`- ${c}: ${schema.recordAgentFields(c).join(', ')||'no agent-owned fields'}`).join('\n'):'- NONE';
+ return `COPY BLOCK — STAGE ${String(stage).padStart(2,'0')} — ${d.title}
+
+ROLE
+You are the ${d.role}. Perform only Stage ${String(stage).padStart(2,'0')} for this single current project.
+
+PROJECT-SCOPE BOUNDARY
+This instruction belongs only to JOB_ID ${j.JOB_ID||'UNKNOWN'}. The project target is treated as not yet existing until Stage 21. The operating application, its repository, source code, UI, stored state, screenshots, prior target versions, generated project artifacts, and other implementations of the same target are never Stage 02 governing sources or Stage 03 requirement authority. They may be used only for implementation-side work when a project explicitly concerns implementation verification.
+
+JOB CONTROL
+JOB_ID: ${j.JOB_ID||'UNKNOWN'}
+JOB_TITLE: ${j.JOB_TITLE||'UNKNOWN'}
+CURRENT_ITERATION: ${j.CURRENT_ITERATION||'NOT APPLICABLE'}
+CURRENT_STAGE: STAGE ${String(stage).padStart(2,'0')}
+CURRENT_STATE: ${j.CURRENT_STATE||'UNKNOWN'}
+NEXT_REQUIRED_ACTION: ${j.NEXT_REQUIRED_ACTION||'UNKNOWN'}
+INPUT_VERSION: ${j.CURRENT_INPUT_VERSION||'UNKNOWN'}
+SOURCE_SET_VERSION: ${j.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE'}
+REQUIREMENTS_VERSION: ${j.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE'}
+TEST_SUITE_VERSION: ${j.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE'}
+INSTRUCTION_VERSION: ${j.CURRENT_INSTRUCTION_VERSION||'NOT APPLICABLE'}
+BASELINE_ID: ${j.CURRENT_BASELINE_ID||'NOT APPLICABLE'}
+PRODUCT_ID: ${j.CURRENT_PRODUCT_ID||'NOT APPLICABLE'}
+
+AUTHORIZED USER JOB INPUT
+VERBATIM REQUEST / OBJECTIVE:
+${show(j.EXACT_USER_OBJECTIVE_VERBATIM)}
+
+REQUESTED DELIVERABLE:
+${show(j.EXACT_DELIVERABLE_REQUESTED)}
+
+SUPPLIED MATERIALS:
+${show(j.SUPPLIED_MATERIALS_INVENTORY)}
+
+USER-SUPPLIED KNOWN AUTHORITY (classification preserved; do not automatically relabel as external authority):
+${show(j.KNOWN_AUTHORITATIVE_SOURCES)}
+
+AVAILABLE TOOLS:
+${show(j.AVAILABLE_TOOLS)}
+
+PROHIBITED ACTIONS:
+${show(j.PROHIBITED_ACTIONS)}
+
+EXPLICIT USER REQUIREMENTS:
+${show(j.EXPLICIT_USER_REQUIREMENTS)}
+
+AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE
+${contextFor(stage,state)}
+
+STAGE-SPECIFIC TASK
+${procedures[stage]}
+
+PERMITTED AGENT-OWNED STAGE DATA
+${fields}
+
+PERMITTED RECORD COLLECTIONS AND AGENT-OWNED FIELDS
+${collections}
+
+COMPLETION CONDITIONS
+${(d.completionGate||[]).map(x=>`- ${x}`).join('\n')}
+
+MANDATORY RESPONSE RULES
+- Return exactly one JSON object and no Markdown fence, preamble, or trailing prose.
+- Use schema ${schema.RESPONSE_SCHEMA}.
+- Use only DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as responseType.
+- Never assign canonical application IDs, versions, timestamps, counts, hashes, statuses, coverage values, release determinations, current stage/state, or other application-owned values. Use temporaryKey and response-local references where relationships are needed.
+- Never set a HUMAN or HUMAN_DECISION-owned field. When unavailable human information is required, return HUMAN_INPUT_REQUIRED and structured humanInputRequests. Do not convert a missing human decision into an assumption.
+- Include evidence for every agent-produced canonical value that requires provenance.
+- Do not include collections or fields outside the current stage contract.
+- Preserve TRUE/FALSE/UNKNOWN/NONE/NOT APPLICABLE and SATISFIED/VIOLATED/UNDETERMINED meanings exactly.
+- Stage 02 may contain only genuinely independent external governing sources; target-product and repository artifacts are prohibited.
+- Stage 03 may research only accepted Stage 02 external governing sources.
+- If required authority, evidence, capability, or decision rule is unavailable, return BLOCKED or HUMAN_INPUT_REQUIRED as applicable rather than inventing data.
+
+RESPONSE ENVELOPE
+The application will provide the controlling prompt identity immediately after this hashed instruction body. Echo that identity exactly in promptIdentity.
+
+END HASHED INSTRUCTION BODY`;
+}
+function buildPromptRecord(stageOrDefinition,state){
+ const stage=Number(stageOrDefinition?.number||stageOrDefinition);
+ if(!Number.isInteger(stage)||stage<1||stage>30)throw new Error('Stage must be 1 through 30.');
+ const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage);
+ const bodyText=body(stage,state),bodySha256=hash.sha256Text(bodyText);
+ const contextSignature=hash.sha256Value({stage,jobId:state?.job?.JOB_ID||'UNKNOWN',input:state?.job?.CURRENT_INPUT_VERSION||'UNKNOWN',sources:state?.job?.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',requirements:state?.job?.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE',tests:state?.job?.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE',instruction:state?.job?.CURRENT_INSTRUCTION_VERSION||'NOT APPLICABLE',iteration:state?.job?.CURRENT_ITERATION||'NOT APPLICABLE',bodySha256});
+ const same=existing.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256);
+ const instructionId=same?.instructionId||same?.promptId||`INSTRUCTION-${String(state?.job?.JOB_ID||'UNKNOWN').replace(/[^A-Za-z0-9-]/g,'')}-S${String(stage).padStart(2,'0')}-${String(existing.length+1).padStart(3,'0')}`;
+ const identityBlock=`
+
+PROMPT IDENTITY — ECHO EXACTLY
+INSTRUCTION_ID: ${instructionId}
+SHA256_OF_HASHED_INSTRUCTION_BODY: ${bodySha256}
+
+STRICT RESPONSE CONTRACT
+${responseContract(stage,instructionId,bodySha256)}
+
+END COPY BLOCK — STAGE ${String(stage).padStart(2,'0')}`;
+ const prompt=bodyText+identityBlock;
+ return {instructionId,promptId:instructionId,stage,role:d.role,bodySha256,sha256:bodySha256,fullTextSha256:hash.sha256Text(prompt),contextSignature,prompt};
+}
+function build(stageOrDefinition,state){return buildPromptRecord(stageOrDefinition,state).prompt;}
 core.buildStagePrompt=build;
-globalThis.closedLoopPromptEngine={version:'2026-08-24-r2',buildStagePrompt:build,procedures,inputCollections};
+globalThis.closedLoopPromptEngine=Object.freeze({version:'closed-loop-prompt-engine/3',build,buildPromptRecord,procedures,contextCollections,contextFor,responseContract});
 })();

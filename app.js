@@ -1,1 +1,12 @@
-(()=>{'use strict';const STORAGE_COMPAT='closed-loop-storage-20260824-r1';void STORAGE_COMPAT;document.write('<script src="prompt-engine.js?v=closed-loop-prompts-20260824-r2"><\/script><script src="app-core.js?v=closed-loop-app-20260823-r1"><\/script><script src="integrity-guard.js?v=closed-loop-integrity-20260824-r3"><\/script><script src="storage-reliability.js?v=closed-loop-storage-20260824-r2"><\/script><script src="authority-guard.js?v=closed-loop-authority-20260824-r1"><\/script><script src="prompt-display.js?v=closed-loop-prompt-display-20260824-r3"><\/script><script src="usability.js?v=closed-loop-usability-20260824-r3"><\/script>');})();
+(()=>{
+'use strict';
+document.write([
+  '<script src="hash.js?v=closed-loop-hash-20260825-r1"><\/script>',
+  '<script src="workflow-schema.js?v=closed-loop-schema-20260825-r1"><\/script>',
+  '<script src="workflow-engine.js?v=closed-loop-engine-20260825-r1"><\/script>',
+  '<script src="prompt-engine.js?v=closed-loop-prompts-20260825-r1"><\/script>',
+  '<script src="response-ingestion.js?v=closed-loop-ingestion-20260825-r1"><\/script>',
+  '<script src="project-store.js?v=closed-loop-store-20260825-r1"><\/script>',
+  '<script src="app-core.js?v=closed-loop-app-20260825-r1"><\/script>'
+].join(''));
+})();
