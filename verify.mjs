@@ -68,3 +68,13 @@ assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&core.WORKFLOW_ID==='mobile
 assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Response schema /2 is required.');
 for(const stage of core.STAGES){const p=stage.ownership;const union=[...p.human,...p.humanDecision,...p.agent,...p.application];assert(union.length===stage.fields.length&&new Set(union).size===stage.fields.length&&stage.fields.every(f=>union.includes(f)),`Stage ${stage.number} ownership must be a complete disjoint partition.`);for(const def of Object.values(schema.STAGE_FIELDS[stage.number])){assert(schema.VALUE_TYPES.includes(def.valueType),'Every stage field needs a valueType.');assert(Array.isArray(def.enumValues),'Every stage field needs enumValues.');assert(Object.hasOwn(def,'nullable')&&Object.hasOwn(def,'normalizerKey'),'Every stage field needs nullability and normalizer metadata.');}}
 for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.ownership;const union=[...p.human,...p.humanDecision,...p.agent,...p.application];assert(union.length===def.fields.length&&new Set(union).size===def.fields.length&&def.fields.every(f=>union.includes(f)),`${name} ownership must be a complete disjoint partition.`);}
+
+// Practical-100 PR5 persistence/UI boundaries.
+{
+ const storeSource=fs.readFileSync('project-store.js','utf8'),appSource=fs.readFileSync('app-core.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8');
+ for(const token of ["DB_NAME='closed-loop-reliability'","createObjectStore(PROJECTS","createObjectStore(ARTIFACTS","createObjectStore(META",'expectedProjectRevision','BroadcastChannel','putArtifact','exportPackage','importPackage','CompressionStream','projectSha256'])if(!storeSource.includes(token))throw new Error(`PR5 storage boundary missing ${token}.`);
+ if(/\bprompt\s*\(/.test(appSource))throw new Error('Browser prompt() remains in app-core canonical actions.');
+ if(/projectData\s*\[[^\]]+\]\s*\.push\s*\(/.test(appSource))throw new Error('Direct projectData collection push remains in app-core.');
+ for(const command of ['createHumanBlocker','registerFreshContext','invalidateAcceptedResponse','recordHumanDecision','freezeCandidate','freezeBaseline','reserveRunBatch','registerArtifactBytes'])if(!engineSource.includes(`function ${command}`))throw new Error(`Engine command missing ${command}.`);
+ if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);
+}
