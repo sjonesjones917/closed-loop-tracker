@@ -26,6 +26,12 @@ jobs:
           old="for(const token of ['identityAssurance','SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
           new="if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);"
           assert old in s;s=s.replace(old,new,1);p.write_text(s)
+          for name in ['verify-browser.mjs','verify-browser-extra.mjs']:
+            p=Path(name);t=p.read_text().replace('Mobile Closed-Loop Agent Reliability Workbook','Mobile Closed-Loop Reliability Workbook')
+            t=t.replace("async function projects(cdp){return JSON.parse(await evalValue(cdp,`localStorage.getItem('closed-loop-reliability-projects-v4')`));}","async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}")
+            t=t.replace("async function activeProject(cdp){return evalValue(cdp,`JSON.parse(localStorage.getItem('closed-loop-reliability-projects-v4'))[0]`);}","async function activeProject(cdp){return (await evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`))[0];}")
+            t=t.replace("await evalValue(cdp,`localStorage.clear();location.reload();true`);await sleep(450);await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);","await waitExpr(cdp,`document.body.innerText.includes('1/30 complete')`);")
+            p.write_text(t)
           PY
       - name: Syntax and deterministic verification
         run: |
@@ -33,6 +39,8 @@ jobs:
           node --check workflow-engine.js
           node --check app-core.js
           node --check verify.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
           node build-test-project.mjs
           node verify.mjs
           node verify-ingestion.mjs
@@ -43,10 +51,6 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           sleep 1
-          BROWSER=$(command -v google-chrome || command -v chromium || true)
-          "$BROWSER" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=3000 --enable-logging=stderr --dump-dom http://127.0.0.1:4173/ >/tmp/dom.txt 2>/tmp/chrome.log || true
-          grep -o "Mobile Closed-Loop[^<]*" /tmp/dom.txt | head || true
-          tail -80 /tmp/chrome.log || true
           node verify-browser.mjs
           node verify-browser-extra.mjs
       - name: Commit verified source only
