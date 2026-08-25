@@ -13,13 +13,13 @@ jobs:
           ref: verify/final-requirement-ledger
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Repair test-only interpolation typo
+      - name: Repair test-only diagnostics
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('verify-browser-extra.mjs');s=p.read_text();bad="===${JSON.stringify(roundTrip.job.JOB_ID)}";good="===roundTrip.job.JOB_ID"
-          if bad in s:p.write_text(s.replace(bad,good,1))
+          p=Path('verify-browser-extra.mjs');s=p.read_text();s=s.replace("===${JSON.stringify(roundTrip.job.JOB_ID)}","===roundTrip.job.JOB_ID",1);p.write_text(s)
+          p=Path('verify-complete.mjs');s=p.read_text();old="assert(engine.unresolvedHumanRequests(p,1).length===1&&p.stages[1].status==='BLOCKED','Blocking human question did not block Stage 01.');";new="assert(engine.unresolvedHumanRequests(p,1).length===1,'Blocking human question was not discoverable by the gate.');assert(p.stages[1].status==='BLOCKED',`Blocking human question left Stage 01 in ${p.stages[1].status}, not BLOCKED.`);";s=s.replace(old,new,1);p.write_text(s)
           PY
       - name: Run complete source and deterministic regressions
         run: |
@@ -52,12 +52,12 @@ jobs:
           trap 'kill $server 2>/dev/null || true' EXIT
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
-      - name: Commit verified test correction
+      - name: Commit verified test corrections
         shell: bash
         run: |
-          if git diff --quiet -- verify-browser-extra.mjs; then exit 0; fi
+          if git diff --quiet -- verify-browser-extra.mjs verify-complete.mjs; then exit 0; fi
           git config user.name 'closed-loop-repair-bot'
           git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
-          git add verify-browser-extra.mjs
-          git commit -m 'Fix final browser regression syntax'
+          git add verify-browser-extra.mjs verify-complete.mjs
+          git commit -m 'Refine final acceptance regressions'
           git push origin HEAD:verify/final-requirement-ledger
