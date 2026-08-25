@@ -55,29 +55,27 @@ function writeAll(projects,storage=globalThis.localStorage){
   if(!Array.isArray(projects))throw new TypeError('Project storage payload must be an array.');
   const payload=JSON.stringify(projects);
   const prior=storage.getItem(STORE_KEY);
-  if(prior===payload)return {changed:false,bytes:payload.length};
+  if(prior===payload){
+    try{storage.removeItem(TEMP_KEY);storage.removeItem(BACKUP_KEY);}catch{}
+    return {changed:false,bytes:payload.length};
+  }
+
+  // Web Storage setItem() is atomic: if quota is exceeded, the existing value at
+  // STORE_KEY is left unchanged. Do not duplicate the complete project payload into
+  // temporary/backup keys before replacing it; doing so can itself exhaust mobile
+  // browser quota even when the replacement would fit. readAll() has already folded
+  // any legacy backup into the canonical project list, so stale auxiliary copies can
+  // be released before the single canonical write.
+  try{storage.removeItem(TEMP_KEY);storage.removeItem(BACKUP_KEY);}catch{}
   let finalTouched=false;
   try{
     fault('before-temp-write');
-    storage.setItem(TEMP_KEY,payload);
     fault('after-temp-write');
-    if(storage.getItem(TEMP_KEY)!==payload)throw new Error('Transactional project payload verification failed.');
-
-    if(prior!==null){
-      try{storage.setItem(BACKUP_KEY,prior);}catch(error){
-        // A stale backup may consume the quota needed to preserve the current value.
-        try{storage.removeItem(BACKUP_KEY);storage.setItem(BACKUP_KEY,prior);}catch{
-          throw new Error(`Current project state could not be backed up: ${error.message||error}`);
-        }
-      }
-    }
-
     fault('before-final-write');
-    finalTouched=true;
     storage.setItem(STORE_KEY,payload);
+    finalTouched=true;
     fault('after-final-write');
     if(storage.getItem(STORE_KEY)!==payload)throw new Error('Committed project payload verification failed.');
-    storage.removeItem(TEMP_KEY);
     return {changed:true,bytes:payload.length};
   }catch(error){
     try{
@@ -88,7 +86,6 @@ function writeAll(projects,storage=globalThis.localStorage){
     }catch(restoreError){
       error.restoreError=String(restoreError?.message||restoreError);
     }
-    try{storage.removeItem(TEMP_KEY);}catch{}
     throw error;
   }
 }
