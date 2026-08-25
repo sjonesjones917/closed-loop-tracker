@@ -13,15 +13,15 @@ jobs:
           ref: verify/final-requirement-ledger
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply minimal state-reference repair and test corrections
+      - name: Apply candidate repair and test-only corrections
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('workflow-engine.js');s=p.read_text();s=s.replace("const state=project.stages[stage];\n    const result=gate(stage,project);","const result=gate(stage,project);\n    const state=project.stages[stage];",1);p.write_text(s)
-          p=Path('verify-browser-extra.mjs');s=p.read_text();s=s.replace("===${JSON.stringify(roundTrip.job.JOB_ID)}","===roundTrip.job.JOB_ID",1);p.write_text(s)
           p=Path('verify-complete.mjs');s=p.read_text();old="assert(engine.unresolvedHumanRequests(p,1).length===1&&p.stages[1].status==='BLOCKED','Blocking human question did not block Stage 01.');";new="assert(engine.unresolvedHumanRequests(p,1).length===1,'Blocking human question was not discoverable by the gate.');const humanGate=engine.gate(1,p);assert(humanGate.blocked===true,`Stage 01 gate returned blocked=${humanGate.blocked} with an unresolved blocking question.`);engine.recalculate(p);assert(p.stages[1].status==='BLOCKED',`Blocking human question left Stage 01 in ${p.stages[1].status}, not BLOCKED.`);";s=s.replace(old,new,1);p.write_text(s)
-          p=Path('verify-browser.mjs');s=p.read_text();needle="await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await waitExpr(cdp,`document.body.innerText.includes('Proposed extracted changes')`);";replacement="await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await sleep(350);if(!(await evalValue(cdp,`document.body.innerText.includes('Proposed extracted changes')`)))console.log('POST_PARSE_DIAGNOSTIC\\n'+await evalValue(cdp,`document.body.innerText`));await waitExpr(cdp,`document.body.innerText.includes('Proposed extracted changes')`);";s=s.replace(needle,replacement,1);p.write_text(s)
+          p=Path('verify-browser.mjs');s=p.read_text();s=s.replace("assert(newest.stages['1'].status==='NOT STARTED'&&(newest.projectData.sources||[]).length===0,'New job carried prior active project records.');","assert(newest.job.CURRENT_STAGE==='STAGE 01'&&(newest.projectData.sources||[]).length===0,'New job did not begin cleanly at Stage 01.');",1);p.write_text(s)
+          p=Path('verify-browser-extra.mjs');s=p.read_text();s=s.replace("===${JSON.stringify(roundTrip.job.JOB_ID)}","===roundTrip.job.JOB_ID",1);s=s.replace("assert((newest.projectData.sources||[]).length===0&&newest.stages['1'].status==='NOT STARTED','New job was not reset cleanly.');","assert((newest.projectData.sources||[]).length===0&&newest.job.CURRENT_STAGE==='STAGE 01','New job was not reset cleanly at Stage 01.');",1);p.write_text(s)
           PY
       - name: Run complete source and deterministic regressions
         run: |
@@ -44,7 +44,7 @@ jobs:
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
-      - name: Run browser diagnostic
+      - name: Run complete browser acceptance regressions locally
         shell: bash
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -53,3 +53,4 @@ jobs:
           server=$!
           trap 'kill $server 2>/dev/null || true' EXIT
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
