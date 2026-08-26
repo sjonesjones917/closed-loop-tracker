@@ -56,6 +56,11 @@ const prior=storage.getItem(store.STORE_KEY);globalThis.__closedLoopStorageFault
 const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.job,JOB_TITLE:'Updated'}},storage);if(replaced.length!==1||replaced[0].job.JOB_TITLE!=='Updated')throw new Error('Stable JOB_ID reconciliation duplicated a project.');
 
 const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
+const appSourceForStatus=fs.readFileSync('app-core.js','utf8');
+const statusSource=appSourceForStatus.match(/const statusClass=v=>\{.*?\};/)?.[0];
+if(!statusSource)throw new Error('Status classifier is not inspectable.');
+const statusProbe=vm.runInNewContext(`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
+if(statusProbe.notReady!=='warn'||statusProbe.notAuthorized!=='danger'||statusProbe.notComplete!=='warn'||statusProbe.unauthorized!=='danger'||statusProbe.accepted!=='success'||statusProbe.ready!=='success'||statusProbe.blocked!=='warn')throw new Error(`Status presentation polarity is unsafe: ${JSON.stringify(statusProbe)}`);
 const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.readFileSync(f,'utf8')).join('\n');
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
