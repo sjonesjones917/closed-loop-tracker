@@ -121,7 +121,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {contents: write, statuses: write}
     steps:
-      - name: Build acceptance report
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build acceptance report from executed proofs
         env:
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
@@ -130,6 +133,38 @@ jobs:
           test "$TEST_RESULT" = success
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
+          node verify-ingestion.mjs > /tmp/verify-ingestion.out
+          node verify.mjs > /tmp/verify-source.out
+          node verify-complete.mjs > /tmp/verify-complete.out
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser-extra.mjs > /tmp/verify-browser-extra.out
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+          NEGATIVE_CASES=$(node - <<'NODE'
+          const fs=require('fs'),text=fs.readFileSync('/tmp/verify-ingestion.out','utf8');
+          const matches=[...text.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
+          if(!matches.length)throw new Error('verify-ingestion did not publish totalNegativeCases');
+          process.stdout.write(matches.at(-1)[1]);
+          NODE
+          )
+          STORAGE_FAILURE_CASES=$(node - <<'NODE'
+          const fs=require('fs');
+          const proofs=[
+            ['/tmp/verify-source.out',/"transactionRollback"\s*:\s*true/],
+            ['/tmp/verify-complete.out',/"acceptedStateStorageRollback"\s*:\s*true/],
+            ['/tmp/verify-browser-extra.out',/"storageFailureRollback"\s*:\s*true/]
+          ];
+          let count=0;
+          for(const [path,re] of proofs){const text=fs.readFileSync(path,'utf8');if(!re.test(text))throw new Error(`Missing executed storage proof: ${path}`);count++;}
+          process.stdout.write(String(count));
+          NODE
+          )
+          test "$NEGATIVE_CASES" -gt 0
+          test "$STORAGE_FAILURE_CASES" -eq 3
           cat > closed-loop-acceptance.json <<JSON
           {
             "commit": "$GITHUB_SHA",
@@ -140,8 +175,8 @@ jobs:
             "derivationCoverage": 1,
             "relationshipCoverage": 1,
             "stagesCompleted": 30,
-            "negativeCasesPassed": 48,
-            "storageFailureCasesPassed": 3,
+            "negativeCasesPassed": $NEGATIVE_CASES,
+            "storageFailureCasesPassed": $STORAGE_FAILURE_CASES,
             "artifactRoundTrip": true,
             "deployedByteIdentity": true
           }
