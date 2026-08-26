@@ -1,0 +1,64 @@
+name: Acceptance fixture isolation
+on:
+  push:
+    branches: [reliability/acceptance-fixture-isolation-20260826]
+permissions: {contents: write}
+jobs:
+  apply-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/acceptance-fixture-isolation-20260826}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Isolate bundled acceptance project from normal startup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          p=Path('app-core.js');s=p.read_text()
+          old="projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);let test=importSeed(await res.json()),i=projects.findIndex(p=>p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID);if(i>=0){const stored=projects[i];projects.splice(i,1);if(stored.retainedSpecRevision&&stored.retainedSpecRevision===test.retainedSpecRevision)test=stored;else needsPersist=true;}else needsPersist=true;projects.unshift(test);}catch(error){console.error('Bundled retained project could not load',error);}if(!projects.length)"
+          new="projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;const acceptanceFixture=new URLSearchParams(location.search).get('acceptanceFixture')==='retained';if(acceptanceFixture){try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);let test=importSeed(await res.json()),i=projects.findIndex(p=>p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID);if(i>=0){const stored=projects[i];projects.splice(i,1);if(stored.retainedSpecRevision&&stored.retainedSpecRevision===test.retainedSpecRevision)test=stored;else needsPersist=true;}else needsPersist=true;projects.unshift(test);}catch(error){console.error('Bundled retained acceptance project could not load',error);}}if(!projects.length)"
+          if s.count(old)!=1: raise SystemExit(f'app fixture anchor changed: {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          for path in ['verify-browser.mjs','verify-browser-extra.mjs']:
+            p=Path(path);s=p.read_text()
+            s=s.replace("${PAGE_URL}?browser=${Date.now()}","${PAGE_URL}?acceptanceFixture=retained&browser=${Date.now()}")
+            s=s.replace("${PAGE_URL}?browserExtra=${Date.now()}","${PAGE_URL}?acceptanceFixture=retained&browserExtra=${Date.now()}")
+            s=s.replace("${PAGE_URL}?browserExtraTab2=${Date.now()}","${PAGE_URL}?acceptanceFixture=retained&browserExtraTab2=${Date.now()}")
+            p.write_text(s)
+          p=Path('verify.mjs');s=p.read_text();anchor="const appSourceForStatus=fs.readFileSync('app-core.js','utf8');"
+          insert="const appRuntimeSource=fs.readFileSync('app-core.js','utf8');if(!appRuntimeSource.includes(\"get('acceptanceFixture')==='retained'\"))throw new Error('Bundled acceptance project is not isolated from normal production startup.');if(!fs.readFileSync('verify-browser.mjs','utf8').includes('acceptanceFixture=retained')||!fs.readFileSync('verify-browser-extra.mjs','utf8').includes('acceptanceFixture=retained'))throw new Error('Browser acceptance does not explicitly activate its retained fixture.');\n"+anchor
+          if s.count(anchor)!=1: raise SystemExit('verify anchor changed')
+          p.write_text(s.replace(anchor,insert,1))
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+            b=Path(path).read_bytes();return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{f}:{blob(f)}\n' for f in files).encode()).hexdigest()[:16]
+          p=Path('index.html');h=p.read_text();h2=re.sub(r'(?<=\?v=)runtime-[a-f0-9]{16}',token,h)
+          if h2==h: raise SystemExit('runtime token not refreshed')
+          p.write_text(h2)
+          PY
+      - name: Prove normal startup and acceptance mode separately
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/http.log 2>&1 & P=$!; trap 'kill $P 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit proven source
+        run: |
+          rm -f .github/workflows/acceptance-fixture-isolation.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Keep acceptance fixture out of normal production startup'
+          git push origin HEAD:reliability/acceptance-fixture-isolation-20260826
