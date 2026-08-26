@@ -151,3 +151,12 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  if(!two.prompt.includes('Add the omitted controlling source and return a complete replacement.'))throw new Error('Accepted-result refinement feedback is missing from the regenerated prompt.');
  if(two.contextSignature===one.contextSignature)throw new Error('Accepted-result refinement feedback did not change context identity.');
 }
+
+
+// Legitimate independent external evidence is not falsely required to be governing authority.
+{
+  const p=baseProject();
+  const s2=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});
+  if(!/no legitimate independent external source of any justified authority or evidentiary role/i.test(s2.prompt))throw new Error('Stage 02 no-source rule still incorrectly means no governing authority.');
+  if(core.STAGES[1].completionGate.some(x=>/every governing source/i.test(x))||core.STAGES[2].completionGate.some(x=>/every controlling source/i.test(x)))throw new Error('Workbook source completion language still treats every useful external source as governing authority.');
+}
