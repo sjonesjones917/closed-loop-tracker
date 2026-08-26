@@ -1,0 +1,40 @@
+name: Finalize semantic closure
+on:
+  push:
+    branches: [reliability/final-semantic-closure-20260826-v2]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, '[semantic-closure-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-semantic-closure-20260826-v2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimum responsible-layer repair
+        run: python3 finalize-semantic-closure.py
+      - name: Syntax and deterministic acceptance
+        run: |
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit final source only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          test ! -e finalize-semantic-closure.py
+          test ! -e .github/workflows/finalize-semantic-closure.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "Close remaining prompt target and artifact semantics [semantic-closure-complete]"
+          git push origin HEAD:reliability/final-semantic-closure-20260826-v2
