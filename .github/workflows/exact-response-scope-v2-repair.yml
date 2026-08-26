@@ -1,0 +1,65 @@
+name: Temporary exact response scope v2 repair
+on:
+  push:
+    branches:
+      - semantic-reliability/exact-response-scope-v2-20260826
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enforce complete controlling scope identity and add regression
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          let ingestion=fs.readFileSync('response-ingestion.js','utf8');
+          const answerMarker="const ANSWER_TYPES=Object.freeze(['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']);\n";
+          const scopeDecl="const RESPONSE_SCOPE_KEYS=Object.freeze(['projectRevision','inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId']);\n";
+          if(!ingestion.includes('const RESPONSE_SCOPE_KEYS=')){
+            if(!ingestion.includes(answerMarker))throw new Error('ANSWER_TYPES marker not found.');
+            ingestion=ingestion.replace(answerMarker,answerMarker+scopeDecl);
+          }
+          const start=ingestion.indexOf("  if(!object(envelope.scope))issues.push(issue('INVALID_SCOPE'");
+          const end=ingestion.indexOf("  if(!schema.RESPONSE_TYPES.includes(envelope.responseType))",start);
+          if(start<0||end<0)throw new Error('scope validation block not found.');
+          const replacement="  if(!object(envelope.scope))issues.push(issue('INVALID_SCOPE','/scope','scope must be an object.'));else{unknownKeys(envelope.scope,RESPONSE_SCOPE_KEYS,'/scope',issues);const expected=currentScope(project,promptRecord);for(const key of RESPONSE_SCOPE_KEYS)if(JSON.stringify(envelope.scope[key]??null)!==JSON.stringify(expected[key]??null))issues.push(issue('STALE_SCOPE',`/scope/${key}`,`Scope ${key} does not match the controlling prompt.`));}\n";
+          ingestion=ingestion.slice(0,start)+replacement+ingestion.slice(end);
+          fs.writeFileSync('response-ingestion.js',ingestion);
+
+          let verify=fs.readFileSync('verify-ingestion.mjs','utf8');
+          const tag="scopeNegative('non-required populated scope identity',2,'baselineId');";
+          if(!verify.includes(tag)){
+            const marker="for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',10,'iterationId'],['candidate',10,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',20,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);\n";
+            if(!verify.includes(marker))throw new Error('scope negative matrix marker not found.');
+            verify=verify.replace(marker,marker+tag+'\n');
+            fs.writeFileSync('verify-ingestion.mjs',verify);
+          }
+          NODE
+          rm .github/workflows/exact-response-scope-v2-repair.yml
+      - name: Run deterministic acceptance
+        run: |
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit proven repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+41898282@users.noreply.github.com"
+          git add -A
+          git commit -m "Require exact full response scope identity"
+          git push origin HEAD:semantic-reliability/exact-response-scope-v2-20260826
