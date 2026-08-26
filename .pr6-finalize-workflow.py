@@ -48,6 +48,67 @@ console.log(JSON.stringify({operationalMetricsDerived:true}));
 """
 p.write_text(s)
 
+# Keep architecture/support documentation synchronized with the implemented contracts.
+Path('README.md').write_text(r'''# Closed-Loop Reliability
+
+Live application: https://sjonesjones917.github.io/closed-loop-tracker/
+
+This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages.
+
+## Responsibility boundaries
+
+| Responsibility | Owner |
+|---|---|
+| Workflow stages, names, roles, declared completion conditions | `workbook.js` |
+| Field ownership, types, enums, relationships, and stage contracts | `workflow-schema.js` |
+| Canonical serialization and SHA-256 | `hash.js` |
+| Prompt content, context selection, and prompt identity | `prompt-engine.js` |
+| Parsing, validation, proposal planning, and response disposition | `response-ingestion.js` |
+| Derived values, current-scope selection, gates, invalidation, and release logic | `workflow-engine.js` |
+| Projects, revisions, artifact bytes, migration, import/export, and storage health | `project-store.js` |
+| Rendering and operator actions | `app-core.js` |
+| Static shell, CSS, and ordered module loading | `index.html` |
+| Source, lifecycle, browser, deployment, and live verification | `.github/workflows/pages.yml` |
+
+There is no second parser, store, workflow engine, prompt layer, application shell, runtime wrapper guard, MutationObserver patch, framework runtime, backend, or multi-device synchronization layer.
+
+## Current contracts
+
+- Workflow identity: `mobile-closed-loop/30`.
+- Project schema: `closed-loop-project/2`.
+- Response schema: `closed-loop-stage-response/2`.
+- Stage count: exactly 30; no Stage or Operation 31.
+- Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS pixels.
+- Required browser capabilities: IndexedDB, Web Crypto, Blob, and CompressionStream/DecompressionStream for complete compressed package export/import.
+- Persistence: one IndexedDB database, `closed-loop-reliability`, with `projects`, `artifacts`, and `meta` object stores. `BroadcastChannel` is notification only, never a state store.
+
+## Migration policy
+
+The supported legacy migration is deterministic: `human-project/30` to `closed-loop-project/2`. It preserves unknown extension data, raw outputs, receipts, history, project identity, and all 30 stages. Original imported payloads are retained as non-operational migration archives. Historical legacy stage records cannot satisfy current prompts or gates.
+
+## Data and backup responsibility
+
+Browser-local persistence is not protection against device destruction, browser-profile deletion, private-mode eviction, or an operator clearing site data. The application requests persistent browser storage and displays persistence/quota/revision/export health, but the operator remains responsible for retaining complete project exports. Complete exports contain the canonical project, response/validation/proposal/receipt/manifest history, artifact metadata, actual artifact bytes, schema versions, a package manifest, and package SHA-256.
+
+## Verification
+
+Run the deterministic checks in this order:
+
+```bash
+node build-test-project.mjs
+for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-prompt-semantics.mjs test-fixtures.mjs verify-full-cycle.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+node verify.mjs
+node verify-ingestion.mjs
+node verify-complete.mjs
+node verify-prompt-semantics.mjs
+node verify-full-cycle.mjs
+```
+
+For local Chromium acceptance, serve the repository root and run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the local URL. The Pages workflow executes the same local browser acceptance before deployment, then verifies exact deployed source bytes and repeats browser acceptance against the deployed URL.
+
+A release is described as **100% conformant to the tested deterministic invariants** only after the exact deployed commit passes the complete workflow. External-agent factual truth, external-source correctness, device survival, and unknown implementation bugs are not absolute guarantees.
+''')
+
 # Replace the one Pages workflow with the required permanent acceptance order.
 p=Path('.github/workflows/pages.yml')
 p.write_text(r'''name: Verify and deploy the single reliability app
