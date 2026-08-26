@@ -25,6 +25,7 @@ jobs:
           set -euo pipefail
           old=aa8a2b26f03f7db302ee22f7b6954b635cb73253
           base=10dc739a9bd088b0df70d1bf6fee776ef09c55eb
+          git fetch --no-tags origin "$old"
           git show "$old:.pr6-patch/part00" > /tmp/pr6-part00
           git show "$old:.pr6-patch/part01" > /tmp/pr6-part01
           cat /tmp/pr6-part00 /tmp/pr6-part01 | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
