@@ -11,6 +11,8 @@ block=r"""  console.log('extra:blob-cas-rollback');
 
   // Injected storage failure produces no partial canonical commit.
   const beforeFailure=(await projects(cdp)).find(x=>x.job.JOB_ID===sharedId),beforeFailureHash=beforeFailure.projectSha256,beforeFailureRevision=beforeFailure.revision;const failureCode=await evalValue(cdp,`(async()=>{const all=await globalThis.closedLoopProjectStore.readAll(),p=all.find(x=>x.job.JOB_ID===${JSON.stringify(sharedId)});p.job.JOB_TITLE='MUST NOT COMMIT';globalThis.__closedLoopStorageFault='during-project-write';try{await globalThis.closedLoopProjectStore.writeProject(p,{expectedProjectRevision:p.revision});return 'NO_ERROR';}catch(e){return e.code||e.message;}finally{delete globalThis.__closedLoopStorageFault;}})()`);assert(failureCode==='INJECTED_STORAGE_FAILURE','Injected storage failure did not fail closed.');const afterFailure=(await projects(cdp)).find(x=>x.job.JOB_ID===sharedId);assert(afterFailure.revision===beforeFailureRevision&&afterFailure.projectSha256===beforeFailureHash&&afterFailure.job.JOB_TITLE==='CAS TAB ONE','Injected storage failure partially changed canonical state.');
+  // The first tab was intentionally made stale by the CAS test. Reload before exercising normal UI commands.
+  await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);
 
 """
 s=s.replace(marker,block+marker,1)
