@@ -32,7 +32,7 @@ jobs:
       - name: Verify intended source boundary
         run: |
           git diff --check
-          ACTUAL="$(git status --short | sed 's/^...//' | sort)"
+          ACTUAL="$(git diff --name-only origin/main -- | sort)"
           EXPECTED="$(printf '%s\n' \
             .github/workflows/pages.yml \
             prompt-engine.js \
@@ -77,6 +77,19 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          test -z "$(git diff --cached --name-only | grep -E '^\.pr6-|^\.github/workflows/pr6-integrate\.yml$' || true)"
+          ACTUAL="$(git diff --cached --name-only origin/main -- | sort)"
+          EXPECTED="$(printf '%s\n' \
+            .github/workflows/pages.yml \
+            prompt-engine.js \
+            response-ingestion.js \
+            test-fixtures.mjs \
+            verify-browser-extra.mjs \
+            verify-full-cycle.mjs \
+            verify-ingestion.mjs \
+            verify-live.mjs \
+            verify.mjs \
+            workflow-engine.js \
+            workflow-schema.js | sort)"
+          test "$ACTUAL" = "$EXPECTED"
           git commit -m 'PR 6: complete acceptance proof'
           git push origin HEAD:practical-100/pr6-complete-acceptance
