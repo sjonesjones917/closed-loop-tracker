@@ -43,17 +43,31 @@ jobs:
 
       - name: Run real local Chromium acceptance
         run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          export PAGE_URL=http://127.0.0.1:4173/
+          test -n "$BROWSER"
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
-          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 50); do
-            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            curl -fsS "$PAGE_URL" >/dev/null && break
             sleep .1
           done
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
-          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+          curl -fsS "$PAGE_URL" >/dev/null
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
 
       - name: Commit only the verified permanent change
         run: |
