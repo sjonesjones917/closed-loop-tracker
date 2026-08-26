@@ -1,0 +1,44 @@
+name: Apply refinement invalidation current main
+on:
+  push:
+    branches: [practical-100/refinement-current-main-v2]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: practical-100/refinement-current-main-v2, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply clean transform
+        run: |
+          python3 .repair-refinement.py
+          rm .repair-refinement.py
+      - name: Deterministic acceptance
+        run: |
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium acceptance
+        run: |
+          python3 -m http.server 4173 >/tmp/server.log 2>&1 &
+          P=$!
+          trap 'kill $P || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit exact tested tree
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/apply-refinement-v2.yml
+          git add -A
+          git commit -m "Invalidate same-stage canonical authority on accepted-result refinement"
+          git push origin HEAD:practical-100/refinement-current-main-v2
