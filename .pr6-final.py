@@ -65,6 +65,8 @@ new="""    case 2:{
 if s.count(old)!=1: raise SystemExit(f'workflow-engine.js: expected Stage 2/3 gate block once, found {s.count(old)}')
 p.write_text(s.replace(old,new,1))
 
+one('verify-full-cycle.mjs',"data(2,{stageData:{AUTHORITY_HIERARCHY:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'Evidence-supported search found no applicable external governing source.'}});","data(2,{stageData:{AUTHORITY_HIERARCHY:'No external authority applies.',SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'Evidence-supported search found no applicable external governing source.'}});")
+
 Path('README.md').write_text("""# Closed-Loop Reliability
 
 Live application: https://sjonesjones917.github.io/closed-loop-tracker/
