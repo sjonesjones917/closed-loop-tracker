@@ -21,6 +21,10 @@ jobs:
           from pathlib import Path
           p=Path('prompt-engine.js')
           s=p.read_text()
+          stage1_old='If required repository, runtime, account, network, deployment, or tool access is absent, do not pretend implementation occurred; define the most complete reliable implementation-ready specification, architecture, patch plan, acceptance criteria, or other feasible deliverable.'
+          stage1_new='If required repository, runtime, account, network, deployment, or tool access is absent, do not pretend implementation occurred; define a complete implementation-ready specification, architecture, patch plan, acceptance criteria, or other feasible deliverable. When such a substitute is feasible, propose it as the workflow deliverable and require normal human intent confirmation before downstream work.'
+          if stage1_old not in s: raise SystemExit('Stage 1 capability fallback sentence missing')
+          s=s.replace(stage1_old,stage1_new,1)
           anchor='- The operating application itself has no external repository, service, deployment, or remote execution capability. Use only capabilities actually available to the external agent and established for this job. Never claim repository or deployment work occurred unless that external execution context actually performed it. When Stage 01 has established and the human has confirmed an implementation-ready specification as the feasible workflow deliverable, later stages operate on that specification as the product rather than repeatedly blocking on the unavailable original implementation.'
           rule=anchor+'\n- Do not simulate completion. If the original requested implementation cannot be performed reliably in the available environment, use the human-confirmed implementation-ready specification or other feasible workflow deliverable established at Stage 01. Return BLOCKED only when the currently confirmed workflow deliverable itself cannot be completed reliably; use EXECUTION_FAILED only for an actual attempted execution or tool failure.'
           if anchor not in s: raise SystemExit('shared capability anchor missing')
