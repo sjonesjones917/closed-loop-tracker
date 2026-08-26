@@ -12,7 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: python .pr6-stage21-30-patch.py
+      - run: |
+          python .pr6-stage21-30-patch.py
+          python .pr6-defect-close.py
       - run: |
           node --check workflow-engine.js
           node --check verify-full-cycle.mjs
@@ -24,7 +26,7 @@ jobs:
       - name: Commit proved changes and clean probe
         if: success()
         run: |
-          rm .pr6-stage21-30-patch.py .github/workflows/pr6-stage21-30-probe.yml
+          rm .pr6-stage21-30-patch.py .pr6-defect-close.py .github/workflows/pr6-stage21-30-probe.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
