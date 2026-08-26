@@ -30,7 +30,7 @@ function semanticIssues(record){
   if(!record.prompt.includes(`BODY_SHA256: ${record.bodySha256}`)||!record.prompt.includes(`CONTRACT_SHA256: ${record.contractSha256}`)||!record.prompt.includes(`CONTEXT_SIGNATURE: ${record.contextSignature}`))issues.push('PROMPT_HASH_IDENTITY_MISSING');
   if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('return BLOCKED'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
   if(!record.prompt.includes('rejected data is not canonical'))issues.push('REFINEMENT_RULE_MISSING');
-  if(!record.prompt.includes('implementation-ready specification rather than pretending implementation occurred'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
+  if(!record.prompt.includes('Never place canonical deliverable data inside BLOCKED')||!record.prompt.includes('return HUMAN_INPUT_REQUIRED and ask for that decision'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
   if(record.stage===2){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
@@ -73,7 +73,7 @@ const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
   {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
   {...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},
-  {...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}
+  {...original,prompt:original.prompt.replace('Never place canonical deliverable data inside BLOCKED','Place canonical deliverable data inside BLOCKED')}
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 
