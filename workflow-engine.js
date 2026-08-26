@@ -288,7 +288,7 @@ function gate(stage,project){
       break;
     }
     case 15:{requireAccepted();const defects=confirmedDefects(project),regs=records(project,'regressions'),covered=new Map(regs.map(r=>[String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''),r]));const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression definitions are missing for: '+missing.join(', ')+'.');const executions=records(project,'regressionExecutions');for(const reg of regs){const id=recordId(reg,'regressions');if(!executions.some(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id&&upper(recordValue(e,'PHASE'))==='PRE_CORRECTION'&&['VIOLATED','FAILED','FAIL'].includes(upper(recordValue(e,'RESULT')))))reasons.push('Regression '+id+' lacks an actual pre-correction failing execution.');}break;}
-    case 16:requireAccepted();if(confirmedDefects(project).length&&!collection('changes').length)reasons.push('A responsible-layer changeset or blocker is required for confirmed defects.');break;
+    case 16:{requireAccepted();const defects=confirmedDefects(project),changes=collection('changes'),mentions=(value,id)=>String(value||'').toUpperCase().split(/[^A-Z0-9_-]+/).includes(String(id||'').toUpperCase());if(defects.length&&!changes.length)reasons.push('A responsible-layer changeset is required for confirmed defects.');const uncovered=defects.filter(defect=>!changes.some(change=>mentions(recordValue(change,'TRIGGERING_DEFECT_IDS'),recordId(defect,'defects')))).map(defect=>recordId(defect,'defects'));if(uncovered.length)reasons.push('Responsible-layer corrections are missing for confirmed defect(s): '+uncovered.join(', ')+'.');break;}
     case 17:{requireAccepted();const iteration=latestIteration(project,[17]);const ev=evaluateIteration(project,recordId(iteration,'iterations'),'CORRECTED');if(!ev.complete)reasons.push(...ev.reasons);break;}
     case 18:{
       requireAccepted();const metrics=convergenceMetrics(project);
@@ -316,16 +316,20 @@ function gate(stage,project){
       break;
     case 27:{requireAccepted();const r=recordsForCurrentScope(project,'releaseRecords').at(-1);if(!r)reasons.push('The application has not recorded a current release determination.');else if(!['ACCEPTED','REJECTED','BLOCKED'].includes(upper(recordValue(r,'DETERMINATION'))))reasons.push('Current release determination is invalid.');break;}
     case 28:{
-      const release=all('releaseRecords').at(-1);
-      if(upper(recordValue(release,'DETERMINATION'))!=='ACCEPTED')reasons.push('Stage 27 must be ACCEPTED before artifact identity verification.');
-      if(!all('artifactIdentities').length)reasons.push('No audited-versus-delivery artifact identity comparison exists.');
-      if(all('artifactIdentities').some(record=>!truth(recordValue(record,'EXACT_HASH_MATCH'))||!truth(recordValue(record,'EXACT_SIZE_MATCH'))||upper(recordValue(record,'AUTHORIZATION'))!=='AUTHORIZED'))reasons.push('At least one release artifact does not exactly match the audited artifact.');
+      const release=recordsForCurrentScope(project,'releaseRecords').at(-1),identities=recordsForCurrentScope(project,'artifactIdentities'),productId=currentScope(project).productId,artifacts=recordsForCurrentScope(project,'artifacts').filter(record=>productId&&String(record.scope?.productId||'')===String(productId)),counts=new Map();
+      if(upper(recordValue(release,'DETERMINATION'))!=='ACCEPTED')reasons.push('The exact current Stage 27 release must be ACCEPTED before artifact identity verification.');
+      for(const identity of identities){const id=String(recordValue(identity,'ARTIFACT_ID')||identity.relationships?.ARTIFACT_ID||'');counts.set(id,(counts.get(id)||0)+1);}
+      const expected=new Set(artifacts.map(record=>recordId(record,'artifacts'))),missing=[...expected].filter(id=>counts.get(id)!==1),unexpected=identities.filter(identity=>!expected.has(String(recordValue(identity,'ARTIFACT_ID')||identity.relationships?.ARTIFACT_ID||'')));
+      if(!expected.size)reasons.push('No current product artifacts exist for pre-release identity verification.');
+      if(missing.length)reasons.push('Exactly one current artifact-identity comparison is required for every current product artifact: '+missing.join(', ')+'.');
+      if(unexpected.length)reasons.push('Artifact-identity comparisons exist outside the current product artifact set.');
+      if(identities.some(record=>!truth(recordValue(record,'EXACT_HASH_MATCH'))||!truth(recordValue(record,'EXACT_SIZE_MATCH'))||upper(recordValue(record,'AUTHORIZATION'))!=='AUTHORIZED'))reasons.push('At least one current release artifact does not exactly match the audited artifact.');
       break;
     }
     case 29:{
-      const reqs=mandatoryRequirements(project),chains=all('evidenceChains'),byReq=new Map(chains.map(record=>[String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||''),record]));
-      const incomplete=reqs.filter(req=>upper(recordValue(byReq.get(requirementId(req)),'STATUS'))!=='COMPLETE').map(requirementId);
-      if(incomplete.length)reasons.push(`Complete evidence chains are missing for: ${incomplete.join(', ')}.`);
+      const reqs=mandatoryRequirements(project,currentScope(project)),chains=recordsForCurrentScope(project,'evidenceChains'),counts=new Map(),byReq=new Map();for(const chain of chains){const id=String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||'');counts.set(id,(counts.get(id)||0)+1);byReq.set(id,chain);}const expected=new Set(reqs.map(requirementId)),missing=[...expected].filter(id=>counts.get(id)!==1||upper(recordValue(byReq.get(id),'STATUS'))!=='COMPLETE'),unexpected=chains.filter(chain=>!expected.has(String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||'')));
+      if(missing.length)reasons.push(`Exactly one complete current evidence chain is required for: ${missing.join(', ')}.`);
+      if(unexpected.length)reasons.push('Evidence chains exist outside the current mandatory-requirement set.');
       break;
     }
     case 30:{requireAccepted();const defects=confirmedDefects(project),regs=records(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||!['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT'))))reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}

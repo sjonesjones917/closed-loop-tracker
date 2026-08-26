@@ -173,4 +173,36 @@ assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matc
  const agent=record('blockers',1,{STATUS:'OPEN',CLOSURE:'OPEN'},'BLOCKER-AGENT');agent.source='APPLICATION_DISPOSITION';p.projectData.blockers.push(agent);let rejected=false;try{engine.resolveHumanBlocker(p,{blockerId:'BLOCKER-AGENT',resolutionEvidence:'not authorized',operatorLabel:'VERIFY'});}catch{rejected=true;}assert(rejected,'Human control resolved a non-human blocker.');
 }
 
+
+// Current-authority gates reject incomplete responsible-layer coverage and stale release/evidence scope.
+{
+  const p=project('JOB-STAGE16-DEFECT-COVERAGE');p.stages[15].status='COMPLETE';p.projectData.acceptedChanges.push({changeId:'AC-16-COVERAGE',stage:16,status:'COMMITTED',responseType:'DATA_PROPOSAL'});
+  p.projectData.defects.push(record('defects',14,{OBSERVED_FAILURE:'failure one',EXPECTED_CONDITION:'condition one',EVIDENCE:'e1',SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-000001'),record('defects',14,{OBSERVED_FAILURE:'failure two',EXPECTED_CONDITION:'condition two',EVIDENCE:'e2',SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-000002'));
+  p.projectData.changes.push(record('changes',16,{TRIGGERING_DEFECT_IDS:'DEFECT-000001',ROOT_CAUSE_ANALYSIS:'rca',RESPONSIBLE_LAYER:'instruction',OLD_ARTIFACT_VERSION:'v1',EXACT_MODIFICATION:'fix one',NEW_ARTIFACT_VERSION:'v2',DOWNSTREAM_INVALIDATION:'required',REQUIRED_RERUNS:'required',INSTRUCTION_CHANGE_DETERMINATION:'changed',JUSTIFIED_UNCHANGED_ARTIFACTS:'none',EVIDENCE:'change evidence'},'CHANGESET-000001'));
+  const incomplete=engine.gate(16,p);assert(!incomplete.complete&&incomplete.reasons.some(r=>r.includes('DEFECT-000002')),'Stage 16 completed while a confirmed defect had no responsible-layer correction.');
+  p.projectData.changes.push(record('changes',16,{TRIGGERING_DEFECT_IDS:'Corrects DEFECT-000002.',ROOT_CAUSE_ANALYSIS:'rca',RESPONSIBLE_LAYER:'instruction',OLD_ARTIFACT_VERSION:'v2',EXACT_MODIFICATION:'fix two',NEW_ARTIFACT_VERSION:'v3',DOWNSTREAM_INVALIDATION:'required',REQUIRED_RERUNS:'required',INSTRUCTION_CHANGE_DETERMINATION:'changed',JUSTIFIED_UNCHANGED_ARTIFACTS:'none',EVIDENCE:'change evidence'},'CHANGESET-000002'));
+  assert(engine.gate(16,p).complete,'Stage 16 did not complete after every confirmed defect was explicitly covered.');
+}
+{
+  const p=project('JOB-STAGE28-CURRENT-SCOPE');p.stages[27].status='COMPLETE';p.job.CURRENT_PRODUCT_ID='PRODUCT-CURRENT';
+  const product=record('products',21,{STATUS:'COMPLETED'},'PRODUCT-CURRENT');product.scope={productId:'PRODUCT-CURRENT'};p.projectData.products.push(product);
+  const artifact=record('artifacts',21,{FILENAME:'current.bin',TYPE:'application/octet-stream',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-CURRENT');artifact.scope={productId:'PRODUCT-CURRENT'};p.projectData.artifacts.push(artifact);
+  const staleRelease=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-STALE');staleRelease.scope={productId:'PRODUCT-STALE'};p.projectData.releaseRecords.push(staleRelease);
+  const staleIdentity=record('artifactIdentities',28,{ARTIFACT_ID:'ARTIFACT-STALE',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,AUTHORIZATION:'AUTHORIZED'},'IDENTITY-STALE');staleIdentity.scope={productId:'PRODUCT-STALE'};p.projectData.artifactIdentities.push(staleIdentity);
+  assert(!engine.gate(28,p).complete,'Stage 28 accepted stale release/artifact identity evidence from another product scope.');
+  const release=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-CURRENT');release.scope={productId:'PRODUCT-CURRENT'};p.projectData.releaseRecords.push(release);
+  const identity=record('artifactIdentities',28,{ARTIFACT_ID:'ARTIFACT-CURRENT',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,AUTHORIZATION:'AUTHORIZED'},'IDENTITY-CURRENT');identity.scope={productId:'PRODUCT-CURRENT'};p.projectData.artifactIdentities.push(identity);
+  assert(engine.gate(28,p).complete,'Stage 28 rejected exact current release/artifact identity coverage.');
+}
+{
+  const p=project('JOB-STAGE29-CURRENT-SCOPE');p.stages[28].status='COMPLETE';p.job.CURRENT_REQUIREMENTS_VERSION='REQ-v2';
+  const req=record('requirements',4,{OBLIGATION:'current obligation',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE',USER_INPUT_RELATIONSHIP:'input'},'REQ-CURRENT-29');req.scope={requirementsVersion:'REQ-v2'};p.projectData.requirements.push(req);
+  const stale=record('evidenceChains',29,{REQ_ID:'REQ-CURRENT-29',STATUS:'COMPLETE'},'CHAIN-STALE');stale.scope={requirementsVersion:'REQ-v1'};p.projectData.evidenceChains.push(stale);
+  assert(!engine.gate(29,p).complete,'Stage 29 accepted a stale complete evidence chain from another requirement scope.');
+  const current=record('evidenceChains',29,{REQ_ID:'REQ-CURRENT-29',STATUS:'COMPLETE'},'CHAIN-CURRENT');current.scope={requirementsVersion:'REQ-v2'};p.projectData.evidenceChains.push(current);
+  assert(engine.gate(29,p).complete,'Stage 29 rejected exactly one complete current evidence chain per mandatory requirement.');
+  const duplicate=record('evidenceChains',29,{REQ_ID:'REQ-CURRENT-29',STATUS:'COMPLETE'},'CHAIN-CURRENT-2');duplicate.scope={requirementsVersion:'REQ-v2'};p.projectData.evidenceChains.push(duplicate);
+  assert(!engine.gate(29,p).complete,'Stage 29 accepted duplicate current evidence chains for one mandatory requirement.');
+}
+
 console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
