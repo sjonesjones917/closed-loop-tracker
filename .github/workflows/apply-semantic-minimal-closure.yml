@@ -1,0 +1,36 @@
+name: Apply minimal semantic closure
+on:
+  push:
+    branches:
+      - semantic-reliability/minimal-closure-current-main
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 .semantic-minimal-closure.py
+      - run: |
+          node --check workbook.js
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - if: success()
+        run: |
+          rm -f .semantic-minimal-closure.py .github/workflows/apply-semantic-minimal-closure.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Close remaining prompt recovery and audit semantics'
+          git push origin HEAD:semantic-reliability/minimal-closure-current-main
