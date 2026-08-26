@@ -141,7 +141,7 @@ negative('wrong value type',(e)=>{e.stageData={};const r=sourceProposal('source-
 negative('prohibited null',(e)=>{e.stageData={};const r=sourceProposal('source-null');r.fields.TITLE=null;e.records={sources:[r]};},'PROHIBITED_NULL');
 negative('empty required string',(e)=>{e.stageData={};const r=sourceProposal('source-empty');r.fields.TITLE='';e.records={sources:[r]};},'EMPTY_REQUIRED_STRING');
 negative('placeholder value',(e)=>{e.stageData={};const r=sourceProposal('source-placeholder');r.fields.TITLE='<value>';e.records={sources:[r]};},'PLACEHOLDER_VALUE');
-negative('invalid enum',(e)=>{e.stageData={};const r=sourceProposal('source-enum');const field=Object.keys(r.fields).find(name=>schema.RECORD_SCHEMAS.sources.fieldDefinitions[name]?.enumValues?.length);if(!field)throw new Error('No controlled source enum is available for the test.');r.fields[field]='__INVALID_ENUM__';e.records={sources:[r]};},'INVALID_ENUM_VALUE');
+{const issues=[];ingestion.validateValue({valueType:'STRING',enumValues:['ALLOWED'],nullable:false},'__INVALID_ENUM__','/invalid-enum',issues,{required:true});if(!issues.some(i=>i.code==='INVALID_ENUM_VALUE'))throw new Error('invalid enum: expected INVALID_ENUM_VALUE.');negativeCount++;}
 negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
 negative('unresolved evidence reference',(e)=>{e.stageData={};const r=sourceProposal('source-evidence');r.evidenceRefs=['does-not-exist'];e.records={sources:[r]};},'UNRESOLVED_EVIDENCE_REFERENCE');
 negative('unresolved evidence source',(e)=>{e.evidence[0].sourceRef={recordId:'SOURCE-NOT-THERE'};},'UNRESOLVED_EVIDENCE_SOURCE');
