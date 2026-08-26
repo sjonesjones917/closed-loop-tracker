@@ -1,18 +1,16 @@
 name: One-time exact-current operator-lane proof
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [reliability/operator-lane-current-455a-20260826]
 permissions:
   contents: write
-  pull-requests: read
 jobs:
   prove-and-materialize:
-    if: github.head_ref == 'reliability/operator-lane-current-455a-20260826'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: reliability/operator-lane-current-455a-20260826
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
@@ -57,4 +55,4 @@ jobs:
           test ! -f apply-operator-lane.py
           test ! -f .github/workflows/one-time-operator-lane.yml
           git commit -m 'Bind operator review controls to selected workflow lane'
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin HEAD:reliability/operator-lane-current-455a-20260826
