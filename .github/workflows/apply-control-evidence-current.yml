@@ -1,0 +1,94 @@
+name: Apply control evidence current
+on:
+  push:
+    branches:
+      - reliability/control-evidence-current-263f-20260826
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/control-evidence-current-263f-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch current responsible ingestion path
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('response-ingestion.js'); s=p.read_text()
+          def sub(old,new,label):
+              global s
+              n=s.count(old)
+              if n!=1: raise SystemExit(f'{label}: expected 1 match, got {n}')
+              s=s.replace(old,new,1)
+          sub("    const byName=suppliedFiles.filter(","    if(attachment.required!==undefined&&typeof attachment.required!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/required`,'required must be BOOLEAN when supplied.'));\n    const byName=suppliedFiles.filter(",'attachment boolean')
+          sub("    for(const name of safe(request.affectedStageFields))","    if(request.blocking!==undefined&&typeof request.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));\n    for(const name of safe(request.affectedStageFields))",'question boolean')
+          sub("if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));});","if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));if(item.blocking!==undefined&&typeof item.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));});",'unresolved boolean')
+          sub("function commit(project,proposalId,{operator='HUMAN_OPERATOR'","function commitEvidence(project,proposal){const ids=[];for(const evidence of safe(proposal.evidence)){if(project.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);project.projectData.evidenceRecords.push(clone(evidence));ids.push(evidence.id);}return ids;}\nfunction commit(project,proposalId,{operator='HUMAN_OPERATOR'",'evidence helper')
+          sub("if(proposal.responseType!=='DATA_PROPOSAL'){let type,status,details={};","if(proposal.responseType!=='DATA_PROPOSAL'){const evidenceIds=commitEvidence(next,proposal);let type,status,details={evidenceIds};",'control evidence commit')
+          sub("blocking:request.blocking!==false,status:'OPEN',createdAt:stamp","blocking:request.blocking!==false,status:'OPEN',evidenceIds:clone(evidenceIds),createdAt:stamp",'question evidence')
+          sub("RESOLUTION_EVIDENCE:'NONE',CLOSURE:'OPEN'","RESOLUTION_EVIDENCE:evidenceIds.length?evidenceIds:'NONE',CLOSURE:'OPEN'",'blocker evidence field')
+          sub("const blocker={id,stage,active:true,fields,...fields,source:'APPLICATION_DISPOSITION'","const blocker={id,stage,active:true,fields,...fields,evidenceRefs:clone(evidenceIds),source:'APPLICATION_DISPOSITION'",'blocker evidence refs')
+          sub("warnings:clone(proposal.warnings),createdAt:stamp","warnings:clone(proposal.warnings),evidenceIds:clone(evidenceIds),createdAt:stamp",'failure evidence')
+          sub("receipt.completionState=type;receipt.nextRequiredVerificationStage=","receipt.completionState=type;receipt.evidenceIds=clone(evidenceIds);receipt.nextRequiredVerificationStage=",'receipt evidence')
+          pattern=re.compile(r"  const committedRecordIds=\[\],reservedTargetSnapshots=\[\];for\(const evidence of proposal\.evidence\)\{.*?committedRecordIds\.push\(evidence\.id\);\}")
+          s,n=pattern.subn("  const committedRecordIds=commitEvidence(next,proposal),reservedTargetSnapshots=[];",s,count=1)
+          if n!=1: raise SystemExit(f'data evidence helper: expected 1 match, got {n}')
+          p.write_text(s)
+          p=Path('index.html'); s=p.read_text(); old='runtime-scoped-reliability-20260826-r1'
+          if s.count(old)!=8: raise SystemExit('runtime token count changed')
+          p.write_text(s.replace(old,'runtime-control-evidence-20260826-r2'))
+          p=Path('verify-ingestion.mjs'); s=p.read_text()
+          marker="console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationTargets:true,humanInputResponseExclusivity:true,choiceContractValidation:true,humanAnswerEdgeValidation:true,totalNegativeCases:negativeCount},null,2));"
+          if s.count(marker)!=1: raise SystemExit('current verifier marker changed')
+          test=r'''
+          // Accepted control responses preserve evidence; supplied control flags are typed.
+          {
+            const p=project('JOB-NEG-CONTROL-BOOLEAN'),pr=savePrompt(p,1);
+            const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-bool',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:'false'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+            const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
+            if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path==='/humanInputRequests/0/blocking'))throw new Error('String blocking flag was accepted as Boolean.');
+            negativeCount++;
+          }
+          for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']){
+            let p=project(`JOB-CONTROL-EVIDENCE-${responseType}`),pr=savePrompt(p,1);
+            const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType,humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence'}],unresolved:[],warnings:[],attachments:[]};
+            if(responseType==='HUMAN_INPUT_REQUIRED')e.humanInputRequests=[{temporaryKey:'q',question:'Exact value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];
+            else e.unresolved=[{temporaryKey:'u',kind:responseType==='BLOCKED'?'MISSING_HUMAN_INPUT':'TOOL_FAILURE',description:'Cannot proceed.',whyBlocking:'Required condition unavailable.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],blocking:true}];
+            const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
+            if(!prepared.validation.valid)throw new Error(`${responseType} control evidence fixture rejected: ${JSON.stringify(prepared.validation.issues)}`);
+            const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});
+            const ids=committed.disposition?.evidenceIds||[];
+            if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);
+          }
+          '''
+          test='\n'.join(line[10:] if line.startswith('          ') else line for line in test.splitlines())
+          p.write_text(s.replace(marker,test+'\n'+marker,1))
+          PY
+      - name: Verify full deterministic suite
+        run: |
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit permanent delta only
+        run: |
+          rm .github/workflows/apply-control-evidence-current.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Preserve control evidence and type control flags'
+          git push origin HEAD:reliability/control-evidence-current-263f-20260826
