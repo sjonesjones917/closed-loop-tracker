@@ -3,12 +3,13 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
 const prompts=globalThis.closedLoopPromptEngine;
-if(!core||!schema||!engine||!prompts)throw new Error('Prompt-semantic runtime failed to load.');
+const ingestion=globalThis.closedLoopResponseIngestion;
+if(!core||!schema||!engine||!prompts||!ingestion)throw new Error('Prompt-semantic runtime failed to load.');
 
 function baseProject(){
   const p=core.createBlankState('JOB-PROMPT-SEMANTICS');
@@ -104,4 +105,39 @@ for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('S
 const temporalMutant=prompts.procedures[15].replace('Do not require or claim post-correction success at this stage','Require and claim post-correction success at this stage');
 if(!procedureIssues(15,temporalMutant).includes('STAGE15_TEMPORAL_CONTRADICTION'))throw new Error('Stage 15 temporal contradiction mutation escaped detection.');
 
-console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length+1,stage2SourceCount:true,insufficiencyRecovery:true,operatorRefinementContext:true,operationIsolation:true},null,2));
+const recoveryProject=baseProject();
+const recoveryPrompt={...prompts.buildPromptRecord(2,recoveryProject),generatedAt:'2026-08-26T00:00:00Z'};
+recoveryProject.projectData.generatedPrompts.push(recoveryPrompt);
+const recoveryEnvelope={
+  schema:schema.RESPONSE_SCHEMA,
+  jobId:recoveryProject.job.JOB_ID,
+  stage:2,
+  operation:recoveryPrompt.operation,
+  promptIdentity:{instructionId:recoveryPrompt.instructionId,bodySha256:recoveryPrompt.bodySha256,contractSha256:recoveryPrompt.contractSha256,contextSignature:recoveryPrompt.contextSignature},
+  scope:recoveryPrompt.scope,
+  responseType:'BLOCKED',
+  humanInputRequests:[],
+  stageData:{},
+  records:{},
+  evidence:[],
+  unresolved:[{temporaryKey:'missing-application-context-1',kind:'MISSING_APPLICATION_CONTEXT',description:'The current canonical application context is absent or internally inconsistent.',whyBlocking:'Stage 02 cannot select governing external authorities without a coherent current scope.',affectedStageFields:[],affectedRecords:[],blocking:true}],
+  warnings:[],
+  attachments:[]
+};
+const namedRecoveryKinds=[...new Set(recoveryPrompt.prompt.match(/\bMISSING_[A-Z_]+\b/g)||[])];
+for(const kind of namedRecoveryKinds){
+  const candidate=structuredClone(recoveryEnvelope);
+  candidate.unresolved[0].kind=kind;
+  const validation=ingestion.validateEnvelope(recoveryProject,candidate,{stage:2,promptRecord:recoveryPrompt,rawSha256:`RAW-${kind}`});
+  if(!validation.valid)throw new Error(`Generated prompt names recovery kind ${kind}, but ingestion rejects it: ${validation.issues.map(x=>x.code).join(', ')}`);
+}
+const preparedRecovery=ingestion.prepare(recoveryProject,{stage:2,text:JSON.stringify(recoveryEnvelope),promptRecord:recoveryPrompt});
+if(!preparedRecovery.validation.valid||preparedRecovery.project.projectData.acceptedChanges.length)throw new Error('MISSING_APPLICATION_CONTEXT did not validate as a noncanonical pending blocker proposal.');
+const committedRecovery=ingestion.commit(preparedRecovery.project,preparedRecovery.proposal.proposalId,{operator:'SEMANTIC_VERIFIER',reviewNote:'Accept controlled missing-application-context blocker.'});
+if(committedRecovery.disposition?.type!=='ACCEPTED_BLOCKER_EVENT')throw new Error('MISSING_APPLICATION_CONTEXT did not create an accepted blocker disposition.');
+if(committedRecovery.project.projectData.acceptedChanges.length)throw new Error('Accepted blocker event was incorrectly counted as a canonical DATA_PROPOSAL change.');
+const recoveryBlocker=committedRecovery.project.projectData.blockers.at(-1);
+if(recoveryBlocker?.fields?.MISSING_ITEM_TYPE!=='MISSING_APPLICATION_CONTEXT')throw new Error('Accepted blocker did not preserve the missing-application-context classification.');
+if(committedRecovery.receipt?.acceptedCanonicalChangeId!=='NONE')throw new Error('Accepted blocker receipt incorrectly claims a canonical data change.');
+
+console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length+1,stage2SourceCount:true,insufficiencyRecovery:true,operatorRefinementContext:true,operationIsolation:true,promptRecoveryKindsAccepted:namedRecoveryKinds,missingApplicationContextDisposition:true},null,2));
