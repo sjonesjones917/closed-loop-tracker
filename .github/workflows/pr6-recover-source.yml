@@ -1,108 +1,40 @@
 name: Recover PR6 reviewable source
+
 on:
   push:
     branches: [practical-100/pr6-acceptance-proof]
+
 permissions:
-  contents: write
-concurrency:
-  group: pr6-recover-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
+
 jobs:
   recover:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Recover complete patch sections in an isolated worktree
+      - name: Reconstruct and validate exact transported patch
         shell: bash
         run: |
           set -euo pipefail
-          old=ea845ac01a10a96fba8f000cb37b7d9e00efcb33
-          base=10dc739a9bd088b0df70d1bf6fee776ef09c55eb
-          git fetch --no-tags origin "$old"
-          { git show "$old:.pr6-patch/part00"; git show "$old:.pr6-patch/part01"; } | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
-          set +e
-          gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch 2>/tmp/pr6-gzip-error.txt
-          gzip_status=$?
-          set -e
-          printf 'gzip_status=%s\n' "$gzip_status" | tee /tmp/pr6-recovery-status.txt
-          wc -c /tmp/pr6.patch.gz /tmp/pr6.patch | tee -a /tmp/pr6-recovery-status.txt
-          cat /tmp/pr6-gzip-error.txt | tee -a /tmp/pr6-recovery-status.txt
-          git worktree add --detach /tmp/pr6-work "$base"
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          data=Path('/tmp/pr6.patch').read_text(errors='strict')
-          sections=[s for s in re.split(r'(?=^diff --git )',data,flags=re.M) if s.startswith('diff --git ')]
-          allowed={
-            '.github/workflows/pages.yml',
-            'README.md',
-            'app-core.js',
-            'build-test-project.mjs',
-            'project-store.js',
-          }
-          out=Path('/tmp/pr6-sections');out.mkdir()
-          found=set()
-          for section in sections:
-            match=re.match(r'diff --git a/(.+?) b/(.+?)\n',section)
-            if not match or match.group(1)!=match.group(2):
-              continue
-            path=match.group(1)
-            if path in allowed:
-              target=out/(path.replace('/','__')+'.patch')
-              target.write_text(section)
-              found.add(path)
-          missing=allowed-found
-          if missing:
-            raise SystemExit(f'Missing complete recovered patch sections: {sorted(missing)}')
-          print('\n'.join(sorted(found)))
-          PY
-          for section in /tmp/pr6-sections/*.patch; do
-            git -C /tmp/pr6-work apply --check "$section"
-            git -C /tmp/pr6-work apply "$section"
-          done
-          git -C /tmp/pr6-work diff --check
-          git -C /tmp/pr6-work diff --stat | tee /tmp/pr6-stat.txt
-      - name: Verify recovered source
-        shell: bash
-        working-directory: /tmp/pr6-work
-        run: |
-          set -euo pipefail
-          for file in *.js *.mjs; do node --check "$file"; done
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-      - name: Commit recovered reviewable files and remove transport scaffolding
-        shell: bash
-        run: |
-          set -euo pipefail
-          rsync -a --delete --exclude=.git /tmp/pr6-work/ ./
-          rm -rf .pr6-patch .github/workflows/pr6-source-export.yml .github/workflows/pr6-recover-source.yml
-          python - <<'PY'
-          from pathlib import Path
-          path=Path('verify-live.mjs')
-          text=path.read_text().replace('ACCEPTED_CANONICAL_CHANGE','ACCEPTED_DATA_CHANGE')
-          path.write_text(text)
-          PY
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          test -n "$(git status --porcelain)"
-          git commit -m "PR 6: recover verified acceptance support changes"
-          git push origin HEAD:practical-100/pr6-acceptance-proof
+          git fetch --no-tags origin practical-100/pr6-final-acceptance
+          {
+            git show origin/practical-100/pr6-final-acceptance:.pr6-transport/part00
+            git show origin/practical-100/pr6-final-acceptance:.pr6-transport/part01
+          } | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
+          gzip -t /tmp/pr6.patch.gz
+          gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch
+          test -s /tmp/pr6.patch
+          grep -q '^diff --git ' /tmp/pr6.patch
+          sha256sum /tmp/pr6.patch.gz /tmp/pr6.patch > /tmp/pr6.sha256
+          wc -c -l /tmp/pr6.patch.gz /tmp/pr6.patch
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: pr6-source-recovery-diagnostics
+          name: pr6-exact-transport
           path: |
-            /tmp/pr6-recovery-status.txt
-            /tmp/pr6-gzip-error.txt
-            /tmp/pr6-stat.txt
-          if-no-files-found: warn
-          retention-days: 7
+            /tmp/pr6.patch.gz
+            /tmp/pr6.patch
+            /tmp/pr6.sha256
+          if-no-files-found: error
+          retention-days: 1
