@@ -1,0 +1,50 @@
+name: Stage 01 minimum-intake repair
+
+on:
+  push:
+    branches:
+      - reliability/stage01-minimum-intake-20260826
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove:
+    if: "!contains(github.event.head_commit.message, '[stage01-repair-complete]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/stage01-minimum-intake-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate repair transformer
+        run: node --check stage01-minimum-intake-repair.mjs
+      - name: Apply responsible-layer repair
+        run: node stage01-minimum-intake-repair.mjs
+      - name: Verify syntax and canonical runtime identity
+        run: |
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+      - name: Verify architecture and ingestion
+        run: |
+          node verify.mjs
+          node verify-ingestion.mjs
+      - name: Verify gates, lifecycle, and prompt semantics
+        run: |
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Remove temporary repair mechanism and commit proven tree
+        run: |
+          rm stage01-minimum-intake-repair.mjs
+          rm .github/workflows/stage01-minimum-intake-repair.yml
+          git config user.name "sjonesjones917"
+          git config user.email "sjones.jones917@gmail.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Make Stage 01 minimum-intake and defer downstream unknowns [stage01-repair-complete]"
+          git push origin HEAD:reliability/stage01-minimum-intake-20260826
