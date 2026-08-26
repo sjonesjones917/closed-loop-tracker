@@ -1,0 +1,11 @@
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17
+async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
+                                                                                                                                ^
+
+Error: Waiting: globalThis.closedLoopAppReady===true
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17:129
+    at async poll (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:13:110)
+    at async main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:28:57)
+    at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:63:5
+
+Node.js v22.23.2
