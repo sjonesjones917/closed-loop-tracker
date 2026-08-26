@@ -49,8 +49,9 @@ function ensureShape(project){
       agentData:{},humanData:{},derivedData:{},acceptedData:{},acceptedDataChangeIds:[],acceptedControlEventIds:[],acceptedResponseIds:[],currentPromptId:null,gate:{complete:false,blocked:false,reasons:[]},invalidatedBy:null,
       ...prior,
       number:stage,
-      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)
+      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'&&Object.keys(prior.agentData).length?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)
     };
+    delete project.stages[stage].acceptedData;
   }
   project.job=project.job&&typeof project.job==='object'?project.job:{};
   project.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[],...(project.release||{})};
@@ -111,7 +112,7 @@ function registerStageVersion(project,stage,acceptedChangeId){
   const config=VERSION_BY_STAGE[stage];
   if(!config)return null;
   const [jobField,prefix]=config;
-  const payload={stage,collections:Object.fromEntries(versionCollections(stage).map(collection=>[collection,records(project,collection).map(record=>({id:recordId(record,collection),fields:recordFields(record),relationships:record.relationships||{},sha256:record.sha256||null}))])),acceptedData:project.stages[stage].acceptedData};
+  const payload={stage,collections:Object.fromEntries(versionCollections(stage).map(collection=>[collection,records(project,collection).map(record=>({id:recordId(record,collection),fields:recordFields(record),relationships:record.relationships||{},sha256:record.sha256||null}))])),agentData:project.stages[stage].agentData,humanData:project.stages[stage].humanData};
   const sha256=hash.sha256Value(payload);
   const latest=safe(project.projectData.artifactVersions).filter(item=>item.stage===stage&&item.kind===prefix).at(-1);
   if(latest?.sha256===sha256){project.job[jobField]=latest.version;return latest;}
@@ -142,7 +143,7 @@ function hasStageActivity(project,stage){
   if(safe(project?.projectData?.rawResponses).some(item=>Number(item.stage)===Number(stage)))return true;
   if(unresolvedHumanRequests(project,stage).length)return true;
   if((schema.STAGE_CONTRACTS[stage]?.allowedCollections||[]).some(collection=>records(project,collection,{stage}).length))return true;
-  return Boolean(Object.keys(project?.stages?.[stage]?.acceptedData||{}).length);
+  return Boolean(Object.keys(project?.stages?.[stage]?.agentData||{}).length||Object.keys(project?.stages?.[stage]?.humanData||{}).length);
 }
 function latestIteration(project,stages=[10,17,19]){
   const candidates=records(project,'iterations').filter(record=>stages.includes(Number(record.stage)));

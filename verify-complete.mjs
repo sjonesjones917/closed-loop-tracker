@@ -118,6 +118,13 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(failed&&storage.getItem(store.STORE_KEY)===priorBytes,'Storage failure during accepted-state persistence did not roll back exact prior state.');
 }
 
+// Current schema has one active agent stage-data surface; legacy acceptedData migrates one-way only.
+{
+  const p=project('JOB-LEGACY-STAGE-DATA');p.stages[4].agentData={};p.stages[4].acceptedData={OBLIGATION:'legacy accepted value'};engine.ensureShape(p);
+  assert(p.stages[4].agentData.OBLIGATION==='legacy accepted value','Legacy acceptedData did not migrate into agentData.');
+  assert(!Object.prototype.hasOwnProperty.call(p.stages[4],'acceptedData'),'Legacy acceptedData remained as a competing active state surface.');
+}
+
 // Stage 15 cannot require evidence from a correction that has not been executed yet.
 {
   const required=schema.RECORD_SCHEMAS.regressions.required;

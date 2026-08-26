@@ -79,6 +79,17 @@ for(let stage=1;stage<=30;stage++){
   for(const r of executions)if(!r.contextManifest.readCollections.instructions||!r.prompt.includes('EXACT-CANONICAL-INSTRUCTION-CONTENT'))throw new Error(`Stage ${r.stage} ${r.operation} cannot see the canonical production instruction it must execute.`);
 }
 
+{
+  const p=baseProject();p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v002';
+  const current={id:'REQ-CURRENT',active:true,stage:4,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:'REQUIREMENTS-v002'},fields:{REQ_ID:'REQ-CURRENT',OBLIGATION:'CURRENT-SCOPE-ONLY'}};
+  const stale={id:'REQ-STALE',active:true,stage:4,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:'REQUIREMENTS-v001'},fields:{REQ_ID:'REQ-STALE',OBLIGATION:'STALE-SCOPE-MUST-NOT-APPEAR'}};
+  p.projectData.requirements.push(current,stale);p.projectData.responseValidations.push({validationId:'VALIDATION-RETRY',rawResponseId:'RAW-RETRY',stage:6,valid:false,issues:[{code:'MISSING_PROVENANCE',path:'/records/tests/0',message:'Evidence is required.'}]});
+  const r=prompts.buildPromptRecord(6,p);
+  if(!r.prompt.includes('CURRENT-SCOPE-ONLY')||r.prompt.includes('STALE-SCOPE-MUST-NOT-APPEAR'))throw new Error('Prompt context is contaminated by a historical requirement version.');
+  if(!r.prompt.includes('LATEST APPLICATION VALIDATION FEEDBACK')||!r.prompt.includes('MISSING_PROVENANCE'))throw new Error('Retry prompt omitted latest application validation feedback.');
+  if(!r.contextManifest.latestValidationFailure||r.contextManifest.latestValidationFailure.validationId!=='VALIDATION-RETRY')throw new Error('Validation feedback is not bound into prompt context identity.');
+}
+
 const p=baseProject();
 const original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}});
 const mutants=[
