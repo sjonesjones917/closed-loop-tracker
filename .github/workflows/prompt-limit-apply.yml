@@ -1,0 +1,58 @@
+name: Restore fail-visible prompt context limit
+on:
+  push:
+    branches:
+      - reliability/prompt-context-limit-current-20260826
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/prompt-context-limit-current-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore only the proven context-size guard and regression
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="const contextSignature=hash.sha256Value(contextManifest),bodyText=body(stage,state,operation,scope),bodySha256=hash.sha256Text(bodyText),descriptor=responseContractDescriptor(stage,operation),contractSha256=hash.sha256Value(descriptor);"
+          new="const contextSignature=hash.sha256Value(contextManifest),bodyText=body(stage,state,operation,scope);if(new TextEncoder().encode(bodyText).byteLength>750000){const error=new Error('The complete controlling prompt context exceeds 750000 bytes. No context was silently omitted. Reduce the authorized project scope or split the job before generating this instruction.');error.code='PROMPT_CONTEXT_LIMIT';throw error;}const bodySha256=hash.sha256Text(bodyText),descriptor=responseContractDescriptor(stage,operation),contractSha256=hash.sha256Value(descriptor);"
+          if s.count(old)!=1: raise SystemExit(f'prompt guard insertion expected once, found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          marker="const p=baseProject();\nconst original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN'"
+          if marker not in s: raise SystemExit('prompt semantic insertion marker missing')
+          test="""// Complete controlling context must fail visibly rather than be silently omitted when it exceeds the proven prompt bound.\n{\n  const large=baseProject(),largeScope=prompts.scopeFor(3,large,{});\n  large.projectData.sources.push({id:'SOURCE-PROMPT-LIMIT',stage:2,active:true,scope:largeScope,fields:{SOURCE_ID:'SOURCE-PROMPT-LIMIT',TITLE:'X'.repeat(760000)},relationships:{},contentSha256:'large-context-fixture'});\n  let error=null;try{prompts.buildPromptRecord(3,large);}catch(e){error=e;}\n  if(error?.code!=='PROMPT_CONTEXT_LIMIT'||!String(error.message||'').includes('No context was silently omitted'))throw new Error('Oversized controlling prompt context did not fail visibly with PROMPT_CONTEXT_LIMIT.');\n}\n\n"""
+          s=s.replace('const p=baseProject();\nconst original=prompts.buildPromptRecord(17,p,{operation:\'EXECUTE_RUN\'',test+'const p=baseProject();\nconst original=prompts.buildPromptRecord(17,p,{operation:\'EXECUTE_RUN\'',1)
+          p.write_text(s)
+          PY
+      - name: Remove temporary executor before verification
+        run: rm .github/workflows/prompt-limit-apply.yml
+      - name: Verify prompt and full lifecycle acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit permanent two-file change only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js verify-prompt-semantics.mjs TEST_PROJECT.json .github/workflows/prompt-limit-apply.yml
+          git commit -m "Restore fail-visible prompt context limit"
+          git push origin HEAD:reliability/prompt-context-limit-current-20260826
