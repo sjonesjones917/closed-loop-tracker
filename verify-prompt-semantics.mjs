@@ -160,3 +160,22 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
   if(!/no legitimate independent external source of any justified authority or evidentiary role/i.test(s2.prompt))throw new Error('Stage 02 no-source rule still incorrectly means no governing authority.');
   if(core.STAGES[1].completionGate.some(x=>/every governing source/i.test(x))||core.STAGES[2].completionGate.some(x=>/every controlling source/i.test(x)))throw new Error('Workbook source completion language still treats every useful external source as governing authority.');
 }
+
+
+// Recovery feedback is current-cycle context, ordered by monotonic eventSequence rather than browser clock time.
+{
+ const p=baseProject(), first=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push({...first,generatedAt:'2026-08-26T01:00:00.000Z'});
+ const lane={stage:2,operation:'COMPLETE',scope:{...first.scope}};
+ p.projectData.acceptedChanges.push({changeId:'CHANGE-OLD',status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-OLD',promptId:first.instructionId,eventSequence:10,...lane});
+ p.projectData.rejectedResponses.push({rejectedResponseId:'REJECT-OLD',requestCorrection:true,reason:'OLD CORRECTION MUST EXPIRE',rawResponseId:'RAW-BAD',...lane});
+ p.projectData.responseValidations.push({validationId:'VALIDATION-OLD',stage:2,promptId:first.instructionId,rawResponseId:'RAW-BAD',valid:false,issues:[{code:'OLD_VALIDATION_MUST_EXPIRE',path:'/',message:'old'}]});
+ p.projectData.history.push({eventId:'EVENT-REJECT',eventSequence:11,type:'CORRECTION_REQUESTED',rejectedResponseId:'REJECT-OLD',stage:2});
+ p.projectData.history.push({eventId:'EVENT-REFINE',eventSequence:12,type:'ACCEPTED_RESPONSE_INVALIDATED',reason:'OLD REFINEMENT MUST EXPIRE',rawResponseId:'RAW-OLD',promptId:first.instructionId,...lane});
+ p.projectData.history.push({eventId:'EVENT-VALIDATION',eventSequence:13,type:'RESPONSE_VALIDATION_FAILED',validationId:'VALIDATION-OLD',stage:2});
+ const duringRecovery=prompts.buildPromptRecord(2,p,{operation:'COMPLETE',scope:{...first.scope}});
+ for(const expected of ['OLD CORRECTION MUST EXPIRE','OLD REFINEMENT MUST EXPIRE','OLD_VALIDATION_MUST_EXPIRE'])if(!duringRecovery.prompt.includes(expected))throw new Error(`Current recovery feedback missing before replacement acceptance: ${expected}`);
+ p.projectData.acceptedChanges.push({changeId:'CHANGE-REPLACEMENT',status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-REPLACEMENT',promptId:first.instructionId,eventSequence:20,...lane});
+ const afterRecovery=prompts.buildPromptRecord(2,p,{operation:'COMPLETE',scope:{...first.scope}});
+ for(const stale of ['OLD CORRECTION MUST EXPIRE','OLD REFINEMENT MUST EXPIRE','OLD_VALIDATION_MUST_EXPIRE'])if(afterRecovery.prompt.includes(stale))throw new Error(`Resolved recovery feedback leaked into a later prompt: ${stale}`);
+ if(afterRecovery.contextManifest.operatorCorrectionRequests.length||afterRecovery.contextManifest.acceptedResultRefinements.length||afterRecovery.contextManifest.latestValidationFailure.length)throw new Error('Resolved recovery feedback remains bound into the prompt context signature.');
+}
