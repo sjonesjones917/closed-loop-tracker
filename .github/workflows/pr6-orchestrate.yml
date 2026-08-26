@@ -1,0 +1,137 @@
+name: Orchestrate PR6 through the existing Pages workflow
+on:
+  push:
+    branches: [practical-100/pr6-orchestrator]
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+jobs:
+  orchestrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      HEAD_BRANCH: practical-100/pr6-final
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Locate the open PR
+        id: pr
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner=${REPO%%/*}
+          number=$(gh api "repos/$REPO/pulls?state=open&head=$owner:$HEAD_BRANCH" --jq '.[0].number')
+          test -n "$number"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+      - name: Wait for a clean final PR head and successful Pages PR test
+        id: prgate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr='${{ steps.pr.outputs.number }}'
+          workflow_id=$(gh api "repos/$REPO/actions/workflows/pages.yml" --jq '.id')
+          for attempt in $(seq 1 90); do
+            head_sha=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha')
+            tree_sha=$(gh api "repos/$REPO/git/commits/$head_sha" --jq '.tree.sha')
+            paths=$(gh api "repos/$REPO/git/trees/$tree_sha?recursive=1" --jq '.tree[].path')
+            if printf '%s\n' "$paths" | grep -Eq '(^|/)PR6_.*DIAGNOSTIC|^\.pr6-patch/|^\.github/workflows/pr6-(materialize|stage8|finalize|final-browser)'; then
+              echo "PR head $head_sha still contains temporary recovery state"
+              sleep 10
+              continue
+            fi
+            run=$(gh api "repos/$REPO/actions/workflows/$workflow_id/runs?branch=$HEAD_BRANCH&event=pull_request&per_page=20" \
+              --jq "[.workflow_runs[] | select(.head_sha == \"$head_sha\")][0] // empty")
+            if [ -z "$run" ]; then
+              echo "Waiting for Pages pull-request run for $head_sha"
+              sleep 10
+              continue
+            fi
+            status=$(jq -r '.status' <<<"$run")
+            conclusion=$(jq -r '.conclusion // ""' <<<"$run")
+            run_id=$(jq -r '.id' <<<"$run")
+            echo "Pages PR run $run_id status=$status conclusion=$conclusion"
+            if [ "$status" != completed ]; then sleep 10; continue; fi
+            if [ "$conclusion" != success ]; then
+              gh run view "$run_id" --log-failed || true
+              exit 1
+            fi
+            jobs=$(gh api "repos/$REPO/actions/runs/$run_id/jobs?per_page=100")
+            test_result=$(jq -r '[.jobs[] | select(.name == "test")][0].conclusion // "missing"' <<<"$jobs")
+            [ "$test_result" = success ] || { echo "Required PR test job: $test_result"; exit 1; }
+            echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+            echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+            exit 0
+          done
+          echo 'Timed out waiting for a clean successful PR head' >&2
+          exit 1
+      - name: Merge the tested PR once
+        id: merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr='${{ steps.pr.outputs.number }}'
+          expected='${{ steps.prgate.outputs.head_sha }}'
+          current=$(gh api "repos/$REPO/pulls/$pr" --jq '.head.sha')
+          [ "$current" = "$expected" ] || { echo "PR head changed after test"; exit 1; }
+          gh pr merge "$pr" --repo "$REPO" --squash --delete-branch
+          merge_sha=$(gh api "repos/$REPO/pulls/$pr" --jq '.merge_commit_sha')
+          test -n "$merge_sha"
+          echo "sha=$merge_sha" >> "$GITHUB_OUTPUT"
+      - name: Wait for exact main deployment and live verification
+        id: live
+        shell: bash
+        run: |
+          set -euo pipefail
+          merge_sha='${{ steps.merge.outputs.sha }}'
+          workflow_id=$(gh api "repos/$REPO/actions/workflows/pages.yml" --jq '.id')
+          for attempt in $(seq 1 120); do
+            run=$(gh api "repos/$REPO/actions/workflows/$workflow_id/runs?branch=main&event=push&per_page=30" \
+              --jq "[.workflow_runs[] | select(.head_sha == \"$merge_sha\")][0] // empty")
+            if [ -z "$run" ]; then sleep 10; continue; fi
+            status=$(jq -r '.status' <<<"$run")
+            conclusion=$(jq -r '.conclusion // ""' <<<"$run")
+            run_id=$(jq -r '.id' <<<"$run")
+            echo "Pages main run $run_id status=$status conclusion=$conclusion"
+            if [ "$status" != completed ]; then sleep 10; continue; fi
+            if [ "$conclusion" != success ]; then
+              gh run view "$run_id" --log-failed || true
+              exit 1
+            fi
+            jobs=$(gh api "repos/$REPO/actions/runs/$run_id/jobs?per_page=100")
+            for name in test deploy verify-live; do
+              result=$(jq -r --arg name "$name" '[.jobs[] | select(.name == $name)][0].conclusion // "missing"' <<<"$jobs")
+              [ "$result" = success ] || { echo "$name=$result"; exit 1; }
+            done
+            echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+            exit 0
+          done
+          echo 'Timed out waiting for exact main deployment verification' >&2
+          exit 1
+      - name: Create the release tag only after test, deploy, and live verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha='${{ steps.merge.outputs.sha }}'
+          short=${sha:0:12}
+          tag="closed-loop-reliability-$short"
+          if gh api "repos/$REPO/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists"
+          else
+            gh api --method POST "repos/$REPO/git/refs" -f ref="refs/tags/$tag" -f sha="$sha" >/dev/null
+          fi
+          printf '{\n  "pullRequest": %s,\n  "mergeCommit": "%s",\n  "pagesPullRequestRun": %s,\n  "pagesMainRun": %s,\n  "tag": "%s"\n}\n' \
+            '${{ steps.pr.outputs.number }}' "$sha" '${{ steps.prgate.outputs.run_id }}' '${{ steps.live.outputs.run_id }}' "$tag" > pr6-orchestration-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr6-orchestration-report
+          path: pr6-orchestration-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Delete the disposable orchestration branch
+        if: success()
+        shell: bash
+        run: git push origin --delete practical-100/pr6-orchestrator
