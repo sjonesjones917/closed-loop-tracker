@@ -1,0 +1,105 @@
+name: Diagnose and repair PR6 Stage 8 contract
+on:
+  push:
+    branches: [practical-100/pr6-final]
+permissions:
+  contents: write
+concurrency:
+  group: pr6-stage8-contract
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm recovered source exists
+        run: |
+          set -euo pipefail
+          test -f verify-full-cycle.mjs
+          test -f test-fixtures.mjs
+          test -f PR6_FULL_CYCLE_DIAGNOSTIC.txt
+      - name: Repair only missing Stage 8/9 instruction-trace collection exposure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path=Path('workflow-schema.js')
+          text=path.read_text()
+          original=text
+          def add_to_stage(stage, prop, value):
+              global text
+              start_candidates=[m.start() for m in re.finditer(rf'(?m)^\s*(?:{stage}|"{stage}"|\'{stage}\')\s*:\s*\{{', text)]
+              if not start_candidates:
+                  return False
+              start=start_candidates[-1]
+              next_candidates=[m.start() for m in re.finditer(rf'(?m)^\s*(?:{stage+1}|"{stage+1}"|\'{stage+1}\')\s*:\s*\{{', text[start+1:])]
+              end=(start+1+next_candidates[0]) if next_candidates else len(text)
+              segment=text[start:end]
+              match=re.search(rf'({prop}\s*:\s*\[)([^\]]*)(\])', segment, re.S)
+              if not match or re.search(rf'["\']{re.escape(value)}["\']', match.group(2)):
+                  return False
+              body=match.group(2).rstrip()
+              insertion=(body + (',' if body and not body.endswith(',') else '') + f'\n      "{value}"')
+              segment=segment[:match.start(2)]+insertion+segment[match.end(2):]
+              text=text[:start]+segment+text[end:]
+              return True
+          changed=[]
+          if add_to_stage(8,'agentWritableCollections','instructionTraces'): changed.append('stage8.agentWritableCollections')
+          if add_to_stage(9,'readCollections','instructionTraces'): changed.append('stage9.readCollections')
+          if text!=original:
+              path.write_text(text)
+          Path('/tmp/stage8-contract-change.txt').write_text('\n'.join(changed) if changed else 'no schema exposure change required')
+          PY
+          cat /tmp/stage8-contract-change.txt
+          rm -f .github/workflows/pr6-stage8-contract.yml
+      - name: Run complete deterministic and semantic suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Re-run continuous lifecycle
+        id: lifecycle
+        shell: bash
+        run: |
+          set +e
+          node verify-full-cycle.mjs > /tmp/pr6-full-cycle-stage8.log 2>&1
+          status=$?
+          set -e
+          printf 'exit_code=%s\n' "$status" >> "$GITHUB_OUTPUT"
+          {
+            printf 'PR6 Stage 8 contract attempt exit code: %s\n' "$status"
+            cat /tmp/stage8-contract-change.txt
+            printf '\n--- LAST 400 LOG LINES ---\n'
+            tail -n 400 /tmp/pr6-full-cycle-stage8.log
+          } > PR6_FULL_CYCLE_DIAGNOSTIC.txt
+          cat PR6_FULL_CYCLE_DIAGNOSTIC.txt
+      - name: Commit exact diagnostic state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 6: test Stage 8 instruction-trace contract boundary"
+          git push origin HEAD:practical-100/pr6-final
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr6-stage8-contract-diagnostic
+          path: /tmp/pr6-full-cycle-stage8.log
+          if-no-files-found: error
+          retention-days: 7
+      - name: Report lifecycle status
+        run: echo "verify-full-cycle.mjs exit code ${{ steps.lifecycle.outputs.exit_code }}"
