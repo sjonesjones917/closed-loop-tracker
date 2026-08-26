@@ -37,7 +37,7 @@ A canonical 'TEST' is a verification definition, not proof that a script/file ex
 
 The static browser is authoritative only for deterministic operations it actually implements. Tool-dependent checks run in the capable external environment; independent reviews use an independent context; irreducible inspections remain human/reviewer work; specialized systems/labs provide their own execution evidence. A test definition, executable/input artifact, and execution result are distinct records of reality.
 
-When an external agent returns an actual file, its response declares the attachment and the operator attaches the exact returned bytes in the stage file control before parsing. The application then verifies the actual filename/media type/byte size/SHA-256 and stores the Blob. A filename, hash claim, repository path, or code block alone never counts as possession of a file, and browser-local bytes are not assumed to be accessible to an external agent.
+When an external agent returns an actual file, its response declares the attachment and the operator attaches the exact returned bytes in the stage file control before parsing. The application then verifies the actual filename/media type/byte size/SHA-256 and stores the Blob. A filename, hash claim, repository path, or code block alone never counts as possession of a file, and browser-local bytes are not assumed to be accessible to an external agent. Stage 06 also rechecks current canonical TEST → evidence → artifact custody, so later loss or loss of verified-byte status fails closed instead of leaving a stale test definition apparently ready.
 
 ## Data and backup responsibility
 
