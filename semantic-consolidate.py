@@ -79,6 +79,10 @@ ws=ws.replace("'Generate the actual requested deliverable in a fresh context usi
 ws=ws.replace("'Assign exactly one release state using the verified requirement, test, defect, blocker, and evidence records.'","'Have the application assign exactly one release state using the verified requirement, test, defect, blocker, and evidence records.'",1)
 w.write_text(ws)
 
+vm=Path('verify.mjs'); vms=vm.read_text()
+vms=vms.replace("'GENERATE THE FINISHED PRODUCT'","'GENERATE THE APPROVED DELIVERABLE'",1)
+vm.write_text(vms)
+
 v=Path('verify-prompt-semantics.mjs'); vs=v.read_text()
 insert="""
 {
