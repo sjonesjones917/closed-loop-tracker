@@ -1,0 +1,28 @@
+name: Audit final authority and scope boundaries
+on:
+  push:
+    branches: [practical-100/final-authority-storage-closure]
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Inspect current scope and ownership behavior
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          const p=core.createBlankState('JOB-AUDIT-FINAL');engine.ensureShape(p);engine.recalculate(p);
+          const stage4=prompts.buildPromptRecord(4,p);
+          const placeholder={id:'REQ-PLACEHOLDER',stage:4,active:true,scope:{requirementsVersion:'NOT APPLICABLE'},fields:{REQ_ID:'REQ-PLACEHOLDER'},REQ_ID:'REQ-PLACEHOLDER'};
+          p.projectData.requirements.push(placeholder);p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';
+          const selected=engine.recordsForCurrentScope(p,'requirements').map(r=>engine.recordId(r,'requirements'));
+          console.log(JSON.stringify({blankVersions:{input:p.job.CURRENT_INPUT_VERSION,sources:p.job.CURRENT_SOURCE_SET_VERSION,requirements:p.job.CURRENT_REQUIREMENTS_VERSION,tests:p.job.CURRENT_TEST_SUITE_VERSION,instruction:p.job.CURRENT_INSTRUCTION_VERSION},stage4Scope:stage4.scope,placeholderSelected:selected.includes('REQ-PLACEHOLDER'),stage1Procedure:prompts.procedures[1],stage10Procedure:prompts.procedures[10],stage27Procedure:prompts.procedures[27]},null,2));
+          NODE
