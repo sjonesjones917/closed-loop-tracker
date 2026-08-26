@@ -1,0 +1,67 @@
+name: Current TEST artifact custody e791
+on:
+  push:
+    branches:
+      - reliability/current-test-artifact-custody-e791-20260826
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[test-artifact-custody-proved]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/current-test-artifact-custody-e791-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact proven patch to current main
+        run: |
+          git fetch origin reliability/current-test-artifact-custody-20260826 main
+          git show origin/reliability/current-test-artifact-custody-20260826:.tmp-current-test-artifact-custody.py >/tmp/current-test-artifact-custody.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/current-test-artifact-custody.py');s=p.read_text();old="!safe(proposedTest.evidenceRefs).includes(proposedEvidence.id)";new="!(Array.isArray(proposedTest.evidenceRefs)?proposedTest.evidenceRefs:[]).includes(proposedEvidence.id)"
+          if s.count(old)!=1: raise SystemExit('test assertion patch mismatch')
+          p.write_text(s.replace(old,new,1))
+          PY
+          test "$(git rev-parse origin/main)" = "e791c4a319dac4b273e9b1836e3363f521e98e12"
+          git reset --hard origin/main
+          python3 /tmp/current-test-artifact-custody.py
+      - name: Run complete acceptance
+        run: |
+          node build-test-project.mjs
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit permanent passing changes only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js app-core.js verify-ingestion.mjs verify-complete.mjs verify-prompt-semantics.mjs README.md index.html
+          git diff --cached --check
+          git commit -m "Recheck exact TEST artifact custody at Stage 6 [test-artifact-custody-proved]"
+          git push --force-with-lease origin HEAD:reliability/current-test-artifact-custody-e791-20260826
