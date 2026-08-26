@@ -1,0 +1,65 @@
+name: PR6 integrate exact tested patch
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'practical-100/pr6-integrated-final'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/pr6-integrated-final
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore current main application baseline
+        run: |
+          git fetch origin main
+          while IFS= read -r path; do git checkout origin/main -- "$path"; done < <(git ls-tree -r --name-only origin/main)
+          rm -f test-fixtures.mjs verify-full-cycle.mjs
+      - name: Verify and decode exact patch transport
+        run: |
+          echo '477796502c51d2afd4b5e0af2ce054b2256335feefbf3752870f0dde19f4b5fd  .pr6-transport/full.b64' | sha256sum -c -
+          base64 -d .pr6-transport/full.b64 > /tmp/pr6-final.patch.gz
+          echo '27cd6f0736ae8f5f96489449e53b804967cbff0e9e952e084ae4e23c331ba62e  /tmp/pr6-final.patch.gz' | sha256sum -c -
+          gzip -dc /tmp/pr6-final.patch.gz > /tmp/pr6-final.patch
+          echo '4c206838b5f7f82a0a9bf416055dc4ab7500419345d08c5ef2879acafa72d399  /tmp/pr6-final.patch' | sha256sum -c -
+      - name: Apply tested patch three-way onto current main
+        run: git apply --3way /tmp/pr6-final.patch
+      - name: Remove transport and integration scaffolding
+        run: rm -rf .pr6-transport .github/workflows/pr6-integrate.yml .github/workflows/pr6-integrate-final.yml
+      - name: Reject forbidden repair residue
+        run: |
+          test ! -e app.js
+          ! find . -maxdepth 2 -name '.repair-*' -print -quit | grep -q .
+          ! grep -R "document.write" -n --include='*.js' --include='*.html' .
+      - name: Verify exact deterministic acceptance before commit
+        run: |
+          node build-test-project.mjs
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-live.mjs verify-prompt-semantics.mjs test-fixtures.mjs verify-full-cycle.mjs; do node --check "$f"; done
+          node verify.mjs
+          node verify.mjs --semantic-only
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Ensure merge result contains no transient files
+        run: |
+          test ! -e .pr6-transport
+          test ! -e .github/workflows/pr6-integrate.yml
+          test ! -e .github/workflows/pr6-integrate-final.yml
+          git status --short
+      - name: Commit verified source only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'PR 6: complete closed-loop acceptance proof'
+          git push origin HEAD:practical-100/pr6-integrated-final
