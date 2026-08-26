@@ -1,0 +1,49 @@
+name: test-artifact-custody-repair-v3
+on:
+  push:
+    branches: [reliability/test-artifact-custody-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/test-artifact-custody-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply correction to exact main
+        run: |
+          cp .tmp-test-artifact-custody.py /tmp/test-artifact-custody.py
+          cp .tmp-fix-readme-locator.py /tmp/fix-readme-locator.py
+          python3 /tmp/fix-readme-locator.py
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "b6bc2e141df99bc740e3c89dd4b0f634874df45b"
+          git reset --hard origin/main
+          python3 /tmp/test-artifact-custody.py
+      - name: Verify exact corrected application
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only passing product/test files
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js README.md verify-ingestion.mjs verify-complete.mjs verify-prompt-semantics.mjs index.html
+          git diff --cached --check
+          git commit -m "Enforce canonical custody of required test artifacts"
+          git push --force-with-lease origin HEAD:reliability/test-artifact-custody-20260826
