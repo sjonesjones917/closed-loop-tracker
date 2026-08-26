@@ -46,7 +46,7 @@ function boundedCollection(state,collection){
  const active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);
  return show({totalActive:active.length,records:active.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})),omitted:0,selectionRule:'All active records selected by the explicit stage readCollections contract; large artifact bytes are referenced by canonical artifact identity.'});
 }
-function contextFor(stage,state){
+function contextFor(stage,state,readCollections=null){
  const parts=[];
  if(stage>1){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:state.stages[stage-1].derivedData||{}}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
  const open=(state?.projectData?.blockers||[]).filter(x=>!x.invalidatedBy&&!['CLOSED','RESOLVED','RETIRED'].includes(String(x?.fields?.STATUS||x?.STATUS||x?.status||'OPEN').toUpperCase()));
@@ -55,21 +55,21 @@ function contextFor(stage,state){
  if(questions.length)parts.push(`UNRESOLVED HUMAN INPUT REQUESTS\n${show(questions)}`);
  const answered=(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({questionId:x.requestId,question:x.question,answer:x.answer,answerType:x.answerType||'UNKNOWN',inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||'UNKNOWN',operatorLabel:x.operatorLabel||x.operator||'UNSPECIFIED',affectedStageFields:x.affectedStageFields||[],affectedRecords:x.affectedRecords||[]}));
  if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\n${show(answered)}`);
- for(const collection of contextCollections[stage]||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\n${boundedCollection(state,collection)}`);
+ for(const collection of readCollections||contextCollections[stage]||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\n${boundedCollection(state,collection)}`);
  return parts.join('\n\n')||'No additional stage-specific canonical records are established.';
 }
 function scopeFor(stage,state,overrides={}){const j=state?.job||{};const value={projectRevision:Number(state?.revision||0),inputVersion:j.CURRENT_INPUT_VERSION||null,sourceSetVersion:j.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:j.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:j.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:j.CURRENT_INSTRUCTION_VERSION||null,iterationId:j.CURRENT_ITERATION||null,candidateId:state?.projectData?.candidateFreezes?.filter(x=>x?.active!==false&&!x?.invalidatedBy).at(-1)?.id||null,runId:overrides.runId||null,contextId:overrides.contextId||null,baselineId:j.CURRENT_BASELINE_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_BASELINE_ID))?j.CURRENT_BASELINE_ID:null,productId:j.CURRENT_PRODUCT_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_PRODUCT_ID))?j.CURRENT_PRODUCT_ID:null};return value;}
 function responseContractDescriptor(stage,operation){const contract=schema.STAGE_CONTRACTS[stage],op=schema.operationContract(stage,operation);return {schema:schema.RESPONSE_SCHEMA,stage,operation,responseTypes:schema.RESPONSE_TYPES,scopeRequirements:op?.scopeRequirements||contract.scopeRequirements,agentStageFields:contract.allowedStageData,agentWritableCollections:op?.agentWritableCollections||contract.agentWritableCollections,resourceLimits:contract.resourceLimits};}
 function responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope){
- const contract=schema.STAGE_CONTRACTS[stage];const writable=contract.agentWritableCollections;
+ const contract=schema.STAGE_CONTRACTS[stage],op=schema.operationContract(stage,operation);const writable=op?.agentWritableCollections||contract.agentWritableCollections;
  const recordShape=Object.fromEntries(writable.map(collection=>[collection,[{tempKey:'response-local-key',targetId:null,fields:Object.fromEntries(schema.recordAgentFields(collection).map(name=>[name,'<value>'])),relationships:{},evidenceRefs:['evidence-1']}]]));
  return JSON.stringify({schema:schema.RESPONSE_SCHEMA,jobId:'<exact current JOB_ID>',stage,operation,promptIdentity:{instructionId,bodySha256,contractSha256,contextSignature},scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:Object.fromEntries(contract.allowedStageData.map(name=>[name,'<value>'])),records:recordShape,evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Exact evidence supporting proposed values',location:'<source/output location>',content:'<exact evidence or faithful excerpt>'}],unresolved:[],warnings:[],attachments:[]},null,2);
 }
-function body(stage,state){
+function body(stage,state,operation){
  const d=core.STAGES[stage-1],j=state?.job||{};
- const contract=schema.STAGE_CONTRACTS[stage];
+ const contract=schema.STAGE_CONTRACTS[stage],op=schema.operationContract(stage,operation)||contract;
  const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>`- ${x}`).join('\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';
- const collections=contract.agentWritableCollections.length?contract.agentWritableCollections.map(c=>`- ${c}: ${schema.recordAgentFields(c).join(', ')||'no agent-owned fields'}`).join('\n'):'- NONE';
+ const collections=op.agentWritableCollections.length?op.agentWritableCollections.map(c=>`- ${c}: ${schema.recordAgentFields(c).join(', ')||'no agent-owned fields'}`).join('\n'):'- NONE';
  return `COPY BLOCK — STAGE ${String(stage).padStart(2,'0')} — ${d.title}
 
 ROLE
@@ -116,7 +116,7 @@ EXPLICIT USER REQUIREMENTS:
 ${show(j.EXPLICIT_USER_REQUIREMENTS)}
 
 AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE
-${contextFor(stage,state)}
+${contextFor(stage,state,op.readCollections)}
 
 STAGE-SPECIFIC TASK
 ${procedures[stage]}
@@ -154,8 +154,9 @@ END HASHED INSTRUCTION BODY`;
 function buildPromptRecord(stageOrDefinition,state,options={}){
  const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);
  const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),activeExisting=existing.filter(x=>!x.invalidatedBy);const operation=options.operation||schema.STAGE_CONTRACTS[stage].operations[0];if(!schema.STAGE_CONTRACTS[stage].operations.includes(operation))throw new Error(`Operation ${operation} is not valid for Stage ${stage}.`);
- const scope=scopeFor(stage,state,options.scope||{}),contextManifest={stage,operation,scope,readCollections:Object.fromEntries((schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,(state?.projectData?.[collection]||[]).filter(x=>x?.active!==false&&!x?.invalidatedBy).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null}))};
- const contextSignature=hash.sha256Value(contextManifest),bodyText=body(stage,state),bodySha256=hash.sha256Text(bodyText),descriptor=responseContractDescriptor(stage,operation),contractSha256=hash.sha256Value(descriptor);
+ const opContract=schema.operationContract(stage,operation)||schema.STAGE_CONTRACTS[stage];
+ const scope=scopeFor(stage,state,options.scope||{}),contextManifest={stage,operation,scope,readCollections:Object.fromEntries((opContract.readCollections||[]).map(collection=>[collection,(state?.projectData?.[collection]||[]).filter(x=>x?.active!==false&&!x?.invalidatedBy).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null}))};
+ const contextSignature=hash.sha256Value(contextManifest),bodyText=body(stage,state,operation),bodySha256=hash.sha256Text(bodyText),descriptor=responseContractDescriptor(stage,operation),contractSha256=hash.sha256Value(descriptor);
  const same=activeExisting.find(x=>x.contextSignature===contextSignature&&x.bodySha256===bodySha256&&x.contractSha256===contractSha256&&x.operation===operation);
  const instructionId=same?.instructionId||same?.promptId||`INSTRUCTION-${String(state?.job?.JOB_ID||'UNKNOWN').replace(/[^A-Za-z0-9-]/g,'')}-S${String(stage).padStart(2,'0')}-${String(existing.length+1).padStart(3,'0')}`;
  const identityBlock=`\n\nPROMPT IDENTITY — ECHO EXACTLY\nINSTRUCTION_ID: ${instructionId}\nBODY_SHA256: ${bodySha256}\nCONTRACT_SHA256: ${contractSha256}\nCONTEXT_SIGNATURE: ${contextSignature}\nOPERATION: ${operation}\nPROJECT_REVISION: ${scope.projectRevision}\n\nSTRICT RESPONSE CONTRACT\n${responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope)}\n\nEND COPY BLOCK — STAGE ${String(stage).padStart(2,'0')}`;

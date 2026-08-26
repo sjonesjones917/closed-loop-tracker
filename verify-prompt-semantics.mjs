@@ -39,6 +39,12 @@ function semanticIssues(record){
   return issues;
 }
 
+const exactOperationWrites={
+  '17:FREEZE':[],'17:EXECUTE_RUN':['runs'],'17:VERIFY':['verification'],'17:COMPARE':['comparisons'],'17:ROOT_CAUSE':['defects','rootCauses'],'17:REGRESSION':['regressions','regressionExecutions'],'17:CORRECT':['changes'],
+  '19:CONFIRM_FREEZE':[],'19:EXECUTE_RUN':['runs'],'19:VERIFY':['verification'],'19:COMPARE':['comparisons'],'19:REGRESSION_VERIFY':['regressionExecutions'],'19:CONFIRM':['confirmationRecords']
+};
+for(const [key,expected] of Object.entries(exactOperationWrites)){const [stage,operation]=key.split(':');const actual=schema.operationContract(Number(stage),operation)?.agentWritableCollections||[];if(!arraysEqual(actual,expected))throw new Error(`${key} writable collections contradict the required operation contract.`);}
+
 let checked=0;
 for(let stage=1;stage<=30;stage++){
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
