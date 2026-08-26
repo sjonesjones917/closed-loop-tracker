@@ -15,7 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: python3 .semantic-minimal-closure.py
+      - run: |
+          python3 .semantic-script-fix.py
+          python3 .semantic-minimal-closure.py
       - run: |
           node --check workbook.js
           node --check prompt-engine.js
@@ -28,7 +30,7 @@ jobs:
           node verify-prompt-semantics.mjs
       - if: success()
         run: |
-          rm -f .semantic-minimal-closure.py .github/workflows/apply-semantic-minimal-closure.yml
+          rm -f .semantic-minimal-closure.py .semantic-script-fix.py .github/workflows/apply-semantic-minimal-closure.yml
           git config user.name 'sjonesjones917'
           git config user.email 'sjones.jones917@gmail.com'
           git add -A
