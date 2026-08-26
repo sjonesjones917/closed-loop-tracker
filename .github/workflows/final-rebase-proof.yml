@@ -16,7 +16,7 @@ jobs:
         with: {node-version: '22'}
       - name: Reapply the already-proven surgical patch from repository history
         run: |
-          git show af0ed7a42e87d9878b42b4b941bc788c5191fc48:.apply-final-boundary-repair.mjs >/tmp/apply-final-boundary-repair.mjs
+          git show 70bf46694b086f3bbf53bf8f355aa47b89b8590c:.apply-final-boundary-repair.mjs >/tmp/apply-final-boundary-repair.mjs
           node - <<'NODE'
           const fs=require('fs'),file='/tmp/apply-final-boundary-repair.mjs';let s=fs.readFileSync(file,'utf8');
           s=s.replace('const semanticTail=`}\\n\\nlet checked=0;`;','const semanticTail=`\\nlet checked=0;`;');
