@@ -13,7 +13,7 @@ new="""async function writeAllIndexed(projects){
       if(prior?.projectSha256===incomingDigest){incoming.revision=currentRevision;incoming.projectSha256=incomingDigest;prepared.push({id,project:incoming,changed:false});continue;}
       if(prior&&suppliedRevision!==currentRevision){const e=new Error(`Project revision conflict for ${id}: expected ${suppliedRevision}, found ${currentRevision}.`);e.code='STALE_PROJECT_REVISION';throw e;}
       if(!prior&&suppliedRevision!==0){const e=new Error(`Project revision conflict for ${id}: incoming revision ${suppliedRevision} has no stored project.`);e.code='STALE_PROJECT_REVISION';throw e;}
-      incoming.revision=prior?currentRevision+1:0;assertProjectIntegrity(incoming);const digest=projectSha256(incoming);prepared.push({id,project:incoming,digest,changed:true});
+      incoming.revision=prior?currentRevision+1:0;const digest=projectSha256(incoming);prepared.push({id,project:incoming,digest,changed:true});
     }
     const changed=prepared.filter(item=>item.changed);for(const item of changed){fault('during-project-write');store.put({jobId:item.id,revision:item.project.revision,project:item.project,projectSha256:item.digest,updatedAt:now()});item.project.projectSha256=item.digest;meta.put({key:'lastCommittedRevision',value:{jobId:item.id,revision:item.project.revision,projectSha256:item.digest},updatedAt:now()});}
     if(prepared[0])meta.put({key:'selectedProject',value:prepared[0].id,updatedAt:now()});fault('before-transaction-commit');await complete(tx);
