@@ -9,27 +9,81 @@ Committed retained project requires no source materialization.
   "responseSchema": "closed-loop-stage-response/2",
   "obsoleteRuntimeWrappers": false
 }
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:58
-const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
-                                                                                                                           ^
+{
+  "application": "single",
+  "stages": 30,
+  "ownershipLedger": true,
+  "responseSchema": "closed-loop-stage-response/2",
+  "allStagePromptsVerified": 30,
+  "externalSourceNonCircularity": true,
+  "retainedProject": "JOB-20260823144121",
+  "retainedStage1": "COMPLETE",
+  "retainedCurrentStage": 2,
+  "retainedDownstreamFabricated": false,
+  "legacyProjectPreservation": true,
+  "unknownFieldRoundTrip": true,
+  "transactionRollback": true,
+  "ingestionCycle": "30/30",
+  "negativeIngestion": true
+}
+{
+  "stagesExercised": 30,
+  "responseSchema": "closed-loop-stage-response/2",
+  "negativeCases": 66,
+  "clarificationLoop": true,
+  "atomicPrecommit": true,
+  "extractionManifest": true,
+  "canonicalIdsApplicationAssigned": true,
+  "scopeIdentityMatrix": true,
+  "verifiedAttachmentBinding": true
+}
+{
+  "pr3Dispositions": true,
+  "preconditions": true,
+  "idempotentAcceptance": true,
+  "canonicalEnvelopeIdempotency": true,
+  "typedHumanAnswers": true,
+  "clarificationPromptInvalidation": true,
+  "exactManifestPointers": true,
+  "acceptanceAfterRejectionBlocked": true,
+  "staleProjectRevisionBlocked": true,
+  "totalNegativeCases": 68
+}
+{
+  "finalRequirementRegression": true,
+  "formalStates": true,
+  "noStage31": true,
+  "invalidRelationshipRejected": true,
+  "humanQuestionGate": true,
+  "stage8PrerequisiteGate": true,
+  "tenRunGate": true,
+  "verificationMatrixGate": true,
+  "convergenceStrict": true,
+  "unchangedConfirmationGate": true,
+  "downstreamInvalidation": true,
+  "preReleaseIdentityBlocked": true,
+  "identityMismatchBlocked": true,
+  "evidenceChainNoFabrication": true,
+  "acceptedStateStorageRollback": true
+}
+{
+  "stagesCompleted": 30,
+  "clarificationCycles": 1,
+  "confirmedDefects": 1,
+  "correctedIterationRuns": 10,
+  "unchangedConfirmationRuns": 10,
+  "verificationTripleCoverage": 1,
+  "release": "ACCEPTED",
+  "artifactIdentity": true,
+  "evidenceChains": true,
+  "reloadIntegrity": true
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:92
+  if(!r.prompt.includes('VALIDATION-SCOPED')||!r.prompt.includes('Complete output is required.'))throw new Error('Scoped validation failure is not included in replacement prompt context.');
+                                                                                                       ^
 
-Error: verify-ingestion.mjs failed:
-
-workflow-engine.js:473
-  const expectedRevision=Number(project.revision||0)+1;if(Number(promptRecord.scope?.projectRevision)!==expectedRevision)throw new Error(`Generated prompt revision ${promptRecord.scope?.projectRevision} does not match next committed revision ${expectedRevision}.`);
-                                                                                                                               ^
-
-Error: Generated prompt revision 0 does not match next committed revision 1.
-    at Object.registerGeneratedPrompt (workflow-engine.js:473:128)
-    at Object.answerHumanInput (response-ingestion.js:370:1400)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:200:28
-    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-
-Node.js v22.23.2
-
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:58:124
+Error: Scoped validation failure is not included in replacement prompt context.
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:92:104
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
