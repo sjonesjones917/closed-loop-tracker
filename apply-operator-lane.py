@@ -53,3 +53,5 @@ token='runtime-'+hashlib.sha256(''.join(f'{f}:{blob(f)}\n' for f in files).encod
 h2,n=re.subn(r'(?<=\?v=)runtime-[a-f0-9]{16}',token,h)
 assert n==8, f'expected 8 runtime tokens, changed {n}'
 idx.write_text(h2,encoding='utf-8')
+
+# trigger exact-current proof
