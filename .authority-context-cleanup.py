@@ -5,19 +5,15 @@ def rep(path, old, new, count=1):
     if s.count(old)!=count: raise SystemExit(f'{path}: expected {count}, found {s.count(old)} for {old[:100]!r}')
     p.write_text(s.replace(old,new,count))
 
-# One active stage authority model: migrate the old alias once, then remove it.
 rep('workflow-engine.js',
 "      ...prior,\n      number:stage,\n      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)\n    };",
 "      ...prior,\n      number:stage,\n      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'&&Object.keys(prior.agentData).length?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)\n    };\n    delete project.stages[stage].acceptedData;")
 rep('workflow-engine.js',"acceptedData:project.stages[stage].acceptedData","agentData:project.stages[stage].agentData,humanData:project.stages[stage].humanData")
 rep('workflow-engine.js',"return Boolean(Object.keys(project?.stages?.[stage]?.acceptedData||{}).length);","return Boolean(Object.keys(project?.stages?.[stage]?.agentData||{}).length||Object.keys(project?.stages?.[stage]?.humanData||{}).length);")
-
 rep('response-ingestion.js',"state.agentData={...state.agentData,...clone(proposal.proposedStageData)};state.acceptedData=state.agentData;","state.agentData={...state.agentData,...clone(proposal.proposedStageData)};")
-
 rep('app-core.js',"authorizedFiles:[],acceptedData:{},humanData:{},acceptedResponseIds:[]","authorizedFiles:[],agentData:{},humanData:{},acceptedResponseIds:[]")
 rep('app-core.js',"authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{}","authorizedFiles:safe(s.authorizedFiles),agentData:s.agentData&&typeof s.agentData==='object'?s.agentData:(s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{}),humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{}")
 
-# Prompt context must match gate scope; preserve only explicitly permanent/cross-iteration history.
 rep('prompt-engine.js',"const hash=globalThis.closedLoopHash;\nif(!core||!schema||!hash)throw new Error('workbook.js, hash.js, and workflow-schema.js must load before prompt-engine.js.');","const hash=globalThis.closedLoopHash;\nconst engine=globalThis.closedLoopWorkflowEngine;\nif(!core||!schema||!hash||!engine)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');")
 p=Path('prompt-engine.js');s=p.read_text()
 old="""function boundedCollection(state,collection){
@@ -45,16 +41,13 @@ if s.count("agentData:state.stages[stage-1].agentData||state.stages[stage-1].acc
 s=s.replace("agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{}","agentData:state.stages[stage-1].agentData||{}",1)
 if s.count("${boundedCollection(state,collection)}`);")!=1: raise SystemExit('boundedCollection call changed')
 s=s.replace("${boundedCollection(state,collection)}`);","${boundedCollection(stage,state,collection)}`);",1)
-anchor=""" if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\n${show(corrections)}`);
- const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);
+needle=" const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);"
+feedback=""" const failedValidation=(state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===Number(stage)&&x.valid===false&&!x.invalidatedBy).at(-1);
+ if(failedValidation)parts.push(`LATEST APPLICATION VALIDATION FEEDBACK\\
+${show({validationId:failedValidation.validationId,rawResponseId:failedValidation.rawResponseId,issues:(failedValidation.issues||[]).map(issue=>({code:issue.code,path:issue.path||null,message:issue.message||null}))})}`);
 """
-insert=""" if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\n${show(corrections)}`);
- const failedValidation=(state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===Number(stage)&&x.valid===false&&!x.invalidatedBy).at(-1);
- if(failedValidation)parts.push(`LATEST APPLICATION VALIDATION FEEDBACK\n${show({validationId:failedValidation.validationId,rawResponseId:failedValidation.rawResponseId,issues:(failedValidation.issues||[]).map(issue=>({code:issue.code,path:issue.path||null,message:issue.message||null}))})}`);
- const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);
-"""
-if s.count(anchor)!=1: raise SystemExit('prompt corrections anchor changed')
-s=s.replace(anchor,insert,1)
+if s.count(needle)!=1: raise SystemExit(f'prompt operation insertion point count {s.count(needle)}')
+s=s.replace(needle,feedback+needle,1)
 old_manifest="""contextManifest={stage,operation,scope,readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,(state?.projectData?.[collection]||[]).filter(x=>x?.active!==false&&!x?.invalidatedBy).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}))};"""
 new_manifest="""contextManifest={stage,operation,scope,readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,contextRecords(stage,state,collection).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId})),latestValidationFailure:(state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===stage&&x.valid===false&&!x.invalidatedBy).slice(-1).map(x=>({validationId:x.validationId,rawResponseId:x.rawResponseId,issues:(x.issues||[]).map(issue=>({code:issue.code,path:issue.path||null,message:issue.message||null}))}))[0]||null};"""
 if s.count(old_manifest)!=1: raise SystemExit('prompt contextManifest expression changed')
