@@ -13,7 +13,7 @@ const QUESTION_KEYS=Object.freeze(['temporaryKey','question','whyRequired','affe
 const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','filename','mediaType','byteSize','sha256','required']);
 const UNRESOLVED_KEYS=Object.freeze(['temporaryKey','kind','description','whyBlocking','affectedStageFields','affectedRecords','blocking']);
 const WARNING_KEYS=Object.freeze(['code','message','path']);
-const UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
+const UNRESOLVED_KINDS=Object.freeze(['MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT','UNRESOLVED_CONFLICT','EXECUTION_FAILURE','TOOL_FAILURE','UNKNOWN']);
 const ANSWER_TYPES=Object.freeze(['TEXT','LONG_TEXT','BOOLEAN','NUMBER','CHOICE','MULTI_CHOICE','DATE','FILE_REFERENCE']);
 
 const clone=workflow.clone;
