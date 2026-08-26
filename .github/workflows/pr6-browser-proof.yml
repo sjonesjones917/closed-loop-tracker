@@ -1,0 +1,35 @@
+name: PR6 browser storage acceptance probe
+on:
+  push:
+    branches: [practical-100/pr6-finalize]
+permissions:
+  contents: write
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python .pr6-browser-proof.py
+      - run: |
+          node build-test-project.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          BROWSER="$(command -v chromium || command -v google-chrome || command -v chrome)"
+          test -n "$BROWSER"
+          BROWSER="$BROWSER" PAGE_URL="http://127.0.0.1:4173/" node verify-browser.mjs
+          BROWSER="$BROWSER" PAGE_URL="http://127.0.0.1:4173/" node verify-browser-extra.mjs
+      - name: Commit proved changes and clean probe
+        if: success()
+        run: |
+          rm .pr6-browser-proof.py .github/workflows/pr6-browser-proof.yml
+          git checkout -- TEST_PROJECT.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 6: prove browser Blob CAS and rollback"
+          git push
