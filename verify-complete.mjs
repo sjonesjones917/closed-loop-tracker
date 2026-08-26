@@ -51,6 +51,22 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 
 
+// Stage 11 initial execution completion does not depend on Stage 12 verification triples.
+{
+  const p=project('JOB-STAGE11-BOUNDARY');
+  p.job.CURRENT_ITERATION='ITERATION-STAGE11';p.stages[10].status='COMPLETE';
+  p.projectData.iterations.push(record('iterations',10,{CANDIDATE_ID:'CANDIDATE-STAGE11',STATUS:'FROZEN'},'ITERATION-STAGE11'));
+  p.projectData.candidateFreezes.push(record('candidateFreezes',10,{ITERATION_ID:'ITERATION-STAGE11',STATUS:'FROZEN'},'CANDIDATE-STAGE11'));
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE11',stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL'});
+  for(let i=0;i<10;i++){
+    const run=record('runs',11,{ITERATION_ID:'ITERATION-STAGE11',CANDIDATE_ID:'CANDIDATE-STAGE11',CONTEXT_ID:`CONTEXT-STAGE11-${i}`,CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:`output-${i}`},`RUN-STAGE11-${i}`);
+    run.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.runs.push(run);
+    p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});
+  }
+  const stage11=engine.gate(11,p);assert(stage11.complete,`Stage 11 incorrectly depends on Stage 12 verification data: ${stage11.reasons.join('; ')}`);
+  const stage12=engine.gate(12,p);assert(!stage12.complete&&stage12.reasons.some(r=>/REQ × RUN × TEST|coverage/i.test(r)),'Stage 12 completed without verification triples.');
+}
+
 // Current-scope selection excludes historical scoped records.
 {
   const p=project('JOB-SCOPE');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v002';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v002';p.job.CURRENT_ITERATION='ITERATION-2';
