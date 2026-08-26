@@ -15,7 +15,15 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply exact source repair
-        run: node .apply-test-execution-contract.mjs
+        run: |
+          set +e
+          node .apply-test-execution-contract.mjs > /tmp/first-pass.log 2>&1
+          code=$?
+          set -e
+          cat /tmp/first-pass.log
+          test "$code" -ne 0
+          grep -F "engine test execution plan: expected exactly one anchor, found 0" /tmp/first-pass.log
+          node .finish-test-execution-contract.mjs
       - name: Rebuild retained test project from current sources
         run: node build-test-project.mjs
       - name: Syntax and deterministic acceptance
@@ -53,7 +61,7 @@ jobs:
           trap - EXIT
       - name: Remove one-time mechanism and commit only permanent repair
         run: |
-          rm -f .apply-test-execution-contract.mjs .github/workflows/test-execution-contract.yml
+          rm -f .apply-test-execution-contract.mjs .finish-test-execution-contract.mjs .github/workflows/test-execution-contract.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
