@@ -120,7 +120,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Missing evidence-chain links remain missing; the application does not invent them.
 {
-  const p=project('JOB-CHAIN');p.projectData.requirements.push(record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User Job Input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'deterministic',EXPECTED_EVIDENCE:'evidence',FAILURE_CONDITION:'missing',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-TEST'));
+  const p=project('JOB-CHAIN');const req=record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User Job Input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'deterministic',EXPECTED_EVIDENCE:'evidence',FAILURE_CONDITION:'missing',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-TEST');req.scope=engine.currentScope(p);p.projectData.requirements.push(req);
   const chains=engine.constructEvidenceChains(p);assert(chains.length===1&&chains[0].STATUS==='INCOMPLETE'&&chains[0].MISSING_LINKS.length>0,'Missing evidence links were fabricated as complete.');
 }
 
@@ -149,8 +149,8 @@ console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,no
 
 // Refining one accepted run restores only that reservation and preserves unrelated accepted lanes.
 {
- let p=project('JOB-SCOPED-ACCEPTED-REFINEMENT'),stage=11;p.job.CURRENT_ITERATION='ITERATION-REFINE';
- const slots=engine.reserveRunBatch(p,{stage,iterationId:'ITERATION-REFINE',candidateId:'CANDIDATE-REFINE',count:10});
+ let p=project('JOB-SCOPED-ACCEPTED-REFINEMENT'),stage=11;const bytes=new TextEncoder().encode('refinement-candidate');engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-REFINE',filename:'refine.bin',mediaType:'application/octet-stream',byteSize:bytes.byteLength,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'});const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
+ const slots=engine.reserveRunBatch(p,{stage,iterationId,count:10});for(const slot of slots){const run=engine.records(p,'runs').find(r=>engine.recordId(r,'runs')===slot.runId);assert(engine.recordValue(run,'CANDIDATE_ID')===candidateId,'Scoped refinement fixture did not reserve the canonical iteration candidate.');}
  const acceptLane=(slot,label)=>{const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const fields={FRESH_CONTEXT_RECORD:slot.contextId,CONTAMINATION_CHECK:'NONE',TOOL_CONFIGURATION:'CONTROLLED',EXECUTION_STATUS:'COMPLETED',COMPLETE_OUTPUT:`output-${label}`};const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{runs:[{targetId:slot.runId,fields,relationships:{},evidenceRefs:['lane-evidence']}]},evidence:[{temporaryKey:'lane-evidence',kind:'WORKFLOW_EVIDENCE',description:'lane evidence',location:'fixture',content:`lane-${label}`}],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert(prepared.validation.valid,`Scoped lane ${label} rejected: ${JSON.stringify(prepared.validation.issues)}`);const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});p=committed.project;return committed.acceptedChange;};
  const changeA=acceptLane(slots[0],'A'),changeB=acceptLane(slots[1],'B');const runBBefore=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[1].runId);assert(runBBefore?.status==='COMPLETED','Run B was not completed before refinement.');
  engine.invalidateAcceptedResponse(p,{stage,rawResponseId:changeA.rawResponseId,reason:'Run A needs a more complete answer.',operatorLabel:'VERIFY'});engine.recalculate(p);
@@ -160,11 +160,11 @@ assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matc
 
 // Operator recovery: exact run-batch reservation is idempotent and partial batches fail closed.
 {
- const p=project('JOB-RUN-BATCH-IDEMPOTENT');p.job.CURRENT_ITERATION='ITERATION-IDEMPOTENT';
- const first=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10}),events=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;
- const second=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});
- assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:17}).length===10&&engine.records(p,'freshContexts',{stage:17}).length===10,'Repeated run-batch reservation allocated duplicate slots.');assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===events,'Idempotent reservation created another reservation event.');
- engine.records(p,'runs',{stage:17})[0].active=false;let threw=false;try{engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});}catch{threw=true;}assert(threw,'Partial active batch was silently topped up.');
+ const p=project('JOB-RUN-BATCH-IDEMPOTENT');engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-IDEMPOTENT',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'});const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-IDEMPOTENT'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
+ const first=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10}),events=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;
+ const second=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});
+ assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:11}).length===10&&engine.records(p,'freshContexts',{stage:11}).length===10,'Repeated run-batch reservation allocated duplicate slots.');assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===events,'Idempotent reservation created another reservation event.');
+ engine.records(p,'runs',{stage:11})[0].active=false;let threw=false;try{engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});}catch{threw=true;}assert(threw,'Partial active batch was silently topped up.');
 }
 
 // Human-created blockers have an authority-matched inverse and cannot close application blockers.
