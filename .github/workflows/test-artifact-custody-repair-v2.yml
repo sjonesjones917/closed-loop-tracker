@@ -1,0 +1,61 @@
+name: test-artifact-custody-repair-v2
+on:
+  push:
+    branches: [reliability/test-artifact-custody-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/test-artifact-custody-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply correction to exact main
+        run: |
+          cp .tmp-test-artifact-custody.py /tmp/test-artifact-custody.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('/tmp/test-artifact-custody.py');s=p.read_text()
+          block="""# 5) Documentation: describe the now-enforced custody rule.
+patch('README.md',
+'''When an external agent returns an actual file, its response declares the attachment and the operator attaches the exact returned bytes in the stage file control before parsing. The application then verifies the actual filename/media type/byte size/SHA-256 and stores the Blob. A filename, hash claim, repository path, or code block alone never counts as possession of a file, and browser-local bytes are not assumed to be accessible to an external agent.''',
+'''When an external agent returns an actual file, its response declares the attachment and the operator attaches the exact returned bytes in the stage file control before parsing. The application then verifies the actual filename/media type/byte size/SHA-256 and stores the Blob. A filename, hash claim, repository path, or code block alone never counts as possession of a file, and browser-local bytes are not assumed to be accessible to an external agent. When a TEST has `ARTIFACT_REQUIREMENTS` other than `NONE`, the application derives `TEST_ARTIFACT_IDS` only from evidence linked to those verified bytes, and Stage 6 remains blocked until that canonical custody link exists.''')
+
+# 6) Acceptance proof:"""
+          s,n=re.subn(r'# 5\) Documentation:.*?# 6\) Acceptance proof:',block,s,flags=re.S)
+          if n!=1: raise SystemExit(f'Expected one README patch section in staged script, found {n}')
+          p.write_text(s)
+          PY
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "b6bc2e141df99bc740e3c89dd4b0f634874df45b"
+          git reset --hard origin/main
+          python3 /tmp/test-artifact-custody.py
+      - name: Verify exact corrected application
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only passing product/test files
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js README.md verify-ingestion.mjs verify-complete.mjs verify-prompt-semantics.mjs index.html
+          git diff --cached --check
+          git commit -m "Enforce canonical custody of required test artifacts"
+          git push --force-with-lease origin HEAD:reliability/test-artifact-custody-20260826
