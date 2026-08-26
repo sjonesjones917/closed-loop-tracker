@@ -1,0 +1,48 @@
+name: Rebase proven semantic closure current5
+on:
+  push:
+    branches: [reliability/final-integrity-authority-current5-20260826]
+permissions:
+  contents: write
+jobs:
+  rebase:
+    if: ${{ !contains(github.event.head_commit.message, '[current5-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-integrity-authority-current5-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Compose latest recovery lanes with proven repair
+        shell: bash
+        run: |
+          for f in project-store.js verify-complete.mjs verify-full-cycle.mjs workflow-engine.js workflow-schema.js; do
+            git show 27dd8f4504fb160fcadf25a451d898356fa140d6:$f > $f
+          done
+          git diff 6c66ac5d65f59eb522b3910c151ac3a540c8e69b 27dd8f4504fb160fcadf25a451d898356fa140d6 -- response-ingestion.js > /tmp/response-repair.patch
+          git apply --verbose /tmp/response-repair.patch
+          rm -f .github/workflows/rebase-integrity-current5.yml
+      - name: Full deterministic acceptance including latest recovery tests
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing tree
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Compose recovery lanes with canonical authority and integrity closure [current5-complete]"
+          git push origin HEAD:reliability/final-integrity-authority-current5-20260826
