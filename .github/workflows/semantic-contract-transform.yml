@@ -39,7 +39,9 @@ jobs:
           replace_once('prompt-engine.js','Define the expected post-correction result. The application assigns REG_ID and lifecycle state.','The linked permanent test expected result defines post-correction success. The application assigns REG_ID and lifecycle state.')
 
           def record_types(t):
-              for key,vt in {'CHAIN.TEST_ID':'REFERENCE_ARRAY','CHAIN.TEST_RESULT_ID':'STRING_ARRAY','CHAIN.EVIDENCE_ID':'STRING_ARRAY','CHAIN.ARTIFACT_HASH_IDENTITY':'REFERENCE_ARRAY'}.items(): t.setdefault(key,{})['valueType']=vt
+              chain=t['CHAIN']
+              for key,vt in {'TEST_ID':'REFERENCE_ARRAY','TEST_RESULT_ID':'STRING_ARRAY','EVIDENCE_ID':'STRING_ARRAY','ARTIFACT_HASH_IDENTITY':'REFERENCE_ARRAY'}.items():
+                  chain[key]['valueType']=vt
           rewrite_const_json('workflow-schema.js','EXPLICIT_RECORD_FIELD_TYPES',record_types)
 
           old=re.search(r"const OPERATION_CONTRACT_OVERRIDES=Object\.freeze\(\{.*?\}\);\nfunction operationContract",Path('workflow-schema.js').read_text(),re.S)
