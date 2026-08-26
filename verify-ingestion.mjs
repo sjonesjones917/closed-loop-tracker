@@ -134,6 +134,7 @@ negative('stale prompt hash',(e)=>{e.promptIdentity.bodySha256='0'.repeat(64);},
 negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(64);},'STALE_CONTRACT_HASH');
 negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
 for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',10,'iterationId'],['candidate',10,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',20,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);
+scopeNegative('non-required populated scope identity',2,'baselineId');
 negative('cross-project response',(e)=>{e.jobId='JOB-CROSS-PROJECT';},'WRONG_JOB_ID');
 negative('unknown collection',(e)=>{e.records.unknownCollection=[];},'UNKNOWN_COLLECTION');
 negative('unknown stage field',(e)=>{e.stageData.UNKNOWN_STAGE_FIELD='x';},'UNKNOWN_STAGE_FIELD');
