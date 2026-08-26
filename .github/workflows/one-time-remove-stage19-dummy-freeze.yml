@@ -32,11 +32,23 @@ jobs:
           if target not in block: raise SystemExit('Stage 19 CONFIRM_FREEZE contract already changed or missing')
           block=block.replace(target,'',1)
           p.write_text(s[:start]+block+s[end:])
+
           p=Path('workflow-engine.js'); s=p.read_text()
           old="stage===19?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[]"
           new="stage===19?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[]"
           if old not in s: raise SystemExit('Stage 19 required operation gate already changed or missing')
           p.write_text(s.replace(old,new,1))
+
+          p=Path('verify-ingestion.mjs'); s=p.read_text()
+          old="const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData;"
+          new="const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
+          if old not in s: raise SystemExit('Ingestion fixture operation contract anchor missing')
+          s=s.replace(old,new,1)
+          old="const collection=contract.allowedCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||contract.allowedCollections.find(name=>schema.recordAgentFields(name).length);"
+          new="const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);"
+          if old not in s: raise SystemExit('Ingestion fixture writable collection anchor missing')
+          p.write_text(s.replace(old,new,1))
+
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
           old="19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}"
           new="19:{EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}"
@@ -46,6 +58,7 @@ jobs:
           proof="if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');\n"
           if anchor not in s: raise SystemExit('Prompt semantic proof anchor missing')
           p.write_text(s.replace(anchor,proof+anchor,1))
+
           p=Path('verify-full-cycle.mjs'); s=p.read_text()
           old="data(19,{operation:'CONFIRM_FREEZE',stageData:{COMPLETE_TEST_SUITE_RUN:'PENDING'}});engine.freezeCandidate"
           if old not in s: raise SystemExit('Stage 19 full-cycle dummy response already changed or missing')
@@ -71,6 +84,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/one-time-remove-stage19-dummy-freeze.yml
-          git add workflow-schema.js workflow-engine.js verify-prompt-semantics.mjs verify-full-cycle.mjs
+          git add workflow-schema.js workflow-engine.js verify-ingestion.mjs verify-prompt-semantics.mjs verify-full-cycle.mjs
           git commit -m 'Remove synthetic Stage 19 freeze response'
           git push origin HEAD:remove-stage19-dummy-freeze-20260826
