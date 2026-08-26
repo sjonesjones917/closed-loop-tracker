@@ -17,7 +17,17 @@ jobs:
         with:
           node-version: '22'
       - name: Apply exact scoped reliability repair
-        run: python3 apply-scoped-reliability.py
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('apply-scoped-reliability.py')
+          s=p.read_text()
+          old='s=replace_once(s,"closed-loop-response-contract/2.1","closed-loop-response-contract/2.2",\'prompt semantic contract version\')'
+          new='s=replace_count(s,"closed-loop-response-contract/2.1","closed-loop-response-contract/2.2",2,\'prompt semantic contract version\')'
+          if s.count(old)!=1: raise SystemExit('temporary assertion correction did not match exactly once')
+          p.write_text(s.replace(old,new,1))
+          PY
+          python3 apply-scoped-reliability.py
       - name: Syntax checks
         run: |
           node --check app-core.js
