@@ -1,0 +1,62 @@
+name: Temporary human authority invalidation repair
+on:
+  push:
+    branches:
+      - semantic-reliability/human-authority-invalidation-20260826
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reopen the current stage when its human authority changes
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          let app=fs.readFileSync('app-core.js','utf8');
+          const oldJob="engine.recordHumanInputVersion(next,changed,'HUMAN_OPERATOR');if(next.stages[1].status==='COMPLETE'&&!next.isRetainedTestProject){const id=engine.allocateInfrastructureId(next,'HUMAN-INPUT-CHANGE','changes');engine.invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.');}await persistReplacement(next);";
+          const newJob="engine.recordHumanInputVersion(next,changed,'HUMAN_OPERATOR');if(next.stages[1].status==='COMPLETE'&&!next.isRetainedTestProject)engine.invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.',operatorLabel:'HUMAN_OPERATOR'});await persistReplacement(next);";
+          if(!app.includes(oldJob))throw new Error('Expected User Job Input invalidation path not found.');
+          app=app.replace(oldJob,newJob);
+          const oldStage="if(current.stages[stage].status==='COMPLETE'){const id=engine.allocateInfrastructureId(next,'HUMAN-STAGE-CHANGE','changes');engine.invalidateDownstream(next,stage,id,'Human-owned stage input changed after completion.');}await persistReplacement(next);";
+          const newStage="if(current.stages[stage].status==='COMPLETE')engine.invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.',operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);";
+          if(!app.includes(oldStage))throw new Error('Expected stage human-input invalidation path not found.');
+          app=app.replace(oldStage,newStage);
+          fs.writeFileSync('app-core.js',app);
+
+          let verify=fs.readFileSync('verify-complete.mjs','utf8');
+          const marker="// Explicit workflow gates cannot be bypassed by manual assertions.\n";
+          const test=`// Human authority changes must invalidate the stage whose accepted result depended on that authority.\n{\n  const appSource=fs.readFileSync('app-core.js','utf8');\n  assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage:1,reason:'User Job Input changed after Stage 01 completion.'"),'User Job Input edits do not reopen Stage 01.');\n  assert(appSource.includes("invalidateStageForAuthorityChange(next,{stage,reason:'Human-owned stage input changed after completion.'"),'Completed human-decision stages are not reopened when their authority changes.');\n  assert(!appSource.includes("invalidateDownstream(next,1,id,'User Job Input changed after Stage 01 completion.'"),'User Job Input edits still preserve stale Stage 01 acceptance.');\n  assert(!appSource.includes("invalidateDownstream(next,stage,id,'Human-owned stage input changed after completion.'"),'Human stage edits still preserve stale current-stage acceptance.');\n  const p=project('JOB-HUMAN-AUTHORITY-CHANGE');\n  p.stages[1].status='COMPLETE';p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'OLD DELIVERABLE'};p.stages[1].acceptedData={EXACT_DELIVERABLE_REQUESTED:'OLD DELIVERABLE'};p.stages[1].acceptedDataChangeIds=['CHANGE-STAGE1-OLD'];p.stages[1].acceptedResponseIds=['CHANGE-STAGE1-OLD'];p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE1-OLD',stage:1,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-STAGE1-OLD'});p.projectData.stageConfirmations.push({confirmationId:'CONFIRM-STAGE1-OLD',stage:1,acceptedChangeId:'CHANGE-STAGE1-OLD',confirmed:true});\n  p.stages[2].status='COMPLETE';const source=record('sources',2,{TITLE:'Old source',ISSUING_ORGANIZATION_OR_AUTHOR:'Authority',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'Authority',URL_REFERENCE:'https://example.invalid/old',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'old',APPLICABLE_PORTIONS:'old',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING'},'SOURCE-OLD-INPUT');p.projectData.sources.push(source);engine.invalidateStageForAuthorityChange(p,{stage:1,reason:'User Job Input changed after Stage 01 completion.',operatorLabel:'VERIFY'});\n  assert(p.stages[1].status!=='COMPLETE'&&!Object.keys(p.stages[1].agentData||{}).length&&!Object.keys(p.stages[1].acceptedData||{}).length,'Stage 01 remained complete with stale normalized input.');assert(p.projectData.acceptedChanges[0].invalidatedBy&&p.projectData.stageConfirmations[0].invalidatedBy,'Old Stage 01 acceptance or confirmation remained current.');assert(source.active===false&&source.invalidatedBy,'Stage 02 evidence remained current after Stage 01 authority changed.');\n  const q=project('JOB-STAGE-HUMAN-AUTHORITY');q.stages[10].status='COMPLETE';q.stages[10].humanData={FREEZE_OWNER:'NEW OWNER'};q.stages[10].agentData={HASHES_RECORDED_WHERE_PRACTICAL:'TRUE'};q.stages[10].acceptedData={HASHES_RECORDED_WHERE_PRACTICAL:'TRUE'};q.stages[10].acceptedDataChangeIds=['CHANGE-STAGE10-OLD'];q.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE10-OLD',stage:10,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-STAGE10-OLD'});q.stages[11].status='COMPLETE';const run=record('runs',11,{ITERATION_ID:'ITERATION-X',CANDIDATE_ID:'CANDIDATE-X',CONTEXT_ID:'CONTEXT-X',CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:'old output'},'RUN-OLD-HUMAN-AUTHORITY');q.projectData.runs.push(run);engine.invalidateStageForAuthorityChange(q,{stage:10,reason:'Human-owned stage input changed after completion.',operatorLabel:'VERIFY'});\n  assert(q.stages[10].status!=='COMPLETE'&&q.stages[10].humanData.FREEZE_OWNER==='NEW OWNER','Stage 10 human authority was lost or stale Stage 10 completion remained current.');assert(!Object.keys(q.stages[10].agentData||{}).length&&!Object.keys(q.stages[10].acceptedData||{}).length&&q.projectData.acceptedChanges[0].invalidatedBy,'Old Stage 10 agent acceptance remained current after human authority changed.');assert(run.active===false&&run.invalidatedBy,'Stage 11 dependent run remained current after Stage 10 authority changed.');\n}\n\n`;
+          if(!verify.includes('JOB-HUMAN-AUTHORITY-CHANGE')){
+            if(!verify.includes(marker))throw new Error('verify-complete insertion marker not found.');
+            verify=verify.replace(marker,test+marker);
+            fs.writeFileSync('verify-complete.mjs',verify);
+          }
+          NODE
+          rm .github/workflows/human-authority-invalidation-repair.yml
+      - name: Run deterministic acceptance
+        run: |
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit proven repair
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+41898282@users.noreply.github.com"
+          git add -A
+          git commit -m "Reopen stages when human authority changes"
+          git push origin HEAD:semantic-reliability/human-authority-invalidation-20260826
