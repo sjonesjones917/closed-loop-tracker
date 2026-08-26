@@ -38,22 +38,26 @@ function semanticIssues(record){
     if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
   }
   const task=prompts.procedures[record.stage]||'';
-  if(record.stage===10&&/Assign CANDIDATE_ID|Assign ITERATION_ID/.test(task))issues.push('AGENT_ASSIGNS_CANDIDATE_ID');
-  if(record.stage===12&&!task.includes('REQ_ID × RUN_ID × TEST_ID triple'))issues.push('VERIFICATION_TRIPLE_MISSING');
-  if(record.stage===15&&/post-correction success at this stage|post-correction result and evidence/.test(task))issues.push('STAGE15_TEMPORAL_CONTRADICTION');
-  if(record.stage===18&&/^Determine convergence|Calculate mandatory requirement coverage/.test(task))issues.push('AGENT_CALCULATES_CONVERGENCE');
-  if(record.stage===20&&/Assign BASELINE_ID/.test(task))issues.push('AGENT_ASSIGNS_BASELINE_ID');
-  if(record.stage===21&&/Assign PRODUCT_ID|Assign .*EXECUTION_ID/.test(task))issues.push('AGENT_ASSIGNS_PRODUCT_ID');
-  if(record.stage===27&&/produce exactly one determination/.test(task))issues.push('AGENT_SETS_RELEASE');
-  if(record.stage===28&&/^Only after Stage 27 is ACCEPTED, verify exact artifact identity/.test(task))issues.push('AGENT_ASSERTS_ARTIFACT_IDENTITY');
-  if(record.stage===29&&/^Preserve this job’s complete evidence chain/.test(task))issues.push('AGENT_CONSTRUCTS_EVIDENCE_CHAIN');
+  issues.push(...procedureIssues(record.stage,task));
+  return [...new Set(issues)];
+}
+function procedureIssues(stage,task){
+  const issues=[];
+  if(stage===10&&/Assign CANDIDATE_ID|Assign ITERATION_ID/.test(task))issues.push('AGENT_ASSIGNS_CANDIDATE_ID');
+  if(stage===12&&!task.includes('REQ_ID × RUN_ID × TEST_ID triple'))issues.push('VERIFICATION_TRIPLE_MISSING');
+  if(stage===15&&(!task.includes('Do not require or claim post-correction success at this stage')||/preserve[^.]*post-correction result and evidence/i.test(task)))issues.push('STAGE15_TEMPORAL_CONTRADICTION');
+  if(stage===18&&/^Determine convergence|Calculate mandatory requirement coverage/.test(task))issues.push('AGENT_CALCULATES_CONVERGENCE');
+  if(stage===20&&/Assign BASELINE_ID/.test(task))issues.push('AGENT_ASSIGNS_BASELINE_ID');
+  if(stage===21&&/Assign PRODUCT_ID|Assign .*EXECUTION_ID/.test(task))issues.push('AGENT_ASSIGNS_PRODUCT_ID');
+  if(stage===27&&/produce exactly one determination/.test(task))issues.push('AGENT_SETS_RELEASE');
+  if(stage===28&&/^Only after Stage 27 is ACCEPTED, verify exact artifact identity/.test(task))issues.push('AGENT_ASSERTS_ARTIFACT_IDENTITY');
+  if(stage===29&&/^Preserve this job’s complete evidence chain/.test(task))issues.push('AGENT_CONSTRUCTS_EVIDENCE_CHAIN');
   return issues;
 }
 
 const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};
 for(const [stage,operations] of Object.entries(expectedOperationWrites))for(const [operation,writes] of Object.entries(operations)){const actual=schema.operationContract(Number(stage),operation).agentWritableCollections;if(!arraysEqual(actual,writes))throw new Error(`Stage ${stage} ${operation} has semantically wrong writable collections: ${actual.join(', ')}`);}
 const runRead=schema.operationContract(17,'EXECUTE_RUN').readCollections;if(!runRead.includes('runs')||!runRead.includes('freshContexts'))throw new Error('Stage 17 EXECUTE_RUN cannot see reserved run/context slots.');
-
 let checked=0;
 for(let stage=1;stage<=30;stage++){
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
@@ -97,5 +101,7 @@ const mutants=[
   {...original,prompt:original.prompt.replace('MISSING_APPLICATION_CONTEXT','UNKNOWN')}
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
+const temporalMutant=prompts.procedures[15].replace('Do not require or claim post-correction success at this stage','Require and claim post-correction success at this stage');
+if(!procedureIssues(15,temporalMutant).includes('STAGE15_TEMPORAL_CONTRADICTION'))throw new Error('Stage 15 temporal contradiction mutation escaped detection.');
 
-console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operatorRefinementContext:true,operationIsolation:true},null,2));
+console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length+1,stage2SourceCount:true,insufficiencyRecovery:true,operatorRefinementContext:true,operationIsolation:true},null,2));
