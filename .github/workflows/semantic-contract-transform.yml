@@ -74,13 +74,17 @@ jobs:
           replace_once('prompt-engine.js','agentStageFields:[...contract.allowedStageData],agentWritableCollections:[...writable]','agentStageFields:[...agentStageFields],agentWritableCollections:[...writable]')
           replace_once('prompt-engine.js',"const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';","const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const fields=agentStageFields.length?agentStageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';")
 
+          replace_once('response-ingestion.js','const allowedStageData=new Set(operationContract?.agentStageFields||contract?.allowedStageData||[]);','const allowedStageData=new Set(operationContract?.agentStageFields||contract?.allowedStageData||[]);')
+
+          replace_once('workflow-engine.js',"requiredOps=stage===17?['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']:stage===19?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[]","requiredOps=stage===17?['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']:stage===19?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[]")
+
           replace_once('verify-ingestion.mjs',"  const contract=schema.STAGE_CONTRACTS[stage];\n  const stageData={};\n  if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);","  const contract=schema.STAGE_CONTRACTS[stage];\n  const operationContract=schema.operationContract(stage,promptRecord.operation);\n  const agentStageFields=operationContract?.agentStageFields||contract.allowedStageData;\n  const writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;\n  const stageData={};\n  if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);")
           replace_once('verify-ingestion.mjs',"    const collection=contract.allowedCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||contract.allowedCollections.find(name=>schema.recordAgentFields(name).length);","    const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);")
 
           replace_once('verify-full-cycle.mjs',"function data(stage,{operation,stageData={},records={},scope={}}={}){const pr=prompt(stage,operation,scope);if(!Object.keys(stageData).length&&!Object.keys(records).length){const f=schema.STAGE_CONTRACTS[stage].allowedStageData[0];if(f)stageData[f]=schema.STAGE_FIELDS[stage][f].valueType==='BOOLEAN'?true:`fixture-${f.toLowerCase()}`;}","function data(stage,{operation,stageData={},records={},scope={}}={}){const pr=prompt(stage,operation,scope);if(!Object.keys(stageData).length&&!Object.keys(records).length){const f=(schema.operationContract(stage,pr.operation)?.agentStageFields||schema.STAGE_CONTRACTS[stage].allowedStageData)[0];if(f)stageData[f]=schema.STAGE_FIELDS[stage][f].valueType==='BOOLEAN'?true:`fixture-${f.toLowerCase()}`;}")
           replace_once('verify-full-cycle.mjs',"PRE_CORRECTION_EVIDENCE:'Failure evidence',CORRECTION:'Controlled correction',POST_CORRECTION_RESULT:'PENDING'","PRE_CORRECTION_EVIDENCE:'Failure evidence',POST_CORRECTION_RESULT:'PENDING'")
           replace_once('verify-full-cycle.mjs',"data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});","data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT'}});")
-          replace_once('verify-full-cycle.mjs',"data(19,{operation:'CONFIRM_FREEZE',stageData:{COMPLETE_TEST_SUITE_RUN:'PENDING'}});","data(19,{operation:'CONFIRM_FREEZE'});")
+          replace_once('verify-full-cycle.mjs',"data(19,{operation:'CONFIRM_FREEZE',stageData:{COMPLETE_TEST_SUITE_RUN:'PENDING'}});","")
 
           replace_once('app-core.js','<div class="field"><label>Select exact files</label><input id="stage-files" type="file" multiple${locked?\' disabled\':\'\'}></div>','<div class="field"><label>${n===21&&!engine.currentScope(current).productId?\'Reserve product execution before adding finished-product files\':\'Select exact files\'}</label><input id="stage-files" type="file" multiple${locked||(n===21&&!engine.currentScope(current).productId)?\' disabled\':\'\'}></div>')
           replace_once('app-core.js',"if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);await navigator.clipboard?.writeText(record.prompt);announce('instruction saved and copied');};","if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);try{if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable.');await navigator.clipboard.writeText(record.prompt);announce('instruction saved and copied');}catch(error){announce('instruction saved; clipboard copy unavailable');alert(`Instruction saved, but automatic clipboard copy failed. Copy it from the generated instruction panel. ${error.message||error}`);}};")
@@ -114,6 +118,7 @@ jobs:
           node build-test-project.mjs
           node --check workbook.js
           node --check workflow-schema.js
+          node --check workflow-engine.js
           node --check prompt-engine.js
           node --check response-ingestion.js
           node --check app-core.js
@@ -131,6 +136,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/semantic-contract-transform.yml .semantic-transform-trigger
-          git add workbook.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs TEST_PROJECT.json index.html
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs TEST_PROJECT.json index.html
           git commit -m "Harden operation and evidence contracts"
           git push origin HEAD:reliability/semantic-contract-hardening-20260826
