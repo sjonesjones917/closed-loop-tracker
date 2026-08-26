@@ -78,7 +78,7 @@ function sha256Text(text){
       const ch=((e&f)^((~e)&g))>>>0;
       const t1=(hh+s1+ch+k[i]+w[i])>>>0;
       const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;
-      const maj=((a&b)^(a&c)^(b&d))>>>0;
+      const maj=((a&b)^(a&c)^(b&c))>>>0;
       const t2=(s0+maj)>>>0;
       hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;
     }
