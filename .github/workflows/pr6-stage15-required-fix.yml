@@ -1,0 +1,29 @@
+name: PR6 Stage 15 required fix
+on:
+  push:
+    branches: [practical-100/pr6-completion]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply minimal schema correction and remove inspection scaffolding
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js')
+          s=p.read_text()
+          old="'PRE_CORRECTION_EVIDENCE','CORRECTION','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION'"
+          new="'PRE_CORRECTION_EVIDENCE','CORRECTION','PERMANENT_TEST_LOCATION'"
+          assert old in s, 'Stage 15 required token not found'
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm -f .github/workflows/pr6-inspect-13-16.yml .github/workflows/pr6-stage15-required-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Use regression executions for post-correction proof'
+          git push
