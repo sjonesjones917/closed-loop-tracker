@@ -227,7 +227,7 @@ function gate(stage,project){
     }
     case 2:{
       requireAccepted();const determination=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION);const sources=collection('sources');
-      if(!sources.length){if(determination!=='NO_APPLICABLE_EXTERNAL_SOURCE')reasons.push('Either at least one legitimate external governing source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');else{const latest=changes.at(-1),proposal=safe(project.projectData.responseProposals).find(x=>x.proposalId===latest?.proposalId);if(!safe(proposal?.evidence).length)reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE requires preserved supporting evidence.');}}
+      if(!sources.length){if(determination!=='NO_APPLICABLE_EXTERNAL_SOURCE')reasons.push('Either at least one legitimate independent external source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');else{const latest=changes.at(-1),proposal=safe(project.projectData.responseProposals).find(x=>x.proposalId===latest?.proposalId);if(!safe(proposal?.evidence).length)reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE requires preserved supporting evidence.');}}
       else if(determination!=='APPLICABLE_SOURCES_ESTABLISHED')reasons.push('Established source records require SOURCE_APPLICABILITY_DETERMINATION = APPLICABLE_SOURCES_ESTABLISHED.');
       for(const source of sources)reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
       if(collection('sourceConflicts').some(record=>['UNRESOLVED','BLOCKED','UNKNOWN','OPEN'].includes(upper(recordValue(record,'RESOLUTION_STATUS')))))reasons.push('An external-source conflict remains unresolved or blocked.');
@@ -427,7 +427,7 @@ function recordHumanDecision(project,{stage,field,value,operatorLabel='HUMAN_OPE
 }
 function invalidateAcceptedResponse(project,{stage=project.activeStage,rawResponseId,reason='Corrected response required.',operatorLabel='HUMAN_OPERATOR'}={}){
   ensureShape(project);const change=acceptedChanges(project,stage).find(item=>!rawResponseId||item.rawResponseId===rawResponseId);if(!change)throw new Error('No current accepted data change exists for invalidation.');
-  const event=addHistory(project,'ACCEPTED_RESPONSE_INVALIDATED',{stage,rawResponseId:change.rawResponseId,reason,operatorLabel,identityAssurance:'SELF_ASSERTED'});change.invalidatedBy=event.eventId;invalidateDownstream(project,stage,event.eventId,reason);recalculate(project);return event;
+  const proposal=safe(project.projectData.responseProposals).find(item=>item.proposalId===change.proposalId),operation=change.operation||proposal?.envelope?.operation||'COMPLETE',scope=clone(change.scope||proposal?.scope||proposal?.envelope?.scope||{});const event=addHistory(project,'ACCEPTED_RESPONSE_INVALIDATED',{stage,rawResponseId:change.rawResponseId,promptId:change.promptId||proposal?.promptId||null,operation,scope,reason,operatorLabel,identityAssurance:'SELF_ASSERTED'});change.invalidatedBy=event.eventId;invalidateDownstream(project,stage,event.eventId,reason);recalculate(project);return event;
 }
 function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){
   ensureShape(project);if(count!==10)throw new Error('Run batches must contain exactly ten slots.');const resolvedIteration=iterationId||project.job.CURRENT_ITERATION;if(!resolvedIteration)throw new Error('A current iteration is required before reserving runs.');

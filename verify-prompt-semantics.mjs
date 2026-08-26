@@ -128,3 +128,30 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
 {const p=baseProject();p.revision=0;const a=prompts.buildPromptRecord(17,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}});engine.registerGeneratedPrompt(p,a);p.revision=1;const b=prompts.buildPromptRecord(17,{...p,revision:2},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}});engine.registerGeneratedPrompt(p,b);const active=p.projectData.generatedPrompts.filter(x=>!x.invalidatedBy);if(!active.some(x=>x.instructionId===a.instructionId)||!active.some(x=>x.instructionId===b.instructionId))throw new Error('Independent run prompt was superseded.');}
 // Desired source count participates in controlled User Job Input identity.
 {const p=baseProject();p.job.DESIRED_SOURCE_COUNT=5;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');const before=p.job.CURRENT_INPUT_VERSION;p.job.DESIRED_SOURCE_COUNT=9;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');if(p.job.CURRENT_INPUT_VERSION===before)throw new Error('Desired source count did not version User Job Input.');}
+
+
+// Minimum semantic closure on current main.
+{
+  const source=fs.readFileSync('workbook.js','utf8');
+  if(source.includes('function buildStagePrompt(stage,state){'))throw new Error('workbook.js still contains a competing legacy prompt implementation.');
+  if(source.includes('POST_CORRECTION_SUCCESSES_PROVEN'))throw new Error('Stage 15 still declares future post-correction success as a current-stage field.');
+  if(core.STAGES[1].completionGate.some(x=>/every governing source/i.test(x))||core.STAGES[2].completionGate.some(x=>/every controlling source/i.test(x)))throw new Error('Workbook source completion language still treats every useful external source as governing authority.');
+}
+{
+  const p=baseProject();
+  const s1=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});
+  if(!/propose that feasible deliverable in EXACT_DELIVERABLE_REQUESTED/i.test(s1.prompt)||!/human intent confirmation/i.test(s1.prompt))throw new Error('Stage 01 large-work recovery does not convert feasible specification work into a confirmable deliverable.');
+  const s2=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});
+  if(!/no legitimate independent external source of any justified authority or evidentiary role/i.test(s2.prompt))throw new Error('Stage 02 no-source path still incorrectly means no governing authority rather than no legitimate external source.');
+}
+{
+  const p=baseProject();
+  const first=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push({...first,generatedAt:new Date().toISOString()});
+  const proposalId='PROPOSAL-REFINE';p.projectData.responseProposals.push({proposalId,stage:2,promptId:first.instructionId,scope:first.scope,envelope:{operation:'COMPLETE',scope:first.scope},status:'ACCEPTED'});
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-REFINE',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-REFINE',proposalId,promptId:first.instructionId,operation:'COMPLETE',scope:first.scope});
+  const event=engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason:'Add the omitted applicability analysis.',operatorLabel:'TEST_OPERATOR'});
+  const next=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});
+  if(!next.prompt.includes('ACCEPTED RESULT REFINEMENT REQUESTS')||!next.prompt.includes('Add the omitted applicability analysis.'))throw new Error('Accepted-result refinement reason is absent from the replacement prompt.');
+  if(!next.contextManifest.acceptedResultRefinements?.some(x=>x.eventId===event.eventId))throw new Error('Accepted-result refinement is absent from the prompt context identity.');
+  if(next.contextSignature===first.contextSignature)throw new Error('Accepted-result refinement did not change prompt context identity.');
+}
