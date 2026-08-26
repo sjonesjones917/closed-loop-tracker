@@ -29,6 +29,7 @@ There is no second parser, store, workflow engine, prompt layer, application she
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
 - Required browser capabilities: IndexedDB, Web Crypto, Blob, CompressionStream, and DecompressionStream for complete compressed package export/import.
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
+- Stage 21 product artifacts are accepted only after the application reserves the current product execution. Finished-product bytes are then bound to that application-owned `PRODUCT_ID`, hashed, persisted, and included in the product artifact inventory.
 
 ## Data and backup responsibility
 
