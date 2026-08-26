@@ -204,6 +204,8 @@ function gate(stage,project){
   if(questions.length)reasons.push(`${questions.length} blocking human-input request${questions.length===1?' is':'s are'} unresolved.`);
   const blockers=openBlockers(project,stage);
   if(blockers.length)reasons.push(`${blockers.length} open mandatory blocker${blockers.length===1?' affects':'s affect'} this stage.`);
+  const executionFailures=safe(project.projectData.executionFailures).filter(x=>Number(x.stage)===Number(stage)&&!x.invalidatedBy&&!x.resolvedBy&&upper(x.status||'OPEN')!=='RESOLVED');
+  if(executionFailures.length)reasons.push(`${executionFailures.length} accepted execution failure${executionFailures.length===1?' blocks':'s block'} this stage until a successful replacement response is accepted.`);
   const changes=acceptedChanges(project,stage);
   const hasAccepted=changes.length>0||project.stages[stage].acceptedResponseIds.length>0;
   const collection=name=>records(project,name,{stage});
@@ -328,7 +330,7 @@ function gate(stage,project){
     }
     case 30:{requireAccepted();const defects=confirmedDefects(project),regs=records(project,'regressions'),covered=new Set(regs.map(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''))),executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects.filter(d=>!covered.has(recordId(d,'defects'))).map(d=>recordId(d,'defects'));if(missing.length)reasons.push('Permanent regression information is missing for: '+missing.join(', ')+'.');for(const reg of regs.filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED')){const id=recordId(reg,'regressions');const latest=executions.filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id).at(-1);if(!latest||!['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT'))))reasons.push('Latest applicable regression execution is not successful for '+id+'.');}break;}
   }
-  const blocked=questions.length>0||blockers.length>0;
+  const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;
   return {stage,complete:reasons.length===0,blocked,reasons,acceptedResponseCount:changes.length,checkedAt:now(),priorReasonCount:previousReasons};
 }
 
@@ -460,11 +462,12 @@ function createNewJobReset(project){ensureShape(project);const id=allocateInfras
 
 function recordMigratedAcceptedChange(project,record){ensureShape(project);if(!record?.changeId)throw new Error('A migrated accepted change requires an identity.');const existing=safe(project.projectData.acceptedChanges).find(x=>x.changeId===record.changeId);if(existing)return existing;const value={...clone(record),source:'DETERMINISTIC_MIGRATION'};project.projectData.acceptedChanges.push(value);addHistory(project,'MIGRATED_ACCEPTED_CHANGE_RECORDED',{stage:Number(value.stage),recordId:value.changeId,migrationSchema:value.migrationSchema||'UNKNOWN'});return value;}
 
+function samePromptTarget(a,b){return Number(a?.stage)===Number(b?.stage)&&String(a?.operation||'COMPLETE')===String(b?.operation||'COMPLETE')&&['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>String(a?.scope?.[key]??'')===String(b?.scope?.[key]??''));}
 function registerGeneratedPrompt(project,promptRecord){
   ensureShape(project);if(!promptRecord?.instructionId||!Number.isInteger(Number(promptRecord?.stage)))throw new Error('A complete generated prompt record is required.');
   const expectedRevision=Number(project.revision||0)+1;if(Number(promptRecord.scope?.projectRevision)!==expectedRevision)throw new Error(`Generated prompt revision ${promptRecord.scope?.projectRevision} does not match next committed revision ${expectedRevision}.`);
   const existing=safe(project.projectData.generatedPrompts).find(x=>x.instructionId===promptRecord.instructionId);if(existing)return existing;
-  const invalidationId=`PROMPT-SUPERSEDED-${promptRecord.instructionId}`;for(const prior of safe(project.projectData.generatedPrompts).filter(x=>Number(x.stage)===Number(promptRecord.stage)&&!x.invalidatedBy))prior.invalidatedBy=invalidationId;
+  const invalidationId=`PROMPT-SUPERSEDED-${promptRecord.instructionId}`;for(const prior of safe(project.projectData.generatedPrompts).filter(x=>!x.invalidatedBy&&samePromptTarget(x,promptRecord)))prior.invalidatedBy=invalidationId;
   const record={...clone(promptRecord),source:'APPLICATION_PROMPT_REGISTRATION'};project.projectData.generatedPrompts.push(record);project.stages[Number(record.stage)].currentPromptId=record.instructionId;
   addHistory(project,'INSTRUCTION_SAVED',{recordId:record.instructionId,stage:Number(record.stage),sha256:record.bodySha256||record.sha256,projectRevision:expectedRevision});return record;
 }
