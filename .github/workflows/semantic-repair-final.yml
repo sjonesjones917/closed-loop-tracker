@@ -38,12 +38,17 @@ jobs:
         run: node verify-full-cycle.mjs
       - name: Prompt semantic verification
         run: node verify-prompt-semantics.mjs
-      - name: Chromium verification
+      - name: Primary Chromium verification
         run: |
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          python3 -m http.server 4173 >/tmp/closed-loop-http-primary.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           node verify-browser.mjs
+      - name: Extended Chromium persistence and recovery verification
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http-extra.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
           node verify-browser-extra.mjs
       - name: Commit verified permanent files and remove temporary repair paths
         run: |
