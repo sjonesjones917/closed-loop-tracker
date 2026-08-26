@@ -16,7 +16,7 @@ replace('workbook.js',
 replace('workbook.js',
         "2:['Every governing source has a complete record','Every relied-upon supplied file was inspected','Authority hierarchy is recorded','Every controlling conflict is resolved or blocked'],3:['Every controlling source has a research record'",
         "2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked'],3:['Every current accepted Stage 02 source has a research record'")
-replace('workbook.js', "'POST_CORRECTION_SUCCESSES_PROVEN',", "")
+replace('workbook.js', "'POST_CORRECTION_SUCCESSES_PROVEN',", "", 2)
 
 # The canonical prompt authority is prompt-engine.js. Remove the old workbook prompt builder entirely.
 p = Path('workbook.js')
