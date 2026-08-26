@@ -20,6 +20,7 @@ jobs:
       - name: Apply guarded historical transformer
         run: |
           python - <<'PY'
+          from pathlib import Path
           import subprocess
           source=subprocess.check_output(['git','show','b84bbd0484fbc47f42e0289d1df5655a9f2d2cb7:.github/workflows/pr6-semantic-scope-fix.yml'],text=True)
           start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
@@ -33,6 +34,16 @@ jobs:
               if j<0: raise SystemExit('Could not isolate already-applied full-cycle fixture correction.')
               code=code[:i]+code[j+2:]
           exec(compile(code,'pr6-minimum-semantic-transform.py','exec'),{})
+
+          p=Path('verify-complete.mjs'); text=p.read_text()
+          old="p.projectData.candidateFreezes.push(record('candidateFreezes',10,{ITERATION_ID:'ITERATION-STAGE11',STATUS:'FROZEN'},'CANDIDATE-STAGE11'));"
+          new="p.projectData.candidateFreezes.push(record('candidateFreezes',10,{ITERATION_ID:'ITERATION-STAGE11',COMPONENT_HASHES:{'ARTIFACT-STAGE11':'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'},STATUS:'FROZEN'},'CANDIDATE-STAGE11'));"
+          if text.count(old)!=1: raise SystemExit(f'Stage11 candidate fixture match {text.count(old)}')
+          text=text.replace(old,new,1)
+          old="p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});"
+          new="p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11,promptScope:{iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`}});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11,iteration:'ITERATION-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`});"
+          if text.count(old)!=1: raise SystemExit(f'Stage11 receipt fixture match {text.count(old)}')
+          p.write_text(text.replace(old,new,1))
           PY
       - name: Verify all deterministic source contracts
         run: |
