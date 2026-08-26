@@ -47,6 +47,8 @@ function semanticIssues(record){
     if(!record.prompt.includes('TEST → EVIDENCE_ID → ATTACHMENT_ID')||!record.prompt.includes('attachmentRef')||!record.prompt.includes('evidenceRefs'))issues.push('TEST_ARTIFACT_CANONICAL_LINK_MISSING');
   }
   if(record.stage===12&&(!record.prompt.includes('Respect each test’s EXECUTION_MODE')||!record.prompt.includes('do not claim the test ran')))issues.push('TEST_EXECUTION_RESPONSIBILITY_MISSING');
+  if(record.stage===1&&(!record.prompt.includes('Evaluate artifact generation separately from downstream execution')||!record.prompt.includes('Never downgrade an actually generatable file deliverable')))issues.push('ARTIFACT_GENERATION_BOUNDARY_MISSING_STAGE_01');
+  if(record.stage===21&&(!record.prompt.includes('Generate the actual requested artifacts whenever the available environment can reliably construct those artifacts')||!record.prompt.includes('Do not confuse artifact generation with proving downstream interoperability or physical execution')||!record.prompt.includes('Only when the required artifact itself cannot be generated reliably')))issues.push('ARTIFACT_GENERATION_BOUNDARY_MISSING_STAGE_21');
   if(record.stage===12&&!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\nNONE'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');
   if(![6,12].includes(record.stage)&&record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_LEAK');
   if(record.stage===2){
