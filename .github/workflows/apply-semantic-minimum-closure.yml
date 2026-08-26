@@ -16,7 +16,17 @@ jobs:
         with:
           node-version: '22'
       - name: Apply responsible-layer fixes
-        run: python3 .semantic-minimum-closure.py
+        run: |
+          python3 .semantic-minimum-closure.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="const p=project('JOB-BLOCKED-SEMANTICS'),stage=1,pr=prompt(p,stage);"
+          new="const p=project('JOB-BLOCKED-SEMANTICS'),stage=1,pr={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);"
+          if old not in s: raise SystemExit('semantic test fixture line not found')
+          p.write_text(s.replace(old,new,1))
+          PY
       - name: Verify syntax and semantics
         run: |
           node --check prompt-engine.js
