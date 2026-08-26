@@ -17,8 +17,20 @@ jobs:
         run: |
           python3 semantic-consolidate.py
           sed -i 's/Research only the legitimate Stage 02 external governing source set/Research only the current accepted Stage 02 external governing source set/g' verify.mjs build-test-project.mjs
-          sed -i "s#if(!record.prompt.includes('do not claim it occurred; produce the complete implementation-ready specification'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');#if(!record.prompt.includes('do not simulate completion')||!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('current confirmed deliverable'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');#" verify-prompt-semantics.mjs
-          sed -i "s#original.prompt.replace('do not claim it occurred; produce the complete implementation-ready specification','assume implementation occurred')#original.prompt.replace('do not simulate completion','simulate completion')#" verify-prompt-semantics.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs')
+          s=p.read_text()
+          old="if(!record.prompt.includes('do not claim it occurred; produce the complete implementation-ready specification'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
+          new="if(!record.prompt.includes('do not simulate completion')||!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('Never claim repository or deployment work occurred unless'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
+          if old not in s:
+              old="if(!record.prompt.includes('do not simulate completion')||!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('current confirmed deliverable'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
+          if old not in s: raise SystemExit('environment semantic assertion not found')
+          s=s.replace(old,new,1)
+          old_mut="original.prompt.replace('do not claim it occurred; produce the complete implementation-ready specification','assume implementation occurred')"
+          if old_mut in s:s=s.replace(old_mut,"original.prompt.replace('do not simulate completion','simulate completion')",1)
+          p.write_text(s)
+          PY
       - name: Verify consolidated source
         if: github.actor != 'github-actions[bot]'
         run: |
