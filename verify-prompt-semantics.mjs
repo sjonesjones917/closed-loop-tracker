@@ -98,7 +98,7 @@ const mutants=[
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 const authorityMutants=[
-  [10,prompts.procedures[10].replace('The application assigns CANDIDATE_ID and ITERATION_ID','Assign CANDIDATE_ID and ITERATION_ID')],
+  [10,prompts.procedures[10].replace('the application assigns CANDIDATE_ID and ITERATION_ID','Assign CANDIDATE_ID and ITERATION_ID')],
   [18,prompts.procedures[18].replace('Review convergence evidence','Determine convergence')],
   [20,prompts.procedures[20].replace('the application assigns BASELINE_ID','assign BASELINE_ID')],
   [21,prompts.procedures[21].replace('The application assigns PRODUCT_ID and execution identity','Assign PRODUCT_ID and EXECUTION_ID')],
