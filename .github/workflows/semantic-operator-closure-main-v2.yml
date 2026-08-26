@@ -1,0 +1,75 @@
+name: Apply remaining semantic operator fixes v2
+'on':
+  push:
+    branches: [practical-100/semantic-operator-closure-main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/semantic-operator-closure-main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded transformer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('.github/workflows/semantic-operator-closure-main.yml').read_text()
+          start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
+          end=source.index("\n          PY\n",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
+          exec(compile(code,'semantic-operator-transform.py','exec'),{})
+          # Keep the existing semantic mutation anchor unique while retaining the stronger scale rule.
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old='If requested implementation is too large for the available environment, return BLOCKED with WORK_TOO_LARGE_FOR_ENVIRONMENT and provide an implementation-ready specification rather than pretending implementation occurred.'
+          new='If requested implementation is too large for the available environment, return BLOCKED with WORK_TOO_LARGE_FOR_ENVIRONMENT, produce a complete implementation-ready specification, and do not claim that execution occurred.'
+          if s.count(old)!=1: raise SystemExit(f'environment rule expected 1 inserted match, found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          # Only per-run Stage 17/19 operations require RUN_ID and CONTEXT_ID.
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old="function operationContract(stage,operation){const operations=STAGE_OPERATIONS[stage]||['COMPLETE'];if(!operations.includes(operation))return null;const override=OPERATION_CONTRACT_OVERRIDES[stage]?.[operation]||{};return Object.freeze({operation,readCollections:Object.freeze(override.readCollections||READ_COLLECTIONS[stage]||[]),agentWritableCollections:Object.freeze(override.agentWritableCollections||STAGE_COLLECTIONS[stage]||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage]||[]),scopeRequirements:Object.freeze(override.scopeRequirements||SCOPE_REQUIREMENTS[stage]||[])});}"
+          new="function operationContract(stage,operation){const operations=STAGE_OPERATIONS[stage]||['COMPLETE'];if(!operations.includes(operation))return null;const override=OPERATION_CONTRACT_OVERRIDES[stage]?.[operation]||{};let scopeRequirements=override.scopeRequirements||SCOPE_REQUIREMENTS[stage]||[];if((stage===17||stage===19)&&!['EXECUTE_RUN','VERIFY'].includes(operation))scopeRequirements=scopeRequirements.filter(key=>key!=='runId'&&key!=='contextId');return Object.freeze({operation,readCollections:Object.freeze(override.readCollections||READ_COLLECTIONS[stage]||[]),agentWritableCollections:Object.freeze(override.agentWritableCollections||STAGE_COLLECTIONS[stage]||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage]||[]),scopeRequirements:Object.freeze(scopeRequirements)});}"
+          if s.count(old)!=1: raise SystemExit('operationContract exact hook missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Verify all source and lifecycle contracts
+        run: |
+          node --check workflow-schema.js && node --check workflow-engine.js && node --check prompt-engine.js && node --check response-ingestion.js && node --check app-core.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          for(const f of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const s=globalThis.closedLoopWorkflowSchema,pe=fs.readFileSync('prompt-engine.js','utf8'),ui=fs.readFileSync('app-core.js','utf8'),ing=fs.readFileSync('response-ingestion.js','utf8'),eng=fs.readFileSync('workflow-engine.js','utf8');
+          const must=(c,m)=>{if(!c)throw new Error(m)};
+          must(!s.operationContract(17,'FREEZE').scopeRequirements.includes('runId'),'Stage 17 FREEZE incorrectly requires run scope');
+          must(s.operationContract(17,'EXECUTE_RUN').scopeRequirements.includes('runId'),'Stage 17 EXECUTE_RUN lost run scope');
+          must(!s.operationContract(17,'COMPARE').scopeRequirements.includes('runId'),'Stage 17 COMPARE incorrectly requires run scope');
+          must(!s.operationContract(19,'CONFIRM_FREEZE').scopeRequirements.includes('runId'),'Stage 19 CONFIRM_FREEZE incorrectly requires run scope');
+          must(!s.operationContract(19,'CONFIRM').scopeRequirements.includes('runId'),'Stage 19 CONFIRM incorrectly requires run scope');
+          must(pe.includes('REQ_ID × RUN_ID × TEST_ID triple'),'Exact verification triple semantics missing');
+          must(pe.includes('OPERATOR REQUESTED CORRECTIONS / REFINEMENTS'),'Correction feedback missing');
+          must(pe.includes('WORK_TOO_LARGE_FOR_ENVIRONMENT')&&ing.includes('MISSING_APPLICATION_CONTEXT'),'Recovery taxonomy incomplete');
+          must(ui.includes('operation-picker')&&ui.includes('run-prompt-picker'),'Operation/run controls missing');
+          must(ui.includes('accepted-refinement-reason'),'Accepted refinement missing');
+          must(ui.includes('begin-unchanged-confirmation')&&eng.includes('beginUnchangedConfirmationIteration'),'Stage 19 operator path missing');
+          must(!ui.includes('Promise.all(af.map(hashFile))')&&!ui.includes('Promise.all(rf.map(hashFile))'),'Release hashing is still concurrent/stale-clone prone');
+          console.log(JSON.stringify({operationScopeExact:true,semanticRecovery:true,operatorRefinement:true,stage19OperatorPath:true,releaseHashingAtomic:true},null,2));
+          NODE
+      - name: Commit verified source and remove one-time workflows
+        run: |
+          rm .github/workflows/semantic-operator-closure-main.yml .github/workflows/semantic-operator-closure-main-v2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Fix semantic recovery and normal operator paths"
+          git push origin HEAD:practical-100/semantic-operator-closure-main
