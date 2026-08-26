@@ -237,3 +237,35 @@ console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,idempotentAc
   const captured=ingestion.captureRaw(p,{stage:17,text:'{}',promptRecord:prompt,contextId:'MISLEADING-CALLER-CONTEXT'});
   if(captured.rawRecord.runId!=='RUN-SCOPE-001'||captured.rawRecord.contextId!=='CONTEXT-SCOPE-001'||captured.rawRecord.iteration!=='ITERATION-SCOPE-001')throw new Error('Raw-response audit identity is not bound to the controlling prompt scope.');
 }
+
+
+// Accepted BLOCKED canonical blockers must carry a hash of the complete stored record.
+{
+  let p=project('JOB-BLOCKER-RECORD-HASH'),stage=2,pr=savePrompt(p,stage);
+  const blocked={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'blocked-1',kind:'MISSING_APPLICATION_CONTEXT',description:'Required application context is unavailable.',whyBlocking:'The current stage cannot proceed reliably.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(blocked),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Blocked-response regression fixture is invalid: '+JSON.stringify(prepared.validation.issues));
+  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
+  const blocker=p.projectData.blockers.at(-1),expected=globalThis.closedLoopHash.recordSha256(blocker);
+  if(!blocker||blocker.recordSha256!==expected||blocker.sha256!==expected)throw new Error('Accepted BLOCKED canonical blocker does not carry a recomputable complete-record hash.');
+}
+
+
+// A later accepted replacement resolves only earlier agent BLOCKED records in the exact stage/operation/scope lane.
+{
+  let p=project('JOB-BLOCKER-RECOVERY'),stage=2,pr=savePrompt(p,stage);
+  const blocked={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'blocked-recovery-1',kind:'MISSING_APPLICATION_CONTEXT',description:'Required application context is unavailable.',whyBlocking:'The current stage cannot proceed reliably.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(blocked),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Blocked recovery fixture is invalid: '+JSON.stringify(prepared.validation.issues));
+  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
+  const agentBlocker=p.projectData.blockers.at(-1);if(!agentBlocker||engine.openBlockers(p,stage).length!==1)throw new Error('Accepted BLOCKED response did not create exactly one open agent blocker.');
+  const humanBlocker=engine.createHumanBlocker(p,{stage,reason:'Independent human blocker must remain open.',operatorLabel:'VERIFY'});
+  const replacementPrompt=savePrompt(p,stage),replacement=validEnvelope(p,stage,replacementPrompt);
+  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(replacement),promptRecord:replacementPrompt});
+  if(!prepared.validation.valid)throw new Error('Replacement recovery fixture is invalid: '+JSON.stringify(prepared.validation.issues));
+  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
+  const resolved=p.projectData.blockers.find(x=>engine.recordId(x,'blockers')===engine.recordId(agentBlocker,'blockers')),stillOpen=p.projectData.blockers.find(x=>engine.recordId(x,'blockers')===engine.recordId(humanBlocker,'blockers'));
+  if(engine.recordValue(resolved,'STATUS')!=='RESOLVED'||engine.recordValue(resolved,'RESOLUTION_EVIDENCE')==='NONE')throw new Error('Accepted replacement did not resolve the earlier exact-lane agent blocker.');
+  if(engine.recordValue(stillOpen,'STATUS')!=='OPEN')throw new Error('Accepted replacement incorrectly resolved an unrelated human blocker.');
+  if(resolved.recordSha256!==globalThis.closedLoopHash.recordSha256(resolved)||resolved.sha256!==resolved.recordSha256)throw new Error('Resolved blocker hash was not refreshed from complete canonical state.');
+}
