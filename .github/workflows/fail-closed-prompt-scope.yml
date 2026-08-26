@@ -12,7 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: python3 repair-prompt-scope.py
+      - run: |
+          python3 repair-prompt-scope.py
+          python3 repair-prompt-scope-tests.py
       - run: |
           node --check prompt-engine.js
           node --check response-ingestion.js
