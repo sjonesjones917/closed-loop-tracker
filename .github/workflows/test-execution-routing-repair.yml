@@ -20,11 +20,12 @@ jobs:
           node .repair-test-execution-anchor.mjs
           node .repair-test-execution-template.mjs
           node .repair-test-execution-types.mjs
+          node .repair-routing-gate-fixture.mjs
           node .repair-test-execution-routing.mjs
           node .repair-ingestion-artifact-default.mjs
           node .repair-ingestion-fixture-values.mjs
           node .repair-runtime-token.mjs
-          rm -f .repair-test-execution-anchor.mjs .repair-test-execution-template.mjs .repair-test-execution-types.mjs .repair-test-execution-routing.mjs .repair-ingestion-fixture-values.mjs .repair-ingestion-artifact-default.mjs .repair-runtime-token.mjs
+          rm -f .repair-test-execution-anchor.mjs .repair-test-execution-template.mjs .repair-test-execution-types.mjs .repair-routing-gate-fixture.mjs .repair-test-execution-routing.mjs .repair-ingestion-fixture-values.mjs .repair-ingestion-artifact-default.mjs .repair-runtime-token.mjs
       - name: Syntax and deterministic model
         run: |
           node --check workbook.js
