@@ -15,45 +15,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply deterministic semantic corrections
+      - name: Apply deterministic corrections
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import json,re
 
           def replace_once(path, old, new):
-              p=Path(path); text=p.read_text()
-              count=text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{path}: expected one exact occurrence, found {count}: {old[:120]!r}')
+              p=Path(path); text=p.read_text(); count=text.count(old)
+              if count != 1: raise SystemExit(f'{path}: expected one occurrence, found {count}: {old[:120]!r}')
               p.write_text(text.replace(old,new,1))
 
           def rewrite_const_json(path, name, mutate):
-              p=Path(path); text=p.read_text()
-              pattern=rf'const {re.escape(name)}=Object\.freeze\((\{{.*?\}})\);'
-              match=re.search(pattern,text,re.S)
-              if not match:
-                  raise SystemExit(f'{path}: generated JSON constant {name} not found')
-              data=json.loads(match.group(1))
-              mutate(data)
-              rendered=json.dumps(data,indent=2)
+              p=Path(path); text=p.read_text(); pattern=rf'const {re.escape(name)}=Object\.freeze\((\{{.*?\}})\);'; match=re.search(pattern,text,re.S)
+              if not match: raise SystemExit(f'{path}: generated JSON constant {name} not found')
+              data=json.loads(match.group(1)); mutate(data); rendered=json.dumps(data,indent=2)
               p.write_text(text[:match.start(1)]+rendered+text[match.end(1):])
 
-          def ownership(o):
-              o['regressions']['agent'].remove('CORRECTION')
+          def ownership(o): o['regressions']['agent'].remove('CORRECTION')
           rewrite_const_json('workflow-schema.js','RECORD_OWNERSHIP',ownership)
           replace_once('workflow-schema.js',"    'PRE_CORRECTION_EVIDENCE','CORRECTION','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE','RETIREMENT_AUTHORITY'","    'PRE_CORRECTION_EVIDENCE','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE','RETIREMENT_AUTHORITY'")
           replace_once('workflow-schema.js',"required:['FAILURE_FIXTURE','REPRODUCTION_PROCEDURE','DETECTION_METHOD','PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','CORRECTION','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE']","required:['FAILURE_FIXTURE','REPRODUCTION_PROCEDURE','DETECTION_METHOD','PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE']")
           replace_once('prompt-engine.js','Define the expected post-correction result. The application assigns REG_ID and lifecycle state.','The linked permanent test expected result defines post-correction success. The application assigns REG_ID and lifecycle state.')
 
           def record_types(t):
-              for key,vt in {
-                  'CHAIN.TEST_ID':'REFERENCE_ARRAY',
-                  'CHAIN.TEST_RESULT_ID':'STRING_ARRAY',
-                  'CHAIN.EVIDENCE_ID':'STRING_ARRAY',
-                  'CHAIN.ARTIFACT_HASH_IDENTITY':'REFERENCE_ARRAY'
-              }.items():
-                  t.setdefault(key,{})['valueType']=vt
+              for key,vt in {'CHAIN.TEST_ID':'REFERENCE_ARRAY','CHAIN.TEST_RESULT_ID':'STRING_ARRAY','CHAIN.EVIDENCE_ID':'STRING_ARRAY','CHAIN.ARTIFACT_HASH_IDENTITY':'REFERENCE_ARRAY'}.items(): t.setdefault(key,{})['valueType']=vt
           rewrite_const_json('workflow-schema.js','EXPLICIT_RECORD_FIELD_TYPES',record_types)
 
           old=re.search(r"const OPERATION_CONTRACT_OVERRIDES=Object\.freeze\(\{.*?\}\);\nfunction operationContract",Path('workflow-schema.js').read_text(),re.S)
@@ -86,6 +72,9 @@ jobs:
           replace_once('prompt-engine.js','const stageData=Object.fromEntries(contract.allowedStageData.map(name=>[name,responseFieldContract(schema.STAGE_FIELDS[stage][name])]));','const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const stageData=Object.fromEntries(agentStageFields.map(name=>[name,responseFieldContract(schema.STAGE_FIELDS[stage][name])]));')
           replace_once('prompt-engine.js','agentStageFields:[...contract.allowedStageData],agentWritableCollections:[...writable]','agentStageFields:[...agentStageFields],agentWritableCollections:[...writable]')
           replace_once('prompt-engine.js',"const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';","const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const fields=agentStageFields.length?agentStageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';")
+
+          replace_once('verify-ingestion.mjs',"  const contract=schema.STAGE_CONTRACTS[stage];\n  const stageData={};\n  if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);","  const contract=schema.STAGE_CONTRACTS[stage];\n  const operationContract=schema.operationContract(stage,promptRecord.operation);\n  const agentStageFields=operationContract?.agentStageFields||contract.allowedStageData;\n  const writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;\n  const stageData={};\n  if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);")
+          replace_once('verify-ingestion.mjs',"    const collection=contract.allowedCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||contract.allowedCollections.find(name=>schema.recordAgentFields(name).length);","    const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);")
 
           replace_once('app-core.js','<div class="field"><label>Select exact files</label><input id="stage-files" type="file" multiple${locked?\' disabled\':\'\'}></div>','<div class="field"><label>${n===21&&!engine.currentScope(current).productId?\'Reserve product execution before adding finished-product files\':\'Select exact files\'}</label><input id="stage-files" type="file" multiple${locked||(n===21&&!engine.currentScope(current).productId)?\' disabled\':\'\'}></div>')
           replace_once('app-core.js',"if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);await navigator.clipboard?.writeText(record.prompt);announce('instruction saved and copied');};","if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);try{if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable.');await navigator.clipboard.writeText(record.prompt);announce('instruction saved and copied');}catch(error){announce('instruction saved; clipboard copy unavailable');alert(`Instruction saved, but automatic clipboard copy failed. Copy it from the generated instruction panel. ${error.message||error}`);}};")
@@ -122,6 +111,7 @@ jobs:
           node --check prompt-engine.js
           node --check response-ingestion.js
           node --check app-core.js
+          node --check verify-ingestion.mjs
           node --check verify-complete.mjs
           node verify-hash.mjs
           node verify.mjs
@@ -133,7 +123,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm .github/workflows/semantic-contract-transform.yml
-          git add workbook.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-complete.mjs TEST_PROJECT.json index.html
+          git rm .github/workflows/semantic-contract-transform.yml .semantic-transform-trigger
+          git add workbook.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-ingestion.mjs verify-complete.mjs TEST_PROJECT.json index.html
           git commit -m "Harden operation and evidence contracts"
           git push origin HEAD:reliability/semantic-contract-hardening-20260826
