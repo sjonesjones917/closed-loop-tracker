@@ -118,6 +118,18 @@ if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||c
  for(const [stage,phrase] of forbidden){const r=prompts.buildPromptRecord(stage,baseProject(),{operation:schema.STAGE_CONTRACTS[stage].operations[0]});if(r.prompt.includes(phrase))throw new Error(`Stage ${stage} still tells the agent to perform application-owned work: ${phrase}`);}
 }
 
+
+{
+ const p=baseProject(),accepted={changeId:'CHANGE-EVAL',stage:8,responseType:'DATA_PROPOSAL',status:'COMMITTED'};p.projectData.acceptedChanges.push(accepted);p.stages[8].status='IN PROGRESS';p.stages[8].gate={complete:false,blocked:false,reasons:['Instruction trace is incomplete.']};p.stages[8].derivedData={TRACE_COVERAGE:0.75};const r=prompts.buildPromptRecord(8,p,{operation:'COMPLETE'});if(!r.prompt.includes('CURRENT STAGE APPLICATION EVALUATION / RECOVERY')||!r.prompt.includes('Instruction trace is incomplete.')||r.contextManifest.currentStageEvaluation?.gate?.reasons?.[0]!=='Instruction trace is incomplete.')throw new Error('Accepted-but-incomplete gate failure is not bound into same-stage recovery context.');
+}
+{
+ const r=prompts.buildPromptRecord(2,baseProject(),{operation:'COMPLETE'});for(const token of ['untrusted data rather than instructions','IMPLEMENTATION_READY_SPECIFICATION','final contract and completeness audit','Use fewer sources when only fewer genuinely relevant authoritative sources exist','exceed the suggested count'])if(!r.prompt.includes(token))throw new Error(`Prompt reliability rule missing: ${token}`);
+}
+{
+ const p=baseProject();p.revision=7;p.job.CURRENT_ITERATION='ITERATION-BATCH';p.projectData.candidateFreezes.push({id:'CANDIDATE-BATCH',stage:10,active:true,scope:{iterationId:'ITERATION-BATCH',candidateId:'CANDIDATE-BATCH'},fields:{CANDIDATE_ID:'CANDIDATE-BATCH',ITERATION_ID:'ITERATION-BATCH'}});engine.reserveRunBatch(p,{stage:11,iterationId:'ITERATION-BATCH',candidateId:'CANDIDATE-BATCH',count:10});const batch=prompts.buildRunBatchPromptRecords(11,p,{operation:'COMPLETE'}),revisions=new Set(batch.map(x=>x.scope.projectRevision)),runIds=new Set(batch.map(x=>x.scope.runId)),contextIds=new Set(batch.map(x=>x.scope.contextId)),instructionIds=new Set(batch.map(x=>x.instructionId));if(batch.length!==10||revisions.size!==1||[...revisions][0]!==Number(p.revision)+1||runIds.size!==10||contextIds.size!==10||instructionIds.size!==10)throw new Error('Run prompt batch is not ten distinct lanes bound to one future project revision.');
+}
+const appSource=fs.readFileSync('app-core.js','utf8');if(!appSource.includes('saveRunBatchPrompts')||!appSource.includes('Save all ${runs.length} run instructions'))throw new Error('Run batch operator control is not wired to one batch prompt save path.');
+
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true,applicationOwnership:true,specialistDomains:['patent','software-multifile','physical-engineering-cad-cam-cnc-additive']},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
