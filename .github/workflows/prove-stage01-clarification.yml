@@ -15,7 +15,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: python3 .apply-stage01-clarification-v2.py
+      - run: |
+          python3 .apply-stage01-clarification-v2.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs');s=p.read_text();old="'Paste full response'";new="'Paste response / questions'"
+          if s.count(old)!=1: raise SystemExit(f'old browser label assertion count={s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
       - run: |
           node build-test-project.mjs
           node --check prompt-engine.js
