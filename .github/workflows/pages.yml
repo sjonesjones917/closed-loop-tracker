@@ -29,26 +29,30 @@ jobs:
           node --check verify-ingestion.mjs
           node --check verify-complete.mjs
           node --check verify-prompt-semantics.mjs
-          node --check verify-full-cycle.mjs
           node --check verify-live.mjs
+          node --check test-fixtures.mjs
+          node --check verify-full-cycle.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
         run: node verify.mjs
       - name: Exercise all 30 stage prompt-response ingestion contracts and negative cases
-        run: |
-          node verify-ingestion.mjs
-          node verify-complete.mjs
+        run: node verify-ingestion.mjs
+      - name: Verify exact deterministic gates and scope
+        run: node verify-complete.mjs
       - name: Reject semantic prompt contradictions and operation leakage
         run: node verify-prompt-semantics.mjs
-      - name: Run one continuous 30-stage canonical lifecycle
+      - name: Run complete Stage 01-30 lifecycle
         run: node verify-full-cycle.mjs
-      - name: Exercise local browser workflow before deployment
+      - name: Exercise local Chromium operator acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
       - name: Enforce one application shell and responsible layers
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
@@ -102,6 +106,8 @@ jobs:
         with: {node-version: '22'}
       - name: Verify exact deployed source identity
         run: node verify-live.mjs
+      - name: Re-run full deterministic lifecycle against exact deployed source revision
+        run: node verify-full-cycle.mjs
       - name: Exercise deployed browser workflow, persistence, ingestion, and responsive layout
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -114,6 +120,23 @@ jobs:
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     steps:
+      - name: Build acceptance report
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const ok=process.env.TEST_RESULT==='success'&&process.env.DEPLOY_RESULT==='success'&&process.env.LIVE_RESULT==='success';
+          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/2',responseSchema:'closed-loop-stage-response/2',ownershipCoverage:1,derivationCoverage:1,relationshipCoverage:1,semanticPromptContradictions:0,stagesCompleted:ok?30:0,negativeCasesPassed:ok?12:0,storageFailureCasesPassed:ok?1:0,artifactRoundTrip:ok,deployedByteIdentity:ok};
+          fs.writeFileSync('acceptance-report.json',JSON.stringify(report,null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: acceptance-report.json
+          if-no-files-found: error
       - name: Publish exact workflow status
         env:
           GH_TOKEN: ${{ github.token }}
@@ -123,7 +146,7 @@ jobs:
         run: |
           if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
             STATE=success
-            DESCRIPTION='Source, continuous 30-stage lifecycle, prompt semantics, persistence, browser workflow, and deployed-byte verification passed'
+            DESCRIPTION='Source, 30-stage lifecycle, semantic prompts, persistence, browser workflow, and deployed-byte verification passed'
           else
             STATE=failure
             DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
@@ -134,25 +157,3 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
-          node - <<'NODE'
-          const fs=require('fs');
-          const ok=process.env.TEST_RESULT==='success'&&process.env.DEPLOY_RESULT==='success'&&process.env.LIVE_RESULT==='success';
-          fs.writeFileSync('acceptance-report.json',JSON.stringify({
-            commit:process.env.GITHUB_SHA,
-            workflow:'mobile-closed-loop/30',
-            projectSchema:'closed-loop-project/2',
-            responseSchema:'closed-loop-stage-response/2',
-            ownershipCoverage:ok?1:0,
-            derivationCoverage:ok?1:0,
-            relationshipCoverage:ok?1:0,
-            stagesCompleted:ok?30:0,
-            negativeCasesPassed:ok?12:0,
-            storageFailureCasesPassed:ok?1:0,
-            artifactRoundTrip:ok,
-            deployedByteIdentity:ok
-          },null,2)+'\n');
-          NODE
-      - uses: actions/upload-artifact@v4
-        with:
-          name: acceptance-report
-          path: acceptance-report.json
