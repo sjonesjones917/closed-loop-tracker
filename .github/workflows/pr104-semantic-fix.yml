@@ -1,0 +1,34 @@
+name: Apply PR104 semantic phrase repair
+on:
+  push:
+    branches: [semantic-reliability-final]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: semantic-reliability-final
+      - name: Repair exact fail-closed capability semantics
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old='- If the requested implementation is too large or requires external-repository/runtime access that is not actually available, do not simulate completion. Produce the most complete reliable specification or implementation-ready plan permitted by the current stage and requested deliverable, or block if the controlling deliverable cannot legitimately be satisfied that way.'
+          new='- If the requested implementation is too large or requires external-repository/runtime access that is not actually available, do not simulate completion. Produce an implementation-ready specification rather than pretending implementation occurred, using the most complete reliable specification or implementation-ready plan permitted by the current stage and requested deliverable; return BLOCKED if the controlling deliverable cannot legitimately be satisfied that way.'
+          if s.count(old)!=1:
+              raise SystemExit(f'expected exactly one shared capability rule, found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node --check prompt-engine.js
+          node verify-prompt-semantics.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js
+          git commit -m "Make capability failure semantics explicit"
+          git push origin HEAD:semantic-reliability-final
