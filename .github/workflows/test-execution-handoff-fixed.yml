@@ -1,0 +1,66 @@
+name: Corrected guarded test-execution handoff proof
+on:
+  push:
+    branches: [reliability/test-execution-handoff-20260826]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: corrected-test-execution-handoff-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact guarded boundary repair
+        run: node .tmp-run-test-execution-handoff.mjs
+      - name: Remove temporary proof machinery before acceptance
+        run: rm -f .tmp-test-execution-handoff.mjs .tmp-run-test-execution-handoff.mjs .github/workflows/test-execution-handoff.yml .github/workflows/test-execution-handoff-fixed.yml
+      - name: Verify clean architecture boundary
+        run: |
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find . -maxdepth 1 -type f -name '.tmp-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+      - name: Run complete deterministic acceptance stack
+        run: |
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Run local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+      - name: Commit only verified permanent source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          test -n "$(git status --short)"
+          git commit -m "Clarify test execution and returned-artifact handoff"
+          git push origin HEAD:reliability/test-execution-handoff-20260826
