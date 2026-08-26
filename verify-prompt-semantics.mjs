@@ -368,3 +368,11 @@ import fsStageBoundary from 'node:fs';
  for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);
  if(r.prompt.includes('Treat any human-supplied files, links, references, records, or other materials as opaque authorized inputs'))throw new Error('Stage 01 still treats supplied human material as opaque instead of usable intake.');
 }
+
+// stage01-objective-required-regression-v1
+{
+ const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='UNKNOWN';let error=null;try{prompts.buildPromptRecord(1,p);}catch(e){error=e;}
+ if(error?.code!=='MISSING_STAGE01_OBJECTIVE')throw new Error('Stage 01 still permits a controlling prompt with an UNKNOWN verbatim objective.');
+ p.job.EXACT_USER_OBJECTIVE_VERBATIM='I need a patent application for my project';
+ const r=prompts.buildPromptRecord(1,p);if(!r.prompt.includes('I need a patent application for my project'))throw new Error('Saved verbatim objective is not preserved in Stage 01 prompt.');
+}
