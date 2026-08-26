@@ -78,3 +78,4 @@ jobs:
           git diff --cached --check
           git commit -m 'Fail closed on partial current-scope membership [strict-scope-complete]'
           git push origin HEAD:reliability/strict-scope-current-main-20260826
+# rerun 2026-08-26
