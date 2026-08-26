@@ -28,25 +28,16 @@ engine=replaceOnce(
 fs.writeFileSync('workflow-engine.js',engine);
 
 let schema=fs.readFileSync('workflow-schema.js','utf8');
-const chainStart=schema.indexOf('"CHAIN":{');
-const chainEnd=schema.indexOf('},"CHAIN-INVESTIGATION"',chainStart);
-if(chainStart<0||chainEnd<0)throw new Error('Could not isolate explicit CHAIN field metadata.');
-let chain=schema.slice(chainStart,chainEnd+1);
-const types={ARTIFACT_HASH_IDENTITY:'REFERENCE_ARRAY',EVIDENCE_ID:'STRING_ARRAY',MISSING_LINKS:'STRING_ARRAY',TEST_ID:'REFERENCE_ARRAY',TEST_RESULT_ID:'STRING_ARRAY'};
-for(const [field,valueType] of Object.entries(types)){
-  const re=new RegExp(`("${field}":\\{"closedProperties":null,"enumValues":\\[\\],"normalizerKey":null,"nullable":false,"valueType":")([^"]+)("\\})`);
-  const matches=[...chain.matchAll(new RegExp(re.source,'g'))];
-  if(matches.length!==1)throw new Error(`CHAIN.${field}: expected one explicit type declaration; found ${matches.length}.`);
-  chain=chain.replace(re,`$1${valueType}$3`);
-}
-schema=schema.slice(0,chainStart)+chain+schema.slice(chainEnd+1);
+const override="const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({CHAIN:Object.freeze({ARTIFACT_HASH_IDENTITY:Object.freeze({valueType:'REFERENCE_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),EVIDENCE_ID:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),MISSING_LINKS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),TEST_ID:Object.freeze({valueType:'REFERENCE_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),TEST_RESULT_ID:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})})});\n";
+schema=replaceOnce(schema,'function ownerFromPartition(partition,name,label){',override+'function ownerFromPartition(partition,name,label){','insert record field type overrides');
+schema=replaceOnce(schema,"const producer=ownerFromPartition(ownership,name,title),type=EXPLICIT_RECORD_FIELD_TYPES[prefix]?.[name];","const producer=ownerFromPartition(ownership,name,title),type=RECORD_FIELD_TYPE_OVERRIDES[prefix]?.[name]||EXPLICIT_RECORD_FIELD_TYPES[prefix]?.[name];",'apply record field type overrides');
 fs.writeFileSync('workflow-schema.js',schema);
 
 let full=fs.readFileSync('verify-full-cycle.mjs','utf8');
 full=replaceOnce(
   full,
   "const assert=(v,m)=>{if(!v)throw new Error(m)};let p=core.createBlankState('JOB-FULL-CYCLE');",
-  "const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='STRING_ARRAY','Evidence-chain evidence identities must be plural.');let p=core.createBlankState('JOB-FULL-CYCLE');",
+  "const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='STRING_ARRAY','Evidence-chain evidence identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must be plural.');let p=core.createBlankState('JOB-FULL-CYCLE');",
   'evidence-chain cardinality regression'
 );
 full=replaceOnce(
