@@ -1,0 +1,49 @@
+name: One-time rebase verified operation isolation current2
+on:
+  push:
+    branches: [operation-stage-data-isolation-current2-20260826]
+permissions:
+  contents: write
+jobs:
+  rebase-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: operation-stage-data-isolation-current2-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply exact previously green source delta with three-way merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin operation-stage-data-isolation-20260826
+          git diff 9fdeb7f4378d8b1f307e3577b9295bafc5414098 985b46dfb3d697fbc1c1a677b481060dbc9555e3 -- workflow-schema.js prompt-engine.js response-ingestion.js workflow-engine.js verify-ingestion.mjs verify-prompt-semantics.mjs verify-full-cycle.mjs > /tmp/operation-isolation.patch
+          git apply --3way --index /tmp/operation-isolation.patch
+      - name: Verify newest-main combination
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check workflow-engine.js
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit verified delta and remove workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-time-rebase-operation-isolation-current2.yml
+          git add workflow-schema.js prompt-engine.js response-ingestion.js workflow-engine.js verify-ingestion.mjs verify-prompt-semantics.mjs verify-full-cycle.mjs
+          git commit -m 'Enforce operation-specific stageData authority on newest main'
+          git push origin HEAD:operation-stage-data-isolation-current2-20260826
