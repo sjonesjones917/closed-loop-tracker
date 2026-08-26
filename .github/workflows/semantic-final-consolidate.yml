@@ -37,6 +37,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js verify-prompt-semantics.mjs
+          git add app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js verify.mjs verify-prompt-semantics.mjs
           git commit -m "Consolidate final semantic reliability fixes"
           git push origin HEAD:practical-100/semantic-final-consolidated
