@@ -30,9 +30,7 @@ EXACT USER OBJECTIVE VERBATIM
 MOBILE CLOSED-LOOP AGENT
 RELIABILITY WORKBOOK
 
-Phone-first fill-in checklist, evidence record, and copy-ready agent blocks for all 30 stages
-
-MASTER TEMPLATE - DUPLICATE THIS FILE FOR EACH NEW JOB”
+Phone-first fill-in checklist, evidence record, and copy-ready agent blocks for all 30 stages”
 
 The complete quoted workbook supplied by the user is the authoritative project job input and defines the requested system, workflow, controls, records, agent blocks, stage gates, appendices, terminology, and operating rules.
 
