@@ -1,0 +1,89 @@
+name: Stage 21 product-lineage proof
+on:
+  push:
+    branches: [reliability/stage21-product-lineage-current-main-20260826]
+permissions:
+  contents: write
+jobs:
+  proof:
+    if: ${{ !contains(github.event.head_commit.message, '[stage21-proof-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/stage21-product-lineage-current-main-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply responsible-layer Stage 21 invariant and permanent regression
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="""function registerArtifactBytes(project,{stage=project.activeStage,artifactId,filename,mediaType,byteSize,sha256,lineage={},role='STAGE_ARTIFACT'}={}){
+            ensureShape(project);if(!artifactId||!filename||!Number.isInteger(Number(byteSize))||Number(byteSize)<0||!/^[a-f0-9]{64}$/i.test(String(sha256||'')))throw new Error('Verified artifact identity is incomplete.');
+            if(records(project,'artifacts',{active:false}).some(r=>recordId(r,'artifacts')===String(artifactId)))return records(project,'artifacts',{active:false}).find(r=>recordId(r,'artifacts')===String(artifactId));
+            const fields={FILENAME:String(filename),TYPE:String(mediaType||'application/octet-stream'),VERSION:'APPLICATION-CONTROLLED',BYTE_SIZE:Number(byteSize),SHA256:String(sha256).toLowerCase(),ROLE:role,STORAGE_REFERENCE:`indexeddb:${artifactId}`,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:JSON.stringify(lineage)};
+            const definition=schema.RECORD_SCHEMAS.artifacts,id=String(artifactId),deviceTimestamp=now(),full={...fields,[definition.idField]:id};const record={id,stage,createdAt:deviceTimestamp,updatedAt:deviceTimestamp,active:true,scope:currentScope(project),fields:full,...full,source:'APPLICATION_BYTES_VERIFIED'};refreshRecordHashes(record,'artifacts');project.projectData.artifacts.push(record);const productId=String(lineage?.productId||'');if(productId){const product=records(project,'products').find(r=>recordId(r,'products')===productId&&isActiveRecord(r));if(!product)throw new Error('Artifact lineage references a missing or inactive product.');const inventory=[...new Set([...safe(recordValue(product,'GENERATED_ARTIFACT_INVENTORY')),id])];product.fields={...(product.fields||{}),GENERATED_ARTIFACT_INVENTORY:inventory};product.GENERATED_ARTIFACT_INVENTORY=inventory;product.updatedAt=now();refreshRecordHashes(product,'products');}addHistory(project,'ARTIFACT_BYTES_REGISTERED',{stage,artifactId:id,byteSize:Number(byteSize),sha256:String(sha256).toLowerCase(),productId:productId||null});recalculate(project);return record;
+          }"""
+          new="""function registerArtifactBytes(project,{stage=project.activeStage,artifactId,filename,mediaType,byteSize,sha256,lineage={},role='STAGE_ARTIFACT'}={}){
+            ensureShape(project);if(!artifactId||!filename||!Number.isInteger(Number(byteSize))||Number(byteSize)<0||!/^[a-f0-9]{64}$/i.test(String(sha256||'')))throw new Error('Verified artifact identity is incomplete.');
+            if(records(project,'artifacts',{active:false}).some(r=>recordId(r,'artifacts')===String(artifactId)))return records(project,'artifacts',{active:false}).find(r=>recordId(r,'artifacts')===String(artifactId));
+            const stageNumber=Number(stage),suppliedProductId=String(lineage?.productId||''),currentProductId=String(project.job.CURRENT_PRODUCT_ID||''),placeholder=value=>['','NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED'].includes(String(value||'').trim().toUpperCase());let productId=suppliedProductId,product=null;
+            if(stageNumber===21){if(placeholder(currentProductId))throw new Error('Stage 21 artifact bytes require the current application-reserved product identity.');product=records(project,'products').find(r=>recordId(r,'products')===currentProductId&&Number(r.stage)===21&&isActiveRecord(r));if(!product)throw new Error('The current Stage 21 product does not exist or is inactive.');if(suppliedProductId&&suppliedProductId!==currentProductId)throw new Error('Stage 21 artifact lineage does not match the current application-reserved product.');productId=currentProductId;}else if(productId){product=records(project,'products').find(r=>recordId(r,'products')===productId&&isActiveRecord(r));if(!product)throw new Error('Artifact lineage references a missing or inactive product.');}
+            const resolvedLineage={...lineage,...(productId?{productId}:{})},fields={FILENAME:String(filename),TYPE:String(mediaType||'application/octet-stream'),VERSION:'APPLICATION-CONTROLLED',BYTE_SIZE:Number(byteSize),SHA256:String(sha256).toLowerCase(),ROLE:role,STORAGE_REFERENCE:`indexeddb:${artifactId}`,AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:JSON.stringify(resolvedLineage)};
+            const definition=schema.RECORD_SCHEMAS.artifacts,id=String(artifactId),deviceTimestamp=now(),full={...fields,[definition.idField]:id};const record={id,stage:stageNumber,createdAt:deviceTimestamp,updatedAt:deviceTimestamp,active:true,scope:{...currentScope(project),...(productId?{productId}:{})},fields:full,...full,source:'APPLICATION_BYTES_VERIFIED'};refreshRecordHashes(record,'artifacts');project.projectData.artifacts.push(record);if(product){const inventory=[...new Set([...safe(recordValue(product,'GENERATED_ARTIFACT_INVENTORY')),id])];product.fields={...(product.fields||{}),GENERATED_ARTIFACT_INVENTORY:inventory};product.GENERATED_ARTIFACT_INVENTORY=inventory;product.updatedAt=now();refreshRecordHashes(product,'products');}addHistory(project,'ARTIFACT_BYTES_REGISTERED',{stage:stageNumber,artifactId:id,byteSize:Number(byteSize),sha256:String(sha256).toLowerCase(),productId:productId||null});recalculate(project);return record;
+          }"""
+          if s.count(old)!=1: raise SystemExit(f'workflow-engine Stage 21 anchor count {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          p=Path('verify-full-cycle.mjs'); s=p.read_text()
+          old="engine.registerArtifactBytes(p,{stage:21,artifactId:'ARTIFACT-PRODUCT',filename:'product.bin',mediaType:'application/octet-stream',byteSize:productBytes.byteLength,sha256:productSha,lineage:{productId}});const completedProduct=engine.recordsForCurrentScope(p,'products').at(-1);"
+          new="""{const conflicting=engine.clone(p),beforeArtifacts=engine.records(conflicting,'artifacts').length;let rejected=false;try{engine.registerArtifactBytes(conflicting,{stage:21,artifactId:'ARTIFACT-WRONG-PRODUCT',filename:'wrong-product.bin',mediaType:'application/octet-stream',byteSize:1,sha256:'b'.repeat(64),lineage:{productId:'WRONG-PRODUCT'}});}catch(error){rejected=/does not match the current application-reserved product/i.test(String(error.message||error));}assert(rejected,'Stage 21 accepted caller-selected product scope.');assert(engine.records(conflicting,'artifacts').length===beforeArtifacts,'Rejected Stage 21 product lineage partially mutated artifact state.');}
+          engine.registerArtifactBytes(p,{stage:21,artifactId:'ARTIFACT-PRODUCT',filename:'product.bin',mediaType:'application/octet-stream',byteSize:productBytes.byteLength,sha256:productSha});const productArtifact=engine.records(p,'artifacts').find(r=>engine.recordId(r,'artifacts')==='ARTIFACT-PRODUCT');assert(productArtifact?.scope?.productId===productId,'Stage 21 artifact did not derive current PRODUCT_ID into canonical scope.');assert(JSON.parse(engine.recordValue(productArtifact,'NOTES')||'{}').productId===productId,'Stage 21 artifact lineage did not derive current PRODUCT_ID.');const completedProduct=engine.recordsForCurrentScope(p,'products').at(-1);"""
+          if s.count(old)!=1: raise SystemExit(f'full-cycle Stage 21 anchor count {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Remove temporary proof mechanism from test tree
+        run: rm -f .github/workflows/stage21-proof.yml
+      - name: Refresh exact runtime cache identity
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          for(const file of files){const marker=`<script defer src="${file}?v=`,first=html.indexOf(marker),second=first<0?-1:html.indexOf(marker,first+1);if(first<0||second>=0)throw new Error(`${file} runtime marker count invalid.`);const start=first+marker.length,end=html.indexOf('"',start);html=html.slice(0,start)+identity+html.slice(end);}
+          fs.writeFileSync('index.html',html);console.log(identity);
+          NODE
+      - name: Syntax and deterministic acceptance
+        run: |
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-stage21-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only passing production and permanent test source
+        run: |
+          test ! -e .github/workflows/stage21-proof.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Enforce Stage 21 product artifact authority [stage21-proof-complete]"
+          git push origin HEAD:reliability/stage21-product-lineage-current-main-20260826
