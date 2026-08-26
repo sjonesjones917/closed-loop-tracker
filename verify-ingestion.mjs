@@ -314,4 +314,24 @@ function proposalEnvelope(p,stage,pr,records){return {schema:schema.RESPONSE_SCH
 {
   let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push({id:runId,stage,active:true,status:'RESERVED',scope:{},fields:{RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'},RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'});const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:'RUN-SCOPE-A',contextId:'CTX-SCOPE-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{runs:[{targetId:runId,fields:completeFields('runs'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='TARGET_SCOPE_MISMATCH'))throw new Error('Reserved target outside the controlling run/context scope was accepted.');negativeCount++;
 }
+
+// Accepted control responses preserve evidence; supplied control flags are typed.
+{
+  const p=project('JOB-NEG-CONTROL-BOOLEAN'),pr=savePrompt(p,1);
+  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-bool',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:'false'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
+  if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path==='/humanInputRequests/0/blocking'))throw new Error('String blocking flag was accepted as Boolean.');
+  negativeCount++;
+}
+for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']){
+  let p=project(`JOB-CONTROL-EVIDENCE-${responseType}`),pr=savePrompt(p,1);
+  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType,humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence'}],unresolved:[],warnings:[],attachments:[]};
+  if(responseType==='HUMAN_INPUT_REQUIRED')e.humanInputRequests=[{temporaryKey:'q',question:'Exact value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];
+  else e.unresolved=[{temporaryKey:'u',kind:responseType==='BLOCKED'?'MISSING_HUMAN_INPUT':'TOOL_FAILURE',description:'Cannot proceed.',whyBlocking:'Required condition unavailable.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],blocking:true}];
+  const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error(`${responseType} control evidence fixture rejected: ${JSON.stringify(prepared.validation.issues)}`);
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});
+  const ids=committed.disposition?.evidenceIds||[];
+  if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);
+}
 console.log(JSON.stringify({operationStageDataIsolation:true,reservedTargetPolicy:true,completedReservedTargetBlocked:true,targetScopeIsolation:true,totalNegativeCases:negativeCount},null,2));
