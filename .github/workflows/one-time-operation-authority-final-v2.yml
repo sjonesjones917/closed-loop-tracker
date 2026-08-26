@@ -1,0 +1,53 @@
+name: One-time operation authority final v2
+on:
+  push:
+    branches: [operation-stage-data-isolation-final-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: operation-stage-data-isolation-final-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Execute patch script stored in prior invalid workflow
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('.github/workflows/one-time-operation-authority-final.yml').read_text().splitlines()
+          start=next(i for i,line in enumerate(lines) if "python3 - <<'PY'" in line)+1
+          end=next(i for i in range(start,len(lines)) if lines[i].strip()=='PY')
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in lines[start:end])+'\n'
+          exec(compile(code,'operation-authority-patch','exec'),{})
+          PY
+      - name: Verify exact correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit only the green minimum and remove temporary workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-time-operation-authority-final.yml .github/workflows/one-time-operation-authority-final-v2.yml
+          git add workflow-schema.js workflow-engine.js verify-ingestion.mjs verify-prompt-semantics.mjs verify-full-cycle.mjs
+          git commit -m 'Make operation stageData authority exact'
+          git push origin HEAD:operation-stage-data-isolation-final-20260826
