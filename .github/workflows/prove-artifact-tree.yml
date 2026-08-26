@@ -1,7 +1,5 @@
 name: Prove artifact tree preservation
-on:
-  push:
-    branches: [reliability/preserve-artifact-tree-20260826]
+on: [push]
 permissions:
   contents: write
 jobs:
