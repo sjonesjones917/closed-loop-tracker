@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          old=aa8a2b26f03f7db302ee22f7b6954b635cb73253
+          old=ea845ac01a10a96fba8f000cb37b7d9e00efcb33
           base=10dc739a9bd088b0df70d1bf6fee776ef09c55eb
           git fetch --no-tags origin "$old"
           { git show "$old:.pr6-patch/part00"; git show "$old:.pr6-patch/part01"; } | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
