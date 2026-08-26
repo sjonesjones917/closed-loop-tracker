@@ -372,11 +372,11 @@ const STAGE_OWNERSHIP=Object.freeze({
     "human": [],
     "humanDecision": [],
     "agent": [
-      "REGRESSION_TEST_SUCCESS",
       "RETURN_STAGE_FOR_EACH_FAILURE"
     ],
     "application": [
       "ITERATION_ID",
+      "REGRESSION_TEST_SUCCESS",
       "METRICS_VERSION",
       "TOTAL_MANDATORY_REQUIREMENTS",
       "MANDATORY_REQUIREMENTS_WITH_COMPLETE_SPECIFICATION_AND_APPLICABILITY",
@@ -429,12 +429,12 @@ const STAGE_OWNERSHIP=Object.freeze({
       "BASELINE_OWNER"
     ],
     "agent": [
-      "SUPPORTING_CONFIRMATION_ITERATION",
-      "APPROVED_VERSIONS",
       "BASELINE_PACKAGE_SEPARATED_FROM_WORKING_FILES"
     ],
     "application": [
       "BASELINE_ID",
+      "SUPPORTING_CONFIRMATION_ITERATION",
+      "APPROVED_VERSIONS",
       "BASELINE_APPROVAL_DATE",
       "BASELINE_FILE_RECORDS",
       "UNCHANGED_CONFIRMATION_SUCCEEDED",
@@ -630,11 +630,10 @@ const STAGE_OWNERSHIP=Object.freeze({
       "EXACT_AUTHORIZED_FILENAMES",
       "AUTHORIZED_BY"
     ],
-    "agent": [
-      "RELEASE_GATE_STATE"
-    ],
+    "agent": [],
     "application": [
       "HASH_REVIEW_ID",
+      "RELEASE_GATE_STATE",
       "RELEASE_GATE_ID",
       "HASH_ALGORITHM",
       "HASH_TOOL_AND_VERSION",

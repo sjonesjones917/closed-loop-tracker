@@ -50,8 +50,8 @@ function validEnvelope(p,stage,promptRecord){
   if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);
   const records={};
   if(!Object.keys(stageData).length){
-    const collection=contract.allowedCollections.find(name=>name!=='blockers')||contract.allowedCollections[0];
-    if(!collection)throw new Error(`Stage ${stage} has no ingestible response surface.`);
+    const collection=contract.allowedCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||contract.allowedCollections.find(name=>schema.recordAgentFields(name).length);
+    if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
     const fields={};
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
@@ -76,6 +76,13 @@ for(let stage=1;stage<=30;stage++){
   p.activeStage=stage;
   const promptRecord=savePrompt(p,stage);
   const envelope=validEnvelope(p,stage,promptRecord);
+  if(!envelope){
+    const prohibited={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+    const rejected=ingestion.prepare(p,{stage,text:JSON.stringify(prohibited),promptRecord});
+    if(rejected.validation.valid)throw new Error(`Stage ${stage} application-only contract accepted an empty agent DATA_PROPOSAL.`);
+    allStages.push({stage,applicationControlled:true});
+    continue;
+  }
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
   if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
   if(!prepared.proposal||prepared.proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Stage ${stage} did not create a pending proposal.`);
