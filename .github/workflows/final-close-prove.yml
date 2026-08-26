@@ -1,0 +1,47 @@
+name: Prove final reliability close
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-close-20260826-v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply exact minimal patch
+        run: |
+          base64 -d final-close.patch.gz.b64 | gzip -d > /tmp/final-close.patch
+          git apply --check /tmp/final-close.patch
+          git apply /tmp/final-close.patch
+      - name: Verify deterministic acceptance
+        run: |
+          node --check app-core.js
+          node --check project-store.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify Chromium operator behavior
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only passing final source
+        run: |
+          rm final-close.patch.gz.b64 .github/workflows/final-close-prove.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close remaining reliability boundaries [final-close-complete]"
+          git push origin HEAD:reliability/final-close-20260826-v2
