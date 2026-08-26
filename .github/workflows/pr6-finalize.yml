@@ -1,0 +1,82 @@
+name: Finalize PR6 acceptance source
+on:
+  push:
+    branches: [practical-100/pr6-final]
+permissions:
+  contents: write
+concurrency:
+  group: pr6-finalize
+  cancel-in-progress: false
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require a passing continuous lifecycle diagnostic
+        run: |
+          set -euo pipefail
+          test -f PR6_FULL_CYCLE_DIAGNOSTIC.txt
+          grep -Eq 'exit code: 0|exit code 0' PR6_FULL_CYCLE_DIAGNOSTIC.txt
+      - name: Integrate first-class semantic and full-cycle gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          text=p.read_text()
+          def insert_after(needle, line):
+              global text
+              if line.strip() in text:
+                  return
+              i=text.find(needle)
+              if i < 0:
+                  raise SystemExit(f'missing workflow insertion anchor: {needle}')
+              end=text.find('\n', i)
+              indent=text[i:text.rfind('\n',0,i)+1]
+              prefix=indent[:len(indent)-len(indent.lstrip())]
+              text=text[:end+1]+prefix+line+'\n'+text[end+1:]
+          # The recovered patch may already contain these commands. Add only when absent.
+          if 'node verify-prompt-semantics.mjs' not in text:
+              anchor='node verify.mjs'
+              pos=text.find(anchor)
+              if pos < 0: raise SystemExit('verify.mjs command missing')
+              eol=text.find('\n',pos)
+              prefix=text[text.rfind('\n',0,pos)+1:pos]
+              text=text[:eol+1]+prefix+'node verify-prompt-semantics.mjs\n'+text[eol+1:]
+          if 'node verify-full-cycle.mjs' not in text:
+              anchor='node verify-complete.mjs'
+              pos=text.find(anchor)
+              if pos < 0: raise SystemExit('verify-complete.mjs command missing')
+              eol=text.find('\n',pos)
+              prefix=text[text.rfind('\n',0,pos)+1:pos]
+              text=text[:eol+1]+prefix+'node verify-full-cycle.mjs\n'+text[eol+1:]
+          p.write_text(text)
+          PY
+          rm -f PR6_FULL_CYCLE_DIAGNOSTIC.txt
+          rm -f .github/workflows/pr6-finalize.yml
+      - name: Run final source acceptance suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Commit finalized PR6 source
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 6: complete deterministic acceptance proof"
+          git push origin HEAD:practical-100/pr6-final
