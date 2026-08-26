@@ -16,8 +16,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply patch
-        run: python3 semantic_patch.py
+      - name: Correct patch targeting and apply
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('semantic_patch.py');s=p.read_text()
+          old='s=s.replace("\'PRE_CORRECTION_EVIDENCE\',\'CORRECTION\',\'POST_CORRECTION_RESULT\',\'POST_CORRECTION_EVIDENCE\',\'PERMANENT_TEST_LOCATION\'","\'PRE_CORRECTION_EVIDENCE\',\'CORRECTION\',\'PERMANENT_TEST_LOCATION\'",1)'
+          new='s=s.replace("required:[\'FAILURE_FIXTURE\',\'REPRODUCTION_PROCEDURE\',\'DETECTION_METHOD\',\'PRE_CORRECTION_RESULT\',\'PRE_CORRECTION_EVIDENCE\',\'CORRECTION\',\'POST_CORRECTION_RESULT\',\'POST_CORRECTION_EVIDENCE\',\'PERMANENT_TEST_LOCATION\',\'APPLICABILITY\',\'ACTIVE_RETIRED_STATE\']","required:[\'FAILURE_FIXTURE\',\'REPRODUCTION_PROCEDURE\',\'DETECTION_METHOD\',\'PRE_CORRECTION_RESULT\',\'PRE_CORRECTION_EVIDENCE\',\'CORRECTION\',\'PERMANENT_TEST_LOCATION\',\'APPLICABILITY\',\'ACTIVE_RETIRED_STATE\']",1)'
+          if old not in s: raise SystemExit('Patch targeting line not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          python3 semantic_patch.py
       - name: Syntax
         run: |
           for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs; do node --check "$f"; done
@@ -42,7 +51,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          rm semantic_patch.py .github/workflows/apply-semantic-patch.yml
+          rm semantic_patch.py .github/workflows/apply-semantic-patch.yml .semantic-trigger
           git add -A
           git commit -m "Close prompt authority and late-stage semantic gaps"
           git push origin HEAD:practical-100/final-authority-organic
