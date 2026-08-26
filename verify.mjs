@@ -108,3 +108,14 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
 {
   const app=fs.readFileSync('app-core.js','utf8');if(!app.includes('ensureState(core.migrateState(p))'))throw new Error('Projects with stages can bypass deterministic migration.');if(!app.includes("[core.SCHEMA,'human-project/30'].includes(raw.schema)"))throw new Error('Declared human-project/30 migration cannot be imported through the UI.');
 }
+
+
+// Regression definition/execution authority must have exactly one canonical execution-truth lane.
+{
+  const definition=schema.RECORD_SCHEMAS.regressions,execution=schema.RECORD_SCHEMAS.regressionExecutions;
+  for(const field of ['PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE']){
+    if(definition.fieldDefinitions[field]?.producer!==schema.PRODUCER.APPLICATION)throw new Error(`Regression definition ${field} must be application-owned compatibility metadata, never agent execution truth.`);
+    if(definition.required.includes(field))throw new Error(`Regression definition must not require ${field}; actual execution truth belongs to regressionExecutions.`);
+  }
+  if(execution.fieldDefinitions.PHASE?.producer!==schema.PRODUCER.AGENT||execution.fieldDefinitions.RESULT?.producer!==schema.PRODUCER.AGENT)throw new Error('Regression execution PHASE/RESULT must remain agent-observed execution fields.');
+}
