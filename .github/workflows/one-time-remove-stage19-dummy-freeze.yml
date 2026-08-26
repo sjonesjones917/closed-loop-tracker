@@ -40,6 +40,10 @@ jobs:
           p.write_text(s.replace(old,new,1))
 
           p=Path('verify-ingestion.mjs'); s=p.read_text()
+          old="function savePrompt(p,stage){\n  const record={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+          new="function savePrompt(p,stage){\n  const options=stage===19?{operation:'COMPARE'}:{};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+          if old not in s: raise SystemExit('Ingestion fixture prompt selection anchor missing')
+          s=s.replace(old,new,1)
           old="const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData;"
           new="const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
           if old not in s: raise SystemExit('Ingestion fixture operation contract anchor missing')
