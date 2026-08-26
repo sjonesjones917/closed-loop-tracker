@@ -20,28 +20,48 @@ jobs:
           set -euo pipefail
           ref=origin/practical-100/pr6-final-acceptance
           git fetch --no-tags origin practical-100/pr6-final-acceptance
-          mapfile -t parts < <(git ls-tree -r --name-only "$ref" .pr6-transport | grep '^.pr6-transport/part[0-9][0-9]$' | sort)
-          test "${#parts[@]}" -gt 0
-          expected=0
-          for part in "${parts[@]}"; do
-            printf -v expected_name '.pr6-transport/part%02d' "$expected"
-            test "$part" = "$expected_name"
-            expected=$((expected + 1))
-            git show "$ref:$part"
-          done | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
+          python - <<'PY'
+          import base64, gzip, itertools, pathlib, subprocess
+          ref='origin/practical-100/pr6-final-acceptance'
+          paths=subprocess.check_output(['git','ls-tree','-r','--name-only',ref,'.pr6-transport'],text=True).splitlines()
+          paths=sorted(p for p in paths if pathlib.PurePosixPath(p).name.startswith('part'))
+          if not paths:
+              raise SystemExit('No transport chunks found')
+          chunks={p:subprocess.check_output(['git','show',f'{ref}:{p}'],text=True).strip() for p in paths}
+          valid=[]
+          diagnostics=[]
+          for order in itertools.permutations(paths):
+              try:
+                  encoded=''.join(chunks[p] for p in order)
+                  compressed=base64.b64decode(encoded,validate=True)
+                  patch=gzip.decompress(compressed)
+                  if not patch.startswith(b'diff --git '):
+                      raise ValueError('decompressed payload is not a git patch')
+                  valid.append((order,compressed,patch))
+              except Exception as exc:
+                  diagnostics.append(f'{order}: {type(exc).__name__}: {exc}')
+          pathlib.Path('/tmp/pr6-order-diagnostics.txt').write_text('\n'.join(diagnostics)+'\n')
+          if len(valid)!=1:
+              raise SystemExit(f'Expected exactly one valid chunk order, found {len(valid)}')
+          order,compressed,patch=valid[0]
+          pathlib.Path('/tmp/pr6.patch.gz').write_bytes(compressed)
+          pathlib.Path('/tmp/pr6.patch').write_bytes(patch)
+          pathlib.Path('/tmp/pr6-order.txt').write_text('\n'.join(order)+'\n')
+          print('valid order:',*order,sep='\n')
+          print('compressed bytes:',len(compressed),'patch bytes:',len(patch))
+          PY
           gzip -t /tmp/pr6.patch.gz
-          gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch
-          test -s /tmp/pr6.patch
-          grep -q '^diff --git ' /tmp/pr6.patch
           sha256sum /tmp/pr6.patch.gz /tmp/pr6.patch > /tmp/pr6.sha256
-          printf 'parts=%s\n' "${#parts[@]}"
           wc -c -l /tmp/pr6.patch.gz /tmp/pr6.patch
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: pr6-exact-transport
           path: |
             /tmp/pr6.patch.gz
             /tmp/pr6.patch
             /tmp/pr6.sha256
-          if-no-files-found: error
+            /tmp/pr6-order.txt
+            /tmp/pr6-order-diagnostics.txt
+          if-no-files-found: warn
           retention-days: 1
