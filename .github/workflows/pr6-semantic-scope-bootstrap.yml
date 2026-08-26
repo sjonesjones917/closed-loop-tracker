@@ -1,0 +1,49 @@
+name: Bootstrap semantic scope correction
+'on':
+  push:
+    branches:
+      - practical-100/pr6-final-proof-current
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/pr6-final-proof-current
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute guarded transformer source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          source=Path('.github/workflows/pr6-semantic-scope-fix.yml').read_text()
+          start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
+          end=source.index("\n          PY\n",start)
+          code=textwrap.dedent(source[start:end])
+          exec(compile(code,'pr6-semantic-scope-transform.py','exec'),{})
+          PY
+      - name: Verify corrected source and lifecycle
+        run: |
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit corrected responsible layers
+        run: |
+          rm .github/workflows/pr6-semantic-scope-fix.yml .github/workflows/pr6-semantic-scope-bootstrap.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js response-ingestion.js app-core.js verify-complete.mjs verify-full-cycle.mjs .github/workflows/pr6-semantic-scope-fix.yml .github/workflows/pr6-semantic-scope-bootstrap.yml
+          git commit -m "Fix iteration scope and repeated-cycle semantics"
+          git push origin HEAD:practical-100/pr6-final-proof-current
