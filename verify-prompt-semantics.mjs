@@ -72,6 +72,14 @@ for(let stage=1;stage<=30;stage++){
   }
 }
 
+// Complete controlling context must fail visibly rather than be silently omitted when it exceeds the proven prompt bound.
+{
+  const large=baseProject(),largeScope=prompts.scopeFor(3,large,{});
+  large.projectData.sources.push({id:'SOURCE-PROMPT-LIMIT',stage:2,active:true,scope:largeScope,fields:{SOURCE_ID:'SOURCE-PROMPT-LIMIT',TITLE:'X'.repeat(760000)},relationships:{},contentSha256:'large-context-fixture'});
+  let error=null;try{prompts.buildPromptRecord(3,large);}catch(e){error=e;}
+  if(error?.code!=='PROMPT_CONTEXT_LIMIT'||!String(error.message||'').includes('No context was silently omitted'))throw new Error('Oversized controlling prompt context did not fail visibly with PROMPT_CONTEXT_LIMIT.');
+}
+
 const p=baseProject();
 const original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}});
 const mutants=[
