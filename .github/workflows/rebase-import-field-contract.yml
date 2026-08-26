@@ -15,11 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply proven import field contract commit
-        run: |
-          git config user.name 'sjonesjones917'
-          git config user.email 'sjones.jones917@gmail.com'
-          git cherry-pick a041a87c16c921225310667e3d3cf28028cb4ba4
+      - name: Apply only proven permanent files
+        run: git checkout a041a87c16c921225310667e3d3cf28028cb4ba4 -- project-store.js verify.mjs
       - name: Verify complete deterministic suite
         run: |
           node --check project-store.js
@@ -35,6 +32,8 @@ jobs:
         if: success()
         run: |
           rm -f .github/workflows/rebase-import-field-contract.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
           git add -A
-          git commit --amend --no-edit
+          git commit -m 'Validate canonical field contracts on import'
           git push --force-with-lease origin HEAD:reliability/import-field-contract-v2-20260826
