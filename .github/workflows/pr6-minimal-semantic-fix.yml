@@ -49,7 +49,19 @@ jobs:
           old="p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});"
           new="p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11,promptScope:{iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`}});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11,iteration:'ITERATION-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`});"
           if text.count(old)!=1: raise SystemExit(f'Stage11 receipt fixture match {text.count(old)}')
-          p.write_text(text.replace(old,new,1))
+          text=text.replace(old,new,1)
+
+          a=text.index("const p=project('JOB-ITERATION-SCOPE')")
+          b=text.index('// Permanent regression/change records',a)
+          segment=text[a:b]
+          segment=segment.replace("const p=project('JOB-ITERATION-SCOPE'),oldIteration=", "const p=project('JOB-ITERATION-SCOPE'),baseScope=engine.currentScope(p),oldIteration=",1)
+          segment=segment.replace("scope:{iterationId:oldIteration,candidateId:oldCandidate}","scope:{...baseScope,iterationId:oldIteration,candidateId:oldCandidate}")
+          segment=segment.replace("scope:{iterationId:newIteration,candidateId:newCandidate}","scope:{...baseScope,iterationId:newIteration,candidateId:newCandidate}")
+          marker="test.relationships={REQ_ID:'REQ-SCOPED'};"
+          if marker not in segment: raise SystemExit('Iteration-scope fixture relationship marker missing.')
+          segment=segment.replace(marker,"req.scope={...baseScope};test.scope={...baseScope};"+marker,1)
+          text=text[:a]+segment+text[b:]
+          p.write_text(text)
           PY
       - name: Verify all deterministic source contracts
         run: |
