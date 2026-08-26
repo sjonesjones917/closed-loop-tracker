@@ -30,7 +30,7 @@ function semanticIssues(record){
   if(!record.prompt.includes(`BODY_SHA256: ${record.bodySha256}`)||!record.prompt.includes(`CONTRACT_SHA256: ${record.contractSha256}`)||!record.prompt.includes(`CONTEXT_SIGNATURE: ${record.contextSignature}`))issues.push('PROMPT_HASH_IDENTITY_MISSING');
   if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('return BLOCKED'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
   if(!record.prompt.includes('rejected data is not canonical'))issues.push('REFINEMENT_RULE_MISSING');
-  if(!record.prompt.includes('implementation-ready specification rather than pretending implementation occurred'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
+  if(!record.prompt.includes('Never claim work was executed merely because it can be specified'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
   if(record.stage===2){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
@@ -67,13 +67,25 @@ for(let stage=1;stage<=30;stage++){
   }
 }
 
+{
+  const p=baseProject();
+  p.projectData.instructions.push({id:'INSTRUCTION-CURRENT',active:true,stage:8,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:p.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:p.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:p.job.CURRENT_INSTRUCTION_VERSION},fields:{INSTRUCTION_ID:'INSTRUCTION-CURRENT',INSTRUCTION_TEXT:'EXACT-CANONICAL-INSTRUCTION-CONTENT'}});
+  const s1=prompts.buildPromptRecord(1,p),s15=prompts.buildPromptRecord(15,p),s21=prompts.buildPromptRecord(21,p);
+  if(!s1.prompt.includes('complete implementation-ready specification')||!s1.prompt.includes('human intent confirmation'))throw new Error('Stage 01 does not establish the honest specification fallback.');
+  if(s1.prompt.includes('WORK_TOO_LARGE_FOR_ENVIRONMENT plus a complete implementation-ready specification'))throw new Error('Prompt still hides a replacement deliverable inside BLOCKED.');
+  if(s15.prompt.includes('post-correction result and evidence')&&!s15.prompt.includes('do not claim a post-correction result'))throw new Error('Stage 15 still asks for impossible future evidence.');
+  if(!s21.prompt.includes('exact workflow deliverable confirmed at Stage 01')||!s21.prompt.includes('implementation-ready specification'))throw new Error('Stage 21 contradicts Stage 01 deliverable selection.');
+  const executions=[prompts.buildPromptRecord(11,p),prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}}),prompts.buildPromptRecord(19,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001',baselineId:'BASELINE-000001'}}),s21];
+  for(const r of executions)if(!r.contextManifest.readCollections.instructions||!r.prompt.includes('EXACT-CANONICAL-INSTRUCTION-CONTENT'))throw new Error(`Stage ${r.stage} ${r.operation} cannot see the canonical production instruction it must execute.`);
+}
+
 const p=baseProject();
 const original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}});
 const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
   {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
   {...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},
-  {...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}
+  {...original,prompt:original.prompt.replace('Never claim work was executed merely because it can be specified','assume implementation occurred')}
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 

@@ -118,4 +118,12 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(failed&&storage.getItem(store.STORE_KEY)===priorBytes,'Storage failure during accepted-state persistence did not roll back exact prior state.');
 }
 
+// Stage 15 cannot require evidence from a correction that has not been executed yet.
+{
+  const required=schema.RECORD_SCHEMAS.regressions.required;
+  assert(!required.includes('POST_CORRECTION_RESULT')&&!required.includes('POST_CORRECTION_EVIDENCE'),'Stage 15 regression schema requires impossible future post-correction evidence.');
+  const reads11=schema.operationContract(11,'COMPLETE').readCollections,reads17=schema.operationContract(17,'EXECUTE_RUN').readCollections,reads19=schema.operationContract(19,'EXECUTE_RUN').readCollections,reads21=schema.operationContract(21,'COMPLETE').readCollections;
+  assert([reads11,reads17,reads19,reads21].every(x=>x.includes('instructions')),'An execution/generation stage cannot read the canonical production instruction.');
+}
+
 console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
