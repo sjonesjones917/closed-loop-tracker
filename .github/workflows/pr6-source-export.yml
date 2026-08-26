@@ -1,0 +1,81 @@
+name: Materialize PR6 acceptance source
+on:
+  push:
+    branches: [practical-100/pr6-acceptance-proof]
+permissions:
+  contents: write
+concurrency:
+  group: pr6-materialize-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Decode and apply the transported patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          parts=(.pr6-patch/part*)
+          test "${#parts[@]}" -gt 0
+          cat "${parts[@]}" | tr -d '\r\n' | base64 --decode > /tmp/pr6-repo.patch.gz
+          gzip -t /tmp/pr6-repo.patch.gz
+          gzip -dc /tmp/pr6-repo.patch.gz > /tmp/pr6-repo.patch
+          git apply --stat /tmp/pr6-repo.patch | tee /tmp/pr6-patch-stat.txt
+          git apply --check /tmp/pr6-repo.patch
+          git apply /tmp/pr6-repo.patch
+          rm -rf .pr6-patch .github/workflows/pr6-source-export.yml
+      - name: Verify syntax and previously passing deterministic suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do
+            node --check "$file"
+          done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Capture continuous lifecycle diagnostic
+        id: lifecycle
+        shell: bash
+        run: |
+          set +e
+          if test -f verify-full-cycle.mjs; then
+            node verify-full-cycle.mjs > /tmp/pr6-full-cycle.log 2>&1
+            status=$?
+          else
+            printf '%s\n' 'verify-full-cycle.mjs was not created by the transported patch.' > /tmp/pr6-full-cycle.log
+            status=127
+          fi
+          set -e
+          cat /tmp/pr6-full-cycle.log
+          printf 'exit_code=%s\n' "$status" >> "$GITHUB_OUTPUT"
+      - name: Commit the reviewable source and remove transport scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m "PR 6: materialize acceptance proof source"
+          git push origin HEAD:practical-100/pr6-acceptance-proof
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr6-materialization-diagnostic
+          path: |
+            /tmp/pr6-patch-stat.txt
+            /tmp/pr6-full-cycle.log
+          if-no-files-found: error
+          retention-days: 7
+      - name: Report lifecycle status without hiding the committed diagnostic state
+        run: echo "verify-full-cycle.mjs exit code ${{ steps.lifecycle.outputs.exit_code }}"
+# connector trigger: materialize the already-transported PR6 source once
