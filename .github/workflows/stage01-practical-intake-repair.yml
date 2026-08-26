@@ -21,13 +21,23 @@ jobs:
           python .stage01-practical-intake-repair.py
           python <<'PY'
           from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          if 'inspection state' not in s:
+              raise SystemExit('Stage 01 future-stage phrase not found')
+          p.write_text(s.replace('inspection state','formal inspection status',1))
+
           p=Path('verify-prompt-semantics.mjs')
           s=p.read_text()
-          old="!/requested filing artifacts/.test(r.prompt)"
-          new="!/supplied invention disclosure/.test(r.prompt)"
-          if old not in s:
-              raise SystemExit('stale Stage 01 specialist assertion not found')
-          p.write_text(s.replace(old,new,1))
+          replacements={
+            "!/requested filing artifacts/.test(r.prompt)":"!/supplied invention disclosure/.test(r.prompt)",
+            "const required1=[/job definition and clarification only/i,/opaque authorized inputs/i,/later source\\/material stage owns discovery, inventory, provenance, inspection, authority, currency, supersession, applicability, and conflicts/i];":"const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\\/currency\\/conflicts among supplied materials here/i];"
+          }
+          for old,new in replacements.items():
+              if old not in s:
+                  raise SystemExit('stale Stage 01 semantic assertion not found: '+old)
+              s=s.replace(old,new,1)
+          p.write_text(s)
           PY
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto');
