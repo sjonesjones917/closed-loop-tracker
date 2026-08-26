@@ -1,0 +1,58 @@
+name: Prove exact operator lane isolation
+on:
+  pull_request:
+    branches: [main]
+permissions: {contents: write}
+jobs:
+  prove:
+    if: github.head_ref == 'reliability/operator-lane-current-main-20260826-v2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/operator-lane-current-main-20260826-v2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply only the exact operator-lane repair
+        run: python3 apply-operator-lane-current.py
+      - name: Verify exact repaired source
+        run: |
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Exercise complete local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/operator-lane-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log" || return 1
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+      - name: Commit only proven permanent files and remove proof machinery
+        run: |
+          rm -f apply-operator-lane-current.py .github/workflows/operator-lane-proof.yml
+          test -z "$(find . -maxdepth 1 -type f \( -name '*repair*.py' -o -name '*operator-lane*.py' \) -print -quit)"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js verify-complete.mjs index.html apply-operator-lane-current.py .github/workflows/operator-lane-proof.yml
+          git diff --cached --check
+          git commit -m 'Bind operator review to exact response lane [operator-lane-complete]'
+          git push origin HEAD:reliability/operator-lane-current-main-20260826-v2
