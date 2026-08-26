@@ -1,0 +1,66 @@
+name: Replay semantic integrity closure current3 v4
+on:
+  push:
+    branches: [reliability/final-integrity-authority-current3-20260826]
+permissions:
+  contents: write
+jobs:
+  replay:
+    if: ${{ !contains(github.event.head_commit.message, '[semantic-replay-current3-v4-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-integrity-authority-current3-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply repair and compose idempotent canonical reservation
+        shell: bash
+        run: |
+          git show 2e4a8ac9f3da242601e2dc4c8fca327374c3bb55:.github/workflows/replay-final-integrity-current3-v3.yml > /tmp/v3.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          y=Path('/tmp/v3.yml').read_text()
+          marker="      - name: Apply proved repair with valid Stage 17 fixture\n        shell: bash\n        run: |\n"
+          body=y.split(marker,1)[1].split("\n      - name: Run deterministic acceptance",1)[0]
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in body.splitlines())+'\n'
+          Path('/tmp/apply.sh').write_text(body)
+          PY
+          bash /tmp/apply.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          start=s.index('function reserveRunBatch('); end=s.index('function registerArtifactBytes(',start)
+          replacement="""function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){
+  ensureShape(project);if(count!==10)throw new Error('Run batches must contain exactly ten slots.');const resolvedIteration=String(iterationId||project.job.CURRENT_ITERATION||'');if(!resolvedIteration)throw new Error('A current iteration is required before reserving runs.');const iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===resolvedIteration&&isActiveRecord(r));if(!iteration)throw new Error('The requested current iteration does not exist or is inactive.');const iterationCandidate=iterationCandidateId(project,resolvedIteration),resolvedCandidate=String(candidateId||iterationCandidate||'');if(!resolvedCandidate)throw new Error('A frozen candidate is required before reserving runs.');if(iterationCandidate&&resolvedCandidate!==iterationCandidate)throw new Error('The requested candidate does not match the current iteration candidate.');const candidate=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===resolvedCandidate&&isActiveRecord(r));if(!candidate||!candidateComponentIdentity(project,resolvedCandidate))throw new Error('The current iteration must resolve to one active frozen candidate with application-computed component hashes.');const stageNumber=Number(stage),iterationScope=scopeForIteration(project,resolvedIteration),existingRuns=records(project,'runs').filter(run=>Number(run.stage)===stageNumber&&String(recordValue(run,'ITERATION_ID')||run.scope?.iterationId||'')===resolvedIteration);
+  if(existingRuns.length){if(existingRuns.length!==count)throw new Error(`The current Stage ${String(stageNumber).padStart(2,'0')} iteration already contains ${existingRuns.length} active run slots; expected exactly ${count}. Resolve the partial or contradictory batch instead of allocating more.`);const existing=existingRuns.map(run=>{const runId=recordId(run,'runs'),runCandidate=String(recordValue(run,'CANDIDATE_ID')||run.scope?.candidateId||'');if(runCandidate!==resolvedCandidate)throw new Error(`Existing run ${runId} is bound to a different candidate.`);const contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||'');const context=records(project,'freshContexts').find(item=>recordId(item,'freshContexts')===contextId&&String(recordValue(item,'ITERATION_ID')||item.scope?.iterationId||'')===resolvedIteration);if(!context)throw new Error(`Existing run ${runId} does not resolve to its active fresh-context slot.`);return {runId,contextId};});if(new Set(existing.map(item=>item.contextId)).size!==count)throw new Error('The existing run batch does not contain ten distinct active context slots.');return existing;}
+  const created=[];for(let i=0;i<count;i++){const context=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:'UNASSIGNED',ROLE:core.STAGES[stageNumber-1]?.role||'UNKNOWN',ITERATION_ID:resolvedIteration,RUN_ID:'PENDING',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE',EVIDENCE:'Application-reserved context slot.',USABILITY_DETERMINATION:'PENDING'},{stage:stageNumber,source:'APPLICATION_RESERVATION',scope:iterationScope});const run=commandRecord(project,'runs',{ITERATION_ID:resolvedIteration,CANDIDATE_ID:resolvedCandidate,CONTEXT_ID:context.id,FRESH_CONTEXT_RECORD:context.id,CONTAMINATION_CHECK:'PENDING',TOOL_CONFIGURATION:'PENDING',EXECUTION_STATUS:'RESERVED',COMPLETE_OUTPUT:''},{stage:stageNumber,source:'APPLICATION_RESERVATION',scope:{...iterationScope,contextId:context.id}});context.fields.RUN_ID=context.RUN_ID=run.id;context.scope={...iterationScope,runId:run.id,contextId:context.id};run.scope={...iterationScope,runId:run.id,contextId:context.id};refreshRecordHashes(context,'freshContexts');refreshRecordHashes(run,'runs');created.push({runId:run.id,contextId:context.id});}
+  addHistory(project,'RUN_BATCH_RESERVED',{stage:stageNumber,iterationId:resolvedIteration,candidateId:resolvedCandidate,count,slots:created});recalculate(project);return created;
+}
+"""
+          p.write_text(s[:start]+replacement+s[end:])
+          PY
+          rm -f .github/workflows/replay-final-integrity-current3.yml .github/workflows/replay-final-integrity-current3-v2.yml .github/workflows/replay-final-integrity-current3-v3.yml .github/workflows/replay-final-integrity-current3-v4.yml
+      - name: Run deterministic acceptance
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing replay
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Compose canonical run identity with idempotent reservation [semantic-replay-current3-v4-complete]"
+          git push origin HEAD:reliability/final-integrity-authority-current3-20260826
