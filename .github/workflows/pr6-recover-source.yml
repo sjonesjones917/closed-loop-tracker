@@ -16,7 +16,7 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Reconstruct verified patch and apply it
+      - name: Reconstruct verified patch and tests
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -30,22 +30,33 @@ jobs:
             02c919028f0bac6767788f6e51477a13a6355d7a
             0f1bf5c9ff2a7403d2ac226cfc248e6b0940bcb1
             1d11f55d20e237f5a9fc02f9799958dfeaeb06b6
+          FIXTURE_BLOB: ba957970cac9a49b802d3fbdb08064d65461373e
+          FIXTURE_SHA256: 619837541e8f648a3279f98ca96cbf1ab75f12341c14bdefdff782b4dc77aa01
+          FULL_CYCLE_BLOBS: >-
+            5e14fbb5cb04351580c72154eb57a7129555c304
+            f3c99eafaf8714a840184acb699efe7bc4216f8a
+            df066ead7457184c341a82824e558723f359b6ba
+          FULL_CYCLE_SHA256: 2d0caf951734dfad9e8f50673d26dbd0837eb4c318642f490f76f42710550cc1
         run: |
           set -euo pipefail
-          : > /tmp/pr6.patch.gz
-          n=0
-          for blob in $PATCH_BLOBS; do
+          fetch_blob() {
+            local blob="$1" out="$2"
             curl --fail-with-body --silent --show-error \
               --header "Authorization: Bearer $GH_TOKEN" \
               --header "Accept: application/vnd.github+json" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$blob" > "/tmp/blob-$n.json"
-            python3 - "$n" <<'PY'
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$blob" > /tmp/blob.json
+            python3 - "$out" <<'PY'
           import base64,json,pathlib,sys
-          n=sys.argv[1]
-          obj=json.load(open(f'/tmp/blob-{n}.json'))
-          with open('/tmp/pr6.patch.gz','ab') as out:
-              out.write(base64.b64decode(obj['content']))
+          obj=json.load(open('/tmp/blob.json'))
+          pathlib.Path(sys.argv[1]).write_bytes(base64.b64decode(obj['content']))
           PY
+          }
+
+          : > /tmp/pr6.patch.gz
+          n=0
+          for blob in $PATCH_BLOBS; do
+            fetch_blob "$blob" "/tmp/patch-part-$n"
+            cat "/tmp/patch-part-$n" >> /tmp/pr6.patch.gz
             n=$((n+1))
           done
           echo "$PATCH_SHA256  /tmp/pr6.patch.gz" | sha256sum --check --strict
@@ -54,6 +65,21 @@ jobs:
           gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch
           git apply --check /tmp/pr6.patch
           git apply /tmp/pr6.patch
+
+          fetch_blob "$FIXTURE_BLOB" test-fixtures.mjs
+          echo "$FIXTURE_SHA256  test-fixtures.mjs" | sha256sum --check --strict
+          test "$(wc -c < test-fixtures.mjs)" -eq 1608
+
+          : > verify-full-cycle.mjs
+          n=0
+          for blob in $FULL_CYCLE_BLOBS; do
+            fetch_blob "$blob" "/tmp/full-cycle-part-$n"
+            cat "/tmp/full-cycle-part-$n" >> verify-full-cycle.mjs
+            n=$((n+1))
+          done
+          echo "$FULL_CYCLE_SHA256  verify-full-cycle.mjs" | sha256sum --check --strict
+          test "$(wc -c < verify-full-cycle.mjs)" -eq 36284
+
       - name: Prove source before commit
         run: |
           node --check workbook.js
@@ -61,14 +87,17 @@ jobs:
           node --check workflow-engine.js
           node --check prompt-engine.js
           node --check response-ingestion.js
+          node --check test-fixtures.mjs
           node --check verify.mjs
           node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
           node --check verify-full-cycle.mjs
           node build-test-project.mjs
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
+
       - name: Commit only verified PR6 source and remove transport scaffolding
         shell: bash
         run: |
