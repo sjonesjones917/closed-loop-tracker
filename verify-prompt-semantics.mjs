@@ -34,7 +34,13 @@ function semanticIssues(record){
   if(record.stage===2){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
-    if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
+    if(!record.prompt.includes('most authoritative and reputable sources appropriate to the domain')&&!record.prompt.includes('strongest source type for each proposition'))issues.push('SOURCE_QUALITY_RULE_MISSING');
+    if(record.prompt.includes('Stage 02 may contain only genuinely independent external governing sources'))issues.push('SOURCE_SCOPE_TOO_NARROW');
+  }
+  if(record.stage===12&&!record.prompt.includes('REQ_ID × RUN_ID × TEST_ID'))issues.push('VERIFICATION_TRIPLE_MISSING');
+  if(record.stage===15){
+    if(!record.prompt.includes('Do not claim a correction or post-correction success in this stage'))issues.push('REGRESSION_TEMPORAL_RULE_MISSING');
+    if(record.prompt.includes('preserve failure fixture and identity/hash when available, reproduction procedure, detection method, pre-correction result and evidence, correction, post-correction result and evidence'))issues.push('FUTURE_EVIDENCE_REQUIRED');
   }
   return issues;
 }
@@ -77,4 +83,12 @@ const mutants=[
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 
-console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
+const recovery=baseProject();
+recovery.projectData.responseValidations.push({validationId:'VALIDATION-RECOVERY',stage:2,rawResponseId:'RAW-BAD',valid:false,issues:[{code:'WRONG_VALUE_TYPE',path:'/records/sources/0/fields/TITLE',message:'Expected STRING.'}]});
+recovery.projectData.history.push({eventId:'EVENT-REFINE',eventSequence:1,type:'ACCEPTED_RESPONSE_INVALIDATED',stage:2,rawResponseId:'RAW-OLD',reason:'Add the omitted authoritative source and explain its applicability.',operatorLabel:'HUMAN_OPERATOR',identityAssurance:'SELF_ASSERTED'});
+const recoveryPrompt=prompts.buildPromptRecord(2,recovery,{operation:'COMPLETE'});
+if(!recoveryPrompt.prompt.includes('APPLICATION VALIDATION FEEDBACK')||!recoveryPrompt.prompt.includes('WRONG_VALUE_TYPE')||!recoveryPrompt.prompt.includes('Expected STRING.'))throw new Error('Application validation feedback is not carried into the next controlling prompt.');
+if(!recoveryPrompt.prompt.includes('OPERATOR REQUESTED CORRECTIONS / REFINEMENTS')||!recoveryPrompt.prompt.includes('Add the omitted authoritative source and explain its applicability.'))throw new Error('Accepted-result refinement reason is not carried into the next controlling prompt.');
+if(!recoveryPrompt.contextManifest.validationFeedback?.length||!recoveryPrompt.contextManifest.acceptedResultRefinements?.length)throw new Error('Recovery feedback is not bound into the prompt context signature.');
+
+console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,sourceRoleSemantics:true,verificationTriplePrompt:true,stage15TemporalSemantics:true,insufficiencyRecovery:true,validationRecovery:true,acceptedRefinementRecovery:true,operationIsolation:true},null,2));
