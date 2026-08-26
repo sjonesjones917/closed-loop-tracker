@@ -1,0 +1,31 @@
+name: Remove no-op run picker
+on:
+  push:
+    branches: [final-audit-current-main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove misleading picker and verify syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js'); t=p.read_text()
+          old="const picker=(n===11||selectedOperation(n)==='EXECUTE_RUN')&&runs.length?"
+          new="const picker=n===11&&runs.length?"
+          if t.count(old)!=1: raise SystemExit(f'expected one picker target, found {t.count(old)}')
+          p.write_text(t.replace(old,new,1))
+          PY
+          node --check app-core.js
+      - name: Commit clean source
+        run: |
+          git rm .github/workflows/remove-noop-picker.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js
+          git commit -m 'Remove misleading automatic-run picker'
+          git push origin HEAD:final-audit-current-main
