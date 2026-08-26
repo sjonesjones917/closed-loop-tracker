@@ -94,7 +94,7 @@ pr=savePrompt(10);accept(10,pr,{stageData:stageData(10),records:{}});const froze
 const slots=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});
 for(let i=0;i<slots.length;i++){
   const slot=slots[i];pr=savePrompt(11,{scope:{runId:slot.runId,contextId:slot.contextId,iterationId,candidateId}});
-  accept(11,pr,{stageData:stageData(11),records:{runs:[targetUpdate(slot.runId,{FRESH_CONTEXT_RECORD:slot.contextId,STARTED_AT:`2026-08-25T20:${String(i).padStart(2,'0')}:00Z`,ENDED_AT:`2026-08-25T20:${String(i).padStart(2,'0')}:30Z`,CONTAMINATION_CHECK:'NONE',TOOL_CONFIGURATION:'CONTROLLED',EXECUTION_STATUS:'COMPLETE',COMPLETE_OUTPUT:`run-${i}-output`,OUTPUT_ARTIFACT_IDENTITIES:['ARTIFACT-CANDIDATE'],TOOL_FAILURES:'NONE',NOTES:'Controlled independent run.'})]}} ,`STAGE-11-RUN-${i+1}`);
+  accept(11,pr,{stageData:stageData(11),records:{runs:[targetUpdate(slot.runId,{FRESH_CONTEXT_RECORD:slot.contextId,STARTED_AT:`2026-08-25T20:${String(i).padStart(2,'0')}:00Z`,ENDED_AT:`2026-08-25T20:${String(i).padStart(2,'0')}:30Z`,CONTAMINATION_CHECK:'NONE',TOOL_CONFIGURATION:'CONTROLLED',EXECUTION_STATUS:'COMPLETE',COMPLETE_OUTPUT:`run-${i}-output`,OUTPUT_ARTIFACT_IDENTITIES:'ARTIFACT-CANDIDATE',TOOL_FAILURES:'NONE',NOTES:'Controlled independent run.'})]}} ,`STAGE-11-RUN-${i+1}`);
 }
 engine.recalculate(p);assertComplete(11);
 
