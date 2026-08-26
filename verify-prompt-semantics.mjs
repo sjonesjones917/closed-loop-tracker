@@ -319,3 +319,20 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
   const p=baseProject(),text=prompts.buildPromptRecord(15,p).prompt;
   for(const token of ['permanent regression definition plus a separate actual pre-correction regression execution','In regressionExecutions','Do not write PRE_CORRECTION_RESULT'])if(!text.includes(token))throw new Error(`Stage 15 definition/execution separation missing: ${token}`);
 }
+
+// stage-locality-regression-v1
+import fsStageBoundary from 'node:fs';
+{
+ const source=fsStageBoundary.readFileSync('prompt-engine.js','utf8');
+ const capture=(n,next)=>{const re=new RegExp('\n'+n+":'(.*?)',\n"+next+":'",'s');const m=source.match(re);if(!m)throw new Error('Cannot isolate Stage '+n+' procedure');return m[1];};
+ const s1=capture(1,2);
+ const s2=capture(2,3);
+ const forbidden1=[/supplied-material inventory/i,/inspection state/i,/build .*source inventory/i,/discover independent external sources/i,/establish source identity/i,/authority hierarchy/i,/source conflicts/i,/research requirements/i];
+ for(const re of forbidden1)if(re.test(s1))throw new Error('Stage 01 leaks Stage 02/03 work: '+re);
+ const required1=[/job definition and clarification only/i,/opaque authorized inputs/i,/Stage 02 owns source\/material discovery, inventory, provenance, inspection, authority, currency, supersession, applicability, and conflicts/i];
+ for(const re of required1)if(!re.test(s1))throw new Error('Stage 01 missing locality boundary: '+re);
+ const required2=[/complete source and supplied-material inventory/i,/Stage 02 owns inventory and inspection/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
+ for(const re of required2)if(!re.test(s2))throw new Error('Stage 02 missing ownership boundary: '+re);
+ const forbidden2=[/compile atomic requirement proposals/i,/define this job’s verification suite/i,/author this job’s production instruction/i];
+ for(const re of forbidden2)if(re.test(s2))throw new Error('Stage 02 leaks later-stage work: '+re);
+}
