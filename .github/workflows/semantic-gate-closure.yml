@@ -20,6 +20,14 @@ jobs:
         run: |
           python3 .semantic-gate-closure.py
           sed -i 's/20260826-semantic-gates-1/20260826-gate-phase-1/g' index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="for(const name of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'])if(!String(project.stages[1]?.agentData?.[name]??'').trim())reasons.push(`Stage 01 accepted data is missing ${name}.`);"
+          new="if(latest?.source!=='DETERMINISTIC_MIGRATION')for(const name of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'])if(!String(project.stages[1]?.agentData?.[name]??'').trim())reasons.push(`Stage 01 accepted data is missing ${name}.`);"
+          if old not in s: raise SystemExit('Stage 01 strict gate patch target missing')
+          p.write_text(s.replace(old,new,1))
+          PY
       - name: Build retained project
         run: node build-test-project.mjs
       - name: Syntax
