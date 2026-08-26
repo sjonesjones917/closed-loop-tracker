@@ -1,0 +1,45 @@
+name: PR6 current scope fail closed
+on:
+  push:
+    branches:
+      - practical-100/pr6-current-scope-failclosed
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply scope repair
+        run: python .pr6-scope-transform.py
+      - name: Verify deterministic and semantic invariants
+        run: |
+          node --check workflow-engine.js
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify browser regression
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          server=$!
+          trap 'kill $server 2>/dev/null || true' EXIT
+          sleep 1
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit verified source
+        run: |
+          rm -f .pr6-scope-transform.py .github/workflows/pr6-current-scope.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js verify-complete.mjs .pr6-scope-transform.py .github/workflows/pr6-current-scope.yml
+          git diff --cached --check
+          git commit -m 'PR 6: fail closed on unscoped current records'
+          git push origin HEAD:practical-100/pr6-current-scope-failclosed
