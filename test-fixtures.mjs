@@ -60,12 +60,14 @@ export function createProject(jobId='JOB-FULL-CYCLE'){
   return project;
 }
 
+function fixturePromptSlotKey(record){const scope=record?.scope||{};return `${Number(record?.stage||0)}|${String(record?.operation||'COMPLETE')}|${String(scope.runId||'')}|${String(scope.contextId||'')}`;}
+
 export function savePrompt(project,stage,{operation=null,runId=null,contextId=null}={}){
   const options={};
   if(operation)options.operation=operation;
   if(runId||contextId)options.scope={runId:runId||null,contextId:contextId||null};
   const record={...prompts.buildPromptRecord(stage,project,options),generatedAt:new Date().toISOString()};
-  const slot=engine.promptSlotKey(record);for(const prior of (project.projectData.generatedPrompts||[]).filter(item=>engine.promptSlotKey(item)===slot&&!item.invalidatedBy))prior.invalidatedBy=`SUPERSEDED-BY-${record.instructionId}`;
+  const slot=fixturePromptSlotKey(record);for(const prior of (project.projectData.generatedPrompts||[]).filter(item=>fixturePromptSlotKey(item)===slot&&!item.invalidatedBy))prior.invalidatedBy=`SUPERSEDED-BY-${record.instructionId}`;
   project.projectData.generatedPrompts.push(record);
   project.stages[stage].currentPromptId=record.instructionId;
   return record;
