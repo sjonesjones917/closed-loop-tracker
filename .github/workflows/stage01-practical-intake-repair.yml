@@ -17,7 +17,18 @@ jobs:
         with:
           node-version: 22
       - name: Apply responsible-layer repair
-        run: python .stage01-practical-intake-repair.py
+        run: |
+          python .stage01-practical-intake-repair.py
+          node <<'NODE'
+          const fs=require('node:fs'),crypto=require('node:crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const bytes=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const token=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          const html=fs.readFileSync('index.html','utf8').replace(/runtime-[0-9a-f]{16}/g,token);
+          fs.writeFileSync('index.html',html);
+          console.log(token);
+          NODE
       - name: Verify prompt behavior and complete deterministic path
         run: |
           node --check prompt-engine.js
