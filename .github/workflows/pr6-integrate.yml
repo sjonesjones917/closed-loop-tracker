@@ -1,0 +1,82 @@
+name: PR6 verified integration
+on:
+  push:
+    branches: [practical-100/pr6-complete-acceptance]
+permissions:
+  contents: write
+concurrency:
+  group: pr6-integration
+  cancel-in-progress: true
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct and verify exact patch
+        run: |
+          cat .pr6-transfer/part{00..16} > /tmp/pr6.patch.gz.b64
+          echo 'b58532cae19e19004450643fdac1613d04942b45f0e21b26fb1a633b81003e19  /tmp/pr6.patch.gz.b64' | sha256sum -c -
+          base64 -d /tmp/pr6.patch.gz.b64 | gzip -d > /tmp/pr6.patch
+          echo 'f7058bbdc66a39ff54559cee6d6ca87e90cc14b8f1275a28118663d504eda9bf  /tmp/pr6.patch' | sha256sum -c -
+          git apply --check /tmp/pr6.patch
+          git apply /tmp/pr6.patch
+      - name: Remove transfer-only material
+        run: |
+          rm -rf .pr6-transfer .pr6-integrate .github/workflows/pr6-integrate.yml
+          test -z "$(find . -maxdepth 2 -name '.pr6-*' -print -quit)"
+      - name: Verify intended source boundary
+        run: |
+          git diff --check
+          ACTUAL="$(git status --short | sed 's/^...//' | sort)"
+          EXPECTED="$(printf '%s\n' \
+            .github/workflows/pages.yml \
+            prompt-engine.js \
+            response-ingestion.js \
+            test-fixtures.mjs \
+            verify-browser-extra.mjs \
+            verify-full-cycle.mjs \
+            verify-ingestion.mjs \
+            verify-live.mjs \
+            verify.mjs \
+            workflow-engine.js \
+            workflow-schema.js | sort)"
+          test "$ACTUAL" = "$EXPECTED"
+      - name: Syntax and deterministic acceptance
+        run: |
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check workflow-engine.js
+          node --check workflow-schema.js
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-live.mjs
+          node --check verify-browser-extra.mjs
+          node --check test-fixtures.mjs
+          node --check verify-full-cycle.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit verified PR6 source only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          test -z "$(git diff --cached --name-only | grep -E '^\.pr6-|^\.github/workflows/pr6-integrate\.yml$' || true)"
+          git commit -m 'PR 6: complete acceptance proof'
+          git push origin HEAD:practical-100/pr6-complete-acceptance
