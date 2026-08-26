@@ -1,82 +1,62 @@
 name: PR6 fresh context proof
 on:
   push:
-    branches: [practical-100/pr6-fresh-context-proof]
-permissions: {contents: write}
+    branches:
+      - practical-100/pr6-fresh-context-proof
+permissions:
+  contents: write
 jobs:
   repair:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Apply fresh-context proof repair
-        shell: bash
+        with:
+          node-version: '22'
+      - name: Apply source repair
+        run: python .pr6-fresh-context-transform.py
+      - name: Verify existing invariants
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('workflow-engine.js'); s=p.read_text()
-          old="""function registerFreshContext(project,{stage=project.activeStage,externalContextIdentifier,operatorLabel='HUMAN_OPERATOR'}={}){
-  if(!String(externalContextIdentifier||'').trim())throw new Error('An external fresh-context identifier is required.');
-  const record=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:String(externalContextIdentifier).trim(),ROLE:core.STAGES[Number(stage)-1]?.role||'UNKNOWN',ITERATION_ID:project.job.CURRENT_ITERATION||'NOT APPLICABLE',RUN_ID:'NOT APPLICABLE',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE RECORDED',EVIDENCE:'Context identifier supplied by operator.',USABILITY_DETERMINATION:'UNKNOWN'},{stage,source:'HUMAN_INPUT'});
-  addHistory(project,'FRESH_CONTEXT_REGISTERED',{stage,recordId:record.id,operatorLabel,identityAssurance:'SELF_ASSERTED'});recalculate(project);return record;
-}"""
-          new="""function registerFreshContext(project,{stage=project.activeStage,externalContextIdentifier,operatorLabel='HUMAN_OPERATOR'}={}){
-  ensureShape(project);const identifier=String(externalContextIdentifier||'').trim();const placeholder=new Set(['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE']);if(placeholder.has(upper(identifier)))throw new Error('A real external fresh-context identifier is required.');
-  const iterationId=String(project.job.CURRENT_ITERATION||'NOT APPLICABLE');const current=records(project,'freshContexts',{stage}).filter(record=>String(recordValue(record,'ITERATION_ID')||record.scope?.iterationId||'')===iterationId);if(current.some(record=>upper(recordValue(record,'EXTERNAL_CONTEXT_IDENTIFIER'))===upper(identifier)))throw new Error('This external context identifier is already registered for the current iteration.');
-  let record=current.find(record=>placeholder.has(upper(recordValue(record,'EXTERNAL_CONTEXT_IDENTIFIER'))));
-  if(record){record.fields=record.fields&&typeof record.fields==='object'?record.fields:{};record.fields.EXTERNAL_CONTEXT_IDENTIFIER=identifier;record.EXTERNAL_CONTEXT_IDENTIFIER=identifier;record.fulfilledAt=now();record.fulfilledBy=operatorLabel;record.identityAssurance='SELF_ASSERTED';}
-  else record=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:identifier,ROLE:core.STAGES[Number(stage)-1]?.role||'UNKNOWN',ITERATION_ID:iterationId,RUN_ID:'NOT APPLICABLE',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE RECORDED',EVIDENCE:'Context identifier supplied by operator.',USABILITY_DETERMINATION:'UNKNOWN'},{stage,source:'HUMAN_INPUT'});
-  addHistory(project,'FRESH_CONTEXT_REGISTERED',{stage,recordId:record.id,externalContextIdentifier:identifier,operatorLabel,identityAssurance:'SELF_ASSERTED'});recalculate(project);return record;
-}"""
-          assert old in s, 'fresh context function changed'; s=s.replace(old,new,1)
-          old="function evaluateIteration(project,iterationId,mode='INITIAL'){const matrix=verificationMatrix(project,iterationId);const runs=matrix.runs;const contexts=new Set(runs.map(r=>String(recordValue(r,'CONTEXT_ID')||r.relationships?.CONTEXT_ID||r.scope?.contextId||'')));"
-          new="function evaluateIteration(project,iterationId,mode='INITIAL'){const matrix=verificationMatrix(project,iterationId);const runs=matrix.runs;const contextRecords=recordsForCurrentScope(project,'freshContexts',{iterationId});const contextById=new Map(contextRecords.map(record=>[recordId(record,'freshContexts'),record]));const placeholder=new Set(['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE']);const resolvedContexts=runs.map(run=>{const id=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||run.scope?.contextId||'');const record=contextById.get(id);const externalIdentifier=String(recordValue(record,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim();return {id,record,externalIdentifier};});const contexts=new Set(resolvedContexts.filter(item=>item.record&&!placeholder.has(upper(item.externalIdentifier))).map(item=>upper(item.externalIdentifier)));"
-          assert old in s, 'iteration evaluator changed'; s=s.replace(old,new,1)
-          old="if(contexts.size!==10||contexts.has(''))reasons.push('Ten distinct current fresh contexts are required.');"
-          new="if(resolvedContexts.some(item=>!item.record||placeholder.has(upper(item.externalIdentifier)))||contexts.size!==10)reasons.push('Ten distinct, actually registered external fresh contexts are required.');"
-          assert old in s; s=s.replace(old,new,1)
-          old="return {mode,iterationId,runs:runs.map(r=>recordId(r,'runs')),contextCount:contexts.size,candidateIds:[...candidates],matrix,"
-          new="return {mode,iterationId,runs:runs.map(r=>recordId(r,'runs')),contextCount:contexts.size,contextRecordIds:resolvedContexts.map(item=>item.id),externalContextIdentifiers:resolvedContexts.map(item=>item.externalIdentifier),candidateIds:[...candidates],matrix,"
-          assert old in s; s=s.replace(old,new,1)
-          p.write_text(s)
-          PY
           node --check workflow-engine.js
           node build-test-project.mjs
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-prompt-semantics.mjs
+      - name: Verify actual external context semantics
+        run: |
           node - <<'NODE'
           const fs=require('fs'),vm=require('vm');globalThis.window=globalThis;globalThis.crypto=require('crypto').webcrypto;
           for(const f of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
           const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;
           const p=core.createBlankState('JOB-CONTEXT-PROOF');engine.ensureShape(p);p.job.CURRENT_ITERATION='ITERATION-000001';
-          const slots=engine.reserveRunBatch(p,{stage:11,iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',count:10});
-          let before=engine.evaluateIteration(p,'ITERATION-000001','INITIAL');if(!before.reasons.some(x=>x.includes('actually registered')))throw new Error('Unassigned reserved contexts incorrectly satisfy freshness.');
+          engine.reserveRunBatch(p,{stage:11,iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',count:10});
+          const before=engine.evaluateIteration(p,'ITERATION-000001','INITIAL');if(!before.reasons.some(x=>x.includes('actually registered')))throw new Error('Unassigned reserved contexts incorrectly satisfy freshness.');
           for(let i=0;i<10;i++)engine.registerFreshContext(p,{stage:11,externalContextIdentifier:`external-agent-session-${i+1}`});
-          const contexts=engine.records(p,'freshContexts',{stage:11});if(contexts.length!==10)throw new Error(`Fresh context registration created duplicate records: ${contexts.length}.`);
-          let duplicateRejected=false;try{engine.registerFreshContext(p,{stage:11,externalContextIdentifier:'external-agent-session-1'});}catch{duplicateRejected=true;}if(!duplicateRejected)throw new Error('Duplicate external context identifier was accepted.');
+          const contexts=engine.records(p,'freshContexts',{stage:11});if(contexts.length!==10)throw new Error(`Fresh-context registration created extra records: ${contexts.length}.`);
+          let duplicateRejected=false;try{engine.registerFreshContext(p,{stage:11,externalContextIdentifier:'external-agent-session-1'});}catch{duplicateRejected=true;}if(!duplicateRejected)throw new Error('Duplicate external context identifier accepted.');
           for(const run of engine.records(p,'runs',{stage:11})){run.fields.CANDIDATE_ID='CANDIDATE-000001';run.fields.CONTAMINATION_CHECK='NONE';run.fields.EXECUTION_STATUS='COMPLETE';}
           for(let i=0;i<10;i++){p.projectData.rawResponses.push({stage:11,rawResponseId:`RAW-${i}`});p.projectData.outputReceipts.push({stage:11,receiptId:`REC-${i}`});}
-          const after=engine.evaluateIteration(p,'ITERATION-000001','INITIAL');if(after.contextCount!==10||after.reasons.some(x=>x.includes('fresh contexts')))throw new Error(`Ten registered external contexts did not satisfy freshness: ${after.reasons.join('; ')}`);
+          const after=engine.evaluateIteration(p,'ITERATION-000001','INITIAL');if(after.contextCount!==10||after.reasons.some(x=>x.includes('fresh contexts')))throw new Error(after.reasons.join('; '));
           console.log(JSON.stringify({unassignedBlocked:true,duplicateExternalContextRejected:true,reservedSlotsFilledInPlace:true,actualExternalContextCount:after.contextCount},null,2));
           NODE
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 & server=$!; trap 'kill $server 2>/dev/null || true' EXIT
+      - name: Verify browser regression
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          server=$!
+          trap 'kill $server 2>/dev/null || true' EXIT
           sleep 1
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
       - name: Commit verified source
-        shell: bash
         run: |
-          set -euo pipefail
-          rm -f .github/workflows/pr6-fresh-context-proof.yml
+          rm -f .pr6-fresh-context-transform.py .github/workflows/pr6-fresh-context-proof.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js .github/workflows/pr6-fresh-context-proof.yml
+          git add workflow-engine.js .pr6-fresh-context-transform.py .github/workflows/pr6-fresh-context-proof.yml
           git diff --cached --check
           git commit -m 'PR 6: require actual fresh external contexts'
           git push origin HEAD:practical-100/pr6-fresh-context-proof
