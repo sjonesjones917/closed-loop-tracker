@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply current-main semantic invariants
-        run: node .current-semantic-fixes.mjs
+        run: |
+          node .current-semantic-fixes.mjs
+          node .current-semantic-tests.mjs
       - name: Verify combined current-main source
         run: |
           node --check workflow-engine.js
@@ -34,7 +36,7 @@ jobs:
           node verify-prompt-semantics.mjs
       - name: Commit verified non-workflow source
         run: |
-          rm -f .current-semantic-fixes.mjs
+          rm -f .current-semantic-fixes.mjs .current-semantic-tests.mjs
           git checkout HEAD -- .github/workflows/cherry-semantic.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
