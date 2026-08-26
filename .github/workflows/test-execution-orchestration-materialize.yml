@@ -16,7 +16,9 @@ jobs:
         with: {node-version: '22'}
       - name: Apply exact guarded repair and remove proof scaffolding
         run: |
+          node .fix-test-execution-transformer.mjs
           node .apply-test-execution-orchestration.mjs
+          rm .fix-test-execution-transformer.mjs
           rm .apply-test-execution-orchestration.mjs
           rm .github/workflows/test-execution-orchestration-materialize.yml
       - name: Prove no prohibited architecture was introduced
@@ -49,6 +51,7 @@ jobs:
           trap - EXIT
       - name: Commit only verified permanent source
         run: |
+          test ! -e .fix-test-execution-transformer.mjs
           test ! -e .apply-test-execution-orchestration.mjs
           test ! -e .github/workflows/test-execution-orchestration-materialize.yml
           git config user.name github-actions[bot]
