@@ -106,14 +106,16 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     return value;
   };
 
-  const allowedStageData=new Set(contract?.allowedStageData||[]);
+  const allowedStageData=new Set(operationContract?.agentStageFields||contract?.allowedStageData||[]);
   if(object(envelope.stageData)){
     for(const [name,value] of Object.entries(envelope.stageData)){
       const path=`/stageData/${pointerEscape(name)}`;
       const definition=schema.STAGE_FIELDS[stageNumber]?.[name];
       if(!definition){issues.push(issue('UNKNOWN_STAGE_FIELD',path,`Stage ${stageNumber} has no field ${name}.`));continue;}
       validateValue(definition,value,path,issues);
-      if(!allowedStageData.has(name)||!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));
+      const authorized=schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized;
+      if(!authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));
+      else if(!allowedStageData.has(name))issues.push(issue('OPERATION_SCOPE_VIOLATION',path,`${name} is agent-owned but is not writable during operation ${expectedOperation}.`));
       if(value===undefined)issues.push(issue('UNDEFINED_VALUE',path,'Undefined values cannot be ingested.'));
     }
   }
