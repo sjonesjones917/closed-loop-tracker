@@ -20,6 +20,7 @@ jobs:
         run: |
           python3 .fix-final-semantic-patch.py
           python3 .final-semantic-patch.py
+          python3 .fix-artifact-fixtures.py
       - name: Verify deterministic source
         run: |
           node --check workflow-schema.js
@@ -52,7 +53,7 @@ jobs:
           trap - EXIT
       - name: Commit only verified final source
         run: |
-          rm .final-semantic-patch.py .fix-final-semantic-patch.py
+          rm .final-semantic-patch.py .fix-final-semantic-patch.py .fix-artifact-fixtures.py
           git rm .github/workflows/apply-final-semantic-closure.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
