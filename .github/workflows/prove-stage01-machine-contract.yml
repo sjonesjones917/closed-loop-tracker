@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: 22
       - name: Apply exact prompt and clarification repair
-        run: python3 .apply-stage01-machine-contract.py
+        run: |
+          sed -i "s/The application owns JOB_ID and controlled input identity/The application already owns JOB_ID and controlled input identity/" .apply-stage01-machine-contract.py
+          python3 .apply-stage01-machine-contract.py
       - name: Full deterministic and browser acceptance
         run: |
           node build-test-project.mjs
