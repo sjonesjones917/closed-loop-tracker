@@ -1,5 +1,6 @@
 export function scalarFor(def,name,overrides={}){
   if(Object.hasOwn(overrides,name))return overrides[name];
+  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';
   if(def.enumValues?.length)return def.enumValues[0];
   if(def.valueType==='BOOLEAN')return true;
   if(def.valueType==='INTEGER')return 1;
