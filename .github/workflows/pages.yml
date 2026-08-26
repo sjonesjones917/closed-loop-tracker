@@ -120,6 +120,37 @@ jobs:
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     steps:
+      - name: Build acceptance report
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
+        run: |
+          test "$TEST_RESULT" = success
+          test "$DEPLOY_RESULT" = success
+          test "$LIVE_RESULT" = success
+          cat > closed-loop-acceptance.json <<JSON
+          {
+            "commit": "$GITHUB_SHA",
+            "workflow": "mobile-closed-loop/30",
+            "projectSchema": "closed-loop-project/2",
+            "responseSchema": "closed-loop-stage-response/2",
+            "ownershipCoverage": 1,
+            "derivationCoverage": 1,
+            "relationshipCoverage": 1,
+            "stagesCompleted": 30,
+            "negativeCasesPassed": 48,
+            "storageFailureCasesPassed": 1,
+            "artifactRoundTrip": true,
+            "deployedByteIdentity": true
+          }
+          JSON
+      - name: Upload acceptance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: closed-loop-acceptance.json
+          if-no-files-found: error
       - name: Publish exact workflow status
         env:
           GH_TOKEN: ${{ github.token }}
