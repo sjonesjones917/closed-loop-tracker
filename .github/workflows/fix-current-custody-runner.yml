@@ -1,0 +1,33 @@
+name: Fix temporary custody runner
+on:
+  push:
+    branches: [reliability/current-test-artifact-custody-20260826]
+permissions:
+  contents: write
+jobs:
+  fix-runner:
+    if: ${{ !contains(github.event.head_commit.message, '[runner-regex-fixed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/current-test-artifact-custody-20260826
+      - name: Correct runner-only cache-token line and self-remove
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/current-test-artifact-custody.yml');s=p.read_text();lines=s.splitlines()
+          hits=[i for i,line in enumerate(lines) if "p=Path('index.html');s=p.read_text();s,n=re.subn" in line]
+          if len(hits)!=1: raise SystemExit(f'expected one cache-token line, found {len(hits)}')
+          indent=lines[hits[0]][:len(lines[hits[0]])-len(lines[hits[0]].lstrip())]
+          lines[hits[0]]=indent+"p=Path('index.html');s=p.read_text();s,n=re.subn(r'(src=\"(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\\.js\\?v=)runtime-[a-f0-9]{16}(\")',rf'\\g<1>{token}\\2',s)"
+          # The Python source above intentionally contains one regex backslash after YAML decoding.
+          p.write_text('\n'.join(lines)+'\n')
+          PY
+          rm -f .github/workflows/fix-current-custody-runner.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Fix temporary custody runner [runner-regex-fixed]"
+          git push origin HEAD:reliability/current-test-artifact-custody-20260826
