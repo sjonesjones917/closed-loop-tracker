@@ -1,0 +1,35 @@
+name: fix-capability-runner
+on:
+  push:
+    branches: [capability/test-execution-contract-20260826]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: capability/test-execution-contract-20260826
+      - name: Correct exact locator and self-remove
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/capability-orchestration-repair.yml')
+          lines=p.read_text().splitlines()
+          replacement="          patch('verify-complete.mjs','// Stage 11 initial execution completion does not depend on Stage 12 verification triples.',\"{const p=globalThis.closedLoopCore.createBlankState('JOB-TEST-EXECUTION-GATE');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'fixture',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});engine.ensureShape(p);p.projectData.requirements.push({id:'REQ-000001',stage:4,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'},fields:{REQ_ID:'REQ-000001',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});const base={id:'TEST-000001',stage:6,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001'},fields:{TEST_ID:'TEST-000001',REQ_ID:'REQ-000001',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'UNAVAILABLE',REQUIRED_CAPABILITIES:['SPECIALIST_TOOL'],EXECUTABLE_ARTIFACT_REQUIRED:false,REQUIRED_ARTIFACTS:'NONE',TEST_ARTIFACT_IDS:[],STATUS:'READY'},relationships:{REQ_ID:'REQ-000001'}};p.projectData.tests.push(base);p.projectData.acceptedChanges.push({changeId:'ACCEPTED-6',stage:6,status:'COMMITTED',responseType:'DATA_PROPOSAL'});let gate=engine.evaluateStageGate(p,6);if(gate.complete||!gate.reasons.some(x=>x.includes('currently unavailable')))throw new Error('Stage 6 accepted an unavailable required test capability.');base.fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';base.fields.EXECUTABLE_ARTIFACT_REQUIRED=true;base.fields.REQUIRED_ARTIFACTS='test_fixture.bin';gate=engine.evaluateStageGate(p,6);if(gate.complete||!gate.reasons.some(x=>x.includes('no application-verified artifact bytes')))throw new Error('Stage 6 accepted a required executable artifact without verified bytes.');base.fields.TEST_ARTIFACT_IDS=['ARTIFACT-TEST'];gate=engine.evaluateStageGate(p,6);if(!gate.complete)throw new Error('Stage 6 rejected a fully specified executable test with verified artifact identity: '+gate.reasons.join(' | '));}\\n\\n// Stage 11 initial execution completion does not depend on Stage 12 verification triples.\")"
+          found=0
+          for i,line in enumerate(lines):
+              if "patch('verify-complete.mjs','console.log(JSON.stringify('" in line:
+                  lines[i]=replacement; found+=1
+              if line.strip()=="git rm .github/workflows/capability-orchestration-repair.yml":
+                  lines[i]='          true # runner file is already absent after reset to exact main'
+          if found!=1: raise SystemExit(f'Expected one verify-complete locator line, found {found}')
+          p.write_text('\n'.join(lines)+'\n')
+          PY
+          git rm .github/workflows/fix-capability-runner.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/capability-orchestration-repair.yml
+          git commit -m "Fix capability verifier exact locator"
+          git push origin HEAD:capability/test-execution-contract-20260826
