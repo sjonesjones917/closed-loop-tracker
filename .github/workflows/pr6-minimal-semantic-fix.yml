@@ -1,0 +1,51 @@
+name: Apply verified minimum semantic corrections
+'on':
+  push:
+    branches:
+      - practical-100/pr6-final-proof-current
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/pr6-final-proof-current
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded historical transformer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          source=subprocess.check_output(['git','show','b84bbd0484fbc47f42e0289d1df5655a9f2d2cb7:.github/workflows/pr6-semantic-scope-fix.yml'],text=True)
+          start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
+          end=source.index("\n          PY\n",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
+          code=code.replace("\nold_scope=", "\ntext=engine.read_text()\n\nold_scope=", 1)
+          exec(compile(code,'pr6-minimum-semantic-transform.py','exec'),{})
+          PY
+      - name: Verify all deterministic source contracts
+        run: |
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit only verified corrections and remove repair workflow
+        run: |
+          rm .github/workflows/pr6-minimal-semantic-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Fix iteration scope and repeated-cycle semantics"
+          git push origin HEAD:practical-100/pr6-final-proof-current
