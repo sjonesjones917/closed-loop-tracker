@@ -4,7 +4,7 @@ let source=fs.readFileSync(target,'utf8');
 const before='\\`${path}/evidenceRefs\\`';
 const after='\\`\\${path}/evidenceRefs\\`';
 const count=source.split(before).length-1;
-if(count!==2)throw new Error(`Expected two response-ingestion template anchors to escape; found ${count}.`);
+if(count!==3)throw new Error(`Expected three response-ingestion template anchors to escape; found ${count}.`);
 source=source.replaceAll(before,after);
 fs.writeFileSync(target,source);
 await import(`./${target}?fixed=${Date.now()}`);
