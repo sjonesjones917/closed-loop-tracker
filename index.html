@@ -50,6 +50,26 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),textarea,sel
 .workflow-list .stage-name{font-size:12px;line-height:1.25}
 @media(max-width:620px){.workflow-list .stage-card{padding:6px}.workflow-list .stage-head>.status{font-size:11px;min-height:24px}.workflow-list .stage-head{row-gap:3px}}
 
+/* Minimal visual hierarchy polish */
+:root{--radius:11px;--shadow:0 1px 2px rgba(0,0,0,.035),0 5px 18px rgba(21,24,23,.025);--focus-ring:0 0 0 3px rgba(22,79,69,.14)}
+main{max-width:1180px;margin:0 auto}
+.panel,.hero{padding:12px}.screen{gap:10px}.panel,.hero,.record-card,.stage-card{transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;box-shadow:var(--focus-ring)}
+button:not(:disabled):active{transform:translateY(1px)}
+.view-tabs button[aria-selected="true"],.header-actions .primary{box-shadow:0 1px 2px rgba(0,0,0,.10)}
+.hero h2{letter-spacing:-.012em}.section-title{letter-spacing:-.006em}.section-intro{max-width:78ch;line-height:1.5}
+.fact{background:#fcfdfc}.fact strong{font-variant-numeric:tabular-nums}.status{letter-spacing:.015em}
+.next-action-panel{border-left:4px solid var(--accent);padding-left:11px}.next-action-panel .notice{background:transparent;border:0;border-radius:0;padding:2px 0;color:var(--ink);font-weight:650}
+.stage-card.current{box-shadow:inset 3px 0 0 var(--accent),var(--shadow)}.workflow-button:focus-visible .stage-card{border-color:var(--accent);box-shadow:var(--focus-ring)}
+.record-card>summary{position:relative;padding-right:30px}.record-card>summary:after,.project-field-group>summary:after,.workflow-disclosure>summary:after{content:'›';font-size:17px;line-height:1;color:var(--muted);transition:transform .15s ease}.record-card[open]>summary:after,.project-field-group[open]>summary:after,.workflow-disclosure[open]>summary:after{transform:rotate(90deg)}
+.record-card>summary,.project-field-group>summary,.workflow-disclosure>summary{align-items:center}.record-card>summary:hover,.project-field-group>summary:hover{background:#fafcfb}
+.prompt{line-height:1.55;background:#f7f9f7;border-color:#cfd6d1;padding:11px;scrollbar-gutter:stable}.stage-output{min-height:clamp(240px,38vh,460px);line-height:1.55}.code-text{tab-size:2}
+#proposal-heading{border-color:#b9d2cb;box-shadow:0 0 0 1px rgba(22,79,69,.035),var(--shadow)}#validation-report{scroll-margin-top:150px}
+.empty-state{background:#fbfcfb}.notice{line-height:1.5}.button-row{align-items:center}.button-row .primary{box-shadow:0 1px 2px rgba(22,79,69,.12)}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,textarea:focus,select:focus{border-color:var(--accent)}
+@media(max-width:620px){.panel,.hero{padding:11px}.screen{gap:9px}.stage-output{min-height:280px}.next-action-panel{padding-left:10px}}
+@media(prefers-reduced-motion:reduce){.panel,.hero,.record-card,.stage-card,.record-card>summary:after,.project-field-group>summary:after,.workflow-disclosure>summary:after{transition:none}button:not(:disabled):active{transform:none}}
+
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 </style>
 </head>
