@@ -1,0 +1,36 @@
+name: Apply residual prompt recovery
+on:
+  push:
+    branches:
+      - semantic-reliability/prompt-recovery-final
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 .prompt-recovery-final.py
+      - name: Verify full deterministic and prompt semantics
+        run: |
+          node --check workbook.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean source-only patch
+        run: |
+          rm -f .prompt-recovery-final.py .github/workflows/apply-prompt-recovery-final.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Close residual prompt recovery contradictions'
+          git push origin HEAD:semantic-reliability/prompt-recovery-final
