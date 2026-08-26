@@ -215,3 +215,6 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  if(!root.agentStageFields.includes('ROOT_CAUSE_COMPLETED')||root.agentStageFields.includes('CORRECTIONS_COMPLETED'))throw new Error('Stage 17 ROOT_CAUSE stageData boundary is incorrect.');
  if(!freeze.agentStageFields.includes('NEW_FROZEN_VERSIONS')||freeze.agentStageFields.includes('ROOT_CAUSE_COMPLETED'))throw new Error('Stage 17 FREEZE stageData boundary is incorrect.');
 }
+
+// FINAL_EDGE_PROMPT_ASSERTIONS
+{const p2=prompts.buildPromptRecord(2,baseProject(),{operation:'COMPLETE'}).prompt;if(p2.includes('If no legitimate external authority applies'))throw new Error('Stage 02 conflates governing authority with legitimate evidence.');if(!p2.includes('If no legitimate independent external source or evidence applies'))throw new Error('Stage 02 no-source condition is wrong.');const p9=prompts.buildPromptRecord(9,baseProject(),{operation:'COMPLETE'}).prompt;if(p9.includes('independent context where required'))throw new Error('Stage 09 independence remains conditional.');}
