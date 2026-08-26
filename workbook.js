@@ -753,7 +753,15 @@ function invalidateDownstream(state,n,changeId){const out=[];for(let i=n+1;i<=30
 function compareArtifactSets(a=[],r=[],gateState=''){const comparisons=[];for(let i=0;i<Math.max(a.length,r.length);i++){const x=a[i],y=r[i];comparisons.push({artifactId:x?.artifactId||`ARTIFACT-${String(i+1).padStart(3,'0')}`,auditedFile:x?.name||'MISSING',releaseFile:y?.name||'MISSING',auditedSha256:x?.sha256||'UNKNOWN',releaseSha256:y?.sha256||'UNKNOWN',hashesIdentical:Boolean(x&&y&&x.sha256===y.sha256),byteSizesIdentical:Boolean(x&&y&&Number(x.size)===Number(y.size))});}const exact=gateState==='ACCEPTED'&&a.length>0&&a.length===r.length&&comparisons.every(x=>x.hashesIdentical&&x.byteSizesIdentical);return {gateState,comparisons,authorization:exact?'AUTHORIZED':'NOT AUTHORIZED'};}
 function migrateState(p){
   if(!p||typeof p!=='object')return createBlankState();
-  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT)return p;
+  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
+    const migrated=JSON.parse(JSON.stringify(p));
+    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
+    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
+    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
+    if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:PROJECT_SCHEMA,records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}
+    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
+    return migrated;
+  }
   if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
   const migrated=JSON.parse(JSON.stringify(p));
   const original=JSON.parse(JSON.stringify(p));

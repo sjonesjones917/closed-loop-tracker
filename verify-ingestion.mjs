@@ -315,3 +315,27 @@ function proposalEnvelope(p,stage,pr,records){return {schema:schema.RESPONSE_SCH
   let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push({id:runId,stage,active:true,status:'RESERVED',scope:{},fields:{RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'},RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'});const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:'RUN-SCOPE-A',contextId:'CTX-SCOPE-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{runs:[{targetId:runId,fields:completeFields('runs'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='TARGET_SCOPE_MISMATCH'))throw new Error('Reserved target outside the controlling run/context scope was accepted.');negativeCount++;
 }
 console.log(JSON.stringify({operationStageDataIsolation:true,reservedTargetPolicy:true,completedReservedTargetBlocked:true,targetScopeIsolation:true,totalNegativeCases:negativeCount},null,2));
+
+// Additional fail-closed semantic boundaries found outside the prior matrix.
+{
+  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p),e=validEnvelope(p,stage,pr);let rejected=false;
+  try{ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});}catch(error){rejected=/controlling persisted prompt|unavailable/i.test(String(error.message||error));}
+  if(!rejected)throw new Error('Caller-supplied prompt object was accepted without a persisted canonical prompt record.');negativeCount++;
+}
+{
+  const p=project('JOB-READABLE-CLARIFICATION'),stage=3,pr=savePrompt(p,stage),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-read',question:'Which accepted source should control this ambiguity?',whyRequired:'The question concerns an already-readable canonical source.',affectedStageFields:[],affectedRecords:['sources'],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Clarification could not reference readable Stage 3 source records: '+JSON.stringify(prepared.validation.issues));
+}
+{
+  const p=project('JOB-HUMAN-QUESTION-MIX'),stage=1,pr=savePrompt(p,stage),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-only',question:'Need input?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'u-second',kind:'MISSING_HUMAN_INPUT',description:'Same missing input.',whyBlocking:'Same blocking condition.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MIXED_RESPONSE_TYPE'&&i.path==='/unresolved'))throw new Error('HUMAN_INPUT_REQUIRED accepted a second blocking unresolved channel.');negativeCount++;
+}
+{
+  const p=project('JOB-QUESTION-VALUES'),stage=1,pr=savePrompt(p,stage),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-choice',question:'Choose one.',whyRequired:'A controlled choice is required.',affectedStageFields:[],affectedRecords:[],answerType:'CHOICE',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_ALLOWED_VALUES'))throw new Error('CHOICE question accepted an empty allowed-values contract.');negativeCount++;
+}
+{
+  const p=project('JOB-HUMAN-ANSWER-EDGES');for(const [request,value] of [
+    [{requestId:'Q-MULTI',answerType:'MULTI_CHOICE',allowedValues:['A','B'],blocking:true},[]],
+    [{requestId:'Q-DATE',answerType:'DATE',allowedValues:[],blocking:true},'2026-02-31'],
+    [{requestId:'Q-DUP',answerType:'MULTI_CHOICE',allowedValues:['A','B'],blocking:true},['A','A']]
+  ]){let rejected=false;try{ingestion.validateHumanAnswer(request,value,p);}catch(error){rejected=error.code==='INVALID_HUMAN_ANSWER';}if(!rejected)throw new Error(`Invalid human answer was accepted for ${request.requestId}.`);negativeCount++;}
+}
+console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationTargets:true,humanInputResponseExclusivity:true,choiceContractValidation:true,humanAnswerEdgeValidation:true,totalNegativeCases:negativeCount},null,2));

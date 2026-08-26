@@ -343,8 +343,6 @@ function recalculate(project){
     const result=gate(stage,project);
     const state=project.stages[stage];
     state.gate=result;
-    const retainedStageOne=stage===1&&project.isRetainedTestProject&&state.status==='COMPLETE'&&project.projectData.stageRecords?.[1]&&!state.invalidatedBy;
-    if(retainedStageOne){state.status='COMPLETE';state.gate={...result,complete:true,reasons:[]};previousComplete=true;continue;}
     if(!previousComplete){state.status='NOT STARTED';}
     else if(result.blocked){state.status='BLOCKED';}
     else if(result.complete){state.status='COMPLETE';}
