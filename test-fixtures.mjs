@@ -7,6 +7,7 @@ export function scalarFor(def,name,overrides={}){
   if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['fixture'];
   if(def.valueType==='OBJECT')return {};
   const upper=String(name).toUpperCase();
+  if(upper.includes('ARTIFACT_REQUIREMENTS'))return 'NONE';
   if(upper.includes('DETERMINATION'))return 'SATISFIED';
   if(upper.includes('INDEPENDENCE'))return 'INDEPENDENT';
   if(upper.includes('CONTAMINATION'))return 'NONE';

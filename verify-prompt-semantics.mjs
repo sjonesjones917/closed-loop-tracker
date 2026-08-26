@@ -267,3 +267,17 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  for(const [key,value] of Object.entries({iterationId:'ITERATION-OVERRIDE',candidateId:'CANDIDATE-OVERRIDE',baselineId:'BASELINE-OVERRIDE',productId:'PRODUCT-OVERRIDE'}))if(scope[key]!==value)throw new Error(`Explicit application target override was ignored for ${key}.`);
  const versionScope=prompts.scopeFor(3,p,{projectRevision:999,inputVersion:'STALE-INPUT',sourceSetVersion:'STALE-SOURCE'});if(versionScope.projectRevision!==Number(p.revision||0)||versionScope.inputVersion!==p.job.CURRENT_INPUT_VERSION||versionScope.sourceSetVersion!==p.job.CURRENT_SOURCE_SET_VERSION)throw new Error('Caller override displaced application-owned revision/version scope.');
 }
+
+
+// Final boundary prompt assertions: source/evidence semantics, verifier independence, artifact possession, and failure-test execution honesty.
+{
+  const p=baseProject();
+  const stage2=prompts.buildPromptRecord(2,p).prompt;
+  if(!stage2.includes('independent external source or evidence'))throw new Error('Stage 02 still makes no-source recovery depend on governing authority rather than legitimate independent source/evidence.');
+  const stage6=prompts.buildPromptRecord(6,p).prompt;
+  if(!stage6.includes('Any non-NONE ARTIFACT_REQUIREMENTS means actual byte-backed artifact evidence is mandatory'))throw new Error('Stage 06 does not tell the agent that named test artifacts require actual bytes.');
+  const stage7=prompts.buildPromptRecord(7,p).prompt;
+  if(!stage7.includes('a proposed fixture alone does not satisfy the gate')||!stage7.includes('MISSING_CAPABILITY')||!stage7.includes('MISSING_ARTIFACT'))throw new Error('Stage 07 can still imply an unexecuted failure-test proposal satisfies completion.');
+  const stage9=prompts.buildPromptRecord(9,p).prompt;
+  if(!stage9.includes('independent context from the instruction author')||stage9.includes('independent context where required'))throw new Error('Stage 09 prompt independence contradicts its unconditional gate.');
+}

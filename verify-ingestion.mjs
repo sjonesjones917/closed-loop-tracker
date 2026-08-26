@@ -31,6 +31,7 @@ function savePrompt(p,stage){
   return record;
 }
 function safeValue(name){
+  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';
   if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';
   if(/SOURCE_TYPE/.test(name))return 'OFFICIAL_STANDARD';
   if(/TITLE/.test(name))return 'Web Content Accessibility Guidelines (WCAG) 2.2';
@@ -362,3 +363,30 @@ for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED'])
   if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);
 }
 console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationTargets:true,humanInputResponseExclusivity:true,choiceContractValidation:true,humanAnswerEdgeValidation:true,totalNegativeCases:negativeCount},null,2));
+
+
+// Final boundary: the stage contract is the only individual text-field length authority.
+{
+  const definition={valueType:'STRING',enumValues:[],nullable:false,closedProperties:null};
+  const tooLong=[]; ingestion.validateValue(definition,'1234','/contract-text',tooLong,{maxTextFieldLength:3});
+  if(!tooLong.some(item=>item.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('validateValue ignored the supplied response-contract text limit.');
+  const exact=[]; ingestion.validateValue(definition,'123','/contract-text',exact,{maxTextFieldLength:3});
+  if(exact.some(item=>item.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('validateValue rejected a value exactly at the response-contract text limit.');
+}
+
+// Final boundary: naming a required executable/input artifact is not possession of its bytes.
+{
+  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
+  const def=schema.RECORD_SCHEMAS.tests,fields={};
+  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
+  fields.ARTIFACT_REQUIREMENTS='fixture.js';
+  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');
+  const sha='a'.repeat(64);
+  e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
+  e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
+  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
+  if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
+}
