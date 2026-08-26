@@ -1,0 +1,114 @@
+name: One-time verification batching current-main proof
+on:
+  push:
+    branches: [reliability/verification-batching-current-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/verification-batching-current-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimum continuation correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, re
+
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old="12:['runs','requirements','tests','freshContexts']"
+          new="12:['runs','requirements','tests','verification','freshContexts']"
+          if old not in s: raise SystemExit('Stage 12 read contract anchor missing')
+          s=s.replace(old,new,1)
+          old="VERIFY:Object.freeze({readCollections:['runs','requirements','tests','freshContexts'],agentWritableCollections:['verification'],allowedStageData:[]})"
+          new="VERIFY:Object.freeze({readCollections:['runs','requirements','tests','verification','freshContexts'],agentWritableCollections:['verification'],allowedStageData:[]})"
+          count=s.count(old)
+          if count!=2: raise SystemExit(f'Expected two repeated-iteration VERIFY contracts, found {count}')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="12:'Verify each current execution independently. Produce one substantive verification proposal for every required REQ_ID × RUN_ID × TEST_ID triple in the current operation scope, preserving verifier and verifier-context identity, independence status, inputs, procedure, expected result, observed result, exact evidence, SATISFIED/VIOLATED/UNDETERMINED, defect reference where applicable, and reason for UNDETERMINED. Do not omit or duplicate required triples, substitute wrong-version or wrong-iteration records, or self-validate. The application reconciles matrix counts and completeness mathematically.',"
+          new="12:'Verify each current execution independently. Produce one substantive verification proposal for every currently missing required REQ_ID × RUN_ID × TEST_ID triple in the current operation scope, preserving verifier and verifier-context identity, independence status, inputs, procedure, expected result, observed result, exact evidence, SATISFIED/VIOLATED/UNDETERMINED, defect reference where applicable, and reason for UNDETERMINED. Never repeat an already-current triple, substitute wrong-version or wrong-iteration records, or self-validate. If the complete missing matrix cannot fit within the declared response resource limits, return the next deterministic non-overlapping batch in REQ_ID, RUN_ID, TEST_ID order; after accepted ingestion the application will regenerate this same stage with current completed triples and the process continues until the matrix is complete. The application reconciles matrix counts and completeness mathematically and the stage cannot complete from a partial batch.',"
+          if old not in s: raise SystemExit('Stage 12 procedure anchor missing')
+          s=s.replace(old,new,1)
+          old="function boundedCollection(state,collection,scope={}){\n const selected=selectedContextRecords(state,collection,scope);if(!selected.length)return 'NONE';\n return show({totalSelected:selected.length,records:selected.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})),omitted:0,selectionRule:'Only active records matching the explicit operation read contract and controlling prompt scope are selected; large artifact bytes are referenced by canonical artifact identity.'});\n}"
+          new="function boundedCollection(state,collection,scope={},options={}){\n const selected=selectedContextRecords(state,collection,scope);if(!selected.length)return 'NONE';\n const compactVerification=options.compactVerification===true&&collection==='verification';\n const records=compactVerification?selected.map(record=>({id:recordId(record,collection),scope:record.scope||{},triple:{REQ_ID:record?.fields?.REQ_ID??record?.REQ_ID??null,RUN_ID:record?.fields?.RUN_ID??record?.RUN_ID??null,TEST_ID:record?.fields?.TEST_ID??record?.TEST_ID??null},relationships:record.relationships||{},determination:record?.fields?.DETERMINATION??record?.DETERMINATION??null,contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})):selected.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'}));\n return show({totalSelected:selected.length,records,omitted:0,selectionRule:compactVerification?'Current accepted verification records are represented as a compact completion manifest so continuation batches can avoid duplicate REQ_ID × RUN_ID × TEST_ID work without replaying full verification prose.':'Only active records matching the explicit operation read contract and controlling prompt scope are selected; large artifact bytes are referenced by canonical artifact identity.'});\n}"
+          if old not in s: raise SystemExit('boundedCollection anchor missing')
+          s=s.replace(old,new,1)
+          old="const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);for(const collection of op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\\n${boundedCollection(state,collection,scope)}`);"
+          new="const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);for(const collection of op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]){const compactVerification=collection==='verification'&&(stage===12||((stage===17||stage===19)&&operation==='VERIFY'));parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\\n${boundedCollection(state,collection,scope,{compactVerification})}`);}"
+          if old not in s: raise SystemExit('contextFor collection loop anchor missing')
+          s=s.replace(old,new,1)
+          anchor="- Before substantive work, determine whether the combined human input, current canonical application context, prior accepted output, evidence, supplied artifacts, and actually available tools are sufficient for this specific stage and domain. Sufficiency is a reasoned stage-specific determination, not a hard-coded field count."
+          addition=anchor+"\n- Verification-matrix work is continuation-safe: when the currently missing REQ_ID × RUN_ID × TEST_ID records cannot fit within the declared response limits, return the next deterministic non-overlapping batch in REQ_ID, RUN_ID, TEST_ID order. Accepted current triples are supplied as a compact completion manifest; do not repeat them. A partial batch never satisfies the application-derived completeness gate."
+          if anchor not in s: raise SystemExit('Mandatory response rule anchor missing')
+          s=s.replace(anchor,addition,1)
+          p.write_text(s)
+
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          anchor="if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');\n"
+          proof="if(!schema.operationContract(12,'COMPLETE').readCollections.includes('verification'))throw new Error('Stage 12 continuation prompts cannot see accepted verification progress.');\nfor(const stage of [17,19])if(!schema.operationContract(stage,'VERIFY').readCollections.includes('verification'))throw new Error(`Stage ${stage} VERIFY continuation prompts cannot see accepted verification progress.`);\n"
+          if anchor not in s: raise SystemExit('Semantic proof anchor missing')
+          s=s.replace(anchor,anchor+proof,1)
+          anchor="if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 completion language is not the exact verification triple.');"
+          proof="{\n const p=baseProject();\n const complete={id:'VERIFICATION-CONTINUATION',stage:12,active:true,scope:{requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001'},fields:{REQ_ID:'REQ-000001',RUN_ID:'RUN-000001',TEST_ID:'TEST-000001',DETERMINATION:'SATISFIED',EXACT_EVIDENCE:'large prose that must not be replayed in a continuation prompt'}};p.projectData.verification.push(complete);\n const r=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'});\n if(!r.prompt.includes('currently missing required REQ_ID × RUN_ID × TEST_ID')||!r.prompt.includes('deterministic non-overlapping batch')||!r.prompt.includes('compact completion manifest'))throw new Error('Stage 12 prompt lacks bounded verification continuation semantics.');\n if(!r.prompt.includes('VERIFICATION-CONTINUATION')||!r.prompt.includes('REQ-000001')||!r.prompt.includes('RUN-000001')||!r.prompt.includes('TEST-000001'))throw new Error('Stage 12 continuation prompt omits accepted triple identity.');\n if(r.prompt.includes('large prose that must not be replayed'))throw new Error('Stage 12 continuation prompt replays full prior verification prose instead of compact progress.');\n}\n"
+          if anchor not in s: raise SystemExit('Stage 12 semantic test anchor missing')
+          s=s.replace(anchor,proof+anchor,1)
+          p.write_text(s)
+
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob_sha(name):
+              data=Path(name).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          manifest=''.join(f'{name}:{blob_sha(name)}\n' for name in runtime_files).encode()
+          token='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
+          html=Path('index.html').read_text()
+          for name in runtime_files:
+              pattern=rf'(<script defer src="{re.escape(name)}\?v=)[^"]+("></script>)'
+              html,count=re.subn(pattern,lambda m:m.group(1)+token+m.group(2),html,count=1)
+              if count!=1: raise SystemExit(f'Runtime script token anchor missing for {name}')
+          Path('index.html').write_text(html)
+          print(token)
+          PY
+      - name: Verify exact correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-batch-current-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only green permanent source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-time-verification-batching-current.yml
+          git add workflow-schema.js prompt-engine.js verify-prompt-semantics.mjs index.html
+          git commit -m 'Make verification matrices continuation-safe'
+          git push origin HEAD:reliability/verification-batching-current-20260826
