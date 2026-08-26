@@ -1,0 +1,55 @@
+name: Apply semantic and operator closure v2
+'on':
+  push:
+    branches: [practical-100/semantic-operator-closure]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/semantic-operator-closure
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded transformer and explicit type
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('.github/workflows/semantic-operator-closure.yml').read_text()
+          start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
+          end=source.index("\n          PY\n",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
+          exec(compile(code,'semantic-operator-transform.py','exec'),{})
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old='"KNOWN_AUTHORITATIVE_SOURCES":{"closedProperties":null,"enumValues":[],"normalizerKey":null,"nullable":false,"valueType":"STRING"},"PROHIBITED_ACTIONS"'
+          new='"KNOWN_AUTHORITATIVE_SOURCES":{"closedProperties":null,"enumValues":[],"normalizerKey":null,"nullable":false,"valueType":"STRING"},"DESIRED_SOURCE_COUNT":{"closedProperties":null,"enumValues":[],"normalizerKey":null,"nullable":true,"valueType":"INTEGER"},"PROHIBITED_ACTIONS"'
+          if s.count(old)!=1: raise SystemExit(f'DESIRED_SOURCE_COUNT explicit type insertion expected 1 match, found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Verify source and lifecycle
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-prompt-semantics.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit verified source and remove one-time workflows
+        run: |
+          rm .github/workflows/semantic-operator-closure.yml .github/workflows/semantic-operator-closure-v2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close semantic recovery and operator workflow gaps"
+          git push origin HEAD:practical-100/semantic-operator-closure
