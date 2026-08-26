@@ -62,7 +62,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
     const run=record('runs',11,{ITERATION_ID:'ITERATION-STAGE11',CANDIDATE_ID:'CANDIDATE-STAGE11',CONTEXT_ID:`CONTEXT-STAGE11-${i}`,CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:`output-${i}`},`RUN-STAGE11-${i}`);
     run.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.runs.push(run);
     const context=record('freshContexts',11,{EXTERNAL_CONTEXT_IDENTIFIER:`external-stage11-${i}`,ITERATION_ID:'ITERATION-STAGE11',RUN_ID:`RUN-STAGE11-${i}`},`CONTEXT-STAGE11-${i}`);context.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.freshContexts.push(context);
-    p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});
+    const rawId=`RAW-STAGE11-${i}`,changeId=`CHANGE-STAGE11-${i}`;p.projectData.rawResponses.push({rawResponseId:rawId,stage:11,promptScope:{iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11',runId:`RUN-STAGE11-${i}`,contextId:`CONTEXT-STAGE11-${i}`}});p.projectData.acceptedChanges.push({changeId,stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:rawId});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11,iteration:'ITERATION-STAGE11',runId:`RUN-STAGE11-${i}`,acceptedCanonicalChangeId:changeId});
   }
   const stage11=engine.gate(11,p);assert(stage11.complete,`Stage 11 incorrectly depends on Stage 12 verification data: ${stage11.reasons.join('; ')}`);
   const stage12=engine.gate(12,p);assert(!stage12.complete&&stage12.reasons.some(r=>/REQ × RUN × TEST|coverage/i.test(r)),'Stage 12 completed without verification triples.');
@@ -119,3 +119,13 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 
 console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
+
+
+// Ten responses for one RUN_ID must not satisfy ten-run evidence preservation.
+{
+  const p=project('JOB-RUN-EVIDENCE-COVERAGE');p.job.CURRENT_ITERATION='ITERATION-RUN-COVERAGE';
+  const iteration=record('iterations',11,{CANDIDATE_ID:'CANDIDATE-RUN-COVERAGE',STATUS:'FROZEN'},'ITERATION-RUN-COVERAGE');iteration.scope={iterationId:'ITERATION-RUN-COVERAGE',candidateId:'CANDIDATE-RUN-COVERAGE'};p.projectData.iterations.push(iteration);
+  for(let i=0;i<10;i++){const runId=`RUN-COVER-${i}`,ctxId=`CTX-COVER-${i}`,run=record('runs',11,{ITERATION_ID:'ITERATION-RUN-COVERAGE',CANDIDATE_ID:'CANDIDATE-RUN-COVERAGE',CONTEXT_ID:ctxId,CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:`out-${i}`},runId);run.scope={iterationId:'ITERATION-RUN-COVERAGE',candidateId:'CANDIDATE-RUN-COVERAGE',runId,contextId:ctxId};p.projectData.runs.push(run);const ctx=record('freshContexts',11,{EXTERNAL_CONTEXT_IDENTIFIER:`external-${i}`,ITERATION_ID:'ITERATION-RUN-COVERAGE',RUN_ID:runId},ctxId);ctx.scope={iterationId:'ITERATION-RUN-COVERAGE',candidateId:'CANDIDATE-RUN-COVERAGE',runId,contextId:ctxId};p.projectData.freshContexts.push(ctx);}
+  for(let i=0;i<10;i++){const rawId=`RAW-DUP-${i}`,changeId=`CHANGE-DUP-${i}`;p.projectData.rawResponses.push({rawResponseId:rawId,stage:11,promptScope:{iterationId:'ITERATION-RUN-COVERAGE',candidateId:'CANDIDATE-RUN-COVERAGE',runId:'RUN-COVER-0',contextId:'CTX-COVER-0'}});p.projectData.acceptedChanges.push({changeId,stage:11,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:rawId});p.projectData.outputReceipts.push({receiptId:`RECEIPT-DUP-${i}`,stage:11,iteration:'ITERATION-RUN-COVERAGE',runId:'RUN-COVER-0',acceptedCanonicalChangeId:changeId});}
+  const ev=engine.evaluateIteration(p,'ITERATION-RUN-COVERAGE','INITIAL');if(ev.complete||!ev.reasons.some(r=>/every RUN_ID/.test(r)))throw new Error('Ten stage-level responses/receipts for one run falsely satisfied iteration evidence coverage.');
+}

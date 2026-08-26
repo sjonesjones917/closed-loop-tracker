@@ -98,3 +98,25 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
 {const p=baseProject();p.revision=0;const a=prompts.buildPromptRecord(17,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}});engine.registerGeneratedPrompt(p,a);p.revision=1;const b=prompts.buildPromptRecord(17,{...p,revision:2},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}});engine.registerGeneratedPrompt(p,b);const active=p.projectData.generatedPrompts.filter(x=>!x.invalidatedBy);if(!active.some(x=>x.instructionId===a.instructionId)||!active.some(x=>x.instructionId===b.instructionId))throw new Error('Independent run prompt was superseded.');}
 // Desired source count participates in controlled User Job Input identity.
 {const p=baseProject();p.job.DESIRED_SOURCE_COUNT=5;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');const before=p.job.CURRENT_INPUT_VERSION;p.job.DESIRED_SOURCE_COUNT=9;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');if(p.job.CURRENT_INPUT_VERSION===before)throw new Error('Desired source count did not version User Job Input.');}
+
+
+// Feasible specification fallback and Stage 15 temporal scope are explicit.
+{
+  const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='Implement a repository-scale system that is not directly writable from the current agent environment.';
+  const s1=prompts.buildPromptRecord(1,p).prompt,s21=prompts.buildPromptRecord(21,p).prompt;
+  if(!/implementation-ready specification/i.test(s1)||!/human intent confirmation/i.test(s1))throw new Error('Stage 01 does not establish a feasible specification fallback for human confirmation.');
+  if(!/approved Stage 01 deliverable/i.test(s21)||!/do not claim repository implementation occurred/i.test(s21))throw new Error('Stage 21 does not honor the approved specification deliverable boundary.');
+  if(core.STAGES[14].fields.includes('POST_CORRECTION_SUCCESSES_PROVEN'))throw new Error('Stage 15 still exposes future post-correction success as current-stage state.');
+  if(fs.readFileSync('workbook.js','utf8').includes('function buildStagePrompt('))throw new Error('workbook.js still contains a competing legacy prompt generator.');
+}
+
+// Refining an accepted response must carry the exact operator reason into the next controlling prompt and identity.
+{
+  const p=baseProject(),first=prompts.buildPromptRecord(2,p);p.projectData.generatedPrompts.push({...first,generatedAt:new Date().toISOString()});
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-REFINE',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-REFINE',proposalId:'PROPOSAL-REFINE',promptId:first.instructionId});
+  p.projectData.responseProposals.push({proposalId:'PROPOSAL-REFINE',promptId:first.instructionId,stage:2,scope:first.scope,envelope:{operation:first.operation,scope:first.scope}});
+  engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason:'Add the missing authoritative source and explain the source-role distinction.',operatorLabel:'VERIFY'});
+  const preview=JSON.parse(JSON.stringify(p));preview.revision=Number(p.revision||0)+1;const next=prompts.buildPromptRecord(2,preview);
+  if(!next.prompt.includes('Add the missing authoritative source and explain the source-role distinction.'))throw new Error('Accepted-result refinement reason is absent from the next prompt.');
+  if(next.contextSignature===first.contextSignature)throw new Error('Accepted-result refinement did not change context identity.');
+}
