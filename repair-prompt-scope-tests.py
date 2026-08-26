@@ -5,6 +5,15 @@ new="""function syntheticPromptOptions(stage,p){const operation=schema.STAGE_CON
 const generated=[];
 for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));generated.push(record.prompt);"""
 if s.count(old)!=1: raise SystemExit(f'verify prompt loop anchor mismatch: {s.count(old)}')
+s=s.replace(old,new,1);p.write_text(s)
+
+p=Path('verify-ingestion.mjs');s=p.read_text()
+old="function savePrompt(p,stage){\n  const options=stage===19?{operation:'COMPARE'}:{};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+new="function savePrompt(p,stage){\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+if s.count(old)!=1: raise SystemExit(f'ingestion savePrompt anchor mismatch: {s.count(old)}')
 s=s.replace(old,new,1)
-p.write_text(s)
+old="if(stage<30){const nextPrompt=prompts.buildPromptRecord(stage+1,reloaded).prompt;if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`)||!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${stage+1} prompt did not consume accepted prior-stage context.`);}"
+new="if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{};const nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt;if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`)||!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
+if s.count(old)!=1: raise SystemExit(f'ingestion nextPrompt anchor mismatch: {s.count(old)}')
+s=s.replace(old,new,1);p.write_text(s)
 Path('repair-prompt-scope-tests.py').unlink(missing_ok=True)
