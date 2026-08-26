@@ -19,43 +19,32 @@ jobs:
       - name: Apply proved integrity closure without regressing operator recovery
         shell: bash
         run: |
-          git show c72ed2b16362fc663028bbc12fc87e7e1c346c15:.github/workflows/final-integrity-authority-repair.yml > /tmp/original-repair.yml
-          python3 - <<'PY'
-          from pathlib import Path
-          y=Path('/tmp/original-repair.yml').read_text()
-          body=y.split("python3 - <<'PY'\n",1)[1].split("\n          PY",1)[0]
-          lines=[]; skipping=False
-          for line in body.splitlines():
-              line=line[10:] if line.startswith('          ') else line
-              if line.strip()=="# Generic current and historical record-integrity assertion before final output.": skipping=True; continue
-              if skipping:
-                  if line.strip()=="p.write_text(s)": lines.append(line); skipping=False
-                  continue
-              lines.append(line)
-          Path('/tmp/repair.py').write_text('\n'.join(lines)+'\n')
-          PY
-          python3 /tmp/repair.py
+          cp workflow-engine.js /tmp/engine-after-210.js
+          git checkout 32202649fb159045cf6dec955c702182167364ca -- project-store.js response-ingestion.js workflow-schema.js workflow-engine.js verify-full-cycle.mjs
           python3 - <<'PY'
           from pathlib import Path
           import re
-
-          # Preserve PR #210's idempotent/fail-closed reservation while adding exact
-          # iteration/candidate binding and canonical run/context scopes from the integrity repair.
-          p=Path('workflow-engine.js'); s=p.read_text()
+          def one(s,old,new,label):
+              if s.count(old)!=1: raise SystemExit(f'{label}: expected one anchor, found {s.count(old)}')
+              return s.replace(old,new,1)
+          pre=Path('/tmp/engine-after-210.js').read_text()
+          m=re.search(r"function resolveHumanBlocker\(.*?\n\}\nfunction registerFreshContext",pre,re.S)
+          if not m: raise SystemExit('PR210 resolveHumanBlocker function not found')
+          human=m.group(0).rsplit('function registerFreshContext',1)[0]
+          p=Path('workflow-engine.js');s=p.read_text()
+          s=one(s,'function registerFreshContext',human+'function registerFreshContext','restore human blocker resolution')
+          s=one(s,'createHumanBlocker,registerFreshContext','createHumanBlocker,resolveHumanBlocker,registerFreshContext','restore blocker export')
           pat=r"function reserveRunBatch\(project,\{stage=project\.activeStage,iterationId=null,candidateId=null,count=10\}=\{\}\)\{.*?\n\}\nfunction registerArtifactBytes"
-          repl="""function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){
-  ensureShape(project);if(count!==10)throw new Error('Run batches must contain exactly ten slots.');const resolvedIteration=String(iterationId||project.job.CURRENT_ITERATION||'');if(!resolvedIteration)throw new Error('A current iteration is required before reserving runs.');const stageNumber=Number(stage),iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===resolvedIteration&&isActiveRecord(r));if(!iteration)throw new Error('The requested current iteration does not exist or is inactive.');const iterationCandidate=iterationCandidateId(project,resolvedIteration),resolvedCandidate=String(candidateId||iterationCandidate||'');if(!resolvedCandidate)throw new Error('A frozen candidate is required before reserving runs.');if(iterationCandidate&&resolvedCandidate!==iterationCandidate)throw new Error('The requested candidate does not match the current iteration candidate.');const candidate=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===resolvedCandidate&&isActiveRecord(r));if(!candidate||!candidateComponentIdentity(project,resolvedCandidate))throw new Error('The current iteration must resolve to one active frozen candidate with application-computed component hashes.');const iterationScope=scopeForIteration(project,resolvedIteration),existingRuns=records(project,'runs').filter(run=>Number(run.stage)===stageNumber&&String(recordValue(run,'ITERATION_ID')||run.scope?.iterationId||'')===resolvedIteration);
-  if(existingRuns.length){if(existingRuns.length!==count)throw new Error(`The current Stage ${String(stageNumber).padStart(2,'0')} iteration already contains ${existingRuns.length} active run slots; expected exactly ${count}. Resolve the partial or contradictory batch instead of allocating more.`);const existing=existingRuns.map(run=>{const runId=recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''),runCandidate=String(recordValue(run,'CANDIDATE_ID')||run.scope?.candidateId||'');if(runCandidate!==resolvedCandidate)throw new Error(`Existing run ${runId} is bound to the wrong candidate.`);if(String(run.scope?.iterationId||'')!==resolvedIteration||String(run.scope?.candidateId||'')!==resolvedCandidate||String(run.scope?.runId||'')!==runId||String(run.scope?.contextId||'')!==contextId)throw new Error(`Existing run ${runId} has contradictory execution scope.`);const context=records(project,'freshContexts').find(item=>recordId(item,'freshContexts')===contextId&&String(recordValue(item,'ITERATION_ID')||item.scope?.iterationId||'')===resolvedIteration&&isActiveRecord(item));if(!context)throw new Error(`Existing run ${runId} does not resolve to its active fresh-context slot.`);if(String(context.scope?.candidateId||'')!==resolvedCandidate||String(context.scope?.runId||'')!==runId||String(context.scope?.contextId||'')!==contextId)throw new Error(`Existing context ${contextId} has contradictory execution scope.`);return {runId,contextId};});if(new Set(existing.map(item=>item.contextId)).size!==count)throw new Error('The existing run batch does not contain ten distinct active context slots.');return existing;}
-  const created=[];for(let i=0;i<count;i++){const context=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:'UNASSIGNED',ROLE:core.STAGES[stageNumber-1]?.role||'UNKNOWN',ITERATION_ID:resolvedIteration,RUN_ID:'PENDING',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE',EVIDENCE:'Application-reserved context slot.',USABILITY_DETERMINATION:'PENDING'},{stage:stageNumber,source:'APPLICATION_RESERVATION',scope:iterationScope});const run=commandRecord(project,'runs',{ITERATION_ID:resolvedIteration,CANDIDATE_ID:resolvedCandidate,CONTEXT_ID:context.id,FRESH_CONTEXT_RECORD:context.id,CONTAMINATION_CHECK:'PENDING',TOOL_CONFIGURATION:'PENDING',EXECUTION_STATUS:'RESERVED',COMPLETE_OUTPUT:''},{stage:stageNumber,source:'APPLICATION_RESERVATION',scope:{...iterationScope,contextId:context.id}});context.fields.RUN_ID=context.RUN_ID=run.id;context.scope={...iterationScope,runId:run.id,contextId:context.id};run.scope={...iterationScope,runId:run.id,contextId:context.id};refreshRecordHashes(context,'freshContexts');refreshRecordHashes(run,'runs');created.push({runId:run.id,contextId:context.id});}
-  addHistory(project,'RUN_BATCH_RESERVED',{stage:stageNumber,iterationId:resolvedIteration,candidateId:resolvedCandidate,count,slots:created});recalculate(project);return created;
-}
-function registerArtifactBytes"""
-          s,n=re.subn(pat,repl,s,count=1,flags=re.S)
-          if n!=1: raise SystemExit(f'combined reserveRunBatch replacement failed: {n}')
+          m=re.search(pat,s,re.S)
+          if not m: raise SystemExit('integrity reserveRunBatch not found')
+          fn=m.group(0)
+          anchor="const iterationScope=scopeForIteration(project,resolvedIteration);\n  const created=[];"
+          inject="const iterationScope=scopeForIteration(project,resolvedIteration),stageNumber=Number(stage),existingRuns=records(project,'runs').filter(run=>Number(run.stage)===stageNumber&&String(recordValue(run,'ITERATION_ID')||run.scope?.iterationId||'')===resolvedIteration);\n  if(existingRuns.length){if(existingRuns.length!==count)throw new Error(`The current Stage ${String(stageNumber).padStart(2,'0')} iteration already contains ${existingRuns.length} active run slots; expected exactly ${count}. Resolve the partial or contradictory batch instead of allocating more.`);const existing=existingRuns.map(run=>{const runId=recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''),runCandidate=String(recordValue(run,'CANDIDATE_ID')||run.scope?.candidateId||'');if(runCandidate!==resolvedCandidate)throw new Error(`Existing run ${runId} is bound to the wrong candidate.`);if(String(run.scope?.iterationId||'')!==resolvedIteration||String(run.scope?.candidateId||'')!==resolvedCandidate||String(run.scope?.runId||'')!==runId||String(run.scope?.contextId||'')!==contextId)throw new Error(`Existing run ${runId} has contradictory execution scope.`);const context=records(project,'freshContexts').find(item=>recordId(item,'freshContexts')===contextId&&String(recordValue(item,'ITERATION_ID')||item.scope?.iterationId||'')===resolvedIteration&&isActiveRecord(item));if(!context)throw new Error(`Existing run ${runId} does not resolve to its active fresh-context slot.`);if(String(context.scope?.candidateId||'')!==resolvedCandidate||String(context.scope?.runId||'')!==runId||String(context.scope?.contextId||'')!==contextId)throw new Error(`Existing context ${contextId} has contradictory execution scope.`);return {runId,contextId};});if(new Set(existing.map(item=>item.contextId)).size!==count)throw new Error('The existing run batch does not contain ten distinct active context slots.');return existing;}\n  const created=[];"
+          if fn.count(anchor)!=1: raise SystemExit('reserve idempotency insertion anchor mismatch')
+          fn=fn.replace(anchor,inject,1).replace('core.STAGES[Number(stage)-1]','core.STAGES[stageNumber-1]').replace('{stage,source:\'APPLICATION_RESERVATION\'','{stage:stageNumber,source:\'APPLICATION_RESERVATION\'').replace("addHistory(project,'RUN_BATCH_RESERVED',{stage,iterationId:","addHistory(project,'RUN_BATCH_RESERVED',{stage:stageNumber,iterationId:")
+          s=s[:m.start()]+fn+s[m.end():]
           p.write_text(s)
-
-          # Stage 29 fixture must be in current canonical scope.
-          p=Path('verify-complete.mjs'); s=p.read_text()
+          p=Path('verify-complete.mjs');s=p.read_text()
           a="const p=project('JOB-CHAIN');p.projectData.requirements.push(record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement'"
           if s.count(a)==1:
               s=s.replace(a,"const p=project('JOB-CHAIN');const req=record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement'",1)
@@ -66,24 +55,6 @@ function registerArtifactBytes"""
           old="let p=project('JOB-SCOPED-ACCEPTED-REFINEMENT'),stage=11;p.job.CURRENT_ITERATION='ITERATION-REFINE';\n const slots=engine.reserveRunBatch(p,{stage,iterationId:'ITERATION-REFINE',candidateId:'CANDIDATE-REFINE',count:10});"
           new="let p=project('JOB-SCOPED-ACCEPTED-REFINEMENT'),stage=11;const bytes=new TextEncoder().encode('refinement-candidate');engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-REFINE',filename:'refine.bin',mediaType:'application/octet-stream',byteSize:bytes.byteLength,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'});const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');\n const slots=engine.reserveRunBatch(p,{stage,iterationId,count:10});for(const slot of slots){const run=engine.records(p,'runs').find(r=>engine.recordId(r,'runs')===slot.runId);assert(engine.recordValue(run,'CANDIDATE_ID')===candidateId,'Scoped refinement fixture did not reserve the canonical iteration candidate.');}"
           if s.count(old)==1:s=s.replace(old,new,1)
-          p.write_text(s)
-
-          # Exact application-owned values need exact structural types.
-          p=Path('workflow-schema.js'); s=p.read_text()
-          s=s.replace("const VALUE_TYPES=Object.freeze(['STRING','INTEGER','NUMBER','BOOLEAN','STRING_ARRAY','REFERENCE','REFERENCE_ARRAY','OBJECT']);","const VALUE_TYPES=Object.freeze(['STRING','INTEGER','NUMBER','BOOLEAN','STRING_ARRAY','REFERENCE','REFERENCE_ARRAY','OBJECT','OBJECT_ARRAY']);")
-          head,sep,tail=s.partition('const EXPLICIT_RECORD_FIELD_TYPES=Object.freeze(')
-          if not sep: raise SystemExit('record type registry missing')
-          changes={'COMPONENT_MANIFEST':'OBJECT_ARRAY','COMPONENT_VERSIONS':'OBJECT','IMMUTABLE_LOCATIONS':'STRING_ARRAY','APPROVED_VERSIONS':'OBJECT','IMMUTABLE_ARTIFACT_RECORDS':'STRING_ARRAY'}
-          for field,t in changes.items():
-              old=f'"{field}":{{"closedProperties":null,"enumValues":[],"normalizerKey":null,"nullable":false,"valueType":"STRING"}}';new=f'"{field}":{{"closedProperties":null,"enumValues":[],"normalizerKey":null,"nullable":false,"valueType":"{t}"}}'
-              if tail.count(old)==1:tail=tail.replace(old,new,1)
-              elif new not in tail:raise SystemExit(f'{field} type not found in expected old/new state')
-          p.write_text(head+sep+tail)
-
-          p=Path('response-ingestion.js'); s=p.read_text();old="else if(t==='OBJECT'&&!object(value))issues.push(issue('WRONG_VALUE_TYPE',path,'Expected OBJECT.'));";new="else if(t==='OBJECT'&&!object(value))issues.push(issue('WRONG_VALUE_TYPE',path,'Expected OBJECT.'));else if(t==='OBJECT_ARRAY'&&(!Array.isArray(value)||value.some(v=>!object(v))))issues.push(issue('WRONG_VALUE_TYPE',path,'Expected OBJECT_ARRAY.'));";s=s.replace(old,new,1) if old in s and new not in s else s;p.write_text(s)
-          p=Path('verify-full-cycle.mjs'); s=p.read_text();old="case 'STRING_ARRAY':case 'REFERENCE_ARRAY':return Array.isArray(value)&&value.every(item=>typeof item==='string');case 'OBJECT':return value!==null&&typeof value==='object'&&!Array.isArray(value);default:return false;";new="case 'STRING_ARRAY':case 'REFERENCE_ARRAY':return Array.isArray(value)&&value.every(item=>typeof item==='string');case 'OBJECT':return value!==null&&typeof value==='object'&&!Array.isArray(value);case 'OBJECT_ARRAY':return Array.isArray(value)&&value.every(item=>item!==null&&typeof item==='object'&&!Array.isArray(item));default:return false;";s=s.replace(old,new,1) if old in s else s
-          integrity="for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of p.projectData[collection]||[]){if(record.recordSha256)assert(record.recordSha256===hash.recordSha256(record),`${collection} ${engine.recordId(record,collection)} has a stale recordSha256.`);if(record.contentSha256)assert(record.contentSha256===hash.contentRecordSha256(record,definition.idField),`${collection} ${engine.recordId(record,collection)} has a stale contentSha256.`);}\n"
-          if integrity not in s:s+='\n'+integrity
           p.write_text(s)
           PY
           rm -f .github/workflows/replay-integrity-after-210.yml
