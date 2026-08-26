@@ -1,0 +1,37 @@
+name: Apply exact response contract
+on:
+  push:
+    branches:
+      - semantic-reliability/exact-response-contract
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 .exact-response-contract.py
+      - name: Verify deterministic, semantic, and browser acceptance
+        run: |
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit clean source-only result
+        run: |
+          rm -f .exact-response-contract.py .github/workflows/apply-exact-response-contract.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Make response contracts exact and placeholder-free'
+          git push origin HEAD:semantic-reliability/exact-response-contract
