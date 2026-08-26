@@ -1,0 +1,35 @@
+name: Restore specialist prompt semantics
+on:
+  push:
+    branches:
+      - semantic-reliability/restore-specialist-prompts
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 .restore-specialist-prompts.py
+      - name: Verify full deterministic lifecycle, prompt semantics, and browser behavior
+        run: |
+          node --check prompt-engine.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-browser.mjs
+      - name: Commit clean source-only result
+        run: |
+          rm -f .restore-specialist-prompts.py .github/workflows/apply-restore-specialist-prompts.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Restore specialist stage prompt semantics'
+          git push origin HEAD:semantic-reliability/restore-specialist-prompts
