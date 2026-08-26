@@ -1116,7 +1116,7 @@ function authorizeMutation({fieldDefinition,actor,mutationType}){
   return {authorized:true,reason:'AUTHORIZED'};
 }
 
-const TARGET_PRODUCT_REFERENCE_PATTERN=/(?:closed-loop-tracker|current\s+application|existing\s+application|target\s+product|repository\s+file|source\s+code|app-core\.js|workbook\.js|prompt-engine\.js|TEST_PROJECT\.json|github\.com\/sjonesjones917\/closed-loop-tracker)/i;
+const TARGET_PRODUCT_REFERENCE_PATTERN=/(?:closed-loop-tracker|current\s+application|existing\s+application|target\s+product|current\s+ui|target\s+screenshot|app-core\.js|workbook\.js|prompt-engine\.js|TEST_PROJECT\.json|github\.com\/sjonesjones917\/closed-loop-tracker)/i;
 function sourceClassificationIssues(fields={}){
   const issues=[];
   const combined=Object.values(fields).join(' ');
@@ -1124,7 +1124,6 @@ function sourceClassificationIssues(fields={}){
   if(!String(fields.TITLE||'').trim())issues.push('Source title is required.');
   if(!String(fields.ISSUING_ORGANIZATION_OR_AUTHOR||'').trim())issues.push('Issuing organization or author is required.');
   if(!String(fields.URL_REFERENCE||'').trim())issues.push('An external URL or formal reference is required.');
-  if(/(?:repository|source code|current ui|existing implementation|target screenshot)/i.test(String(fields.SOURCE_TYPE||'')))issues.push('Source type describes an implementation artifact rather than independent external authority.');
   return issues;
 }
 

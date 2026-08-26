@@ -239,10 +239,15 @@ function gate(stage,project){
       if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}
       requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;
     }
-    case 4:
+    case 4:{
       requireAccepted();requireCount('requirements',1);
-      for(const req of collection('requirements'))for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: ${name} is missing.`);
+      for(const req of collection('requirements')){
+        for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: ${name} is missing.`);
+        const sourceId=String(recordValue(req,'SOURCE_ID')||req.relationships?.SOURCE_ID||'').trim(),userRelationship=String(recordValue(req,'USER_INPUT_RELATIONSHIP')||'').trim();
+        if(!sourceId&&!userRelationship)reasons.push(`${recordId(req,'requirements')}: requirement lacks source provenance or an explicit User Job Input relationship.`);
+      }
       break;
+    }
     case 5:
       requireAccepted();
       if(collection('requirementResolutions').some(record=>['OPEN','UNRESOLVED','BLOCKED','UNKNOWN'].includes(upper(recordValue(record,'STATUS')))))reasons.push('A requirement-set defect remains unresolved.');
