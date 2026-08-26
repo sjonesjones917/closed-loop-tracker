@@ -1,0 +1,49 @@
+name: Current-main current-job authority boundary fix
+on:
+  push:
+    branches:
+      - fix/current-job-prompt-boundary-current-20260826
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/current-job-prompt-boundary-current-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply current-job authority correction
+        run: python3 .current-job-boundary-fix.py
+      - name: Deterministic verification
+        run: |
+          node build-test-project.mjs
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium verification
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified permanent correction
+        run: |
+          git config user.name 'closed-loop semantic verifier'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/current-job-boundary-fix.yml .current-job-boundary-fix.py
+          git add prompt-engine.js verify-prompt-semantics.mjs TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt index.html
+          git diff --cached --check
+          git commit -m 'Keep template directives out of current-job authority'
+          git push origin HEAD:fix/current-job-prompt-boundary-current-20260826
