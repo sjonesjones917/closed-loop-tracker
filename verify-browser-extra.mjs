@@ -43,6 +43,8 @@ async function main(){
   console.log('extra:blob-persistence');
   const blobProof=await evalValue(cdp,`(async()=>{const store=globalThis.closedLoopProjectStore,hash=globalThis.closedLoopHash,jobId=${JSON.stringify(newest.job.JOB_ID)},artifactId='ARTIFACT-BROWSER-BLOB';const blob=new Blob([new TextEncoder().encode('blob-proof')],{type:'text/plain'});const saved=await store.putArtifact({artifactId,jobId,blob,filename:'blob-proof.txt',mediaType:'text/plain',lineage:{test:'browser-extra'}});const read=await store.getArtifact(artifactId),actual=await hash.sha256Bytes(await read.blob.arrayBuffer());return {byteSize:read.byteSize,stored:saved.sha256,actual,filename:read.filename};})()`);
   assert(blobProof?.byteSize===10&&blobProof.stored===blobProof.actual&&blobProof.filename==='blob-proof.txt','Actual IndexedDB Blob bytes did not survive read-back and rehash.');
+  const artifactIdempotence=await evalValue(cdp,`(async()=>{const store=globalThis.closedLoopProjectStore,jobId=${JSON.stringify(newest.job.JOB_ID)},artifactId='ARTIFACT-BROWSER-BLOB',blob=new Blob([new TextEncoder().encode('blob-proof')],{type:'text/plain'});const again=await store.putArtifact({artifactId,jobId,blob,filename:'blob-proof.txt',mediaType:'text/plain',lineage:{test:'browser-extra-repeat'}});return {artifactId:again.artifactId,byteSize:again.byteSize,sha256:again.sha256};})()`);
+  assert(artifactIdempotence?.artifactId==='ARTIFACT-BROWSER-BLOB'&&artifactIdempotence.byteSize===10&&artifactIdempotence.sha256===blobProof.stored,'Idempotent artifact registration did not return the verified existing artifact.');
 
   console.log('extra:two-tab-cas');
   const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
@@ -68,7 +70,7 @@ async function main(){
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
-  console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,runtimeErrors:0},null,2));cdp.close();
+  console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,runtimeErrors:0},null,2));cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
 try{await main();}finally{await cleanup();}
