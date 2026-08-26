@@ -131,6 +131,8 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 
 
+assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matches the selected operation/run scope.'),'Refinement UI does not target the selected operation/run scope.');
+
 // Targeted accepted-result refinement preserves independent same-stage operation scope.
 {
   const p=project('JOB-TARGETED-REFINEMENT'),stage=17,base={iterationId:'ITERATION-TARGET',candidateId:'CANDIDATE-TARGET'},scopeA={...base,runId:'RUN-TARGET-A',contextId:'CONTEXT-TARGET-A'},scopeB={...base,runId:'RUN-TARGET-B',contextId:'CONTEXT-TARGET-B'};
