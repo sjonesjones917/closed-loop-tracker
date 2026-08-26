@@ -83,3 +83,15 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
  for(const command of ['createHumanBlocker','registerFreshContext','invalidateAcceptedResponse','recordHumanDecision','freezeCandidate','freezeBaseline','reserveRunBatch','registerArtifactBytes'])if(!engineSource.includes(`function ${command}`))throw new Error(`Engine command missing ${command}.`);
  if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);
 }
+
+
+// IMPORT_FIELD_CONTRACT_INTEGRITY
+{
+ const p=core.createBlankState('JOB-IMPORT-FIELD-CONTRACT');engine.ensureShape(p);engine.recalculate(p);
+ const id='REQ-IMPORT-TYPE-BAD',fields={REQ_ID:id,OBLIGATION:123};p.projectData.requirements.push({id,stage:4,active:true,scope:{requirementsVersion:'REQUIREMENTS-v001'},fields,...fields});
+ const badType=store.validateProjectIntegrity(p,{verifyDerived:false});
+ if(badType.valid||!badType.issues.some(x=>x.includes('OBLIGATION')&&x.includes('Expected STRING')))throw new Error('Canonical import integrity accepted a wrong-typed record field.');
+ p.projectData.requirements=[];const mirrored={REQ_ID:'REQ-IMPORT-MIRROR',OBLIGATION:'nested canonical'};p.projectData.requirements.push({id:'REQ-IMPORT-MIRROR',stage:4,active:true,scope:{requirementsVersion:'REQUIREMENTS-v001'},fields:mirrored,REQ_ID:'REQ-IMPORT-MIRROR',OBLIGATION:'contradictory top-level'});
+ const badMirror=store.validateProjectIntegrity(p,{verifyDerived:false});
+ if(badMirror.valid||!badMirror.issues.some(x=>x.includes('contradictory mirrored value for OBLIGATION')))throw new Error('Canonical import integrity accepted contradictory mirrored record values.');
+}
