@@ -279,6 +279,8 @@ function gate(stage,project){
       if(incomplete.length)reasons.push(`${incomplete.length} mandatory test definition(s) lack complete execution responsibility, capability, or artifact requirements.`);
       const unavailable=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='UNAVAILABLE');
       if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);
+      const mandatoryTestIds=new Set(mandatoryTests.map(test=>recordId(test,'tests'))),missingArtifacts=testExecutionPlan(project).missingArtifactTestIds.filter(id=>mandatoryTestIds.has(id));
+      if(missingArtifacts.length)reasons.push(`${missingArtifacts.length} mandatory test definition(s) require exact artifact bytes that are missing or no longer application-verified.`);
       break;
     }
     case 7:{
@@ -529,14 +531,17 @@ const TEST_EXECUTION_ACTIONS=Object.freeze({
 });
 function testExecutionPlan(project){
   ensureShape(project);
+  const evidenceById=new Map(records(project,'evidenceRecords').map(item=>[recordId(item,'evidenceRecords'),item]));
+  const artifactsById=new Map(records(project,'artifacts').map(item=>[recordId(item,'artifacts'),item]));
   const items=recordsForCurrentScope(project,'tests').map(test=>{
-    const mode=upper(recordValue(test,'EXECUTION_MODE'))||'UNSPECIFIED';
-    return {testId:recordId(test,'tests'),requirementId:testRequirementId(test),testType:upper(recordValue(test,'TEST_TYPE'))||'UNKNOWN',executionMode:mode,requiredCapability:String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),artifactRequirements:String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim(),operatorAction:TEST_EXECUTION_ACTIONS[mode]||'Execution responsibility is not validly classified.'};
+    const mode=upper(recordValue(test,'EXECUTION_MODE'))||'UNSPECIFIED',artifactRequirements=String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim(),artifactRequired=Boolean(artifactRequirements&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(artifactRequirements))),evidenceIds=safe(test.evidenceRefs).map(String),artifactIds=[...new Set(evidenceIds.map(id=>evidenceById.get(id)).map(item=>String(recordValue(item,'ATTACHMENT_ID')||'').trim()).filter(Boolean))],missingArtifactIds=artifactIds.filter(id=>!artifactsById.has(id)),unverifiedArtifactIds=artifactIds.filter(id=>{const artifact=artifactsById.get(id);return artifact&&upper(recordValue(artifact,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED';}),artifactReady=!artifactRequired||(artifactIds.length>0&&!missingArtifactIds.length&&!unverifiedArtifactIds.length);
+    return {testId:recordId(test,'tests'),requirementId:testRequirementId(test),testType:upper(recordValue(test,'TEST_TYPE'))||'UNKNOWN',executionMode:mode,requiredCapability:String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),artifactRequirements,artifactRequired,evidenceIds,artifactIds,missingArtifactIds,unverifiedArtifactIds,artifactReady,operatorAction:artifactRequired&&!artifactReady?'Restore or attach the exact required artifact bytes before execution. Browser-local custody does not transfer those bytes to an external executor; that exact context must actually receive them.':TEST_EXECUTION_ACTIONS[mode]||'Execution responsibility is not validly classified.'};
   });
   const counts=Object.fromEntries(Object.keys(TEST_EXECUTION_ACTIONS).map(mode=>[mode,items.filter(item=>item.executionMode===mode).length]));
   const incompleteTestIds=items.filter(item=>!TEST_EXECUTION_ACTIONS[item.executionMode]||!item.requiredCapability||!item.artifactRequirements).map(item=>item.testId);
   const unavailableTestIds=items.filter(item=>item.executionMode==='UNAVAILABLE').map(item=>item.testId);
-  return {total:items.length,counts,incompleteTestIds,unavailableTestIds,items};
+  const missingArtifactTestIds=items.filter(item=>item.artifactRequired&&!item.artifactReady).map(item=>item.testId);
+  return {total:items.length,counts,incompleteTestIds,unavailableTestIds,missingArtifactTestIds,items};
 }
 
 function operationalMetrics(project){ensureShape(project);const history=safe(project.projectData.history),validations=safe(project.projectData.responseValidations),proposals=safe(project.projectData.responseProposals),releases=safe(project.projectData.releaseRecords);return {rawResponses:safe(project.projectData.rawResponses).length,validationFailures:validations.filter(x=>x.valid===false).length,staleResponses:proposals.filter(x=>x.status==='STALE'||x.invalidatedBy).length,rejectedProposals:safe(project.projectData.rejectedResponses).length,acceptedDataChanges:safe(project.projectData.acceptedChanges).length,clarificationCycles:safe(project.projectData.humanInputAnswers).length,controlledCorrections:history.filter(x=>['ACCEPTED_RESPONSE_INVALIDATED','STAGE_AUTHORITY_CHANGED','DOWNSTREAM_INVALIDATED'].includes(x.type)).length,storageFailures:history.filter(x=>String(x.type||'').includes('STORAGE')&&String(x.type||'').includes('FAIL')).length,gateRegressions:history.filter(x=>x.type==='DOWNSTREAM_INVALIDATED').length,releaseRejections:releases.filter(x=>upper(recordValue(x,'DETERMINATION'))==='REJECTED').length,releaseBlocks:releases.filter(x=>upper(recordValue(x,'DETERMINATION'))==='BLOCKED').length};}

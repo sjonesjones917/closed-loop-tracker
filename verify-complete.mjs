@@ -33,6 +33,19 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(g.reasons.some(reason=>reason.includes('unavailable execution capability')),'Stage 06 did not fail closed on unavailable mandatory execution capability.');
 }
 
+// Stage 06 continuously rechecks exact required artifact custody from canonical evidence and current verified bytes.
+{
+  const p=project('JOB-TEST-ARTIFACT-CURRENT');
+  Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
+  const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};
+  p.projectData.requirements.push({id:'REQ-ART-1',stage:4,active:true,scope,fields:{REQ_ID:'REQ-ART-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});
+  p.projectData.tests.push({id:'TEST-ART-1',stage:6,active:true,scope:{...scope,testSuiteVersion:'TEST-SUITE-v001'},fields:{TEST_ID:'TEST-ART-1',REQ_ID:'REQ-ART-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'exact tool',ARTIFACT_REQUIREMENTS:'fixture.bin',INPUTS:'controlled',TOOLS:'exact tool',PROCEDURE:'execute',EXPECTED_RESULT:'pass',FAILURE_CONDITION:'fail',EVIDENCE_TO_PRESERVE:'report',STATUS:'READY'},relationships:{REQ_ID:'REQ-ART-1'},evidenceRefs:['EVIDENCE-ART-1']});
+  p.projectData.evidenceRecords.push({id:'EVIDENCE-ART-1',stage:6,active:true,fields:{EVIDENCE_ID:'EVIDENCE-ART-1',ATTACHMENT_ID:'ARTIFACT-ART-1',STATUS:'PRESERVED'}});
+  let plan=engine.testExecutionPlan(p);assert(plan.missingArtifactTestIds.includes('TEST-ART-1'),'A TEST with a missing canonical artifact was reported ready.');assert(engine.gate(6,p).reasons.some(reason=>reason.includes('missing or no longer application-verified')),'Stage 06 did not fail closed after required artifact bytes became unavailable.');
+  p.projectData.artifacts.push({id:'ARTIFACT-ART-1',stage:6,active:true,fields:{ARTIFACT_ID:'ARTIFACT-ART-1',AVAILABILITY:'METADATA_ONLY'}});plan=engine.testExecutionPlan(p);assert(plan.missingArtifactTestIds.includes('TEST-ART-1'),'Metadata-only artifact incorrectly satisfied TEST custody.');
+  p.projectData.artifacts[0].fields.AVAILABILITY='BYTES_PERSISTED_AND_VERIFIED';plan=engine.testExecutionPlan(p);assert(!plan.missingArtifactTestIds.includes('TEST-ART-1')&&plan.items[0].artifactIds.includes('ARTIFACT-ART-1'),'Verified current artifact bytes did not satisfy TEST custody.');
+}
+
 // Invalid canonical relationship is rejected before mutation.
 {
   const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);
