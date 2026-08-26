@@ -1,0 +1,39 @@
+name: Temporary targeted refinement repair
+on:
+  push:
+    branches: [practical-100/targeted-refinement-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/targeted-refinement-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact minimal repair
+        run: python .github/targeted-refinement-repair.py
+      - name: Syntax and deterministic proof
+        run: |
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Remove temporary repair machinery and commit only permanent delta
+        run: |
+          rm .github/targeted-refinement-repair.py .github/workflows/targeted-refinement-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js response-ingestion.js verify-ingestion.mjs .github/targeted-refinement-repair.py .github/workflows/targeted-refinement-repair.yml
+          git commit -m "Scope accepted-result refinement to exact response lane"
+          git push origin HEAD:practical-100/targeted-refinement-20260826
