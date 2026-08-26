@@ -96,3 +96,4 @@ jobs:
           test -n "$(git diff --cached --name-only)"
           git commit -m "Close exact prompt and operator semantic boundaries [semantic-closure-complete]"
           git push origin HEAD:reliability/exact-main-semantic-closure-20260826
+# trigger exact-current proof
