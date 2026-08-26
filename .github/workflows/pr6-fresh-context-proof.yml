@@ -29,7 +29,7 @@ jobs:
       - name: Verify actual external context semantics
         run: |
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm');globalThis.window=globalThis;globalThis.crypto=require('crypto').webcrypto;
+          const fs=require('fs'),vm=require('vm');globalThis.window=globalThis;globalThis.crypto=require('crypto').webcrypto;globalThis.dispatchEvent=()=>{};globalThis.Event=class Event{constructor(type){this.type=type;}};
           for(const f of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
           const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;
           const p=core.createBlankState('JOB-CONTEXT-PROOF');engine.ensureShape(p);p.job.CURRENT_ITERATION='ITERATION-000001';
@@ -56,7 +56,7 @@ jobs:
           rm -f .pr6-fresh-context-transform.py .github/workflows/pr6-fresh-context-proof.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js .pr6-fresh-context-transform.py .github/workflows/pr6-fresh-context-proof.yml
+          git add workflow-engine.js verify-complete.mjs .pr6-fresh-context-transform.py .github/workflows/pr6-fresh-context-proof.yml
           git diff --cached --check
           git commit -m 'PR 6: require actual fresh external contexts'
           git push origin HEAD:practical-100/pr6-fresh-context-proof
