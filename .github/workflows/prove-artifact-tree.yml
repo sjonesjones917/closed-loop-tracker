@@ -1,0 +1,41 @@
+name: Prove artifact tree preservation
+on:
+  push:
+    branches: [reliability/preserve-artifact-tree-20260826]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[artifact-tree-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/preserve-artifact-tree-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimum repair
+        run: python3 repair-artifact-tree.py
+      - name: Verify deterministic acceptance
+        run: |
+          node --check app-core.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify browser artifact paths and persistence
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node verify-browser-extra.mjs
+      - name: Commit exact passing source
+        run: |
+          rm repair-artifact-tree.py .github/workflows/prove-artifact-tree.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Preserve structured artifact package paths [artifact-tree-complete]"
+          git push origin HEAD:reliability/preserve-artifact-tree-20260826
