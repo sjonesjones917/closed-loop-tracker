@@ -228,3 +228,13 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  if(!root.agentStageFields.includes('ROOT_CAUSE_COMPLETED')||root.agentStageFields.includes('CORRECTIONS_COMPLETED'))throw new Error('Stage 17 ROOT_CAUSE stageData boundary is incorrect.');
  if(!freeze.agentStageFields.includes('NEW_FROZEN_VERSIONS')||freeze.agentStageFields.includes('ROOT_CAUSE_COMPLETED'))throw new Error('Stage 17 FREEZE stageData boundary is incorrect.');
 }
+
+
+// Execution-lane scope must fail closed before a controlling run prompt can exist.
+{
+ const p=baseProject();let failure=null;try{prompts.buildPromptRecord(11,p,{operation:'COMPLETE',scope:{iterationId:'ITERATION-X',candidateId:'CANDIDATE-X'}});}catch(error){failure=error;}
+ if(failure?.code!=='MISSING_REQUIRED_PROMPT_SCOPE'||!failure.missingScope?.includes('runId')||!failure.missingScope?.includes('contextId'))throw new Error('A controlling run prompt was created without its required run/context scope.');
+ const scope=prompts.scopeFor(21,p,{iterationId:'ITERATION-OVERRIDE',candidateId:'CANDIDATE-OVERRIDE',baselineId:'BASELINE-OVERRIDE',productId:'PRODUCT-OVERRIDE'});
+ for(const [key,value] of Object.entries({iterationId:'ITERATION-OVERRIDE',candidateId:'CANDIDATE-OVERRIDE',baselineId:'BASELINE-OVERRIDE',productId:'PRODUCT-OVERRIDE'}))if(scope[key]!==value)throw new Error(`Explicit application target override was ignored for ${key}.`);
+ const versionScope=prompts.scopeFor(3,p,{projectRevision:999,inputVersion:'STALE-INPUT',sourceSetVersion:'STALE-SOURCE'});if(versionScope.projectRevision!==Number(p.revision||0)||versionScope.inputVersion!==p.job.CURRENT_INPUT_VERSION||versionScope.sourceSetVersion!==p.job.CURRENT_SOURCE_SET_VERSION)throw new Error('Caller override displaced application-owned revision/version scope.');
+}
