@@ -1,0 +1,62 @@
+name: Apply exact test-execution contract repair
+on:
+  push:
+    branches: [reliability/test-execution-contract-20260826]
+permissions:
+  contents: write
+jobs:
+  apply-and-prove:
+    if: ${{ !contains(github.event.head_commit.message, '[test-execution-contract-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/test-execution-contract-20260826
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact source repair
+        run: node .apply-test-execution-contract.mjs
+      - name: Rebuild retained test project from current sources
+        run: node build-test-project.mjs
+      - name: Syntax and deterministic acceptance
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check test-fixtures.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove one-time mechanism and commit only permanent repair
+        run: |
+          rm -f .apply-test-execution-contract.mjs .github/workflows/test-execution-contract.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Complete test execution and artifact contract [test-execution-contract-applied]"
+          git push origin HEAD:reliability/test-execution-contract-20260826
