@@ -1,0 +1,57 @@
+name: Semantic supplement v2
+on:
+  push:
+    branches:
+      - practical-100/final-semantic-closure-latest
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/final-semantic-closure-latest
+          fetch-depth: 100
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recover and execute audited source patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          y=subprocess.check_output(['git','show','03e9425f19fcf6954fd5cbb8df14bfbb0f261b89:.github/workflows/semantic-supplement.yml'],text=True)
+          marker='      - name: Apply minimum semantic corrections\n        shell: python\n        run: |\n'
+          start=y.index(marker)+len(marker)
+          end=y.index('\n      - name: Syntax and deterministic proof',start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in y[start:end].splitlines())+'\n'
+          Path('/tmp/semantic-patch.py').write_text(code)
+          subprocess.run(['python3','/tmp/semantic-patch.py'],check=True)
+          PY
+      - name: Run deterministic proof
+        run: |
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Run browser proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/semantic-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit permanent changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/semantic-supplement-v2.yml
+          git add workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js build-test-project.mjs verify.mjs verify-complete.mjs verify-full-cycle.mjs .github/workflows/semantic-supplement-v2.yml
+          git commit -m "Close remaining authority and completeness gaps"
+          git push origin HEAD:practical-100/final-semantic-closure-latest
