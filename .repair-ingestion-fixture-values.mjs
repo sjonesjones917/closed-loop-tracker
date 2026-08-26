@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const path='verify-ingestion.mjs';
+let s=fs.readFileSync(path,'utf8');
+const old1="for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}";
+const new1="for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);}";
+const old2="if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}";
+const new2="if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=valueForDefinition(def.fieldDefinitions[agentField]);}";
+if(!s.includes(old1)||!s.includes(old2))throw new Error('Typed ingestion fixture anchors not found exactly.');
+s=s.replace(old1,new1).replace(old2,new2);
+fs.writeFileSync(path,s);
+console.log('Ingestion contract fixtures now honor exact schema value types.');
