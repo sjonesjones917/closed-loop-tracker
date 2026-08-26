@@ -880,7 +880,8 @@ const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({
 });
 const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
   '1':Object.freeze({DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null})}),
-  '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})})
+  '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})}),
+  '24':Object.freeze({ATTACKS_EXECUTED:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})})
 });
 function ownerFromPartition(partition,name,label){const hits=[['human',PRODUCER.HUMAN],['humanDecision',PRODUCER.HUMAN_DECISION],['agent',PRODUCER.AGENT],['application',PRODUCER.APPLICATION]].filter(([key])=>partition?.[key]?.includes(name));if(hits.length!==1)throw new Error(`${label} field ${name} must occur in exactly one ownership partition.`);return hits[0][1];}
 
@@ -1059,7 +1060,7 @@ const STAGE_COLLECTIONS=Object.freeze({
   15:['regressions','regressionExecutions'],
   16:['changes'],
   17:['iterations','candidateFreezes','runs'],
-  18:['convergenceRecords'],
+  18:[],
   19:['iterations','runs','confirmationRecords'],
   20:['baselines'],
   21:['products','artifacts'],

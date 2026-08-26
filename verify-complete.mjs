@@ -76,9 +76,42 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   const ids=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(ids.includes('REQ-CURRENT')&&!ids.includes('REQ-STALE'),'Historical scope satisfied current selector.');
   const unscoped=record('requirements',4,{OBLIGATION:'unscoped historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-UNSCOPED');delete unscoped.scope;p.projectData.requirements.push(unscoped);const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');
 }
+
+// Application-derived collections are never advertised as agent-writable.
+for(const [stage,contract] of Object.entries(schema.STAGE_CONTRACTS))for(const collection of contract.agentWritableCollections)assert(schema.RECORD_SCHEMAS[collection]?.commitPolicy!=='APPLICATION_DERIVED',`Stage ${stage} exposes application-derived ${collection} as agent-writable.`);
+assert(schema.STAGE_FIELDS[24].ATTACKS_EXECUTED.valueType==='STRING_ARRAY','Stage 24 attack-set declaration is not a typed list.');
+
+// Explicit resource identity survives prompt regeneration.
+{
+ const p=project('JOB-PROMPT-RESOURCE-SCOPE');p.job.CURRENT_ITERATION='ITERATION-CURRENT';p.job.CURRENT_BASELINE_ID='BASELINE-CURRENT';p.job.CURRENT_PRODUCT_ID='PRODUCT-CURRENT';
+ const scope=prompts.scopeFor(17,p,{iterationId:'ITERATION-SELECTED',candidateId:'CANDIDATE-SELECTED',runId:'RUN-SELECTED',contextId:'CONTEXT-SELECTED',baselineId:'BASELINE-SELECTED',productId:'PRODUCT-SELECTED'});
+ assert(scope.iterationId==='ITERATION-SELECTED'&&scope.candidateId==='CANDIDATE-SELECTED'&&scope.runId==='RUN-SELECTED'&&scope.contextId==='CONTEXT-SELECTED'&&scope.baselineId==='BASELINE-SELECTED'&&scope.productId==='PRODUCT-SELECTED','Prompt resource identity was silently replaced by global state.');
+}
+
+// Historical operation activity cannot satisfy a later repeated iteration.
+{
+ const p=project('JOB-OPERATION-ITERATION');p.projectData.acceptedChanges.push({changeId:'OLD-VERIFY',stage:19,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'VERIFY',scope:{iterationId:'ITERATION-OLD'}},{changeId:'NEW-COMPARE',stage:19,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPARE',scope:{iterationId:'ITERATION-NEW'}},{changeId:'SETUP',stage:19,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'CONFIRM_FREEZE',scope:{}});
+ const ops=engine.acceptedOperationSet(p,19,'ITERATION-NEW');assert(!ops.has('VERIFY')&&ops.has('COMPARE')&&ops.has('CONFIRM_FREEZE'),'Repeated operation proof is not iteration-scoped.');
+}
+
+// Stage 24 requires the exact declared attack set and every active historical regression.
+{
+ const p=project('JOB-STAGE24-EXACT');p.job.CURRENT_PRODUCT_ID='PRODUCT-24';p.stages[23].status='COMPLETE';p.stages[24].agentData.ATTACKS_EXECUTED=['CATEGORY-A','CATEGORY-B','HISTORICAL_REGRESSION:REG-24'];p.projectData.acceptedChanges.push({changeId:'CHANGE-24',stage:24,status:'COMMITTED',responseType:'DATA_PROPOSAL'});
+ const scope={inputVersion:p.job.CURRENT_INPUT_VERSION,productId:'PRODUCT-24'};const a=record('adversarialResults',24,{PRODUCT_ID:'PRODUCT-24',ATTACK:'CATEGORY-A',METHOD:'x',EXPECTED_BEHAVIOR:'x',ACTUAL_RESULT:'x',DETERMINATION:'SATISFIED',SEVERITY:'MINOR',EVIDENCE:'e'},'ATTACK-A');a.scope=scope;p.projectData.adversarialResults.push(a);
+ const reg=record('regressions',15,{ACTIVE_RETIRED_STATE:'ACTIVE',APPLICABILITY:'APPLICABLE'},'REG-24');reg.scope=scope;p.projectData.regressions.push(reg);
+ let g=engine.gate(24,p);assert(!g.complete&&g.reasons.some(x=>/CATEGORY-B/.test(x))&&g.reasons.some(x=>/REG-24/.test(x)),'Stage 24 accepted incomplete attack/regression coverage.');
+ const b=record('adversarialResults',24,{PRODUCT_ID:'PRODUCT-24',ATTACK:'CATEGORY-B',METHOD:'x',EXPECTED_BEHAVIOR:'x',ACTUAL_RESULT:'x',DETERMINATION:'SATISFIED',SEVERITY:'MINOR',EVIDENCE:'e'},'ATTACK-B');b.scope=scope;p.projectData.adversarialResults.push(b);const rx=record('adversarialResults',24,{PRODUCT_ID:'PRODUCT-24',ATTACK:'HISTORICAL_REGRESSION:REG-24',METHOD:'execute permanent regression',EXPECTED_BEHAVIOR:'satisfied',ACTUAL_RESULT:'satisfied',DETERMINATION:'SATISFIED',SEVERITY:'MINOR',EVIDENCE:'current regression evidence'},'ATTACK-REG-24');rx.scope=scope;p.projectData.adversarialResults.push(rx);g=engine.gate(24,p);assert(g.complete,`Stage 24 rejected complete exact coverage: ${g.reasons.join('; ')}`);
+}
+
+// Release/artifact commands reject premature or stale-scope authority.
+{
+ const p=project('JOB-PREMATURE-RELEASE');let blocked=false;try{engine.recordReleaseDetermination(p);}catch{blocked=true;}assert(blocked,'Release determination ran before Stage 26 completion.');
+ const rel=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-OLD');rel.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.releaseRecords.push(rel);let identityBlocked=false;try{engine.verifyArtifactIdentity(p,[],[]);}catch{identityBlocked=true;}assert(identityBlocked,'Artifact identity ran before current Stage 27 completion.');
+}
+
 // Artifact identity is independent of file-selection order.
 {
-  const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));
+  const p=project('JOB-ORDER');p.stages[27].status='COMPLETE';const releaseOrder=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER');releaseOrder.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.releaseRecords.push(releaseOrder);const artifactA=record('artifacts',21,{FILENAME:'a.bin',BYTE_SIZE:1,SHA256:'a',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'A'),artifactB=record('artifacts',21,{FILENAME:'b.bin',BYTE_SIZE:2,SHA256:'b',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'B');artifactA.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};artifactB.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.artifacts.push(artifactA,artifactB);
   const audited=[{artifactId:'A',name:'a.bin',size:1,sha256:'a'},{artifactId:'B',name:'b.bin',size:2,sha256:'b'}];const delivery=[{artifactId:'B',name:'b.bin',size:2,sha256:'b'},{artifactId:'A',name:'a.bin',size:1,sha256:'a'}];
   const r=engine.verifyArtifactIdentity(p,audited,delivery);assert(r.length===2&&p.release.authorization==='AUTHORIZED','Artifact identity depends on file-selection order.');
 }
@@ -98,14 +131,14 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 // Release identity is prohibited before ACCEPTED and exact mismatches remain unauthorized.
 {
   const p=project('JOB-IDENTITY');let threw=false;try{engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}]);}catch{threw=true;}assert(threw,'Stage 28 ran before an ACCEPTED Stage 27 determination.');
-  p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST'));
+  p.stages[27].status='COMPLETE';const releaseTest=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST');releaseTest.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.releaseRecords.push(releaseTest);const canonicalA=record('artifacts',21,{FILENAME:'x.bin',BYTE_SIZE:3,SHA256:'aaa',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'A');canonicalA.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.artifacts.push(canonicalA);
   const result=engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:4,sha256:'bbb'}]);
   assert(result.length===1&&result[0].AUTHORIZATION==='NOT AUTHORIZED'&&p.release.authorization==='NOT AUTHORIZED','Mismatched release bytes were authorized.');
 }
 
 // Missing evidence-chain links remain missing; the application does not invent them.
 {
-  const p=project('JOB-CHAIN');p.projectData.requirements.push(record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User Job Input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'deterministic',EXPECTED_EVIDENCE:'evidence',FAILURE_CONDITION:'missing',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-TEST'));
+  const p=project('JOB-CHAIN');const chainReq=record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User Job Input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'deterministic',EXPECTED_EVIDENCE:'evidence',FAILURE_CONDITION:'missing',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-TEST');chainReq.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.requirements.push(chainReq);
   const chains=engine.constructEvidenceChains(p);assert(chains.length===1&&chains[0].STATUS==='INCOMPLETE'&&chains[0].MISSING_LINKS.length>0,'Missing evidence links were fabricated as complete.');
 }
 
