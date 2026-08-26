@@ -1,30 +1,49 @@
 from pathlib import Path
 
-p=Path('response-ingestion.js')
-s=p.read_text()
-old="""      if(reference.tempKey){
+def replace(path,old,new,count=1):
+    p=Path(path);s=p.read_text();assert old in s,f'missing target in {path}';p.write_text(s.replace(old,new,count))
+
+# Stage 8: response-local evidence is a valid typed relationship target.
+replace('response-ingestion.js',"""      if(reference.tempKey){
         const target=responseRecordIndex.get(String(reference.tempKey));
         if(!target)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Temporary relationship ${reference.tempKey} does not exist.`));
         else if(target.collection!==expectedCollection)issues.push(issue('WRONG_RELATIONSHIP_TYPE',`${path}/relationships/${pointerEscape(name)}`,`${name} must refer to ${expectedCollection}, not ${target.collection}.`));
-      }else if(reference.recordId){"""
-new="""      if(reference.tempKey){
+      }else if(reference.recordId){""","""      if(reference.tempKey){
         const target=responseRecordIndex.get(String(reference.tempKey));
         const evidenceTarget=expectedCollection==='evidenceRecords'?evidenceIndex.get(String(reference.tempKey)):null;
         if(!target&&!evidenceTarget)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Temporary relationship ${reference.tempKey} does not exist.`));
         else if(target&&target.collection!==expectedCollection)issues.push(issue('WRONG_RELATIONSHIP_TYPE',`${path}/relationships/${pointerEscape(name)}`,`${name} must refer to ${expectedCollection}, not ${target.collection}.`));
-      }else if(reference.recordId){"""
-assert old in s
-p.write_text(s.replace(old,new,1))
+      }else if(reference.recordId){""")
 
-p=Path('verify-full-cycle.mjs')
-s=p.read_text()
+# Candidate freezing must honor the stage that owns the repeated iteration.
+replace('workflow-engine.js',"function freezeCandidate(project,{artifactIds=[],operatorLabel='HUMAN_OPERATOR',purpose='TEST_CANDIDATE',toolConfiguration='CURRENT AUTHORIZED CONFIGURATION',settings='CURRENT AUTHORIZED SETTINGS',permissions='CURRENT AUTHORIZED PERMISSIONS',limitations='RECORDED LIMITATIONS',roleDistribution='WORKFLOW ROLE MAP',batchChangeRule='ANY MATERIAL CHANGE REQUIRES A NEW CANDIDATE'}={}){","function freezeCandidate(project,{stage=project.activeStage||10,artifactIds=[],operatorLabel='HUMAN_OPERATOR',purpose='TEST_CANDIDATE',toolConfiguration='CURRENT AUTHORIZED CONFIGURATION',settings='CURRENT AUTHORIZED SETTINGS',permissions='CURRENT AUTHORIZED PERMISSIONS',limitations='RECORDED LIMITATIONS',roleDistribution='WORKFLOW ROLE MAP',batchChangeRule='ANY MATERIAL CHANGE REQUIRES A NEW CANDIDATE'}={}){")
+replace('workflow-engine.js',"const iteration={id:iterationId,stage:10,createdAt,active:true,scope:currentScope(project)","const iteration={id:iterationId,stage:Number(stage),createdAt,active:true,scope:currentScope(project)")
+replace('workflow-engine.js',"const candidate={id:candidateId,stage:10,createdAt,active:true,scope:{...currentScope(project),iterationId,candidateId}","const candidate={id:candidateId,stage:Number(stage),createdAt,active:true,scope:{...currentScope(project),iterationId,candidateId}")
+replace('workflow-engine.js',"addHistory(project,'CANDIDATE_FROZEN',{stage:10,iterationId,candidateId,artifactIds:manifest.map(a=>a.artifactId),operatorLabel,identityAssurance:'SELF_ASSERTED'})","addHistory(project,'CANDIDATE_FROZEN',{stage:Number(stage),iterationId,candidateId,artifactIds:manifest.map(a=>a.artifactId),operatorLabel,identityAssurance:'SELF_ASSERTED'})")
+
+# An explicitly selected historical/current iteration must carry its own candidate scope,
+# not inherit the newest candidate from an unrelated later iteration.
+replace('workflow-engine.js',"function applicableTests(project,requirement){const req=requirementId(requirement);return recordsForCurrentScope(project,'tests').filter(test=>testRequirementId(test)===req&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));}\nfunction verificationMatrix(project,iterationId){const requirements=mandatoryRequirements(project);const runs=recordsForCurrentScope(project,'runs',{iterationId}).filter(run=>runIterationId(run)===String(iterationId||''));const verification=recordsForCurrentScope(project,'verification',{iterationId});","function applicableTests(project,requirement){const req=requirementId(requirement);return recordsForCurrentScope(project,'tests').filter(test=>testRequirementId(test)===req&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));}\nfunction iterationScope(project,iterationId){const id=String(iterationId||'');if(!id)return {};const candidate=records(project,'candidateFreezes').find(record=>String(recordValue(record,'ITERATION_ID')||record.relationships?.ITERATION_ID||record.scope?.iterationId||'')===id);return {iterationId:id,candidateId:recordId(candidate,'candidateFreezes')||undefined};}\nfunction verificationMatrix(project,iterationId){const requirements=mandatoryRequirements(project),scope=iterationScope(project,iterationId);const runs=recordsForCurrentScope(project,'runs',scope).filter(run=>runIterationId(run)===String(iterationId||''));const verification=recordsForCurrentScope(project,'verification',scope);")
+replace('workflow-engine.js',"function currentRegressionExecutions(project,iterationId){return recordsForCurrentScope(project,'regressionExecutions',{iterationId}).filter(record=>!iterationId||String(recordValue(record,'ITERATION_ID')||record.relationships?.ITERATION_ID||record.scope?.iterationId||'')===String(iterationId));}","function currentRegressionExecutions(project,iterationId){const scope=iterationScope(project,iterationId);return recordsForCurrentScope(project,'regressionExecutions',scope).filter(record=>!iterationId||String(recordValue(record,'ITERATION_ID')||record.relationships?.ITERATION_ID||record.scope?.iterationId||'')===String(iterationId));}")
+replace('workflow-engine.js',"function evaluateIteration(project,iterationId,mode='INITIAL'){const matrix=verificationMatrix(project,iterationId);const runs=matrix.runs;const contextRecords=recordsForCurrentScope(project,'freshContexts',{iterationId});","function evaluateIteration(project,iterationId,mode='INITIAL'){const matrix=verificationMatrix(project,iterationId),scope=iterationScope(project,iterationId);const runs=matrix.runs;const contextRecords=recordsForCurrentScope(project,'freshContexts',scope);")
+replace('workflow-engine.js',"const comparisons=recordsForCurrentScope(project,'comparisons',{iterationId});const defects=recordsForCurrentScope(project,'defects',{iterationId});const rca=recordsForCurrentScope(project,'rootCauses',{iterationId});","const comparisons=recordsForCurrentScope(project,'comparisons',scope);const defects=recordsForCurrentScope(project,'defects',scope);const rca=recordsForCurrentScope(project,'rootCauses',scope);")
+
+# Stage 12 is the initial frozen-candidate verification stage; later iterations have their own VERIFY operations.
+replace('workflow-engine.js',"case 12:{requireAccepted();const iteration=latestIteration(project,[10,17,19]);const m=verificationMatrix(project,recordId(iteration,'iterations'));","case 12:{requireAccepted();const iteration=latestIteration(project,[10,11]);const m=verificationMatrix(project,recordId(iteration,'iterations'));")
+# Stage 15 owns its permanent definitions and pre-correction executions. Later regression executions must not reopen it.
+replace('workflow-engine.js',"case 15:{requireAccepted();const defects=confirmedDefects(project),regs=recordsForCurrentScope(project,'regressions'),covered=new Map(regs.map(r=>[String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''),r]));","case 15:{requireAccepted();const defects=confirmedDefects(project).filter(d=>Number(d.stage)===15||Number(d.stage)===14),regs=collection('regressions'),covered=new Map(regs.map(r=>[String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||''),r]));")
+replace('workflow-engine.js',"const executions=recordsForCurrentScope(project,'regressionExecutions');for(const reg of regs)","const executions=collection('regressionExecutions');for(const reg of regs)")
+
+# The fixture must register actual external fresh-context identities rather than trusting agent echoes.
+p=Path('verify-full-cycle.mjs');s=p.read_text()
 old="""for(let i=0;i<slots.length;i++){
   const slot=slots[i];pr=savePrompt(11,{scope:{runId:slot.runId,contextId:slot.contextId,iterationId,candidateId}});"""
 new="""for(let i=0;i<slots.length;i++){
   const slot=slots[i];engine.registerFreshContext(p,{stage:11,externalContextIdentifier:`EXTERNAL-CONTEXT-11-${i+1}`,operatorLabel:'FULL_CYCLE_OPERATOR'});pr=savePrompt(11,{scope:{runId:slot.runId,contextId:slot.contextId,iterationId,candidateId}});"""
-assert old in s
-s=s.replace(old,new,1)
+assert old in s;s=s.replace(old,new,1)
+old="""const correctedFreeze=engine.freezeCandidate(p,{stage:17,artifactIds:['ARTIFACT-CORRECTED'],operatorLabel:'FULL_CYCLE_OPERATOR',purpose:'CORRECTED_ITERATION'}),iteration17=correctedFreeze.iteration.id,candidate17=correctedFreeze.candidate.id;"""
+new="""const correctedFreeze=engine.freezeCandidate(p,{stage:17,artifactIds:['ARTIFACT-CORRECTED'],operatorLabel:'FULL_CYCLE_OPERATOR',purpose:'CORRECTED_ITERATION'}),iteration17=correctedFreeze.iteration.id,candidate17=correctedFreeze.candidate.id;assert(p.stages[16].status==='COMPLETE','Creating the Stage 17 candidate retroactively invalidated completed Stage 16.');"""
+assert old in s;s=s.replace(old,new,1)
 old="""for(let i=0;i<slots17.length;i++){const slot=slots17[i];pr=savePrompt(17,{operation:'EXECUTE_RUN',scope:{runId:slot.runId,contextId:slot.contextId,iterationId:iteration17,candidateId:candidate17}});"""
 new="""for(let i=0;i<slots17.length;i++){const slot=slots17[i];engine.registerFreshContext(p,{stage:17,externalContextIdentifier:`EXTERNAL-CONTEXT-17-${i+1}`,operatorLabel:'FULL_CYCLE_OPERATOR'});pr=savePrompt(17,{operation:'EXECUTE_RUN',scope:{runId:slot.runId,contextId:slot.contextId,iterationId:iteration17,candidateId:candidate17}});"""
-assert old in s
-p.write_text(s.replace(old,new,1))
+assert old in s;p.write_text(s.replace(old,new,1))
