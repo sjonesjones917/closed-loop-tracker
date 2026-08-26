@@ -20,11 +20,11 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import textwrap
           source=Path('.github/workflows/pr6-semantic-scope-fix.yml').read_text()
           start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
           end=source.index("\n          PY\n",start)
-          code=textwrap.dedent(source[start:end])
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
+          code=code.replace("\nold_scope=", "\ntext=engine.read_text()\n\nold_scope=", 1)
           exec(compile(code,'pr6-semantic-scope-transform.py','exec'),{})
           PY
       - name: Verify corrected source and lifecycle
