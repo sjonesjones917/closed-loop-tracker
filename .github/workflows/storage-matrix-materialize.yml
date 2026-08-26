@@ -1,0 +1,139 @@
+name: Materialize complete storage failure proof
+
+on:
+  push:
+    branches: [practical-100/storage-failure-matrix]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-prove-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimum semantic storage fault boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # Existing IndexedDB adapter remains the sole store. Add semantic operation
+          # labels only so the existing fault injector can exercise every declared
+          # durable boundary without introducing a second persistence path.
+          path=Path('project-store.js'); text=path.read_text()
+          old="const fault=phase=>{const configured=globalThis.__closedLoopStorageFault;if(configured===phase||configured?.phase===phase){const error=new Error(`Injected storage failure at ${phase}.`);error.code='INJECTED_STORAGE_FAILURE';throw error;}};"
+          new="const fault=phase=>{const configured=globalThis.__closedLoopStorageFault;if(configured===phase||configured?.phase===phase){const error=new Error(`Injected storage failure at ${phase}.`);error.name=phase==='quota-exhaustion'?'QuotaExceededError':'Error';error.code=phase==='quota-exhaustion'?'QUOTA_EXHAUSTED':'INJECTED_STORAGE_FAILURE';throw error;}};"
+          assert old in text; text=text.replace(old,new,1)
+          old="async function writeProject(project,{expectedProjectRevision=null,incrementRevision=true}={}){"
+          new="async function writeProject(project,{expectedProjectRevision=null,incrementRevision=true,operation=null}={}){"
+          assert old in text; text=text.replace(old,new,1)
+          old="const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');const db=await openDatabase();fault('before-project-transaction');"
+          new="const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');const op=String(operation||'GENERIC').toUpperCase();if(op==='RAW_CAPTURE')fault('before-raw-write');if(op==='CANONICAL_ACCEPTANCE')fault('before-canonical-transaction');const db=await openDatabase();fault('before-project-transaction');"
+          assert old in text; text=text.replace(old,new,1)
+          old="const digest=projectSha256(next);fault('during-project-write');store.put({jobId:id,revision:next.revision,project:next,projectSha256:digest,updatedAt:now()});"
+          new="const digest=projectSha256(next);if(op==='RAW_CAPTURE')fault('during-raw-write');if(op==='PROPOSAL'){fault('during-validation-write');fault('during-proposal-write');}if(op==='CANONICAL_ACCEPTANCE'){fault('during-canonical-record-write');fault('during-receipt-write');fault('during-manifest-write');}fault('quota-exhaustion');fault('during-project-write');store.put({jobId:id,revision:next.revision,project:next,projectSha256:digest,updatedAt:now()});"
+          assert old in text; text=text.replace(old,new,1)
+          old="fault('before-transaction-commit');await complete(tx);next.projectSha256=digest;"
+          new="fault('before-transaction-commit');await complete(tx);if(op==='RAW_CAPTURE')fault('after-raw-commit');next.projectSha256=digest;"
+          assert old in text; text=text.replace(old,new,1)
+          path.write_text(text)
+
+          path=Path('app-core.js'); text=path.read_text()
+          old="async function persistReplacement(next){engine.ensureShape(next);engine.recalculate(next);const committed=await projectStore.replaceProject(next,{expectedProjectRevision:Number(current?.revision||0)});"
+          new="async function persistReplacement(next,options={}){engine.ensureShape(next);engine.recalculate(next);const committed=await projectStore.replaceProject(next,{expectedProjectRevision:Number(current?.revision||0),...options});"
+          assert old in text; text=text.replace(old,new,1)
+          old="await persistReplacement(captured.project);announce('saved');"
+          new="await persistReplacement(captured.project,{operation:'RAW_CAPTURE'});announce('saved');"
+          assert old in text; text=text.replace(old,new,1)
+          old="await persistReplacement(prepared.project);announce(prepared.validation?.valid?'proposal ready':'validation failed');"
+          new="await persistReplacement(prepared.project,{operation:'PROPOSAL'});announce(prepared.validation?.valid?'proposal ready':'validation failed');"
+          assert old in text; text=text.replace(old,new,1)
+          old="await persistReplacement(result.project);announce('response accepted');render();}catch(error){alert(`Response was not committed: ${error.message||error}`);}}"
+          new="await persistReplacement(result.project,{operation:'CANONICAL_ACCEPTANCE'});announce('response accepted');render();}catch(error){alert(`Response was not committed: ${error.message||error}`);}}"
+          assert old in text; text=text.replace(old,new,1)
+          path.write_text(text)
+
+          path=Path('verify-browser-extra.mjs'); text=path.read_text()
+          anchor="  console.log('extra:support-controls');"
+          assert anchor in text
+          block=r'''  console.log('extra:storage-failure-matrix');
+          const storageCases=[
+            ['before-raw-write','RAW_CAPTURE'],
+            ['during-raw-write','RAW_CAPTURE'],
+            ['during-validation-write','PROPOSAL'],
+            ['during-proposal-write','PROPOSAL'],
+            ['before-canonical-transaction','CANONICAL_ACCEPTANCE'],
+            ['during-canonical-record-write','CANONICAL_ACCEPTANCE'],
+            ['during-receipt-write','CANONICAL_ACCEPTANCE'],
+            ['during-manifest-write','CANONICAL_ACCEPTANCE'],
+            ['before-transaction-commit','CANONICAL_ACCEPTANCE'],
+            ['quota-exhaustion','CANONICAL_ACCEPTANCE']
+          ];
+          for(const [phase,operation] of storageCases){
+            const result=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision,candidate=structuredClone(before);candidate.__storageFailureMarker=${JSON.stringify(phase)};globalThis.__closedLoopStorageFault=${JSON.stringify(phase)};let failed=false,code='',name='';try{await store.writeProject(candidate,{expectedProjectRevision:revision,operation:${JSON.stringify(operation)}});}catch(e){failed=true;code=e.code||'';name=e.name||'';}finally{delete globalThis.__closedLoopStorageFault;}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {failed,code,name,revisionSame:Number(after.revision)===Number(revision),markerAbsent:after.__storageFailureMarker===undefined};})()`);
+            assert(result?.failed&&result.revisionSame&&result.markerAbsent,`${phase} produced a partial project commit.`);
+            if(phase==='quota-exhaustion')assert(result.code==='QUOTA_EXHAUSTED'&&result.name==='QuotaExceededError','Quota exhaustion did not use the explicit quota failure disposition.');
+          }
+          const rawCommit=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision,accepted=(before.projectData?.acceptedChanges||[]).length,candidate=structuredClone(before);candidate.__rawCommitMarker='RAW_CAPTURE_COMMITTED';globalThis.__closedLoopStorageFault='after-raw-commit';let failed=false;try{await store.writeProject(candidate,{expectedProjectRevision:revision,operation:'RAW_CAPTURE'});}catch(e){failed=e.code==='INJECTED_STORAGE_FAILURE';}finally{delete globalThis.__closedLoopStorageFault;}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {failed,revisionAdvanced:Number(after.revision)===Number(revision)+1,markerPresent:after.__rawCommitMarker==='RAW_CAPTURE_COMMITTED',canonicalUnchanged:(after.projectData?.acceptedChanges||[]).length===accepted};})()`);
+          assert(rawCommit?.failed&&rawCommit.revisionAdvanced&&rawCommit.markerPresent&&rawCommit.canonicalUnchanged,'Failure after raw commit did not preserve the complete raw operation while leaving canonical accepted data unchanged.');
+          const artifactRollback=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},artifactId='ARTIFACT-INJECTED-FAILURE';globalThis.__closedLoopStorageFault='during-artifact-blob-write';let failed=false;try{await store.putArtifact({artifactId,jobId,blob:new Blob(['must-not-persist']),filename:'must-not-persist.txt',mediaType:'text/plain'});}catch(e){failed=e.code==='INJECTED_STORAGE_FAILURE';}finally{delete globalThis.__closedLoopStorageFault;}return {failed,missing:(await store.getArtifact(artifactId))===null};})()`);
+          assert(artifactRollback?.failed&&artifactRollback.missing,'Injected artifact Blob failure persisted unverified bytes.');
+
+          // Run interrupted migration last because it intentionally destroys this test profile's
+          // IndexedDB database. The original legacy payload must remain while the migration tx aborts.
+          console.log('extra:interrupted-legacy-migration');
+          const migrationSeed=await activeProject(cdp);
+          const migrationSetup=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,p=${JSON.stringify(migrationSeed)};localStorage.setItem(store.STORE_KEY,JSON.stringify([p]));const db=await store.openDatabase();db.close();return await new Promise((resolve,reject)=>{const req=indexedDB.deleteDatabase(store.DB_NAME);req.onsuccess=()=>resolve(true);req.onerror=()=>reject(req.error);req.onblocked=()=>reject(new Error('IndexedDB deletion blocked'));});})()`);
+          assert(migrationSetup===true,'Could not prepare isolated interrupted-migration fixture.');
+          const migrationTarget=await getJson(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'}),migrationCdp=new CDP(migrationTarget.webSocketDebuggerUrl);await migrationCdp.ready;await migrationCdp.send('Runtime.enable');await migrationCdp.send('Page.enable');await migrationCdp.send('Page.addScriptToEvaluateOnNewDocument',{source:`globalThis.__closedLoopStorageFault='during-legacy-migration';`});await migrationCdp.send('Page.navigate',{url:`${PAGE_URL}?migrationFailure=${Date.now()}`});await waitExpr(migrationCdp,`Boolean(globalThis.closedLoopAppError)`,20000);
+          const migrationProof=await evalValue(migrationCdp,`(async()=>{const legacy=localStorage.getItem('closed-loop-reliability-projects-v4');const count=await new Promise((resolve,reject)=>{const req=indexedDB.open('closed-loop-reliability');req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('projects','readonly'),c=tx.objectStore('projects').count();c.onsuccess=()=>resolve(c.result);c.onerror=()=>reject(c.error);};});return {legacyPreserved:Boolean(legacy),projectCount:count,appFailed:Boolean(globalThis.closedLoopAppError)};})()`);
+          assert(migrationProof?.legacyPreserved&&migrationProof.projectCount===0&&migrationProof.appFailed,'Interrupted legacy migration did not preserve the original payload and abort project activation.');migrationCdp.close();
+
+'''
+          text=text.replace(anchor,block+anchor,1)
+          old="storageFailureRollback:true,runtimeErrors:0"
+          new="storageFailureRollback:true,storageFailureCasesPassed:14,runtimeErrors:0"
+          assert old in text; text=text.replace(old,new,1)
+          path.write_text(text)
+
+          path=Path('.github/workflows/pages.yml'); text=path.read_text()
+          old='"storageFailureCasesPassed": 3,'
+          new='"storageFailureCasesPassed": 14,'
+          assert old in text; path.write_text(text.replace(old,new,1))
+          PY
+      - name: Prove source and full browser storage matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-browser-extra.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/storage-matrix-http.log 2>&1 &
+          server=$!
+          trap 'kill $server 2>/dev/null || true' EXIT
+          export PAGE_URL=http://127.0.0.1:4173/
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit proven changes and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/storage-matrix-materialize.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Complete named storage failure acceptance matrix'
+          git push origin HEAD:practical-100/storage-failure-matrix
