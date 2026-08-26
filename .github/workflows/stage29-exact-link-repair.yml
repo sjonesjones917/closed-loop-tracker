@@ -1,0 +1,71 @@
+name: Temporary Stage 29 exact-link repair
+on:
+  push:
+    branches:
+      - reliability/stage29-exact-links-current-20260826
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Repair exact Stage 29 instruction and execution links
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          let engine=fs.readFileSync('workflow-engine.js','utf8');
+          const oldStart="function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project);const instruction=recordsForCurrentScope(project,'instructions').at(-1);const product=recordsForCurrentScope(project,'products').at(-1);const release=recordsForCurrentScope(project,'releaseRecords').at(-1);const identities=recordsForCurrentScope(project,'artifactIdentities');const traces=recordsForCurrentScope(project,'instructionTraces');const created=[];for(const requirement of requirements){const reqId=requirementId(requirement);const sourceId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||'');const trace=traces.find(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===reqId);";
+          const newStart="function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project);const instructions=recordsForCurrentScope(project,'instructions');const product=recordsForCurrentScope(project,'products').at(-1);const productId=recordId(product,'products');const executionId=String(recordValue(product,'EXECUTION_ID')||'').trim();const release=recordsForCurrentScope(project,'releaseRecords').at(-1);const identities=recordsForCurrentScope(project,'artifactIdentities');const traces=recordsForCurrentScope(project,'instructionTraces');const created=[];for(const requirement of requirements){const reqId=requirementId(requirement);const sourceId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||'');const trace=traces.find(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===reqId);const instructionId=String(recordValue(trace,'INSTRUCTION_ID')||trace?.relationships?.INSTRUCTION_ID||'').trim();const instruction=instructionId?instructions.find(r=>recordId(r,'instructions')===instructionId):null;";
+          if(!engine.includes(oldStart))throw new Error('Stage 29 constructor start marker not found.');
+          engine=engine.replace(oldStart,newStart);
+          const oldMissing="if(!sourceId)missing.push('AUTHORITY');if(!trace)missing.push('INSTRUCTION_TRACE');if(!instruction)missing.push('INSTRUCTION');if(!product)missing.push('EXECUTION_OR_PRODUCT');";
+          const newMissing="if(!sourceId)missing.push('AUTHORITY');if(!trace)missing.push('INSTRUCTION_TRACE');if(!instruction)missing.push('INSTRUCTION');if(!productId)missing.push('PRODUCT');if(productId&&!executionId)missing.push('EXECUTION');";
+          if(!engine.includes(oldMissing))throw new Error('Stage 29 missing-link marker not found.');
+          engine=engine.replace(oldMissing,newMissing);
+          const oldFields="AUTHORITY_ID:sourceId||'UNKNOWN',INSTRUCTION_ID:recordId(instruction,'instructions')||'UNKNOWN',EXECUTION_ID:recordId(product,'products')||'UNKNOWN',PRODUCT_ELEMENT:recordId(product,'products')||'UNKNOWN'";
+          const newFields="AUTHORITY_ID:sourceId||'UNKNOWN',INSTRUCTION_ID:instruction?instructionId:'UNKNOWN',EXECUTION_ID:executionId||'UNKNOWN',PRODUCT_ELEMENT:productId||'UNKNOWN'";
+          if(!engine.includes(oldFields))throw new Error('Stage 29 exact-link field marker not found.');
+          engine=engine.replace(oldFields,newFields);
+          fs.writeFileSync('workflow-engine.js',engine);
+          let full=fs.readFileSync('verify-full-cycle.mjs','utf8');
+          const stage28="engine.verifyArtifactIdentity(p,[{artifactId:'ARTIFACT-PRODUCT',name:'product.bin',size:productBytes.byteLength,sha256:productSha}],[{artifactId:'ARTIFACT-PRODUCT',name:'product.bin',size:productBytes.byteLength,sha256:productSha}]);complete(28);";
+          if(!full.includes('PRODUCTION-INSTRUCTION-DECOY')){
+            if(!full.includes(stage28))throw new Error('Stage 28 fixture marker not found.');
+            full=full.replace(stage28,`${stage28}\nconst requirementTrace=engine.recordsForCurrentScope(p,'instructionTraces').find(record=>String(engine.recordValue(record,'REQ_ID'))===reqId);const tracedInstructionId=String(engine.recordValue(requirementTrace,'INSTRUCTION_ID')||requirementTrace?.relationships?.INSTRUCTION_ID||'');assert(tracedInstructionId,'Fixture instruction trace lost its canonical instruction identity.');const tracedInstruction=engine.recordsForCurrentScope(p,'instructions').find(record=>engine.recordId(record,'instructions')===tracedInstructionId);assert(tracedInstruction,'Fixture traced instruction is missing.');const decoyInstruction=JSON.parse(JSON.stringify(tracedInstruction));decoyInstruction.id='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.recordId='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.fields={...(decoyInstruction.fields||{}),INSTRUCTION_ID:'PRODUCTION-INSTRUCTION-DECOY'};decoyInstruction.INSTRUCTION_ID='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.createdAt='9999-12-31T23:59:59.999Z';decoyInstruction.updatedAt=decoyInstruction.createdAt;decoyInstruction.contentSha256=hash.contentRecordSha256(decoyInstruction,'INSTRUCTION_ID');decoyInstruction.recordSha256=hash.recordSha256(decoyInstruction);decoyInstruction.sha256=decoyInstruction.recordSha256;p.projectData.instructions.push(decoyInstruction);`);
+          }
+          const stage29Current="data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_ID'))&&engine.recordValue(evidenceChain,'TEST_ID').includes(testId),'Evidence chain did not preserve the applicable test set.');assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');complete(29);";
+          if(!full.includes('Stage 29 substituted the product ID for the production execution ID')){
+            if(!full.includes(stage29Current))throw new Error('Current Stage 29 fixture marker not found.');
+            const stage29New="data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_ID'))&&engine.recordValue(evidenceChain,'TEST_ID').includes(testId),'Evidence chain did not preserve the applicable test set.');assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');const productionExecutionId=String(engine.recordValue(product,'EXECUTION_ID')||'');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')===tracedInstructionId,'Stage 29 ignored the requirement trace and selected a different instruction.');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')!=='PRODUCTION-INSTRUCTION-DECOY','Stage 29 selected the latest instruction instead of the traced instruction.');assert(engine.recordValue(evidenceChain,'EXECUTION_ID')===productionExecutionId,'Stage 29 substituted the product ID for the production execution ID.');assert(engine.recordValue(evidenceChain,'PRODUCT_ELEMENT')===productId,'Stage 29 lost the exact product identity.');assert(productionExecutionId&&productionExecutionId!==productId,'Fixture must prove production execution ID and product ID are distinct.');complete(29);";
+            full=full.replace(stage29Current,stage29New);
+          }
+          fs.writeFileSync('verify-full-cycle.mjs',full);
+          NODE
+      - name: Remove temporary workflow from acceptance tree
+        run: git rm .github/workflows/stage29-exact-link-repair.yml
+      - name: Run deterministic acceptance
+        run: |
+          node --check workflow-engine.js
+          node --check verify-full-cycle.mjs
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit tested source only
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workflow-engine.js verify-full-cycle.mjs
+          git commit -m "Preserve exact instruction and execution links in evidence chains"
+          git push origin HEAD:reliability/stage29-exact-links-current-20260826
