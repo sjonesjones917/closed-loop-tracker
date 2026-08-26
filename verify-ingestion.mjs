@@ -25,7 +25,7 @@ function project(jobId='JOB-INGESTION-TEST'){
   return p;
 }
 function savePrompt(p,stage){
-  const record={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
+  const record={...prompts.buildPromptRecord(stage,p,stage===19?{operation:'CONFIRM'}:{}),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
   return record;
 }
@@ -45,13 +45,15 @@ function safeValue(name){
   return `verified-${name.toLowerCase()}`;
 }
 function validEnvelope(p,stage,promptRecord){
-  const contract=schema.STAGE_CONTRACTS[stage];
+  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation);
+  const allowedStageData=operationContract?.agentStageFields||contract.allowedStageData;
+  const writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
-  if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);
+  if(allowedStageData.length)stageData[allowedStageData[0]]=safeValue(allowedStageData[0]);
   const records={};
   if(!Object.keys(stageData).length){
-    const collection=contract.allowedCollections.find(name=>name!=='blockers')||contract.allowedCollections[0];
-    if(!collection)throw new Error(`Stage ${stage} has no ingestible response surface.`);
+    const collection=writableCollections.find(name=>name!=='blockers')||writableCollections[0];
+    if(!collection)return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:[],unresolved:[],warnings:[],attachments:[]};
     const def=schema.RECORD_SCHEMAS[collection];
     const fields={};
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
@@ -92,6 +94,7 @@ for(let stage=1;stage<=30;stage++){
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
+let negativeCount=0;
 function negative(name,mutate,expectedCode){
   const p=project(`JOB-NEG-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),stage=2,promptRecord=savePrompt(p,stage);
   let envelope=validEnvelope(p,stage,promptRecord); const mutated=mutate(envelope,p,promptRecord); if(mutated!==undefined)envelope=mutated;
@@ -101,6 +104,16 @@ function negative(name,mutate,expectedCode){
   if(expectedCode&&!prepared.validation.issues.some(issue=>issue.code===expectedCode))throw new Error(`${name}: expected ${expectedCode}; got ${prepared.validation.issues.map(x=>x.code).join(', ')}.`);
   if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed on validation failure.`);
   if(!prepared.project.projectData.rawResponses.length||!prepared.project.projectData.responseValidations.length)throw new Error(`${name}: failed raw response/validation was not preserved.`);
+  negativeCount++;
+}
+function rawNegative(name,text,expectedCode){
+  const p=project(`JOB-NEG-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),stage=2,promptRecord=savePrompt(p,stage);
+  const prepared=ingestion.prepare(p,{stage,text,promptRecord});
+  if(prepared.validation.valid)throw new Error(`${name}: invalid raw response was accepted.`);
+  if(expectedCode&&!prepared.validation.issues.some(issue=>issue.code===expectedCode))throw new Error(`${name}: expected ${expectedCode}; got ${prepared.validation.issues.map(x=>x.code).join(', ')}.`);
+  if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed on validation failure.`);
+  if(!prepared.project.projectData.rawResponses.length||!prepared.project.projectData.responseValidations.length)throw new Error(`${name}: failed raw response/validation was not preserved.`);
+  negativeCount++;
 }
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('wrong job',(e)=>{e.jobId='JOB-OTHER';},'WRONG_JOB_ID');
@@ -114,6 +127,19 @@ negative('target product source',(e)=>{e.stageData={};e.records={sources:[{tempo
 negative('duplicate temp key',(e)=>{e.records.blockers=[{tempKey:'dup',fields:{MISSING_ITEM_TYPE:'INPUT',MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:'missing',WHY_WORK_CANNOT_CONTINUE:'blocked',ATTEMPTED_RESOLUTIONS:'none',DOWNSTREAM_WORK_STOPPED:'stage',STATUS:'OPEN'},relationships:{},evidenceRefs:['evidence-1']},{tempKey:'dup',fields:{MISSING_ITEM_TYPE:'INPUT',MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:'missing',WHY_WORK_CANNOT_CONTINUE:'blocked',ATTEMPTED_RESOLUTIONS:'none',DOWNSTREAM_WORK_STOPPED:'stage',STATUS:'OPEN'},relationships:{},evidenceRefs:['evidence-1']}];},'DUPLICATE_TEMPORARY_KEY');
 negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
 negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+
+negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');
+negative('wrong operation',(e)=>{e.operation='NOT_AN_OPERATION';},'WRONG_OPERATION');
+negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(64);},'STALE_CONTRACT_HASH');
+negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
+negative('unknown root property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
+negative('wrong value type',(e)=>{e.stageData.AUTHORITY_HIERARCHY=42;},'WRONG_VALUE_TYPE');
+negative('prohibited null',(e)=>{e.stageData.AUTHORITY_HIERARCHY=null;},'PROHIBITED_NULL');
+negative('placeholder value',(e)=>{e.stageData.AUTHORITY_HIERARCHY='<value>';},'PLACEHOLDER_VALUE');
+rawNegative('empty response','', 'EMPTY_RESPONSE');
+rawNegative('truncated JSON','{"schema":"closed-loop-stage-response/2"', 'TRUNCATED_RESPONSE');
+rawNegative('wrong root type','[]','INVALID_ROOT');
+rawNegative('duplicate JSON member','{"schema":"closed-loop-stage-response/2","stage":2,"stage":3}','DUPLICATE_JSON_MEMBER');
 
 // Duplicate response is detected only after the first raw response has been preserved.
 {
@@ -138,7 +164,7 @@ negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON
   if(engine.unresolvedHumanRequests(p,stage).length)throw new Error('Answered clarification remained open.');
 }
 
-console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:12,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true},null,2));
+console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:negativeCount,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true},null,2));
 
 // PR3 transaction/disposition invariants.
 {let p=project('JOB-PR3-IDEMP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);const first=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const accepted=ingestion.commit(first.project,first.proposal.proposalId,{operator:'VERIFY'});const again=ingestion.commit(accepted.project,first.proposal.proposalId,{operator:'VERIFY'});if(!again.idempotent||again.project.projectData.acceptedChanges.length!==accepted.project.projectData.acceptedChanges.length)throw new Error('Repeat acceptance was not idempotent.');const repeated=ingestion.prepare(accepted.project,{stage,text:JSON.stringify(e),promptRecord:pr});if(!repeated.duplicate||repeated.receipt?.receiptId!==accepted.receipt?.receiptId)throw new Error('Repeated canonical envelope did not return existing receipt/disposition.');const manifest=accepted.manifest;if(!manifest.entries.some(x=>/^\/records\/[^/]+\/0\/fields\//.test(x.jsonPointer||''))&&!manifest.entries.some(x=>/^\/stageData\//.test(x.jsonPointer||'')))throw new Error('Extraction manifest does not contain exact response JSON pointers.');}
