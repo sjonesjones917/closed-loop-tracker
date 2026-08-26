@@ -1,0 +1,121 @@
+from pathlib import Path
+import re
+
+def replace_once(path, old, new):
+    p=Path(path); text=p.read_text()
+    if text.count(old)!=1:
+        raise SystemExit(f'{path}: expected exactly one occurrence, found {text.count(old)}: {old[:120]}')
+    p.write_text(text.replace(old,new,1))
+
+def regex_once(path, pattern, replacement):
+    p=Path(path); text=p.read_text()
+    new,count=re.subn(pattern,replacement,text,count=1,flags=re.S)
+    if count!=1:
+        raise SystemExit(f'{path}: regex replacement count {count}: {pattern[:120]}')
+    p.write_text(new)
+
+replace_once('workflow-engine.js',
+    "  4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],5:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],",
+    "  4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],")
+
+regex_once('workflow-engine.js',
+    r"function defectResolvedByRegression\(project,defect\)\{.*?\}\nfunction unresolvedMaterialDefects",
+    """function defectResolvedByRegression(project,defect){
+  const defectId=recordId(defect,'defects'),linked=records(project,'regressions').filter(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||'')===defectId&&upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');
+  if(!linked.length)return false;
+  const iterationId=recordId(latestIteration(project,[10,17,19]),'iterations')||String(project.job.CURRENT_ITERATION||'').trim();
+  const source=iterationId?currentRegressionExecutions(project,iterationId):records(project,'regressionExecutions');
+  return linked.every(reg=>{const id=recordId(reg,'regressions'),executions=source.filter(x=>String(recordValue(x,'REG_ID')||x.relationships?.REG_ID||'')===id&&upper(recordValue(x,'PHASE'))!=='PRE_CORRECTION');return executions.length===1&&['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(executions[0],'RESULT')));});
+}
+function unresolvedMaterialDefects""")
+
+regex_once('workflow-engine.js',
+    r"function acceptedOperationSet\(project,stage\)\{.*?\}\nfunction candidateComponentIdentity",
+    """function acceptedOperationSet(project,stage,scopeRule={}){
+  const proposals=safe(project.projectData.responseProposals),out=new Set(),keys=['iterationId','candidateId','baselineId','productId'];
+  for(const c of acceptedChanges(project,stage)){
+    const proposal=proposals.find(p=>p.proposalId===c.proposalId),op=c.operation||proposal?.envelope?.operation,scope=c.scope||proposal?.envelope?.scope||{};
+    if(keys.some(key=>scopeRule[key]!==undefined&&scopeRule[key]!==null&&String(scope[key]??'')!==String(scopeRule[key])))continue;
+    if(op)out.add(String(op));
+  }
+  return out;
+}
+function candidateComponentIdentity""")
+replace_once('workflow-engine.js',
+    "ops=acceptedOperationSet(project,stage),requiredOps=",
+    "ops=acceptedOperationSet(project,stage,{iterationId,candidateId:expectedCandidate}),requiredOps=")
+
+regex_once('workflow-engine.js',
+    r"function verifyArtifactIdentity\(project,audited,delivery\)\{.*?\}\n\nfunction commandRecord",
+    """function verifyArtifactIdentity(project,audited,delivery){
+  ensureShape(project);
+  const release=records(project,'releaseRecords').at(-1);
+  if(upper(recordValue(release,'DETERMINATION'))!=='ACCEPTED')throw new Error('Artifact identity verification is prohibited until Stage 27 is ACCEPTED.');
+  const a=safe(audited),d=safe(delivery),duplicate=(list,key)=>{const seen=new Set();for(const x of list){const v=String(x[key]??'');if(!v||seen.has(v))return true;seen.add(v);}return false;};
+  if(duplicate(a,'artifactId')||duplicate(d,'artifactId')||duplicate(a,'name')||duplicate(d,'name'))throw new Error('Duplicate artifact identity or filename is prohibited.');
+  if(a.length!==d.length)throw new Error('Audited and delivery artifact counts differ.');
+  const normalized=list=>list.map(x=>({artifactId:String(x.artifactId||''),name:String(x.name||''),version:String(x.version||'UNKNOWN'),storageReference:String(x.storageReference||'INDEXEDDB'),size:Number(x.size),sha256:String(x.sha256||'')})).sort((x,y)=>x.artifactId.localeCompare(y.artifactId)||x.name.localeCompare(y.name));
+  const identityEvidenceSha256=hash.sha256Value({releaseId:recordId(release,'releaseRecords'),audited:normalized(a),delivery:normalized(d)}),existing=records(project,'artifactIdentities').filter(r=>r.identityEvidenceSha256===identityEvidenceSha256);
+  if(existing.length){project.release.authorization=existing.every(r=>r.AUTHORIZATION==='AUTHORIZED')?'AUTHORIZED':'NOT AUTHORIZED';project.release.authorizedArtifactIds=existing.map(r=>r.ARTIFACT_ID);recalculate(project);return existing;}
+  const supersessionId=`ARTIFACT-IDENTITY-EVIDENCE-${identityEvidenceSha256}`;
+  for(const prior of records(project,'artifactIdentities',{active:false}))if(isActiveRecord(prior)){prior.active=false;prior.validity='SUPERSEDED';prior.invalidatedBy=supersessionId;}
+  const byId=new Map(d.map(x=>[String(x.artifactId),x])),created=[];
+  for(const left of a){const right=byId.get(String(left.artifactId));if(!right)throw new Error('Missing delivery artifact '+left.artifactId+'.');const id=allocateId(project,'artifactIdentities');const fields={IDENTITY_ID:id,ARTIFACT_ID:left.artifactId,AUDITED_FILENAME:left.name,AUDITED_VERSION:left.version||'UNKNOWN',AUDITED_STORAGE_REFERENCE:left.storageReference||'INDEXEDDB',AUDITED_BYTE_SIZE:left.size,AUDITED_SHA256:left.sha256,RELEASE_FILENAME:right.name,RELEASE_VERSION:right.version||'UNKNOWN',RELEASE_STORAGE_REFERENCE:right.storageReference||'INDEXEDDB',RELEASE_BYTE_SIZE:right.size,PRE_DELIVERY_SHA256:right.sha256,EXACT_HASH_MATCH:Boolean(left.sha256&&right.sha256&&left.sha256===right.sha256),EXACT_SIZE_MATCH:Number(left.size)===Number(right.size),POST_AUDIT_MODIFICATION_EVIDENCE:left.sha256===right.sha256?'NONE':'MISMATCH',AUTHORIZATION:'NOT AUTHORIZED'};fields.AUTHORIZATION=fields.EXACT_HASH_MATCH&&fields.EXACT_SIZE_MATCH&&fields.AUDITED_FILENAME===fields.RELEASE_FILENAME?'AUTHORIZED':'NOT AUTHORIZED';const record={id,stage:28,createdAt:now(),active:true,fields,...fields,scope:currentScope(project),identityEvidenceSha256,sha256:hash.sha256Value(fields),source:'APPLICATION_DERIVATION',derivationKey:'stage28.artifactIdentity'};project.projectData.artifactIdentities.push(record);created.push(record);}
+  project.release.authorization=created.length&&created.every(r=>r.AUTHORIZATION==='AUTHORIZED')?'AUTHORIZED':'NOT AUTHORIZED';project.release.authorizedArtifactIds=created.map(r=>r.ARTIFACT_ID);addHistory(project,'ARTIFACT_IDENTITY_VERIFIED',{count:created.length,authorization:project.release.authorization,identityEvidenceSha256});recalculate(project);return created;
+}
+
+function commandRecord""")
+
+regex_once('project-store.js',
+    r"async function readAllIndexed\(\)\{.*?\}\nfunction readAll\(storage\)",
+    """async function readAllIndexed(){await migrateLegacy();const db=await openDatabase(),tx=db.transaction(PROJECTS,'readonly'),rows=await request(tx.objectStore(PROJECTS).getAll());await complete(tx);const valid=[];for(const row of rows){const actual=projectSha256(row.project);if(actual!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');continue;}const project=clone(row.project);project.revision=Number(row.revision||project.revision||0);const integrity=validateProjectIntegrity(project,{verifyDerived:false});if(!integrity.valid){await quarantine(row,'PROJECT_CANONICAL_INTEGRITY_FAILED: '+integrity.issues.join(' | '));continue;}project.projectSha256=row.projectSha256;valid.push(project);}return valid;}
+function readAll(storage)""")
+regex_once('project-store.js',
+    r"async function writeProject\(project,\{expectedProjectRevision=null,incrementRevision=true\}=\{\}\)\{.*?\n\}\n\nasync function writeAllIndexed",
+    """async function writeProject(project,{expectedProjectRevision=null,incrementRevision=true}={}){
+  const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');const db=await openDatabase();fault('before-project-transaction');const tx=db.transaction([PROJECTS,META],'readwrite');const store=tx.objectStore(PROJECTS);try{const prior=await request(store.get(id));const currentRevision=Number(prior?.revision||0);if(expectedProjectRevision!==null&&Number(expectedProjectRevision)!==currentRevision){const e=new Error(`Project revision conflict for ${id}: expected ${expectedProjectRevision}, found ${currentRevision}.`);e.code='STALE_PROJECT_REVISION';throw e;}const next=clone(project);next.revision=incrementRevision?currentRevision+1:currentRevision;delete next.projectSha256;const engine=globalThis.closedLoopWorkflowEngine;engine?.ensureShape?.(next);engine?.recalculate?.(next);assertProjectIntegrity(next);const digest=projectSha256(next);fault('during-project-write');store.put({jobId:id,revision:next.revision,project:next,projectSha256:digest,updatedAt:now()});tx.objectStore(META).put({key:'selectedProject',value:id,updatedAt:now()});tx.objectStore(META).put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});fault('before-transaction-commit');await complete(tx);next.projectSha256=digest;try{new BroadcastChannel('closed-loop-reliability').postMessage({type:'PROJECT_CHANGED',jobId:id,revision:next.revision});}catch{}return next;}catch(error){try{tx.abort();}catch{}throw error;}
+}
+
+async function writeAllIndexed""")
+replace_once('project-store.js',
+    "engine?.ensureShape?.(next);engine?.recalculate?.(next);next.revision=expected+1;const digest=projectSha256(next);",
+    "engine?.ensureShape?.(next);engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next);const digest=projectSha256(next);")
+
+vc=Path('verify-complete.mjs'); text=vc.read_text()
+marker="console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));"
+if marker not in text: raise SystemExit('verify-complete marker not found')
+tests=r'''
+
+// Stage 05 cannot manufacture a new requirements version without a replacement requirement set.
+{
+  const p=project('JOB-STAGE5-VERSION');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';p.projectData.requirementResolutions.push(record('requirementResolutions',5,{DEFECT_TYPE:'NONE',GOVERNING_EVIDENCE:'review',RESOLUTION:'No requirement change required.',CHANGED_REQUIREMENT_REFS:[],AFFECTED_DOWNSTREAM_WORK:'NONE',STATUS:'RESOLVED'},'RESOLUTION-STAGE5'));
+  const result=engine.registerStageVersion(p,5,'CHANGE-STAGE5');assert(result===null&&p.job.CURRENT_REQUIREMENTS_VERSION==='REQUIREMENTS-v001','Stage 05 created a requirements version without a replacement requirement set.');
+}
+
+// Stage 17 operation completeness cannot borrow accepted operations from an earlier iteration.
+{
+  const p=project('JOB-ITERATION-OP-SCOPE'),ops=['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'];p.projectData.iterations.push(record('iterations',17,{CANDIDATE_ID:'CANDIDATE-OLD',STATUS:'FROZEN'},'ITERATION-OLD'));for(const op of ops)p.projectData.acceptedChanges.push({changeId:`CHANGE-OLD-${op}`,stage:17,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:op,scope:{iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'}});const current=record('iterations',17,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');current.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(current);const ev=engine.evaluateIteration(p,'ITERATION-NEW','CORRECTED');assert(ev.reasons.some(r=>/Required stage operations are missing/.test(r)),'A new Stage 17 iteration borrowed accepted operations from an older iteration.');
+}
+
+// A stale successful regression execution cannot resolve a current-iteration material defect.
+{
+  const p=project('JOB-REGRESSION-SCOPE');p.job.CURRENT_ITERATION='ITERATION-NEW';const iteration=record('iterations',17,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');iteration.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(iteration);const defect=record('defects',14,{SEVERITY:'CRITICAL',STATUS:'CONFIRMED'},'DEFECT-SCOPE');p.projectData.defects.push(defect);const reg=record('regressions',15,{DEFECT_ID:'DEFECT-SCOPE',ACTIVE_RETIRED_STATE:'ACTIVE'},'REG-SCOPE');p.projectData.regressions.push(reg);const old=record('regressionExecutions',17,{REG_ID:'REG-SCOPE',ITERATION_ID:'ITERATION-OLD',PHASE:'POST_CORRECTION',RESULT:'PASSED'},'REG-EXEC-OLD');old.scope={iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'};p.projectData.regressionExecutions.push(old);assert(engine.unresolvedMaterialDefects(p).some(x=>engine.recordId(x,'defects')==='DEFECT-SCOPE'),'A stale regression success resolved a current material defect.');
+}
+
+// Stage 28 replaces the current comparison batch and is idempotent for identical evidence.
+{
+  const p=project('JOB-IDENTITY-RECOVERY');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-IDENTITY-RECOVERY'));const audited=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}],bad=[{artifactId:'A',name:'a.bin',size:4,sha256:'bbb'}],good=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}];engine.verifyArtifactIdentity(p,audited,bad);const corrected=engine.verifyArtifactIdentity(p,audited,good);assert(engine.records(p,'artifactIdentities').length===1&&corrected.length===1&&p.release.authorization==='AUTHORIZED','A corrected Stage 28 comparison remained blocked by an older active mismatch.');const count=p.projectData.artifactIdentities.length,again=engine.verifyArtifactIdentity(p,audited,good);assert(p.projectData.artifactIdentities.length===count&&again[0].id===corrected[0].id,'Identical Stage 28 evidence created a duplicate comparison batch.');
+}
+
+console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOperationIsolation:true,currentRegressionClosure:true,stage28CurrentBatch:true},null,2));
+'''
+vc.write_text(text.replace(marker,marker+tests,1))
+
+vb=Path('verify-browser-extra.mjs'); text=vb.read_text(); marker="  console.log('extra:support-controls');"
+if marker not in text: raise SystemExit('verify-browser-extra marker not found')
+browser_test=r'''  console.log('extra:canonical-write-integrity');
+  const canonicalWrite=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision,candidate=structuredClone(before);candidate.stageCount=29;let code='';try{await store.writeProject(candidate,{expectedProjectRevision:revision});}catch(e){code=e.code||'';}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {code,revisionSame:after.revision===revision,stageCount:after.stageCount};})()`);
+  assert(canonicalWrite?.code==='PROJECT_INTEGRITY_FAILED'&&canonicalWrite.revisionSame&&canonicalWrite.stageCount===30,'Normal IndexedDB write accepted structurally invalid canonical state.');
+
+'''
+vb.write_text(text.replace(marker,browser_test+marker,1))
