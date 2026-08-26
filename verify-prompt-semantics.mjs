@@ -29,7 +29,7 @@ function procedureIssues(stage,task){
   if(stage===16&&/Create a controlled CHANGESET_ID/.test(task))issues.push('AGENT_ASSIGNS_CHANGESET_ID');
   if(stage===17&&/new ITERATION_ID and CANDIDATE_ID/.test(task))issues.push('AGENT_ASSIGNS_ITERATION_ID');
   if(stage===18&&(/Determine convergence/.test(task)||/Calculate mandatory requirement coverage/.test(task)))issues.push('AGENT_CALCULATES_CONVERGENCE');
-  if(stage===20&&/Assign BASELINE_ID/.test(task))issues.push('AGENT_ASSIGNS_BASELINE_ID');
+  if(stage===20&&/assign BASELINE_ID/i.test(task))issues.push('AGENT_ASSIGNS_BASELINE_ID');
   if(stage===21&&(/Assign PRODUCT_ID/.test(task)||/Assign .*EXECUTION_ID/.test(task)))issues.push('AGENT_ASSIGNS_PRODUCT_ID');
   if(stage===25&&/Preserve artifact inventory, filename, version, byte size, SHA-256/.test(task))issues.push('AGENT_ASSERTS_FILE_FACTS');
   if(stage===27&&/produce exactly one determination/.test(task))issues.push('AGENT_SETS_RELEASE');
