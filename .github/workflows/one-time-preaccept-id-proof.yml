@@ -1,0 +1,130 @@
+name: One-time preaccept canonical ID proof
+on:
+  push:
+    branches: [reliability/preaccept-id-allocation-20260826]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[preaccept-id-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/preaccept-id-allocation-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimum canonical ID boundary correction
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p=Path(path); s=p.read_text(); count=s.count(old)
+              if count!=1: raise SystemExit(f'{label}: expected one anchor, found {count}')
+              p.write_text(s.replace(old,new,1))
+
+          replace_once('response-ingestion.js',
+          "function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0)}){\n  const proposalId=workflow.allocateInfrastructureId(project,'PARSED-PROPOSAL','responseProposals');\n  const tempToCanonical={};",
+          "function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,expectedProjectRevision=Number(project.revision||0)}){\n  const proposalId=workflow.allocateInfrastructureId(project,'PARSED-PROPOSAL','responseProposals');\n  const canonicalIdPreview=clone(project);\n  const tempToCanonical={};",
+          'proposal preview clone')
+
+          replace_once('response-ingestion.js',
+          "    const id=workflow.allocateId(project,'evidenceRecords');\n    tempToCanonical[source.temporaryKey]={collection:'evidenceRecords',id};",
+          "    const id=workflow.allocateId(canonicalIdPreview,'evidenceRecords');\n    tempToCanonical[source.temporaryKey]={collection:'evidenceRecords',id};",
+          'evidence preview allocation')
+
+          replace_once('response-ingestion.js',
+          "  for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):workflow.allocateId(project,collection);if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}",
+          "  for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):workflow.allocateId(canonicalIdPreview,collection);if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}",
+          'record preview allocation')
+
+          replace_once('response-ingestion.js',
+          "function commitEvidence(project,proposal){const ids=[];for(const evidence of safe(proposal.evidence)){if(project.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);project.projectData.evidenceRecords.push(clone(evidence));ids.push(evidence.id);}return ids;}",
+          "function commitEvidence(project,proposal){const ids=[];for(const evidence of safe(proposal.evidence)){const claimedId=workflow.allocateId(project,'evidenceRecords');if(claimedId!==evidence.id){const error=new Error(`The response proposal is stale: previewed evidence ID ${evidence.id} can no longer be allocated; next ID is ${claimedId}.`);error.code='STALE_PROPOSAL';throw error;}if(project.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);project.projectData.evidenceRecords.push(clone(evidence));ids.push(evidence.id);}return ids;}",
+          'accept-time evidence claim')
+
+          replace_once('response-ingestion.js',
+          "}if(next.projectData[collection].some(record=>workflow.recordId(record,collection)===canonical.id))throw new Error(`Canonical ID collision: ${canonical.id}.`);const duplicate=next.projectData[collection].find(record=>record.contentSha256===canonical.contentSha256&&workflow.isActiveRecord(record));",
+          "}const claimedCanonicalId=workflow.allocateId(next,collection);if(claimedCanonicalId!==canonical.id){const error=new Error(`The response proposal is stale: previewed ${collection} ID ${canonical.id} can no longer be allocated; next ID is ${claimedCanonicalId}.`);error.code='STALE_PROPOSAL';throw error;}if(next.projectData[collection].some(record=>workflow.recordId(record,collection)===canonical.id))throw new Error(`Canonical ID collision: ${canonical.id}.`);const duplicate=next.projectData[collection].find(record=>record.contentSha256===canonical.contentSha256&&workflow.isActiveRecord(record));",
+          'accept-time canonical claim')
+
+          p=Path('verify-ingestion.mjs'); s=p.read_text()
+          anchor="{let p=project('JOB-PR3-STALE-REVISION'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});p=prepared.project;p.revision=Number(p.revision||0)+1;let stale=false;try{ingestion.commit(p,prepared.proposal.proposalId,{operator:'VERIFY'});}catch(error){stale=error.code==='STALE_PROPOSAL';}if(!stale)throw new Error('Proposal stale after project revision change was accepted.');negativeCount++;}\n"
+          proof="""// Canonical IDs are previewed without consuming canonical counters; only acceptance claims them.
+{
+  const snapshot=p=>Object.fromEntries(Object.keys(schema.RECORD_SCHEMAS).map(collection=>[collection,Number(p.projectData.idCounters?.[collection]||0)]));
+  let p=project('JOB-PREACCEPT-ID-REJECT'),stage=2,pr=savePrompt(p,stage),before=snapshot(p),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  const afterPrepare=snapshot(prepared.project);if(JSON.stringify(afterPrepare)!==JSON.stringify(before))throw new Error('Proposal preview consumed canonical record IDs before acceptance.');
+  const rejected=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Reject preview without consuming canonical IDs.'});if(JSON.stringify(snapshot(rejected.project))!==JSON.stringify(before))throw new Error('Rejected proposal consumed canonical record IDs.');
+}
+{
+  let p=project('JOB-PREACCEPT-ID-ACCEPT'),stage=2,pr=savePrompt(p,stage),before=Object.fromEntries(Object.keys(schema.RECORD_SCHEMAS).map(collection=>[collection,Number(p.projectData.idCounters?.[collection]||0)])),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(JSON.stringify(Object.fromEntries(Object.keys(schema.RECORD_SCHEMAS).map(collection=>[collection,Number(prepared.project.projectData.idCounters?.[collection]||0)])))!==JSON.stringify(before))throw new Error('Accepted-path preview consumed canonical IDs before operator acceptance.');
+  const preview=[];for(const evidence of prepared.proposal.evidence||[])preview.push(['evidenceRecords',evidence.id]);for(const [collection,records] of Object.entries(prepared.proposal.canonicalRecords||{}))for(const record of records)if(!record.updateTargetId)preview.push([collection,record.id]);if(!preview.length)throw new Error('Preaccept ID regression fixture did not preview any canonical IDs.');
+  const accepted=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});for(const [collection,id] of preview)if(!accepted.project.projectData[collection].some(record=>engine.recordId(record,collection)===id))throw new Error(`Acceptance did not claim previewed canonical ID ${collection}:${id}.`);
+  const again=ingestion.commit(accepted.project,prepared.proposal.proposalId,{operator:'VERIFY'});if(!again.idempotent||JSON.stringify(again.project.projectData.idCounters)!==JSON.stringify(accepted.project.projectData.idCounters))throw new Error('Repeat acceptance consumed canonical IDs a second time.');
+}
+"""
+          if anchor not in s: raise SystemExit('preaccept regression anchor missing')
+          p.write_text(s.replace(anchor,anchor+proof,1))
+          PY
+      - name: Refresh exact runtime cache identity
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          for(const file of files){const marker=`<script defer src="${file}?v=`,first=html.indexOf(marker),second=first<0?-1:html.indexOf(marker,first+1);if(first<0||second>=0)throw new Error(`${file} script marker must occur exactly once.`);const start=first+marker.length,end=html.indexOf('"',start);html=html.slice(0,start)+identity+html.slice(end);}
+          fs.writeFileSync('index.html',html);console.log(identity);
+          NODE
+      - name: Verify exact correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-preaccept-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log" || return 1
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only passing permanent source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/one-time-preaccept-id-proof.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add response-ingestion.js verify-ingestion.mjs index.html
+          git commit -m 'Allocate canonical IDs only on acceptance [preaccept-id-complete]'
+          git push origin HEAD:reliability/preaccept-id-allocation-20260826
