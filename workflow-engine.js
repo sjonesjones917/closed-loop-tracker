@@ -221,22 +221,17 @@ function gate(stage,project){
       break;
     }
     case 2:{
-      requireAccepted();
-      const noApplicableSource=collection('sources').length===0&&upper(project.stages[2].agentData?.AUTHORITY_HIERARCHY)==='NO_APPLICABLE_EXTERNAL_SOURCE'&&String(project.stages[2].agentData?.KNOWN_CONTROLLING_SOURCES_EXAMINED||'').trim().length>0;
-      if(!noApplicableSource)requireCount('sources',1,'At least one inspected independent external governing source or an evidence-supported NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');
-      for(const source of collection('sources'))reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
+      requireAccepted();const determination=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION);const sources=collection('sources');
+      if(!sources.length){if(determination!=='NO_APPLICABLE_EXTERNAL_SOURCE')reasons.push('Either at least one legitimate external governing source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');else{const latest=changes.at(-1),proposal=safe(project.projectData.responseProposals).find(x=>x.proposalId===latest?.proposalId);if(!safe(proposal?.evidence).length)reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE requires preserved supporting evidence.');}}
+      else if(determination!=='APPLICABLE_SOURCES_ESTABLISHED')reasons.push('Established source records require SOURCE_APPLICABILITY_DETERMINATION = APPLICABLE_SOURCES_ESTABLISHED.');
+      for(const source of sources)reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
       if(collection('sourceConflicts').some(record=>['UNRESOLVED','BLOCKED','UNKNOWN','OPEN'].includes(upper(recordValue(record,'RESOLUTION_STATUS')))))reasons.push('An external-source conflict remains unresolved or blocked.');
       break;
     }
     case 3:{
-      requireAccepted();
-      const sourceIds=all('sources').map(record=>recordId(record,'sources'));
-      const noApplicableSource=sourceIds.length===0&&upper(project.stages[2].agentData?.AUTHORITY_HIERARCHY)==='NO_APPLICABLE_EXTERNAL_SOURCE';
-      if(!noApplicableSource)requireCount('research',1);
-      const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')));
-      const missing=sourceIds.filter(id=>!researched.has(id));
-      if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);
-      break;
+      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
+      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}
+      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;
     }
     case 4:
       requireAccepted();requireCount('requirements',1);
