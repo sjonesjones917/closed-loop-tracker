@@ -128,3 +128,25 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
 {const p=baseProject();p.revision=0;const a=prompts.buildPromptRecord(17,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}});engine.registerGeneratedPrompt(p,a);p.revision=1;const b=prompts.buildPromptRecord(17,{...p,revision:2},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}});engine.registerGeneratedPrompt(p,b);const active=p.projectData.generatedPrompts.filter(x=>!x.invalidatedBy);if(!active.some(x=>x.instructionId===a.instructionId)||!active.some(x=>x.instructionId===b.instructionId))throw new Error('Independent run prompt was superseded.');}
 // Desired source count participates in controlled User Job Input identity.
 {const p=baseProject();p.job.DESIRED_SOURCE_COUNT=5;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');const before=p.job.CURRENT_INPUT_VERSION;p.job.DESIRED_SOURCE_COUNT=9;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');if(p.job.CURRENT_INPUT_VERSION===before)throw new Error('Desired source count did not version User Job Input.');}
+
+
+// Residual prompt recovery invariants.
+{
+  const p=baseProject();
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='Implement a repository-scale application that cannot be directly modified from the authorized environment.';
+  const s1=prompts.buildPromptRecord(1,p).prompt;
+  if(!/EXACT_DELIVERABLE_REQUESTED/.test(s1)||!/human intent confirmation/i.test(s1)||!/implementation-ready specification/i.test(s1))throw new Error('Stage 01 does not convert infeasible implementation into a confirmable feasible deliverable.');
+  if(/Work too large for the available environment requires BLOCKED/.test(s1))throw new Error('Global prompt rules still contradict Stage 01 feasible-deliverable recovery.');
+  const workbookText=fs.readFileSync('workbook.js','utf8');
+  if(/function\s+buildStagePrompt\s*\(/.test(workbookText))throw new Error('workbook.js still contains a competing legacy prompt implementation.');
+  if(core.STAGES[14].fields.includes('POST_CORRECTION_SUCCESSES_PROVEN'))throw new Error('Stage 15 still exposes future post-correction success as current-stage state.');
+}
+{
+  const p=baseProject(), first=prompts.buildPromptRecord(2,p);p.projectData.generatedPrompts.push({...first,generatedAt:new Date().toISOString()});
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-REFINE',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-REFINE',proposalId:'PROPOSAL-REFINE',promptId:first.instructionId,operation:'COMPLETE',scope:{...first.scope}});
+  p.projectData.responseProposals.push({proposalId:'PROPOSAL-REFINE',promptId:first.instructionId,stage:2,envelope:{operation:'COMPLETE',scope:{...first.scope}},scope:{...first.scope}});
+  engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason:'The accepted result omitted a material source and must be more complete.'});
+  const second=prompts.buildPromptRecord(2,p,{operation:'COMPLETE',scope:{...first.scope}});
+  if(!second.prompt.includes('The accepted result omitted a material source and must be more complete.'))throw new Error('Accepted-result refinement reason is absent from the next controlling prompt.');
+  if(second.contextSignature===first.contextSignature)throw new Error('Accepted-result refinement did not change prompt context identity.');
+}
