@@ -69,6 +69,7 @@ function validEnvelope(p,stage,promptRecord){
     unresolved:[],warnings:[],attachments:[]
   };
 }
+function sourceProposal(tempKey='source-1',overrides={}){return {tempKey,fields:{TITLE:'Web Content Accessibility Guidelines (WCAG) 2.2',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'W3C Recommendation',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/',PUBLICATION_UPDATE_DATE:'2024-12-12',RETRIEVAL_DATE:'2026-08-25',AUTHORITY_LEVEL:'PRIMARY TECHNICAL AUTHORITY',AUTHORITY_ROLE:'GOVERNING WHERE APPLICABLE',RELEVANCE:'Independent accessibility authority',APPLICABLE_PORTIONS:'Conformance requirements',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING WHERE APPLICABLE',NOTES:'Controlled fixture',...overrides},relationships:{},evidenceRefs:['evidence-1']};}
 
 const allStages=[];
 for(let stage=1;stage<=30;stage++){
@@ -99,36 +100,69 @@ for(let stage=1;stage<=30;stage++){
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
-function negative(name,mutate,expectedCode){
-  const p=project(`JOB-NEG-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),stage=2,promptRecord=savePrompt(p,stage);
-  let envelope=validEnvelope(p,stage,promptRecord); const mutated=mutate(envelope,p,promptRecord); if(mutated!==undefined)envelope=mutated;
+let negativeCount=0;
+function negativeAt(name,stage,mutate,expectedCode){
+  const p=project(`JOB-NEG-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),promptRecord=savePrompt(p,stage);
+  let envelope=validEnvelope(p,stage,promptRecord);if(!envelope)throw new Error(`${name}: Stage ${stage} has no agent envelope fixture.`);const mutated=mutate(envelope,p,promptRecord);if(mutated!==undefined)envelope=mutated;
   const text=typeof envelope==='string'?envelope:JSON.stringify(envelope);
   const prepared=ingestion.prepare(p,{stage,text,promptRecord});
   if(prepared.validation.valid)throw new Error(`${name}: invalid response was accepted.`);
   if(expectedCode&&!prepared.validation.issues.some(issue=>issue.code===expectedCode))throw new Error(`${name}: expected ${expectedCode}; got ${prepared.validation.issues.map(x=>x.code).join(', ')}.`);
   if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed on validation failure.`);
   if(!prepared.project.projectData.rawResponses.length||!prepared.project.projectData.responseValidations.length)throw new Error(`${name}: failed raw response/validation was not preserved.`);
+  negativeCount++;
 }
+const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
+negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
+negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
+negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
+negative('wrong root type',()=> '[]','INVALID_ROOT');
+negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
+negative('oversized response',()=> 'x'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxRawResponseBytes+1),'OVERSIZED_RESPONSE');
+negative('excessive nesting',()=> '['.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1)+'0'+']'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1),'EXCESSIVE_JSON_DEPTH');
+negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');
 negative('wrong job',(e)=>{e.jobId='JOB-OTHER';},'WRONG_JOB_ID');
 negative('wrong stage',(e)=>{e.stage=3;},'WRONG_STAGE');
+negative('wrong operation',(e)=>{e.operation='NOT_THE_OPERATION';},'WRONG_OPERATION');
 negative('stale prompt id',(e)=>{e.promptIdentity.instructionId='INSTRUCTION-STALE';},'STALE_PROMPT_IDENTITY');
 negative('stale prompt hash',(e)=>{e.promptIdentity.bodySha256='0'.repeat(64);},'STALE_PROMPT_HASH');
+negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(64);},'STALE_CONTRACT_HASH');
+negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
 negative('unknown collection',(e)=>{e.records.unknownCollection=[];},'UNKNOWN_COLLECTION');
+negative('unknown stage field',(e)=>{e.stageData.UNKNOWN_STAGE_FIELD='x';},'UNKNOWN_STAGE_FIELD');
 negative('agent application field',(e)=>{e.stageData.SOURCE_SET_VERSION='SOURCE-SET-v999';},'FIELD_OWNERSHIP_VIOLATION');
 negative('agent human field',(e)=>{e.records.blockers=[{tempKey:'blocker-1',fields:{OWNER:'agent-overwrite'},relationships:{},evidenceRefs:['evidence-1']}];},'FIELD_OWNERSHIP_VIOLATION');
-negative('target product source',(e)=>{e.stageData={};e.records={sources:[{temporaryKey:'source-1',fields:{TITLE:'Current application repository',ISSUING_ORGANIZATION_OR_AUTHOR:'Project repository',SOURCE_TYPE:'repository source code',PUBLICATION_ORIGIN:'current application',URL_REFERENCE:'https://github.com/sjonesjones917/closed-loop-tracker',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'target product',APPLICABLE_PORTIONS:'app-core.js',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NONE',CONTROLLING_STATE:'CONTROLLING'},relationships:{},evidenceRefs:['evidence-1']}]};},'INVALID_EXTERNAL_SOURCE');
-negative('duplicate temp key',(e)=>{e.records.blockers=[{tempKey:'dup',fields:{MISSING_ITEM_TYPE:'INPUT',MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:'missing',WHY_WORK_CANNOT_CONTINUE:'blocked',ATTEMPTED_RESOLUTIONS:'none',DOWNSTREAM_WORK_STOPPED:'stage',STATUS:'OPEN'},relationships:{},evidenceRefs:['evidence-1']},{tempKey:'dup',fields:{MISSING_ITEM_TYPE:'INPUT',MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:'missing',WHY_WORK_CANNOT_CONTINUE:'blocked',ATTEMPTED_RESOLUTIONS:'none',DOWNSTREAM_WORK_STOPPED:'stage',STATUS:'OPEN'},relationships:{},evidenceRefs:['evidence-1']}];},'DUPLICATE_TEMPORARY_KEY');
+negative('target product source',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-target',{TITLE:'Current application repository',ISSUING_ORGANIZATION_OR_AUTHOR:'Project repository',SOURCE_TYPE:'repository source code',PUBLICATION_ORIGIN:'current application',URL_REFERENCE:'https://github.com/sjonesjones917/closed-loop-tracker',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'target product',APPLICABLE_PORTIONS:'app-core.js',CONTROLLING_STATE:'CONTROLLING'})]};},'INVALID_EXTERNAL_SOURCE');
+negative('duplicate temp key',(e)=>{e.stageData={};e.records={sources:[sourceProposal('dup'),sourceProposal('dup',{TITLE:'Second source'})]};},'DUPLICATE_TEMPORARY_KEY');
+negative('unknown record field',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-unknown',{UNKNOWN_FIELD:'forbidden'})]};},'UNKNOWN_RECORD_FIELD');
+negative('wrong value type',(e)=>{e.stageData={};const r=sourceProposal('source-type');r.fields.TITLE=42;e.records={sources:[r]};},'WRONG_VALUE_TYPE');
+negative('prohibited null',(e)=>{e.stageData={};const r=sourceProposal('source-null');r.fields.TITLE=null;e.records={sources:[r]};},'PROHIBITED_NULL');
+negative('empty required string',(e)=>{e.stageData={};const r=sourceProposal('source-empty');r.fields.TITLE='';e.records={sources:[r]};},'EMPTY_REQUIRED_STRING');
+negative('placeholder value',(e)=>{e.stageData={};const r=sourceProposal('source-placeholder');r.fields.TITLE='<value>';e.records={sources:[r]};},'PLACEHOLDER_VALUE');
+negative('invalid enum',(e)=>{e.stageData={};const r=sourceProposal('source-enum');const field=Object.keys(r.fields).find(name=>schema.RECORD_SCHEMAS.sources.fieldDefinitions[name]?.enumValues?.length);if(!field)throw new Error('No controlled source enum is available for the test.');r.fields[field]='__INVALID_ENUM__';e.records={sources:[r]};},'INVALID_ENUM_VALUE');
 negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
-negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+negative('unresolved evidence reference',(e)=>{e.stageData={};const r=sourceProposal('source-evidence');r.evidenceRefs=['does-not-exist'];e.records={sources:[r]};},'UNRESOLVED_EVIDENCE_REFERENCE');
+negative('unresolved evidence source',(e)=>{e.evidence[0].sourceRef={recordId:'SOURCE-NOT-THERE'};},'UNRESOLVED_EVIDENCE_SOURCE');
+negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={recordId:'ARTIFACT-NOT-THERE'};},'UNRESOLVED_EVIDENCE_ATTACHMENT');
+negative('invalid record identity',(e)=>{e.stageData={};const r=sourceProposal('source-both');r.targetId='SOURCE-ALSO';e.records={sources:[r]};},'INVALID_RECORD_IDENTITY');
+negativeAt('unresolved relationship',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]};},'UNRESOLVED_RELATIONSHIP');
+negativeAt('wrong relationship type',14,(e)=>{e.stageData={};e.records={rootCauses:[{tempKey:'wrong-type',fields:{CATEGORY:'INSTRUCTION',LAYER_TRACE:'trace',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'cause',EVIDENCE:'evidence',DOWNSTREAM_INVALIDATION:'downstream'},relationships:{DEFECT_ID:{tempKey:'wrong-type'}},evidenceRefs:['evidence-1']}]};},'WRONG_RELATIONSHIP_TYPE');
+negative('mixed human input response',(e)=>{e.responseType='HUMAN_INPUT_REQUIRED';e.humanInputRequests=[{temporaryKey:'q',question:'Need input?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
+negative('mixed blocked response',(e)=>{e.responseType='BLOCKED';e.unresolved=[{temporaryKey:'u',kind:'MISSING_AUTHORITY',description:'Missing authority',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
+negative('mixed execution failed response',(e)=>{e.responseType='EXECUTION_FAILED';e.unresolved=[{temporaryKey:'u',kind:'EXECUTION_FAILURE',description:'Execution failed',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
+negative('empty data proposal',(e)=>{e.stageData={};e.records={};},'EMPTY_DATA_PROPOSAL');
+negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].resourceLimits.maxEvidenceRecords;e.evidence=Array.from({length:max+1},(_,i)=>({temporaryKey:`e-${i}`,kind:'WORKFLOW_EVIDENCE',description:'e',location:'fixture',content:'e'}));},'RESOURCE_LIMIT_EXCEEDED');
 
-// Duplicate response is detected only after the first raw response has been preserved.
+// Duplicate response is semantic, not whitespace-sensitive.
 {
   let p=project('JOB-NEG-DUPLICATE'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord),text=JSON.stringify(envelope);
   const first=ingestion.prepare(p,{stage,text,promptRecord});
   if(!first.validation.valid)throw new Error('Duplicate fixture first response unexpectedly invalid.');
-  const second=ingestion.prepare(first.project,{stage,text,promptRecord});
-  if(!second.duplicate||second.rawRecord.rawResponseId!==first.rawRecord.rawResponseId||second.receipt.receiptId!==first.receipt.receiptId)throw new Error('Duplicate canonical envelope did not return the existing response and receipt.');
+  const reordered={...envelope,warnings:[...envelope.warnings]};const second=ingestion.prepare(first.project,{stage,text:JSON.stringify(reordered,null,2),promptRecord});
+  if(!second.duplicate||second.rawRecord.rawResponseId!==first.rawRecord.rawResponseId||second.receipt.receiptId!==first.receipt.receiptId)throw new Error('Semantic duplicate with different whitespace did not return the existing response and receipt.');
+  negativeCount++;
 }
 
 // Clarification loop: structured question -> accepted question record -> human answer -> INPUT version increments.
@@ -145,9 +179,19 @@ negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON
   if(engine.unresolvedHumanRequests(p,stage).length)throw new Error('Answered clarification remained open.');
 }
 
-console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:12,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true},null,2));
+// Exact primitive value-validator failures, including values JSON cannot represent faithfully.
+for(const [name,definition,value,code] of [
+  ['non-finite number',{valueType:'NUMBER',enumValues:[],nullable:false},Infinity,'WRONG_VALUE_TYPE'],
+  ['integer required',{valueType:'INTEGER',enumValues:[],nullable:false},1.5,'WRONG_VALUE_TYPE'],
+  ['boolean required',{valueType:'BOOLEAN',enumValues:[],nullable:false},'true','WRONG_VALUE_TYPE'],
+  ['array required',{valueType:'STRING_ARRAY',enumValues:[],nullable:false},'x','WRONG_VALUE_TYPE'],
+  ['empty required array',{valueType:'STRING_ARRAY',enumValues:[],nullable:false},[],'EMPTY_REQUIRED_ARRAY']
+]){const issues=[];ingestion.validateValue(definition,value,`/${name}`,issues,{required:true});if(!issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}.`);negativeCount++;}
+
+console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:negativeCount,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true},null,2));
 
 // PR3 transaction/disposition invariants.
 {let p=project('JOB-PR3-IDEMP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);const first=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const accepted=ingestion.commit(first.project,first.proposal.proposalId,{operator:'VERIFY'});const again=ingestion.commit(accepted.project,first.proposal.proposalId,{operator:'VERIFY'});if(!again.idempotent||again.project.projectData.acceptedChanges.length!==accepted.project.projectData.acceptedChanges.length)throw new Error('Repeat acceptance was not idempotent.');const repeated=ingestion.prepare(accepted.project,{stage,text:JSON.stringify(e),promptRecord:pr});if(!repeated.duplicate||repeated.receipt?.receiptId!==accepted.receipt?.receiptId)throw new Error('Repeated canonical envelope did not return existing receipt/disposition.');const manifest=accepted.manifest;if(!manifest.entries.some(x=>/^\/records\/[^/]+\/0\/fields\//.test(x.jsonPointer||''))&&!manifest.entries.some(x=>/^\/stageData\//.test(x.jsonPointer||'')))throw new Error('Extraction manifest does not contain exact response JSON pointers.');}
 {let p=project('JOB-PR3-QUESTION'),stage=1,pr=savePrompt(p,stage);const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q1',question:'Need number?',whyRequired:'Human-only value.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'NUMBER',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const control=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});p=control.project;if(p.projectData.acceptedChanges.length)throw new Error('Question set counted as accepted DATA change.');const q=p.projectData.humanInputRequests.at(-1);let bad=false;try{ingestion.answerHumanInput(p,{[q.requestId]:'3'},{operator:'VERIFY'});}catch{bad=true;}if(!bad)throw new Error('NUMBER answer accepted a string.');const oldPrompt=pr.instructionId;const answered=ingestion.answerHumanInput(p,{[q.requestId]:3},{operator:'VERIFY'});p=answered.project;if(p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===oldPrompt)?.invalidatedBy==null)throw new Error('Clarification did not invalidate prior prompt.');if(!answered.generatedPromptIds[0]||answered.generatedPromptIds[0]===oldPrompt)throw new Error('Clarification did not regenerate the stage prompt.');}
-console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,idempotentAcceptance:true,canonicalEnvelopeIdempotency:true,typedHumanAnswers:true,clarificationPromptInvalidation:true,exactManifestPointers:true},null,2));
+{let p=project('JOB-PR3-REJECT'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});p=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Controlled rejection.'}).project;let blocked=false;try{ingestion.commit(p,prepared.proposal.proposalId,{operator:'VERIFY'});}catch(error){blocked=error.code==='PROPOSAL_NOT_ACCEPTABLE';}if(!blocked)throw new Error('Acceptance after rejection was not prohibited.');negativeCount++;}
+console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,idempotentAcceptance:true,canonicalEnvelopeIdempotency:true,typedHumanAnswers:true,clarificationPromptInvalidation:true,exactManifestPointers:true,acceptanceAfterRejectionBlocked:true,totalNegativeCases:negativeCount},null,2));
