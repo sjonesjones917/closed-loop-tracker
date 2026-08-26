@@ -16,7 +16,7 @@ jobs:
       - name: Restore production workflow and remove proof machinery
         run: |
           git checkout origin/main -- .github/workflows/pages.yml
-          rm -f apply-operator-lane.py
+          rm -f apply-operator-lane.py .operator-lane-proof-trigger
       - name: Verify exact resulting source
         run: |
           node build-test-project.mjs
@@ -52,6 +52,7 @@ jobs:
           git add -A
           git diff --cached --check
           test ! -f apply-operator-lane.py
+          test ! -f .operator-lane-proof-trigger
           test "$(git diff --cached --name-only | wc -l)" -eq 3
           git diff --cached --name-only | grep -qx app-core.js
           git diff --cached --name-only | grep -qx verify-complete.mjs
