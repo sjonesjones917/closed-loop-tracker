@@ -29,7 +29,7 @@ replacement="""function acceptedOperationSet(project,stage,scopeRule={}){
 function candidateComponentIdentity"""
 text,count=re.subn(pattern,replacement,text,count=1,flags=re.S)
 if count!=1: raise SystemExit('Operation scope pattern mismatch')
-old="ops=acceptedOperationSet(project,stage),requiredOps=";new="ops=acceptedOperationSet(project,stage,{iterationId,candidateId:expectedCandidate}),requiredOps="
+old="ops=acceptedOperationSet(project,stage),requiredOps=";new="ops=acceptedOperationSet(project,stage,{iterationId}),requiredOps="
 if text.count(old)!=1: raise SystemExit('Iteration evaluator operation pattern mismatch')
 text=text.replace(old,new,1)
 old="project.job.CURRENT_ITERATION=iterationId;addHistory(project,'CANDIDATE_FROZEN'"
