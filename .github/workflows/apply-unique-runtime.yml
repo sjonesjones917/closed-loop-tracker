@@ -15,12 +15,30 @@ jobs:
         with:
           node-version: 22
       - name: Apply exact current-main patch
-        run: python .unique_runtime.py
+        id: patch
+        continue-on-error: true
+        run: |
+          set +e
+          python .unique_runtime.py > .patch-log 2>&1
+          code=$?
+          cat .patch-log
+          echo "$code" > .patch-exit
+          exit $code
+      - name: Persist patch diagnostic
+        if: steps.patch.outcome == 'failure'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .patch-log .patch-exit
+          git commit -m "Capture unique runtime patch mismatch"
+          git push origin HEAD:practical-100/final-organic-ui
       - name: Add self specification artifact
+        if: steps.patch.outcome == 'success'
         run: |
           git fetch origin practical-100/organic-self-spec-acceptance --depth=20
           git show origin/practical-100/organic-self-spec-acceptance:SELF_SPECIFICATION.md > SELF_SPECIFICATION.md
       - name: Verify existing acceptance suites
+        if: steps.patch.outcome == 'success'
         run: |
           node --check app-core.js
           node --check response-ingestion.js
@@ -31,10 +49,11 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
       - name: Commit clean result
+        if: steps.patch.outcome == 'success'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          rm .unique_runtime.py .github/workflows/apply-unique-runtime.yml
+          rm -f .unique_runtime.py .patch-log .patch-exit .github/workflows/apply-unique-runtime.yml
           git add -A
           git commit -m "Close accepted-response, run identity, operation, and Stage 29 UI gaps"
           git push origin HEAD:practical-100/final-organic-ui
