@@ -1,0 +1,61 @@
+name: Prove exact prompt preview repair
+on:
+  push:
+    branches: [ui/prompt-preview-expand-fix-20260826]
+permissions: {contents: write}
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: ui/prompt-preview-expand-fix-20260826}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply the two exact permanent changes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old=".record-card>summary,.project-field-group>summary,.workflow-disclosure>summary{align-items:center}.record-card>summary:hover,.project-field-group>summary:hover{background:#fafcfb}\n.prompt{line-height:1.55;background:#f7f9f7;border-color:#cfd6d1;padding:11px;scrollbar-gutter:stable}.stage-output{min-height:clamp(240px,38vh,460px);line-height:1.55}.code-text{tab-size:2}"
+          new=".record-card>summary,.project-field-group>summary,.workflow-disclosure>summary{align-items:center}.record-card>summary:hover,.project-field-group>summary:hover{background:#fafcfb}\n.expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}.expandable-prompt.expanded{height:auto;max-height:none}\n.prompt{line-height:1.55;background:#f7f9f7;border-color:#cfd6d1;padding:11px;scrollbar-gutter:stable}.stage-output{min-height:clamp(240px,38vh,460px);line-height:1.55}.code-text{tab-size:2}"
+          if s.count(old)!=1: raise SystemExit('index.html exact visual anchor missing or ambiguous')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('verify-browser.mjs')
+          s=p.read_text()
+          old="assert(!(await evalValue(cdp,`document.querySelector('#generated-prompt')?.classList.contains('expanded')`)),'Prompt preview starts expanded instead of compact.');await click(cdp,'#toggle-prompt');assert(await evalValue(cdp,`document.querySelector('#generated-prompt')?.classList.contains('expanded')&&document.querySelector('#toggle-prompt')?.getAttribute('aria-expanded')==='true'`),'Prompt preview did not expand accessibly.');await click(cdp,'#toggle-prompt');assert(!(await evalValue(cdp,`document.querySelector('#generated-prompt')?.classList.contains('expanded')`)),'Prompt preview did not collapse.');"
+          new="assert(!(await evalValue(cdp,`document.querySelector('#generated-prompt')?.classList.contains('expanded')`)),'Prompt preview starts expanded instead of compact.');assert(await evalValue(cdp,`{const n=document.querySelector('#generated-prompt');return n&&n.scrollHeight>n.clientHeight+1;}`),'Compact prompt preview is not actually bounded.');await click(cdp,'#toggle-prompt');assert(await evalValue(cdp,`{const n=document.querySelector('#generated-prompt'),b=document.querySelector('#toggle-prompt');return n?.classList.contains('expanded')&&b?.getAttribute('aria-expanded')==='true'&&n.scrollHeight<=n.clientHeight+1;}`),'Prompt preview did not expand to reveal the full instruction accessibly.');await click(cdp,'#toggle-prompt');assert(await evalValue(cdp,`{const n=document.querySelector('#generated-prompt');return !n?.classList.contains('expanded')&&n.scrollHeight>n.clientHeight+1;}`),'Prompt preview did not return to the bounded compact state.');"
+          if s.count(old)!=1: raise SystemExit('verify-browser exact preview assertion anchor missing or ambiguous')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Run deterministic acceptance
+        run: |
+          node --check verify-browser.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Prove prompt preview behavior in Chromium
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-preview-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only the proven permanent diff
+        run: |
+          rm .github/workflows/prove-prompt-preview.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          test "$(git status --short | wc -l)" -eq 3
+          git add index.html verify-browser.mjs .github/workflows/prove-prompt-preview.yml
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/prove-prompt-preview.yml index.html verify-browser.mjs "
+          git commit -m "Make prompt preview expansion reveal the full instruction"
+          git push origin HEAD:ui/prompt-preview-expand-fix-20260826
