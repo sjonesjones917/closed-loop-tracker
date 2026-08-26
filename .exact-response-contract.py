@@ -28,7 +28,7 @@ s=s.replace("const fields=contract.allowedStageData.length?contract.allowedStage
 s=s.replace("const collections=writable.length?writable.map(c=>`- ${c}: ${schema.recordAgentFields(c).join(', ')||'no agent-owned fields'}`).join('\\n'):'- NONE';",
 "const collections=writable.length?writable.map(c=>`- ${c}: ${schema.recordAgentFields(c).map(name=>{const def=schema.RECORD_SCHEMAS[c].fieldDefinitions[name];return `${name} (${def.valueType}${def.enumValues?.length?`; ${def.enumValues.join(' | ')}`:''}${def.nullable?'; nullable':''})`;}).join(', ')||'no agent-owned fields'}`).join('\\n'):'- NONE';",1)
 oldcall='${responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope)}'
-newcall='${responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope,j.JOB_ID)}'
+newcall='${responseContract(stage,operation,instructionId,bodySha256,contractSha256,contextSignature,scope,state?.job?.JOB_ID)}'
 if s.count(oldcall)!=1: raise SystemExit(f'prompt-engine responseContract call count {s.count(oldcall)}')
 s=s.replace(oldcall,newcall,1)
 p.write_text(s)
