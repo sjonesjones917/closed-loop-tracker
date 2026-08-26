@@ -1,0 +1,67 @@
+name: Current TEST artifact custody proof v3
+on:
+  push:
+    branches:
+      - reliability/current-test-artifact-custody-20260826
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[test-artifact-custody-proved]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/current-test-artifact-custody-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact patch to current main
+        run: |
+          cp .tmp-current-test-artifact-custody.py /tmp/current-test-artifact-custody.py
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "51ef42ffc2c63827b15fe9abed92bcc7778cc927"
+          git reset --hard origin/main
+          python3 /tmp/current-test-artifact-custody.py
+      - name: Run complete acceptance
+        run: |
+          node build-test-project.mjs
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit permanent files only
+        run: |
+          rm -f .tmp-current-test-artifact-custody.py
+          rm -f .github/workflows/current-test-artifact-custody.yml
+          rm -f .github/workflows/current-test-artifact-custody-v2.yml
+          rm -f .github/workflows/current-test-artifact-custody-v3.yml
+          rm -f .github/workflows/fix-current-custody-runner.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          if git diff --cached --name-only | grep -E '(^\.tmp|^\.repair|current-test-artifact-custody|fix-current-custody-runner)'; then exit 1; fi
+          git commit -m "Recheck exact TEST artifact custody at Stage 6 [test-artifact-custody-proved]"
+          git push --force-with-lease origin HEAD:reliability/current-test-artifact-custody-20260826
