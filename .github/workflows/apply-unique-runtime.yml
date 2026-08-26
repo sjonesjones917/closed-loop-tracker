@@ -1,0 +1,78 @@
+name: Apply unique runtime closure
+on:
+  push:
+    branches: [practical-100/final-organic-ui]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 100}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply only unique runtime hunks from audited candidate
+        run: |
+          git fetch origin practical-100/organic-self-spec-final --depth=100
+          git diff d0aae2aef3fb7675962f2747f75b0051ba4fe427 2efee2303c2fd8b593e02264d6e5f9ea5a5a60f0 -- app-core.js response-ingestion.js workflow-engine.js > /tmp/runtime.patch
+          git apply --3way /tmp/runtime.patch
+          git show 2efee2303c2fd8b593e02264d6e5f9ea5a5a60f0:SELF_SPECIFICATION.md > SELF_SPECIFICATION.md
+      - name: Add direct runtime proof to existing verifier
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('verify-complete.mjs');s=p.read_text()
+          marker="console.log(JSON.stringify("
+          i=s.rfind(marker)
+          if i<0: raise SystemExit('verify-complete report marker missing')
+          tests=r'''
+// Accepted-response refinement removes the invalid response's same-stage authority and preserves history.
+{
+  const p=project('JOB-REFINEMENT-AUTHORITY');
+  const src=record('sources',2,{TITLE:'Superseded source'},'SOURCE-REFINE');src.rawResponseId='RAW-REFINE';p.projectData.sources.push(src);
+  p.projectData.acceptedChanges.push({changeId:'CHANGE-REFINE',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPLETE',rawResponseId:'RAW-REFINE',canonicalRecordIds:['SOURCE-REFINE'],scope:{}});
+  p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'SOURCES_IDENTIFIED'};p.stages[2].acceptedData={...p.stages[2].agentData};p.stages[2].acceptedDataChangeIds=['CHANGE-REFINE'];p.stages[2].acceptedResponseIds=['RAW-REFINE'];
+  engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason:'Incomplete source set',operatorLabel:'VERIFY'});
+  assert(src.active===false&&src.invalidatedBy,'Invalidated accepted response left its same-stage canonical record active.');
+  assert(engine.acceptedChanges(p,2).length===0&&!p.stages[2].acceptedDataChangeIds.includes('CHANGE-REFINE'),'Invalidated response still retained current stage authority.');
+}
+
+// Run reservation requires and stamps one exact application-frozen candidate.
+{
+  const p=project('JOB-RUN-CANDIDATE');p.job.CURRENT_ITERATION='ITERATION-RUN-CANDIDATE';
+  p.projectData.iterations.push(record('iterations',10,{CANDIDATE_ID:'CANDIDATE-RUN-CANDIDATE',STATUS:'FROZEN'},'ITERATION-RUN-CANDIDATE'));
+  let threw=false;try{const q=project('JOB-RUN-NO-CANDIDATE');q.job.CURRENT_ITERATION='ITERATION-NO-CANDIDATE';engine.reserveRunBatch(q,{stage:11});}catch{threw=true;}assert(threw,'Run batch was reserved without an application-frozen candidate.');
+  const slots=engine.reserveRunBatch(p,{stage:11});assert(slots.length===10,'Run batch did not reserve exactly ten slots.');
+  const candidates=engine.records(p,'runs',{stage:11}).map(r=>engine.recordValue(r,'CANDIDATE_ID'));assert(candidates.every(x=>x==='CANDIDATE-RUN-CANDIDATE'),'Reserved runs are not bound to the exact frozen candidate.');
+}
+
+// Stage 17/19 operation selection is application-derived and run-scoped rather than human-coordinated.
+{
+  const p=project('JOB-OPERATION-SEQUENCE');p.job.CURRENT_ITERATION='ITERATION-OP';
+  p.projectData.iterations.push(record('iterations',17,{CANDIDATE_ID:'CANDIDATE-OP',STATUS:'FROZEN'},'ITERATION-OP'));
+  p.projectData.candidateFreezes.push(record('candidateFreezes',17,{ITERATION_ID:'ITERATION-OP',COMPONENT_HASHES:{A:'a'},STATUS:'FROZEN'},'CANDIDATE-OP'));
+  engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-OP',candidateId:'CANDIDATE-OP'});
+  const plan=engine.nextPromptOperation(p,17);assert(plan.operation==='EXECUTE_RUN'&&plan.scope.runId&&plan.scope.contextId,'Stage 17 did not derive the next exact run operation from canonical state.');
+}
+'''
+          p.write_text(s[:i]+tests+s[i:])
+      - name: Verify source and deterministic lifecycle
+        run: |
+          node --check app-core.js
+          node --check response-ingestion.js
+          node --check workflow-engine.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean result
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/apply-unique-runtime.yml
+          git add -A
+          git commit -m "Close accepted-response, run identity, and Stage 29 operator gaps"
+          git push origin HEAD:practical-100/final-organic-ui
