@@ -19,6 +19,16 @@ jobs:
       - name: Apply responsible-layer repair
         run: |
           python .stage01-practical-intake-repair.py
+          python <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs')
+          s=p.read_text()
+          old="!/requested filing artifacts/.test(r.prompt)"
+          new="!/supplied invention disclosure/.test(r.prompt)"
+          if old not in s:
+              raise SystemExit('stale Stage 01 specialist assertion not found')
+          p.write_text(s.replace(old,new,1))
+          PY
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto');
           const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
