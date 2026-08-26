@@ -1,0 +1,107 @@
+name: Temporary current-scope gate repair
+on:
+  push:
+    branches: [reliability/current-scope-gates-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="    case 16:requireAccepted();if(confirmedDefects(project).length&&!collection('changes').length)reasons.push('A responsible-layer changeset or blocker is required for confirmed defects.');break;"
+          new="    case 16:{requireAccepted();const defects=confirmedDefects(project),changes=collection('changes'),mentions=(value,id)=>String(value||'').toUpperCase().split(/[^A-Z0-9_-]+/).includes(String(id||'').toUpperCase());if(defects.length&&!changes.length)reasons.push('A responsible-layer changeset is required for confirmed defects.');const uncovered=defects.filter(defect=>!changes.some(change=>mentions(recordValue(change,'TRIGGERING_DEFECT_IDS'),recordId(defect,'defects')))).map(defect=>recordId(defect,'defects'));if(uncovered.length)reasons.push('Responsible-layer corrections are missing for confirmed defect(s): '+uncovered.join(', ')+'.');break;}"
+          if old not in s: raise SystemExit('Stage 16 gate source changed')
+          s=s.replace(old,new)
+          old="""    case 28:{
+              const release=all('releaseRecords').at(-1);
+              if(upper(recordValue(release,'DETERMINATION'))!=='ACCEPTED')reasons.push('Stage 27 must be ACCEPTED before artifact identity verification.');
+              if(!all('artifactIdentities').length)reasons.push('No audited-versus-delivery artifact identity comparison exists.');
+              if(all('artifactIdentities').some(record=>!truth(recordValue(record,'EXACT_HASH_MATCH'))||!truth(recordValue(record,'EXACT_SIZE_MATCH'))||upper(recordValue(record,'AUTHORIZATION'))!=='AUTHORIZED'))reasons.push('At least one release artifact does not exactly match the audited artifact.');
+              break;
+            }
+            case 29:{
+              const reqs=mandatoryRequirements(project),chains=all('evidenceChains'),byReq=new Map(chains.map(record=>[String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||''),record]));
+              const incomplete=reqs.filter(req=>upper(recordValue(byReq.get(requirementId(req)),'STATUS'))!=='COMPLETE').map(requirementId);
+              if(incomplete.length)reasons.push(`Complete evidence chains are missing for: ${incomplete.join(', ')}.`);
+              break;
+            }"""
+          new="""    case 28:{
+              const release=recordsForCurrentScope(project,'releaseRecords').at(-1),identities=recordsForCurrentScope(project,'artifactIdentities'),productId=currentScope(project).productId,artifacts=recordsForCurrentScope(project,'artifacts').filter(record=>productId&&String(record.scope?.productId||'')===String(productId)),counts=new Map();
+              if(upper(recordValue(release,'DETERMINATION'))!=='ACCEPTED')reasons.push('The exact current Stage 27 release must be ACCEPTED before artifact identity verification.');
+              for(const identity of identities){const id=String(recordValue(identity,'ARTIFACT_ID')||identity.relationships?.ARTIFACT_ID||'');counts.set(id,(counts.get(id)||0)+1);}
+              const expected=new Set(artifacts.map(record=>recordId(record,'artifacts'))),missing=[...expected].filter(id=>counts.get(id)!==1),unexpected=identities.filter(identity=>!expected.has(String(recordValue(identity,'ARTIFACT_ID')||identity.relationships?.ARTIFACT_ID||'')));
+              if(!expected.size)reasons.push('No current product artifacts exist for pre-release identity verification.');
+              if(missing.length)reasons.push('Exactly one current artifact-identity comparison is required for every current product artifact: '+missing.join(', ')+'.');
+              if(unexpected.length)reasons.push('Artifact-identity comparisons exist outside the current product artifact set.');
+              if(identities.some(record=>!truth(recordValue(record,'EXACT_HASH_MATCH'))||!truth(recordValue(record,'EXACT_SIZE_MATCH'))||upper(recordValue(record,'AUTHORIZATION'))!=='AUTHORIZED'))reasons.push('At least one current release artifact does not exactly match the audited artifact.');
+              break;
+            }
+            case 29:{
+              const reqs=mandatoryRequirements(project,currentScope(project)),chains=recordsForCurrentScope(project,'evidenceChains'),counts=new Map(),byReq=new Map();for(const chain of chains){const id=String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||'');counts.set(id,(counts.get(id)||0)+1);byReq.set(id,chain);}const expected=new Set(reqs.map(requirementId)),missing=[...expected].filter(id=>counts.get(id)!==1||upper(recordValue(byReq.get(id),'STATUS'))!=='COMPLETE'),unexpected=chains.filter(chain=>!expected.has(String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||'')));
+              if(missing.length)reasons.push(`Exactly one complete current evidence chain is required for: ${missing.join(', ')}.`);
+              if(unexpected.length)reasons.push('Evidence chains exist outside the current mandatory-requirement set.');
+              break;
+            }"""
+          if old not in s: raise SystemExit('Stage 28/29 gate source changed')
+          p.write_text(s.replace(old,new))
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          marker="\nconsole.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));"
+          if marker not in s: raise SystemExit('verify-complete footer changed')
+          tests=r'''
+
+// Current-authority gates reject incomplete responsible-layer coverage and stale release/evidence scope.
+{
+  const p=project('JOB-STAGE16-DEFECT-COVERAGE');p.stages[15].status='COMPLETE';p.projectData.acceptedChanges.push({changeId:'AC-16-COVERAGE',stage:16,status:'COMMITTED',responseType:'DATA_PROPOSAL'});
+  p.projectData.defects.push(record('defects',14,{OBSERVED_FAILURE:'failure one',EXPECTED_CONDITION:'condition one',EVIDENCE:'e1',SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-000001'),record('defects',14,{OBSERVED_FAILURE:'failure two',EXPECTED_CONDITION:'condition two',EVIDENCE:'e2',SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-000002'));
+  p.projectData.changes.push(record('changes',16,{TRIGGERING_DEFECT_IDS:'DEFECT-000001',ROOT_CAUSE_ANALYSIS:'rca',RESPONSIBLE_LAYER:'instruction',OLD_ARTIFACT_VERSION:'v1',EXACT_MODIFICATION:'fix one',NEW_ARTIFACT_VERSION:'v2',DOWNSTREAM_INVALIDATION:'required',REQUIRED_RERUNS:'required',INSTRUCTION_CHANGE_DETERMINATION:'changed',JUSTIFIED_UNCHANGED_ARTIFACTS:'none',EVIDENCE:'change evidence'},'CHANGESET-000001'));
+  const incomplete=engine.gate(16,p);assert(!incomplete.complete&&incomplete.reasons.some(r=>r.includes('DEFECT-000002')),'Stage 16 completed while a confirmed defect had no responsible-layer correction.');
+  p.projectData.changes.push(record('changes',16,{TRIGGERING_DEFECT_IDS:'Corrects DEFECT-000002.',ROOT_CAUSE_ANALYSIS:'rca',RESPONSIBLE_LAYER:'instruction',OLD_ARTIFACT_VERSION:'v2',EXACT_MODIFICATION:'fix two',NEW_ARTIFACT_VERSION:'v3',DOWNSTREAM_INVALIDATION:'required',REQUIRED_RERUNS:'required',INSTRUCTION_CHANGE_DETERMINATION:'changed',JUSTIFIED_UNCHANGED_ARTIFACTS:'none',EVIDENCE:'change evidence'},'CHANGESET-000002'));
+  assert(engine.gate(16,p).complete,'Stage 16 did not complete after every confirmed defect was explicitly covered.');
+}
+{
+  const p=project('JOB-STAGE28-CURRENT-SCOPE');p.stages[27].status='COMPLETE';p.job.CURRENT_PRODUCT_ID='PRODUCT-CURRENT';
+  const product=record('products',21,{STATUS:'COMPLETED'},'PRODUCT-CURRENT');product.scope={productId:'PRODUCT-CURRENT'};p.projectData.products.push(product);
+  const artifact=record('artifacts',21,{FILENAME:'current.bin',TYPE:'application/octet-stream',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-CURRENT');artifact.scope={productId:'PRODUCT-CURRENT'};p.projectData.artifacts.push(artifact);
+  const staleRelease=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-STALE');staleRelease.scope={productId:'PRODUCT-STALE'};p.projectData.releaseRecords.push(staleRelease);
+  const staleIdentity=record('artifactIdentities',28,{ARTIFACT_ID:'ARTIFACT-STALE',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,AUTHORIZATION:'AUTHORIZED'},'IDENTITY-STALE');staleIdentity.scope={productId:'PRODUCT-STALE'};p.projectData.artifactIdentities.push(staleIdentity);
+  assert(!engine.gate(28,p).complete,'Stage 28 accepted stale release/artifact identity evidence from another product scope.');
+  const release=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-CURRENT');release.scope={productId:'PRODUCT-CURRENT'};p.projectData.releaseRecords.push(release);
+  const identity=record('artifactIdentities',28,{ARTIFACT_ID:'ARTIFACT-CURRENT',EXACT_HASH_MATCH:true,EXACT_SIZE_MATCH:true,AUTHORIZATION:'AUTHORIZED'},'IDENTITY-CURRENT');identity.scope={productId:'PRODUCT-CURRENT'};p.projectData.artifactIdentities.push(identity);
+  assert(engine.gate(28,p).complete,'Stage 28 rejected exact current release/artifact identity coverage.');
+}
+{
+  const p=project('JOB-STAGE29-CURRENT-SCOPE');p.stages[28].status='COMPLETE';p.job.CURRENT_REQUIREMENTS_VERSION='REQ-v2';
+  const req=record('requirements',4,{OBLIGATION:'current obligation',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'observable',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE',USER_INPUT_RELATIONSHIP:'input'},'REQ-CURRENT-29');req.scope={requirementsVersion:'REQ-v2'};p.projectData.requirements.push(req);
+  const stale=record('evidenceChains',29,{REQ_ID:'REQ-CURRENT-29',STATUS:'COMPLETE'},'CHAIN-STALE');stale.scope={requirementsVersion:'REQ-v1'};p.projectData.evidenceChains.push(stale);
+  assert(!engine.gate(29,p).complete,'Stage 29 accepted a stale complete evidence chain from another requirement scope.');
+  const current=record('evidenceChains',29,{REQ_ID:'REQ-CURRENT-29',STATUS:'COMPLETE'},'CHAIN-CURRENT');current.scope={requirementsVersion:'REQ-v2'};p.projectData.evidenceChains.push(current);
+  assert(engine.gate(29,p).complete,'Stage 29 rejected exactly one complete current evidence chain per mandatory requirement.');
+  const duplicate=record('evidenceChains',29,{REQ_ID:'REQ-CURRENT-29',STATUS:'COMPLETE'},'CHAIN-CURRENT-2');duplicate.scope={requirementsVersion:'REQ-v2'};p.projectData.evidenceChains.push(duplicate);
+  assert(!engine.gate(29,p).complete,'Stage 29 accepted duplicate current evidence chains for one mandatory requirement.');
+}
+'''
+          p.write_text(s.replace(marker,tests+marker))
+          PY
+          node build-test-project.mjs
+          node --check workflow-engine.js && node --check verify-complete.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          rm .github/workflows/temporary-current-scope-gates.yml
+          git add workflow-engine.js verify-complete.mjs .github/workflows/temporary-current-scope-gates.yml
+          git commit -m 'Bind correction and release gates to current authority'
+          git push origin HEAD
