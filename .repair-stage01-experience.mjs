@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 
 function replaceOnce(file,from,to){
   const src=fs.readFileSync(file,'utf8');
@@ -43,9 +44,13 @@ replaceOnce('verify-browser.mjs',
 " await click(cdp,'#new-project');await waitExpr(cdp,`document.body.innerText.includes('Save User Job Input')`);const afterNew=await allProjects(cdp);const newest=await activeProject(cdp);assert(newest.job.JOB_ID!==userJob&&newest.job.JOB_ID!=='JOB-20260823144121','New JOB_ID was not unique.');assert(newest.job.CURRENT_STAGE==='STAGE 01'&&(newest.projectData.sources||[]).length===0,'New job did not begin cleanly at Stage 01.');\n",
 " await click(cdp,'#new-project');await waitExpr(cdp,`document.body.innerText.includes('Save User Job Input')`);const afterNew=await allProjects(cdp);const newest=await activeProject(cdp);assert(newest.job.JOB_ID!==userJob&&newest.job.JOB_ID!=='JOB-20260823144121','New JOB_ID was not unique.');assert(newest.job.CURRENT_STAGE==='STAGE 01'&&(newest.projectData.sources||[]).length===0,'New job did not begin cleanly at Stage 01.');await openStage(cdp,1);const stageOneText=(await snapshot(cdp)).text;for(const token of ['First response:','tell you exactly what human information is still required','HUMAN_INPUT_REQUIRED JSON here once','application will turn those questions into normal answer fields'])assert(stageOneText.includes(token),`Stage 01 clarification experience missing ${token}.`);\n");
 
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const runtimeBuildIdentity=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
 const index=fs.readFileSync('index.html','utf8');
-const nextIndex=index.replace(/(src=\"(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^\"]+/g,'$120260826-stage01-clarification');
+const nextIndex=index.replace(/(src=\"(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^\"]+/g,`$1${runtimeBuildIdentity}`);
 if(nextIndex===index)throw new Error('index.html build-token anchor not found');
 fs.writeFileSync('index.html',nextIndex);
 
-console.log('Applied minimum Stage 01 clarification-experience repair.');
+console.log(`Applied minimum Stage 01 clarification-experience repair with ${runtimeBuildIdentity}.`);
