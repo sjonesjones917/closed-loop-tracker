@@ -1,0 +1,105 @@
+name: Final PR6 local browser acceptance
+on:
+  push:
+    branches: [practical-100/pr6-final]
+permissions:
+  contents: write
+concurrency:
+  group: pr6-final-browser
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run complete source acceptance
+        id: source
+        shell: bash
+        run: |
+          set +e
+          {
+            for file in *.js *.mjs; do node --check "$file" || exit 20; done
+            node build-test-project.mjs && \
+            node verify.mjs && \
+            node verify-prompt-semantics.mjs && \
+            node verify-ingestion.mjs && \
+            node verify-complete.mjs && \
+            node verify-full-cycle.mjs
+          } > /tmp/source.log 2>&1
+          status=$?
+          set -e
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+      - name: Install Chromium browser runtime
+        if: steps.source.outputs.exit_code == '0'
+        run: npx playwright install --with-deps chromium
+      - name: Run complete local browser acceptance
+        id: browser
+        if: steps.source.outputs.exit_code == '0'
+        shell: bash
+        run: |
+          set +e
+          {
+            node verify-browser.mjs
+            node verify-browser-extra.mjs
+          } > /tmp/browser.log 2>&1
+          status=$?
+          set -e
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+      - name: Finalize only a fully passing branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_status='${{ steps.source.outputs.exit_code }}'
+          browser_status='${{ steps.browser.outputs.exit_code }}'
+          if [ "$source_status" = 0 ] && [ "$browser_status" = 0 ]; then
+            python3 - <<'PY'
+            from pathlib import Path
+            p=Path('.github/workflows/pages.yml')
+            text=p.read_text()
+            for anchor, command in [('node verify.mjs','node verify-prompt-semantics.mjs'),('node verify-complete.mjs','node verify-full-cycle.mjs')]:
+                if command in text: continue
+                pos=text.find(anchor)
+                if pos < 0: raise SystemExit(f'missing anchor {anchor}')
+                eol=text.find('\n',pos)
+                prefix=text[text.rfind('\n',0,pos)+1:pos]
+                text=text[:eol+1]+prefix+command+'\n'+text[eol+1:]
+            p.write_text(text)
+            PY
+            rm -f PR6_FULL_CYCLE_DIAGNOSTIC.txt
+            rm -f .github/workflows/pr6-final-browser.yml .github/workflows/pr6-stage8-fixture.yml .github/workflows/pr6-stage8-semantic.yml .github/workflows/pr6-finalize.yml .github/workflows/pr6-finalize-robust.yml .github/workflows/pr6-stage8-contract.yml .github/workflows/pr6-materialize.yml
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add -A
+            git commit -m "PR 6: pass full source and browser acceptance"
+            git push origin HEAD:practical-100/pr6-final
+            exit 0
+          fi
+          {
+            echo "PR6 final acceptance did not pass. source=$source_status browser=$browser_status"
+            echo '--- SOURCE ---'
+            tail -n 400 /tmp/source.log
+            echo '--- BROWSER ---'
+            test -f /tmp/browser.log && tail -n 400 /tmp/browser.log
+          } > PR6_FULL_CYCLE_DIAGNOSTIC.txt
+          rm -f .github/workflows/pr6-final-browser.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 6: preserve final acceptance diagnostic"
+          git push origin HEAD:practical-100/pr6-final
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr6-final-local-acceptance
+          path: |
+            /tmp/source.log
+            /tmp/browser.log
+          if-no-files-found: ignore
+          retention-days: 7
