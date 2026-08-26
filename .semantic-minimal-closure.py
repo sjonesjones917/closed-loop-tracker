@@ -97,9 +97,9 @@ s += r'''
 
 // Raw capture audit scope must be controlled by the persisted prompt, not a caller-supplied context hint.
 {
-  const p=baseProject(17);
+  const p=project('JOB-RAW-SCOPE');
   p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';
-  const prompt=promptEngine.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-SCOPE-001',candidateId:'CANDIDATE-SCOPE-001',runId:'RUN-SCOPE-001',contextId:'CONTEXT-SCOPE-001'}});
+  const prompt=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-SCOPE-001',candidateId:'CANDIDATE-SCOPE-001',runId:'RUN-SCOPE-001',contextId:'CONTEXT-SCOPE-001'}});
   p.projectData.generatedPrompts.push({...prompt,generatedAt:new Date().toISOString()});
   const captured=ingestion.captureRaw(p,{stage:17,text:'{}',promptRecord:prompt,contextId:'MISLEADING-CALLER-CONTEXT'});
   if(captured.rawRecord.runId!=='RUN-SCOPE-001'||captured.rawRecord.contextId!=='CONTEXT-SCOPE-001'||captured.rawRecord.iteration!=='ITERATION-SCOPE-001')throw new Error('Raw-response audit identity is not bound to the controlling prompt scope.');
