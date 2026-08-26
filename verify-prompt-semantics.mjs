@@ -191,3 +191,13 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  for(const stale of ['OLD CORRECTION MUST EXPIRE','OLD REFINEMENT MUST EXPIRE','OLD_VALIDATION_MUST_EXPIRE'])if(afterRecovery.prompt.includes(stale))throw new Error(`Resolved recovery feedback leaked into a later prompt: ${stale}`);
  if(afterRecovery.contextManifest.operatorCorrectionRequests.length||afterRecovery.contextManifest.acceptedResultRefinements.length||afterRecovery.contextManifest.latestValidationFailure.length)throw new Error('Resolved recovery feedback remains bound into the prompt context signature.');
 }
+
+// FINAL_SEMANTIC_EDGE_PROMPT_ASSERTIONS
+{
+ const stage2=prompts.buildPromptRecord(2,baseProject(),{operation:'COMPLETE'}).prompt;
+ if(stage2.includes('If no legitimate external authority applies')||stage2.includes('If no legitimate external governing source applies'))throw new Error('Stage 02 still conflates absence of governing authority with absence of legitimate external evidence.');
+ if(!stage2.includes('If no legitimate independent external source or evidence applies'))throw new Error('Stage 02 no-source path is not tied to absence of legitimate independent source/evidence.');
+ const stage9=prompts.buildPromptRecord(9,baseProject(),{operation:'COMPLETE'}).prompt;
+ if(stage9.includes('independent context where required'))throw new Error('Stage 09 prompt makes mandatory independence conditional.');
+ if(!stage9.includes('in an independent context.'))throw new Error('Stage 09 prompt does not require independent preflight context.');
+}
