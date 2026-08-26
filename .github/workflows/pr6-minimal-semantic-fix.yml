@@ -62,6 +62,13 @@ jobs:
           segment=segment.replace(marker,"req.scope={...baseScope};test.scope={...baseScope};"+marker,1)
           text=text[:a]+segment+text[b:]
           p.write_text(text)
+
+          p=Path('verify-full-cycle.mjs'); text=p.read_text()
+          marker="acceptStage(17,{operation:'REGRESSION',records:{regressionExecutions:"
+          i=text.index(marker)
+          insertion="acceptStage(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:true}});\n"
+          text=text[:i]+insertion+text[i:]
+          p.write_text(text)
           PY
       - name: Verify all deterministic source contracts
         run: |
