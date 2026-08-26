@@ -1,12 +1,13 @@
-name: Apply and prove final recovery semantics
+name: Apply final recovery closure
 on:
   push:
-    branches: [practical-100/final-recovery-closure]
+    branches:
+      - practical-100/final-recovery-closure
 permissions:
   contents: write
 jobs:
   apply:
-    if: ${{ github.actor != 'github-actions[bot]' }}
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,80 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Fix accepted-result refinement and feasible specification fallback
-        shell: python
-        run: |
-          from pathlib import Path
-
-          p=Path('workflow-engine.js'); s=p.read_text()
-          old="""function invalidateAcceptedResponse(project,{stage=project.activeStage,rawResponseId,reason='Corrected response required.',operatorLabel='HUMAN_OPERATOR'}={}){
-  ensureShape(project);const change=acceptedChanges(project,stage).find(item=>!rawResponseId||item.rawResponseId===rawResponseId);if(!change)throw new Error('No current accepted data change exists for invalidation.');
-  const event=addHistory(project,'ACCEPTED_RESPONSE_INVALIDATED',{stage,rawResponseId:change.rawResponseId,reason,operatorLabel,identityAssurance:'SELF_ASSERTED'});change.invalidatedBy=event.eventId;invalidateDownstream(project,stage,event.eventId,reason);recalculate(project);return event;
-}"""
-          new="""function invalidateAcceptedResponse(project,{stage=project.activeStage,rawResponseId,reason='Corrected response required.',operatorLabel='HUMAN_OPERATOR'}={}){
-  ensureShape(project);const number=Number(stage),current=acceptedChanges(project,number),selected=current.find(item=>!rawResponseId||item.rawResponseId===rawResponseId);if(!selected)throw new Error('No current accepted data change exists for invalidation.');
-  const selectedProposal=safe(project.projectData.responseProposals).find(item=>item.proposalId===selected.proposalId),operation=selected.operation||selectedProposal?.envelope?.operation||'COMPLETE',scope=clone(selected.scope||selectedProposal?.scope||selectedProposal?.envelope?.scope||{}),event=addHistory(project,'ACCEPTED_RESPONSE_INVALIDATED',{stage:number,rawResponseId:selected.rawResponseId,promptId:selected.promptId||selectedProposal?.promptId||null,operation,scope,reason,operatorLabel,identityAssurance:'SELF_ASSERTED'}),id=event.eventId,proposalIds=new Set(current.map(change=>change.proposalId)),rawIds=new Set(current.map(change=>change.rawResponseId)),canonicalIds=new Set(current.flatMap(change=>safe(change.canonicalRecordIds)));
-  for(const change of current)change.invalidatedBy=id;
-  for(const prompt of safe(project.projectData.generatedPrompts).filter(item=>Number(item.stage)===number&&!item.invalidatedBy))prompt.invalidatedBy=id;
-  for(const proposal of safe(project.projectData.responseProposals).filter(item=>Number(item.stage)===number&&!item.invalidatedBy)){if(proposalIds.has(proposal.proposalId)||proposal.status==='PENDING_OPERATOR_REVIEW'){proposal.invalidatedBy=id;proposal.status='INVALIDATED_FOR_REFINEMENT';}}
-  for(const validation of safe(project.projectData.responseValidations).filter(item=>Number(item.stage)===number&&rawIds.has(item.rawResponseId)&&!item.invalidatedBy))validation.invalidatedBy=id;
-  for(const raw of safe(project.projectData.rawResponses).filter(item=>Number(item.stage)===number&&rawIds.has(item.rawResponseId)&&!item.invalidatedBy))raw.invalidatedBy=id;
-  for(const receipt of safe(project.projectData.outputReceipts).filter(item=>Number(item.stage)===number&&rawIds.has(item.rawResponseId)&&!item.invalidatedBy)){receipt.invalidatedBy=id;receipt.completionState='ACCEPTED_DATA_CHANGE_INVALIDATED';}
-  for(const manifest of safe(project.projectData.extractionManifests).filter(item=>Number(item.stage)===number&&rawIds.has(item.rawResponseId)&&!item.invalidatedBy))manifest.invalidatedBy=id;
-  for(const confirmation of safe(project.projectData.stageConfirmations).filter(item=>Number(item.stage)===number&&!item.invalidatedBy))confirmation.invalidatedBy=id;
-  for(const collection of Object.keys(schema.RECORD_SCHEMAS))for(const record of records(project,collection,{stage:number,active:false}))if(!record.invalidatedBy&&(proposalIds.has(record.sourceProposalId)||rawIds.has(record.rawResponseId)||canonicalIds.has(recordId(record,collection)))){record.invalidatedBy=id;record.active=false;record.validity='INVALIDATED';}
-  const state=project.stages[number];state.agentData={};state.acceptedData={};state.acceptedDataChangeIds=[];state.acceptedResponseIds=[];state.currentPromptId=null;state.status='NOT STARTED';state.invalidatedBy=id;
-  if(number<30)invalidateDownstream(project,number,id,reason);else recalculate(project);return event;
-}"""
-          if old not in s: raise SystemExit('invalidateAcceptedResponse source anchor missing')
-          p.write_text(s.replace(old,new,1))
-
-          p=Path('prompt-engine.js'); s=p.read_text()
-          old=""" const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\\n${show(corrections)}`);
- const failed="""
-          new=""" const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\\n${show(corrections)}`);const acceptedRefinements=(state?.projectData?.history||[]).filter(x=>x.type==='ACCEPTED_RESPONSE_INVALIDATED'&&Number(x.stage)===stage&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({eventId:x.eventId,reason:x.reason,rawResponseId:x.rawResponseId,promptId:x.promptId}));if(acceptedRefinements.length)parts.push(`ACCEPTED RESULT REFINEMENT REQUESTS\\n${show(acceptedRefinements)}`);
- const failed="""
-          if old not in s: raise SystemExit('prompt refinement context anchor missing')
-          s=s.replace(old,new,1)
-          old="""operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId})),latestValidationFailure:"""
-          new="""operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId})),acceptedResultRefinements:(state?.projectData?.history||[]).filter(x=>x.type==='ACCEPTED_RESPONSE_INVALIDATED'&&Number(x.stage)===stage&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({eventId:x.eventId,reason:x.reason,rawResponseId:x.rawResponseId,promptId:x.promptId})),latestValidationFailure:"""
-          if old not in s: raise SystemExit('context manifest refinement anchor missing')
-          s=s.replace(old,new,1)
-          old="""- Missing human-authority information requires HUMAN_INPUT_REQUIRED. Missing, stale, or incomplete canonical application context requires BLOCKED with MISSING_APPLICATION_CONTEXT. An unavailable external capability requires BLOCKED with MISSING_CAPABILITY, or EXECUTION_FAILED if an attempted execution failed. Work too large for the available environment requires BLOCKED with WORK_TOO_LARGE_FOR_ENVIRONMENT plus a complete implementation-ready specification; do not claim execution occurred. Self-contained deliverables that can actually be produced in the available environment should still be produced."""
-          new="""- Missing human-authority information requires HUMAN_INPUT_REQUIRED. Missing, stale, or incomplete canonical application context requires BLOCKED with MISSING_APPLICATION_CONTEXT. An unavailable external capability requires BLOCKED with MISSING_CAPABILITY, or EXECUTION_FAILED if an attempted execution failed. At Stage 01, when direct implementation is unavailable or materially too large but a complete implementation-ready specification is feasible, propose that specification as EXACT_DELIVERABLE_REQUESTED for human confirmation rather than blocking the job; this changes the proposed deliverable, not the human's verbatim request, and it must not claim implementation occurred. At later stages, WORK_TOO_LARGE_FOR_ENVIRONMENT is blocking only when the currently approved deliverable itself cannot be completed reliably. Self-contained deliverables that can actually be produced in the available environment should still be produced."""
-          if old not in s: raise SystemExit('fallback response rule anchor missing')
-          s=s.replace(old,new,1)
-          old="""21:'Produce the job’s finished deliverable only when the actual authorized execution environment can do so reliably from the approved baseline. The application itself does not connect to or modify an external repository. If implementation depends on repository, runtime, account, network, deployment, or other execution access absent from the authorized environment, do not claim implementation or fabricate product bytes; provide the complete implementation-ready specification or patch plan when that satisfies the feasible deliverable, or return the appropriate BLOCKED or EXECUTION_FAILED disposition. For a self-contained deliverable that can actually be generated here, use a fresh production context and only approved baseline materials. The application assigns PRODUCT_ID and execution identity and is authoritative for actual file bytes, filenames, media types, sizes, hashes, storage references, and lineage after bytes are persisted and verified.',"""
-          new="""21:'Produce the exact deliverable approved by the human from Stage 01, using only the approved baseline materials and a fresh production context. If Stage 01 established a self-contained artifact, generate that complete artifact. If direct implementation was unavailable or materially too large and the human confirmed an implementation-ready specification or patch plan as the feasible deliverable, produce that specification or patch plan as the finished product and do not claim repository implementation occurred. The application itself does not connect to or modify an external repository. If the approved deliverable itself cannot be completed reliably because a required capability is absent or execution fails, return BLOCKED or EXECUTION_FAILED rather than fabricating completion. The application assigns PRODUCT_ID and execution identity and is authoritative for actual persisted file bytes, filenames, media types, sizes, hashes, storage references, and lineage.',"""
-          if old not in s: raise SystemExit('stage21 fallback anchor missing')
-          p.write_text(s.replace(old,new,1))
-
-          p=Path('app-core.js'); s=p.read_text()
-          old="If requested implementation is too large or unavailable in that environment, the workflow must fail closed and return a complete implementation-ready specification rather than claim work was performed."
-          new="If direct implementation is too large or unavailable in that environment but a complete implementation-ready specification can be produced reliably, Stage 01 proposes that specification as the deliverable for human confirmation instead of pretending implementation occurred; the workflow blocks only when the approved deliverable itself cannot be completed or genuine human authority is missing."
-          if old not in s: raise SystemExit('project UI fallback anchor missing')
-          p.write_text(s.replace(old,new,1))
-
-          p=Path('verify-complete.mjs'); s=p.read_text(); marker='// Accepted-result refinement invalidates the whole current stage set and preserves its reason for the replacement prompt.'
-          if marker in s: raise SystemExit('recovery test already present')
-          insert=r'''
-// Accepted-result refinement invalidates the whole current stage set and preserves its reason for the replacement prompt.
-{
-  let p=project('JOB-REFINEMENT-CANONICAL'),stage=2,pr=prompt(p,stage);
-  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{SOURCE_APPLICABILITY_DETERMINATION:'SOURCES_IDENTIFIED',AUTHORITY_HIERARCHY:'Primary source',KNOWN_CONTROLLING_SOURCES_EXAMINED:'One source'},records:{sources:[{tempKey:'source-refine',fields:{TITLE:'Refinement source',ISSUING_ORGANIZATION_OR_AUTHOR:'Authority',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'Authority',URL_REFERENCE:'https://example.invalid/refine',PUBLICATION_UPDATE_DATE:'2026-01-01',RETRIEVAL_DATE:'2026-08-26',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'fixture',APPLICABLE_PORTIONS:'fixture',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING',NOTES:'fixture'},relationships:{},evidenceRefs:['ev-refine']}]},evidence:[{temporaryKey:'ev-refine',kind:'WORKFLOW_EVIDENCE',description:'Refinement evidence',location:'synthetic',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
-  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert(prepared.validation.valid,'Refinement fixture response rejected.');const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});p=committed.project;const sourceId=engine.recordId(engine.records(p,'sources',{stage:2}).at(-1),'sources');assert(sourceId,'Refinement fixture source was not committed.');
-  const reason='The accepted source analysis omitted an applicable authority and must be replaced completely.';engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:committed.acceptedChange.rawResponseId,reason,operatorLabel:'VERIFY'});assert(engine.records(p,'sources',{stage:2}).length===0,'Invalidated accepted response left same-stage canonical source active.');assert(engine.acceptedChanges(p,2).length===0,'Invalidated accepted change retained current stage authority.');assert(Object.keys(p.stages[2].agentData||{}).length===0&&p.stages[2].acceptedDataChangeIds.length===0&&p.stages[2].acceptedResponseIds.length===0,'Invalidated stage retained accepted agent state.');const replacement=prompts.buildPromptRecord(2,p);assert(replacement.prompt.includes(reason),'Replacement prompt omitted accepted-result refinement reason.');assert(replacement.contextManifest.acceptedResultRefinements?.some(x=>x.reason===reason),'Replacement prompt identity did not bind the refinement reason.');
-}
-
-// An infeasible direct implementation may become a human-confirmable specification deliverable without pretending implementation occurred.
-{
-  const p=project('JOB-SPEC-FALLBACK');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Implement a large external repository that this static application cannot access.';const pr=prompts.buildPromptRecord(1,p);assert(pr.prompt.includes('propose that specification as EXACT_DELIVERABLE_REQUESTED for human confirmation rather than blocking the job'),'Stage 01 does not permit the feasible specification fallback.');assert(pr.prompt.includes('must not claim implementation occurred'),'Stage 01 fallback does not preserve execution honesty.');const stage21=prompts.procedures[21];assert(stage21.includes('exact deliverable approved by the human from Stage 01')&&stage21.includes('produce that specification or patch plan as the finished product'),'Stage 21 is not bound to the approved Stage 01 fallback deliverable.');
-}
-
-'''
-          idx=s.rfind('console.log(JSON.stringify(')
-          if idx<0: raise SystemExit('verify-complete final report anchor missing')
-          p.write_text(s[:idx]+insert+s[idx:])
+      - name: Apply exact audited transform
+        run: python3 .repair-final-recovery.py
       - name: Full deterministic acceptance
         run: |
           node --check workflow-engine.js
@@ -104,16 +33,16 @@ jobs:
           node verify-prompt-semantics.mjs
       - name: Chromium acceptance
         run: |
-          python3 -m http.server 4173 >/tmp/server.log 2>&1 &
+          python3 -m http.server 4173 >/tmp/closed-loop-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           node verify-browser.mjs
           node verify-browser-extra.mjs
-      - name: Publish exact tested source without repair workflow
+      - name: Publish exact tested source without repair scaffolding
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          rm .github/workflows/apply-final-recovery.yml
+          rm .github/workflows/apply-final-recovery.yml .repair-final-recovery.py
           git add -A
           git commit -m "Close accepted-result refinement and specification fallback semantics"
           git push origin HEAD:practical-100/final-recovery-closure
