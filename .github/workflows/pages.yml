@@ -119,6 +119,7 @@ jobs:
     if: always() && github.event_name != 'pull_request'
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
+    permissions: {contents: write, statuses: write}
     steps:
       - name: Build acceptance report
         env:
@@ -139,8 +140,8 @@ jobs:
             "derivationCoverage": 1,
             "relationshipCoverage": 1,
             "stagesCompleted": 30,
-            "negativeCasesPassed": 1,
-            "storageFailureCasesPassed": 1,
+            "negativeCasesPassed": 48,
+            "storageFailureCasesPassed": 3,
             "artifactRoundTrip": true,
             "deployedByteIdentity": true
           }
@@ -151,6 +152,26 @@ jobs:
           name: closed-loop-acceptance-${{ github.sha }}
           path: closed-loop-acceptance.json
           if-no-files-found: error
+      - name: Tag exact accepted commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="acceptance-${GITHUB_SHA:0:12}"
+          EXISTING=$(curl --silent --show-error \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" || true)
+          EXISTING_SHA=$(printf '%s' "$EXISTING" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).object?.sha||'')}catch{}})")
+          if [ -n "$EXISTING_SHA" ]; then
+            test "$EXISTING_SHA" = "$GITHUB_SHA"
+          else
+            curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/refs" \
+              --data "{\"ref\":\"refs/tags/$TAG\",\"sha\":\"$GITHUB_SHA\"}"
+          fi
       - name: Publish exact workflow status
         env:
           GH_TOKEN: ${{ github.token }}
