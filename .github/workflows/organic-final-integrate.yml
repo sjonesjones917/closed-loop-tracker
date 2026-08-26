@@ -1,0 +1,55 @@
+name: Final runtime and prompt integration
+on:
+  push:
+    branches: [practical-100/organic-self-spec-final]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 100}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply audited prompt closure
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          subprocess.run(['git','fetch','origin','practical-100/final-organic-prompt-closure','practical-100/organic-self-spec-acceptance','--depth=100'],check=True)
+          y=subprocess.check_output(['git','show','4f0725249442c9482946349a885b44b75187da48:.github/workflows/final-organic-prompt-closure.yml'],text=True)
+          def block(name):
+            start=y.index('      - name: '+name)
+            run=y.index('        run: |',start)+len('        run: |\n')
+            end=y.find('\n      - name:',run)
+            if end<0:end=len(y)
+            return '\n'.join(line[10:] if line.startswith('          ') else line for line in y[run:end].splitlines())+'\n'
+          for i,name in enumerate(['Patch existing responsible layers only','Strengthen permanent semantic verifier'],1):
+            f=Path(f'/tmp/audited-{i}.py');f.write_text(block(name));subprocess.run(['python',str(f)],check=True)
+          p=Path('build-test-project.mjs');s=p.read_text().replace("'genuinely independent external governing sources','Research only the legitimate Stage 02 external governing source set'","'independent external source inventory','Research only the current accepted Stage 02 independent external source set'");p.write_text(s)
+          p=Path('verify.mjs');s=p.read_text().replace("record.prompt.includes('genuinely independent external governing sources')","record.prompt.includes('independent external source inventory')").replace("record.prompt.includes('Research only the legitimate Stage 02 external governing source set')","record.prompt.includes('Research only the current accepted Stage 02 independent external source set')");p.write_text(s)
+      - name: Apply exact runtime closure
+        run: python .final_patch.py
+      - name: Verify deterministic acceptance
+        run: |
+          node --check prompt-engine.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean result
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .final_patch.py .github/workflows/organic-final-integrate.yml
+          git add -A
+          git commit -m "Close prompt, recovery, operation, and evidence workflow gaps"
+          git push origin HEAD:practical-100/organic-self-spec-final
