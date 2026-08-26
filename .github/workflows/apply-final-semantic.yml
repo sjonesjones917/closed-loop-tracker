@@ -1,0 +1,49 @@
+name: Apply final semantic invariants to current main
+on:
+  push:
+    branches:
+      - practical-100/final-semantic-closure-final
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/final-semantic-closure-final
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply only still-missing verified invariants
+        run: |
+          git show a9f34a171bb1c11904733668f480b26e6fcf96e6:.current-semantic-fixes.mjs > /tmp/fix.mjs
+          node - <<'NODE'
+          const fs=require('fs'),p='/tmp/fix.mjs';
+          let s=fs.readFileSync(p,'utf8');
+          s=s.split('\n').filter(line=>!line.includes("'Stage 3 wording'")).join('\n');
+          fs.writeFileSync(p,s);
+          NODE
+          node /tmp/fix.mjs
+      - name: Verify deterministic source and full lifecycle
+        run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit only fully verified non-workflow source
+        run: |
+          git checkout HEAD -- .github/workflows/apply-final-semantic.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "Close remaining deterministic semantic gaps"
+          git push origin HEAD:practical-100/final-semantic-closure-final
