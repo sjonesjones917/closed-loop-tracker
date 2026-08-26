@@ -1,0 +1,48 @@
+name: capability-repair-v3
+on:
+  push:
+    branches: [capability/test-execution-contract-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: capability/test-execution-contract-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply patch to exact current main
+        run: |
+          cp .tmp-capability-repair.py /tmp/capability-repair.py
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "a129e8ffe9152fc34e9a75b95f1cfe69ff70765d"
+          git reset --hard origin/main
+          python3 /tmp/capability-repair.py
+      - name: Verify corrected application
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only exact passing application and tests
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js test-fixtures.mjs verify-ingestion.mjs verify-complete.mjs verify-prompt-semantics.mjs verify-browser.mjs index.html
+          git diff --cached --check
+          git commit -m "Clarify test execution responsibility and artifact custody"
+          git push --force-with-lease origin HEAD:capability/test-execution-contract-20260826
