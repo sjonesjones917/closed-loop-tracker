@@ -158,4 +158,19 @@ console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,no
 }
 assert(fs.readFileSync('app-core.js','utf8').includes('No accepted response matches the selected operation/run scope.'),'Refinement UI does not target the selected operation/run scope.');
 
+// Operator control recovery: run-batch reservation is idempotent and partial batches fail closed.
+{
+ const p=project('JOB-RUN-BATCH-IDEMPOTENT');p.job.CURRENT_ITERATION='ITERATION-IDEMPOTENT';
+ const first=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10}),events=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;
+ const second=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});
+ assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:17}).length===10&&engine.records(p,'freshContexts',{stage:17}).length===10,'Repeated run-batch reservation allocated duplicate slots.');assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===events,'Idempotent reservation created another reservation event.');
+ engine.records(p,'runs',{stage:17})[0].active=false;let threw=false;try{engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});}catch{threw=true;}assert(threw,'Partial active batch was silently topped up.');
+}
+
+// Human-created blockers have an authority-matched resolution path; agent blockers do not.
+{
+ const p=project('JOB-HUMAN-BLOCKER-RESOLUTION'),human=engine.createHumanBlocker(p,{stage:1,reason:'Missing human prerequisite.',operatorLabel:'VERIFY'});assert(engine.openBlockers(p).some(x=>engine.recordId(x,'blockers')===human.id),'Human blocker did not open.');const resolved=engine.resolveHumanBlocker(p,{blockerId:human.id,resolutionEvidence:'Prerequisite supplied and reviewed.',operatorLabel:'VERIFY'});assert(engine.recordValue(resolved,'STATUS')==='RESOLVED'&&!engine.openBlockers(p).some(x=>engine.recordId(x,'blockers')===human.id),'Human blocker did not resolve.');
+ const agent=record('blockers',1,{STATUS:'OPEN',CLOSURE:'OPEN'},'BLOCKER-AGENT');agent.source='APPLICATION_DISPOSITION';p.projectData.blockers.push(agent);let rejected=false;try{engine.resolveHumanBlocker(p,{blockerId:'BLOCKER-AGENT',resolutionEvidence:'not authorized',operatorLabel:'VERIFY'});}catch{rejected=true;}assert(rejected,'Human control resolved a non-human blocker.');
+}
+
 console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
