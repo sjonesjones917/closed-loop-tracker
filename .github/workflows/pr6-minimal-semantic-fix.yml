@@ -20,13 +20,14 @@ jobs:
       - name: Apply guarded historical transformer
         run: |
           python - <<'PY'
-          from pathlib import Path
           import subprocess
           source=subprocess.check_output(['git','show','b84bbd0484fbc47f42e0289d1df5655a9f2d2cb7:.github/workflows/pr6-semantic-scope-fix.yml'],text=True)
           start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
           end=source.index("\n          PY\n",start)
           code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
           code=code.replace("\nold_scope=", "\ntext=engine.read_text()\n\nold_scope=", 1)
+          already="""replace_once('verify-full-cycle.mjs',\n          \"const productSha=hash.sha256Text('product-bytes');\",\n          \"const productSha=hash.sha256Text('released-product-bytes');\")\n\n"""
+          code=code.replace(already,'',1)
           exec(compile(code,'pr6-minimum-semantic-transform.py','exec'),{})
           PY
       - name: Verify all deterministic source contracts
