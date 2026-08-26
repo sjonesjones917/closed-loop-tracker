@@ -18,6 +18,7 @@ jobs:
       - name: Apply exact prompt and clarification repair
         run: |
           sed -i "s/The application owns JOB_ID and controlled input identity/The application already owns JOB_ID and controlled input identity/" .apply-stage01-machine-contract.py
+          sed -i "s/for later human confirmation/for later human intent confirmation/" .apply-stage01-machine-contract.py
           python3 .apply-stage01-machine-contract.py
       - name: Full deterministic and browser acceptance
         run: |
