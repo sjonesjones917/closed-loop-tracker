@@ -16,7 +16,9 @@ jobs:
         with: {node-version: '22'}
       - name: Apply exact correction and remove proof scaffolding
         run: |
+          node .fix-native-test-transformer.mjs
           node .apply-native-test-capability-truth.mjs
+          rm .fix-native-test-transformer.mjs
           rm .apply-native-test-capability-truth.mjs
           rm .github/workflows/native-test-capability-truth.yml
       - name: Architecture boundaries
@@ -48,6 +50,7 @@ jobs:
           trap - EXIT
       - name: Commit verified permanent source
         run: |
+          test ! -e .fix-native-test-transformer.mjs
           test ! -e .apply-native-test-capability-truth.mjs
           test ! -e .github/workflows/native-test-capability-truth.yml
           git config user.name github-actions[bot]
