@@ -78,8 +78,18 @@ jobs:
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
@@ -115,8 +125,18 @@ jobs:
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
 
   publish-status:
     if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -144,7 +164,14 @@ jobs:
           python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node verify-browser-extra.mjs > /tmp/verify-browser-extra.out
+          success=false
+          for attempt in 1 2 3; do
+            if node verify-browser-extra.mjs > /tmp/verify-browser-extra.out 2>&1; then success=true; break; fi
+            cat /tmp/verify-browser-extra.out
+            grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' /tmp/verify-browser-extra.out || exit 1
+            test "$attempt" -lt 3 || exit 1
+          done
+          test "$success" = true
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
           NEGATIVE_CASES=$(node - <<'NODE'
