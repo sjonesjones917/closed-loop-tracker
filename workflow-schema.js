@@ -40,7 +40,7 @@ const field=(name,producer,options={})=>Object.freeze({
 
 const HUMAN_JOB_FIELDS=Object.freeze([
   'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',
-  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES',
+  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES','DESIRED_SOURCE_COUNT',
   'AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'
 ]);
 const APPLICATION_JOB_FIELDS=Object.freeze([
@@ -55,6 +55,7 @@ const AGENT_JOB_FIELDS=Object.freeze([
 ]);
 
 function jobFieldDefinition(name){
+  if(name==='DESIRED_SOURCE_COUNT')return field(name,PRODUCER.HUMAN,{valueType:'INTEGER',nullable:true,requiredAtStage:null,provenanceRequired:false,help:'Optional Stage 02 search target. Authority, quality, applicability, and currency control over count.'});
   if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});
   if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:1,provenanceRequired:false});
   if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1});
