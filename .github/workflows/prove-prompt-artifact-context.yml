@@ -1,0 +1,33 @@
+name: Prove artifact-aware prompt semantics
+on: [push]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[prompt-artifact-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/prompt-artifact-domain-semantics-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python3 repair-prompt-artifact-context.py
+      - name: Verify prompt semantics and deterministic stack
+        run: |
+          node --check prompt-engine.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing source
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Make artifact access and specialist prompt semantics explicit [prompt-artifact-complete]"
+          git push origin HEAD:reliability/prompt-artifact-domain-semantics-20260826
