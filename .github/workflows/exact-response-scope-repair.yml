@@ -43,6 +43,7 @@ jobs:
             fs.writeFileSync('verify-ingestion.mjs',verify);
           }
           NODE
+          rm .github/workflows/exact-response-scope-repair.yml
       - name: Run deterministic acceptance
         run: |
           node --check response-ingestion.js
@@ -54,12 +55,11 @@ jobs:
           node verify-complete.mjs
           node verify-prompt-semantics.mjs
           node verify-full-cycle.mjs
-      - name: Remove repair scaffolding and commit
+      - name: Commit proven repair
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/exact-response-scope-repair.yml
-          git add response-ingestion.js verify-ingestion.mjs
+          git config user.email "41898282+41898282@users.noreply.github.com"
+          git add -A
           git commit -m "Require exact full response scope identity"
           git push origin HEAD:semantic-reliability/exact-response-scope-20260826
