@@ -1,0 +1,51 @@
+name: Temporary Stage 1 authority proof
+on:
+  push:
+    branches: [practical-100/stage1-input-invalidation-current-20260826]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/stage1-input-invalidation-current-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact two-file correction and remove temporary machinery
+        run: |
+          python .github/stage1-authority-patch.py
+          rm .github/stage1-authority-patch.py .github/workflows/stage1-authority-temp.yml
+      - name: Verify final tree deterministically
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify final tree in Chromium
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/stage1-authority-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only permanent two-file delta
+        run: |
+          git checkout -- TEST_PROJECT.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Invalidate Stage 1 when authoritative job input changes"
+          git push origin HEAD:practical-100/stage1-input-invalidation-current-20260826
