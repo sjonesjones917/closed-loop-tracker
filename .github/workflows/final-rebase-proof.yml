@@ -1,0 +1,76 @@
+name: Reapply and prove final boundary repair on current main
+on:
+  push:
+    branches: [reliability/operator-clarification-handoff-20260826]
+permissions: {contents: write}
+concurrency: {group: final-boundary-rebase-proof, cancel-in-progress: false}
+
+jobs:
+  reapply-and-prove:
+    if: ${{ !contains(github.event.head_commit.message, '[final-current-main-proven]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: true}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Reapply the already-proven surgical patch from repository history
+        run: |
+          git show af0ed7a42e87d9878b42b4b941bc788c5191fc48:.apply-final-boundary-repair.mjs >/tmp/apply-final-boundary-repair.mjs
+          node - <<'NODE'
+          const fs=require('fs'),file='/tmp/apply-final-boundary-repair.mjs';let s=fs.readFileSync(file,'utf8');
+          s=s.replace('const semanticTail=`}\\n\\nlet checked=0;`;','const semanticTail=`\\nlet checked=0;`;');
+          s=s.replace('const extra=`}\\n{\\n const fixture','const extra=`{\\n const fixture');
+          fs.writeFileSync(file,s);
+          NODE
+          node /tmp/apply-final-boundary-repair.mjs
+      - name: Recalculate shared runtime cache identity with canonical formula
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');html=html.replace(/v=runtime-[a-f0-9]+/g,`v=${token}`);fs.writeFileSync('index.html',html);
+          NODE
+      - name: Remove temporary workflow from final tree
+        run: rm -f .github/workflows/final-rebase-proof.yml
+      - name: Rebuild retained project
+        run: node build-test-project.mjs
+      - name: Syntax
+        run: |
+          for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+      - name: Deterministic proof
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Clean tree boundaries
+        run: |
+          test ! -f app.js
+          test ! -f .github/workflows/final-rebase-proof.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -o -name '.apply-*')"
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+      - name: Chromium proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/http.log 2>&1 & SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit exact current-main proven tree
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          test ! -e .github/workflows/final-rebase-proof.yml
+          git commit -m "Close test-execution and returned-file handoff boundaries on current main [final-current-main-proven]"
+          git push origin HEAD:reliability/operator-clarification-handoff-20260826
