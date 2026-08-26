@@ -1,0 +1,81 @@
+name: Finalize proven semantic repair
+on:
+  push:
+    branches: [semantic-reliability/recovery-context]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: semantic-reliability/recovery-context
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply previously proven transforms
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('.github/workflows/semantic-final-integrate.yml').read_text().splitlines()
+          def extract(name):
+              marker=f'      - name: {name}'; start=lines.index(marker)
+              run_i=next(i for i in range(start+1,len(lines)) if lines[i].strip()=='run: |')
+              out=[]
+              for line in lines[run_i+1:]:
+                  if line.startswith('      - name: ') or line.startswith('      - uses: '): break
+                  out.append(line[10:] if line.startswith('          ') else line)
+              return '\n'.join(out)+'\n'
+          Path('/tmp/apply-source.sh').write_text(extract('Apply minimal semantic repairs'))
+          Path('/tmp/apply-semantic.sh').write_text(extract('Strengthen semantic verifier for the newly audited failure modes'))
+          PY
+          bash /tmp/apply-source.sh
+          bash /tmp/apply-semantic.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          weak="if(!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('external project repository'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
+          strong="if(!record.prompt.includes('Work too large for the available environment requires BLOCKED with WORK_TOO_LARGE_FOR_ENVIRONMENT')||!record.prompt.includes('complete implementation-ready specification')||!record.prompt.includes('external project repository'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
+          if weak not in s: raise SystemExit('environment assertion anchor missing')
+          s=s.replace(weak,strong,1)
+          stale="{...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}"
+          live="{...original,prompt:original.prompt.replace('WORK_TOO_LARGE_FOR_ENVIRONMENT plus a complete implementation-ready specification','WORK_TOO_LARGE_FOR_ENVIRONMENT and assume implementation occurred')}"
+          if stale not in s: raise SystemExit('environment mutant anchor missing')
+          s=s.replace(stale,live,1)
+          loop="for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');"
+          replacement="const expectedMutationIssues=['READ_COLLECTION_CONTRADICTION','OPERATION_IDENTITY_MISSING','REFINEMENT_RULE_MISSING','ENVIRONMENT_LIMIT_RULE_MISSING'];for(const [index,mutant] of mutants.entries()){if(mutant.prompt===original.prompt&&JSON.stringify(mutant.contextManifest)===JSON.stringify(original.contextManifest))throw new Error(`Semantic mutation ${index} did not alter the prompt or context manifest.`);const detected=semanticIssues(mutant);if(!detected.includes(expectedMutationIssues[index]))throw new Error(`Semantic mutation ${index} did not trigger ${expectedMutationIssues[index]}; detected: ${detected.join(', ')}`);}"
+          if loop not in s: raise SystemExit('mutation loop anchor missing')
+          p.write_text(s.replace(loop,replacement,1))
+          PY
+      - name: Re-run complete deterministic and semantic proof
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit permanent files with zero audit scaffolding
+        run: |
+          rm -f .semantic-trigger .github/workflows/semantic-final-integrate.yml .github/workflows/semantic-final-integrate-v2.yml .github/workflows/semantic-final-integrate-v3.yml .github/workflows/semantic-final-integrate-v4.yml
+          test ! -e .semantic-trigger
+          test ! -e .github/workflows/semantic-final-integrate.yml
+          test ! -e .github/workflows/semantic-final-integrate-v2.yml
+          test ! -e .github/workflows/semantic-final-integrate-v3.yml
+          test ! -e .github/workflows/semantic-final-integrate-v4.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workbook.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-prompt-semantics.mjs TEST_PROJECT.json
+          git add -u .semantic-trigger .github/workflows/semantic-final-integrate.yml .github/workflows/semantic-final-integrate-v2.yml .github/workflows/semantic-final-integrate-v3.yml .github/workflows/semantic-final-integrate-v4.yml
+          git diff --cached --check
+          git commit -m "Remove remaining prompt ownership contradictions"
+          git push origin HEAD:semantic-reliability/recovery-context
