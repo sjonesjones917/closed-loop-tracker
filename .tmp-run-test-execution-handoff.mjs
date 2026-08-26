@@ -12,5 +12,9 @@ const newSingle="fields:['TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIR
 const newMulti="fields:[\n    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITIES','EXECUTABLE_ARTIFACT_REQUIRED','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'\n  ]";
 if(source.split(oldSingle).length-1!==1||source.split(newSingle).length-1!==1)throw new Error('Expected exactly one old and one new single-line tests schema literal in transformer.');
 source=source.replace(oldSingle,oldMulti).replace(newSingle,newMulti);
+const proposedTitle="'DEFINE THE VERIFICATION SUITE BEFORE WRITING THE PRODUCTION INSTRUCTION'";
+const stableTitle="'BUILD THE VERIFICATION SUITE BEFORE WRITING THE PRODUCTION INSTRUCTION'";
+if(source.split(proposedTitle).length-1!==1)throw new Error('Expected exactly one proposed Stage 06 title in transformer.');
+source=source.replace(proposedTitle,stableTitle);
 fs.writeFileSync(target,source);
 await import(`./${target}?fixed=${Date.now()}`);
