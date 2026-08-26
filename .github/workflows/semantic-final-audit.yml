@@ -1,0 +1,208 @@
+name: Semantic reliability final audit
+on:
+  push:
+    branches: [semantic-reliability/final-audit]
+permissions:
+  contents: write
+jobs:
+  repair-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: semantic-reliability/final-audit
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimum semantic corrections
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p=Path(path); s=p.read_text()
+              if s.count(old)!=1:
+                  raise SystemExit(f'{path}: expected exactly one occurrence, found {s.count(old)} for {old[:100]!r}')
+              p.write_text(s.replace(old,new,1))
+
+          # prompt-engine: make current workflow scope authoritative for prompt context.
+          replace_once('prompt-engine.js',
+            "const hash=globalThis.closedLoopHash;\nif(!core||!schema||!hash)throw new Error('workbook.js, hash.js, and workflow-schema.js must load before prompt-engine.js.');",
+            "const hash=globalThis.closedLoopHash;\nconst engine=globalThis.closedLoopWorkflowEngine;\nif(!core||!schema||!hash||!engine)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');")
+          replace_once('prompt-engine.js',
+            "Do not begin substantive external-source research or downstream production work.'",
+            "Do not begin substantive external-source research or downstream production work. Before normalizing the requested deliverable, assess whether the available environment and authorized tools can reliably produce it. Preserve the verbatim request unchanged. If a large implementation depends on an inaccessible external repository, service, deployment environment, or other unavailable execution surface, define the workflow deliverable as a complete implementation-ready specification rather than pretending implementation can occur here; disclose that limitation and require normal human intent confirmation. Self-contained deliverables that can actually be produced with the available tools remain direct deliverables.'")
+          replace_once('prompt-engine.js',
+            "Prefer primary, official, controlling sources when applicable.",
+            "Prefer the most authoritative and reputable sources appropriate to the information type, prioritizing primary, official, and controlling sources when applicable. Quality, applicability, currency, and authority control over source count.")
+          replace_once('prompt-engine.js',
+            "Create one applicable verification record for every required REQ_ID × RUN_ID relation, linked to TEST_ID.",
+            "Create exactly one current verification record for every required REQ_ID × RUN_ID × TEST_ID triple.")
+          replace_once('prompt-engine.js',
+            "preserve failure fixture and identity/hash when available, reproduction procedure, detection method, pre-correction result and evidence, correction, post-correction result and evidence, permanent test location, applicability, active/retired state, and retirement authority where applicable.'",
+            "preserve failure fixture and identity/hash when available, reproduction procedure, detection method, the actual pre-correction failing result and evidence, correction, permanent test location, applicability, active/retired state, and retirement authority where applicable. At Stage 15, post-correction result and evidence are PENDING unless a later actual corrected execution already exists; never invent future success.'")
+          replace_once('prompt-engine.js',
+            "21:'Generate this job’s finished target product here, in a fresh production context, using only the approved baseline materials.",
+            "21:'Generate the approved workflow deliverable here, in a fresh production context, using only the approved baseline materials. The approved deliverable may be the requested self-contained product, or it may be the complete implementation-ready specification confirmed at Stage 01 when direct implementation was not reliably available.")
+          replace_once('prompt-engine.js',
+            "function boundedCollection(state,collection){\n const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[];if(!list.length)return 'NONE';\n const active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);\n return show({totalActive:active.length,records:active.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})),omitted:0,selectionRule:'All active records selected by the explicit stage readCollections contract; large artifact bytes are referenced by canonical artifact identity.'});\n}",
+            "function selectedCurrentRecords(state,collection,scopeRule={}){return engine.recordsForCurrentScope(state,collection,scopeRule);}\nfunction boundedCollection(state,collection,scopeRule={}){\n const current=selectedCurrentRecords(state,collection,scopeRule);if(!current.length)return 'NONE';\n return show({totalCurrent:current.length,records:current.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})),omitted:0,selectionRule:'All and only active records matching the current canonical project scope and explicit stage readCollections contract; large artifact bytes are referenced by canonical artifact identity.'});\n}")
+          replace_once('prompt-engine.js', "${show(open.slice(-20))}", "${show(open)}")
+          replace_once('prompt-engine.js',
+            " if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\\n${show(answered)}`);\n for(const collection of contextCollections[stage]||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\\n${boundedCollection(state,collection)}`);",
+            " if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\\n${show(answered)}`);\n const latestAccepted=(state?.projectData?.acceptedChanges||[]).filter(x=>Number(x.stage)===stage&&x.status==='COMMITTED'&&!x.invalidatedBy).at(-1),acceptedAt=latestAccepted?.committedAt||'';\n const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection===true&&(!acceptedAt||String(x.rejectedAt||'')>acceptedAt));\n if(corrections.length)parts.push(`OPERATOR CORRECTION REQUESTS SINCE THE LAST ACCEPTED STAGE RESPONSE\\n${show(corrections.map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,operatorLabel:x.operator||'HUMAN_OPERATOR',rejectedAt:x.rejectedAt})))}`);\n const latestValidationFailure=(state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===stage&&x.valid===false&&(!acceptedAt||String(x.createdAt||'')>acceptedAt)).at(-1);\n if(latestValidationFailure)parts.push(`LATEST APPLICATION VALIDATION FAILURE TO CORRECT\\n${show({validationId:latestValidationFailure.validationId,issues:latestValidationFailure.issues||[]})}`);\n for(const collection of contextCollections[stage]||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\\n${boundedCollection(state,collection)}`);")
+          replace_once('prompt-engine.js',
+            "EXPLICIT USER REQUIREMENTS:\n${show(j.EXPLICIT_USER_REQUIREMENTS)}\n\nAUTHORIZED BOUNDED CONTEXT FOR THIS STAGE",
+            "EXPLICIT USER REQUIREMENTS:\n${show(j.EXPLICIT_USER_REQUIREMENTS)}\n\nDESIRED / SUGGESTED SOURCE COUNT (optional; Stage 02 search target, never a quota):\n${show(j.DESIRED_SOURCE_COUNT)}\n\nAUTHORIZED BOUNDED CONTEXT FOR THIS STAGE")
+          replace_once('prompt-engine.js',
+            "- Use only DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as responseType.\n",
+            "- Use only DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as responseType.\n- Before substantive work, decide whether the combination of current human input, current canonical application context, prior accepted results, and actually available capabilities is sufficient to complete this stage reliably. What is sufficient is stage- and job-dependent; reason about it rather than using a fixed checklist.\n- If a missing fact or genuine authority decision can only come from the human, return HUMAN_INPUT_REQUIRED with the minimum precise questions needed.\n- If required canonical project context, evidence, an artifact, or a prior-stage fact should exist but is absent or inconsistent, return BLOCKED with structured unresolved items; do not ask the human to manually reconstruct application-owned state.\n- If an attempted tool or execution failed, return EXECUTION_FAILED with the exact failed capability and evidence.\n- If a prior response was rejected or validation failed but the available context is sufficient to fix it, return a complete replacement response addressing the supplied correction or validation feedback; never require the human to transcribe agent-owned fields.\n")
+          replace_once('prompt-engine.js',
+            "- When the environment cannot perform a requested implementation or execution, provide an implementation-ready specification rather than pretending implementation occurred.",
+            "- The operating application itself has no external repository, service, deployment, or remote execution capability. Use only capabilities actually available to the external agent and listed/established for this job. When direct implementation or execution is unavailable or too large to perform reliably, do not claim it occurred; produce the complete implementation-ready specification selected and confirmed for this workflow instead.")
+          replace_once('prompt-engine.js',
+            "readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,(state?.projectData?.[collection]||[]).filter(x=>x?.active!==false&&!x?.invalidatedBy).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))]))",
+            "readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,selectedCurrentRecords(state,collection,scope).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))]))")
+
+          # workflow-schema: make the optional Stage 02 search target a real typed human input.
+          replace_once('workflow-schema.js',
+            "'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES',\n  'AVAILABLE_TOOLS'",
+            "'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES','DESIRED_SOURCE_COUNT',\n  'AVAILABLE_TOOLS'")
+          replace_once('workflow-schema.js',
+            "function jobFieldDefinition(name){\n  if(APPLICATION_JOB_FIELDS.includes(name))",
+            "function jobFieldDefinition(name){\n  if(name==='DESIRED_SOURCE_COUNT')return field(name,PRODUCER.HUMAN,{valueType:'INTEGER',nullable:true,requiredAtStage:null,provenanceRequired:false,help:'Optional Stage 02 search target. Authority, quality, applicability, and currency control over count.'});\n  if(APPLICATION_JOB_FIELDS.includes(name))")
+
+          # workbook: honest UI completion language and persistent job value.
+          replace_once('workbook.js',
+            "'Every mandatory requirement has one verification record per run'",
+            "'Every required REQ_ID × RUN_ID × TEST_ID triple has exactly one current verification record'")
+          replace_once('workbook.js',
+            "'Every regression fails before correction and succeeds after correction'",
+            "'Every regression has an actual pre-correction failing execution; post-correction success is proven only by a later actual execution'")
+          replace_once('workbook.js',
+            "'Convert every confirmed defect into a permanent test that reproduces the failure before correction and succeeds after correction.'",
+            "'Convert every confirmed defect into a permanent test that reproduces the failure before correction; later corrected or confirmation iterations must prove success.'")
+          replace_once('workbook.js',
+            "KNOWN_AUTHORITATIVE_SOURCES:'',AVAILABLE_TOOLS:''",
+            "KNOWN_AUTHORITATIVE_SOURCES:'',DESIRED_SOURCE_COUNT:'',AVAILABLE_TOOLS:''")
+
+          # app-core: expose the source target, carry correction guidance automatically, and use numeric UI semantics.
+          replace_once('app-core.js',
+            "['KNOWN_AUTHORITATIVE_SOURCES','Known authority supplied by user','textarea'],['AVAILABLE_TOOLS'",
+            "['KNOWN_AUTHORITATIVE_SOURCES','Known authority supplied by user','textarea'],['DESIRED_SOURCE_COUNT','Desired / suggested source count (optional)','number'],['AVAILABLE_TOOLS'")
+          replace_once('app-core.js',
+            "`<input data-job=\"${k}\" value=\"${esc(current.job[k]||'')}\">`",
+            "`<input data-job=\"${k}\" type=\"${t==='number'?'number':'text'}\"${t==='number'?' min=\"1\" step=\"1\"':''} value=\"${esc(current.job[k]??'')}\">`")
+          replace_once('app-core.js',
+            "async function saveJob(){const next=clone(current),changed=[];document.querySelectorAll('[data-job]').forEach(x=>{const key=x.dataset.job,value=x.value;if(next.job[key]!==value){next.job[key]=value;changed.push(key);}});",
+            "async function saveJob(){const sourceCount=$('[data-job=\"DESIRED_SOURCE_COUNT\"]');if(sourceCount?.value!==''&&(!Number.isInteger(Number(sourceCount.value))||Number(sourceCount.value)<1)){sourceCount.focus();alert('Desired / suggested source count must be a positive whole number or left blank.');return;}const next=clone(current),changed=[];document.querySelectorAll('[data-job]').forEach(x=>{const key=x.dataset.job,value=key==='DESIRED_SOURCE_COUNT'&&x.value!==''?Number(x.value):x.value;if(next.job[key]!==value){next.job[key]=value;changed.push(key);}});")
+          replace_once('app-core.js',
+            "knownAuthorities:next.job.KNOWN_AUTHORITATIVE_SOURCES,availableTools:next.job.AVAILABLE_TOOLS",
+            "knownAuthorities:next.job.KNOWN_AUTHORITATIVE_SOURCES,desiredSourceCount:next.job.DESIRED_SOURCE_COUNT,availableTools:next.job.AVAILABLE_TOOLS")
+          replace_once('app-core.js',
+            "KNOWN_AUTHORITATIVE_SOURCES:raw.userJobInput?.knownAuthorities||'',AVAILABLE_TOOLS:",
+            "KNOWN_AUTHORITATIVE_SOURCES:raw.userJobInput?.knownAuthorities||'',DESIRED_SOURCE_COUNT:raw.userJobInput?.desiredSourceCount||'',AVAILABLE_TOOLS:")
+          replace_once('app-core.js',
+            "<div class=\"button-row\"><button class=\"primary\" id=\"accept-proposal\">Accept response</button><button id=\"reject-proposal\">Reject response</button><button id=\"request-correction\">Request correction</button></div>",
+            "<div class=\"field full\"><label>Correction guidance</label><textarea id=\"correction-reason\" placeholder=\"When requesting correction, describe exactly what the next response should add, correct, or clarify.\"></textarea></div><div class=\"button-row\"><button class=\"primary\" id=\"accept-proposal\">Accept response</button><button id=\"reject-proposal\">Reject response</button><button id=\"request-correction\">Request correction</button></div>")
+          replace_once('app-core.js',
+            "async function rejectPendingProposal(requestCorrection=false){const p=pendingProposal();if(!p)return;const result=ingestion.reject(current,p.proposalId,{operator:'HUMAN_OPERATOR',reason:requestCorrection?'Correction requested after proposal review.':'Rejected after proposal review.',requestCorrection});",
+            "async function rejectPendingProposal(requestCorrection=false){const p=pendingProposal();if(!p)return;const guidance=$('#correction-reason')?.value.trim()||'';if(requestCorrection&&!guidance){$('#correction-reason')?.focus();alert('Describe what the next response should correct or add.');return;}const result=ingestion.reject(current,p.proposalId,{operator:'HUMAN_OPERATOR',reason:requestCorrection?guidance:'Rejected after proposal review.',requestCorrection});")
+
+          # release: historical corrected major/critical defects must not reject the current release.
+          replace_once('workflow-engine.js',
+            "const blockers=openBlockers(project);const defects=unresolvedMaterialDefects(project);",
+            "const blockers=openBlockers(project);const currentIterationId=recordId(latestIteration(project,[19,17,10]),'iterations');const defects=unresolvedMaterialDefects(project).filter(r=>!currentIterationId||!r.scope?.iterationId||String(r.scope.iterationId)===String(currentIterationId));")
+
+          # prompt semantic acceptance: prove the previously untested semantic boundaries.
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          marker="const p=baseProject();\nconst original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN'"
+          if marker not in s: raise SystemExit('verify-prompt-semantics marker missing')
+          insert="""
+if(schema.JOB_FIELDS.DESIRED_SOURCE_COUNT?.producer!=='HUMAN'||schema.JOB_FIELDS.DESIRED_SOURCE_COUNT?.valueType!=='INTEGER')throw new Error('Desired source count is not a typed human-owned job input.');
+{
+  const p=baseProject(),s2=prompts.buildPromptRecord(2,p),s12=prompts.buildPromptRecord(12,p),s15=prompts.buildPromptRecord(15,p),s21=prompts.buildPromptRecord(21,p);
+  if(!s2.prompt.includes('DESIRED / SUGGESTED SOURCE COUNT')||!s2.prompt.includes('\\n5\\n'))throw new Error('Stage 02 does not receive the actual desired source count.');
+  if(!s12.prompt.includes('REQ_ID × RUN_ID × TEST_ID triple'))throw new Error('Stage 12 prompt does not require exact verification triples.');
+  if(s15.prompt.includes('fails before correction and succeeds after correction'))throw new Error('Stage 15 still requires impossible future post-correction success.');
+  if(!s21.prompt.includes('approved workflow deliverable')||!s21.prompt.includes('implementation-ready specification'))throw new Error('Stage 21 does not honor the confirmed specification fallback.');
+  if(!s2.prompt.includes('current human input, current canonical application context')||!s2.prompt.includes('do not ask the human to manually reconstruct application-owned state')||!s2.prompt.includes('complete replacement response'))throw new Error('Recovery protocol does not distinguish sufficiency causes.');
+}
+{
+  const p=baseProject();
+  p.projectData.sources.push({id:'SOURCE-STALE',active:true,scope:{inputVersion:'INPUT-v000'},fields:{SOURCE_ID:'SOURCE-STALE',TITLE:'STALE-SHOULD-NOT-APPEAR'}});
+  p.projectData.sources.push({id:'SOURCE-CURRENT',active:true,scope:{inputVersion:'INPUT-v001'},fields:{SOURCE_ID:'SOURCE-CURRENT',TITLE:'CURRENT-SHOULD-APPEAR'}});
+  const r=prompts.buildPromptRecord(3,p),ids=r.contextManifest.readCollections.sources.map(x=>x.id);
+  if(ids.includes('SOURCE-STALE')||!ids.includes('SOURCE-CURRENT')||r.prompt.includes('STALE-SHOULD-NOT-APPEAR')||!r.prompt.includes('CURRENT-SHOULD-APPEAR'))throw new Error('Prompt context is not current-scope fail-closed.');
+}
+{
+  const p=baseProject();for(let i=1;i<=25;i++)p.projectData.blockers.push({id:`BLOCKER-${i}`,active:true,stage:2,fields:{BLOCKER_ID:`BLOCKER-${i}`,STATUS:'OPEN',WHY_MANDATORY_SATISFACTION_CANNOT_BE_ESTABLISHED:`BLOCKER-REASON-${i}`}});
+  p.projectData.rejectedResponses.push({rejectedResponseId:'REJECTED-CORRECTION',stage:2,requestCorrection:true,reason:'Add the missing jurisdiction analysis.',operator:'HUMAN_OPERATOR',rejectedAt:'2099-01-01T00:00:00.000Z'});
+  p.projectData.responseValidations.push({validationId:'VALIDATION-LATEST',stage:2,valid:false,createdAt:'2099-01-01T00:00:01.000Z',issues:[{code:'MISSING_PROVENANCE',message:'Evidence is required.'}]});
+  const text=prompts.buildPromptRecord(2,p).prompt;
+  if(!text.includes('BLOCKER-REASON-1')||!text.includes('BLOCKER-REASON-25'))throw new Error('Open blockers are silently truncated in prompt context.');
+  if(!text.includes('Add the missing jurisdiction analysis.'))throw new Error('Operator correction guidance is not carried into the next prompt.');
+  if(!text.includes('MISSING_PROVENANCE')||!text.includes('Evidence is required.'))throw new Error('Application validation feedback is not carried into the next prompt.');
+}
+
+"""
+          p.write_text(s.replace(marker,insert+marker,1))
+
+          # release regression: historical major defect does not poison current release, current major defect still does.
+          p=Path('verify-complete.mjs'); s=p.read_text(); marker="console.log(JSON.stringify({"
+          if marker not in s: raise SystemExit('verify-complete final marker missing')
+          insert="""
+// Release evaluates current blocking defects, while permanent defect history remains preserved.
+{
+  const p=project('JOB-RELEASE-DEFECT-SCOPE');p.job.CURRENT_ITERATION='ITERATION-NEW';
+  const it=record('iterations',19,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');it.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(it);
+  const old=record('defects',14,{SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-OLD');old.scope={iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'};p.projectData.defects.push(old);
+  let metrics=engine.releaseMetrics(p);assert(metrics.majorDefects===0&&metrics.determination!=='REJECTED','Historical corrected-scope major defect incorrectly rejects the current release.');
+  const current=record('defects',24,{SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-CURRENT');current.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.defects.push(current);
+  metrics=engine.releaseMetrics(p);assert(metrics.majorDefects===1&&metrics.determination==='REJECTED','Current major defect does not reject release.');
+}
+
+"""
+          p.write_text(s.replace(marker,insert+marker,1))
+
+          # Browser-visible source-count control.
+          p=Path('verify-browser.mjs'); s=p.read_text(); marker="console.log('step:stage01-clarification');"
+          if marker in s:
+              s=s.replace(marker,"assert(await evalValue(cdp,`Boolean(document.querySelector('[data-job=\\\"DESIRED_SOURCE_COUNT\\\"]'))`),'Optional desired source-count input is missing from Project UI.');\n  "+marker,1)
+              p.write_text(s)
+          PY
+      - name: Verify source and semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify Chromium operator paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified changes and remove audit scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/semantic-final-audit.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m "Close semantic prompt and recovery gaps"
+          git push origin HEAD:semantic-reliability/final-audit
