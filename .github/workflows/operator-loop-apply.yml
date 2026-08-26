@@ -1,0 +1,64 @@
+name: Apply proven operator-loop delta
+on:
+  push:
+    branches:
+      - reliability/operator-loop-closure-current-20260826
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/operator-loop-closure-current-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply already-verified four-file delta with three-way merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin reliability/operator-loop-closure-20260826
+          git diff a6a7d7681a590d2979c225bc18ea2a7d7609bf92 a7888f337e234670058d5154108f7e5472c5228d -- app-core.js workflow-engine.js verify-complete.mjs verify-browser-extra.mjs > /tmp/operator-loop.patch
+          test -s /tmp/operator-loop.patch
+          git apply --3way /tmp/operator-loop.patch
+      - name: Remove temporary executor before repository verification
+        run: rm .github/workflows/operator-loop-apply.yml
+      - name: Verify complete deterministic contract on current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check test-fixtures.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-live.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit current-main integration only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js workflow-engine.js verify-complete.mjs verify-browser-extra.mjs TEST_PROJECT.json .github/workflows/operator-loop-apply.yml
+          git commit -m "Close operator recovery and run-lane gaps on current main"
+          git push origin HEAD:reliability/operator-loop-closure-current-20260826
