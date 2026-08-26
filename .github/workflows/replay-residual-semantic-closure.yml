@@ -20,7 +20,16 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          set +e
           git cherry-pick 7f40292965a59709ce6c0c99a480339249726159
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            test -f .github/workflows/replay-residual-semantic-closure.yml
+            git rm .github/workflows/replay-residual-semantic-closure.yml
+            test -z "$(git diff --name-only --diff-filter=U)"
+            git cherry-pick --continue
+          fi
       - name: Verify deterministic source and lifecycle
         run: |
           node --check workflow-schema.js
@@ -53,7 +62,4 @@ jobs:
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
       - name: Publish only fully verified replay
-        run: |
-          git rm .github/workflows/replay-residual-semantic-closure.yml
-          git commit -m "Remove one-shot residual replay workflow"
-          git push origin HEAD:reliability/residual-semantic-closure-main-37d90a6
+        run: git push origin HEAD:reliability/residual-semantic-closure-main-37d90a6
