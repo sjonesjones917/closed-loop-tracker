@@ -194,8 +194,9 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
       if(!expectedCollection||!object(reference))continue;
       if(reference.tempKey){
         const target=responseRecordIndex.get(String(reference.tempKey));
-        if(!target)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Temporary relationship ${reference.tempKey} does not exist.`));
-        else if(target.collection!==expectedCollection)issues.push(issue('WRONG_RELATIONSHIP_TYPE',`${path}/relationships/${pointerEscape(name)}`,`${name} must refer to ${expectedCollection}, not ${target.collection}.`));
+        const evidenceTarget=expectedCollection==='evidenceRecords'?evidenceIndex.get(String(reference.tempKey)):null;
+        if(!target&&!evidenceTarget)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Temporary relationship ${reference.tempKey} does not exist.`));
+        else if(target&&target.collection!==expectedCollection)issues.push(issue('WRONG_RELATIONSHIP_TYPE',`${path}/relationships/${pointerEscape(name)}`,`${name} must refer to ${expectedCollection}, not ${target.collection}.`));
       }else if(reference.recordId){
         const exists=workflow.records(project,expectedCollection,{active:true}).some(existing=>workflow.recordId(existing,expectedCollection)===String(reference.recordId));
         if(!exists)issues.push(issue('UNRESOLVED_RELATIONSHIP',`${path}/relationships/${pointerEscape(name)}`,`Canonical ${expectedCollection} record ${reference.recordId} does not exist.`));
