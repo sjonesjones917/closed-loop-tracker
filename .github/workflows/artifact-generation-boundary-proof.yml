@@ -34,10 +34,25 @@ jobs:
           node verify-full-cycle.mjs
       - name: Chromium acceptance
         run: |
-          export BROWSER="$(command -v google-chrome || command -v chromium || true)"
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
       - name: Commit only permanent correction
         run: |
           rm -f .apply-artifact-generation-boundary.mjs .github/workflows/artifact-generation-boundary-proof.yml
