@@ -1,0 +1,82 @@
+name: One-time reserved completion integrity repair
+on:
+  push:
+    branches: [reliability/reserved-completion-integrity-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/reserved-completion-integrity-20260826}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimum lifecycle/hash correction and regression
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('response-ingestion.js')
+          text=path.read_text()
+          old="target.contentSha256=hash.contentRecordSha256(target,schema.RECORD_SCHEMAS[collection].idField);target.recordSha256=hash.recordSha256(target);target.sha256=target.recordSha256;target.status='COMPLETED';committedRecordIds.push(canonical.id);continue;"
+          new="if(target.reserved===true)target.reserved=false;if(Object.hasOwn(target,'completionState'))target.completionState='COMPLETED';if(target.fields&&upper(target.fields.STATUS)==='RESERVED'){target.fields.STATUS='COMPLETED';target.STATUS='COMPLETED';}target.status='COMPLETED';target.updatedAt=stamp;target.contentSha256=hash.contentRecordSha256(target,schema.RECORD_SCHEMAS[collection].idField);target.recordSha256=hash.recordSha256(target);target.sha256=target.recordSha256;committedRecordIds.push(canonical.id);continue;"
+          if text.count(old)!=1:
+              raise SystemExit(f'Expected exact reserved completion sequence once, found {text.count(old)}')
+          path.write_text(text.replace(old,new))
+
+          test=Path('verify-ingestion.mjs')
+          t=test.read_text()
+          marker="JOB-RESERVED-COMPLETION-INTEGRITY"
+          if marker not in t:
+              t += r'''
+
+// Application-reserved records must have one internally consistent final lifecycle and exact final-record hash.
+{
+  let p=project('JOB-RESERVED-COMPLETION-INTEGRITY'),stage=21,baselineId='BASELINE-000001';
+  p.job.CURRENT_BASELINE_ID=baselineId;
+  const baselineScope={...engine.currentScope(p),baselineId};
+  p.projectData.baselines.push({id:baselineId,stage:20,active:true,scope:baselineScope,fields:{BASELINE_ID:baselineId,IMMUTABLE_ARTIFACT_RECORDS:[]},BASELINE_ID:baselineId,IMMUTABLE_ARTIFACT_RECORDS:[],source:'VERIFICATION_FIXTURE'});
+  engine.registerFreshContext(p,{stage,externalContextIdentifier:'EXTERNAL-PRODUCTION-CONTEXT-RESERVED-INTEGRITY',operatorLabel:'VERIFY'});
+  const reserved=engine.reserveProductExecution(p,{operatorLabel:'VERIFY'}),productId=engine.recordId(reserved,'products');
+  const pr={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
+  const e=proposalEnvelope(p,stage,pr,{products:[{targetId:productId,fields:completeFields('products'),relationships:{},evidenceRefs:['policy-evidence']}]});
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Reserved product completion regression fixture is invalid: '+JSON.stringify(prepared.validation.issues));
+  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
+  const product=p.projectData.products.find(record=>engine.recordId(record,'products')===productId);
+  if(product.status!=='COMPLETED'||product.STATUS!=='COMPLETED'||product.fields?.STATUS!=='COMPLETED'||product.reserved!==false||product.completionState!=='COMPLETED')throw new Error('Reserved product committed with contradictory lifecycle representations: '+JSON.stringify({status:product.status,STATUS:product.STATUS,fieldStatus:product.fields?.STATUS,reserved:product.reserved,completionState:product.completionState}));
+  if(product.recordSha256!==globalThis.closedLoopHash.recordSha256(product)||product.sha256!==product.recordSha256)throw new Error('Reserved product final record hash does not describe the final canonical record.');
+}
+'''
+          test.write_text(t)
+          PY
+      - name: Verify exact corrected tree
+        run: |
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify Chromium operator suites
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit permanent correction and self-remove
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/temporary-reserved-completion-integrity.yml
+          git add response-ingestion.js verify-ingestion.mjs
+          git commit -m "Make reserved completion state and hash canonical"
+          git push origin HEAD:reliability/reserved-completion-integrity-20260826
