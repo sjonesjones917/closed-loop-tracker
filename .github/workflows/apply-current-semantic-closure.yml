@@ -19,6 +19,7 @@ jobs:
       - name: Apply minimal semantic corrections
         run: |
           python3 .fix-current-patch-matcher.py
+          python3 .fix-stage24-patch-model.py
           python3 .final-current-patch.py
           python3 .fix-stage24-proof-fixture.py
       - name: Verify deterministic source and full lifecycle
@@ -53,7 +54,7 @@ jobs:
           trap - EXIT
       - name: Commit only fully verified source
         run: |
-          rm .final-current-patch.py .fix-current-patch-matcher.py .fix-stage24-proof-fixture.py
+          rm .final-current-patch.py .fix-current-patch-matcher.py .fix-stage24-patch-model.py .fix-stage24-proof-fixture.py
           git rm .github/workflows/apply-current-semantic-closure.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
