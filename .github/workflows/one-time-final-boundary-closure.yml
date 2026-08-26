@@ -19,8 +19,9 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor b6bc2e141df99bc740e3c89dd4b0f634874df45b HEAD
+          python3 fix-transformer-anchor.py
           python3 apply-final-boundary-closure.py
-          rm apply-final-boundary-closure.py .github/workflows/one-time-final-boundary-closure.yml
+          rm fix-transformer-anchor.py apply-final-boundary-closure.py .github/workflows/one-time-final-boundary-closure.yml
       - name: Verify exact responsible-layer corrections
         run: |
           set -euo pipefail
@@ -47,6 +48,7 @@ jobs:
           node verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
+          test ! -e fix-transformer-anchor.py
           test ! -e apply-final-boundary-closure.py
           test ! -e .github/workflows/one-time-final-boundary-closure.yml
       - name: Commit only verified permanent files
@@ -55,8 +57,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add response-ingestion.js prompt-engine.js project-store.js test-fixtures.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs index.html
-          git add -u .github/workflows/one-time-final-boundary-closure.yml apply-final-boundary-closure.py
+          git add -u .github/workflows/one-time-final-boundary-closure.yml apply-final-boundary-closure.py fix-transformer-anchor.py
           git diff --cached --name-only
-          test -z "$(git diff --cached --name-only | grep -E '(^|/)apply-final-boundary-closure\.py$|one-time-final-boundary-closure\.yml$' || true)" || true
           git commit -m 'Close remaining response, artifact, prompt, and migration boundaries'
           git push origin HEAD:reliability/final-boundary-closure-b6bc-20260826
