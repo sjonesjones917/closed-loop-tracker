@@ -95,3 +95,14 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
  const badMirror=store.validateProjectIntegrity(p,{verifyDerived:false});
  if(badMirror.valid||!badMirror.issues.some(x=>x.includes('contradictory mirrored value for OBLIGATION')))throw new Error('Canonical import integrity accepted contradictory mirrored record values.');
 }
+
+// Current and legacy project schemas must pass through deterministic migration; legacy duplicates remain non-operational.
+{
+  const legacy=core.createBlankState('JOB-MIGRATION-LEGACY');legacy.schema='human-project/30';delete legacy.workflow;delete legacy.stageCount;legacy.projectData.stageRecords={1:{status:'COMPLETE',record:'legacy'}};const migrated=core.migrateState(legacy);if(migrated.schema!==core.PROJECT_SCHEMA||migrated.workflow!==core.WORKFLOW_ID||migrated.stageCount!==30)throw new Error('Legacy schema migration did not establish current identities.');if(migrated.projectData.stageRecords)throw new Error('Legacy stageRecords remained operational after migration.');if(!migrated.projectData.historicalImportRecords?.some(x=>x.kind==='LEGACY_STAGE_RECORDS'))throw new Error('Legacy stageRecords were not preserved as history.');
+}
+{
+  const current=core.createBlankState('JOB-MIGRATION-CURRENT');current.projectData.stageRecords={1:{status:'COMPLETE',record:'legacy duplicate'}};current.projectData.fullProject={opaque:'preserve me'};const migrated=core.migrateState(current);if(Object.keys(migrated.projectData.stageRecords||{}).length)throw new Error('Current-schema legacy stageRecords remained operational.');if(!migrated.projectData.historicalImportRecords?.some(x=>x.kind==='LEGACY_STAGE_RECORDS'))throw new Error('Current-schema legacy stageRecords were not quarantined.');if(migrated.projectData.fullProject)throw new Error('Nested fullProject remained active.');if(!migrated.projectData.migrationArchives?.some(x=>x.kind==='LEGACY_NESTED_PROJECT'))throw new Error('Nested fullProject was not preserved as an audit archive.');engine.ensureShape(migrated);engine.recalculate(migrated);if(migrated.stages[1].status==='COMPLETE')throw new Error('Legacy Stage 1 state satisfied the current gate without a canonical accepted DATA_PROPOSAL.');
+}
+{
+  const app=fs.readFileSync('app-core.js','utf8');if(!app.includes('ensureState(core.migrateState(p))'))throw new Error('Projects with stages can bypass deterministic migration.');if(!app.includes("[core.SCHEMA,'human-project/30'].includes(raw.schema)"))throw new Error('Declared human-project/30 migration cannot be imported through the UI.');
+}
