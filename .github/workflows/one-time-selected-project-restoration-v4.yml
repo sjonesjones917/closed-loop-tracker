@@ -38,7 +38,7 @@ jobs:
             "  await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);",
             "  const fallbackSelection=await evalValue(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0],all=await closedLoopProjectStore.readAll(),p=all.find(x=>x.job?.JOB_ID===id);return {id,retained:Boolean(p?.isRetainedTestProject)};})()`);",
             "  assert(fallbackSelection?.id&&fallbackSelection.retained===false,'Missing selected-project identity fell back to the bundled retained test project while a real operator project existed.');",
-            "  await evalValue(cdp,`closedLoopProjectStore.metaPut('selectedProject',selectedProjectId)`);",
+            "  await evalValue(cdp,`closedLoopProjectStore.metaPut('selectedProject',${JSON.stringify(selectedProjectId)})`);",
             "  await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);",
             "  assert((await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`))===selectedProjectId,'Explicit selected project was not restored after fallback test.');",
             ""
