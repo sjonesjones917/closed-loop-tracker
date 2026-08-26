@@ -67,6 +67,12 @@ jobs:
           node verify-prompt-semantics.mjs
       - name: Commit only verified permanent source changes
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ['verify-ingestion.mjs','verify-complete.mjs','verify-prompt-semantics.mjs']:
+              p=Path(name)
+              p.write_text(p.read_text().rstrip()+"\n")
+          PY
           rm apply-scoped-reliability.py
           rm .github/workflows/apply-scoped-reliability.yml
           git config user.name 'github-actions[bot]'
