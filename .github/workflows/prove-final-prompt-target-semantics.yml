@@ -1,0 +1,43 @@
+name: Prove final prompt and target semantics
+on: [push]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[final-prompt-target-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-prompt-target-semantics-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply reviewed semantic repairs
+        run: |
+          git fetch origin reliability/prompt-artifact-domain-semantics-20260826
+          git checkout origin/reliability/prompt-artifact-domain-semantics-20260826 -- repair-prompt-artifact-context.py repair-target-scope.py
+          python3 repair-prompt-artifact-context.py
+          python3 repair-target-scope.py
+      - name: Verify complete semantic and deterministic stack
+        run: |
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing source
+        run: |
+          rm -f repair-prompt-artifact-context.py repair-target-scope.py .github/workflows/prove-final-prompt-target-semantics.yml .github/workflows/prove-prompt-artifact-context.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Bind exact operation targets and explicit artifact/domain prompt context [final-prompt-target-complete]"
+          git push origin HEAD:reliability/final-prompt-target-semantics-20260826
