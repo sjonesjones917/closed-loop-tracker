@@ -1,0 +1,48 @@
+name: Temporary Stage 21 inventory correction
+on:
+  push:
+    branches: [reliability/stage21-exact-inventory-20260826]
+permissions:
+  contents: write
+jobs:
+  patch-test-clean:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/stage21-exact-inventory-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node .github/apply-stage21-inventory-fix.mjs
+      - run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check verify-full-cycle.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/stage21-inventory-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - run: |
+          rm -f .github/apply-stage21-inventory-fix.mjs .github/workflows/stage21-inventory-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Reconcile Stage 21 output inventory to verified bytes"
+          git push origin HEAD:reliability/stage21-exact-inventory-20260826
