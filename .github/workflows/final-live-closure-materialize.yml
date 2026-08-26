@@ -1,0 +1,53 @@
+name: Materialize final live closure
+
+on:
+  push:
+    branches: ["practical-100/final-live-prompt-closure"]
+
+permissions:
+  contents: write
+
+jobs:
+  prove:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply guarded final closure
+        run: python3 final-live-closure-patch.py
+      - name: Verify source, lifecycle, and Chromium behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workbook.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser-extra.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/final-live-closure-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          export PAGE_URL=http://127.0.0.1:4173/
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit proven source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f final-live-closure-patch.py .github/workflows/final-live-closure-materialize.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close prompt refinement and parallel-run usability gaps"
+          git push origin HEAD:practical-100/final-live-prompt-closure
