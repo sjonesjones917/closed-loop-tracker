@@ -62,7 +62,12 @@ jobs:
           assert marker in s; s=s.replace(marker,extra+marker,1); p.write_text(s)
 
           files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          h=hashlib.sha256(); [h.update(Path(f).read_bytes()) for f in files]; token=h.hexdigest()[:16]
+          manifest=''
+          for f in files:
+              b=Path(f).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+              manifest+=f'{f}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
           p=Path('index.html'); html=p.read_text(); html=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)',lambda m:m.group(1)+token+m.group(2),html); p.write_text(html)
           PY
       - name: Verify complete application
