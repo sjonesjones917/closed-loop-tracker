@@ -9,6 +9,11 @@ concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 jobs:
   test:
     runs-on: ubuntu-latest
+    outputs:
+      negative_cases: ${{ steps.ingestion.outputs.negative_cases }}
+      stages_completed: ${{ steps.full_cycle.outputs.stages_completed }}
+      artifact_round_trip: ${{ steps.full_cycle.outputs.artifact_round_trip }}
+      storage_failure_cases: ${{ steps.browser.outputs.storage_failure_cases }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,14 +42,30 @@ jobs:
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
         run: node verify.mjs
       - name: Exercise all 30 stage prompt-response ingestion contracts and negative cases
-        run: node verify-ingestion.mjs
+        id: ingestion
+        shell: bash
+        run: |
+          output="$(node verify-ingestion.mjs)"
+          printf '%s\n' "$output"
+          count="$(printf '%s\n' "$output" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const m=s.match(/\"negativeCases\"\s*:\s*(\d+)/);if(!m)process.exit(2);process.stdout.write(m[1])})")"
+          echo "negative_cases=$count" >> "$GITHUB_OUTPUT"
       - name: Verify exact deterministic gates and scope
         run: node verify-complete.mjs
       - name: Reject semantic prompt contradictions and operation leakage
         run: node verify-prompt-semantics.mjs
       - name: Run complete Stage 01-30 lifecycle
-        run: node verify-full-cycle.mjs
+        id: full_cycle
+        shell: bash
+        run: |
+          output="$(node verify-full-cycle.mjs)"
+          printf '%s\n' "$output"
+          stages="$(printf '%s\n' "$output" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const m=s.match(/\"stagesCompleted\"\s*:\s*(\d+)/);if(!m)process.exit(2);process.stdout.write(m[1])})")"
+          roundtrip="$(printf '%s\n' "$output" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{process.stdout.write(/\"artifactRoundTrip\"\s*:\s*true/.test(s)?'true':'false')})")"
+          echo "stages_completed=$stages" >> "$GITHUB_OUTPUT"
+          echo "artifact_round_trip=$roundtrip" >> "$GITHUB_OUTPUT"
       - name: Exercise local Chromium operator acceptance
+        id: browser
+        shell: bash
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -52,7 +73,10 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
-          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+          extra="$(PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs)"
+          printf '%s\n' "$extra"
+          storage_count="$(printf '%s\n' "$extra" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{process.stdout.write(/\"storageFailureRollback\"\s*:\s*true/.test(s)?'1':'0')})")"
+          echo "storage_failure_cases=$storage_count" >> "$GITHUB_OUTPUT"
       - name: Enforce one application shell and responsible layers
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
@@ -119,18 +143,25 @@ jobs:
     if: always() && github.event_name != 'pull_request'
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
+    permissions: {contents: write, statuses: write}
     steps:
-      - name: Build acceptance report
+      - uses: actions/checkout@v4
+      - name: Build measured acceptance report
         env:
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           LIVE_RESULT: ${{ needs.verify-live.result }}
+          NEGATIVE_CASES: ${{ needs.test.outputs.negative_cases }}
+          STAGES_COMPLETED: ${{ needs.test.outputs.stages_completed }}
+          ARTIFACT_ROUND_TRIP: ${{ needs.test.outputs.artifact_round_trip }}
+          STORAGE_FAILURE_CASES: ${{ needs.test.outputs.storage_failure_cases }}
         run: |
           node - <<'NODE'
           const fs=require('fs');
           const ok=process.env.TEST_RESULT==='success'&&process.env.DEPLOY_RESULT==='success'&&process.env.LIVE_RESULT==='success';
-          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/2',responseSchema:'closed-loop-stage-response/2',ownershipCoverage:1,derivationCoverage:1,relationshipCoverage:1,semanticPromptContradictions:0,stagesCompleted:ok?30:0,negativeCasesPassed:ok?12:0,storageFailureCasesPassed:ok?1:0,artifactRoundTrip:ok,deployedByteIdentity:ok};
+          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/2',responseSchema:'closed-loop-stage-response/2',ownershipCoverage:process.env.TEST_RESULT==='success'?1:0,derivationCoverage:process.env.TEST_RESULT==='success'?1:0,relationshipCoverage:process.env.TEST_RESULT==='success'?1:0,semanticPromptContradictions:process.env.TEST_RESULT==='success'?0:null,stagesCompleted:Number(process.env.STAGES_COMPLETED||0),negativeCasesPassed:Number(process.env.NEGATIVE_CASES||0),storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES||0),artifactRoundTrip:process.env.ARTIFACT_ROUND_TRIP==='true',deployedByteIdentity:process.env.LIVE_RESULT==='success'};
           fs.writeFileSync('acceptance-report.json',JSON.stringify(report,null,2)+'\n');
+          if(ok&&(report.stagesCompleted!==30||!report.artifactRoundTrip||!report.deployedByteIdentity))process.exit(2);
           NODE
       - uses: actions/upload-artifact@v4
         with:
@@ -157,3 +188,11 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+      - name: Tag only a fully verified deployed commit
+        if: needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success'
+        run: |
+          tag="closed-loop-verified-${GITHUB_SHA::12}"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "$tag"
