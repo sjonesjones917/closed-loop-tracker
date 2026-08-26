@@ -156,6 +156,7 @@ negative('prohibited null',(e)=>{e.stageData={};const r=sourceProposal('source-n
 negative('empty required string',(e)=>{e.stageData={};const r=sourceProposal('source-empty');r.fields.TITLE='';e.records={sources:[r]};},'EMPTY_REQUIRED_STRING');
 negative('placeholder value',(e)=>{e.stageData={};const r=sourceProposal('source-placeholder');r.fields.TITLE='<value>';e.records={sources:[r]};},'PLACEHOLDER_VALUE');
 {const issues=[];ingestion.validateValue({valueType:'STRING',enumValues:['ALLOWED'],nullable:false},'__INVALID_ENUM__','/invalid-enum',issues,{required:true});if(!issues.some(i=>i.code==='INVALID_ENUM_VALUE'))throw new Error('invalid enum: expected INVALID_ENUM_VALUE.');negativeCount++;}
+{const issues=[];ingestion.validateValue({valueType:'STRING',enumValues:[],nullable:false},'12345','/contract-text-limit',issues,{required:true,maxTextFieldLength:4});if(!issues.some(i=>i.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('configured contract text limit was not enforced.');negativeCount++;}
 negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
 negative('unresolved evidence reference',(e)=>{e.stageData={};const r=sourceProposal('source-evidence');r.evidenceRefs=['does-not-exist'];e.records={sources:[r]};},'UNRESOLVED_EVIDENCE_REFERENCE');
 negative('unresolved evidence source',(e)=>{e.evidence[0].sourceRef={recordId:'SOURCE-NOT-THERE'};},'UNRESOLVED_EVIDENCE_SOURCE');
