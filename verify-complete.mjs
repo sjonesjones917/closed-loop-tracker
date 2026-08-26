@@ -54,6 +54,17 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(q.stages[10].status!=='COMPLETE'&&q.stages[10].humanData.FREEZE_OWNER==='NEW OWNER','Stage 10 human authority was lost or stale Stage 10 completion remained current.');assert(!Object.keys(q.stages[10].agentData||{}).length&&!Object.keys(q.stages[10].acceptedData||{}).length&&q.projectData.acceptedChanges[0].invalidatedBy,'Old Stage 10 agent acceptance remained current after human authority changed.');assert(run.active===false&&run.invalidatedBy,'Stage 11 dependent run remained current after Stage 10 authority changed.');
 }
 
+// Multi-operation operator review must remain bound to the selected operation/run lane.
+{
+  const appSource=fs.readFileSync('app-core.js','utf8');
+  assert(appSource.includes('function operatorLaneMatches(item,n)'),'Operator review has no shared lane matcher.');
+  assert(appSource.includes("filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,n))"),'Proposal rendering is still stage-wide.');
+  assert(appSource.includes("filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,current.activeStage))"),'Accept/reject selection is still stage-wide.');
+  assert(appSource.includes('operatorLaneMatches(validationLaneRecord(x),n)'),'Validation feedback is still stage-wide.');
+  assert(appSource.includes('acceptedLaneChanges(n).length'),'Refinement control visibility is still stage-wide.');
+  assert(appSource.includes('change=acceptedLaneChanges(stage).at(-1)'),'Refinement action can still target a different accepted lane.');
+}
+
 // Explicit workflow gates cannot be bypassed by manual assertions.
 {
   const p=project('JOB-GATES');
