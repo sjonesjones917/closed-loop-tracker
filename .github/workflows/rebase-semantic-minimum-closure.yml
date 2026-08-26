@@ -1,0 +1,39 @@
+name: Verify semantic minimum closure on latest main
+on:
+  push:
+    branches:
+      - reliability/semantic-minimum-closure-v2-20260826
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply proven permanent commit to latest main
+        run: git cherry-pick 3f5b20ae1b8565eb73b6f84f4399af36671448b4
+      - name: Verify syntax and semantics
+        run: |
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Publish clean verified branch
+        if: success()
+        run: |
+          rm -f .github/workflows/rebase-semantic-minimum-closure.yml
+          git add -A
+          git commit --amend --no-edit
+          git push --force-with-lease origin HEAD:reliability/semantic-minimum-closure-v2-20260826
