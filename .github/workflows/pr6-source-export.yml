@@ -1,23 +1,37 @@
-name: PR6 source export
+name: PR6 scoped repair
 on:
   push:
     branches: [practical-100/pr6-acceptance-proof]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: practical-100/pr6-completion-2
-      - name: Package target branch source
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Normalize non-applicable scope sentinels
         run: |
-          rm -rf .git
-          zip -qr source.zip . -x source.zip
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr76-source
-          path: source.zip
-          if-no-files-found: error
-          retention-days: 1
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="function currentScope(project){return {inputVersion:project.job.CURRENT_INPUT_VERSION||null,sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:project.job.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:project.job.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:project.job.CURRENT_INSTRUCTION_VERSION||null,iterationId:recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION||null,candidateId:recordId(records(project,'candidateFreezes').at(-1),'candidateFreezes')||null,baselineId:recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID||null,productId:recordId(records(project,'products').at(-1),'products')||project.job.CURRENT_PRODUCT_ID||null};}"
+          new="const scopeValue=value=>{const text=String(value??'').trim();return !text||['NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED'].includes(text.toUpperCase())?null:value;};\nfunction currentScope(project){return {inputVersion:scopeValue(project.job.CURRENT_INPUT_VERSION),sourceSetVersion:scopeValue(project.job.CURRENT_SOURCE_SET_VERSION),requirementsVersion:scopeValue(project.job.CURRENT_REQUIREMENTS_VERSION),testSuiteVersion:scopeValue(project.job.CURRENT_TEST_SUITE_VERSION),instructionVersion:scopeValue(project.job.CURRENT_INSTRUCTION_VERSION),iterationId:scopeValue(recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION),candidateId:scopeValue(recordId(records(project,'candidateFreezes').at(-1),'candidateFreezes')),baselineId:scopeValue(recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID),productId:scopeValue(recordId(records(project,'products').at(-1),'products')||project.job.CURRENT_PRODUCT_ID)};}"
+          if old not in s: raise SystemExit('expected currentScope source not found')
+          p.write_text(s.replace(old,new))
+          PY
+          node --check workflow-engine.js
+          node verify-full-cycle.mjs
+      - name: Commit verified scope repair to PR76
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js
+          git diff --cached --quiet && exit 0
+          git commit -m "PR 6: normalize non-applicable current scope identities"
+          git push origin HEAD:practical-100/pr6-completion-2
