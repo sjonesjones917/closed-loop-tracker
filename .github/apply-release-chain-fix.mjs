@@ -27,18 +27,12 @@ engine=replaceOnce(
 );
 fs.writeFileSync('workflow-engine.js',engine);
 
-let schema=fs.readFileSync('workflow-schema.js','utf8');
-const override="const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({CHAIN:Object.freeze({ARTIFACT_HASH_IDENTITY:Object.freeze({valueType:'REFERENCE_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),EVIDENCE_ID:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),MISSING_LINKS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),TEST_ID:Object.freeze({valueType:'REFERENCE_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),TEST_RESULT_ID:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})})});\n";
-schema=replaceOnce(schema,'function ownerFromPartition(partition,name,label){',override+'function ownerFromPartition(partition,name,label){','insert record field type overrides');
-schema=replaceOnce(schema,"const producer=ownerFromPartition(ownership,name,title),type=EXPLICIT_RECORD_FIELD_TYPES[prefix]?.[name];","const producer=ownerFromPartition(ownership,name,title),type=RECORD_FIELD_TYPE_OVERRIDES[prefix]?.[name]||EXPLICIT_RECORD_FIELD_TYPES[prefix]?.[name];",'apply record field type overrides');
-fs.writeFileSync('workflow-schema.js',schema);
-
 let full=fs.readFileSync('verify-full-cycle.mjs','utf8');
 full=replaceOnce(
   full,
   "const assert=(v,m)=>{if(!v)throw new Error(m)};let p=core.createBlankState('JOB-FULL-CYCLE');",
-  "const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='STRING_ARRAY','Evidence-chain evidence identities must be plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must be plural.');let p=core.createBlankState('JOB-FULL-CYCLE');",
-  'evidence-chain cardinality regression'
+  "const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');",
+  'preserve evidence-chain cardinality contract'
 );
 full=replaceOnce(
   full,
@@ -55,9 +49,9 @@ full=replaceOnce(
 full=replaceOnce(
   full,
   "data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);complete(29);",
-  "data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_ID'))&&engine.recordValue(evidenceChain,'TEST_ID').includes(testId),'Evidence chain did not preserve the plural applicable test set.');assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');complete(29);",
+  "data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_ID'))&&engine.recordValue(evidenceChain,'TEST_ID').includes(testId),'Evidence chain did not preserve the applicable test set.');assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');complete(29);",
   'evidence-chain deterministic relationship regression'
 );
 fs.writeFileSync('verify-full-cycle.mjs',full);
 
-console.log(JSON.stringify({patched:['workflow-engine.js','workflow-schema.js','verify-full-cycle.mjs'],semanticFixes:['result requirement traversal','evidence-chain plural cardinality']},null,2));
+console.log(JSON.stringify({patched:['workflow-engine.js','verify-full-cycle.mjs'],semanticFixes:['deterministic result requirement traversal']},null,2));
