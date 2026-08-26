@@ -1,0 +1,75 @@
+name: Prove minimal visual polish
+on:
+  push:
+    branches: [ui/minimal-visual-polish-current-20260826]
+permissions: {contents: write}
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: ui/minimal-visual-polish-current-20260826, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply CSS-only visual polish
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          p=Path('index.html'); s=p.read_text()
+          marker='/* Minimal visual hierarchy polish */'
+          assert marker not in s
+          block=r'''
+/* Minimal visual hierarchy polish */
+:root{--radius:11px;--shadow:0 1px 2px rgba(0,0,0,.035),0 5px 18px rgba(21,24,23,.025);--focus-ring:0 0 0 3px rgba(22,79,69,.14)}
+main{max-width:1180px;margin:0 auto}
+.panel,.hero{padding:12px}.screen{gap:10px}.panel,.hero,.record-card,.stage-card{transition:border-color .15s ease,box-shadow .15s ease,background-color .15s ease}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;box-shadow:var(--focus-ring)}
+button:not(:disabled):active{transform:translateY(1px)}
+.view-tabs button[aria-selected="true"],.header-actions .primary{box-shadow:0 1px 2px rgba(0,0,0,.10)}
+.hero h2{letter-spacing:-.012em}.section-title{letter-spacing:-.006em}.section-intro{max-width:78ch;line-height:1.5}
+.fact{background:#fcfdfc}.fact strong{font-variant-numeric:tabular-nums}.status{letter-spacing:.015em}
+.next-action-panel{border-left:4px solid var(--accent);padding-left:11px}.next-action-panel .notice{background:transparent;border:0;border-radius:0;padding:2px 0;color:var(--ink);font-weight:650}
+.stage-card.current{box-shadow:inset 3px 0 0 var(--accent),var(--shadow)}.workflow-button:focus-visible .stage-card{border-color:var(--accent);box-shadow:var(--focus-ring)}
+.record-card>summary{position:relative;padding-right:30px}.record-card>summary:after,.project-field-group>summary:after,.workflow-disclosure>summary:after{content:'›';font-size:17px;line-height:1;color:var(--muted);transition:transform .15s ease}.record-card[open]>summary:after,.project-field-group[open]>summary:after,.workflow-disclosure[open]>summary:after{transform:rotate(90deg)}
+.record-card>summary,.project-field-group>summary,.workflow-disclosure>summary{align-items:center}.record-card>summary:hover,.project-field-group>summary:hover{background:#fafcfb}
+.prompt{max-height:min(52vh,520px);line-height:1.55;background:#f7f9f7;border-color:#cfd6d1;padding:11px;scrollbar-gutter:stable}.stage-output{min-height:clamp(240px,38vh,460px);line-height:1.55}.code-text{tab-size:2}
+#proposal-heading{border-color:#b9d2cb;box-shadow:0 0 0 1px rgba(22,79,69,.035),var(--shadow)}#validation-report{scroll-margin-top:150px}
+.empty-state{background:#fbfcfb}.notice{line-height:1.5}.button-row{align-items:center}.button-row .primary{box-shadow:0 1px 2px rgba(22,79,69,.12)}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,textarea:focus,select:focus{border-color:var(--accent)}
+@media(max-width:620px){.panel,.hero{padding:11px}.screen{gap:9px}.prompt{max-height:46vh}.stage-output{min-height:280px}.next-action-panel{padding-left:10px}}
+@media(prefers-reduced-motion:reduce){.panel,.hero,.record-card,.stage-card,.record-card>summary:after,.project-field-group>summary:after,.workflow-disclosure>summary:after{transition:none}button:not(:disabled):active{transform:none}}
+'''
+          s=s.replace('</style>',block+'\n</style>',1)
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+            b=Path(path).read_bytes();return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{f}:{blob(f)}\n' for f in files).encode()).hexdigest()[:16]
+          s=re.sub(r'(?<=\?v=)runtime-[a-f0-9]{16}',token,s)
+          p.write_text(s)
+          PY
+      - name: Prove no functional regression
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/ui-http.log 2>&1 & P=$!; trap 'kill $P 2>/dev/null || true' EXIT
+          run_browser(){ script="$1"; for attempt in 1 2 3; do log="/tmp/${script}.${attempt}.log"; if PAGE_URL=http://127.0.0.1:4173/ node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi; cat "$log"; grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log" || return 1; test "$attempt" -lt 3 || return 1; done; }
+          run_browser verify-browser.mjs
+          run_browser verify-browser-extra.mjs
+      - name: Commit only proven visual change
+        run: |
+          rm -f .github/workflows/ui-polish-proof.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html .github/workflows/ui-polish-proof.yml
+          git diff --cached --check
+          git commit -m 'Fine tune visual hierarchy and long-text ergonomics [ui-polish-complete]'
+          git push origin HEAD:ui/minimal-visual-polish-current-20260826
