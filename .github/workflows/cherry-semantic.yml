@@ -1,0 +1,37 @@
+name: Apply verified semantic closure onto current main
+on:
+  push:
+    branches:
+      - practical-100/final-semantic-closure-current
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/final-semantic-closure-current
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Three-way apply verified semantic source commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git cherry-pick 60dbcd7dd5f955e91dcb422a4332ba7bd1827a6e
+      - name: Verify combined current-main source
+        run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Push only after verification
+        run: git push origin HEAD:practical-100/final-semantic-closure-current
