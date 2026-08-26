@@ -3,8 +3,14 @@ from pathlib import Path
 def replace(path,old,new,count=1):
     p=Path(path);s=p.read_text();assert old in s,f'missing target in {path}';p.write_text(s.replace(old,new,count))
 
+# Permanent regression definitions survive iteration rollover; only executions are iteration-scoped.
 replace('workflow-engine.js',"const regressions=recordsForCurrentScope(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');const executions=currentRegressionExecutions(project,iterationId);","const regressions=records(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');const executions=currentRegressionExecutions(project,iterationId);")
 replace('workflow-engine.js',"const regressions=recordsForCurrentScope(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');const regExec=recordsForCurrentScope(project,'regressionExecutions');","const regressions=records(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');const regExec=records(project,'regressionExecutions');")
+
+# deriveStageData normalizes shape; do not assign its result through the stale pre-normalization state reference.
+replace('workflow-engine.js',"    state.derivedData=deriveStageData(project,stage);\n    previousComplete=state.status==='COMPLETE';","    const derivedData=deriveStageData(project,stage);\n    project.stages[stage].derivedData=derivedData;\n    previousComplete=project.stages[stage].status==='COMPLETE';")
+
+# Stage 19 must prove the frozen component versions/hashes are unchanged from Stage 17.
 replace('workflow-engine.js',"case 19:{requireAccepted();const iteration=latestIteration(project,[19]);const ev=evaluateIteration(project,recordId(iteration,'iterations'),'UNCHANGED_CONFIRMATION');if(!ev.complete)reasons.push(...ev.reasons);requireCount('confirmationRecords',1);","case 19:{requireAccepted();const iteration=latestIteration(project,[19]);const ev=evaluateIteration(project,recordId(iteration,'iterations'),'UNCHANGED_CONFIRMATION');if(!ev.complete)reasons.push(...ev.reasons);const priorCandidate=records(project,'candidateFreezes',{stage:17}).at(-1),currentCandidate=records(project,'candidateFreezes',{stage:19}).at(-1);const identity=c=>hash.sha256Value({versions:recordValue(c,'COMPONENT_VERSIONS')||{},hashes:recordValue(c,'COMPONENT_HASHES')||{}});if(!priorCandidate||!currentCandidate||identity(priorCandidate)!==identity(currentCandidate))reasons.push('Stage 19 candidate versions and hashes are not exactly unchanged from Stage 17.');requireCount('confirmationRecords',1);")
 
 p=Path('verify-full-cycle.mjs');s=p.read_text();marker="const result={continuousLifecycle:'STAGES_01_TO_17'";assert marker in s
