@@ -17,15 +17,15 @@ jobs:
         with:
           node-version: '22'
       - name: Apply exact deterministic corrections
-        run: node .semantic-closure.mjs
+        run: |
+          node .semantic-followup.mjs
+          node .semantic-closure.mjs
       - name: Verify corrected source
         run: |
           node --check workflow-engine.js
           node --check prompt-engine.js
           node --check response-ingestion.js
           node --check app-core.js
-          node --check verify-full-cycle.mjs
-          node --check verify-prompt-semantics.mjs
           node build-test-project.mjs
           node verify.mjs
           node verify-ingestion.mjs
@@ -34,9 +34,8 @@ jobs:
           node verify-prompt-semantics.mjs
       - name: Commit only verified production files
         run: |
-          rm -f .semantic-closure.mjs
-          rm -f .github/workflows/apply-semantic-closure.yml
-          rm -f .github/workflows/final-semantic-closure.yml
+          rm -f .semantic-closure.mjs .semantic-followup.mjs
+          rm -f .github/workflows/apply-semantic-closure.yml .github/workflows/final-semantic-closure.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
