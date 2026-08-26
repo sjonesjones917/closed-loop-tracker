@@ -17,20 +17,29 @@ jobs:
         with: {node-version: '22'}
       - name: Apply exact minimal repair
         run: python .github/targeted-refinement-repair.py
-      - name: Syntax and deterministic proof
-        run: |
-          node --check workflow-engine.js
-          node --check response-ingestion.js
-          node --check verify-ingestion.mjs
-          node build-test-project.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+      - name: Check workflow engine syntax
+        run: node --check workflow-engine.js
+      - name: Check ingestion syntax
+        run: node --check response-ingestion.js
+      - name: Check regression syntax
+        run: node --check verify-ingestion.mjs
+      - name: Build retained fixture
+        run: node build-test-project.mjs
+      - name: Hash proof
+        run: node verify-hash.mjs
+      - name: Architecture and ingestion-cycle proof
+        run: node verify.mjs
+      - name: Ingestion and targeted refinement proof
+        run: node verify-ingestion.mjs
+      - name: Strict gate proof
+        run: node verify-complete.mjs
+      - name: Full 30-stage lifecycle proof
+        run: node verify-full-cycle.mjs
+      - name: Prompt semantic proof
+        run: node verify-prompt-semantics.mjs
       - name: Remove temporary repair machinery and commit only permanent delta
         run: |
+          git checkout -- TEST_PROJECT.json
           rm .github/targeted-refinement-repair.py .github/workflows/targeted-refinement-repair.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
