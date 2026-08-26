@@ -12,11 +12,34 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: reliability/final-minimal-fixes-20260826
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Apply exact minimum repairs
-        run: python3 repair-final-minimal.py
+        run: |
+          python3 finalize-semantic-closure.py
+          python3 repair-final-minimal.py
+      - name: Refresh exact runtime cache identity
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          for(const file of files){
+            const marker=`<script defer src="${file}?v=`;
+            const first=html.indexOf(marker),second=first<0?-1:html.indexOf(marker,first+1);
+            if(first<0||second>=0)throw new Error(`${file} runtime script marker must occur exactly once.`);
+            const valueStart=first+marker.length,end=html.indexOf('"',valueStart);
+            if(end<0)throw new Error(`${file} runtime script token is unterminated.`);
+            html=html.slice(0,valueStart)+identity+html.slice(end);
+          }
+          fs.writeFileSync('index.html',html);
+          console.log(identity);
+          NODE
       - name: Syntax checks
         run: |
           node --check app-core.js
@@ -34,6 +57,7 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-full-cycle.mjs
           node --check verify-prompt-semantics.mjs
+          node --check verify-live.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
       - name: Verify deterministic acceptance
@@ -50,17 +74,17 @@ jobs:
           node - <<'NODE'
           const fs=require('fs'),vm=require('vm');
           for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-          const s=globalThis.closedLoopWorkflowSchema,e=globalThis.closedLoopWorkflowEngine,i=globalThis.closedLoopResponseIngestion,c=globalThis.closedLoopCore;
+          const s=globalThis.closedLoopWorkflowSchema,e=globalThis.closedLoopWorkflowEngine,i=globalThis.closedLoopResponseIngestion,c=globalThis.closedLoopCore,prompts=globalThis.closedLoopPromptEngine;
           if(!s.STAGE_CONTRACTS[1].readCollections.includes('artifacts'))throw new Error('Stage 01 does not read verified supplied artifacts.');
-          const p=c.createBlankState('JOB-SEMANTIC-REPAIR');e.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce a complete technical specification.';
+          const p=c.createBlankState('JOB-SEMANTIC-REPAIR');e.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce a complete patent-ready technical specification for a multi-file electromechanical system.';
           e.registerArtifactBytes(p,{stage:1,artifactId:'ARTIFACT-SUPPLIED-1',filename:'inputs/reference.step',mediaType:'model/step',byteSize:123,sha256:'a'.repeat(64),lineage:{stage:1,logicalPath:'inputs/reference.step'}});
           const v=e.recordHumanInputVersion(p,['SUPPLIED_ARTIFACT:ARTIFACT-SUPPLIED-1'],'TEST');
           if(!v.payload.suppliedArtifacts?.some(a=>a.artifactId==='ARTIFACT-SUPPLIED-1'&&a.logicalPath==='inputs/reference.step'&&a.sha256==='a'.repeat(64)))throw new Error('Input version does not bind supplied artifact identity.');
-          const pr=globalThis.closedLoopPromptEngine.buildPromptRecord(1,{...p,revision:1});
-          if(!pr.prompt.includes('ARTIFACT-SUPPLIED-1')||!pr.prompt.includes('inputs/reference.step'))throw new Error('Stage 01 prompt omits verified artifact identity/path.');
+          const pr=prompts.buildPromptRecord(1,{...p,revision:1});
+          for(const required of ['ARTIFACT-SUPPLIED-1','inputs/reference.step','VERIFIED APPLICATION ARTIFACT MANIFEST / ACCESS BOUNDARY','PATENT / REGULATED FILING','prior-art search completeness','SOFTWARE / MULTI-FILE SYSTEM','same basename in different directories are distinct artifacts','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(!pr.prompt.includes(required))throw new Error(`Controlling prompt omits semantic boundary: ${required}`);
           const issues=[];i.validateValue({valueType:'STRING',nullable:false,enumValues:[]},'12345','/x',issues,{maxTextFieldLength:4});
           if(!issues.some(x=>x.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('Text limit does not follow effective contract input.');
-          console.log(JSON.stringify({stage1ArtifactContext:true,inputArtifactIdentity:true,contractTextLimit:true}));
+          console.log(JSON.stringify({stage1ArtifactContext:true,inputArtifactIdentity:true,contractTextLimit:true,patentSemantics:true,multiFileSemantics:true,physicalEngineeringSemantics:true}));
           NODE
       - name: Exercise local Chromium acceptance
         run: |
@@ -75,11 +99,16 @@ jobs:
           trap - EXIT
       - name: Commit exact passing source and remove repair scaffolding
         run: |
-          rm repair-final-minimal.py .github/workflows/final-minimal-repair.yml
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+          git fetch origin main --no-tags
+          git checkout origin/main -- .github/workflows/pages.yml
+          rm -f .final-minimal-trigger finalize-semantic-closure.py repair-final-minimal.py
+          rm -f .github/workflows/final-minimal-repair.yml .github/workflows/finalize-semantic-closure.yml
+          test -z "$(find . -maxdepth 1 -type f \( -name '.repair-*' -o -name '*repair*.py' -o -name '*semantic-closure*.py' \) -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f \( -iname '*repair*' -o -iname '*semantic-closure*' \) -print -quit)"
+          test ! -e .final-minimal-trigger
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
+          git diff --cached --check
           git commit -m "Close final minimum semantic reliability gaps [final-minimal-complete]"
           git push origin HEAD:reliability/final-minimal-fixes-20260826
