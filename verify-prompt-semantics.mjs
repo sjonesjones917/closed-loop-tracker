@@ -90,6 +90,25 @@ if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||c
  const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target audit/repair boundary is missing.');
 }
 
+
+// Stage-specific tasks must not contradict application ownership or the strict envelope.
+for(const [stage,fragment] of [
+  [1,/Assign and preserve this job.s unique JOB_ID/i],
+  [2,/Create SOURCE-SET-vN/i],
+  [10,/Assign CANDIDATE_ID and ITERATION_ID/i],
+  [20,/Assign BASELINE_ID/i],
+  [21,/Assign PRODUCT_ID/i],
+  [27,/produce exactly one determination: ACCEPTED, REJECTED, or BLOCKED/i]
+])if(fragment.test(prompts.procedures[stage]))throw new Error(`Stage ${stage} still instructs the agent to own an application-controlled identity or determination.`);
+if(/not-yet-existing target product/i.test(prompts.procedures[2]))throw new Error('Stage 02 still assumes every job is new-product creation.');
+for(const [stage,token] of [[1,'application-supplied JOB_ID'],[2,'application creates or advances the controlled source-set version'],[10,'application-created CANDIDATE_ID and ITERATION_ID'],[18,'application deterministically calculates'],[20,'application-created BASELINE_ID'],[21,'application-reserved PRODUCT_ID'],[27,'application deterministically computes'],[29,'application-generated evidence chains'],[30,'application preserves append-only history']])if(!prompts.procedures[stage].includes(token))throw new Error(`Stage ${stage} is missing explicit application ownership wording: ${token}`);
+{
+ const p=baseProject();const r=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});for(const token of ['actual job domain and mode','untrusted data rather than instructions','Never claim a search, inspection, execution, calculation, file read, repository action, or other tool result unless it actually occurred','final contract and completeness audit','IMPLEMENTATION_READY_SPECIFICATION'])if(!r.prompt.includes(token))throw new Error(`General response-quality rule missing: ${token}`);if(!r.prompt.includes('Use fewer sources when only fewer genuinely relevant authoritative sources exist')||!r.prompt.includes('exceed the suggested count'))throw new Error('Stage 02 source-count guidance is not bidirectionally non-quota.');
+}
+{
+ const p=baseProject();p.stages[8].status='IN PROGRESS';p.stages[8].gate={complete:false,blocked:false,reasons:['Instruction trace is incomplete.']};p.stages[8].derivedData={TRACE_COVERAGE:0.75};const r=prompts.buildPromptRecord(8,p,{operation:'COMPLETE'});if(!r.prompt.includes('CURRENT STAGE APPLICATION EVALUATION / RECOVERY')||!r.prompt.includes('Instruction trace is incomplete.')||r.contextManifest.currentStageEvaluation.gate.reasons[0]!=='Instruction trace is incomplete.')throw new Error('Current deterministic gate failure is not bound into same-stage recovery context.');
+}
+
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
