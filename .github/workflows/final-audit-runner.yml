@@ -23,6 +23,10 @@ jobs:
           end=source.index("\n          PY\n",start)
           lines=source[start:end].splitlines()
           script='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)+'\n'
+          old='t=once(t,"\\nconsole.log(JSON.stringify({",insert+"\\nconsole.log(JSON.stringify({",\'strict date test\')'
+          new='t=once(t,"\\nconsole.log(JSON.stringify({pr3Dispositions:true",insert+"\\nconsole.log(JSON.stringify({pr3Dispositions:true",\'strict date test\')'
+          if script.count(old)!=1: raise SystemExit(f'Runner strict-date transformer target count {script.count(old)}')
+          script=script.replace(old,new,1)
           Path('/tmp/final-audit-transform.py').write_text(script)
           PY
           python3 /tmp/final-audit-transform.py
