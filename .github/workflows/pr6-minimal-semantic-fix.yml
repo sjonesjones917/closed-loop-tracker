@@ -26,8 +26,12 @@ jobs:
           end=source.index("\n          PY\n",start)
           code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
           code=code.replace("\nold_scope=", "\ntext=engine.read_text()\n\nold_scope=", 1)
-          already="""replace_once('verify-full-cycle.mjs',\n          \"const productSha=hash.sha256Text('product-bytes');\",\n          \"const productSha=hash.sha256Text('released-product-bytes');\")\n\n"""
-          code=code.replace(already,'',1)
+          needle="replace_once('verify-full-cycle.mjs',"
+          i=code.find(needle)
+          if i>=0:
+              j=code.find('\n\n',i)
+              if j<0: raise SystemExit('Could not isolate already-applied full-cycle fixture correction.')
+              code=code[:i]+code[j+2:]
           exec(compile(code,'pr6-minimum-semantic-transform.py','exec'),{})
           PY
       - name: Verify all deterministic source contracts
