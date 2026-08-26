@@ -1,0 +1,70 @@
+name: Prove blocking human input disposition
+on:
+  push:
+    branches:
+      - fix/blocking-human-input-disposition-20260826
+permissions:
+  contents: write
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/blocking-human-input-disposition-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply exact validator regression
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          def one(path,old,new,label):
+              p=Path(path);s=p.read_text();n=s.count(old)
+              if n!=1: raise SystemExit(f'{label}: expected one anchor, found {n}')
+              p.write_text(s.replace(old,new,1))
+          one('response-ingestion.js',
+            "    if(!safe(envelope.humanInputRequests).length)issues.push(issue('MISSING_HUMAN_INPUT_REQUESTS','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one question.'));",
+            "    if(!safe(envelope.humanInputRequests).length)issues.push(issue('MISSING_HUMAN_INPUT_REQUESTS','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one question.'));\n    else if(!safe(envelope.humanInputRequests).some(request=>request.blocking!==false))issues.push(issue('MISSING_BLOCKING_HUMAN_INPUT_REQUEST','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one blocking human-authority question.'));",
+            'HUMAN_INPUT_REQUIRED blocking rule')
+          marker='// Clarification loop: structured question -> accepted question record -> human answer -> INPUT version increments.'
+          p=Path('verify-ingestion.mjs');s=p.read_text()
+          case="""// A HUMAN_INPUT_REQUIRED disposition must contain actual blocking human-authority work.\n{\n const p=project('JOB-NONBLOCKING-HUMAN-INPUT'),stage=1,promptRecord=savePrompt(p,stage);\n const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-optional',question:'Optional preference?',whyRequired:'This preference is not required to continue.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:false}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};\n const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});\n if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MISSING_BLOCKING_HUMAN_INPUT_REQUEST'))throw new Error('HUMAN_INPUT_REQUIRED without a blocking human question was accepted.');\n if(prepared.project.projectData.acceptedChanges.length)throw new Error('Invalid clarification mutated canonical state.');\n negativeCount++;\n}\n\n"""
+          if s.count(marker)!=1: raise SystemExit('clarification test anchor mismatch')
+          p.write_text(s.replace(marker,case+marker,1))
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def gitblob(path):
+              b=Path(path).read_bytes();return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{f}:{gitblob(f)}\n' for f in runtime).encode()).hexdigest()[:16]
+          p=Path('index.html');html=p.read_text();html,n=re.subn(r'(src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]{16}(\")',rf'\g<1>{token}\2',html)
+          if n!=8: raise SystemExit(f'runtime token replacements={n}')
+          p.write_text(html)
+          PY
+      - name: Full acceptance
+        run: |
+          node build-test-project.mjs
+          node --check response-ingestion.js
+          node --check verify-ingestion.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit permanent source only
+        run: |
+          rm -f .github/workflows/prove-blocking-human-input.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Require blocking work in human-input dispositions"
+          git push origin HEAD:fix/blocking-human-input-disposition-20260826
