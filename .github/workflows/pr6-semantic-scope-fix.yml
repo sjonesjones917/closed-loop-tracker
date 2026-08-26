@@ -1,0 +1,221 @@
+name: Apply minimum semantic scope correction
+on:
+  push:
+    branches: [practical-100/pr6-final-proof-current]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/pr6-final-proof-current
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact responsible-layer corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p=Path(path); text=p.read_text()
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one exact match, found {count}: {old[:100]!r}')
+              p.write_text(text.replace(old,new,1))
+
+          engine=Path('workflow-engine.js')
+          text=engine.read_text()
+
+          replace_once('workflow-engine.js',
+          "  const config=VERSION_BY_STAGE[stage];\n  if(!config)return null;",
+          "  const config=VERSION_BY_STAGE[stage];\n  if(!config)return null;\n  if(stage===2&&hasNoApplicableExternalSourceDetermination(project)){project.job.CURRENT_SOURCE_SET_VERSION='NOT APPLICABLE';return null;}\n  if(stage===3&&hasNoApplicableExternalSourceDetermination(project)){project.job.CURRENT_RESEARCH_VERSION='NOT APPLICABLE';return null;}")
+
+          replace_once('workflow-engine.js',
+          "function acceptedChanges(project,stage){return safe(project?.projectData?.acceptedChanges).filter(change=>Number(change.stage)===Number(stage)&&change.status==='COMMITTED'&&change.responseType==='DATA_PROPOSAL'&&!change.invalidatedBy);}\nfunction acceptedControlEvents(project,stage)",
+          "function acceptedChanges(project,stage){return safe(project?.projectData?.acceptedChanges).filter(change=>Number(change.stage)===Number(stage)&&change.status==='COMMITTED'&&change.responseType==='DATA_PROPOSAL'&&!change.invalidatedBy);}\nfunction hasNoApplicableExternalSourceDetermination(project){\n  if(records(project,'sources').length)return false;\n  const stage=project?.stages?.[2];\n  if(upper(stage?.agentData?.AUTHORITY_HIERARCHY)!=='NO_APPLICABLE_EXTERNAL_SOURCE')return false;\n  if(!String(stage?.agentData?.KNOWN_CONTROLLING_SOURCES_EXAMINED||'').trim())return false;\n  const accepted=acceptedChanges(project,2).at(-1);\n  if(!accepted)return false;\n  return records(project,'evidenceRecords').some(record=>Number(record.stage)===2&&record.rawResponseId===accepted.rawResponseId&&String(recordValue(record,'CONTENT')||'').trim());\n}\nfunction acceptedControlEvents(project,stage)")
+
+          replace_once('workflow-engine.js',
+          "      const noApplicableSource=collection('sources').length===0&&upper(project.stages[2].agentData?.AUTHORITY_HIERARCHY)==='NO_APPLICABLE_EXTERNAL_SOURCE'&&String(project.stages[2].agentData?.KNOWN_CONTROLLING_SOURCES_EXAMINED||'').trim().length>0;",
+          "      const noApplicableSource=hasNoApplicableExternalSourceDetermination(project);")
+          replace_once('workflow-engine.js',
+          "      const noApplicableSource=sourceIds.length===0&&upper(project.stages[2].agentData?.AUTHORITY_HIERARCHY)==='NO_APPLICABLE_EXTERNAL_SOURCE';",
+          "      const noApplicableSource=sourceIds.length===0&&hasNoApplicableExternalSourceDetermination(project);")
+
+          replace_once('workflow-engine.js',
+          "function mandatoryRequirements(project){\n  return records(project,'requirements').filter(record=>{",
+          "function mandatoryRequirements(project,scopeRule=null){\n  const source=scopeRule?recordsForScope(project,'requirements',scopeRule):records(project,'requirements');\n  return source.filter(record=>{")
+
+          old_scope="function scopeMatches(record,scopeRule={}){const rs=record?.scope||{};for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}\nfunction recordsForCurrentScope(project,collection,scopeRule={}){const active=records(project,collection);const scope={...currentScope(project),...scopeRule};const applicable=Object.fromEntries(Object.entries(scope).filter(([,v])=>v!==undefined&&v!==null));return active.filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable));}\nfunction applicableTests(project,requirement){const req=requirementId(requirement);return recordsForCurrentScope(project,'tests').filter(test=>testRequirementId(test)===req&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));}\n"
+          new_scope="function scopeMatches(record,scopeRule={}){const rs=record?.scope||{};for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}\nfunction recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable));}\nfunction recordsForCurrentScope(project,collection,scopeRule={}){return recordsForScope(project,collection,{...currentScope(project),...scopeRule});}\nfunction scopeForIteration(project,iterationId){const id=String(iterationId||'');const iteration=records(project,'iterations').find(record=>recordId(record,'iterations')===id);if(!iteration)return {iterationId:id||null};const candidateId=String(recordValue(iteration,'CANDIDATE_ID')||iteration.relationships?.CANDIDATE_ID||iteration.scope?.candidateId||'');return {...clone(iteration.scope||{}),iterationId:id,candidateId:candidateId||null};}\nfunction recordsForIteration(project,collection,iterationId){return recordsForScope(project,collection,scopeForIteration(project,iterationId));}\nfunction applicableTests(project,requirement,scopeRule=null){const req=requirementId(requirement),source=scopeRule?recordsForScope(project,'tests',scopeRule):recordsForCurrentScope(project,'tests');return source.filter(test=>testRequirementId(test)===req&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));}\n"
+          if text.count(old_scope)!=1:
+              raise SystemExit(f'workflow-engine.js: scope block match count {text.count(old_scope)}')
+          text=text.replace(old_scope,new_scope,1)
+
+          start=text.index('function verificationMatrix(')
+          end=text.index('function deriveMandatoryTestCoverage',start)
+          new_iteration=r'''function verificationMatrix(project,iterationId){
+  const scope=scopeForIteration(project,iterationId),requirements=mandatoryRequirements(project,scope);
+  const runs=recordsForIteration(project,'runs',iterationId).filter(run=>runIterationId(run)===String(iterationId||''));
+  const verification=recordsForIteration(project,'verification',iterationId),expected=[];
+  for(const req of requirements)for(const test of applicableTests(project,req,scope))for(const run of runs)expected.push([requirementId(req),recordId(run,'runs'),recordId(test,'tests')].join('|'));
+  const expectedSet=new Set(expected),counts=new Map();for(const record of verification){const key=verificationKey(record);counts.set(key,(counts.get(key)||0)+1);}
+  const missing=expected.filter(key=>!counts.has(key));
+  const duplicates=[...counts].filter(([key,count])=>expectedSet.has(key)&&count!==1).map(([key,count])=>({key,count}));
+  const invalid=verification.filter(record=>!expectedSet.has(verificationKey(record))||upper(recordValue(record,'INDEPENDENCE_STATUS'))!=='INDEPENDENT'||!String(recordValue(record,'EXACT_EVIDENCE')||'').trim()||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(record,'DETERMINATION'))));
+  return {scope,requirements,runs,verification,expected,counts,missing,duplicates,invalid,coverage:expected.length?expected.filter(key=>counts.get(key)===1).length/expected.length:0};
+}
+function currentRegressionExecutions(project,iterationId){return recordsForIteration(project,'regressionExecutions',iterationId).filter(record=>!iterationId||String(recordValue(record,'ITERATION_ID')||record.relationships?.ITERATION_ID||record.scope?.iterationId||'')===String(iterationId));}
+function activeRegressions(project){return records(project,'regressions').filter(record=>upper(recordValue(record,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');}
+function acceptedOperationSet(project,stage){const proposals=safe(project.projectData.responseProposals),operations=new Set();for(const change of acceptedChanges(project,stage)){const operation=change.operation||proposals.find(item=>item.proposalId===change.proposalId)?.envelope?.operation;if(operation)operations.add(String(operation));}return operations;}
+function candidateComponentIdentity(project,candidateId){const record=records(project,'candidateFreezes').find(item=>recordId(item,'candidateFreezes')===String(candidateId||''));return record?hash.sha256Value(recordValue(record,'COMPONENT_HASHES')||{}):'';}
+function evaluateIteration(project,iterationId,mode='INITIAL'){
+  const matrix=verificationMatrix(project,iterationId),runs=matrix.runs,scope=matrix.scope,iteration=records(project,'iterations').find(record=>recordId(record,'iterations')===String(iterationId||'')),stage=Number(iteration?.stage||runs[0]?.stage||0);
+  const contextRecords=recordsForIteration(project,'freshContexts',iterationId),contextById=new Map(contextRecords.map(record=>[recordId(record,'freshContexts'),record])),placeholder=new Set(['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE']);
+  const resolvedContexts=runs.map(run=>{const id=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||run.scope?.contextId||'');const record=contextById.get(id),externalIdentifier=String(recordValue(record,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim();return {id,record,externalIdentifier};});
+  const contexts=new Set(resolvedContexts.filter(item=>item.record&&!placeholder.has(upper(item.externalIdentifier))).map(item=>upper(item.externalIdentifier)));
+  const candidates=new Set(runs.map(record=>String(recordValue(record,'CANDIDATE_ID')||record.relationships?.CANDIDATE_ID||record.scope?.candidateId||''))),candidateHashes=new Set([...candidates].filter(Boolean).map(id=>candidateComponentIdentity(project,id)).filter(Boolean));
+  const contaminated=runs.filter(record=>!['NONE','FALSE','CLEAN','NOT CONTAMINATED'].includes(upper(recordValue(record,'CONTAMINATION_CHECK')))),runIds=new Set(runs.map(record=>recordId(record,'runs')));
+  const rawRunIds=new Set(safe(project.projectData.rawResponses).filter(item=>Number(item.stage)===stage&&!item.invalidatedBy&&String(item.promptScope?.iterationId||'')===String(iterationId||'')&&runIds.has(String(item.promptScope?.runId||''))).map(item=>String(item.promptScope.runId)));
+  const receiptRunIds=new Set(safe(project.projectData.outputReceipts).filter(item=>Number(item.stage)===stage&&!item.invalidatedBy&&String(item.iteration||'')===String(iterationId||'')&&runIds.has(String(item.runId||''))).map(item=>String(item.runId)));
+  const comparisons=recordsForIteration(project,'comparisons',iterationId),defects=recordsForIteration(project,'defects',iterationId),rca=recordsForIteration(project,'rootCauses',iterationId),regExec=currentRegressionExecutions(project,iterationId),regressions=activeRegressions(project),operations=acceptedOperationSet(project,stage);
+  const unexplained=comparisons.filter(record=>truth(recordValue(record,'CORRECTNESS_AFFECTING_VARIANCE'))&&!truth(recordValue(record,'AUTHORIZED_VARIANCE'))),reasons=[];
+  if(runs.length!==10)reasons.push('Exactly ten current runs are required.');
+  if(resolvedContexts.some(item=>!item.record||placeholder.has(upper(item.externalIdentifier)))||contexts.size!==10)reasons.push('Ten distinct, actually registered external fresh contexts are required.');
+  if(candidates.size!==1||candidates.has(''))reasons.push('Exactly one current candidate identity is required.');
+  if(candidateHashes.size!==1)reasons.push('Every current run must resolve to one identical frozen candidate component identity.');
+  if(contaminated.length)reasons.push('A current run is contaminated or contamination is unknown.');
+  if(rawRunIds.size!==10)reasons.push('Complete raw outputs are not preserved and bound to all ten current run identities.');
+  if(receiptRunIds.size!==10)reasons.push('Complete receipts are not preserved and bound to all ten current run identities.');
+  if(mode!=='INITIAL'&&(matrix.expected.length===0||matrix.missing.length||matrix.duplicates.length||matrix.invalid.length))reasons.push('The current REQ × RUN × TEST matrix is incomplete or invalid.');
+  if(mode!=='INITIAL'){
+    const requirementIds=new Set(matrix.requirements.map(requirementId)),comparisonCounts=new Map();for(const record of comparisons){const id=String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||'');comparisonCounts.set(id,(comparisonCounts.get(id)||0)+1);}if([...requirementIds].some(id=>comparisonCounts.get(id)!==1)||[...comparisonCounts].some(([id,count])=>!requirementIds.has(id)||count!==1))reasons.push('Exactly one current cross-run comparison is required for every current mandatory requirement.');
+    const successful=new Set(regExec.filter(record=>['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(record,'RESULT')))).map(record=>String(recordValue(record,'REG_ID')||record.relationships?.REG_ID||''))),missingRegressions=regressions.filter(record=>!successful.has(recordId(record,'regressions'))).map(record=>recordId(record,'regressions'));if(missingRegressions.length)reasons.push(`Current successful regression executions are missing for: ${missingRegressions.join(', ')}.`);
+  }
+  const requiredOperations=mode==='CORRECTED'?['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']:mode==='UNCHANGED_CONFIRMATION'?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[];
+  const missingOperations=requiredOperations.filter(operation=>!operations.has(operation));if(missingOperations.length)reasons.push(`Missing accepted Stage ${String(stage).padStart(2,'0')} operation(s): ${missingOperations.join(', ')}.`);
+  if(mode==='UNCHANGED_CONFIRMATION'){
+    const source=latestIteration(project,[17]);if(!source)reasons.push('A completed corrected iteration is required before unchanged confirmation.');else{const sourceScope=scopeForIteration(project,recordId(source,'iterations')),versionKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion'];if(versionKeys.some(key=>(sourceScope[key]??null)!==(scope[key]??null)))reasons.push('The unchanged-confirmation version scope differs from the corrected iteration.');const sourceCandidate=String(recordValue(source,'CANDIDATE_ID')||source.relationships?.CANDIDATE_ID||source.scope?.candidateId||'');const currentCandidate=[...candidates][0]||'';if(!sourceCandidate||candidateComponentIdentity(project,sourceCandidate)!==candidateComponentIdentity(project,currentCandidate))reasons.push('The unchanged-confirmation candidate component hashes differ from the corrected candidate.');}
+  }
+  if(unexplained.length)reasons.push('Unexplained correctness-affecting variance remains.');
+  return {mode,iterationId,runs:runs.map(record=>recordId(record,'runs')),contextCount:contexts.size,contextRecordIds:resolvedContexts.map(item=>item.id),externalContextIdentifiers:resolvedContexts.map(item=>item.externalIdentifier),candidateIds:[...candidates],candidateIdentityCount:candidateHashes.size,matrix,comparisonCount:comparisons.length,defectCount:defects.length,rootCauseCount:rca.length,regressionExecutionCount:regExec.length,acceptedOperations:[...operations],missingOperations,unexplainedVarianceCount:unexplained.length,complete:reasons.length===0,reasons};
+}
+'''
+          text=text[:start]+new_iteration+text[end:]
+
+          old_coverage="function coverageMetrics(project){const requirements=mandatoryRequirements(project);const tests=recordsForCurrentScope(project,'tests');const covered=new Set(tests.map(testRequirementId).filter(Boolean));const requirementCoverage=requirements.length?requirements.filter(req=>covered.has(requirementId(req))).length/requirements.length:0;const iteration=latestIteration(project,[10,17,19]);const iterationId=recordId(iteration,'iterations')||project.job.CURRENT_ITERATION||'';const matrix=verificationMatrix(project,iterationId);const regressions=recordsForCurrentScope(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');const executions=currentRegressionExecutions(project,iterationId);const successful=new Set(executions.filter(r=>['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(r,'RESULT')))).map(r=>String(recordValue(r,'REG_ID')||r.relationships?.REG_ID||'')));return {mandatoryRequirementCount:requirements.length,requirementsWithTests:requirements.filter(req=>covered.has(requirementId(req))).length,requirementCoverage,iterationRunCount:matrix.runs.length,expectedVerificationCount:matrix.expected.length,actualVerificationPairCount:matrix.expected.filter(key=>matrix.counts.get(key)===1).length,actualVerificationTripleCount:matrix.expected.filter(key=>matrix.counts.get(key)===1).length,verificationCoverage:matrix.coverage,missingVerificationTriples:matrix.missing,duplicateVerificationTriples:matrix.duplicates,activeRegressionCount:regressions.length,successfulRegressionCount:regressions.filter(r=>successful.has(recordId(r,'regressions'))).length,regressionSuccess:regressions.length?regressions.filter(r=>successful.has(recordId(r,'regressions'))).length/regressions.length:1};}"
+          new_coverage="function coverageMetrics(project,iterationIdOverride=null){const iterationId=String(iterationIdOverride||recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION||''),scope=iterationId?scopeForIteration(project,iterationId):null,requirements=scope?mandatoryRequirements(project,scope):mandatoryRequirements(project),tests=scope?recordsForScope(project,'tests',scope):recordsForCurrentScope(project,'tests'),covered=new Set(tests.map(testRequirementId).filter(Boolean)),requirementCoverage=requirements.length?requirements.filter(req=>covered.has(requirementId(req))).length/requirements.length:0,matrix=verificationMatrix(project,iterationId),regressions=activeRegressions(project),executions=currentRegressionExecutions(project,iterationId),successful=new Set(executions.filter(record=>['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(record,'RESULT')))).map(record=>String(recordValue(record,'REG_ID')||record.relationships?.REG_ID||'')));return {mandatoryRequirementCount:requirements.length,requirementsWithTests:requirements.filter(req=>covered.has(requirementId(req))).length,requirementCoverage,iterationRunCount:matrix.runs.length,expectedVerificationCount:matrix.expected.length,actualVerificationPairCount:matrix.expected.filter(key=>matrix.counts.get(key)===1).length,actualVerificationTripleCount:matrix.expected.filter(key=>matrix.counts.get(key)===1).length,verificationCoverage:matrix.coverage,missingVerificationTriples:matrix.missing,duplicateVerificationTriples:matrix.duplicates,activeRegressionCount:regressions.length,successfulRegressionCount:regressions.filter(record=>successful.has(recordId(record,'regressions'))).length,regressionSuccess:regressions.length?regressions.filter(record=>successful.has(recordId(record,'regressions'))).length/regressions.length:1};}"
+          if text.count(old_coverage)!=1: raise SystemExit(f'coverage function match {text.count(old_coverage)}')
+          text=text.replace(old_coverage,new_coverage,1)
+
+          text=text.replace("function convergenceMetrics(project){const latest=latestIteration(project,[17]);const iterationId=recordId(latest,'iterations');const coverage=coverageMetrics(project);", "function convergenceMetrics(project){const latest=latestIteration(project,[17]);const iterationId=recordId(latest,'iterations');const coverage=coverageMetrics(project,iterationId);",1)
+          text=text.replace("const verification=recordsForCurrentScope(project,'verification',iterationId?{iterationId}:{});", "const verification=iterationId?recordsForIteration(project,'verification',iterationId):[];",1)
+          text=text.replace("const comparisons=recordsForCurrentScope(project,'comparisons',iterationId?{iterationId}:{});", "const comparisons=iterationId?recordsForIteration(project,'comparisons',iterationId):[];",1)
+          text=text.replace("const regressions=recordsForCurrentScope(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');", "const regressions=activeRegressions(project);",1)
+
+          text=text.replace("case 11:{requireAccepted();const iteration=latestIteration(project,[10,11]);", "case 11:{requireAccepted();const iteration=latestIteration(project,[10]);",1)
+          text=text.replace("case 12:{requireAccepted();const iteration=latestIteration(project,[10,17,19]);", "case 12:{requireAccepted();const iteration=latestIteration(project,[10]);",1)
+          old_case13="case 13:{\n      requireAccepted();const reqs=mandatoryRequirements(project),compared=new Set(collection('comparisons').map(record=>String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||'')));\n      const missing=reqs.filter(req=>!compared.has(requirementId(req))).map(requirementId);\n      if(missing.length)reasons.push(`Cross-run comparison is missing for: ${missing.join(', ')}.`);\n      break;\n    }"
+          new_case13="case 13:{\n      requireAccepted();const iteration=latestIteration(project,[10]),iterationId=recordId(iteration,'iterations'),scope=scopeForIteration(project,iterationId),reqs=mandatoryRequirements(project,scope),comparisons=recordsForIteration(project,'comparisons',iterationId),counts=new Map();for(const record of comparisons){const id=String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||'');counts.set(id,(counts.get(id)||0)+1);}\n      const missing=reqs.filter(req=>counts.get(requirementId(req))!==1).map(requirementId);\n      if(missing.length)reasons.push(`Exactly one initial-iteration cross-run comparison is required for: ${missing.join(', ')}.`);\n      break;\n    }"
+          if text.count(old_case13)!=1: raise SystemExit(f'case13 match {text.count(old_case13)}')
+          text=text.replace(old_case13,new_case13,1)
+          text=text.replace("case 15:{requireAccepted();const defects=confirmedDefects(project),regs=recordsForCurrentScope(project,'regressions')", "case 15:{requireAccepted();const defects=confirmedDefects(project),regs=activeRegressions(project)",1)
+          text=text.replace("const executions=recordsForCurrentScope(project,'regressionExecutions');for(const reg of regs)", "const executions=records(project,'regressionExecutions');for(const reg of regs)",1)
+          text=text.replace("case 16:requireAccepted();if(confirmedDefects(project).length&&!collection('changes').length)", "case 16:requireAccepted();if(confirmedDefects(project).length&&!records(project,'changes').length)",1)
+          text=text.replace("case 30:{requireAccepted();const defects=confirmedDefects(project),regs=recordsForCurrentScope(project,'regressions')", "case 30:{requireAccepted();const defects=confirmedDefects(project),regs=activeRegressions(project)",1)
+          text=text.replace(",executions=recordsForCurrentScope(project,'regressionExecutions');const missing=defects", ",executions=records(project,'regressionExecutions');const missing=defects",1)
+
+          old_freeze="function freezeCandidate(project,{stage=10,artifactIds=[],operatorLabel='HUMAN_OPERATOR',purpose='TEST_CANDIDATE',toolConfiguration='CURRENT AUTHORIZED CONFIGURATION',settings='CURRENT AUTHORIZED SETTINGS',permissions='CURRENT AUTHORIZED PERMISSIONS',limitations='RECORDED LIMITATIONS',roleDistribution='WORKFLOW ROLE MAP',batchChangeRule='ANY MATERIAL CHANGE REQUIRES A NEW CANDIDATE'}={}){\n  ensureShape(project);"
+          new_freeze="function freezeCandidate(project,{stage=10,artifactIds=[],operatorLabel='HUMAN_OPERATOR',purpose='TEST_CANDIDATE',toolConfiguration='CURRENT AUTHORIZED CONFIGURATION',settings='CURRENT AUTHORIZED SETTINGS',permissions='CURRENT AUTHORIZED PERMISSIONS',limitations='RECORDED LIMITATIONS',roleDistribution='WORKFLOW ROLE MAP',batchChangeRule='ANY MATERIAL CHANGE REQUIRES A NEW CANDIDATE'}={}){\n  ensureShape(project);stage=Number(stage);if(![10,17,19].includes(stage))throw new Error('Candidate freezes are permitted only for Stages 10, 17, and 19.');"
+          if text.count(old_freeze)!=1: raise SystemExit(f'freeze signature match {text.count(old_freeze)}')
+          text=text.replace(old_freeze,new_freeze,1)
+
+          export_old="  currentScope,recordsForCurrentScope,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,"
+          export_new="  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,hasNoApplicableExternalSourceDetermination,"
+          if text.count(export_old)!=1: raise SystemExit(f'export match {text.count(export_old)}')
+          text=text.replace(export_old,export_new,1)
+          engine.write_text(text)
+
+          replace_once('response-ingestion.js',
+          "stage:Number(stage),role:globalThis.closedLoopCore?.STAGES?.[Number(stage)-1]?.role||'UNKNOWN',contextId:'UNKNOWN',\n    iteration:project.job.CURRENT_ITERATION||'NOT APPLICABLE',runId:'NOT APPLICABLE',",
+          "stage:Number(stage),role:globalThis.closedLoopCore?.STAGES?.[Number(stage)-1]?.role||'UNKNOWN',contextId:promptRecord.scope?.contextId||'NOT APPLICABLE',\n    iteration:promptRecord.scope?.iterationId||project.job.CURRENT_ITERATION||'NOT APPLICABLE',runId:promptRecord.scope?.runId||'NOT APPLICABLE',")
+          replace_once('response-ingestion.js',
+          "jobId:next.job.JOB_ID,stage,responseType:'DATA_PROPOSAL',operatorLabel:operator,identityAssurance:'SELF_ASSERTED',reviewNote,",
+          "jobId:next.job.JOB_ID,stage,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),responseType:'DATA_PROPOSAL',operatorLabel:operator,identityAssurance:'SELF_ASSERTED',reviewNote,")
+
+          replace_once('app-core.js',
+          "engine.freezeCandidate(next,{artifactIds:selectedArtifactIds(),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});",
+          "engine.freezeCandidate(next,{stage:current.activeStage,artifactIds:selectedArtifactIds(),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});")
+          replace_once('app-core.js',
+          "if($('#hash-audited'))$('#hash-audited').onclick=async()=>{const next=clone(current);next.release.auditedDraft=await Promise.all(af.map(hashFile));persistReplacement(next);render();};if($('#hash-release'))$('#hash-release').onclick=async()=>{const next=clone(current);next.release.releaseDraft=await Promise.all(rf.map(hashFile));persistReplacement(next);render();};",
+          "if($('#hash-audited'))$('#hash-audited').onclick=async()=>{try{const draft=[];for(const file of af)draft.push(await hashFile(file));const next=clone(current);next.release.auditedDraft=draft;await persistReplacement(next);announce('saved');render();}catch(error){announce('storage failed');alert(`Audited artifact storage failed: ${error.message||error}`);}};if($('#hash-release'))$('#hash-release').onclick=async()=>{try{const draft=[];for(const file of rf)draft.push(await hashFile(file));const next=clone(current);next.release.releaseDraft=draft;await persistReplacement(next);announce('saved');render();}catch(error){announce('storage failed');alert(`Delivery artifact storage failed: ${error.message||error}`);}};")
+
+          replace_once('verify-full-cycle.mjs',
+          "const productSha=hash.sha256Text('product-bytes');",
+          "const productSha=hash.sha256Text('released-product-bytes');")
+
+          verify=Path('verify-complete.mjs')
+          vt=verify.read_text()
+          marker="\nconsole.log(JSON.stringify({finalRequirementRegression:true"
+          if vt.count(marker)!=1: raise SystemExit(f'verify-complete final marker {vt.count(marker)}')
+          additions=r'''
+
+// Evidence-supported no-applicable-source determination completes Stage 02 without fabricating a source set.
+{
+  let p=project('JOB-NO-APPLICABLE-SOURCE'),stage=2,pr=prompt(p,stage);
+  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{AUTHORITY_HIERARCHY:'NO_APPLICABLE_EXTERNAL_SOURCE',KNOWN_CONTROLLING_SOURCES_EXAMINED:'The documented authority search found no applicable external governing source.'},records:{},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'No-source authority search evidence',location:'synthetic test',content:'Search scope, result, and basis preserved.'}],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});assert(prepared.validation.valid,'Evidence-supported no-source response was rejected.');p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;p.stages[1].status='COMPLETE';const result=engine.gate(2,p);assert(result.complete,`Valid no-source determination did not complete Stage 02: ${result.reasons.join('; ')}`);assert(p.job.CURRENT_SOURCE_SET_VERSION==='NOT APPLICABLE','No-source determination fabricated a source-set version.');
+}
+
+// Candidate freeze uses the owning stage and stamps the new iteration/candidate with their own identities.
+{
+  const p=project('JOB-STAGE-CORRECT-FREEZE');engine.registerArtifactBytes(p,{stage:17,artifactId:'ARTIFACT-FREEZE',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:'a'.repeat(64)});const frozen=engine.freezeCandidate(p,{stage:17,artifactIds:['ARTIFACT-FREEZE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');assert(frozen.iteration.stage===17&&frozen.candidate.stage===17,'Candidate freeze was recorded against the wrong stage.');assert(frozen.iteration.scope.iterationId===iterationId&&frozen.iteration.scope.candidateId===candidateId&&frozen.candidate.scope.iterationId===iterationId&&frozen.candidate.scope.candidateId===candidateId,'Frozen iteration/candidate was stamped with prior scope.');
+}
+
+// Iteration-specific verification remains resolvable after a newer iteration becomes current.
+{
+  const p=project('JOB-ITERATION-SCOPE'),oldIteration='ITERATION-OLD',oldCandidate='CANDIDATE-OLD',newIteration='ITERATION-NEW',newCandidate='CANDIDATE-NEW';
+  p.projectData.iterations.push({...record('iterations',10,{CANDIDATE_ID:oldCandidate,STATUS:'FROZEN'},oldIteration),scope:{iterationId:oldIteration,candidateId:oldCandidate}},{...record('iterations',17,{CANDIDATE_ID:newCandidate,STATUS:'FROZEN'},newIteration),scope:{iterationId:newIteration,candidateId:newCandidate}});p.projectData.candidateFreezes.push({...record('candidateFreezes',10,{ITERATION_ID:oldIteration,STATUS:'FROZEN'},oldCandidate),scope:{iterationId:oldIteration,candidateId:oldCandidate}},{...record('candidateFreezes',17,{ITERATION_ID:newIteration,STATUS:'FROZEN'},newCandidate),scope:{iterationId:newIteration,candidateId:newCandidate}});p.job.CURRENT_ITERATION=newIteration;
+  const req=record('requirements',4,{OBLIGATION:'Scoped requirement',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'evidence',FAILURE_CONDITION:'failure',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-SCOPED'),test=record('tests',6,{REQ_ID:'REQ-SCOPED',TEST_TYPE:'DETERMINISTIC',INPUTS:'input',TOOLS:'tool',PROCEDURE:'procedure',EXPECTED_RESULT:'SATISFIED',FAILURE_CONDITION:'failure',EVIDENCE_TO_PRESERVE:'evidence',STATUS:'READY'},'TEST-SCOPED'),run={...record('runs',11,{ITERATION_ID:oldIteration,CANDIDATE_ID:oldCandidate,CONTEXT_ID:'CONTEXT-SCOPED',CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:'output'},'RUN-SCOPED'),scope:{iterationId:oldIteration,candidateId:oldCandidate}},verification={...record('verification',12,{REQ_ID:'REQ-SCOPED',RUN_ID:'RUN-SCOPED',TEST_ID:'TEST-SCOPED',INDEPENDENCE_STATUS:'INDEPENDENT',EXACT_EVIDENCE:'evidence',DETERMINATION:'SATISFIED'},'VERIFICATION-SCOPED'),scope:{iterationId:oldIteration,candidateId:oldCandidate}};test.relationships={REQ_ID:'REQ-SCOPED'};verification.relationships={REQ_ID:'REQ-SCOPED',RUN_ID:'RUN-SCOPED',TEST_ID:'TEST-SCOPED'};p.projectData.requirements.push(req);p.projectData.tests.push(test);p.projectData.runs.push(run);p.projectData.verification.push(verification);const matrix=engine.verificationMatrix(p,oldIteration);assert(matrix.runs.length===1&&matrix.expected.length===1&&matrix.coverage===1,'Newer iteration scope hid the initial verification matrix.');
+}
+
+// Permanent regression/change records remain authoritative after a new candidate is frozen.
+{
+  const p=project('JOB-PERSISTENT-CORRECTION');p.stages[15].status='COMPLETE';p.projectData.acceptedChanges.push({changeId:'CHANGE-16',stage:16,status:'COMMITTED',responseType:'DATA_PROPOSAL'});const defect=record('defects',14,{OBSERVED_FAILURE:'failure',EXPECTED_CONDITION:'success',EVIDENCE:'evidence',SEVERITY:'MINOR',STATUS:'CONFIRMED'},'DEFECT-PERSISTENT'),change={...record('changes',16,{TRIGGERING_DEFECT_IDS:'DEFECT-PERSISTENT',ROOT_CAUSE_ANALYSIS:'rca',RESPONSIBLE_LAYER:'instruction',OLD_ARTIFACT_VERSION:'v1',EXACT_MODIFICATION:'fix',NEW_ARTIFACT_VERSION:'v2',DOWNSTREAM_INVALIDATION:'17+',REQUIRED_RERUNS:'17',INSTRUCTION_CHANGE_DETERMINATION:'UNCHANGED',REQUIRED_REPEATED_PREFLIGHT:'NONE',JUSTIFIED_UNCHANGED_ARTIFACTS:'none',EVIDENCE:'evidence'},'CHANGE-PERSISTENT'),scope:{iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'}};p.projectData.defects.push(defect);p.projectData.changes.push(change);p.job.CURRENT_ITERATION='ITERATION-NEW';p.projectData.iterations.push({...record('iterations',17,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW'),scope:{iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'}});const result=engine.gate(16,p);assert(result.complete,`New iteration hid the accepted Stage 16 correction: ${result.reasons.join('; ')}`);
+}
+
+// Corrected and unchanged iteration evaluators fail closed when an operation subcontract is omitted.
+{
+  const p=project('JOB-OPERATION-COMPLETENESS'),iteration={...record('iterations',17,{CANDIDATE_ID:'CANDIDATE-OPS',STATUS:'FROZEN'},'ITERATION-OPS'),scope:{iterationId:'ITERATION-OPS',candidateId:'CANDIDATE-OPS'}};p.projectData.iterations.push(iteration);const result=engine.evaluateIteration(p,'ITERATION-OPS','CORRECTED');assert(result.reasons.some(reason=>reason.includes('Missing accepted Stage 17 operation')),'Stage 17 evaluator did not reject missing operation subcontracts.');
+}
+'''
+          vt=vt.replace(marker,additions+marker,1)
+          vt=vt.replace("acceptedStateStorageRollback:true}","acceptedStateStorageRollback:true,noApplicableSource:true,stageCorrectFreeze:true,iterationScopedVerification:true,persistentCorrectionVisibility:true,operationCompleteness:true}",1)
+          verify.write_text(vt)
+          PY
+      - name: Verify corrected source and lifecycle
+        run: |
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit corrected responsible layers and remove one-shot workflow
+        shell: bash
+        run: |
+          rm .github/workflows/pr6-semantic-scope-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js response-ingestion.js app-core.js verify-complete.mjs verify-full-cycle.mjs .github/workflows/pr6-semantic-scope-fix.yml
+          git commit -m "Fix iteration scope and repeated-cycle semantics"
+          git push origin HEAD:practical-100/pr6-final-proof-current
