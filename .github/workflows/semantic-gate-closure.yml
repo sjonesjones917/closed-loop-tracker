@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply focused semantic changes
-        run: python3 .semantic-gate-closure.py
+        run: |
+          python3 .semantic-gate-closure.py
+          sed -i 's/20260826-semantic-gates-1/20260826-gate-phase-1/g' index.html
       - name: Build retained project
         run: node build-test-project.mjs
       - name: Syntax
