@@ -146,3 +146,22 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  if(!two.prompt.includes('Add the omitted controlling source and return a complete replacement.'))throw new Error('Accepted-result refinement feedback is missing from the regenerated prompt.');
  if(two.contextSignature===one.contextSignature)throw new Error('Accepted-result refinement feedback did not change context identity.');
 }
+
+
+// Exact copyable response-contract invariants.
+{
+ const p=baseProject();p.job.JOB_ID='JOB-EXACT-CONTRACT-001';
+ const built=prompts.buildPromptRecord(2,p),text=built.prompt;
+ if(!text.includes('"jobId": "JOB-EXACT-CONTRACT-001"'))throw new Error('Copyable response contract does not contain the exact current JOB_ID.');
+ for(const token of ['<value>','<exact current JOB_ID>','<application-reserved-target-id>','<source/output location>','<exact evidence or faithful excerpt>'])if(text.includes(token))throw new Error(`Copyable response contract contains invalid placeholder ${token}.`);
+ const marker='STRICT RESPONSE CONTRACT\n',end='\n\nEND COPY BLOCK';const start=text.indexOf(marker);if(start<0)throw new Error('Strict response contract block is missing.');
+ const raw=text.slice(start+marker.length,text.indexOf(end,start));const envelope=JSON.parse(raw);
+ if(Object.keys(envelope.stageData||{}).length||Object.keys(envelope.records||{}).length||(envelope.evidence||[]).length)throw new Error('Copyable response skeleton fabricates proposal data or evidence.');
+ if(!/PERMITTED AGENT-OWNED STAGE DATA[\s\S]*: (STRING|INTEGER|NUMBER|BOOLEAN|STRING_ARRAY|REFERENCE|REFERENCE_ARRAY|OBJECT)/.test(text))throw new Error('Prompt does not state agent stage-field value types outside the response skeleton.');
+}
+{
+ const d=schema.JOB_FIELDS;
+ if(d.EXACT_USER_OBJECTIVE_VERBATIM.requiredAtStage!==1||d.EXACT_USER_OBJECTIVE_VERBATIM.nullable)throw new Error('Verbatim job request is not the required Stage 01 human intake.');
+ for(const name of schema.HUMAN_JOB_FIELDS.filter(x=>x!=='EXACT_USER_OBJECTIVE_VERBATIM'))if(d[name].requiredAtStage===1)throw new Error(`Optional human intake field ${name} is still universally required at Stage 01.`);
+ if(d.DESIRED_SOURCE_COUNT.valueType!=='INTEGER'||!d.DESIRED_SOURCE_COUNT.nullable)throw new Error('Desired source count is not optional integer guidance.');
+}
