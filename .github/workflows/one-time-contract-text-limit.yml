@@ -2,6 +2,8 @@ name: One-time contract text-limit proof
 on:
   push:
     branches: [reliability/contract-text-limit-20260826]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
