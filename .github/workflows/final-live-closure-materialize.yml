@@ -17,7 +17,21 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply guarded final closure
-        run: python3 final-live-closure-patch.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 final-live-closure-patch.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs')
+          text=p.read_text()
+          bad="![...revisions][0]!==Number(p.revision)+1"
+          good="[...revisions][0]!==Number(p.revision)+1"
+          if text.count(bad)!=1:
+              raise SystemExit(f'expected one bad run-batch revision assertion, found {text.count(bad)}')
+          text=text.replace(bad,good,1)
+          p.write_text(text)
+          PY
       - name: Verify source, lifecycle, and Chromium behavior
         shell: bash
         run: |
