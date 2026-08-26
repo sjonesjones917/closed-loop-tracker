@@ -27,6 +27,7 @@ jobs:
           new='t=once(t,"\\nconsole.log(JSON.stringify({pr3Dispositions:true",insert+"\\nconsole.log(JSON.stringify({pr3Dispositions:true",\'strict date test\')'
           if script.count(old)!=1: raise SystemExit(f'Runner strict-date transformer target count {script.count(old)}')
           script=script.replace(old,new,1)
+          script=script.replace("assert(rejected,'Impossible ISO calendar date was accepted.');","if(!rejected)throw new Error('Impossible ISO calendar date was accepted.');")
           Path('/tmp/final-audit-transform.py').write_text(script)
           PY
           python3 /tmp/final-audit-transform.py
