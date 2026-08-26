@@ -1,0 +1,52 @@
+name: Focused semantic gate closure
+on:
+  push:
+    branches:
+      - practical-100/semantic-gate-closure-276fc3
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/semantic-gate-closure-276fc3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply focused semantic changes
+        run: python3 .semantic-gate-closure.py
+      - name: Run deterministic verification
+        run: |
+          node build-test-project.mjs
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Run Chromium verification
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit permanent changes and remove temporary transformer
+        run: |
+          git config user.name 'closed-loop semantic verifier'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/semantic-gate-closure.yml .semantic-gate-closure.py
+          git add workflow-schema.js workflow-engine.js app-core.js verify-complete.mjs verify-full-cycle.mjs index.html TEST_PROJECT.json
+          git diff --cached --check
+          git commit -m 'Close remaining semantic gate bypasses'
+          git push origin HEAD:practical-100/semantic-gate-closure-276fc3
