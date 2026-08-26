@@ -142,3 +142,27 @@ console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,no
  const runA=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[0].runId),runB=engine.records(p,'runs',{active:true}).find(r=>engine.recordId(r,'runs')===slots[1].runId);assert(engine.recordValue(runA,'EXECUTION_STATUS')==='RESERVED'&&runA?.status!=='COMPLETED','Refined Run A reservation was not restored.');assert(runB?.status==='COMPLETED','Unrelated Run B was invalidated by Run A refinement.');assert(!changeB.invalidatedBy&&engine.acceptedChanges(p,stage).some(c=>c.changeId===changeB.changeId),'Unrelated accepted Run B change was invalidated.');assert(p.projectData.generatedPrompts.some(x=>x.scope?.runId===slots[1].runId&&!x.invalidatedBy),'Unrelated Run B prompt was invalidated.');
 }
 console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
+
+// Stage 05 cannot manufacture a new requirements version without a replacement requirement set.
+{
+  const p=project('JOB-STAGE5-VERSION');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';p.projectData.requirementResolutions.push(record('requirementResolutions',5,{DEFECT_TYPE:'NONE',GOVERNING_EVIDENCE:'review',RESOLUTION:'No requirement change required.',CHANGED_REQUIREMENT_REFS:[],AFFECTED_DOWNSTREAM_WORK:'NONE',STATUS:'RESOLVED'},'RESOLUTION-STAGE5'));
+  const result=engine.registerStageVersion(p,5,'CHANGE-STAGE5');assert(result===null&&p.job.CURRENT_REQUIREMENTS_VERSION==='REQUIREMENTS-v001','Stage 05 created a requirements version without a replacement requirement set.');
+}
+
+// Stage 17 operation completeness cannot borrow accepted operations from an earlier iteration.
+{
+  const p=project('JOB-ITERATION-OP-SCOPE'),ops=['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'];p.projectData.iterations.push(record('iterations',17,{CANDIDATE_ID:'CANDIDATE-OLD',STATUS:'FROZEN'},'ITERATION-OLD'));for(const op of ops)p.projectData.acceptedChanges.push({changeId:`CHANGE-OLD-${op}`,stage:17,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:op,scope:{iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'}});const current=record('iterations',17,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');current.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(current);const ev=engine.evaluateIteration(p,'ITERATION-NEW','CORRECTED');assert(ev.reasons.some(r=>/Required stage operations are missing/.test(r)),'A new Stage 17 iteration borrowed accepted operations from an older iteration.');
+}
+
+// A stale successful regression execution cannot resolve a current-iteration material defect.
+{
+  const p=project('JOB-REGRESSION-SCOPE');p.job.CURRENT_ITERATION='ITERATION-NEW';const iteration=record('iterations',17,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');iteration.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(iteration);const defect=record('defects',14,{SEVERITY:'CRITICAL',STATUS:'CONFIRMED'},'DEFECT-SCOPE');p.projectData.defects.push(defect);const reg=record('regressions',15,{DEFECT_ID:'DEFECT-SCOPE',ACTIVE_RETIRED_STATE:'ACTIVE'},'REG-SCOPE');p.projectData.regressions.push(reg);const old=record('regressionExecutions',17,{REG_ID:'REG-SCOPE',ITERATION_ID:'ITERATION-OLD',PHASE:'POST_CORRECTION',RESULT:'PASSED'},'REG-EXEC-OLD');old.scope={iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'};p.projectData.regressionExecutions.push(old);assert(engine.unresolvedMaterialDefects(p).some(x=>engine.recordId(x,'defects')==='DEFECT-SCOPE'),'A stale regression success resolved a current material defect.');
+}
+
+// Stage 28 replaces the current comparison batch and is idempotent for identical evidence.
+{
+  const p=project('JOB-IDENTITY-RECOVERY');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-IDENTITY-RECOVERY'));const audited=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}],bad=[{artifactId:'A',name:'a.bin',size:4,sha256:'bbb'}],good=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}];engine.verifyArtifactIdentity(p,audited,bad);const corrected=engine.verifyArtifactIdentity(p,audited,good);assert(engine.records(p,'artifactIdentities').length===1&&corrected.length===1&&p.release.authorization==='AUTHORIZED','A corrected Stage 28 comparison remained blocked by an older active mismatch.');const count=p.projectData.artifactIdentities.length,again=engine.verifyArtifactIdentity(p,audited,good);assert(p.projectData.artifactIdentities.length===count&&again[0].id===corrected[0].id,'Identical Stage 28 evidence created a duplicate comparison batch.');
+}
+
+console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOperationIsolation:true,currentRegressionClosure:true,stage28CurrentBatch:true},null,2));
+

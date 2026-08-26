@@ -65,6 +65,10 @@ async function main(){
   assert(mutatorLifetime?.syncResult==='SYNC_OK'&&mutatorLifetime.syncRevisionAdvanced&&mutatorLifetime.syncMarker==='COMMITTED','Synchronous canonical transaction mutator did not commit atomically.');
   await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);
 
+  console.log('extra:canonical-write-integrity');
+  const canonicalWrite=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,jobId=${JSON.stringify(sharedJob)},before=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId),revision=before.revision,candidate=structuredClone(before);candidate.stageCount=29;let code='';try{await store.writeProject(candidate,{expectedProjectRevision:revision});}catch(e){code=e.code||'';}const after=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);return {code,revisionSame:after.revision===revision,stageCount:after.stageCount};})()`);
+  assert(canonicalWrite?.code==='PROJECT_INTEGRITY_FAILED'&&canonicalWrite.revisionSame&&canonicalWrite.stageCount===30,'Normal IndexedDB write accepted structurally invalid canonical state.');
+
   console.log('extra:support-controls');
   await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');
 
