@@ -112,6 +112,7 @@ acceptStage(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'v2'}});
 runBatch(17,iteration17,candidate17,{operation:'EXECUTE_RUN'});
 acceptStage(17,{operation:'VERIFY',records:{verification:verificationRecords(iteration17,17)},stageData:{VERIFY_COMPLETED:true}});
 acceptStage(17,{operation:'COMPARE',records:{comparisons:[proposal('comparisons',{tempKey:'comparison-17',fields:{RUN_DETERMINATIONS:'10/10 SATISFIED',INTERPRETATION_VARIANCE:'NONE',OUTPUT_VARIANCE:'NONE',AUTHORIZED_VARIANCE:'NONE',INCONCLUSIVE_TESTS:'NONE',REPEATED_FAILURE_PATTERNS:'NONE',UNIQUE_FAILURES:'NONE',CORRECTNESS_AFFECTING_VARIANCE:'NONE',EVIDENCE:'Corrected iteration all-ten comparison.'},relationships:{REQ_ID:rel(reqId)}})]},stageData:{COMPARE_COMPLETED:true}});
+acceptStage(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:true}});
 acceptStage(17,{operation:'REGRESSION',records:{regressionExecutions:[proposal('regressionExecutions',{tempKey:'regexec-post17',fields:{PHASE:'POST_CORRECTION',RESULT:'SATISFIED'},relationships:{REG_ID:rel(regId),ITERATION_ID:rel(iteration17),CANDIDATE_ID:rel(candidate17)}})]},stageData:{REGRESSION_TESTS_ADDED:true}});
 acceptStage(17,{operation:'CORRECT',stageData:{CORRECTIONS_COMPLETED:true}});assertStage(p,17);
 // 18 convergence.
