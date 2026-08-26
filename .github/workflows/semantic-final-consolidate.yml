@@ -43,6 +43,7 @@ jobs:
           new="if(!record.prompt.includes('Do not simulate completion')||!record.prompt.includes('human-confirmed implementation-ready specification')||!record.prompt.includes('currently confirmed workflow deliverable'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
           if old not in s: raise SystemExit('environment semantic assertion not found')
           s=s.replace(old,new,1)
+          s=s.replace("s1.includes('this is not a failure merely because direct implementation is unavailable')","s1.includes('This is not a failure merely because direct implementation is unavailable')")
           old_mut="original.prompt.replace('do not claim it occurred; produce the complete implementation-ready specification','assume implementation occurred')"
           if old_mut in s:s=s.replace(old_mut,"original.prompt.replace('Do not simulate completion','Simulate completion')",1)
           p.write_text(s)
