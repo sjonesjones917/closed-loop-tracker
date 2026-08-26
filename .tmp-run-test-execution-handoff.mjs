@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const target='.tmp-test-execution-handoff.mjs';
+let source=fs.readFileSync(target,'utf8');
+const before='\\`${path}/evidenceRefs\\`';
+const after='\\`\\${path}/evidenceRefs\\`';
+const count=source.split(before).length-1;
+if(count!==4)throw new Error(`Expected four response-ingestion template anchors to escape; found ${count}.`);
+source=source.replaceAll(before,after);
+fs.writeFileSync(target,source);
+await import(`./${target}?fixed=${Date.now()}`);
