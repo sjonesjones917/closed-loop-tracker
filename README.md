@@ -23,11 +23,13 @@ There is no second parser, store, workflow engine, prompt layer, application she
 
 ## Current contracts
 
-- Project schema: `human-project/30` (the deterministic `closed-loop-project/2` migration is the next schema change).
-- Response schema: `closed-loop-stage-response/2` (the version-2 scope-bound contract is the next response-contract change).
+- Project schema: `closed-loop-project/2`. Legacy `human-project/30` payloads migrate deterministically and are preserved as quarantined migration archives.
+- Workflow identity: `mobile-closed-loop/30`; stage count: exactly 30.
+- Response schema: `closed-loop-stage-response/2`, bound to instruction ID, body SHA-256, contract SHA-256, context signature, operation, current project revision, and stage-relevant scope.
 - Workflow: exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
-- Persistence: one `closedLoopProjectStore` adapter over verified browser storage. The application is browser-local and has no backend or multi-device synchronization.
+- Persistence: one `closedLoopProjectStore` adapter over IndexedDB database `closed-loop-reliability` with `projects`, `artifacts`, and `meta` object stores. Artifact Blob bytes are persisted and rehashed on verification. The application is browser-local and has no backend or multi-device synchronization.
+- Required browser capabilities: IndexedDB, Web Crypto, Blob, and CompressionStream for complete compressed package export.
 
 ## Data and backup responsibility
 
@@ -54,12 +56,15 @@ node --check app-core.js
 node --check verify.mjs
 node --check verify-ingestion.mjs
 node --check verify-complete.mjs
+node --check test-fixtures.mjs
+node --check verify-full-cycle.mjs
 node --check verify-live.mjs
 node --check verify-browser.mjs
 node --check verify-browser-extra.mjs
 node verify.mjs
 node verify-ingestion.mjs
 node verify-complete.mjs
+node verify-full-cycle.mjs
 ```
 
 Local and deployed Chromium verification additionally run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL.
