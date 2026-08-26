@@ -14,7 +14,9 @@ jobs:
           ref: practical-100/semantic-final-consolidated
           fetch-depth: 0
       - name: Apply consolidated semantic patch
-        run: python3 semantic-consolidate.py
+        run: |
+          python3 semantic-consolidate.py
+          sed -i 's/Research only the legitimate Stage 02 external governing source set/Research only the current accepted Stage 02 external governing source set/g' verify.mjs build-test-project.mjs
       - name: Verify consolidated source
         if: github.actor != 'github-actions[bot]'
         run: |
@@ -37,6 +39,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js verify.mjs verify-prompt-semantics.mjs
+          git add app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js build-test-project.mjs verify.mjs verify-prompt-semantics.mjs
           git commit -m "Consolidate final semantic reliability fixes"
           git push origin HEAD:practical-100/semantic-final-consolidated
