@@ -1,13 +1,11 @@
 name: Verify Stage 2 source-role closure
 on:
   push:
-    branches:
-      - practical-100/source-role-closure
+    branches: [practical-100/source-role-closure]
 permissions:
   contents: write
 jobs:
   apply:
-    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,58 +15,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply minimum source-role corrections
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('prompt-engine.js'); s=p.read_text()
-          old='If no legitimate external governing source applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.'
-          new='If no legitimate independent external source of any justified authority or evidentiary role applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.'
-          if old not in s: raise SystemExit('Stage 2 no-source wording changed unexpectedly')
-          s=s.replace(old,new,1); p.write_text(s)
-
-          p=Path('workbook.js'); s=p.read_text()
-          old='Extract every material requirement, restriction, exception, condition, and dependency from the governing sources.'
-          new='Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'
-          if old not in s: raise SystemExit('Stage 3 result wording changed unexpectedly')
-          s=s.replace(old,new,1)
-          old='Every governing source is researched independently, with at least two passes and explicit conflict, exception, and invalidation analysis.'
-          new='Every accepted external source is researched according to its actual authority or evidentiary role, with at least two passes and explicit conflict, exception, and invalidation analysis where applicable.'
-          if old in s: s=s.replace(old,new,1)
-          old='Every controlling source has at least one complete research record with exact source linkage and evidence.'
-          new='Every accepted external source that materially informs, controls, or proves correctness has at least one complete research record with exact source linkage and evidence.'
-          if old in s: s=s.replace(old,new,1)
-          p.write_text(s)
-
-          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
-          if 'Legitimate external evidence is not falsely required to be governing authority.' not in s:
-              s += """
-
-// Legitimate external evidence is not falsely required to be governing authority.
-{
- const p=baseProject();
- const s2=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});
- if(!/no legitimate independent external source of any justified authority or evidentiary role/i.test(s2.prompt))throw new Error('Stage 02 no-source rule still incorrectly means no governing authority.');
- if(core.STAGES[1].completionGate.some(x=>/every governing source/i.test(x))||core.STAGES[2].completionGate.some(x=>/every controlling source/i.test(x)))throw new Error('Workbook source completion language still treats every useful external source as governing authority.');
-}
-"""
-          p.write_text(s)
-          PY
-      - name: Syntax
+      - name: Apply source-role corrections
+        run: python3 source_role_patch.py
+      - name: Verify source-role closure
         run: |
           node --check prompt-engine.js
           node --check workbook.js
           node --check verify-prompt-semantics.mjs
-      - name: Deterministic proof
-        run: |
           node build-test-project.mjs
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
-      - name: Browser proof
-        run: |
           python3 -m http.server 4173 >/tmp/http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
@@ -76,10 +35,11 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit verified source
         run: |
+          rm source_role_patch.py
           rm .github/workflows/apply-source-role-closure.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
           git diff --cached --quiet && exit 0
-          git commit -m "Align external source authority and evidentiary roles"
+          git commit -m 'Align external source authority and evidentiary roles'
           git push origin HEAD:practical-100/source-role-closure
