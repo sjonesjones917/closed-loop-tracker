@@ -33,9 +33,14 @@ jobs:
           FIXTURE_BLOB: ba957970cac9a49b802d3fbdb08064d65461373e
           FIXTURE_SHA256: 619837541e8f648a3279f98ca96cbf1ab75f12341c14bdefdff782b4dc77aa01
           FULL_CYCLE_BLOBS: >-
-            5e14fbb5cb04351580c72154eb57a7129555c304
-            f3c99eafaf8714a840184acb699efe7bc4216f8a
-            df066ead7457184c341a82824e558723f359b6ba
+            5a3e37feff146071aa6faaa6ec4ab021d902c011
+            e614bb0e2e032b3830b3a6582b6da2cda6c0fe88
+            b96cc1d107122f41e94d943f3a21b9fc94ae9394
+            d48dd0ad658feea3b52b23a9a72cea78ddf3ee81
+            f92ee99201309a31ad6c3b99c3fc131049132052
+            ba82e134883a615b5e2fc75e4ca829667496cb18
+            38b3db0e7ca6450a012bc805f4da8eb5a26ee1e9
+            9a1941bfc3ec3c8c8b3bbd254c4b067edddfa074
           FULL_CYCLE_SHA256: 2d0caf951734dfad9e8f50673d26dbd0837eb4c318642f490f76f42710550cc1
         run: |
           set -euo pipefail
