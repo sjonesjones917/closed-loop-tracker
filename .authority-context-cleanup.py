@@ -65,8 +65,8 @@ insert="""// Current schema has one active agent stage-data surface; legacy acce
 """
 s=s.replace(marker,insert+marker,1);p.write_text(s)
 
-p=Path('verify-prompt-semantics.mjs');s=p.read_text();marker="const results=[];"
-if marker not in s: raise SystemExit('verify-prompt marker missing')
+p=Path('verify-prompt-semantics.mjs');s=p.read_text();marker="const p=baseProject();\nconst original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN'"
+if marker not in s: raise SystemExit('verify-prompt stable marker missing')
 insert="""{
   const p=baseProject();p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v002';
   const current={id:'REQ-CURRENT',active:true,stage:4,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:'REQUIREMENTS-v002'},fields:{REQ_ID:'REQ-CURRENT',OBLIGATION:'CURRENT-SCOPE-ONLY'}};
