@@ -14,18 +14,22 @@ jobs:
         with: {node-version: '22'}
       - name: Apply exact semantic changes
         run: node .semantic-fix-v3.mjs
-      - name: Syntax and deterministic acceptance
-        run: |
-          node --check app-core.js
-          node --check project-store.js
-          node --check prompt-engine.js
-          node verify-hash.mjs
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+      - name: Syntax
+        run: node --check app-core.js && node --check project-store.js && node --check prompt-engine.js
+      - name: Hash verifier
+        run: node verify-hash.mjs
+      - name: Build retained project
+        run: node build-test-project.mjs
+      - name: Architecture and storage verifier
+        run: node verify.mjs
+      - name: Ingestion verifier
+        run: node verify-ingestion.mjs
+      - name: Completion verifier
+        run: node verify-complete.mjs
+      - name: Full lifecycle verifier
+        run: node verify-full-cycle.mjs
+      - name: Prompt semantic verifier
+        run: node verify-prompt-semantics.mjs
       - name: Chromium acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
