@@ -28,7 +28,7 @@ function semanticIssues(record){
   if(!record.prompt.includes(`OPERATION: ${record.operation}`))issues.push('OPERATION_IDENTITY_MISSING');
   if(!record.prompt.includes(`INSTRUCTION_ID: ${record.instructionId}`))issues.push('INSTRUCTION_IDENTITY_MISSING');
   if(!record.prompt.includes(`BODY_SHA256: ${record.bodySha256}`)||!record.prompt.includes(`CONTRACT_SHA256: ${record.contractSha256}`)||!record.prompt.includes(`CONTEXT_SIGNATURE: ${record.contextSignature}`))issues.push('PROMPT_HASH_IDENTITY_MISSING');
-  if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('BLOCKED with MISSING_APPLICATION_CONTEXT')||!record.prompt.includes('BLOCKED with MISSING_CAPABILITY'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
+  if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('BLOCKED with MISSING_APPLICATION_CONTEXT')||!record.prompt.includes('BLOCKED with INADEQUATE_PRIOR_OUTPUT')||!record.prompt.includes('BLOCKED with MISSING_CAPABILITY'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
   if(!record.prompt.includes('rejected data is not canonical'))issues.push('REFINEMENT_RULE_MISSING');
   if(!record.prompt.includes('implementation-ready')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
   if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');
@@ -82,6 +82,11 @@ const mutants=[
   {...original,prompt:original.prompt.replace('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred','Assume external actions occurred when useful')}
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
+
+
+{
+ const p=baseProject();const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});const contract=r.prompt.split('STRICT RESPONSE CONTRACT\n')[1].split('\n\nEND COPY BLOCK')[0];if(contract.includes('<value>')||contract.includes('<exact current JOB_ID>')||contract.includes('<application-reserved-target-id>'))throw new Error('Copyable response contract still contains invalid placeholder data.');if(!contract.includes('\"jobId\": \"JOB-PROMPT-SEMANTICS\"'))throw new Error('Response contract does not contain the exact current JOB_ID.');if(!r.prompt.includes('empty shape skeleton, not a complete answer'))throw new Error('Response skeleton semantics are not explicit.');
+}
 
 if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 completion language is not the exact verification triple.');
 if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||core.STAGES[14].completionGate.some(x=>x.toLowerCase().includes('succeeds after correction')))throw new Error('Stage 15 incorrectly requires future post-correction success.');
