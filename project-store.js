@@ -78,7 +78,24 @@ async function writeProject(project,{expectedProjectRevision=null,incrementRevis
   const id=projectIdentity(project);if(!id)throw new Error('A project without a JOB_ID cannot be committed.');const db=await openDatabase();fault('before-project-transaction');const tx=db.transaction([PROJECTS,META],'readwrite');const store=tx.objectStore(PROJECTS);try{const prior=await request(store.get(id));const currentRevision=Number(prior?.revision||0);if(expectedProjectRevision!==null&&Number(expectedProjectRevision)!==currentRevision){const e=new Error(`Project revision conflict for ${id}: expected ${expectedProjectRevision}, found ${currentRevision}.`);e.code='STALE_PROJECT_REVISION';throw e;}const next=clone(project);next.revision=incrementRevision?currentRevision+1:currentRevision;delete next.projectSha256;const digest=projectSha256(next);fault('during-project-write');store.put({jobId:id,revision:next.revision,project:next,projectSha256:digest,updatedAt:now()});tx.objectStore(META).put({key:'selectedProject',value:id,updatedAt:now()});tx.objectStore(META).put({key:'lastCommittedRevision',value:{jobId:id,revision:next.revision,projectSha256:digest},updatedAt:now()});fault('before-transaction-commit');await complete(tx);next.projectSha256=digest;try{new BroadcastChannel('closed-loop-reliability').postMessage({type:'PROJECT_CHANGED',jobId:id,revision:next.revision});}catch{}return next;}catch(error){try{tx.abort();}catch{}throw error;}
 }
 
-async function writeAllIndexed(projects){if(!Array.isArray(projects))throw new TypeError('Project storage payload must be an array.');const saved=[];for(const project of projects){const id=projectIdentity(project);if(!id)continue;const db=await openDatabase(),tx=db.transaction(PROJECTS,'readonly'),prior=await request(tx.objectStore(PROJECTS).get(id));await complete(tx);const incoming=clone(project);delete incoming.projectSha256;const digest=projectSha256(incoming);if(prior?.projectSha256===digest){incoming.revision=Number(prior.revision||0);incoming.projectSha256=digest;saved.push(incoming);}else saved.push(await writeProject(incoming,{expectedProjectRevision:Number(prior?.revision||0),incrementRevision:Boolean(prior)}));}return saved;}
+async function writeAllIndexed(projects){
+  if(!Array.isArray(projects))throw new TypeError('Project storage payload must be an array.');
+  const db=await openDatabase(),tx=db.transaction([PROJECTS,META],'readwrite'),store=tx.objectStore(PROJECTS),meta=tx.objectStore(META),prepared=[],seen=new Set();
+  try{
+    for(const project of projects){
+      const id=projectIdentity(project);if(!id)continue;if(seen.has(id))throw storageError(`Project storage payload contains duplicate JOB_ID ${id}.`,'DUPLICATE_PROJECT_ID');seen.add(id);
+      const incoming=clone(project),suppliedRevision=Number(incoming.revision||0);delete incoming.projectSha256;const prior=await request(store.get(id)),currentRevision=Number(prior?.revision||0),incomingDigest=projectSha256(incoming);
+      if(prior?.projectSha256===incomingDigest){incoming.revision=currentRevision;incoming.projectSha256=incomingDigest;prepared.push({id,project:incoming,changed:false});continue;}
+      if(prior&&suppliedRevision!==currentRevision){const e=new Error(`Project revision conflict for ${id}: expected ${suppliedRevision}, found ${currentRevision}.`);e.code='STALE_PROJECT_REVISION';throw e;}
+      if(!prior&&suppliedRevision!==0){const e=new Error(`Project revision conflict for ${id}: incoming revision ${suppliedRevision} has no stored project.`);e.code='STALE_PROJECT_REVISION';throw e;}
+      incoming.revision=prior?currentRevision+1:0;const digest=projectSha256(incoming);prepared.push({id,project:incoming,digest,changed:true});
+    }
+    const changed=prepared.filter(item=>item.changed);for(const item of changed){fault('during-project-write');store.put({jobId:item.id,revision:item.project.revision,project:item.project,projectSha256:item.digest,updatedAt:now()});item.project.projectSha256=item.digest;meta.put({key:'lastCommittedRevision',value:{jobId:item.id,revision:item.project.revision,projectSha256:item.digest},updatedAt:now()});}
+    if(prepared[0])meta.put({key:'selectedProject',value:prepared[0].id,updatedAt:now()});fault('before-transaction-commit');await complete(tx);
+    for(const item of changed)try{new BroadcastChannel('closed-loop-reliability').postMessage({type:'PROJECT_CHANGED',jobId:item.id,revision:item.project.revision});}catch{}
+    return prepared.map(item=>item.project);
+  }catch(error){try{tx.abort();}catch{}throw error;}
+}
 function writeAll(projects,storage){return storage?writeAllLegacy(projects,storage):writeAllIndexed(projects);}
 
 async function replaceProjectIndexed(projectsOrProject,projectOrOptions){
