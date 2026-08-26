@@ -80,8 +80,10 @@ ws=ws.replace("'Assign exactly one release state using the verified requirement,
 w.write_text(ws)
 
 vm=Path('verify.mjs'); vms=vm.read_text()
-vms=vms.replace("'GENERATE THE FINISHED PRODUCT'","'GENERATE THE APPROVED DELIVERABLE'",1)
-vm.write_text(vms)
+old_title="'Generate the Finished Product'"
+new_title="'Generate the Approved Deliverable'"
+if old_title not in vms: raise SystemExit('Stage 21 verifier title token missing')
+vms=vms.replace(old_title,new_title,1); vm.write_text(vms)
 
 v=Path('verify-prompt-semantics.mjs'); vs=v.read_text()
 insert="""
