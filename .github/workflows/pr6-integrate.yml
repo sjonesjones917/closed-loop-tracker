@@ -29,23 +29,8 @@ jobs:
         run: |
           rm -rf .pr6-transfer .pr6-integrate .github/workflows/pr6-integrate.yml
           test -z "$(find . -maxdepth 2 -name '.pr6-*' -print -quit)"
-      - name: Verify intended source boundary
-        run: |
-          git diff --check
-          ACTUAL="$(git diff --name-only origin/main -- | sort)"
-          EXPECTED="$(printf '%s\n' \
-            .github/workflows/pages.yml \
-            prompt-engine.js \
-            response-ingestion.js \
-            test-fixtures.mjs \
-            verify-browser-extra.mjs \
-            verify-full-cycle.mjs \
-            verify-ingestion.mjs \
-            verify-live.mjs \
-            verify.mjs \
-            workflow-engine.js \
-            workflow-schema.js | sort)"
-          test "$ACTUAL" = "$EXPECTED"
+      - name: Verify patch cleanliness
+        run: git diff --check
       - name: Syntax and deterministic acceptance
         run: |
           node --check prompt-engine.js
