@@ -28,19 +28,21 @@ jobs:
                   raise SystemExit(f'{path}: expected one exact occurrence, found {count}: {old[:120]!r}')
               p.write_text(text.replace(old,new,1))
 
-          def rewrite_frozen_json(path, start_marker, end_marker, mutate):
+          def rewrite_const_json(path, name, mutate):
               p=Path(path); text=p.read_text()
-              start=text.index(start_marker)+len(start_marker)
-              end=text.index(end_marker,start)
-              data=json.loads(text[start:end])
+              pattern=rf'const {re.escape(name)}=Object\.freeze\((\{{.*?\}})\);'
+              match=re.search(pattern,text,re.S)
+              if not match:
+                  raise SystemExit(f'{path}: generated JSON constant {name} not found')
+              data=json.loads(match.group(1))
               mutate(data)
               rendered=json.dumps(data,indent=2)
-              p.write_text(text[:start]+rendered+text[end:])
+              p.write_text(text[:match.start(1)]+rendered+text[match.end(1):])
 
           # Stage 15 defines the permanent failing regression; Stage 16 owns the correction.
           def ownership(o):
               o['regressions']['agent'].remove('CORRECTION')
-          rewrite_frozen_json('workflow-schema.js','const RECORD_OWNERSHIP=Object.freeze(',');\nconst EXPLICIT_STAGE_FIELD_TYPES',ownership)
+          rewrite_const_json('workflow-schema.js','RECORD_OWNERSHIP',ownership)
           replace_once('workflow-schema.js',"    'PRE_CORRECTION_EVIDENCE','CORRECTION','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE','RETIREMENT_AUTHORITY'","    'PRE_CORRECTION_EVIDENCE','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE','RETIREMENT_AUTHORITY'")
           replace_once('workflow-schema.js',"required:['FAILURE_FIXTURE','REPRODUCTION_PROCEDURE','DETECTION_METHOD','PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','CORRECTION','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE']","required:['FAILURE_FIXTURE','REPRODUCTION_PROCEDURE','DETECTION_METHOD','PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE']")
           replace_once('prompt-engine.js','Define the expected post-correction result. The application assigns REG_ID and lifecycle state.','The linked permanent test expected result defines post-correction success. The application assigns REG_ID and lifecycle state.')
@@ -54,7 +56,7 @@ jobs:
                   'CHAIN.ARTIFACT_HASH_IDENTITY':'REFERENCE_ARRAY'
               }.items():
                   t.setdefault(key,{})['valueType']=vt
-          rewrite_frozen_json('workflow-schema.js','const EXPLICIT_RECORD_FIELD_TYPES=Object.freeze(',');\nfunction recordFieldDefinition',record_types)
+          rewrite_const_json('workflow-schema.js','EXPLICIT_RECORD_FIELD_TYPES',record_types)
 
           # Operation-specific stageData: an early Stage 17/19 operation cannot assert later-operation facts.
           old=re.search(r"const OPERATION_CONTRACT_OVERRIDES=Object\.freeze\(\{.*?\}\);\nfunction operationContract",Path('workflow-schema.js').read_text(),re.S)
@@ -86,7 +88,7 @@ jobs:
           replace_once('response-ingestion.js','const allowedStageData=new Set(contract?.allowedStageData||[]);','const allowedStageData=new Set(operationContract?.agentStageFields||contract?.allowedStageData||[]);')
           replace_once('prompt-engine.js','const stageData=Object.fromEntries(contract.allowedStageData.map(name=>[name,responseFieldContract(schema.STAGE_FIELDS[stage][name])]));','const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const stageData=Object.fromEntries(agentStageFields.map(name=>[name,responseFieldContract(schema.STAGE_FIELDS[stage][name])]));')
           replace_once('prompt-engine.js','agentStageFields:[...contract.allowedStageData],agentWritableCollections:[...writable]','agentStageFields:[...agentStageFields],agentWritableCollections:[...writable]')
-          replace_once('prompt-engine.js','const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(\' | \')})`:\'\'}${d.nullable?\' nullable\':\'\'}`;}).join(\'\\n\'):\'- No agent-owned stageData fields; use permitted records/evidence only.\';','const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const fields=agentStageFields.length?agentStageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(\' | \')})`:\'\'}${d.nullable?\' nullable\':\'\'}`;}).join(\'\\n\'):\'- No agent-owned stageData fields; use permitted records/evidence only.\';')
+          replace_once('prompt-engine.js',"const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';","const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const fields=agentStageFields.length?agentStageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';")
 
           # Prevent product bytes from being uploaded before PRODUCT_ID exists; otherwise they cannot be current-product artifacts.
           replace_once('app-core.js','<div class="field"><label>Select exact files</label><input id="stage-files" type="file" multiple${locked?\' disabled\':\'\'}></div>','<div class="field"><label>${n===21&&!engine.currentScope(current).productId?\'Reserve product execution before adding finished-product files\':\'Select exact files\'}</label><input id="stage-files" type="file" multiple${locked||(n===21&&!engine.currentScope(current).productId)?\' disabled\':\'\'}></div>')
