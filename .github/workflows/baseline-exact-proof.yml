@@ -45,5 +45,5 @@ jobs:
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
           test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
           git commit -m 'Bind Stage 20 baseline to exact confirmed candidate [baseline-proof-complete]'
-          git push origin HEAD
-# exact-current proof trigger
+          git push --force-with-lease origin HEAD:reliability/baseline-exact-candidate-20260826
+# race-safe exact-current proof trigger
