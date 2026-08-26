@@ -1,0 +1,45 @@
+name: Replay proved final integrity delta
+on:
+  push:
+    branches: [reliability/final-integrity-authority-current-20260826]
+permissions:
+  contents: write
+jobs:
+  replay:
+    if: ${{ !contains(github.event.head_commit.message, '[replay-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-integrity-authority-current-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply proved source delta with three-way merge
+        shell: bash
+        run: |
+          git diff --binary 276fc3e2920ff91a81e1f49243a9894d64c79011..87d0493f81a49e8f912f5de5194b3f78ca6b4e1a -- workflow-schema.js workflow-engine.js response-ingestion.js project-store.js verify-complete.mjs verify-full-cycle.mjs > /tmp/final-integrity.patch
+          git apply --3way /tmp/final-integrity.patch
+          rm .github/workflows/replay-final-integrity-delta.yml
+      - name: Run deterministic acceptance on replayed latest-main tree
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing replay
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Replay final authority and integrity closure on latest main [replay-complete]"
+          git push origin HEAD:reliability/final-integrity-authority-current-20260826
