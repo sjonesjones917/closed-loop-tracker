@@ -17,6 +17,29 @@ function baseProject(){
   return p;
 }
 function arraysEqual(a,b){return JSON.stringify([...a].sort())===JSON.stringify([...b].sort());}
+
+const forbiddenProcedureSemantics=[
+  [/Assign and preserve this job’s unique JOB_ID/i,'AGENT_ASSIGNS_JOB_ID'],
+  [/Create SOURCE-SET-vN/i,'AGENT_CREATES_SOURCE_SET_VERSION'],
+  [/Each REQ_ID must express/i,'AGENT_COORDINATES_REQUIREMENT_ID'],
+  [/Calculate mandatory requirement-to-test coverage exactly/i,'AGENT_CALCULATES_COVERAGE'],
+  [/Build this job’s MUTATION-SUITE-vN/i,'AGENT_ASSIGNS_MUTATION_SUITE_VERSION'],
+  [/Assign CANDIDATE_ID and ITERATION_ID/i,'AGENT_ASSIGNS_CANDIDATE_ITERATION'],
+  [/For each RUN_ID preserve context identity, timestamps/i,'AGENT_OWNS_RUN_LIFECYCLE'],
+  [/create a complete new ten-execution iteration.*new ITERATION_ID and CANDIDATE_ID/i,'AGENT_ASSIGNS_REPEATED_ITERATION'],
+  [/Determine convergence.*Calculate mandatory requirement coverage/i,'AGENT_CALCULATES_CONVERGENCE'],
+  [/Assign BASELINE_ID/i,'AGENT_ASSIGNS_BASELINE'],
+  [/Assign PRODUCT_ID, PRODUCT_VERSION, BASELINE_ID, EXECUTION_ID/i,'AGENT_ASSIGNS_PRODUCT_IDENTITY'],
+  [/Apply this job’s release gate and produce exactly one determination/i,'AGENT_SETS_RELEASE'],
+  [/verify exact artifact identity immediately before release\. Compare audited artifact identity/i,'AGENT_ASSERTS_BYTE_IDENTITY'],
+  [/Preserve this job’s complete evidence chain for every mandatory requirement/i,'AGENT_CONSTRUCTS_EVIDENCE_GRAPH']
+];
+for(const [pattern,code] of forbiddenProcedureSemantics)for(const [stage,text] of Object.entries(prompts.procedures))if(pattern.test(text))throw new Error(`Stage ${stage} prompt authority contradiction: ${code}`);
+const requiredProcedureSemantics={
+  1:['The application owns JOB_ID','does not connect to or modify an external repository'],2:['application assigns source-set version and canonical source identities','return fewer rather than adding weak or irrelevant sources'],4:['application assigns REQ_ID'],6:['application assigns TEST_ID','calculates exact mandatory requirement-to-test coverage'],10:['application assigns CANDIDATE_ID and ITERATION_ID','human selects authorized canonical components'],11:['application owns run/context IDs','hashes calculated from actual bytes'],12:['REQ_ID × RUN_ID × TEST_ID'],13:['application calculates all-ten'],15:['application assigns REG_ID','later actual regression execution'],16:['application assigns CHANGESET_ID','invalidates downstream work'],18:['application calculates mandatory requirement coverage','final convergence Boolean'],20:['application assigns BASELINE_ID','human authorizes the baseline'],21:['application assigns PRODUCT_ID','authoritative for actual file bytes'],25:['application derives filenames','byte sizes'],27:['Do not set a release state','application evaluates the complete current evidence'],28:['application performs the authoritative immediate pre-release byte comparison'],29:['application constructs the complete evidence graph'],30:['application maintains append-only defect and regression history']
+};
+for(const [stage,phrases] of Object.entries(requiredProcedureSemantics)){const text=prompts.procedures[Number(stage)];for(const phrase of phrases)if(!text.includes(phrase))throw new Error(`Stage ${stage} is missing required semantic authority text: ${phrase}`);}
+
 function semanticIssues(record){
   const issues=[];
   const op=schema.operationContract(record.stage,record.operation);
@@ -31,53 +54,16 @@ function semanticIssues(record){
   if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('return BLOCKED'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
   if(!record.prompt.includes('rejected data is not canonical'))issues.push('REFINEMENT_RULE_MISSING');
   if(!record.prompt.includes('implementation-ready specification rather than pretending implementation occurred'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
-  if(record.stage===2){
-    if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
-    if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
-    if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
-  }
+  if(record.stage===2){if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');}
   return issues;
 }
 
-const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}}; for(const [stage,operations] of Object.entries(expectedOperationWrites))for(const [operation,writes] of Object.entries(operations)){const actual=schema.operationContract(Number(stage),operation).agentWritableCollections;if(!arraysEqual(actual,writes))throw new Error(`Stage ${stage} ${operation} has semantically wrong writable collections: ${actual.join(', ')}`);} const runRead=schema.operationContract(17,'EXECUTE_RUN').readCollections;if(!runRead.includes('runs')||!runRead.includes('freshContexts'))throw new Error('Stage 17 EXECUTE_RUN cannot see reserved run/context slots.');
+const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};for(const [stage,operations] of Object.entries(expectedOperationWrites))for(const [operation,writes] of Object.entries(operations)){const actual=schema.operationContract(Number(stage),operation).agentWritableCollections;if(!arraysEqual(actual,writes))throw new Error(`Stage ${stage} ${operation} has semantically wrong writable collections: ${actual.join(', ')}`);}const runRead=schema.operationContract(17,'EXECUTE_RUN').readCollections;if(!runRead.includes('runs')||!runRead.includes('freshContexts'))throw new Error('Stage 17 EXECUTE_RUN cannot see reserved run/context slots.');
 let checked=0;
-for(let stage=1;stage<=30;stage++){
-  for(const operation of schema.STAGE_CONTRACTS[stage].operations){
-    const p=baseProject();
-    const op=schema.operationContract(stage,operation);
-    const scope={};
-    for(const key of op.scopeRequirements){
-      if(key==='projectRevision')scope[key]=Number(p.revision||0);
-      else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;
-      else if(key==='sourceSetVersion')scope[key]=p.job.CURRENT_SOURCE_SET_VERSION;
-      else if(key==='requirementsVersion')scope[key]=p.job.CURRENT_REQUIREMENTS_VERSION;
-      else if(key==='testSuiteVersion')scope[key]=p.job.CURRENT_TEST_SUITE_VERSION;
-      else if(key==='instructionVersion')scope[key]=p.job.CURRENT_INSTRUCTION_VERSION;
-      else if(key==='iterationId')scope[key]='ITERATION-000001';
-      else if(key==='candidateId')scope[key]='CANDIDATE-000001';
-      else if(key==='runId')scope[key]='RUN-000001';
-      else if(key==='contextId')scope[key]='CONTEXT-000001';
-      else if(key==='baselineId')scope[key]='BASELINE-000001';
-      else if(key==='productId')scope[key]='PRODUCT-000001';
-    }
-    const record=prompts.buildPromptRecord(stage,p,{operation,scope});
-    const issues=semanticIssues(record);
-    if(issues.length)throw new Error(`Stage ${stage} ${operation} semantic contradiction(s): ${issues.join(', ')}`);
-    checked++;
-  }
-}
+for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){const p=baseProject();const op=schema.operationContract(stage,operation);const scope={};for(const key of op.scopeRequirements){if(key==='projectRevision')scope[key]=Number(p.revision||0);else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;else if(key==='sourceSetVersion')scope[key]=p.job.CURRENT_SOURCE_SET_VERSION;else if(key==='requirementsVersion')scope[key]=p.job.CURRENT_REQUIREMENTS_VERSION;else if(key==='testSuiteVersion')scope[key]=p.job.CURRENT_TEST_SUITE_VERSION;else if(key==='instructionVersion')scope[key]=p.job.CURRENT_INSTRUCTION_VERSION;else if(key==='iterationId')scope[key]='ITERATION-000001';else if(key==='candidateId')scope[key]='CANDIDATE-000001';else if(key==='runId')scope[key]='RUN-000001';else if(key==='contextId')scope[key]='CONTEXT-000001';else if(key==='baselineId')scope[key]='BASELINE-000001';else if(key==='productId')scope[key]='PRODUCT-000001';}const record=prompts.buildPromptRecord(stage,p,{operation,scope});const issues=semanticIssues(record);if(issues.length)throw new Error(`Stage ${stage} ${operation} semantic contradiction(s): ${issues.join(', ')}`);checked++;}
 
-const p=baseProject();
-const original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}});
-const mutants=[
-  {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
-  {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
-  {...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},
-  {...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}
-];
-for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
-
-console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
+const p=baseProject();const original=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}});const mutants=[{...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},{...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},{...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},{...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}];for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
+console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,authorityProcedureChecks:Object.keys(requiredProcedureSemantics).length,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
 {const p=baseProject();p.projectData.runs.push({id:'RUN-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{RUN_ID:'RUN-ISO-A',COMPLETE_OUTPUT:'SECRET-OTHER-RUN'}},{id:'RUN-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{RUN_ID:'RUN-ISO-B',COMPLETE_OUTPUT:''}});p.projectData.freshContexts.push({id:'CTX-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{CONTEXT_ID:'CTX-ISO-A'}},{id:'CTX-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{CONTEXT_ID:'CTX-ISO-B'}});const pr=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'}});if(pr.prompt.includes('SECRET-OTHER-RUN'))throw new Error('Run prompt leaked another run output.');if(pr.contextManifest.readCollections.runs.length!==1||pr.contextManifest.readCollections.runs[0].id!=='RUN-ISO-B')throw new Error('Run prompt manifest was not scoped to the selected run.');}
