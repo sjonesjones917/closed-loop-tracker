@@ -1,0 +1,182 @@
+name: Final integrity and authority repair
+on:
+  push:
+    branches: [reliability/final-integrity-authority-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[repair-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-integrity-authority-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal semantic repairs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text, old, new, label):
+              n=text.count(old)
+              if n!=1: raise SystemExit(f'{label}: expected 1 occurrence, found {n}')
+              return text.replace(old,new,1)
+
+          # ----- workflow-schema.js: remove agent authority over application-created identity/byte records -----
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old='''  "iterations": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "PURPOSE",\n      "LINEAGE",\n      "EVIDENCE"\n    ],\n    "application": [\n      "ITERATION_ID",\n      "CANDIDATE_ID",\n      "PREVIOUS_ITERATION_ID",\n      "CHANGESET_ID",\n      "STATUS"\n    ]\n  },\n  "candidateFreezes": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "COMPONENT_MANIFEST",\n      "COMPONENT_VERSIONS",\n      "ROLE_DISTRIBUTION",\n      "IMMUTABLE_LOCATIONS",\n      "TOOL_CONFIGURATION",\n      "SETTINGS",\n      "PERMISSIONS",\n      "LIMITATIONS",\n      "BATCH_CHANGE_RULE",\n      "EVIDENCE"\n    ],\n    "application": [\n      "CANDIDATE_ID",\n      "ITERATION_ID",\n      "COMPONENT_HASHES",\n      "STATUS"\n    ]\n  },'''
+          new='''  "iterations": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [],\n    "application": [\n      "ITERATION_ID",\n      "CANDIDATE_ID",\n      "PREVIOUS_ITERATION_ID",\n      "CHANGESET_ID",\n      "PURPOSE",\n      "STATUS",\n      "LINEAGE",\n      "EVIDENCE"\n    ]\n  },\n  "candidateFreezes": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [],\n    "application": [\n      "CANDIDATE_ID",\n      "ITERATION_ID",\n      "COMPONENT_MANIFEST",\n      "COMPONENT_VERSIONS",\n      "COMPONENT_HASHES",\n      "ROLE_DISTRIBUTION",\n      "IMMUTABLE_LOCATIONS",\n      "TOOL_CONFIGURATION",\n      "SETTINGS",\n      "PERMISSIONS",\n      "LIMITATIONS",\n      "BATCH_CHANGE_RULE",\n      "STATUS",\n      "EVIDENCE"\n    ]\n  },'''
+          s=replace_once(s,old,new,'iteration/candidate ownership')
+
+          old='''  "baselines": {\n    "human": [],\n    "humanDecision": [\n      "HUMAN_AUTHORIZATION"\n    ],\n    "agent": [\n      "APPROVED_VERSIONS",\n      "IMMUTABLE_ARTIFACT_RECORDS",\n      "AUTHORIZED_RECIPIENT_ROLES",\n      "CONTROLLED_STORAGE",\n      "EVIDENCE"\n    ],\n    "application": [\n      "BASELINE_ID",\n      "SUPPORTING_CONFIRMATION_ID",\n      "HASHES",\n      "STATUS"\n    ]\n  },'''
+          new='''  "baselines": {\n    "human": [],\n    "humanDecision": [\n      "HUMAN_AUTHORIZATION"\n    ],\n    "agent": [],\n    "application": [\n      "BASELINE_ID",\n      "SUPPORTING_CONFIRMATION_ID",\n      "APPROVED_VERSIONS",\n      "HASHES",\n      "IMMUTABLE_ARTIFACT_RECORDS",\n      "AUTHORIZED_RECIPIENT_ROLES",\n      "CONTROLLED_STORAGE",\n      "STATUS",\n      "EVIDENCE"\n    ]\n  },'''
+          s=replace_once(s,old,new,'baseline ownership')
+
+          old='''  "products": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "BASELINE_MATERIALS",\n      "EXECUTION_TIMESTAMPS",\n      "TOOL_CONFIGURATION",\n      "DEVIATIONS",\n      "FAILURES",\n      "GENERATED_ARTIFACT_INVENTORY"\n    ],\n    "application": [\n      "PRODUCT_ID",\n      "PRODUCT_VERSION",\n      "BASELINE_ID",\n      "EXECUTION_ID",\n      "PRODUCTION_CONTEXT_ID",\n      "INSTRUCTION_VERSION",\n      "STATUS"\n    ]\n  },'''
+          new='''  "products": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "BASELINE_MATERIALS",\n      "EXECUTION_TIMESTAMPS",\n      "TOOL_CONFIGURATION",\n      "DEVIATIONS",\n      "FAILURES"\n    ],\n    "application": [\n      "PRODUCT_ID",\n      "PRODUCT_VERSION",\n      "BASELINE_ID",\n      "EXECUTION_ID",\n      "PRODUCTION_CONTEXT_ID",\n      "INSTRUCTION_VERSION",\n      "GENERATED_ARTIFACT_INVENTORY",\n      "STATUS"\n    ]\n  },'''
+          s=replace_once(s,old,new,'product inventory ownership')
+
+          old='''  "artifacts": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "FILENAME",\n      "TYPE",\n      "ROLE",\n      "STORAGE_REFERENCE",\n      "AVAILABILITY",\n      "NOTES"\n    ],\n    "application": [\n      "ARTIFACT_ID",\n      "VERSION",\n      "BYTE_SIZE",\n      "SHA256"\n    ]\n  }'''
+          new='''  "artifacts": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [],\n    "application": [\n      "ARTIFACT_ID",\n      "FILENAME",\n      "TYPE",\n      "VERSION",\n      "BYTE_SIZE",\n      "SHA256",\n      "ROLE",\n      "STORAGE_REFERENCE",\n      "AVAILABILITY",\n      "NOTES"\n    ]\n  }'''
+          s=replace_once(s,old,new,'artifact ownership')
+
+          s=replace_once(s,"iterations:recordSchema({ownership:RECORD_OWNERSHIP.iterations,title:","iterations:recordSchema({ownership:RECORD_OWNERSHIP.iterations,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:",'iteration policy')
+          s=replace_once(s,"candidateFreezes:recordSchema({ownership:RECORD_OWNERSHIP.candidateFreezes,commitPolicy:COLLECTION_POLICIES.UPDATE_RESERVED,title:","candidateFreezes:recordSchema({ownership:RECORD_OWNERSHIP.candidateFreezes,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:",'candidate policy')
+          s=replace_once(s,"baselines:recordSchema({ownership:RECORD_OWNERSHIP.baselines,title:","baselines:recordSchema({ownership:RECORD_OWNERSHIP.baselines,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:",'baseline policy')
+          s=replace_once(s,"artifacts:recordSchema({ownership:RECORD_OWNERSHIP.artifacts,title:","artifacts:recordSchema({ownership:RECORD_OWNERSHIP.artifacts,commitPolicy:COLLECTION_POLICIES.APPLICATION_DERIVED,title:",'artifact policy')
+          s=replace_once(s,"  10:['iterations','candidateFreezes'],","  10:[],",'stage10 writable')
+          s=replace_once(s,"  20:['baselines'],","  20:[],",'stage20 writable')
+          s=replace_once(s,"  21:['products','artifacts'],","  21:['products'],",'stage21 writable')
+          # Product inventory is a canonical application-generated list of artifact IDs.
+          s,n=re.subn(r'("GENERATED_ARTIFACT_INVENTORY":\{"closedProperties":null,"enumValues":\[\],"normalizerKey":null,"nullable":false,"valueType":")STRING("\})',r'\1STRING_ARRAY\2',s,count=1)
+          if n!=1: raise SystemExit(f'product inventory type: expected 1, found {n}')
+          p.write_text(s)
+
+          # ----- workflow-engine.js: exact run/candidate binding, byte gates, baseline lineage, canonical rehashing -----
+          p=Path('workflow-engine.js'); s=p.read_text()
+          marker="function commandRecord(project,collection,fields,{stage=null,source='APPLICATION_COMMAND',scope=null}={}){"
+          helper="""function refreshRecordHashes(record,collection){\n  if(!record)return record;const definition=schema.RECORD_SCHEMAS[collection];if(!definition)return record;record.contentSha256=hash.contentRecordSha256(record,definition.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;return record;\n}\n"""
+          if helper not in s: s=replace_once(s,marker,helper+marker,'hash helper insert')
+          old="""  record.contentSha256=hash.contentSha256?hash.contentSha256({fields:full,relationships:{},evidenceRefs:[]}):hash.sha256Value(full);\n  record.recordSha256=hash.recordSha256?hash.recordSha256(record):hash.sha256Value(record);record.sha256=record.recordSha256;\n  project.projectData[collection].push(record);return record;"""
+          new="""  refreshRecordHashes(record,collection);\n  project.projectData[collection].push(record);return record;"""
+          s=replace_once(s,old,new,'commandRecord hashing')
+
+          # Rehash a reserved fresh-context after operator identity is recorded.
+          old="if(record){record.fields=record.fields&&typeof record.fields==='object'?record.fields:{};record.fields.EXTERNAL_CONTEXT_IDENTIFIER=identifier;record.EXTERNAL_CONTEXT_IDENTIFIER=identifier;record.fulfilledAt=now();record.fulfilledBy=operatorLabel;record.identityAssurance='SELF_ASSERTED';}"
+          new="if(record){record.fields=record.fields&&typeof record.fields==='object'?record.fields:{};record.fields.EXTERNAL_CONTEXT_IDENTIFIER=identifier;record.EXTERNAL_CONTEXT_IDENTIFIER=identifier;record.fulfilledAt=now();record.fulfilledBy=operatorLabel;record.identityAssurance='SELF_ASSERTED';refreshRecordHashes(record,'freshContexts');}"
+          s=replace_once(s,old,new,'fresh context rehash')
+
+          # Replace run reservation with exact iteration/candidate resolution and fully scoped/rehashed slot identities.
+          pat=r"function reserveRunBatch\(project,\{stage=project\.activeStage,iterationId=null,candidateId=null,count=10\}=\{\}\)\{.*?\n\}\nfunction registerArtifactBytes"
+          repl="""function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){\n  ensureShape(project);if(count!==10)throw new Error('Run batches must contain exactly ten slots.');const resolvedIteration=String(iterationId||project.job.CURRENT_ITERATION||'');if(!resolvedIteration)throw new Error('A current iteration is required before reserving runs.');const iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===resolvedIteration&&isActiveRecord(r));if(!iteration)throw new Error('The requested current iteration does not exist or is inactive.');const iterationCandidate=iterationCandidateId(project,resolvedIteration),resolvedCandidate=String(candidateId||iterationCandidate||'');if(!resolvedCandidate)throw new Error('A frozen candidate is required before reserving runs.');if(iterationCandidate&&resolvedCandidate!==iterationCandidate)throw new Error('The requested candidate does not match the current iteration candidate.');const candidate=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===resolvedCandidate&&isActiveRecord(r));if(!candidate||!candidateComponentIdentity(project,resolvedCandidate))throw new Error('The current iteration must resolve to one active frozen candidate with application-computed component hashes.');const iterationScope=scopeForIteration(project,resolvedIteration);\n  const created=[];for(let i=0;i<count;i++){const context=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:'UNASSIGNED',ROLE:core.STAGES[Number(stage)-1]?.role||'UNKNOWN',ITERATION_ID:resolvedIteration,RUN_ID:'PENDING',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE',EVIDENCE:'Application-reserved context slot.',USABILITY_DETERMINATION:'PENDING'},{stage,source:'APPLICATION_RESERVATION',scope:iterationScope});const run=commandRecord(project,'runs',{ITERATION_ID:resolvedIteration,CANDIDATE_ID:resolvedCandidate,CONTEXT_ID:context.id,FRESH_CONTEXT_RECORD:context.id,CONTAMINATION_CHECK:'PENDING',TOOL_CONFIGURATION:'PENDING',EXECUTION_STATUS:'RESERVED',COMPLETE_OUTPUT:''},{stage,source:'APPLICATION_RESERVATION',scope:{...iterationScope,contextId:context.id}});context.fields.RUN_ID=context.RUN_ID=run.id;context.scope={...iterationScope,runId:run.id,contextId:context.id};run.scope={...iterationScope,runId:run.id,contextId:context.id};refreshRecordHashes(context,'freshContexts');refreshRecordHashes(run,'runs');created.push({runId:run.id,contextId:context.id});}\n  addHistory(project,'RUN_BATCH_RESERVED',{stage,iterationId:resolvedIteration,candidateId:resolvedCandidate,count,slots:created});recalculate(project);return created;\n}\nfunction registerArtifactBytes"""
+          s,n=re.subn(pat,repl,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit(f'reserveRunBatch replacement: {n}')
+
+          # Artifact intake is authoritative; bind product inventory to actual persisted bytes.
+          old="record.contentSha256=hash.sha256Value(fields);record.recordSha256=hash.sha256Value(record);record.sha256=record.recordSha256;project.projectData.artifacts.push(record);addHistory(project,'ARTIFACT_BYTES_REGISTERED',{stage,artifactId:id,byteSize:Number(byteSize),sha256:String(sha256).toLowerCase()});recalculate(project);return record;"
+          new="refreshRecordHashes(record,'artifacts');project.projectData.artifacts.push(record);const productId=String(lineage?.productId||'');if(productId){const product=records(project,'products').find(r=>recordId(r,'products')===productId&&isActiveRecord(r));if(!product)throw new Error('Artifact lineage references a missing or inactive product.');const inventory=[...new Set([...safe(recordValue(product,'GENERATED_ARTIFACT_INVENTORY')),id])];product.fields={...(product.fields||{}),GENERATED_ARTIFACT_INVENTORY:inventory};product.GENERATED_ARTIFACT_INVENTORY=inventory;product.updatedAt=now();refreshRecordHashes(product,'products');}addHistory(project,'ARTIFACT_BYTES_REGISTERED',{stage,artifactId:id,byteSize:Number(byteSize),sha256:String(sha256).toLowerCase(),productId:productId||null});recalculate(project);return record;"
+          s=replace_once(s,old,new,'artifact authority/inventory')
+
+          # Baseline must inherit candidate identity from the current unchanged-confirmation iteration, not scope-match the old candidate row.
+          old="const baselineId=allocateId(project,'baselines'),createdAt=now(),approvedVersions={inputVersion:project.job.CURRENT_INPUT_VERSION,sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:project.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:project.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:project.job.CURRENT_INSTRUCTION_VERSION,iterationId:project.job.CURRENT_ITERATION,candidateId:recordId(recordsForCurrentScope(project,'candidateFreezes').at(-1),'candidateFreezes'),hashes:Object.fromEntries(artifacts.map(a=>[recordId(a,'artifacts'),recordValue(a,'SHA256')]))};"
+          new="const currentIteration=records(project,'iterations').find(r=>recordId(r,'iterations')===String(project.job.CURRENT_ITERATION||'')&&isActiveRecord(r));if(!currentIteration||Number(currentIteration.stage)!==19)throw new Error('The current unchanged-confirmation iteration is required before baseline freeze.');const currentCandidateId=iterationCandidateId(project,recordId(currentIteration,'iterations')),currentCandidate=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===currentCandidateId&&isActiveRecord(r));if(!currentCandidate||!candidateComponentIdentity(project,currentCandidateId))throw new Error('The unchanged-confirmation iteration does not resolve to an active frozen candidate.');const baselineId=allocateId(project,'baselines'),createdAt=now(),approvedVersions={inputVersion:project.job.CURRENT_INPUT_VERSION,sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:project.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:project.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:project.job.CURRENT_INSTRUCTION_VERSION,iterationId:recordId(currentIteration,'iterations'),candidateId:currentCandidateId,hashes:Object.fromEntries(artifacts.map(a=>[recordId(a,'artifacts'),recordValue(a,'SHA256')]))};"
+          s=replace_once(s,old,new,'baseline candidate lineage')
+
+          # Production contexts must be Stage 21 contexts, not merely any no-run context in current scope.
+          old="contexts=recordsForCurrentScope(project,'freshContexts').filter(r=>noRun(recordValue(r,'RUN_ID'))&&!usedContextIds.has(recordId(r,'freshContexts'))),context=contexts.at(-1);"
+          new="contexts=recordsForCurrentScope(project,'freshContexts').filter(r=>Number(r.stage)===21&&noRun(recordValue(r,'RUN_ID'))&&!usedContextIds.has(recordId(r,'freshContexts'))),context=contexts.at(-1);"
+          s=replace_once(s,old,new,'stage21 context selection')
+
+          # Stage 20 exact lineage and Stage 21 verified-byte/inventory/lifecycle gates.
+          old="case 20:{requireAccepted();const confirmations=recordsForCurrentScope(project,'confirmationRecords').filter(record=>upper(recordValue(record,'DETERMINATION'))==='SATISFIED'),baselines=recordsForCurrentScope(project,'baselines');if(confirmations.length!==1)reasons.push('Exactly one current successful unchanged confirmation is required.');if(baselines.length!==1)reasons.push('Exactly one current production baseline is required.');if(baselines.some(record=>upper(recordValue(record,'HUMAN_AUTHORIZATION'))!=='AUTHORIZED'||String(recordValue(record,'SUPPORTING_CONFIRMATION_ID')||record.relationships?.SUPPORTING_CONFIRMATION_ID||'')!==recordId(confirmations[0],'confirmationRecords')))reasons.push('The current baseline is not bound to the current authorized unchanged confirmation.');break;}"
+          new="case 20:{requireAccepted();const confirmations=recordsForCurrentScope(project,'confirmationRecords').filter(record=>upper(recordValue(record,'DETERMINATION'))==='SATISFIED'),baselines=recordsForCurrentScope(project,'baselines'),iteration=latestIteration(project,[19]),iterationId=recordId(iteration,'iterations'),candidateId=iterationCandidateId(project,iterationId);if(confirmations.length!==1)reasons.push('Exactly one current successful unchanged confirmation is required.');if(baselines.length!==1)reasons.push('Exactly one current production baseline is required.');for(const baseline of baselines){const approved=recordValue(baseline,'APPROVED_VERSIONS')||{};if(upper(recordValue(baseline,'HUMAN_AUTHORIZATION'))!=='AUTHORIZED'||String(recordValue(baseline,'SUPPORTING_CONFIRMATION_ID')||baseline.relationships?.SUPPORTING_CONFIRMATION_ID||'')!==recordId(confirmations[0],'confirmationRecords'))reasons.push('The current baseline is not bound to the current authorized unchanged confirmation.');if(String(approved.iterationId||'')!==iterationId||String(approved.candidateId||'')!==candidateId||!candidateComponentIdentity(project,candidateId))reasons.push('The current baseline does not preserve the exact unchanged-confirmation iteration and frozen candidate identity.');}break;}"
+          s=replace_once(s,old,new,'stage20 gate')
+          old="case 21:{requireAccepted();const products=recordsForCurrentScope(project,'products'),product=products.at(-1),productId=recordId(product,'products'),artifacts=recordsForCurrentScope(project,'artifacts').filter(a=>productId&&String(a.scope?.productId||'')===productId);if(products.length!==1)reasons.push('Exactly one current product execution identity is required.');if(!recordsForCurrentScope(project,'baselines').length)reasons.push('An approved production baseline is required.');if(!artifacts.length)reasons.push('Actual finished-product bytes must be persisted and hashed before Stage 21 can complete.');break;}"
+          new="case 21:{requireAccepted();const products=recordsForCurrentScope(project,'products'),product=products.at(-1),productId=recordId(product,'products'),baselines=recordsForCurrentScope(project,'baselines'),baseline=baselines.at(-1),artifacts=recordsForCurrentScope(project,'artifacts').filter(a=>productId&&String(a.scope?.productId||'')===productId),verified=artifacts.filter(a=>upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED'&&/^[a-f0-9]{64}$/i.test(String(recordValue(a,'SHA256')||''))&&Number.isInteger(Number(recordValue(a,'BYTE_SIZE')))&&Number(recordValue(a,'BYTE_SIZE'))>=0&&String(recordValue(a,'STORAGE_REFERENCE')||'').startsWith('indexeddb:')),inventory=safe(recordValue(product,'GENERATED_ARTIFACT_INVENTORY')).map(String).sort(),verifiedIds=verified.map(a=>recordId(a,'artifacts')).sort(),contextId=String(recordValue(product,'PRODUCTION_CONTEXT_ID')||product?.relationships?.PRODUCTION_CONTEXT_ID||''),context=records(project,'freshContexts').find(r=>recordId(r,'freshContexts')===contextId&&isActiveRecord(r));if(products.length!==1)reasons.push('Exactly one current product execution identity is required.');if(baselines.length!==1||String(recordValue(product,'BASELINE_ID')||product?.relationships?.BASELINE_ID||'')!==recordId(baseline,'baselines'))reasons.push('The current product execution is not bound to exactly one current approved baseline.');if(!context||Number(context.stage)!==21)reasons.push('The product execution does not use a dedicated current Stage 21 production context.');if(upper(recordValue(product,'STATUS'))!=='COMPLETED'||product?.completionState!=='COMPLETED')reasons.push('The reserved product execution has not been completed by an accepted Stage 21 response.');if(!verified.length||verified.length!==artifacts.length)reasons.push('Every current finished-product artifact must have actual IndexedDB bytes, byte size, and application-computed SHA-256 before Stage 21 can complete.');if(hash.sha256Value(inventory)!==hash.sha256Value(verifiedIds))reasons.push('The application-generated product artifact inventory does not exactly match the verified current product bytes.');break;}"
+          s=replace_once(s,old,new,'stage21 gate')
+
+          # Current-scope release/evidence requirements.
+          s=replace_once(s,"function releaseMetrics(project){const requirements=mandatoryRequirements(project);","function releaseMetrics(project){const requirements=mandatoryRequirements(project,currentScope(project));",'release current requirements')
+          s=replace_once(s,"function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project);","function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project,currentScope(project));",'evidence current requirements')
+
+          # Rehash records whenever lifecycle/invalidation metadata is changed.
+          s=s.replace("record.invalidatedBy=changeId;record.active=false;record.validity='INVALIDATED';}}", "record.invalidatedBy=changeId;record.active=false;record.validity='INVALIDATED';refreshRecordHashes(record,collection);}}")
+          s=s.replace("record.invalidatedBy=id;record.active=false;record.validity='INVALIDATED';}", "record.invalidatedBy=id;record.active=false;record.validity='INVALIDATED';refreshRecordHashes(record,collection);}")
+          s=s.replace("prior.active=false;prior.validity='SUPERSEDED';prior.invalidatedBy='RELEASE-EVIDENCE-CHANGED';}", "prior.active=false;prior.validity='SUPERSEDED';prior.invalidatedBy='RELEASE-EVIDENCE-CHANGED';refreshRecordHashes(prior,'releaseRecords');}")
+
+          # Use complete canonical record hashes on application-derived records that are later audited.
+          s=s.replace("const record={id,stage:27,createdAt:now(),active:true,fields,...fields,releaseEvidenceSha256,scope:currentScope(project),sha256:hash.sha256Value(fields),source:'APPLICATION_DERIVATION',derivationKey:'stage27.release'};project.projectData.releaseRecords.push(record);", "const record={id,stage:27,createdAt:now(),active:true,fields,...fields,releaseEvidenceSha256,scope:currentScope(project),source:'APPLICATION_DERIVATION',derivationKey:'stage27.release'};refreshRecordHashes(record,'releaseRecords');project.projectData.releaseRecords.push(record);")
+          s=s.replace("const record={id,stage:29,createdAt:prior?.createdAt||now(),updatedAt:now(),active:true,fields,...fields,scope:currentScope(project),sha256:hash.sha256Value(fields),source:'APPLICATION_DERIVATION',derivationKey:'stage29.evidenceChains'};if(prior)Object.assign(prior,record);else project.projectData.evidenceChains.push(record);", "const record={id,stage:29,createdAt:prior?.createdAt||now(),updatedAt:now(),active:true,fields,...fields,scope:currentScope(project),source:'APPLICATION_DERIVATION',derivationKey:'stage29.evidenceChains'};refreshRecordHashes(record,'evidenceChains');if(prior)Object.assign(prior,record);else project.projectData.evidenceChains.push(record);")
+          s=s.replace("const record={id,stage:28,createdAt:now(),active:true,fields,...fields,scope:currentScope(project),sha256:hash.sha256Value(fields),source:'APPLICATION_DERIVATION',derivationKey:'stage28.artifactIdentity'};project.projectData.artifactIdentities.push(record);", "const record={id,stage:28,createdAt:now(),active:true,fields,...fields,scope:currentScope(project),source:'APPLICATION_DERIVATION',derivationKey:'stage28.artifactIdentity'};refreshRecordHashes(record,'artifactIdentities');project.projectData.artifactIdentities.push(record);")
+          # Export helper for ingestion/store consistency.
+          s=replace_once(s,"clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,registerGeneratedPrompt,","clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,",'export hash helper')
+          p.write_text(s)
+
+          # ----- response-ingestion.js: lifecycle state is application-owned and must be hashed after mutation -----
+          p=Path('response-ingestion.js'); s=p.read_text()
+          s=s.replace("record.active=false;record.validity='SUPERSEDED';record.supersededBy=changeId;}","record.active=false;record.validity='SUPERSEDED';record.supersededBy=changeId;workflow.refreshRecordHashes(record,collection);}")
+          old="target.fields={...(target.fields||{}),...clone(canonical.fields)};Object.assign(target,target.fields);target.relationships={...(target.relationships||{}),...clone(canonical.relationships||{})};target.evidenceRefs=[...new Set([...(target.evidenceRefs||[]),...(canonical.evidenceRefs||[])])];target.contentSha256=hash.contentRecordSha256(target,schema.RECORD_SCHEMAS[collection].idField);target.recordSha256=hash.recordSha256(target);target.sha256=target.recordSha256;target.status='COMPLETED';"
+          new="target.fields={...(target.fields||{}),...clone(canonical.fields)};Object.assign(target,target.fields);target.relationships={...(target.relationships||{}),...clone(canonical.relationships||{})};target.evidenceRefs=[...new Set([...(target.evidenceRefs||[]),...(canonical.evidenceRefs||[])])];target.status='COMPLETED';target.completionState='COMPLETED';target.updatedAt=stamp;if(collection==='products'){target.fields.STATUS='COMPLETED';target.STATUS='COMPLETED';}workflow.refreshRecordHashes(target,collection);"
+          s=replace_once(s,old,new,'reserved lifecycle hashing')
+          # blocker path already recalculates hash; use shared helper for exact same definition.
+          s=s.replace("blocker.contentSha256=hash.contentRecordSha256(blocker,schema.RECORD_SCHEMAS.blockers.idField);blocker.recordSha256=hash.recordSha256(blocker);blocker.sha256=blocker.recordSha256;","workflow.refreshRecordHashes(blocker,'blockers');")
+          p.write_text(s)
+
+          # ----- project-store.js: actually verify persisted record digests when present -----
+          p=Path('project-store.js'); s=p.read_text()
+          old="if(record?.id&&fieldId&&String(record.id)!==fieldId)issues.push(`${collection} record ${id} contradicts its ${definition.idField}.`);"
+          new="if(record?.id&&fieldId&&String(record.id)!==fieldId)issues.push(`${collection} record ${id} contradicts its ${definition.idField}.`);if(record?.contentSha256&&String(record.contentSha256)!==String(hash.contentRecordSha256(record,definition.idField)))issues.push(`${collection} record ${id} contentSha256 does not match canonical content.`);if(record?.recordSha256&&String(record.recordSha256)!==String(hash.recordSha256(record)))issues.push(`${collection} record ${id} recordSha256 does not match the persisted canonical record.`);if(record?.recordSha256&&record?.sha256&&String(record.sha256)!==String(record.recordSha256))issues.push(`${collection} record ${id} sha256 does not mirror recordSha256.`);"
+          s=replace_once(s,old,new,'project record hash integrity')
+          p.write_text(s)
+
+          # ----- verify-full-cycle.mjs: prove the previously untested semantic boundaries -----
+          p=Path('verify-full-cycle.mjs'); s=p.read_text()
+          anchor="const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,hash=globalThis.closedLoopHash;"
+          extra="""\nif(schema.operationContract(10,'COMPLETE').agentWritableCollections.length)throw new Error('Stage 10 must not allow agent writes to application-frozen iteration/candidate records.');\nif(schema.operationContract(20,'COMPLETE').agentWritableCollections.length)throw new Error('Stage 20 must not allow agent writes to application-frozen baseline records.');\nif(JSON.stringify(schema.operationContract(21,'COMPLETE').agentWritableCollections)!==JSON.stringify(['products']))throw new Error('Stage 21 may update only the application-reserved product; artifact bytes are application-owned.');\nfor(const c of ['iterations','candidateFreezes','baselines','artifacts'])if(schema.RECORD_SCHEMAS[c].commitPolicy!==schema.COLLECTION_POLICIES.APPLICATION_DERIVED)throw new Error(`${c} must be application-derived.`);\nif(schema.RECORD_SCHEMAS.products.fieldDefinitions.GENERATED_ARTIFACT_INVENTORY.producer!==schema.PRODUCER.APPLICATION||schema.RECORD_SCHEMAS.products.fieldDefinitions.GENERATED_ARTIFACT_INVENTORY.valueType!=='STRING_ARRAY')throw new Error('Product artifact inventory must be an application-owned string array.');\n"""
+          s=replace_once(s,anchor,anchor+extra,'full-cycle authority assertions')
+          # Default run reservation path must derive candidate from the iteration; do not pass it manually.
+          s=replace_once(s,"const slots=engine.reserveRunBatch(p,{stage,iterationId,candidateId,count:10});","const slots=engine.reserveRunBatch(p,{stage,iterationId,count:10});for(const {runId,contextId} of slots){const run=engine.records(p,'runs').find(r=>engine.recordId(r,'runs')===runId),context=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===contextId);assert(engine.recordValue(run,'CANDIDATE_ID')===candidateId,`Run ${runId} did not derive the exact iteration candidate.`);assert(run.recordSha256===hash.recordSha256(run),`Run ${runId} reservation hash is stale.`);assert(context.recordSha256===hash.recordSha256(context),`Context ${contextId} reservation hash is stale.`);}", 'run reservation proof')
+          # Rehash after operator registration.
+          s=replace_once(s,"engine.registerFreshContext(p,{stage,externalContextIdentifier:`EXTERNAL-CONTEXT-${stage}-${i+1}`,operatorLabel:'FULL_CYCLE'});data(stage,","engine.registerFreshContext(p,{stage,externalContextIdentifier:`EXTERNAL-CONTEXT-${stage}-${i+1}`,operatorLabel:'FULL_CYCLE'});const fulfilled=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===contextId);assert(fulfilled.recordSha256===hash.recordSha256(fulfilled),`Context ${contextId} hash is stale after registration.`);data(stage,",'fresh context proof')
+          # Baseline exact candidate lineage.
+          s=replace_once(s,"const baselineId=rid('baselines');complete(20);","const baselineId=rid('baselines'),baseline=engine.recordsForCurrentScope(p,'baselines').at(-1);assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId===cand19,'Baseline did not preserve the exact unchanged candidate identity.');assert(engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId===iter19,'Baseline did not preserve the exact unchanged-confirmation iteration.');complete(20);",'baseline proof')
+          # Product response no longer claims application artifact inventory; actual bytes fill it. Also prove metadata/no-byte state cannot complete.
+          s=replace_once(s,"FAILURES:'NONE',GENERATED_ARTIFACT_INVENTORY:'ARTIFACT-PRODUCT'","FAILURES:'NONE'",'remove agent inventory claim')
+          s=replace_once(s,"const productBytes=new TextEncoder().encode('released-product-bytes');","assert(!engine.gate(21,p).complete,'Stage 21 completed before actual product bytes were persisted.');const productBytes=new TextEncoder().encode('released-product-bytes');",'pre-byte gate proof')
+          s=replace_once(s,"engine.registerArtifactBytes(p,{stage:21,artifactId:'ARTIFACT-PRODUCT',filename:'product.bin',mediaType:'application/octet-stream',byteSize:productBytes.byteLength,sha256:productSha,lineage:{productId}});complete(21);","engine.registerArtifactBytes(p,{stage:21,artifactId:'ARTIFACT-PRODUCT',filename:'product.bin',mediaType:'application/octet-stream',byteSize:productBytes.byteLength,sha256:productSha,lineage:{productId}});const completedProduct=engine.recordsForCurrentScope(p,'products').at(-1);assert(engine.recordValue(completedProduct,'STATUS')==='COMPLETED'&&completedProduct.completionState==='COMPLETED','Accepted reserved product did not transition to application-owned COMPLETED state.');assert(JSON.stringify(engine.recordValue(completedProduct,'GENERATED_ARTIFACT_INVENTORY'))===JSON.stringify(['ARTIFACT-PRODUCT']),'Product inventory was not derived from actual persisted bytes.');assert(completedProduct.recordSha256===hash.recordSha256(completedProduct),'Product hash is stale after artifact inventory update.');complete(21);",'post-byte proof')
+          # Generic current and historical record-integrity assertion before final output.
+          end_anchor="console.log(JSON.stringify({fullCycle:true,stagesCompleted:30"
+          idx=s.find(end_anchor)
+          if idx<0: raise SystemExit('full-cycle final console anchor not found')
+          integrity="""for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of p.projectData[collection]||[]){if(record.recordSha256)assert(record.recordSha256===hash.recordSha256(record),`${collection} ${engine.recordId(record,collection)} has a stale recordSha256.`);if(record.contentSha256)assert(record.contentSha256===hash.contentRecordSha256(record,definition.idField),`${collection} ${engine.recordId(record,collection)} has a stale contentSha256.`);}\n"""
+          s=s[:idx]+integrity+s[idx:]
+          p.write_text(s)
+          PY
+      - name: Run deterministic acceptance
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Remove repair workflow and commit passing tree
+        shell: bash
+        run: |
+          rm .github/workflows/final-integrity-authority-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js workflow-engine.js response-ingestion.js project-store.js verify-full-cycle.mjs .github/workflows/final-integrity-authority-repair.yml
+          git commit -m "Close final authority and canonical integrity gaps [repair-complete]"
+          git push origin HEAD:reliability/final-integrity-authority-20260826
