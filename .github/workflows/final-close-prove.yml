@@ -2,11 +2,13 @@ name: Prove final reliability close
 on:
   push:
     branches: [reliability/final-close-20260826]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
   prove:
-    if: ${{ !contains(github.event.head_commit.message, '[final-close-complete]') }}
+    if: ${{ !contains(github.event.head_commit.message || '', '[final-close-complete]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
