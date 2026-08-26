@@ -1,0 +1,30 @@
+name: PR6 Stage 18-19 lifecycle probe
+on:
+  push:
+    branches: [practical-100/pr6-finalize]
+permissions:
+  contents: write
+jobs:
+  lifecycle:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python .pr6-stage18-19-patch.py
+      - run: |
+          node --check workflow-engine.js
+          node --check verify-full-cycle.mjs
+          node verify-complete.mjs
+          node verify-ingestion.mjs
+          node verify-full-cycle.mjs
+      - name: Commit proved changes and clean probe
+        run: |
+          rm .pr6-stage18-19-patch.py .github/workflows/pr6-stage18-19-probe.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'PR 6: prove convergence and unchanged confirmation'
+          git push
