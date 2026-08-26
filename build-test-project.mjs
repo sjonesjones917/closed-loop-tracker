@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
-import './build-test-project-impl.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
