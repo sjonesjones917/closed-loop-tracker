@@ -14,15 +14,21 @@ function typedValue(def,name){
   if(def.enumValues?.length)return def.enumValues[0];
   switch(def.valueType){case 'BOOLEAN':return true;case 'INTEGER':return 1;case 'NUMBER':return 1;case 'STRING_ARRAY':return [`verified-${name.toLowerCase()}`];case 'REFERENCE_ARRAY':return [];case 'OBJECT':return {};default:return `verified-${name.toLowerCase()}`;}
 }
+function coerceValue(def,value){
+  if(value===null||value===undefined)return value;
+  switch(def?.valueType){case 'STRING':case 'REFERENCE':return String(value);case 'INTEGER':return Number.parseInt(value,10);case 'NUMBER':return Number(value);case 'BOOLEAN':return Boolean(value);case 'STRING_ARRAY':case 'REFERENCE_ARRAY':return Array.isArray(value)?value.map(String):[String(value)];default:return value;}
+}
 function requiredAgentFields(collection,overrides={}){
   const def=schema.RECORD_SCHEMAS[collection],fields={};
   for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=typedValue(def.fieldDefinitions[name],name);
-  return {...fields,...overrides};
+  for(const [name,value] of Object.entries(overrides))fields[name]=coerceValue(def.fieldDefinitions[name],value);
+  return fields;
 }
 function stageData(stage,overrides={}){
   const data={};
   for(const name of schema.STAGE_CONTRACTS[stage].allowedStageData){const def=schema.STAGE_FIELDS[stage][name];if(def.producer===schema.PRODUCER.AGENT)data[name]=typedValue(def,name);}
-  return {...data,...overrides};
+  for(const [name,value] of Object.entries(overrides))data[name]=coerceValue(schema.STAGE_FIELDS[stage][name],value);
+  return data;
 }
 function recordId(collection,index=-1){const r=engine.records(p,collection).at(index);return r?engine.recordId(r,collection):null;}
 function savePrompt(stage,options={}){const pr=prompts.buildPromptRecord(stage,p,options);p.projectData.generatedPrompts.push({...pr,generatedAt:new Date().toISOString()});p.stages[stage].currentPromptId=pr.instructionId;return pr;}
