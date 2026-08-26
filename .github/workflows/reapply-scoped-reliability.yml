@@ -1,0 +1,60 @@
+name: Reapply verified scoped reliability patch
+on:
+  push:
+    branches: [reliability/scoped-refinement-operation-isolation-current]
+permissions:
+  contents: write
+jobs:
+  reapply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/scoped-refinement-operation-isolation-current
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply only the eight previously verified permanent file changes
+        run: |
+          git fetch origin reliability/scoped-refinement-operation-isolation-20260826
+          git diff d77319979bf3090710509a94ba4967a033ed6edc 7d9b0e9b3ce9e16d8f29821f8e62481523c8ca19 -- \
+            index.html prompt-engine.js response-ingestion.js verify-complete.mjs verify-ingestion.mjs verify-prompt-semantics.mjs workflow-engine.js workflow-schema.js \
+            > /tmp/scoped.patch
+          test -s /tmp/scoped.patch
+          git apply --3way --index /tmp/scoped.patch
+      - name: Verify exact current-main integration
+        run: |
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node --check test-fixtures.mjs
+          node --check verify-hash.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit current-main repair only
+        run: |
+          rm .github/workflows/reapply-scoped-reliability.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          test ! -e .github/workflows/reapply-scoped-reliability.yml
+          git commit -m 'Isolate operation responses and scope accepted-result refinement'
+          git push origin HEAD:reliability/scoped-refinement-operation-isolation-current
