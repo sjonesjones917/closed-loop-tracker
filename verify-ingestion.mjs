@@ -237,3 +237,15 @@ console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,idempotentAc
   const captured=ingestion.captureRaw(p,{stage:17,text:'{}',promptRecord:prompt,contextId:'MISLEADING-CALLER-CONTEXT'});
   if(captured.rawRecord.runId!=='RUN-SCOPE-001'||captured.rawRecord.contextId!=='CONTEXT-SCOPE-001'||captured.rawRecord.iteration!=='ITERATION-SCOPE-001')throw new Error('Raw-response audit identity is not bound to the controlling prompt scope.');
 }
+
+
+// Accepted BLOCKED canonical blockers must carry a hash of the complete stored record.
+{
+  let p=project('JOB-BLOCKER-RECORD-HASH'),stage=2,pr=savePrompt(p,stage);
+  const blocked={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'blocked-1',kind:'MISSING_APPLICATION_CONTEXT',description:'Required application context is unavailable.',whyBlocking:'The current stage cannot proceed reliably.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(blocked),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Blocked-response regression fixture is invalid: '+JSON.stringify(prepared.validation.issues));
+  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
+  const blocker=p.projectData.blockers.at(-1),expected=globalThis.closedLoopHash.recordSha256(blocker);
+  if(!blocker||blocker.recordSha256!==expected||blocker.sha256!==expected)throw new Error('Accepted BLOCKED canonical blocker does not carry a recomputable complete-record hash.');
+}
