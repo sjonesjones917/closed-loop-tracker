@@ -17,6 +17,14 @@ function baseProject(){
   return p;
 }
 function arraysEqual(a,b){return JSON.stringify([...a].sort())===JSON.stringify([...b].sort());}
+
+const forbiddenProcedureSemantics=[
+  [/Assign and preserve this job’s unique JOB_ID/i,'AGENT_ASSIGNS_JOB_ID'],[/Create SOURCE-SET-vN/i,'AGENT_CREATES_SOURCE_SET'],[/Each REQ_ID must express/i,'AGENT_COORDINATES_REQ_ID'],[/Calculate mandatory requirement-to-test coverage exactly/i,'AGENT_CALCULATES_COVERAGE'],[/Assign CANDIDATE_ID and ITERATION_ID/i,'AGENT_ASSIGNS_CANDIDATE'],[/Assign BASELINE_ID/i,'AGENT_ASSIGNS_BASELINE'],[/Assign PRODUCT_ID, PRODUCT_VERSION/i,'AGENT_ASSIGNS_PRODUCT'],[/produce exactly one determination/i,'AGENT_SETS_RELEASE'],[/Determine convergence.*Calculate mandatory requirement coverage/i,'AGENT_CALCULATES_CONVERGENCE']
+];
+for(const [pattern,code] of forbiddenProcedureSemantics)for(const [stage,text] of Object.entries(prompts.procedures))if(pattern.test(text))throw new Error(`Stage ${stage} prompt authority contradiction: ${code}`);
+const requiredProcedureSemantics={1:['application-assigned JOB_ID','implementation-ready specification'],2:['optional search-breadth guidance','application assigns SOURCE_ID'],6:['application assigns TEST_ID','calculates mandatory requirement-to-test coverage'],10:['application assigns CANDIDATE_ID and ITERATION_ID'],12:['REQ_ID × RUN_ID × TEST_ID'],15:['Do not claim post-correction success'],18:['application calculates requirement coverage'],20:['Human authority authorizes the baseline','application assigns BASELINE_ID'],21:['implementation-ready specification','application reserves PRODUCT_ID'],27:['Do not set a release state','application alone evaluates'],28:['application performs the authoritative immediate pre-release byte comparison'],29:['application constructs the complete evidence graph'],30:['application maintains append-only defect and regression history']};
+for(const [stage,phrases] of Object.entries(requiredProcedureSemantics))for(const phrase of phrases)if(!prompts.procedures[Number(stage)].includes(phrase))throw new Error(`Stage ${stage} missing required prompt semantic: ${phrase}`);
+
 function semanticIssues(record){
   const issues=[];
   const op=schema.operationContract(record.stage,record.operation);
@@ -76,6 +84,13 @@ const mutants=[
   {...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
+
+
+{
+  const p=baseProject();p.projectData.responseValidations.push({validationId:'VALIDATION-SCOPED',rawResponseId:'RAW-SCOPED',stage:17,operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'},valid:false,issues:[{code:'MISSING_REQUIRED_FIELD',path:'/records/runs/0/fields/COMPLETE_OUTPUT',message:'Complete output is required.'}]});
+  const r=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-000001',contextId:'CONTEXT-000001'}});
+  if(!r.prompt.includes('VALIDATION-SCOPED')||!r.prompt.includes('Complete output is required.'))throw new Error('Scoped validation failure is not included in replacement prompt context.');
+}
 
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
 
