@@ -1,0 +1,51 @@
+name: Apply semantic closure and verify
+on:
+  push:
+    branches:
+      - practical-100/final-semantic-closure-main
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/final-semantic-closure-main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply semantic closure
+        run: node .semantic-closure.mjs
+      - name: Syntax and deterministic verification
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit verified source only
+        run: |
+          rm -f .semantic-closure.mjs
+          rm -f .github/workflows/apply-semantic-closure.yml
+          rm -f .github/workflows/final-semantic-closure.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "Close remaining semantic reliability gaps"
+          git push origin HEAD:practical-100/final-semantic-closure-main
