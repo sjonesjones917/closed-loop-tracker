@@ -1,0 +1,127 @@
+name: Apply final semantic closure
+on:
+  push:
+    branches: [reliability/final-control-evidence-stage29-20260826]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-control-evidence-stage29-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact minimal semantic corrections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          def rep(path,old,new,label):
+              p=Path(path);s=p.read_text();n=s.count(old)
+              if n!=1: raise SystemExit(f'{label}: expected 1 match, got {n}')
+              p.write_text(s.replace(old,new,1))
+
+          # Typed optional Boolean control flags. Omission retains the existing fail-safe default; supplied values must be actual JSON booleans.
+          rep('response-ingestion.js',
+              "    if(!/^[0-9a-f]{64}$/.test(claimedHash))issues.push(issue('INVALID_ATTACHMENT_SHA256',`${path}/sha256`,'sha256 must be a 64-character hexadecimal SHA-256 digest.'));\n    const byName=",
+              "    if(!/^[0-9a-f]{64}$/.test(claimedHash))issues.push(issue('INVALID_ATTACHMENT_SHA256',`${path}/sha256`,'sha256 must be a 64-character hexadecimal SHA-256 digest.'));\n    if(attachment.required!==undefined&&typeof attachment.required!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/required`,'required must be BOOLEAN when supplied.'));\n    const byName=",
+              'attachment required boolean')
+          rep('response-ingestion.js',
+              "    if(!Array.isArray(request.allowedValues))issues.push(issue('INVALID_ARRAY',`${path}/allowedValues`,'allowedValues must be an array.'));\n    for(const name of safe(request.affectedStageFields))",
+              "    if(!Array.isArray(request.allowedValues))issues.push(issue('INVALID_ARRAY',`${path}/allowedValues`,'allowedValues must be an array.'));\n    if(request.blocking!==undefined&&typeof request.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));\n    for(const name of safe(request.affectedStageFields))",
+              'question blocking boolean')
+          rep('response-ingestion.js',
+              "if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));});",
+              "if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));if(item.blocking!==undefined&&typeof item.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));});",
+              'unresolved blocking boolean')
+
+          # Canonicalize evidence once for every accepted response type, including control dispositions.
+          rep('response-ingestion.js',
+              "function commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accepted after operator review.'}={}){",
+              "function commitEvidence(project,proposal){const ids=[];for(const evidence of safe(proposal.evidence)){if(project.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);project.projectData.evidenceRecords.push(clone(evidence));ids.push(evidence.id);}return ids;}\nfunction commit(project,proposalId,{operator='HUMAN_OPERATOR',reviewNote='Accepted after operator review.'}={}){",
+              'commitEvidence helper')
+          old="if(proposal.responseType!=='DATA_PROPOSAL'){let type,status,details={};if(proposal.responseType==='HUMAN_INPUT_REQUIRED'){type='ACCEPTED_HUMAN_QUESTION_SET';status='QUESTIONS_CREATED';for(const request of proposal.humanInputRequests){next.projectData.humanInputRequests.push({requestId:workflow.allocateInfrastructureId(next,'HUMAN-INPUT-REQUEST','humanInputRequests'),temporaryKey:request.temporaryKey,jobId:next.job.JOB_ID,stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),question:request.question,whyRequired:request.whyRequired,affectedStageFields:clone(request.affectedStageFields),affectedRecords:clone(request.affectedRecords),answerType:request.answerType,allowedValues:clone(request.allowedValues),blocking:request.blocking!==false,status:'OPEN',createdAt:stamp});}}else if(proposal.responseType==='BLOCKED'){type='ACCEPTED_BLOCKER_EVENT';status='BLOCKER_ACCEPTED';const blockerIds=[];for(const item of proposal.unresolved.filter(x=>x.blocking!==false)){const id=workflow.allocateId(next,'blockers');const fields={BLOCKER_ID:id,MISSING_ITEM_TYPE:item.kind,MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:item.description,AFFECTED_REQUIREMENTS:item.affectedRecords,AFFECTED_TESTS:[],AFFECTED_ARTIFACTS:item.affectedStageFields,WHY_WORK_CANNOT_CONTINUE:item.whyBlocking,ATTEMPTED_RESOLUTIONS:'NONE',DOWNSTREAM_WORK_STOPPED:`STAGE ${String(stage).padStart(2,'0')}`,OWNER:'UNASSIGNED',STATUS:'OPEN',RESOLUTION_EVIDENCE:'NONE',CLOSURE:'OPEN',REEVALUATION:'REQUIRED',REQUIRED_REVALIDATION:'REQUIRED'};const blocker={id,stage,active:true,fields,...fields,source:'APPLICATION_DISPOSITION',rawResponseId:proposal.rawResponseId};blocker.contentSha256=hash.contentRecordSha256(blocker,'BLOCKER_ID');blocker.recordSha256=hash.recordSha256(blocker);blocker.sha256=blocker.recordSha256;next.projectData.blockers.push(blocker);blockerIds.push(id);}details.blockerIds=blockerIds;}else{type='ACCEPTED_EXECUTION_FAILURE';status='EXECUTION_FAILURE_ACCEPTED';const failureId=workflow.allocateInfrastructureId(next,'EXECUTION-FAILURE','executionFailures');next.projectData.executionFailures.push({failureId,stage,jobId:next.job.JOB_ID,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),status:'OPEN',unresolved:clone(proposal.unresolved),warnings:clone(proposal.warnings),createdAt:stamp});details.failureId=failureId;}"
+          new="if(proposal.responseType!=='DATA_PROPOSAL'){const evidenceIds=commitEvidence(next,proposal);let type,status,details={evidenceIds};if(proposal.responseType==='HUMAN_INPUT_REQUIRED'){type='ACCEPTED_HUMAN_QUESTION_SET';status='QUESTIONS_CREATED';for(const request of proposal.humanInputRequests){next.projectData.humanInputRequests.push({requestId:workflow.allocateInfrastructureId(next,'HUMAN-INPUT-REQUEST','humanInputRequests'),temporaryKey:request.temporaryKey,jobId:next.job.JOB_ID,stage,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),question:request.question,whyRequired:request.whyRequired,affectedStageFields:clone(request.affectedStageFields),affectedRecords:clone(request.affectedRecords),answerType:request.answerType,allowedValues:clone(request.allowedValues),blocking:request.blocking!==false,status:'OPEN',evidenceIds:clone(evidenceIds),createdAt:stamp});}}else if(proposal.responseType==='BLOCKED'){type='ACCEPTED_BLOCKER_EVENT';status='BLOCKER_ACCEPTED';const blockerIds=[];for(const item of proposal.unresolved.filter(x=>x.blocking!==false)){const id=workflow.allocateId(next,'blockers');const fields={BLOCKER_ID:id,MISSING_ITEM_TYPE:item.kind,MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:item.description,AFFECTED_REQUIREMENTS:item.affectedRecords,AFFECTED_TESTS:[],AFFECTED_ARTIFACTS:item.affectedStageFields,WHY_WORK_CANNOT_CONTINUE:item.whyBlocking,ATTEMPTED_RESOLUTIONS:'NONE',DOWNSTREAM_WORK_STOPPED:`STAGE ${String(stage).padStart(2,'0')}`,OWNER:'UNASSIGNED',STATUS:'OPEN',RESOLUTION_EVIDENCE:evidenceIds.length?evidenceIds:'NONE',CLOSURE:'OPEN',REEVALUATION:'REQUIRED',REQUIRED_REVALIDATION:'REQUIRED'};const blocker={id,stage,active:true,fields,...fields,evidenceRefs:clone(evidenceIds),source:'APPLICATION_DISPOSITION',rawResponseId:proposal.rawResponseId};blocker.contentSha256=hash.contentRecordSha256(blocker,'BLOCKER_ID');blocker.recordSha256=hash.recordSha256(blocker);blocker.sha256=blocker.recordSha256;next.projectData.blockers.push(blocker);blockerIds.push(id);}details.blockerIds=blockerIds;}else{type='ACCEPTED_EXECUTION_FAILURE';status='EXECUTION_FAILURE_ACCEPTED';const failureId=workflow.allocateInfrastructureId(next,'EXECUTION-FAILURE','executionFailures');next.projectData.executionFailures.push({failureId,stage,jobId:next.job.JOB_ID,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),status:'OPEN',unresolved:clone(proposal.unresolved),warnings:clone(proposal.warnings),evidenceIds:clone(evidenceIds),createdAt:stamp});details.failureId=failureId;}"
+          rep('response-ingestion.js',old,new,'control disposition evidence')
+          rep('response-ingestion.js',
+              "if(receipt){receipt.acceptedCanonicalChangeId='NONE';receipt.completionState=type;receipt.nextRequiredVerificationStage=",
+              "if(receipt){receipt.acceptedCanonicalChangeId='NONE';receipt.completionState=type;receipt.evidenceIds=clone(evidenceIds);receipt.nextRequiredVerificationStage=",
+              'receipt control evidence')
+          rep('response-ingestion.js',
+              "  const committedRecordIds=[],reservedTargetSnapshots=[];for(const evidence of proposal.evidence){if(next.projectData.evidenceRecords.some(record=>workflow.recordId(record,'evidenceRecords')===evidence.id))throw new Error(`Evidence ID collision: ${evidence.id}.`);next.projectData.evidenceRecords.push(clone(evidence));committedRecordIds.push(evidence.id);}",
+              "  const committedRecordIds=commitEvidence(next,proposal),reservedTargetSnapshots=[];",
+              'data evidence helper')
+
+          # Stage 29 follows the exact requirement trace and actual product execution identity.
+          old="function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project);const instruction=recordsForCurrentScope(project,'instructions').at(-1);const product=recordsForCurrentScope(project,'products').at(-1);const release=recordsForCurrentScope(project,'releaseRecords').at(-1);const identities=recordsForCurrentScope(project,'artifactIdentities');const traces=recordsForCurrentScope(project,'instructionTraces');const created=[];for(const requirement of requirements){const reqId=requirementId(requirement);const sourceId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||'');const trace=traces.find(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===reqId);const tests=applicableTests(project,requirement);"
+          new="function constructEvidenceChains(project){ensureShape(project);const requirements=mandatoryRequirements(project);const instructions=recordsForCurrentScope(project,'instructions');const product=recordsForCurrentScope(project,'products').at(-1),productId=recordId(product,'products'),executionId=String(recordValue(product,'EXECUTION_ID')||'').trim();const release=recordsForCurrentScope(project,'releaseRecords').at(-1);const identities=recordsForCurrentScope(project,'artifactIdentities');const traces=recordsForCurrentScope(project,'instructionTraces');const created=[];for(const requirement of requirements){const reqId=requirementId(requirement);const sourceId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||'');const trace=traces.find(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===reqId),instructionId=String(recordValue(trace,'INSTRUCTION_ID')||trace?.relationships?.INSTRUCTION_ID||'').trim(),instruction=instructionId?instructions.find(r=>recordId(r,'instructions')===instructionId):null;const tests=applicableTests(project,requirement);"
+          rep('workflow-engine.js',old,new,'stage29 exact inputs')
+          rep('workflow-engine.js',
+              "if(!instruction)missing.push('INSTRUCTION');if(!product)missing.push('EXECUTION_OR_PRODUCT');",
+              "if(!instruction)missing.push('INSTRUCTION');if(!productId)missing.push('PRODUCT');if(productId&&!executionId)missing.push('EXECUTION');",
+              'stage29 missing identities')
+          rep('workflow-engine.js',
+              "INSTRUCTION_ID:recordId(instruction,'instructions')||'UNKNOWN',EXECUTION_ID:recordId(product,'products')||'UNKNOWN',PRODUCT_ELEMENT:recordId(product,'products')||'UNKNOWN'",
+              "INSTRUCTION_ID:instruction?instructionId:'UNKNOWN',EXECUTION_ID:executionId||'UNKNOWN',PRODUCT_ELEMENT:productId||'UNKNOWN'",
+              'stage29 exact identity fields')
+
+          # Runtime semantics changed: rotate all module URLs together.
+          p=Path('index.html');s=p.read_text();old='runtime-scoped-reliability-20260826-r1';n=s.count(old)
+          if n!=8: raise SystemExit(f'runtime token: expected 8 matches, got {n}')
+          p.write_text(s.replace(old,'runtime-final-semantic-closure-20260826-r2'))
+
+          # Focused regressions appended to existing suites.
+          p=Path('verify-ingestion.mjs');s=p.read_text().rstrip()
+          s += r'''
+
+// Control flags are typed, and accepted control-response evidence is canonical rather than discarded.
+{
+ const make=(id)=>{const p=project(id),pr=savePrompt(p,1);return {p,pr};};
+ {const {p,pr}=make('JOB-BOOL-CONTROL');const e=validEnvelope(p,1,pr);e.responseType='HUMAN_INPUT_REQUIRED';e.stageData={};e.records={};e.evidence=[];e.humanInputRequests=[{temporaryKey:'qbool',question:'Need value?',whyRequired:'Human authority',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:'false'}];const x=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});if(x.validation.valid||!x.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'))throw new Error('String blocking flag was accepted as Boolean.');negativeCount++;}
+ for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']){let {p,pr}=make(`JOB-CONTROL-EVIDENCE-${responseType}`);const ev={temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'control evidence',location:'fixture',content:'preserve this control evidence'};const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType,humanInputRequests:[],stageData:{},records:{},evidence:[ev],unresolved:[],warnings:[],attachments:[]};if(responseType==='HUMAN_INPUT_REQUIRED')e.humanInputRequests=[{temporaryKey:'q',question:'Exact value?',whyRequired:'Human authority required',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];else e.unresolved=[{temporaryKey:'u',kind:responseType==='BLOCKED'?'MISSING_HUMAN_INPUT':'TOOL_FAILURE',description:'Cannot proceed',whyBlocking:'Required condition unavailable',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],blocking:true}];const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});if(!prepared.validation.valid)throw new Error(`${responseType} evidence fixture invalid: ${JSON.stringify(prepared.validation.issues)}`);const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});const ids=committed.disposition?.evidenceIds||[];if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);}
+}
+'''
+          p.write_text(s+'\n')
+
+          p=Path('verify-full-cycle.mjs');s=p.read_text()
+          needle="data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);"
+          replacement="const requirementTrace=engine.recordsForCurrentScope(p,'instructionTraces').find(record=>String(engine.recordValue(record,'REQ_ID'))===reqId),tracedInstructionId=String(engine.recordValue(requirementTrace,'INSTRUCTION_ID')||requirementTrace?.relationships?.INSTRUCTION_ID||'');assert(tracedInstructionId,'Instruction trace lost canonical instruction identity.');const tracedInstruction=engine.recordsForCurrentScope(p,'instructions').find(record=>engine.recordId(record,'instructions')===tracedInstructionId);assert(tracedInstruction,'Traced instruction missing.');const decoyInstruction=JSON.parse(JSON.stringify(tracedInstruction));decoyInstruction.id=decoyInstruction.recordId=decoyInstruction.fields.INSTRUCTION_ID=decoyInstruction.INSTRUCTION_ID='PRODUCTION-INSTRUCTION-DECOY';decoyInstruction.createdAt='9999-12-31T23:59:59.999Z';decoyInstruction.contentSha256=hash.contentRecordSha256(decoyInstruction,'INSTRUCTION_ID');decoyInstruction.recordSha256=hash.recordSha256(decoyInstruction);decoyInstruction.sha256=decoyInstruction.recordSha256;p.projectData.instructions.push(decoyInstruction);data(29,{stageData:{EVIDENCE_REPOSITORY_LOCATION:'Canonical project',REPRODUCTION_INSTRUCTIONS:'Follow IDs',CONTROLLING_EVIDENCE:'Canonical evidence'}});engine.constructEvidenceChains(p);const evidenceChain=engine.recordsForCurrentScope(p,'evidenceChains').find(r=>String(engine.recordValue(r,'REQ_ID'))===reqId);"
+          if s.count(needle)!=1: raise SystemExit('stage29 test insertion mismatch')
+          s=s.replace(needle,replacement,1)
+          anchor="assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');complete(29);"
+          extra="assert(Array.isArray(engine.recordValue(evidenceChain,'TEST_RESULT_ID'))&&engine.recordValue(evidenceChain,'TEST_RESULT_ID').includes(deterministicResultId),'Evidence chain ignored deterministic TEST_ID -> REQ_ID evidence.');const productionExecutionId=String(engine.recordValue(product,'EXECUTION_ID')||'');assert(engine.recordValue(evidenceChain,'INSTRUCTION_ID')===tracedInstructionId&&engine.recordValue(evidenceChain,'INSTRUCTION_ID')!=='PRODUCTION-INSTRUCTION-DECOY','Stage 29 did not preserve the traced instruction identity.');assert(productionExecutionId&&productionExecutionId!==productId,'Fixture requires distinct execution and product identities.');assert(engine.recordValue(evidenceChain,'EXECUTION_ID')===productionExecutionId,'Stage 29 substituted product identity for execution identity.');assert(engine.recordValue(evidenceChain,'PRODUCT_ELEMENT')===productId,'Stage 29 lost product identity.');complete(29);"
+          if s.count(anchor)!=1: raise SystemExit('stage29 assertions mismatch')
+          p.write_text(s.replace(anchor,extra,1))
+          PY
+      - name: Verify complete source and browser lifecycle
+        run: |
+          node --check response-ingestion.js
+          node --check workflow-engine.js
+          node --check verify-ingestion.mjs
+          node --check verify-full-cycle.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only verified permanent changes
+        run: |
+          rm .github/workflows/apply-final-semantic-closure.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Preserve control evidence and exact final trace identities'
+          git push origin HEAD:reliability/final-control-evidence-stage29-20260826
