@@ -24,6 +24,7 @@ jobs:
           python3 .github/current-main-identity-patch.py
           python3 .github/current-main-storage-patch.py
           python3 .github/current-main-test-patch.py
+          python3 .github/current-main-cache-token.py
       - name: Syntax
         run: |
           node --check workflow-engine.js
@@ -52,7 +53,7 @@ jobs:
         run: |
           git config user.name "closed-loop-reliability-bot"
           git config user.email "closed-loop-reliability-bot@users.noreply.github.com"
-          git rm .github/current-main-engine-patch.py .github/current-main-identity-patch.py .github/current-main-storage-patch.py .github/current-main-test-patch.py .github/workflows/current-main-boundary-verify.yml
-          git add workflow-engine.js project-store.js app-core.js verify-complete.mjs verify-browser-extra.mjs
+          git rm .github/current-main-engine-patch.py .github/current-main-identity-patch.py .github/current-main-storage-patch.py .github/current-main-test-patch.py .github/current-main-cache-token.py .github/workflows/current-main-boundary-verify.yml
+          git add workflow-engine.js project-store.js app-core.js index.html verify-complete.mjs verify-browser-extra.mjs
           git commit -m "Close remaining current-state reliability boundaries"
           git push origin HEAD:reliability/current-main-final-boundaries-20260826
