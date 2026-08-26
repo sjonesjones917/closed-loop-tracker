@@ -23,7 +23,7 @@ jobs:
         run: |
           git fetch origin practical-100/pr6-final-proof-current
           git checkout origin/practical-100/pr6-final-proof-current -- test-fixtures.mjs verify-full-cycle.mjs .github/workflows/pages.yml
-      - name: Apply only confirmed scope and candidate-freeze repairs
+      - name: Apply only confirmed runtime repairs
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -52,6 +52,52 @@ jobs:
           block=block.replace('stage:10','stage:Number(stage)')
           block=block.replace('scope:currentScope(project)','scope:{...currentScope(project),iterationId,candidateId}',1)
           s=s[:a]+block+s[b:]
+          old="""    case 2:
+      requireAccepted();requireCount('sources',1,'At least one inspected independent external governing source is required.');
+      for(const source of collection('sources'))reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
+      if(collection('sourceConflicts').some(record=>['UNRESOLVED','BLOCKED','UNKNOWN','OPEN'].includes(upper(recordValue(record,'RESOLUTION_STATUS')))))reasons.push('An external-source conflict remains unresolved or blocked.');
+      break;
+    case 3:{
+      requireAccepted();requireCount('research',1);
+      const sourceIds=all('sources').map(record=>recordId(record,'sources'));
+      const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')));
+      const missing=sourceIds.filter(id=>!researched.has(id));
+      if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);
+      break;
+    }
+"""
+          new="""    case 2:{
+      requireAccepted();
+      const stageData=project.stages[2].agentData||{};
+      const determination=upper(stageData.EXTERNAL_SOURCE_APPLICABILITY_DETERMINATION);
+      const sources=collection('sources');
+      if(sources.length){
+        if(determination!=='APPLICABLE_EXTERNAL_SOURCE')reasons.push('Stage 02 has source records but the applicability determination is not APPLICABLE_EXTERNAL_SOURCE.');
+        for(const source of sources)reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
+      }else{
+        if(determination!=='NO_APPLICABLE_EXTERNAL_SOURCE')reasons.push('Stage 02 must establish an inspected external source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination.');
+        const evidence=String(stageData.NO_APPLICABLE_EXTERNAL_SOURCE_EVIDENCE||'').trim();
+        if(!evidence||['NONE','UNKNOWN','NOT APPLICABLE'].includes(upper(evidence)))reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE requires exact supporting evidence.');
+      }
+      if(collection('sourceConflicts').some(record=>['UNRESOLVED','BLOCKED','UNKNOWN','OPEN'].includes(upper(recordValue(record,'RESOLUTION_STATUS')))))reasons.push('An external-source conflict remains unresolved or blocked.');
+      break;
+    }
+    case 3:{
+      requireAccepted();
+      const noExternalSource=upper(project.stages[2].agentData?.EXTERNAL_SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
+      const sourceIds=recordsForCurrentScope(project,'sources').map(record=>recordId(record,'sources'));
+      const research=collection('research');
+      if(!sourceIds.length&&!noExternalSource)reasons.push('Stage 03 cannot proceed without current Stage 02 sources unless Stage 02 established NO_APPLICABLE_EXTERNAL_SOURCE.');
+      if(sourceIds.length&&!research.length)reasons.push('Current Stage 02 sources require current Stage 03 research records.');
+      const researched=new Set(research.map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')));
+      const missing=sourceIds.filter(id=>!researched.has(id));
+      if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);
+      break;
+    }
+"""
+          if old not in s:
+              raise SystemExit('Stage 2/3 gate target not found')
+          s=s.replace(old,new,1)
           p.write_text(s)
           PY
       - name: Remove transport and integration scaffolding
