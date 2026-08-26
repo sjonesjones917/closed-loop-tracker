@@ -108,6 +108,9 @@ ${show(j.SUPPLIED_MATERIALS_INVENTORY)}
 USER-SUPPLIED KNOWN AUTHORITY (classification preserved; do not automatically relabel as external authority):
 ${show(j.KNOWN_AUTHORITATIVE_SOURCES)}
 
+DESIRED OR SUGGESTED SOURCE COUNT (search target only; never authority to invent sources):
+${show(j.DESIRED_OR_SUGGESTED_SOURCE_COUNT)}
+
 AVAILABLE TOOLS:
 ${show(j.AVAILABLE_TOOLS)}
 

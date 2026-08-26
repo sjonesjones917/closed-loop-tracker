@@ -119,6 +119,15 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 }
 
 
+// Multi-operation correction keeps independent run executions but invalidates dependent later operations.
+{
+  const p=project('JOB-OP-INVALIDATION');p.projectData.acceptedChanges.push(
+    {changeId:'RUN-A',rawResponseId:'RAW-A',proposalId:'P-A',stage:17,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_RUN',scope:{runId:'RUN-1'}},
+    {changeId:'RUN-B',rawResponseId:'RAW-B',proposalId:'P-B',stage:17,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'EXECUTE_RUN',scope:{runId:'RUN-2'}},
+    {changeId:'VERIFY-A',rawResponseId:'RAW-V',proposalId:'P-V',stage:17,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'VERIFY',scope:{}}
+  );p.projectData.responseProposals.push({proposalId:'P-A',stage:17,canonicalRecords:{}},{proposalId:'P-B',stage:17,canonicalRecords:{}},{proposalId:'P-V',stage:17,canonicalRecords:{}});engine.invalidateAcceptedResponse(p,{stage:17,rawResponseId:'RAW-A',reason:'Correct run 1.'});if(!p.projectData.acceptedChanges.find(x=>x.changeId==='RUN-A').invalidatedBy)throw new Error('Selected run response was not invalidated.');if(p.projectData.acceptedChanges.find(x=>x.changeId==='RUN-B').invalidatedBy)throw new Error('Independent run response was unnecessarily invalidated.');if(!p.projectData.acceptedChanges.find(x=>x.changeId==='VERIFY-A').invalidatedBy)throw new Error('Dependent Stage 17 verification was not invalidated.');
+}
+
 // Final operator-path audit: run reservation derives candidate; scope overrides are exact; accepted-response invalidation removes same-stage authority.
 {
   const p=project('JOB-FINAL-OPERATOR');p.job.CURRENT_ITERATION='ITERATION-OP';const it=record('iterations',17,{CANDIDATE_ID:'CANDIDATE-OP',STATUS:'FROZEN'},'ITERATION-OP');it.scope={...engine.currentScope(p),iterationId:'ITERATION-OP',candidateId:'CANDIDATE-OP'};p.projectData.iterations.push(it);const slots=engine.reserveRunBatch(p,{stage:17,count:10});assert(slots.length===10&&p.projectData.runs.every(r=>engine.recordValue(r,'CANDIDATE_ID')==='CANDIDATE-OP'),'Run reservation did not derive the frozen candidate.');const scoped=prompts.scopeFor(17,p,{iterationId:'ITERATION-X',candidateId:'CANDIDATE-X',runId:'RUN-X',contextId:'CONTEXT-X'});assert(scoped.iterationId==='ITERATION-X'&&scoped.candidateId==='CANDIDATE-X'&&scoped.runId==='RUN-X'&&scoped.contextId==='CONTEXT-X','Prompt scope overrides were ignored.');
