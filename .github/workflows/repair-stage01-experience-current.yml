@@ -1,0 +1,44 @@
+name: One-time current-main Stage 01 clarification proof
+on:
+  push:
+    branches:
+      - reliability/stage01-clarification-experience-current-20260826
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply only Stage 01 clarification experience correction
+        run: |
+          node .repair-stage01-experience.mjs
+          rm -f .repair-stage01-experience.mjs .github/workflows/repair-stage01-experience-current.yml
+      - name: Verify exact responsible-layer correction
+        run: |
+          node --check prompt-engine.js
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+      - name: Commit only verified permanent files
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs index.html .repair-stage01-experience.mjs .github/workflows/repair-stage01-experience-current.yml
+          git diff --cached --quiet && exit 1
+          git commit -m "Make Stage 01 clarification human-readable and fail closed"
+          git push origin HEAD:reliability/stage01-clarification-experience-current-20260826
