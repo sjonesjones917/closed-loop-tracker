@@ -50,7 +50,7 @@ function contextFor(stage,state){
  const parts=[];
  if(stage>1){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:state.stages[stage-1].derivedData||{}}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
  const open=(state?.projectData?.blockers||[]).filter(x=>!x.invalidatedBy&&!['CLOSED','RESOLVED','RETIRED'].includes(String(x?.fields?.STATUS||x?.STATUS||x?.status||'OPEN').toUpperCase()));
- if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\n${show(open.slice(-20))}`);
+ if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\n${show(open)}`);
  const questions=(state?.projectData?.humanInputRequests||[]).filter(x=>Number(x.stage)===stage&&String(x.status||'OPEN').toUpperCase()==='OPEN');
  if(questions.length)parts.push(`UNRESOLVED HUMAN INPUT REQUESTS\n${show(questions)}`);
  const answered=(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({questionId:x.requestId,question:x.question,answer:x.answer,answerType:x.answerType||'UNKNOWN',inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||'UNKNOWN',operatorLabel:x.operatorLabel||x.operator||'UNSPECIFIED',affectedStageFields:x.affectedStageFields||[],affectedRecords:x.affectedRecords||[]}));
@@ -116,6 +116,10 @@ ${show(j.PROHIBITED_ACTIONS)}
 EXPLICIT USER REQUIREMENTS:
 ${show(j.EXPLICIT_USER_REQUIREMENTS)}
 
+${stage===2?`STAGE 02 SOURCE DISCOVERY GUIDANCE
+DESIRED OR SUGGESTED SOURCE COUNT: ${show(j.DESIRED_SOURCE_COUNT)}
+Treat this count as guidance, not a quota. Prefer the most authoritative and reputable sources appropriate to the domain, prioritizing primary, official, controlling sources where they exist. Verify identity, currency, applicability, and authority before proposing a source. If no legitimate external governing source applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.
+`:''}
 AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE
 ${contextFor(stage,state)}
 

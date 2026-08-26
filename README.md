@@ -2,64 +2,62 @@
 
 Live application: https://sjonesjones917.github.io/closed-loop-tracker/
 
-This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages and retains `JOB-20260823144121` as the authorized Stage 01-complete, Stage 02-next project.
+One static, phone-first vanilla-JavaScript application implements exactly 30 closed-loop reliability stages. There is no Stage 31.
 
 ## Responsibility boundaries
 
-| Responsibility | Owner |
+| Responsibility | Final owner |
 |---|---|
 | Workflow stages, names, roles, declared completion conditions | `workbook.js` |
-| Field ownership, types, relationships, and stage contracts | `workflow-schema.js` |
+| Field ownership, types, enums, relationships, stage/operation contracts | `workflow-schema.js` |
 | Canonical serialization and SHA-256 | `hash.js` |
-| Prompt content, context selection, and prompt identity | `prompt-engine.js` |
-| Parsing, validation, proposal planning, and response disposition | `response-ingestion.js` |
-| Derived values, current-scope selection, gates, invalidation, and release logic | `workflow-engine.js` |
-| Projects, migration, import/export, and persistence | `project-store.js` |
+| Prompt content, bounded context selection, prompt identity | `prompt-engine.js` |
+| Parsing, validation, proposal planning, response disposition | `response-ingestion.js` |
+| Derived values, current-scope selection, gates, invalidation, release logic | `workflow-engine.js` |
+| Projects, revisions, artifact bytes, migration, integrity, import/export | `project-store.js` |
 | Rendering and operator actions | `app-core.js` |
-| Static shell, CSS, and ordered module loading | `index.html` |
-| Source, lifecycle, browser, deployment, and live verification | `.github/workflows/pages.yml` |
+| Static shell, CSS, accessibility, ordered module loading | `index.html` |
+| Source, lifecycle, browser, deployment, live verification | `.github/workflows/pages.yml` |
 
-There is no second parser, store, workflow engine, prompt layer, application shell, runtime wrapper guard, MutationObserver patch, or framework runtime.
+No second parser, store, workflow engine, prompt layer, application shell, runtime wrapper guard, MutationObserver, framework runtime, service worker, or backend is part of the supported architecture.
 
 ## Current contracts
 
-- Project schema: `human-project/30` (the deterministic `closed-loop-project/2` migration is the next schema change).
-- Response schema: `closed-loop-stage-response/2` (the version-2 scope-bound contract is the next response-contract change).
-- Workflow: exactly 30 stages; no Stage or Operation 31.
-- Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
-- Persistence: one `closedLoopProjectStore` adapter over verified browser storage. The application is browser-local and has no backend or multi-device synchronization.
+- Project schema: `closed-loop-project/2`
+- Workflow identity: `mobile-closed-loop/30`
+- Stage count: `30`
+- Response schema: `closed-loop-stage-response/2`
+- Project package schema: `closed-loop-project-package/1`
 
-## Data and backup responsibility
+Every accepted response is bound to the current project, stage, operation, project revision, instruction ID, instruction-body SHA-256, response-contract SHA-256, context signature, and operation-relevant scope.
 
-Browser-local persistence is not protection against device destruction, browser-profile deletion, private-mode eviction, or an operator clearing site data. The operator must create and retain complete project exports. The application must fail closed when storage cannot preserve a response or canonical transaction.
+## Persistence and backup
+
+The application uses one IndexedDB database named `closed-loop-reliability` with `projects`, `artifacts`, and `meta` stores. Project writes use revision compare-and-swap. Actual artifact Blob bytes are stored and rehashed. Raw output is durably captured before parsing; proposal persistence and canonical acceptance are separate operations. Integrity failures fail closed or quarantine rather than silently becoming canonical state.
+
+Browser-local persistence is not protection against device destruction, browser-profile deletion, private-mode eviction, or clearing site data. Retain verified complete exports outside the browser. There is no backend, cloud synchronization, authentication, or multi-device coordination.
 
 ## Migration policy
 
-Migrations are deterministic, preserve unknown extension data and historical evidence, and never create a Stage 31. Original imported payloads remain auditable but must not act as current canonical state.
+The deterministic legacy migration is `human-project/30 -> closed-loop-project/2`. It preserves identity, all 30 stages, raw outputs, receipts, history, unknown extension data, and the original payload in a non-operational migration archive.
+
+## Supported browser contract
+
+Current Chromium desktop and current Android Chrome, minimum 320 CSS px, with IndexedDB, Web Crypto, Blob, `CompressionStream`, and `DecompressionStream`. Safari, Firefox, service-worker offline operation, and multi-device synchronization are not claimed.
 
 ## Verification
 
-Run the repository checks in this order:
-
 ```bash
 node build-test-project.mjs
-node --check workbook.js
-node --check hash.js
-node --check workflow-schema.js
-node --check workflow-engine.js
-node --check prompt-engine.js
-node --check response-ingestion.js
-node --check project-store.js
-node --check app-core.js
-node --check verify.mjs
-node --check verify-ingestion.mjs
-node --check verify-complete.mjs
-node --check verify-live.mjs
-node --check verify-browser.mjs
-node --check verify-browser-extra.mjs
 node verify.mjs
 node verify-ingestion.mjs
 node verify-complete.mjs
+node verify-full-cycle.mjs
+node verify-prompt-semantics.mjs
+PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
 ```
 
-Local and deployed Chromium verification additionally run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL.
+The single Pages workflow runs source/schema/ownership, ingestion, gates, continuous lifecycle, semantic prompt contradiction, local Chromium, deployment, exact deployed-byte, and deployed Chromium verification before publishing acceptance status.
+
+A green acceptance report supports only: `100% conformant to the tested deterministic invariants`. Operational reliability must be measured from real accepted operations; with zero observed silent failures across N materially independent accepted operations, the approximate 95% upper failure-rate bound is `3 / N`.
