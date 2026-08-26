@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);const header=Buffer.from(`blob ${bytes.length}`);return createHash('sha1').update(header).update(Buffer.from([0])).update(bytes).digest('hex');};
+const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+let html=fs.readFileSync('index.html','utf8');
+html=html.replace(/(<script defer src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\><\/script>)/g,`$1${token}$2`);
+fs.writeFileSync('index.html',html);
+console.log(token);
