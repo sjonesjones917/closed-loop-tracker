@@ -15,7 +15,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply minimum responsible-layer repairs
-        run: python .pr6-finalize-patch.py
+        run: |
+          sed -i "s/\`NO_APPLICABLE_EXTERNAL_SOURCE: <evidence-supported rationale>\`/'NO_APPLICABLE_EXTERNAL_SOURCE: <evidence-supported rationale>'/" .pr6-finalize-patch.py
+          python .pr6-finalize-patch.py
       - name: Verify repaired invariants
         run: |
           node --check response-ingestion.js
