@@ -1,0 +1,48 @@
+name: Repair PR87 verifier enum case
+
+on:
+  push:
+    branches: [practical-100/pr6-proof-final-3]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Replace invalid field-enum assumption with real response enum
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-ingestion.mjs')
+          text=path.read_text()
+          old="negative('invalid enum',(e)=>{e.stageData={};const r=sourceProposal('source-enum');const field=Object.keys(r.fields).find(name=>schema.RECORD_SCHEMAS.sources.fieldDefinitions[name]?.enumValues?.length);if(!field)throw new Error('No controlled source enum is available for the test.');r.fields[field]='__INVALID_ENUM__';e.records={sources:[r]};},'INVALID_ENUM_VALUE');"
+          new="negative('invalid response enum',(e)=>{e.responseType='__INVALID_ENUM__';},'INVALID_RESPONSE_TYPE');"
+          if old not in text:
+              raise SystemExit('Expected invalid-enum verifier line not found; refusing ambiguous edit.')
+          path.write_text(text.replace(old,new,1))
+          PY
+          node --check verify-ingestion.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit proven verifier fix and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/pr87-fix-verifier.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'PR 6 proof: test the actual controlled response enum'
+          git push origin HEAD:practical-100/pr6-proof-final-3
