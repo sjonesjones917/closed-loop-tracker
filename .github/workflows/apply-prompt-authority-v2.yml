@@ -1,0 +1,67 @@
+name: Apply prompt authority corrections v2
+on:
+  push:
+    branches: [practical-100/current-main-prompt-authority]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/current-main-prompt-authority
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply authority-correct procedure text from audited transform
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          # Reuse the audited procedure replacement program embedded in v1, changing only
+          # its object-member boundary so Stage 30 does not require a trailing comma.
+          wf=Path('.github/workflows/apply-prompt-authority.yml').read_text()
+          start=wf.index("          from pathlib import Path\n", wf.index('Correct only stage procedure authority semantics'))
+          end=wf.index("      - name: Deterministic acceptance", start)
+          program=wf[start:end]
+          program='\n'.join(line[10:] if line.startswith('          ') else line for line in program.splitlines())
+          program=program.replace("pat=re.compile(rf'(?m)^{n}:.*,$')", "pat=re.compile(rf'(?m)^{n}:.*(?:,)?$')")
+          program=program.replace("s=pat.sub(f'{n}:'+json.dumps(text,ensure_ascii=False)+',',s,1)", "s=pat.sub(f'{n}:'+json.dumps(text,ensure_ascii=False)+(',' if n<30 else ''),s,1)")
+          exec(compile(program,'prompt-authority-transform','exec'),{})
+          PY
+      - name: Deterministic and semantic acceptance
+        run: |
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Clean and publish exact tested source
+        run: |
+          rm .github/workflows/apply-prompt-authority.yml .github/workflows/apply-prompt-authority-v2.yml
+          git diff --check
+          test ! -e app.js
+          ! find . -maxdepth 2 -type f \( -name '.repair-*' -o -name '*guard.js' -o -name 'prompt-display.js' \) | grep .
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Make stage prompts authority-correct and model-agnostic"
+          git push origin HEAD:practical-100/current-main-prompt-authority
