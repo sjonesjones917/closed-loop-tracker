@@ -1,18 +1,20 @@
 name: PR6 integrate verified lifecycle
 
 on:
-  push:
-    branches: [practical-100/pr6-integrated-final]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   integrate:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'practical-100/pr6-integrated-final'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: practical-100/pr6-integrated-final
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
