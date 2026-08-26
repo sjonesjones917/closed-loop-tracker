@@ -1,7 +1,8 @@
 name: Surgical verification batching proof
 on:
-  push:
-    branches: [reliability/surgical-boundary-closure-20260826]
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
 permissions:
   contents: write
 jobs:
