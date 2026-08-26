@@ -73,7 +73,7 @@ jobs:
           p.write_text(s.replace(old,'runtime-control-evidence-20260826-r2'))
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          marker="console.log(JSON.stringify({stages:allStages.length,negativeCases:negativeCount,status:'PASS'},null,2));"
+          marker="console.log(JSON.stringify({operationStageDataIsolation:true,reservedTargetPolicy:true,completedReservedTargetBlocked:true,targetScopeIsolation:true,totalNegativeCases:negativeCount},null,2));"
           if s.count(marker)!=1:
               raise SystemExit('verify-ingestion marker changed')
           test=r'''
