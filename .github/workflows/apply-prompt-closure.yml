@@ -1,0 +1,37 @@
+name: Apply prompt semantic closure
+on:
+  push:
+    branches:
+      - semantic-reliability/prompt-closure-current
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 .semantic-prompt-closure.py
+      - name: Verify prompt closure and full deterministic lifecycle
+        run: |
+          node --check workbook.js
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean source-only result
+        run: |
+          rm -f .semantic-prompt-closure.py .github/workflows/apply-prompt-closure.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Close prompt recovery and deliverable semantics'
+          git push origin HEAD:semantic-reliability/prompt-closure-current
