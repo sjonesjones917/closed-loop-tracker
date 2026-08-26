@@ -34,25 +34,21 @@ jobs:
           p=Path('verify.mjs');s=p.read_text().replace("record.prompt.includes('genuinely independent external governing sources')","record.prompt.includes('independent external source inventory')").replace("record.prompt.includes('Research only the legitimate Stage 02 external governing source set')","record.prompt.includes('Research only the current accepted Stage 02 independent external source set')");p.write_text(s)
       - name: Apply exact runtime closure
         run: python .final_patch.py
-      - name: Verify deterministic acceptance
+      - name: Run strict verifier and capture exact exit
+        id: verify
+        continue-on-error: true
         run: |
-          node --check prompt-engine.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check response-ingestion.js
-          node --check app-core.js
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
-      - name: Commit clean result
+          set +e
+          bash -o pipefail -c 'node --check prompt-engine.js && node --check workflow-schema.js && node --check workflow-engine.js && node --check response-ingestion.js && node --check app-core.js && node build-test-project.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs' > .integration-test.log 2>&1
+          code=$?
+          echo "$code" > .integration-exit
+          cat .integration-test.log
+          exit $code
+      - name: Persist exact diagnostic
+        if: always()
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          rm -f .final_patch.py .integration-test.log .github/workflows/organic-final-integrate.yml
-          git add -A
-          test -n "$(git status --porcelain)"
-          git commit -m "Close prompt, recovery, operation, and evidence workflow gaps"
+          git add .integration-test.log .integration-exit
+          git commit -m "Capture strict final integration result" || true
           git push origin HEAD:practical-100/organic-self-spec-final
