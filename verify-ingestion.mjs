@@ -46,12 +46,12 @@ function safeValue(name){
 }
 function valueForDefinition(def){if(def.enumValues?.length)return def.enumValues[0];if(def.valueType==='INTEGER')return 1;if(def.valueType==='NUMBER')return 1;if(def.valueType==='BOOLEAN')return true;if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['verified'];if(def.valueType==='OBJECT')return {};return 'verified';}
 function validEnvelope(p,stage,promptRecord){
-  const contract=schema.STAGE_CONTRACTS[stage];
+  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.agentStageFields||contract.allowedStageData,writable=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
-  if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);
+  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
   const records={};
   if(!Object.keys(stageData).length){
-    const collection=contract.allowedCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||contract.allowedCollections.find(name=>schema.recordAgentFields(name).length);
+    const collection=writable.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writable.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
     const fields={};
@@ -178,6 +178,9 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
     ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
   ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
 }
+
+// Agent ownership does not grant cross-operation stageData authority.
+{const p=project('JOB-NEG-OPERATION-STAGE-DATA'),stage=17,pr={...prompts.buildPromptRecord(stage,p,{operation:'COMPARE'}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:'COMPARE',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{CORRECTIONS_COMPLETED:'YES'},records:{},evidence:[{temporaryKey:'evidence-op-scope',kind:'WORKFLOW_EVIDENCE',description:'Cross-operation scope fixture',location:'verification fixture',content:'Agent-owned field belongs to CORRECT, not COMPARE.'}],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='OPERATION_SCOPE_VIOLATION'&&i.path==='/stageData/CORRECTIONS_COMPLETED'))throw new Error(`Cross-operation stageData was not rejected correctly: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.project.projectData.acceptedChanges.length)throw new Error('Cross-operation stageData mutated canonical state.');negativeCount++;}
 
 // Duplicate response is semantic, not whitespace-sensitive.
 {
