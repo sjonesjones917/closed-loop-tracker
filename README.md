@@ -31,6 +31,12 @@ There is no second parser, store, workflow engine, prompt layer, application she
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
 - Stage 21 product artifacts are accepted only after the application reserves the current product execution. Finished-product bytes are then bound to that application-owned `PRODUCT_ID`, hashed, persisted, and included in the product artifact inventory.
 
+## Artifact generation and downstream execution
+
+The workflow determines the actual artifact set and suitable file formats that constitute completion; the operator is not expected to know in advance whether the correct deliverable is source code, DXF, OpenSCAD, STEP, STL, IFC, SVG, XML, a controller-specific machine program, documents, or a multi-file package. When the available environment can reliably construct exact artifact bytes from a defined representation and sufficient controlling inputs, it must produce the actual requested artifact even if the downstream application that commonly consumes that format is unavailable. Missing downstream software is not, by itself, a reason to replace a real file with prose.
+
+Artifact creation does not prove downstream behavior. Opening or importing in a named application, compiling, executing, simulating, slicing, post-processing, machining, fabricating, physically testing, filing, or submitting remains a separate operation that requires the actual capability and evidence. An implementation-ready or manufacturing-ready specification is used only when actual requested artifact bytes cannot be generated reliably, or when that specification is itself the human-confirmed deliverable.
+
 ## Verification execution and returned files
 
 A canonical 'TEST' is a verification definition, not proof that a script/file exists and not proof that execution occurred. Each test declares an execution mode ('APPLICATION_DETERMINISTIC', 'EXTERNAL_AGENT_TOOL', 'INDEPENDENT_AGENT_REVIEW', 'HUMAN_INSPECTION', 'EXTERNAL_SYSTEM', or 'UNAVAILABLE'), the required capability, any required artifacts, its procedure, expected result, failure condition, and evidence to preserve. 'UNAVAILABLE' remains blocking for a mandatory test until a valid capability or equivalent verification path exists.
