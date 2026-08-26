@@ -16,7 +16,9 @@ jobs:
         with: {node-version: '22'}
       - name: Apply exact correction and remove proof scaffolding
         run: |
+          node .fix-apply-index.mjs
           node .apply-native-test-capability-truth.mjs
+          rm .fix-apply-index.mjs
           rm .apply-native-test-capability-truth.mjs
           rm .fix-native-test-transformer.mjs
           rm .github/workflows/native-test-capability-truth.yml
@@ -51,6 +53,7 @@ jobs:
         run: |
           test ! -e .apply-native-test-capability-truth.mjs
           test ! -e .fix-native-test-transformer.mjs
+          test ! -e .fix-apply-index.mjs
           test ! -e .github/workflows/native-test-capability-truth.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
