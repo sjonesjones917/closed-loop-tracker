@@ -87,13 +87,13 @@ for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('S
 {
  const p=baseProject(),record=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'}),descriptor=prompts.responseContractDescriptor(12,'COMPLETE');
  if(record.contractSha256!==globalThis.closedLoopHash.sha256Value(descriptor))throw new Error('CONTRACT_SHA256 is not the canonical descriptor hash.');
- if(descriptor.contractVersion!=='closed-loop-response-contract/2.1')throw new Error('Versioned response-contract descriptor is missing.');
+ if(descriptor.contractVersion!=='closed-loop-response-contract/2.2')throw new Error('Versioned response-contract descriptor is missing.');
  const stageField=Object.entries(descriptor.stageData)[0];if(stageField&&(!stageField[1].valueType||!Object.hasOwn(stageField[1],'nullable')||!Object.hasOwn(stageField[1],'provenanceRequired')))throw new Error('Stage-field type/nullability/provenance is not bound into the response contract.');
  const verification=descriptor.records.verification;if(!verification||verification.commitPolicy!==schema.RECORD_SCHEMAS.verification.commitPolicy||verification.idField!==schema.RECORD_SCHEMAS.verification.idField)throw new Error('Record commit policy or identity field is not bound into the response contract.');
  if(JSON.stringify(verification.relationships)!==JSON.stringify(schema.RECORD_SCHEMAS.verification.relationships))throw new Error('Relationship targets are not bound into the response contract.');
  const observed=verification.agentFields.OBSERVED_RESULT;if(!observed?.valueType||!Object.hasOwn(observed,'nullable'))throw new Error('Record field type metadata is not bound into the response contract.');
  if(!descriptor.envelope?.responseTypeRules?.DATA_PROPOSAL||!descriptor.envelope?.recordIdentityRule||!descriptor.envelope?.attachmentRule)throw new Error('Envelope identity/disposition/attachment semantics are not bound into the response contract.');
- if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.1'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
+ if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.2'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
  const mutated=structuredClone(descriptor);mutated.records.verification.agentFields.OBSERVED_RESULT.valueType='BOOLEAN';if(globalThis.closedLoopHash.sha256Value(mutated)===record.contractSha256)throw new Error('A material field-contract change did not change CONTRACT_SHA256.');
 }
 
@@ -190,4 +190,12 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  const afterRecovery=prompts.buildPromptRecord(2,p,{operation:'COMPLETE',scope:{...first.scope}});
  for(const stale of ['OLD CORRECTION MUST EXPIRE','OLD REFINEMENT MUST EXPIRE','OLD_VALIDATION_MUST_EXPIRE'])if(afterRecovery.prompt.includes(stale))throw new Error(`Resolved recovery feedback leaked into a later prompt: ${stale}`);
  if(afterRecovery.contextManifest.operatorCorrectionRequests.length||afterRecovery.contextManifest.acceptedResultRefinements.length||afterRecovery.contextManifest.latestValidationFailure.length)throw new Error('Resolved recovery feedback remains bound into the prompt context signature.');
+}
+
+// Multi-operation stages expose only stageData owned by the selected operation.
+{
+ const p=baseProject(),execute=prompts.responseContractDescriptor(17,'EXECUTE_RUN'),root=prompts.responseContractDescriptor(17,'ROOT_CAUSE'),freeze=prompts.responseContractDescriptor(17,'FREEZE');
+ if(execute.agentStageFields.length||Object.keys(execute.stageData).length)throw new Error('Stage 17 EXECUTE_RUN still exposes cross-operation stageData.');
+ if(!root.agentStageFields.includes('ROOT_CAUSE_COMPLETED')||root.agentStageFields.includes('CORRECTIONS_COMPLETED'))throw new Error('Stage 17 ROOT_CAUSE stageData boundary is incorrect.');
+ if(!freeze.agentStageFields.includes('NEW_FROZEN_VERSIONS')||freeze.agentStageFields.includes('ROOT_CAUSE_COMPLETED'))throw new Error('Stage 17 FREEZE stageData boundary is incorrect.');
 }
