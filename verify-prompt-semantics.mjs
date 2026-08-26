@@ -180,7 +180,7 @@ if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||c
 }
 {
  const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target audit/repair boundary is missing.');
- if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/requested filing artifacts/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');
+ if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');
  if(/STAGE 0[23]|Stage 0[23] may|Research only the current accepted Stage 02|Build the independent external source inventory|Stage 02 owns source\/material/.test(r.prompt))throw new Error('Stage 01 contains future Stage 02/03 work.');
  const production=prompts.buildPromptRecord(21,baseProject(),{operation:'COMPLETE'});if(!production.prompt.includes('Generate the complete approved deliverable and every required actual artifact whenever this environment can reliably construct the artifact bytes'))throw new Error('Stage 21 artifact-generation boundary coverage is missing.');
 }
@@ -335,10 +335,36 @@ import fsStageBoundary from 'node:fs';
  const s2=capture(2,3);
  const forbidden1=[/supplied-material inventory/i,/inspection state/i,/build .*source inventory/i,/discover independent external sources/i,/establish source identity/i,/authority hierarchy/i,/source conflicts/i,/research requirements/i];
  for(const re of forbidden1)if(re.test(s1))throw new Error('Stage 01 leaks Stage 02/03 work: '+re);
- const required1=[/job definition and clarification only/i,/opaque authorized inputs/i,/later source\/material stage owns discovery, inventory, provenance, inspection, authority, currency, supersession, applicability, and conflicts/i];
+ const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
  for(const re of required1)if(!re.test(s1))throw new Error('Stage 01 missing locality boundary: '+re);
  const required2=[/complete source and supplied-material inventory/i,/Stage 02 owns inventory and inspection/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
  for(const re of required2)if(!re.test(s2))throw new Error('Stage 02 missing ownership boundary: '+re);
  const forbidden2=[/compile atomic requirement proposals/i,/define this job’s verification suite/i,/author this job’s production instruction/i];
  for(const re of forbidden2)if(re.test(s2))throw new Error('Stage 02 leaks later-stage work: '+re);
+}
+
+
+// stage01-practical-intake-regression-v1
+{
+ const p=baseProject();
+ p.job.EXACT_USER_OBJECTIVE_VERBATIM='I need a patent application for my project';
+ p.job.SUPPLIED_MATERIALS_INVENTORY='MAINFRAME_INVENTION_DISCLOSURE.zip';
+ const r=prompts.buildPromptRecord(1,p);
+ const required=[
+  'do not ask the human to re-enter facts that are already present in those materials',
+  'Do not block Stage 01 merely because information will be needed by a later',
+  'Stage 01 does not require every fact needed to execute later stages',
+  'A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01',
+  'Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01',
+  'Never ask for information merely because a later stage will need it',
+  'humanInputRequestContract',
+  'temporaryKey',
+  'whyRequired',
+  'affectedStageFields',
+  'answerType',
+  'allowedValues',
+  'Do not invent requestKey, required, whyNeeded, expectedAnswer'
+ ];
+ for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);
+ if(r.prompt.includes('Treat any human-supplied files, links, references, records, or other materials as opaque authorized inputs'))throw new Error('Stage 01 still treats supplied human material as opaque instead of usable intake.');
 }
