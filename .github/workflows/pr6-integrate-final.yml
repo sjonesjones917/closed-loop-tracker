@@ -26,7 +26,6 @@ jobs:
           rm -f test-fixtures.mjs verify-full-cycle.mjs
       - name: Verify and decode exact patch transport
         run: |
-          echo '477796502c51d2afd4b5e0af2ce054b2256335feefbf3752870f0dde19f4b5fd  .pr6-transport/full.b64' | sha256sum -c -
           base64 -d .pr6-transport/full.b64 > /tmp/pr6-final.patch.gz
           echo '27cd6f0736ae8f5f96489449e53b804967cbff0e9e952e084ae4e23c331ba62e  /tmp/pr6-final.patch.gz' | sha256sum -c -
           gzip -dc /tmp/pr6-final.patch.gz > /tmp/pr6-final.patch
