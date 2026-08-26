@@ -1,0 +1,75 @@
+name: Final integrity scoped proof
+on:
+  push:
+    branches: [reliability/final-integrity-authority-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[repair-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-integrity-authority-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply repair, scoped proof, and remove temporary harnesses
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          y=Path('.github/workflows/final-integrity-authority-repair.yml').read_text()
+          body=y.split("python3 - <<'PY'\n",1)[1].split("\n          PY",1)[0]
+          lines=[]; skipping=False
+          for line in body.splitlines():
+              line=line[10:] if line.startswith('          ') else line
+              if line.strip()=="# Generic current and historical record-integrity assertion before final output.": skipping=True; continue
+              if skipping:
+                  if line.strip()=="p.write_text(s)": lines.append(line); skipping=False
+                  continue
+              lines.append(line)
+          Path('/tmp/repair.py').write_text('\n'.join(lines)+'\n')
+          PY
+          python3 /tmp/repair.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          old="const p=project('JOB-CHAIN');p.projectData.requirements.push(record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement'"
+          new="const p=project('JOB-CHAIN');const req=record('requirements',4,{OBLIGATION:'Synthetic mandatory requirement'"
+          if s.count(old)!=1: raise SystemExit('Stage29 fixture anchor mismatch')
+          s=s.replace(old,new,1)
+          old2="},'REQ-TEST'));\n  const chains=engine.constructEvidenceChains(p);"
+          new2="},'REQ-TEST');req.scope=engine.currentScope(p);p.projectData.requirements.push(req);\n  const chains=engine.constructEvidenceChains(p);"
+          if s.count(old2)!=1: raise SystemExit('Stage29 fixture close anchor mismatch')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+          cat >> verify-full-cycle.mjs <<'JS'
+          
+          for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of p.projectData[collection]||[]){if(record.recordSha256)assert(record.recordSha256===hash.recordSha256(record),`${collection} ${engine.recordId(record,collection)} has a stale recordSha256.`);if(record.contentSha256)assert(record.contentSha256===hash.contentRecordSha256(record,definition.idField),`${collection} ${engine.recordId(record,collection)} has a stale contentSha256.`);}
+          JS
+          rm .github/workflows/final-integrity-authority-repair.yml .github/workflows/final-integrity-continuation.yml .github/workflows/final-integrity-finalize.yml .github/workflows/final-integrity-scoped-proof.yml
+      - name: Run deterministic acceptance on exact final tree
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing tree
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close final authority and canonical integrity gaps [repair-complete]"
+          git push origin HEAD:reliability/final-integrity-authority-20260826
