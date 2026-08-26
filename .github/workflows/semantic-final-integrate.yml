@@ -51,7 +51,6 @@ jobs:
               n=s.count(old)
               if n!=1: raise SystemExit(f'prompt ownership wording anchor expected 1, found {n}: {old[:40]}')
               s=s.replace(old,new,1)
-          # Validation failures become explicit recovery context, alongside operator correction feedback.
           old=" const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));\n if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\\n${show(corrections)}`);"
           new=" const validations=(state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===stage&&x.valid===false).slice(-3).map(x=>({validationId:x.validationId,rawResponseId:x.rawResponseId,issues:(x.issues||[]).map(i=>({code:i.code,path:i.path,message:i.message}))}));\n if(validations.length)parts.push(`PRIOR RESPONSE VALIDATION FAILURES TO CORRECT\\n${show(validations)}`);\n const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));\n if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\\n${show(corrections)}`);"
           if s.count(old)!=1: raise SystemExit('validation recovery visible-context anchor mismatch')
@@ -81,7 +80,7 @@ jobs:
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
           anchor="  if(!record.prompt.includes('implementation-ready specification rather than pretending implementation occurred'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
           if anchor in s:
-              s=s.replace(anchor,"  if(!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('does not connect to or modify an external repository'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');",1)
+              s=s.replace(anchor,"  if(!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('external project repository'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');",1)
           marker="  if(record.stage===2){"
           insert="  if(!record.prompt.includes('INADEQUATE_PRIOR_OUTPUT'))issues.push('PRIOR_OUTPUT_RECOVERY_MISSING');\n  if(record.stage===12&&!record.prompt.includes('REQ_ID × RUN_ID × TEST_ID'))issues.push('VERIFICATION_TRIPLE_WORDING_MISSING');\n"
           if marker not in s: raise SystemExit('semantic verifier marker missing')
