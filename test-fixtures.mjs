@@ -1,67 +1,174 @@
-export function semanticValue(name,definition={}){
-  if(definition.enumValues?.length)return definition.enumValues[0];
-  switch(definition.valueType){
-    case 'INTEGER': return 1;
-    case 'NUMBER': return 1;
-    case 'BOOLEAN': return false;
-    case 'STRING_ARRAY': return ['fixture'];
-    case 'REFERENCE_ARRAY': return ['fixture'];
-    case 'OBJECT': return {fixture:true};
-    case 'REFERENCE': return 'fixture';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+
+export function loadRuntime(root=process.cwd(),{includeStore=false}={}){
+  globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+  globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+  const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'];
+  if(includeStore)files.push('project-store.js');
+  for(const file of files){
+    const globalName={
+      'workbook.js':'closedLoopCore','hash.js':'closedLoopHash','workflow-schema.js':'closedLoopWorkflowSchema',
+      'workflow-engine.js':'closedLoopWorkflowEngine','prompt-engine.js':'closedLoopPromptEngine',
+      'response-ingestion.js':'closedLoopResponseIngestion','project-store.js':'closedLoopProjectStore'
+    }[file];
+    if(globalThis[globalName])continue;
+    vm.runInThisContext(fs.readFileSync(path.join(root,file),'utf8'),{filename:file});
   }
-  if(/STATUS|STATE|DETERMINATION|RESULT/.test(name))return 'SATISFIED';
-  return `fixture-${String(name).toLowerCase()}`;
+  return {
+    core:globalThis.closedLoopCore,
+    hash:globalThis.closedLoopHash,
+    schema:globalThis.closedLoopWorkflowSchema,
+    engine:globalThis.closedLoopWorkflowEngine,
+    prompts:globalThis.closedLoopPromptEngine,
+    ingestion:globalThis.closedLoopResponseIngestion,
+    store:globalThis.closedLoopProjectStore||null
+  };
 }
 
-export function agentFields(schema,collection,overrides={}){
-  const def=schema.RECORD_SCHEMAS[collection],fields={};
-  for(const name of def.required){const fd=def.fieldDefinitions[name];if(fd?.producer===schema.PRODUCER.AGENT)fields[name]=semanticValue(name,fd);}
+export const runtime=loadRuntime();
+const {core,hash,schema,engine,prompts,ingestion}=runtime;
+
+export function assert(condition,message){if(!condition)throw new Error(message);}
+export function canonicalCounts(project){return Object.fromEntries(Object.keys(schema.RECORD_SCHEMAS).map(name=>[name,(project.projectData?.[name]||[]).length]));}
+export function assertNoCanonicalMutation(before,after,label='response preparation'){
+  const a=canonicalCounts(before),b=canonicalCounts(after);
+  for(const name of Object.keys(a))assert(a[name]===b[name],`${label} mutated canonical collection ${name} before acceptance (${a[name]} -> ${b[name]}).`);
+  assert((before.projectData?.acceptedChanges||[]).length===(after.projectData?.acceptedChanges||[]).length,`${label} created an accepted change before acceptance.`);
+}
+
+export function createProject(jobId='JOB-FULL-CYCLE'){
+  const project=core.createBlankState(jobId);
+  Object.assign(project.job,{
+    JOB_ID:jobId,
+    JOB_TITLE:'Closed-loop full-cycle acceptance fixture',
+    JOB_OWNER:'VERIFICATION_OPERATOR',
+    EXACT_USER_OBJECTIVE_VERBATIM:'Create and release one exact text artifact containing the ASCII bytes Hello.',
+    SUPPLIED_MATERIALS_INVENTORY:'No supplied files; one operator clarification is required.',
+    REQUIRED_OUTPUT_FORMAT:'text/plain',
+    DEADLINE_OR_TEMPORAL_SCOPE:'No deadline; current controlled test scope.',
+    KNOWN_AUTHORITATIVE_SOURCES:'W3C Web Content Accessibility Guidelines 2.2 where applicable.',
+    AVAILABLE_TOOLS:'Current Chromium, Node.js, Web Crypto, IndexedDB, exact byte comparison.',
+    PROHIBITED_ACTIONS:'No invention, silent truncation, loose prose extraction, or metadata-only file authorization.',
+    EXPLICIT_USER_REQUIREMENTS:'The released artifact bytes must equal Hello exactly.'
+  });
+  engine.ensureShape(project);
+  engine.createNewJobReset(project);
+  engine.recordHumanInputVersion(project,['INITIAL_INTAKE'],'VERIFICATION_OPERATOR');
+  engine.recalculate(project);
+  return project;
+}
+
+export function savePrompt(project,stage,{operation=null,runId=null,contextId=null}={}){
+  const options={};
+  if(operation)options.operation=operation;
+  if(runId||contextId)options.scope={runId:runId||null,contextId:contextId||null};
+  const record={...prompts.buildPromptRecord(stage,project,options),generatedAt:new Date().toISOString()};
+  const slot=engine.promptSlotKey(record);for(const prior of (project.projectData.generatedPrompts||[]).filter(item=>engine.promptSlotKey(item)===slot&&!item.invalidatedBy))prior.invalidatedBy=`SUPERSEDED-BY-${record.instructionId}`;
+  project.projectData.generatedPrompts.push(record);
+  project.stages[stage].currentPromptId=record.instructionId;
+  return record;
+}
+
+export function evidence(seed='fixture',overrides={}){
+  return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`Controlled ${seed} evidence`,authorityType:'CONTROLLED_TEST',location:`verify-full-cycle/${seed}`,content:`Deterministic acceptance evidence for ${seed}.`,...overrides};
+}
+
+export function valueFor(definition,name,seed='fixture'){
+  if(definition?.enumValues?.length)return definition.enumValues[0];
+  switch(definition?.valueType){
+    case 'INTEGER':return 1;
+    case 'NUMBER':return 1;
+    case 'BOOLEAN':return false;
+    case 'STRING_ARRAY':case 'REFERENCE_ARRAY':return [`${seed}-${name.toLowerCase()}`];
+    case 'OBJECT':return {fixture:seed};
+    case 'REFERENCE':return `${seed}-${name.toLowerCase()}`;
+    default:return `${seed}-${name.toLowerCase().replaceAll('_','-')}`;
+  }
+}
+
+export function agentFields(collection,overrides={},seed=collection){
+  const definition=schema.RECORD_SCHEMAS[collection];
+  if(!definition)throw new Error(`Unknown fixture collection ${collection}.`);
+  const fields={};
+  for(const name of definition.required){
+    const fieldDefinition=definition.fieldDefinitions[name];
+    if(fieldDefinition?.producer===schema.PRODUCER.AGENT)fields[name]=valueFor(fieldDefinition,name,seed);
+  }
   return {...fields,...overrides};
 }
 
-export function evidence(key='evidence-1',content='Controlled full-cycle evidence'){
-  return {temporaryKey:key,kind:'WORKFLOW_EVIDENCE',description:'Controlled full-cycle verification evidence',location:'verify-full-cycle.mjs',content};
+export function proposal(collection,{tempKey=`${collection}-1`,targetId=null,fields={},relationships={},evidenceRefs=['evidence-1'],notes=''}={}){
+  return {tempKey:targetId?null:tempKey,targetId:targetId||null,fields:agentFields(collection,fields,tempKey),relationships,evidenceRefs,notes};
 }
 
-export function proposal(tempKey,fields,relationships={},evidenceRefs=['evidence-1']){
-  return {tempKey,fields,relationships,evidenceRefs};
-}
-export function targetProposal(targetId,fields,relationships={},evidenceRefs=['evidence-1']){
-  return {tempKey:null,targetId,fields,relationships,evidenceRefs};
+export function envelope(project,promptRecord,{responseType='DATA_PROPOSAL',stageData={},records={},humanInputRequests=[],unresolved=[],warnings=[],attachments=[],evidenceRecords=null}={}){
+  const hasData=Object.keys(stageData).length||Object.values(records).some(list=>Array.isArray(list)&&list.length);
+  return {
+    schema:schema.RESPONSE_SCHEMA,
+    jobId:project.job.JOB_ID,
+    stage:promptRecord.stage,
+    operation:promptRecord.operation,
+    promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},
+    scope:structuredClone(promptRecord.scope),
+    responseType,
+    humanInputRequests:structuredClone(humanInputRequests),
+    stageData:structuredClone(stageData),
+    records:structuredClone(records),
+    evidence:evidenceRecords===null?(responseType==='DATA_PROPOSAL'&&hasData?[evidence(`stage-${promptRecord.stage}-${promptRecord.operation}`)]:[]):structuredClone(evidenceRecords),
+    unresolved:structuredClone(unresolved),
+    warnings:structuredClone(warnings),
+    attachments:structuredClone(attachments)
+  };
 }
 
-export function envelope(schema,project,stage,promptRecord,{responseType='DATA_PROPOSAL',stageData={},records={},evidenceRecords=[evidence()],humanInputRequests=[],unresolved=[],warnings=[],attachments=[]}={}){
-  return {schema:schema.RESPONSE_SCHEMA,jobId:project.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType,humanInputRequests,stageData,records,evidence:evidenceRecords,unresolved,warnings,attachments};
+export function acceptResponse(project,promptRecord,payload,{operator='VERIFICATION_OPERATOR',reviewNote='Controlled full-cycle acceptance.'}={}){
+  const responseEnvelope=envelope(project,promptRecord,payload);
+  const raw=JSON.stringify(responseEnvelope);
+  const prepared=ingestion.prepare(project,{stage:promptRecord.stage,text:raw,promptRecord});
+  assert(prepared.validation?.valid,`Stage ${promptRecord.stage} ${promptRecord.operation} rejected a valid fixture: ${JSON.stringify(prepared.validation?.issues,null,2)}`);
+  assert(prepared.proposal?.status==='PENDING_OPERATOR_REVIEW',`Stage ${promptRecord.stage} did not create a pending proposal.`);
+  assertNoCanonicalMutation(project,prepared.project,`Stage ${promptRecord.stage} ${promptRecord.operation} preparation`);
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator,reviewNote});
+  const next=committed.project;
+  assert(next.projectData.rawResponses.find(item=>item.rawResponseId===prepared.rawRecord.rawResponseId)?.completeRawResponse===raw,`Stage ${promptRecord.stage} raw response was not preserved exactly.`);
+  assert(committed.receipt,`Stage ${promptRecord.stage} did not create a receipt.`);
+  if(responseEnvelope.responseType==='DATA_PROPOSAL'){
+    assert(committed.acceptedChange,`Stage ${promptRecord.stage} did not create an accepted data change.`);
+    assert(committed.manifest?.entries?.length,`Stage ${promptRecord.stage} did not create a populated extraction manifest.`);
+  }
+  engine.recalculate(next);
+  return {...committed,project:next,envelope:responseEnvelope,raw,prepared};
 }
 
-export async function runFullCycleFirstHalf(runtime){
-const {core,schema,engine,prompts,ingestion,hash}=runtime;
-const assert=(x,m)=>{if(!x)throw new Error(m);};
-const clone=x=>JSON.parse(JSON.stringify(x));
-const canonicalCounts=p=>Object.fromEntries(Object.keys(schema.RECORD_SCHEMAS).map(k=>[k,engine.records(p,k).length]));
-const sameCounts=(a,b)=>Object.keys(a).every(k=>a[k]===b[k]);
-function freshProject(){const p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_ID:'JOB-FULL-CYCLE',JOB_TITLE:'Full cycle acceptance fixture',EXACT_USER_OBJECTIVE_VERBATIM:'x',SUPPLIED_MATERIALS_INVENTORY:'Synthetic controlled fixture',REQUIRED_OUTPUT_FORMAT:'x',AVAILABLE_TOOLS:'x',PROHIBITED_ACTIONS:'x'});p.projectData.userEntered={objective:p.job.EXACT_USER_OBJECTIVE_VERBATIM};engine.ensureShape(p);engine.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM'],'VERIFY');engine.recalculate(p);return p;}
-function savePrompt(p,stage,options={}){const pr=prompts.buildPromptRecord(stage,p,options);p.projectData.generatedPrompts.push({...pr,generatedAt:new Date().toISOString()});p.stages[stage].currentPromptId=pr.instructionId;return pr;}
-function accept(p,stage,spec={},options={}){const pr=options.promptRecord||savePrompt(p,stage,options.promptOptions||{}),env=envelope(schema,p,stage,pr,spec),before=canonicalCounts(p),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(env),promptRecord:pr,expectedProjectRevision:Number(p.revision||0)});assert(prepared.validation.valid,`Stage ${stage} ${pr.operation} rejected: ${JSON.stringify(prepared.validation.issues)}`);assert(prepared.proposal?.status==='PENDING_OPERATOR_REVIEW',`Stage ${stage} ${pr.operation} did not create proposal.`);assert(sameCounts(before,canonicalCounts(prepared.project)),`Stage ${stage} ${pr.operation} mutated canonical collections before acceptance.`);const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reviewNote:'Full-cycle acceptance fixture'});p=committed.project;assert(committed.acceptedChange,`Stage ${stage} ${pr.operation} did not create accepted data change.`);assert(committed.manifest?.entries,`Stage ${stage} ${pr.operation} extraction manifest missing.`);const raw=p.projectData.rawResponses.find(r=>r.rawResponseId===committed.acceptedChange.rawResponseId);assert(raw?.completeRawResponse===JSON.stringify(env),`Stage ${stage} raw response not preserved.`);const reloaded=JSON.parse(JSON.stringify(p));engine.ensureShape(reloaded);engine.recalculate(reloaded);return {project:reloaded,prompt:pr,envelope:env,acceptedChange:committed.acceptedChange};}
-function requireComplete(p,stage){engine.recalculate(p);const g=engine.gate(stage,p);assert(g.complete,`Stage ${stage} not complete: ${g.reasons.join(' | ')}`);assert(p.stages[stage].status==='COMPLETE',`Stage ${stage} status is ${p.stages[stage].status}.`);}
-function id(p,collection){return engine.recordId(engine.recordsForCurrentScope(p,collection).at(-1),collection);}
-function allIds(p,collection){return engine.recordsForCurrentScope(p,collection).map(r=>engine.recordId(r,collection));}
-let p=freshProject();
-let pr=savePrompt(p,1);let qenv=envelope(schema,p,1,pr,{responseType:'HUMAN_INPUT_REQUIRED',stageData:{},records:{},evidenceRecords:[],humanInputRequests:[{temporaryKey:'question-1',question:'x',whyRequired:'x',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'CHOICE',allowedValues:['ENGINEERING_REVIEW','GENERAL_PUBLIC'],blocking:true}]});let prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(qenv),promptRecord:pr});assert(prepared.validation.valid,'x');p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;assert(engine.gate(1,p).blocked,'x');const request=p.projectData.humanInputRequests.at(-1),oldInput=p.job.CURRENT_INPUT_VERSION;p=ingestion.answerHumanInput(p,{[request.requestId]:'ENGINEERING_REVIEW'},{operator:'VERIFY'}).project;assert(p.job.CURRENT_INPUT_VERSION!==oldInput,'x');pr=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===1&&!x.invalidatedBy).at(-1);assert(pr.prompt.includes('ENGINEERING_REVIEW'),'x');({project:p}=accept(p,1,{stageData:{EXACT_DELIVERABLE_REQUESTED:'x',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'x'},records:{}},{promptRecord:pr}));engine.recordStageConfirmation(p,1,true,'VERIFY','x');requireComplete(p,1);
-({project:p}=accept(p,2,{stageData:{EXTERNAL_SOURCE_DETERMINATION:'SOURCES_IDENTIFIED',AUTHORITY_HIERARCHY:'x',KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE'},records:{sources:[proposal('source-1',agentFields(schema,'sources',{TITLE:'x',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'W3C Recommendation',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/',AUTHORITY_LEVEL:'PRIMARY TECHNICAL AUTHORITY',AUTHORITY_ROLE:'GOVERNING WHERE APPLICABLE',RELEVANCE:'x',APPLICABLE_PORTIONS:'Conformance requirements',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING WHERE APPLICABLE'}))]}}));requireComplete(p,2);const sourceId=id(p,'sources');
-({project:p}=accept(p,3,{stageData:{SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:1,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE',EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE'},records:{research:[proposal('research-1',agentFields(schema,'research',{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Conformance requirements',FINDING_CLASSIFICATION:'MANDATORY_REQUIREMENT',SOURCE_EVIDENCE:'Controlled source evidence'}),{SOURCE_ID:{recordId:sourceId}})],candidateRequirements:[proposal('candidate-1',agentFields(schema,'candidateRequirements',{SOURCE_LOCATION:'x',CANDIDATE_OBLIGATION:'x',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'x'}),{SOURCE_ID:{recordId:sourceId}})]}}));requireComplete(p,3);
-({project:p}=accept(p,4,{stageData:{DEFINED_TERM_GAPS:'NONE',CONDITIONAL_REQUIREMENTS:'NONE',OPTIONAL_REQUIREMENTS:'NONE',BLOCKED_REQUIREMENTS:'NONE'},records:{requirements:[proposal('req-1',agentFields(schema,'requirements',{OBLIGATION:'x',REQUIREMENT_TYPE:'REPRESENTATION',MANDATORY_OPTIONAL_STATUS:'MANDATORY',SOURCE_LOCATION:'x',SOURCE_AUTHORITY:'x',USER_INPUT_RELATIONSHIP:'Explicit user requirement',APPLICABILITY:'APPLICABLE',DEPENDENCIES:'Current Chromium rendering',PROHIBITIONS:'x',DEFINED_TERMS:'x',OBSERVABLE_SATISFACTION_CONDITION:'x',INTENDED_VERIFICATION_METHOD:'x',EXPECTED_EVIDENCE:'Viewport and scroll-width values',FAILURE_CONDITION:'scrollWidth > innerWidth',SEVERITY:'MAJOR'}),{SOURCE_ID:{recordId:sourceId}})]}}));requireComplete(p,4);const reqId=id(p,'requirements');
-({project:p}=accept(p,5,{stageData:{DUPLICATES_REMAINING:'NONE',IMPOSSIBLE_COMBINATIONS:'NONE',UNDEFINED_TERMS:'NONE',CIRCULAR_DEPENDENCIES:'NONE',UNSUPPORTED_REQUIREMENTS:'NONE',APPLICABILITY_UNDETERMINED:'NONE',REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{}}));requireComplete(p,5);
-({project:p}=accept(p,6,{stageData:{BLOCKED_MANDATORY_REQUIREMENTS:'NONE'},records:{tests:[proposal('test-1',agentFields(schema,'tests',{TEST_TYPE:'DETERMINISTIC_BROWSER',INPUTS:'320 CSS pixel viewport',TOOLS:'Chromium DOM measurement',PROCEDURE:'x',EXPECTED_RESULT:'scrollWidth <= innerWidth',FAILURE_CONDITION:'scrollWidth > innerWidth',EVIDENCE_TO_PRESERVE:'x'}),{REQ_ID:{recordId:reqId}})]}}));requireComplete(p,6);const testId=id(p,'tests');
-({project:p}=accept(p,7,{records:{failureTests:[proposal('mutation-1',agentFields(schema,'failureTests',{VIOLATION_MODE:'FORCED_HORIZONTAL_OVERFLOW',FIXTURE:'x',EXPECTED_REJECTION:'REJECT',ACTUAL_RESULT:'REJECTED',EVIDENCE:'x'}),{REQ_ID:{recordId:reqId}})]}}));requireComplete(p,7);
-({project:p}=accept(p,8,{stageData:{OBJECTIVE:'x',AUTHORIZED_INPUTS:'x',INPUT_FAILURE_RULES:'Block rather than invent.',SOURCE_AUTHORITY:'x',SCOPE:'Current job only.',DEFINED_TERMS:'Use canonical definitions.',REQUIRED_PROCEDURE_IN_ORDER:'x',DECISION_RULES:'Fail closed.',TOOL_RULES:'Use declared tools only.',OUTPUT_CONTRACT:'Return exact structured result.',VERIFICATION_AND_FAILURE_HANDLING:'Preserve evidence and defects.',COMPLETION_CRITERIA:'x'},records:{instructions:[proposal('instruction-1',agentFields(schema,'instructions',{OBJECTIVE:'Produce the controlled target.',AUTHORIZED_INPUTS:'x',FAILURE_HANDLING:'Block on missing evidence.',AUTHORITY_RULES:'x',SCOPE:'Current job.',PROHIBITIONS:'No invention.',DEFINED_TERMS:'Canonical glossary.',ORDERED_PROCEDURE:'x',BRANCHES:'Block on uncertainty.',TOOL_REQUIREMENTS:'x',OUTPUT_CONTRACT:'x',FACTUAL_STATE_HANDLING:'UNKNOWN remains unknown.',REJECTION_BLOCKING_RULES:'Mandatory failure blocks.',COMPLETION_CONDITIONS:'All mandatory tests satisfied.',REQUIREMENT_TRACEABILITY:'REQ to instruction trace.',INSTRUCTION_TEXT:'x'}))],instructionTraces:[proposal('trace-1',agentFields(schema,'instructionTraces',{INSTRUCTION_LOCATION:'Instruction paragraph 1',IMPLEMENTED_BEHAVIOR:'x'}),{REQ_ID:{recordId:reqId},INSTRUCTION_ID:{tempKey:'instruction-1'}})]}}));requireComplete(p,8);const instructionId=id(p,'instructions');
-({project:p}=accept(p,9,{stageData:{REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR:'TRUE',EVERY_SENTENCE_REVIEWED:'TRUE',KNOWN_MATERIAL_AMBIGUITIES:'NONE',KNOWN_MATERIAL_CONFLICTS:'NONE',UNAVAILABLE_REQUIRED_CAPABILITIES:'NONE',UNVERIFIABLE_INSTRUCTIONS:'NONE'},records:{preflightRecords:[proposal('preflight-1',agentFields(schema,'preflightRecords',{CLAUSE:'Complete instruction',DETERMINATION:'SATISFIED',FINDINGS:'x',EVIDENCE:'x'}),{INSTRUCTION_ID:{recordId:instructionId}})]}}));requireComplete(p,9);
-const candidateBytes=new TextEncoder().encode('candidate-bytes-v1'),candidateSha=await hash.sha256Bytes(candidateBytes);engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-CANDIDATE',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:candidateBytes.byteLength,sha256:candidateSha,lineage:{fixture:'candidate'}});const frozen10=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'VERIFY'});requireComplete(p,10);const iteration1=engine.recordId(frozen10.iteration,'iterations'),candidate1=engine.recordId(frozen10.candidate,'candidateFreezes');
-const slots11=engine.reserveRunBatch(p,{stage:11,iterationId:iteration1,candidateId:candidate1,count:10});for(let i=0;i<slots11.length;i++){const slot=slots11[i];engine.registerFreshContext(p,{stage:11,externalContextIdentifier:`external-stage11-${i+1}`,operatorLabel:'VERIFY'});({project:p}=accept(p,11,{records:{runs:[targetProposal(slot.runId,agentFields(schema,'runs',{FRESH_CONTEXT_RECORD:slot.contextId,STARTED_AT:`2026-08-25T12:${String(i).padStart(2,'0')}:00Z`,ENDED_AT:`2026-08-25T12:${String(i).padStart(2,'0')}:30Z`,CONTAMINATION_CHECK:'NONE',TOOL_CONFIGURATION:'FIXTURE-CONFIG',EXECUTION_STATUS:'COMPLETE',COMPLETE_OUTPUT:`run-${i+1}-complete`,OUTPUT_ARTIFACT_IDENTITIES:['ARTIFACT-CANDIDATE'],TOOL_FAILURES:'NONE',NOTES:'Independent execution'}))]}},{promptOptions:{scope:{runId:slot.runId,contextId:slot.contextId}}}));}requireComplete(p,11);const runIds1=allIds(p,'runs');assert(runIds1.length===10,'x');
-for(let i=0;i<runIds1.length;i++){const runId=runIds1[i],run=engine.recordsForCurrentScope(p,'runs').find(r=>engine.recordId(r,'runs')===runId),contextId=engine.recordValue(run,'CONTEXT_ID');({project:p}=accept(p,12,{records:{verification:[proposal(`verify-${i+1}`,agentFields(schema,'verification',{VERIFIER:`independent-verifier-${i+1}`,VERIFIER_CONTEXT_ID:`VERIFY-CONTEXT-${i+1}`,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:`${reqId}, ${testId}, ${runId}`,PROCEDURE:'x',EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`evidence-${runId}`,DETERMINATION:'SATISFIED'}),{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:testId}})]}},{promptOptions:{scope:{runId,contextId}}}));}requireComplete(p,12);assert(engine.verificationMatrix(p,iteration1).coverage===1,'x');
-({project:p}=accept(p,13,{stageData:{REQUIREMENTS_SATISFIED_BY_ALL_TEN:'TRUE',CORRECTNESS_AFFECTING_DISAGREEMENTS:'NONE',PROHIBITED_OUTPUT_VARIANCES:'NONE',INCONCLUSIVE_TESTS:'NONE',REPEATED_FAILURE_GROUPS:'NONE',UNIQUE_FAILURES:'ONE CONTROLLED DEFECT FOR RCA'},records:{comparisons:[proposal('comparison-1',agentFields(schema,'comparisons',{RUN_DETERMINATIONS:Object.fromEntries(runIds1.map(r=>[r,'SATISFIED'])),INTERPRETATION_VARIANCE:'NONE',OUTPUT_VARIANCE:'NON_MATERIAL',AUTHORIZED_VARIANCE:'TRUE',INCONCLUSIVE_TESTS:'NONE',REPEATED_FAILURE_PATTERNS:'NONE',UNIQUE_FAILURES:'x',CORRECTNESS_AFFECTING_VARIANCE:'FALSE',DEFECT_IDS:[],EVIDENCE:'x'}),{REQ_ID:{recordId:reqId}})]}}));requireComplete(p,13);
-({project:p}=accept(p,14,{stageData:{CONFIRMED_ROOT_CAUSES:'ONE',UNDETERMINED_ROOT_CAUSES:'NONE',BLOCKED_ANALYSES:'NONE'},records:{defects:[proposal('defect-1',agentFields(schema,'defects',{OBSERVED_FAILURE:'x',EXPECTED_CONDITION:'x',EVIDENCE:'Controlled defect fixture.',SEVERITY:'MAJOR',ROOT_CAUSE_CATEGORY:'INSTRUCTION',ROOT_CAUSE:'x',CORRECTION:'Add the missing clause.',CHANGED_ARTIFACTS:'Instruction candidate.',VERIFICATION_RESULT:'PENDING',RELATIONSHIPS:'REQ linked'}),{REQ_ID:{recordId:reqId}})],rootCauses:[proposal('rca-1',agentFields(schema,'rootCauses',{CATEGORY:'INSTRUCTION',LAYER_TRACE:'x',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'x',EVIDENCE:'Backward trace fixture.',DOWNSTREAM_INVALIDATION:'x'}),{DEFECT_ID:{tempKey:'defect-1'}})]}}));requireComplete(p,14);const defectId=id(p,'defects');
-({project:p}=accept(p,15,{stageData:{UNCONVERTED_CONFIRMED_DEFECTS:'NONE'},records:{regressions:[proposal('reg-1',agentFields(schema,'regressions',{FAILURE_FIXTURE:'Auxiliary defect fixture',REPRODUCTION_PROCEDURE:'x',DETECTION_METHOD:'Deterministic comparison',PRE_CORRECTION_RESULT:'VIOLATED',PRE_CORRECTION_EVIDENCE:'Pre-correction failure evidence',CORRECTION:'x',POST_CORRECTION_RESULT:'PENDING',POST_CORRECTION_EVIDENCE:'PENDING LATER EXECUTION',PERMANENT_TEST_LOCATION:'Permanent regression registry',APPLICABILITY:'APPLICABLE'}),{DEFECT_ID:{recordId:defectId},REQ_ID:{recordId:reqId}})],regressionExecutions:[proposal('regexec-pre',agentFields(schema,'regressionExecutions',{PHASE:'PRE_CORRECTION',RESULT:'VIOLATED'}),{REG_ID:{tempKey:'reg-1'},ITERATION_ID:{recordId:iteration1},CANDIDATE_ID:{recordId:candidate1}})]}}));requireComplete(p,15);const regId=id(p,'regressions');
-({project:p}=accept(p,16,{stageData:{DATE:'2026-08-25',INSTRUCTION_CHANGED:'TRUE',IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED:'NOT APPLICABLE',PREFLIGHT_REPEATED_IF_CHANGED:'TRUE',ARTIFACTS_CHANGED:'Instruction candidate',NEW_VERSIONS_CREATED:'TRUE',IN_PLACE_MODIFICATIONS:'NONE',DOWNSTREAM_VERIFICATIONS_INVALIDATED:'TRUE'},records:{changes:[proposal('change-1',agentFields(schema,'changes',{TRIGGERING_DEFECT_IDS:[defectId],ROOT_CAUSE_ANALYSIS:'x',RESPONSIBLE_LAYER:'INSTRUCTION',OLD_ARTIFACT_VERSION:p.job.CURRENT_INSTRUCTION_VERSION,EXACT_MODIFICATION:'x',NEW_ARTIFACT_VERSION:'INSTRUCTION-CORRECTED-v001',DOWNSTREAM_INVALIDATION:'Candidate and execution evidence',REQUIRED_RERUNS:'Full corrected ten-run iteration',INSTRUCTION_CHANGE_DETERMINATION:'CHANGED',REQUIRED_REPEATED_PREFLIGHT:'REQUIRED',JUSTIFIED_UNCHANGED_ARTIFACTS:'x',EVIDENCE:'Controlled change evidence'}))]}}));requireComplete(p,16);
-return {p,reqId,testId,iteration1,candidate1,regId};
+export function latestId(project,collection,{stage=null}={}){
+  const records=engine.records(project,collection,stage===null?{}:{stage});
+  return engine.recordId(records.at(-1),collection);
 }
+export function latestRecord(project,collection,{stage=null}={}){return engine.records(project,collection,stage===null?{}:{stage}).at(-1)||null;}
+export function activeRecords(project,collection,options={}){return engine.records(project,collection,options);}
+
+export function roundTrip(project){
+  const serialized=JSON.stringify(project);
+  const reloaded=JSON.parse(serialized);
+  engine.ensureShape(reloaded);
+  engine.recalculate(reloaded);
+  assert(JSON.stringify(reloaded)===JSON.stringify(JSON.parse(JSON.stringify(reloaded))),'Project JSON round trip is unstable.');
+  return reloaded;
+}
+
+export function assertStage(project,stage,expected='COMPLETE'){
+  engine.recalculate(project);
+  const state=project.stages[stage];
+  assert(state.status===expected,`Stage ${String(stage).padStart(2,'0')} expected ${expected}; got ${state.status}: ${state.gate?.reasons?.join('; ')}`);
+  return state;
+}
+
+export async function exactBytesArtifact(project,{stage,artifactId,filename,bytes,mediaType='text/plain',role='STAGE_ARTIFACT'}={}){
+  const data=bytes instanceof Uint8Array?bytes:new TextEncoder().encode(String(bytes));
+  const sha256=await hash.sha256Bytes(data);
+  return engine.registerArtifactBytes(project,{stage,artifactId,filename,mediaType,byteSize:data.byteLength,sha256,lineage:{fixture:'verify-full-cycle'},role});
+}
+
+export {core,hash,schema,engine,prompts,ingestion};
