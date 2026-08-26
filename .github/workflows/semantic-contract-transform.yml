@@ -39,7 +39,6 @@ jobs:
               rendered=json.dumps(data,indent=2)
               p.write_text(text[:match.start(1)]+rendered+text[match.end(1):])
 
-          # Stage 15 defines the permanent failing regression; Stage 16 owns the correction.
           def ownership(o):
               o['regressions']['agent'].remove('CORRECTION')
           rewrite_const_json('workflow-schema.js','RECORD_OWNERSHIP',ownership)
@@ -47,7 +46,6 @@ jobs:
           replace_once('workflow-schema.js',"required:['FAILURE_FIXTURE','REPRODUCTION_PROCEDURE','DETECTION_METHOD','PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','CORRECTION','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE']","required:['FAILURE_FIXTURE','REPRODUCTION_PROCEDURE','DETECTION_METHOD','PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','PERMANENT_TEST_LOCATION','APPLICABILITY','ACTIVE_RETIRED_STATE']")
           replace_once('prompt-engine.js','Define the expected post-correction result. The application assigns REG_ID and lifecycle state.','The linked permanent test expected result defines post-correction success. The application assigns REG_ID and lifecycle state.')
 
-          # Evidence chains are graphs: these fields are intentionally multi-edge arrays.
           def record_types(t):
               for key,vt in {
                   'CHAIN.TEST_ID':'REFERENCE_ARRAY',
@@ -58,7 +56,6 @@ jobs:
                   t.setdefault(key,{})['valueType']=vt
           rewrite_const_json('workflow-schema.js','EXPLICIT_RECORD_FIELD_TYPES',record_types)
 
-          # Operation-specific stageData: an early Stage 17/19 operation cannot assert later-operation facts.
           old=re.search(r"const OPERATION_CONTRACT_OVERRIDES=Object\.freeze\(\{.*?\}\);\nfunction operationContract",Path('workflow-schema.js').read_text(),re.S)
           if not old: raise SystemExit('operation override block not found')
           new="""const OPERATION_CONTRACT_OVERRIDES=Object.freeze({
@@ -90,17 +87,13 @@ jobs:
           replace_once('prompt-engine.js','agentStageFields:[...contract.allowedStageData],agentWritableCollections:[...writable]','agentStageFields:[...agentStageFields],agentWritableCollections:[...writable]')
           replace_once('prompt-engine.js',"const fields=contract.allowedStageData.length?contract.allowedStageData.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';","const agentStageFields=op?.agentStageFields||contract.allowedStageData;\n const fields=agentStageFields.length?agentStageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields; use permitted records/evidence only.';")
 
-          # Prevent product bytes from being uploaded before PRODUCT_ID exists; otherwise they cannot be current-product artifacts.
           replace_once('app-core.js','<div class="field"><label>Select exact files</label><input id="stage-files" type="file" multiple${locked?\' disabled\':\'\'}></div>','<div class="field"><label>${n===21&&!engine.currentScope(current).productId?\'Reserve product execution before adding finished-product files\':\'Select exact files\'}</label><input id="stage-files" type="file" multiple${locked||(n===21&&!engine.currentScope(current).productId)?\' disabled\':\'\'}></div>')
-
-          # Never report clipboard success when the browser did not actually copy.
           replace_once('app-core.js',"if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);await navigator.clipboard?.writeText(record.prompt);announce('instruction saved and copied');};","if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);try{if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable.');await navigator.clipboard.writeText(record.prompt);announce('instruction saved and copied');}catch(error){announce('instruction saved; clipboard copy unavailable');alert(`Instruction saved, but automatic clipboard copy failed. Copy it from the generated instruction panel. ${error.message||error}`);}};")
 
-          # Add focused executable regression assertions.
           p=Path('verify-complete.mjs'); text=p.read_text(); marker='console.log(JSON.stringify({finalRequirementRegression:true'
           if marker not in text: raise SystemExit('verify-complete marker missing')
           proof="""
-          // Semantic contract hardening: array cardinality, Stage 15 chronology, operation stageData isolation, and product artifact authority.
+          // Contract hardening: array cardinality, Stage 15 chronology, operation stageData isolation, and product artifact authority.
           {
             const chain=schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions;
             assert(chain.TEST_ID.valueType==='REFERENCE_ARRAY'&&chain.TEST_RESULT_ID.valueType==='STRING_ARRAY'&&chain.EVIDENCE_ID.valueType==='STRING_ARRAY'&&chain.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain multi-edge fields are not array typed.');
@@ -117,8 +110,7 @@ jobs:
           """
           p.write_text(text.replace(marker,proof+marker,1))
 
-          # Runtime files changed: rotate one coherent browser cache token.
-          idx=Path('index.html'); html=idx.read_text(); html,n=re.subn(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)',r'\g<1>20260826-semantic2\2',html)
+          idx=Path('index.html'); html=idx.read_text(); html,n=re.subn(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)',r'\g<1>20260826-contract2\2',html)
           if n!=8: raise SystemExit(f'expected 8 runtime script token replacements, got {n}')
           idx.write_text(html)
           PY
@@ -143,5 +135,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/semantic-contract-transform.yml
           git add workbook.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-complete.mjs TEST_PROJECT.json index.html
-          git commit -m "Harden semantic operation and evidence contracts"
+          git commit -m "Harden operation and evidence contracts"
           git push origin HEAD:reliability/semantic-contract-hardening-20260826
