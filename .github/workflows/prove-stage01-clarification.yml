@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: python3 .apply-stage01-clarification.py
+      - run: python3 .apply-stage01-clarification-v2.py
       - run: |
           node build-test-project.mjs
           node --check prompt-engine.js
@@ -38,7 +38,7 @@ jobs:
           node verify-browser.mjs
           node verify-browser-extra.mjs
       - run: |
-          rm -f .apply-stage01-clarification.py .github/workflows/prove-stage01-clarification.yml
+          rm -f .apply-stage01-clarification.py .apply-stage01-clarification-v2.py .github/workflows/prove-stage01-clarification.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
