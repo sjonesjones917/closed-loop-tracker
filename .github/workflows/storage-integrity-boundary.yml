@@ -1,0 +1,74 @@
+name: Storage integrity boundary
+on:
+  push:
+    branches: [reliability/storage-integrity-boundary-20260826]
+permissions: {contents: write}
+jobs:
+  apply-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/storage-integrity-boundary-20260826}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Enforce semantic integrity at persistence boundaries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          p=Path('project-store.js');s=p.read_text()
+          old="try{fault('before-legacy-migration');for(const source of legacy){const project=clone(source);const id=projectIdentity(project);if(!id)continue;const revision=Number(project.revision||0);tx.objectStore(PROJECTS).put({jobId:id,revision,project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}"
+          new="try{fault('before-legacy-migration');for(const source of legacy){const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,project=core?.migrateState?core.migrateState(clone(source)):clone(source);engine?.ensureShape?.(project);engine?.recalculate?.(project);assertProjectIntegrity(project);const id=projectIdentity(project);if(!id)continue;const revision=Number(project.revision||0);tx.objectStore(PROJECTS).put({jobId:id,revision,project,projectSha256:projectSha256(project),updatedAt:now()});migrated++;}"
+          if s.count(old)!=1: raise SystemExit(f'legacy migration anchor changed: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="const valid=[];for(const row of rows){const actual=projectSha256(row.project);if(actual!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');continue;}const project=clone(row.project);project.revision=Number(row.revision||project.revision||0);project.projectSha256=row.projectSha256;valid.push(project);}return valid;"
+          new="const valid=[];for(const row of rows){const actual=projectSha256(row.project);if(actual!==row.projectSha256){await quarantine(row,'PROJECT_HASH_MISMATCH');continue;}if(Number(row.project?.revision||0)!==Number(row.revision||0)){await quarantine(row,'PROJECT_REVISION_MISMATCH');continue;}const project=clone(row.project),integrity=validateProjectIntegrity(project,{verifyDerived:false});if(!integrity.valid){await quarantine(row,`PROJECT_SEMANTIC_INTEGRITY_FAILED: ${integrity.issues.join(' | ')}`);continue;}project.projectSha256=row.projectSha256;valid.push(project);}return valid;"
+          if s.count(old)!=1: raise SystemExit(f'read boundary anchor changed: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="const next=clone(project);next.revision=incrementRevision?currentRevision+1:currentRevision;delete next.projectSha256;const digest=projectSha256(next);"
+          new="const next=clone(project);next.revision=incrementRevision?currentRevision+1:currentRevision;delete next.projectSha256;assertProjectIntegrity(next);const digest=projectSha256(next);"
+          if s.count(old)!=1: raise SystemExit(f'write boundary anchor changed: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="const incoming=clone(project);delete incoming.projectSha256;const digest=projectSha256(incoming);"
+          new="const incoming=clone(project);delete incoming.projectSha256;assertProjectIntegrity(incoming);const digest=projectSha256(incoming);"
+          if s.count(old)!=1: raise SystemExit(f'writeAll boundary anchor changed: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="engine?.ensureShape?.(next);engine?.recalculate?.(next);next.revision=expected+1;const digest=projectSha256(next);"
+          new="engine?.ensureShape?.(next);engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next);const digest=projectSha256(next);"
+          if s.count(old)!=1: raise SystemExit(f'transaction boundary anchor changed: {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          p=Path('verify.mjs');s=p.read_text();anchor="for(const token of [\"DB_NAME='closed-loop-reliability'\",\"createObjectStore(PROJECTS\",\"createObjectStore(ARTIFACTS\",\"createObjectStore(META\",'expectedProjectRevision','BroadcastChannel','putArtifact','exportPackage','importPackage','CompressionStream','projectSha256'])if(!storeSource.includes(token))throw new Error(`PR5 storage boundary missing ${token}.`);"
+          replacement=anchor+"\n for(const token of ['assertProjectIntegrity(next);const digest=projectSha256(next)','assertProjectIntegrity(incoming);const digest=projectSha256(incoming)','PROJECT_REVISION_MISMATCH','PROJECT_SEMANTIC_INTEGRITY_FAILED'])if(!storeSource.includes(token))throw new Error(`Canonical persistence integrity boundary missing ${token}.`);"
+          if s.count(anchor)!=1: raise SystemExit(f'verifier storage anchor changed: {s.count(anchor)}')
+          p.write_text(s.replace(anchor,replacement,1))
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+            b=Path(path).read_bytes();return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{f}:{blob(f)}\n' for f in files).encode()).hexdigest()[:16]
+          p=Path('index.html');h=p.read_text();h2=re.sub(r'(?<=\?v=)runtime-[a-f0-9]{16}',token,h)
+          if h2==h: raise SystemExit('runtime token not refreshed')
+          p.write_text(h2)
+          PY
+      - name: Prove full application and persistence lifecycle
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/http.log 2>&1 & P=$!; trap 'kill $P 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit proven source
+        run: |
+          rm -f .github/workflows/storage-integrity-boundary.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Enforce semantic integrity at canonical persistence boundaries'
+          git push origin HEAD:reliability/storage-integrity-boundary-20260826
