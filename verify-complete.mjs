@@ -76,9 +76,34 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   const ids=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(ids.includes('REQ-CURRENT')&&!ids.includes('REQ-STALE'),'Historical scope satisfied current selector.');
   const unscoped=record('requirements',4,{OBLIGATION:'unscoped historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-UNSCOPED');delete unscoped.scope;p.projectData.requirements.push(unscoped);const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');
 }
+
+// Agent-writable contracts may never expose application-derived collections.
+for(const [stage,contract] of Object.entries(schema.STAGE_CONTRACTS))for(const collection of contract.agentWritableCollections)assert(schema.RECORD_SCHEMAS[collection]?.commitPolicy!=='APPLICATION_DERIVED',`Stage ${stage} exposes application-derived ${collection} as agent-writable.`);
+assert(!schema.STAGE_CONTRACTS[18].agentWritableCollections.includes('convergenceRecords'),'Stage 18 exposes convergenceRecords to the agent.');
+
+// Explicit prompt resource scope survives regeneration instead of silently switching to global current identities.
+{
+  const p=project('JOB-PROMPT-SCOPE');p.job.CURRENT_ITERATION='ITERATION-CURRENT';p.job.CURRENT_BASELINE_ID='BASELINE-CURRENT';p.job.CURRENT_PRODUCT_ID='PRODUCT-CURRENT';
+  p.projectData.candidateFreezes.push(record('candidateFreezes',17,{ITERATION_ID:'ITERATION-CURRENT',COMPONENT_HASHES:{A:'a'},STATUS:'FROZEN'},'CANDIDATE-CURRENT'));
+  const scope=prompts.scopeFor(17,p,{iterationId:'ITERATION-SELECTED',candidateId:'CANDIDATE-SELECTED',runId:'RUN-SELECTED',contextId:'CONTEXT-SELECTED',baselineId:'BASELINE-SELECTED',productId:'PRODUCT-SELECTED'});
+  assert(scope.iterationId==='ITERATION-SELECTED'&&scope.candidateId==='CANDIDATE-SELECTED'&&scope.runId==='RUN-SELECTED'&&scope.contextId==='CONTEXT-SELECTED'&&scope.baselineId==='BASELINE-SELECTED'&&scope.productId==='PRODUCT-SELECTED','Prompt resource-scope override was silently replaced by global state.');
+}
+
+// Operation completion is iteration-scoped; historical operation activity cannot satisfy a new repeated cycle.
+{
+  const p=project('JOB-OP-SCOPE');p.projectData.acceptedChanges.push({changeId:'OLD-VERIFY',stage:19,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'VERIFY',scope:{iterationId:'ITERATION-OLD'}});p.projectData.acceptedChanges.push({changeId:'NEW-COMPARE',stage:19,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'COMPARE',scope:{iterationId:'ITERATION-NEW'}});
+  const ops=engine.acceptedOperationSet(p,19,'ITERATION-NEW');assert(!ops.has('VERIFY')&&ops.has('COMPARE'),'Historical repeated-operation proof leaked into the current iteration.');
+}
+
+// Release and delivery identity cannot be invoked before their prerequisite stages are complete.
+{
+  const p=project('JOB-PREMATURE-RELEASE');let releaseBlocked=false;try{engine.recordReleaseDetermination(p);}catch{releaseBlocked=true;}assert(releaseBlocked,'Release determination ran before Stage 26 completion.');
+  const release=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-EARLY');release.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.releaseRecords.push(release);let identityBlocked=false;try{engine.verifyArtifactIdentity(p,[],[]);}catch{identityBlocked=true;}assert(identityBlocked,'Artifact identity ran before Stage 27 completion.');
+}
+
 // Artifact identity is independent of file-selection order.
 {
-  const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));
+  const p=project('JOB-ORDER');p.stages[27].status='COMPLETE';const rel=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER');rel.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.releaseRecords.push(rel);const aa=record('artifacts',21,{FILENAME:'a.bin',BYTE_SIZE:1,SHA256:'a',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'A'),ab=record('artifacts',21,{FILENAME:'b.bin',BYTE_SIZE:2,SHA256:'b',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'B');aa.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};ab.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.artifacts.push(aa,ab);
   const audited=[{artifactId:'A',name:'a.bin',size:1,sha256:'a'},{artifactId:'B',name:'b.bin',size:2,sha256:'b'}];const delivery=[{artifactId:'B',name:'b.bin',size:2,sha256:'b'},{artifactId:'A',name:'a.bin',size:1,sha256:'a'}];
   const r=engine.verifyArtifactIdentity(p,audited,delivery);assert(r.length===2&&p.release.authorization==='AUTHORIZED','Artifact identity depends on file-selection order.');
 }
@@ -98,7 +123,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 // Release identity is prohibited before ACCEPTED and exact mismatches remain unauthorized.
 {
   const p=project('JOB-IDENTITY');let threw=false;try{engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}]);}catch{threw=true;}assert(threw,'Stage 28 ran before an ACCEPTED Stage 27 determination.');
-  p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST'));
+  p.stages[27].status='COMPLETE';const rel=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-TEST');rel.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.releaseRecords.push(rel);const artifact=record('artifacts',21,{FILENAME:'x.bin',BYTE_SIZE:3,SHA256:'aaa',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'A');artifact.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.artifacts.push(artifact);
   const result=engine.verifyArtifactIdentity(p,[{artifactId:'A',name:'x.bin',size:3,sha256:'aaa'}],[{artifactId:'A',name:'x.bin',size:4,sha256:'bbb'}]);
   assert(result.length===1&&result[0].AUTHORIZATION==='NOT AUTHORIZED'&&p.release.authorization==='NOT AUTHORIZED','Mismatched release bytes were authorized.');
 }
