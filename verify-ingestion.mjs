@@ -184,6 +184,44 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
   ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
 }
 
+// A missing returned file can be attached later and the same preserved raw response can be revalidated without duplication.
+{
+  const make=(job)=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),sha='c'.repeat(64);e.attachments=[{temporaryKey:'retry-attachment',filename:'result.pdf',mediaType:'application/pdf',byteSize:7,sha256:sha,required:true}];e.evidence[0].attachmentRef={tempKey:'retry-attachment'};return {p,stage,pr,e,sha};};
+  {
+    const {p,stage,pr,e,sha}=make('JOB-ATTACHMENT-RETRY'),text=JSON.stringify(e),captured=ingestion.captureRaw(p,{stage,text,promptRecord:pr,files:[]}),first=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:pr});
+    if(first.validation.valid||!first.validation.issues.some(item=>item.code==='MISSING_REQUIRED_ATTACHMENT'))throw new Error('Missing attachment did not create the expected preserved validation failure.');
+    const rawId=first.rawRecord.rawResponseId,rawSha=first.rawRecord.sha256,firstValidationId=first.validation.validationId,validationCount=first.project.projectData.responseValidations.length;
+    engine.registerArtifactBytes(first.project,{stage,artifactId:'ARTIFACT-RETRY-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:7,sha256:sha,lineage:{test:'attachment-retry'}});
+    const file={artifactId:'ARTIFACT-RETRY-1',name:'result.pdf',type:'application/pdf',size:7,sha256:sha},retried=ingestion.prepareCaptured(first.project,{rawResponseId:rawId,promptRecord:pr,expectedCommittedRevision:Number(first.project.revision||0),files:[file]});
+    if(!retried.validation.valid||retried.validation.issues.some(item=>item.code==='DUPLICATE_RESPONSE')||!retried.proposal)throw new Error('The same preserved response did not validate after exact returned bytes were attached: '+JSON.stringify(retried.validation.issues));
+    if(retried.rawRecord.rawResponseId!==rawId||retried.rawRecord.sha256!==rawSha||retried.project.projectData.rawResponses.length!==1)throw new Error('Attachment retry changed raw response identity or created a second raw response.');
+    if(retried.project.projectData.responseValidations.length!==validationCount+1||!retried.project.projectData.responseValidations.some(item=>item.validationId===firstValidationId&&!item.valid))throw new Error('Attachment retry did not preserve the first validation and append a new result.');
+    if(retried.rawRecord.attachmentBindingAttempts?.length!==1||retried.rawRecord.attachmentBindingAttempts[0].artifactIds[0]!=='ARTIFACT-RETRY-1')throw new Error('Attachment retry did not preserve its application-verified binding attempt.');
+    if(retried.project.projectData.sources.length||retried.project.projectData.acceptedChanges.length)throw new Error('Attachment retry mutated canonical stage data before acceptance.');
+    const pendingAgain=ingestion.prepareCaptured(retried.project,{rawResponseId:rawId,promptRecord:pr,files:[file]});
+    if(!pendingAgain.idempotent||pendingAgain.project.projectData.responseProposals.length!==retried.project.projectData.responseProposals.length)throw new Error('A pending validated response created a second proposal during reprepare.');
+    const committed=ingestion.commit(retried.project,retried.proposal.proposalId,{operator:'ATTACHMENT_RETRY_TEST'});
+    if(committed.project.projectData.acceptedChanges.length!==1||!Object.keys(committed.project.stages[stage].agentData||{}).length)throw new Error('Attachment-retried response did not commit exactly once.');
+    const acceptedAgain=ingestion.prepareCaptured(committed.project,{rawResponseId:rawId,promptRecord:pr,files:[file]});
+    if(!acceptedAgain.idempotent||acceptedAgain.project.projectData.responseValidations.length!==retried.project.projectData.responseValidations.length)throw new Error('Accepted response attachment retry created another validation or mutation.');
+  }
+  {
+    const {p,stage,pr,e}=make('JOB-ATTACHMENT-RETRY-WRONG'),captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[]}),first=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:pr}),sha='d'.repeat(64);
+    engine.registerArtifactBytes(first.project,{stage,artifactId:'ARTIFACT-RETRY-WRONG',filename:'wrong.pdf',mediaType:'application/pdf',byteSize:7,sha256:sha});
+    const retried=ingestion.prepareCaptured(first.project,{rawResponseId:first.rawRecord.rawResponseId,promptRecord:pr,files:[{artifactId:'ARTIFACT-RETRY-WRONG',name:'wrong.pdf',type:'application/pdf',size:7,sha256:sha}]});
+    if(retried.validation.valid||!retried.validation.issues.some(item=>item.code==='ATTACHMENT_FILENAME_MISMATCH'))throw new Error('Wrong returned file became acceptable during attachment retry.');negativeCount++;
+  }
+  {
+    const {p,stage,pr,e}=make('JOB-ATTACHMENT-RETRY-CROSS'),captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[]}),first=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:pr});let code='';try{ingestion.prepareCaptured(first.project,{rawResponseId:first.rawRecord.rawResponseId,promptRecord:pr,files:[{artifactId:'ARTIFACT-OTHER-PROJECT',name:'result.pdf',type:'application/pdf',size:7,sha256:'c'.repeat(64)}]});}catch(error){code=error.code;}if(code!=='CROSS_PROJECT_ATTACHMENT')throw new Error(`Cross-project retry attachment was not rejected: ${code||'NO_ERROR'}.`);negativeCount++;
+  }
+  {
+    const {p,stage,pr,e}=make('JOB-ATTACHMENT-RETRY-METADATA'),captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[]}),first=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:pr});first.project.projectData.artifacts.push({id:'ARTIFACT-METADATA-ONLY',stage,active:true,fields:{ARTIFACT_ID:'ARTIFACT-METADATA-ONLY',FILENAME:'result.pdf',TYPE:'application/pdf',BYTE_SIZE:7,SHA256:'c'.repeat(64),AVAILABILITY:'METADATA_ONLY'}});let code='';try{ingestion.prepareCaptured(first.project,{rawResponseId:first.rawRecord.rawResponseId,promptRecord:pr,files:[{artifactId:'ARTIFACT-METADATA-ONLY',name:'result.pdf',type:'application/pdf',size:7,sha256:'c'.repeat(64)}]});}catch(error){code=error.code;}if(code!=='UNVERIFIED_ATTACHMENT_BINDING')throw new Error(`Metadata-only retry attachment was not rejected: ${code||'NO_ERROR'}.`);negativeCount++;
+  }
+  {
+    const {p,stage,pr,e,sha}=make('JOB-ATTACHMENT-RETRY-STALE'),captured=ingestion.captureRaw(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[]}),first=ingestion.prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:pr});engine.registerArtifactBytes(first.project,{stage,artifactId:'ARTIFACT-RETRY-STALE',filename:'result.pdf',mediaType:'application/pdf',byteSize:7,sha256:sha});first.project.projectData.generatedPrompts.find(item=>item.instructionId===pr.instructionId).invalidatedBy='AUTHORITY-CHANGE';const retried=ingestion.prepareCaptured(first.project,{rawResponseId:first.rawRecord.rawResponseId,promptRecord:pr,files:[{artifactId:'ARTIFACT-RETRY-STALE',name:'result.pdf',type:'application/pdf',size:7,sha256:sha}]});if(retried.validation.valid||!retried.validation.issues.some(item=>item.code==='STALE_PROMPT_IDENTITY'))throw new Error('Attachment retry accepted an invalidated controlling prompt.');negativeCount++;
+  }
+}
+
 // Duplicate response is semantic, not whitespace-sensitive.
 {
   let p=project('JOB-NEG-DUPLICATE'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord),text=JSON.stringify(envelope);
