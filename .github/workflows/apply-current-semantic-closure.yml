@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply minimal semantic corrections
-        run: python3 .final-current-patch.py
+        run: |
+          python3 .fix-current-patch-matcher.py
+          python3 .final-current-patch.py
       - name: Verify deterministic source and full lifecycle
         run: |
           node --check workflow-schema.js
@@ -50,7 +52,7 @@ jobs:
           trap - EXIT
       - name: Commit only fully verified source
         run: |
-          rm .final-current-patch.py
+          rm .final-current-patch.py .fix-current-patch-matcher.py
           git rm .github/workflows/apply-current-semantic-closure.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
