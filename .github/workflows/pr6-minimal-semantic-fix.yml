@@ -71,7 +71,11 @@ jobs:
           if marker not in segment: raise SystemExit('Iteration-scope fixture relationship marker missing.')
           segment=segment.replace(marker,"req.scope={...baseScope};test.scope={...baseScope};"+marker,1); text=text[:a]+segment+text[b:]; p.write_text(text)
 
-          p=Path('verify-full-cycle.mjs'); text=p.read_text(); marker="acceptStage(17,{operation:'REGRESSION',records:{regressionExecutions:"; i=text.index(marker); text=text[:i]+"acceptStage(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:true}});\n"+text[i:]; p.write_text(text)
+          p=Path('verify-full-cycle.mjs'); text=p.read_text(); marker="acceptStage(17,{operation:'REGRESSION',records:{regressionExecutions:"; i=text.index(marker); text=text[:i]+"acceptStage(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:true}});\n"+text[i:]
+          old="engine.recordReleaseDetermination(p);assertStage(p,27);const releaseId=id('releaseRecords');assert(engine.recordValue(rec('releaseRecords'),'DETERMINATION')==='ACCEPTED','Release was not ACCEPTED.');"
+          new="engine.recordReleaseDetermination(p);assertStage(p,27);const releaseId=id('releaseRecords');if(engine.recordValue(rec('releaseRecords'),'DETERMINATION')!=='ACCEPTED')console.error('RELEASE_METRICS',JSON.stringify(engine.releaseMetrics(p),null,2));assert(engine.recordValue(rec('releaseRecords'),'DETERMINATION')==='ACCEPTED','Release was not ACCEPTED.');"
+          if text.count(old)!=1: raise SystemExit(f'Release diagnostic insertion match {text.count(old)}')
+          p.write_text(text.replace(old,new,1))
 
           p=Path('app-core.js'); text=p.read_text()
           old="const applicable=[10,20,21,25,28].includes(n)"
@@ -82,11 +86,9 @@ jobs:
           new="${(n===10||n===17)?`<button id=\"freeze-candidate\"${locked?' disabled':''}>Freeze selected candidate</button>`:''}${n===19?`<button id=\"begin-unchanged-confirmation\"${locked?' disabled':''}>Begin unchanged confirmation</button>`:''}"
           if text.count(old)!=1: raise SystemExit(f'Freeze candidate button match {text.count(old)}')
           text=text.replace(old,new,1)
-          hook="if($('#freeze-baseline'))"
-          i=text.index(hook)
+          hook="if($('#freeze-baseline'))"; i=text.index(hook)
           insertion="if($('#begin-unchanged-confirmation'))$('#begin-unchanged-confirmation').onclick=async()=>{try{const next=clone(current),candidate=engine.records(next,'candidateFreezes').filter(r=>Number(r.stage)===17&&engine.isActiveRecord(r)).at(-1);if(!candidate)throw new Error('A current Stage 17 frozen candidate is required.');engine.beginUnchangedConfirmationIteration(next,{candidateId:engine.recordId(candidate,'candidateFreezes'),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('saved');render();}catch(error){alert(error.message||error);}};"
-          text=text[:i]+insertion+text[i:]
-          p.write_text(text)
+          text=text[:i]+insertion+text[i:]; p.write_text(text)
           PY
       - name: Verify all deterministic source contracts
         run: |
