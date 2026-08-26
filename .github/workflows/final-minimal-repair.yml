@@ -1,0 +1,85 @@
+name: Final minimum semantic repair proof
+on:
+  push:
+    branches: [reliability/final-minimal-fixes-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[final-minimal-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-minimal-fixes-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact minimum repairs
+        run: python3 repair-final-minimal.py
+      - name: Syntax checks
+        run: |
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node --check test-fixtures.mjs
+          node --check verify-hash.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Verify deterministic acceptance
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify repaired semantic boundaries
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const s=globalThis.closedLoopWorkflowSchema,e=globalThis.closedLoopWorkflowEngine,i=globalThis.closedLoopResponseIngestion,c=globalThis.closedLoopCore;
+          if(!s.STAGE_CONTRACTS[1].readCollections.includes('artifacts'))throw new Error('Stage 01 does not read verified supplied artifacts.');
+          const p=c.createBlankState('JOB-SEMANTIC-REPAIR');e.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Produce a complete technical specification.';
+          e.registerArtifactBytes(p,{stage:1,artifactId:'ARTIFACT-SUPPLIED-1',filename:'inputs/reference.step',mediaType:'model/step',byteSize:123,sha256:'a'.repeat(64),lineage:{stage:1,logicalPath:'inputs/reference.step'}});
+          const v=e.recordHumanInputVersion(p,['SUPPLIED_ARTIFACT:ARTIFACT-SUPPLIED-1'],'TEST');
+          if(!v.payload.suppliedArtifacts?.some(a=>a.artifactId==='ARTIFACT-SUPPLIED-1'&&a.logicalPath==='inputs/reference.step'&&a.sha256==='a'.repeat(64)))throw new Error('Input version does not bind supplied artifact identity.');
+          const pr=globalThis.closedLoopPromptEngine.buildPromptRecord(1,{...p,revision:1});
+          if(!pr.prompt.includes('ARTIFACT-SUPPLIED-1')||!pr.prompt.includes('inputs/reference.step'))throw new Error('Stage 01 prompt omits verified artifact identity/path.');
+          const issues=[];i.validateValue({valueType:'STRING',nullable:false,enumValues:[]},'12345','/x',issues,{maxTextFieldLength:4});
+          if(!issues.some(x=>x.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('Text limit does not follow effective contract input.');
+          console.log(JSON.stringify({stage1ArtifactContext:true,inputArtifactIdentity:true,contractTextLimit:true}));
+          NODE
+      - name: Exercise local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit exact passing source and remove repair scaffolding
+        run: |
+          rm repair-final-minimal.py .github/workflows/final-minimal-repair.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close final minimum semantic reliability gaps [final-minimal-complete]"
+          git push origin HEAD:reliability/final-minimal-fixes-20260826
