@@ -7,20 +7,19 @@ permissions:
   contents: write
 jobs:
   integrate:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 100
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply audited unique runtime diff
+      - name: Apply exact current-main patch
+        run: python .unique_runtime.py
+      - name: Add self specification artifact
         run: |
-          git fetch origin practical-100/organic-self-spec-final --depth=100
-          git diff d0aae2aef3fb7675962f2747f75b0051ba4fe427 2efee2303c2fd8b593e02264d6e5f9ea5a5a60f0 -- app-core.js response-ingestion.js workflow-engine.js > /tmp/runtime.patch
-          git apply --3way /tmp/runtime.patch
-          git show 2efee2303c2fd8b593e02264d6e5f9ea5a5a60f0:SELF_SPECIFICATION.md > SELF_SPECIFICATION.md
+          git fetch origin practical-100/organic-self-spec-acceptance --depth=20
+          git show origin/practical-100/organic-self-spec-acceptance:SELF_SPECIFICATION.md > SELF_SPECIFICATION.md
       - name: Verify existing acceptance suites
         run: |
           node --check app-core.js
@@ -35,7 +34,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          rm .github/workflows/apply-unique-runtime.yml
+          rm .unique_runtime.py .github/workflows/apply-unique-runtime.yml
           git add -A
-          git commit -m "Close accepted-response, run identity, and Stage 29 operator gaps"
+          git commit -m "Close accepted-response, run identity, operation, and Stage 29 UI gaps"
           git push origin HEAD:practical-100/final-organic-ui
