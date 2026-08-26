@@ -106,7 +106,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     return value;
   };
 
-  const allowedStageData=new Set(contract?.allowedStageData||[]);
+  const allowedStageData=new Set(operationContract?.agentStageFields||contract?.allowedStageData||[]);
   if(object(envelope.stageData)){
     for(const [name,value] of Object.entries(envelope.stageData)){
       const path=`/stageData/${pointerEscape(name)}`;

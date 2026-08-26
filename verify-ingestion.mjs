@@ -47,11 +47,14 @@ function safeValue(name){
 function valueForDefinition(def){if(def.enumValues?.length)return def.enumValues[0];if(def.valueType==='INTEGER')return 1;if(def.valueType==='NUMBER')return 1;if(def.valueType==='BOOLEAN')return true;if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['verified'];if(def.valueType==='OBJECT')return {};return 'verified';}
 function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage];
+  const operationContract=schema.operationContract(stage,promptRecord.operation);
+  const agentStageFields=operationContract?.agentStageFields||contract.allowedStageData;
+  const writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
-  if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);
+  if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);
   const records={};
   if(!Object.keys(stageData).length){
-    const collection=contract.allowedCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||contract.allowedCollections.find(name=>schema.recordAgentFields(name).length);
+    const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
     const fields={};

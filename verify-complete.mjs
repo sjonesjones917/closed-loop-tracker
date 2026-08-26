@@ -130,4 +130,19 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(engine.records(p,'sources',{stage:2}).length===0,'Invalidated accepted response left same-stage canonical source active.');assert(engine.acceptedChanges(p,2).length===0,'Invalidated accepted change retained current stage authority.');assert(Object.keys(p.stages[2].agentData||{}).length===0&&p.stages[2].acceptedDataChangeIds.length===0&&p.stages[2].acceptedResponseIds.length===0,'Invalidated stage retained accepted agent state.');const replacement=prompts.buildPromptRecord(2,p);assert(replacement.prompt.includes(reason),'Replacement prompt omitted accepted-result refinement reason.');assert(replacement.contextManifest.acceptedResultRefinements?.some(x=>x.reason===reason),'Replacement prompt identity did not bind the refinement reason.');
 }
 
+
+// Contract hardening: array cardinality, Stage 15 chronology, operation stageData isolation, and product artifact authority.
+{
+  const chain=schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions;
+  assert(chain.TEST_ID.valueType==='REFERENCE_ARRAY'&&chain.TEST_RESULT_ID.valueType==='STRING_ARRAY'&&chain.EVIDENCE_ID.valueType==='STRING_ARRAY'&&chain.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain multi-edge fields are not array typed.');
+  assert(!schema.RECORD_SCHEMAS.regressions.fieldDefinitions.CORRECTION,'Stage 15 regression schema still requires a correction before Stage 16.');
+  assert(!schema.operationContract(17,'EXECUTE_RUN').agentStageFields.includes('REGRESSION_TESTS_ADDED'),'Stage 17 EXECUTE_RUN can assert later regression stageData.');
+  assert(schema.operationContract(17,'REGRESSION').agentStageFields.includes('REGRESSION_TESTS_ADDED'),'Stage 17 REGRESSION lost its own stageData field.');
+  assert(!schema.operationContract(21,'COMPLETE').agentWritableCollections.includes('artifacts'),'Stage 21 agent can fabricate canonical artifact records instead of using verified bytes.');
+  const p=project('JOB-OP-STAGE-DATA'),stage=17,pr=prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN'});
+  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:'EXECUTE_RUN',promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{REGRESSION_TESTS_ADDED:'YES'},records:{},evidence:[{temporaryKey:'evidence-op',kind:'WORKFLOW_EVIDENCE',description:'Operation-field isolation proof',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
+  const v=ingestion.validateEnvelope(p,e,{stage,promptRecord:pr,rawSha256:'operation-stage-data-proof'});
+  assert(!v.valid&&v.issues.some(x=>x.code==='FIELD_OWNERSHIP_VIOLATION'&&x.path==='/stageData/REGRESSION_TESTS_ADDED'),'Operation-specific Stage 17 stageData leakage was accepted.');
+}
+
 console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
