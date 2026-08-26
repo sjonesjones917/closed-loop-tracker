@@ -16,4 +16,4 @@ jobs:
           node --check test-fixtures.mjs
           node --check verify-full-cycle.mjs
           node verify-full-cycle.mjs
-          # Temporary lifecycle runner; remove before opening PR6.
+          # Temporary lifecycle runner; delete before PR6 review.
