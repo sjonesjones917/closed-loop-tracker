@@ -281,3 +281,10 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
   const stage9=prompts.buildPromptRecord(9,p).prompt;
   if(!stage9.includes('independent context from the instruction author')||stage9.includes('independent context where required'))throw new Error('Stage 09 prompt independence contradicts its unconditional gate.');
 }
+
+
+// Stage 15 must distinguish the permanent definition from actual regression executions.
+{
+  const p=baseProject(),text=prompts.buildPromptRecord(15,p).prompt;
+  for(const token of ['permanent regression definition plus a separate actual pre-correction regression execution','In regressionExecutions','Do not write PRE_CORRECTION_RESULT'])if(!text.includes(token))throw new Error(`Stage 15 definition/execution separation missing: ${token}`);
+}

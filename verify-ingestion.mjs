@@ -390,3 +390,13 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
   prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
   if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
 }
+
+
+// Regression execution truth cannot be asserted on the permanent regression definition.
+negativeAt('regression definition execution-truth injection',15,(e)=>{
+  const def=schema.RECORD_SCHEMAS.regressions,fields={};
+  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
+  fields.PRE_CORRECTION_RESULT='VIOLATED';
+  e.stageData={};
+  e.records={regressions:[{tempKey:'regression-definition',fields,relationships:{},evidenceRefs:['evidence-1']}]};
+},'FIELD_OWNERSHIP_VIOLATION');
