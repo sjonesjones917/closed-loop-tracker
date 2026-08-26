@@ -3,16 +3,34 @@
 
 function stableStringify(value){
   const seen=new WeakSet();
-  const normalize=input=>{
-    if(input===null||typeof input!=='object'){
-      if(typeof input==='number'&&!Number.isFinite(input))return String(input);
+  const normalize=(input,path='$')=>{
+    if(input===null)return null;
+    const type=typeof input;
+    if(type==='string'||type==='boolean')return input;
+    if(type==='number'){
+      if(!Number.isFinite(input))throw new TypeError(`Cannot canonically hash non-finite number at ${path}.`);
       return input;
     }
-    if(seen.has(input))throw new TypeError('Cannot hash a cyclic value.');
+    if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
+    if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
     seen.add(input);
     let output;
-    if(Array.isArray(input))output=input.map(normalize);
-    else output=Object.fromEntries(Object.keys(input).sort().filter(key=>input[key]!==undefined).map(key=>[key,normalize(input[key])]));
+    if(Array.isArray(input)){
+      const keys=Object.keys(input);
+      for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
+      if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+      output=input.map((item,index)=>normalize(item,`${path}[${index}]`));
+    }else{
+      const prototype=Object.getPrototypeOf(input);
+      if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
+      if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
+      output={};
+      for(const key of Object.keys(input).sort()){
+        const descriptor=Object.getOwnPropertyDescriptor(input,key);
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
+        output[key]=normalize(descriptor.value,`${path}.${key}`);
+      }
+    }
     seen.delete(input);
     return output;
   };
