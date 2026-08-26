@@ -61,12 +61,15 @@ jobs:
           extra="""// Stage 01 minimum intake and exact clarification contract regression.\n{\n const empty=core.createBlankState('JOB-STAGE01-MINIMUM');engine.ensureShape(empty);let error=null;try{prompts.buildPromptRecord(1,empty,{operation:'COMPLETE'});}catch(caught){error=caught;}if(error?.code!=='MISSING_MINIMUM_HUMAN_INPUT')throw new Error('Stage 01 still generates an UNKNOWN-objective prompt.');\n const patent=baseProject();patent.job.EXACT_USER_OBJECTIVE_VERBATIM='I need a patent application for my project.';const record=prompts.buildPromptRecord(1,patent,{operation:'COMPLETE'}),descriptor=prompts.responseContractDescriptor(1,'COMPLETE');const expected=['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking'];if(JSON.stringify(descriptor.envelope.humanInputRequestKeys)!==JSON.stringify(expected))throw new Error('Stage 01 question contract is not exact.');for(const bad of ['whyNeeded','expectedAnswer','requestKey','required','expectedValue'])if(!record.prompt.includes(bad))throw new Error(`Stage 01 prompt does not prohibit invented clarification key ${bad}.`);if(!record.prompt.includes('ASCII U+0022')||!record.prompt.includes('never use typographic/curly quotation marks'))throw new Error('Stage 01 prompt does not protect strict JSON quote syntax.');if(record.prompt.includes('ask only the necessary clarification questions in normal plain language first'))throw new Error('Stage 01 still contradicts its JSON-only response contract.');\n}\n\n"""
           assert marker in s; s=s.replace(marker,extra+marker,1); p.write_text(s)
 
+          p=Path('verify-browser.mjs'); s=p.read_text()
+          old="await openStage(cdp,1);text=(await snapshot(cdp)).text;for(const token of ['Clarify before final JSON.','plain-language questions before final JSON','record the answer in User Job Input and regenerate this instruction','HUMAN_INPUT_REQUIRED'])assert(text.includes(token),`Stage 01 clarification experience missing ${token}.`);"
+          new="await openStage(cdp,1);text=(await snapshot(cdp)).text;for(const token of ['Start with one thing: save the verbatim job request','one structured HUMAN_INPUT_REQUIRED response','STAGE 01 NEEDS YOUR JOB REQUEST'])assert(text.includes(token),`Stage 01 clarification experience missing ${token}.`);assert(!text.includes('plain-language questions before final JSON'),'Stage 01 UI still advertises the contradictory conversational-before-JSON path.');"
+          assert old in s; s=s.replace(old,new,1); p.write_text(s)
+
           files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest=''
           for f in files:
-              b=Path(f).read_bytes()
-              blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
-              manifest+=f'{f}:{blob}\n'
+              b=Path(f).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{f}:{blob}\n'
           token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
           p=Path('index.html'); html=p.read_text(); html=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)',lambda m:m.group(1)+token+m.group(2),html); p.write_text(html)
           PY
@@ -78,6 +81,7 @@ jobs:
           node --check prompt-engine.js
           node --check app-core.js
           node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
           node verify-hash.mjs
           node verify.mjs
           node verify-ingestion.mjs
@@ -100,6 +104,6 @@ jobs:
           rm .github/workflows/stage01-prompt-contract-proof.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs index.html .github/workflows/stage01-prompt-contract-proof.yml
+          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs index.html .github/workflows/stage01-prompt-contract-proof.yml
           git commit -m 'Make Stage 01 clarification deterministic and usable'
           git push origin HEAD
