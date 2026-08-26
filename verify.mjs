@@ -45,6 +45,20 @@ function blank(jobId){const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.
 const generated=[];
 for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);const record=prompts.buildPromptRecord(stage,p);generated.push(record.prompt);for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/2','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);if(stage===2&&!record.prompt.includes('genuinely independent external governing sources'))throw new Error('Stage 02 non-circular authority rule missing.');if(stage===3&&!record.prompt.includes('Research only the legitimate Stage 02 external governing source set'))throw new Error('Stage 03 external-source research boundary missing.');}
 if(new Set(generated).size!==30)throw new Error('Prompts are not stage-specific.');
+// First-class semantic contradiction verification: prompt prose, operation contract, and emitted JSON surface must agree exactly.
+let semanticPromptContracts=0;
+for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
+  const p=blank(`JOB-SEMANTIC-${stage}-${operation}`),record=prompts.buildPromptRecord(stage,p,{operation}),op=schema.operationContract(stage,operation);
+  const marker='STRICT RESPONSE CONTRACT\n',tail='\n\nEND COPY BLOCK',startIndex=record.prompt.indexOf(marker),endIndex=record.prompt.indexOf(tail,startIndex+marker.length);
+  if(startIndex<0||endIndex<0)throw new Error(`Stage ${stage} ${operation} has no parseable strict response contract.`);
+  const envelope=JSON.parse(record.prompt.slice(startIndex+marker.length,endIndex)),stageKeys=Object.keys(envelope.stageData||{}).sort(),expectedStage=[...(op.agentStageFields||[])].sort(),recordKeys=Object.keys(envelope.records||{}).sort(),expectedCollections=[...(op.agentWritableCollections||[])].sort();
+  if(JSON.stringify(stageKeys)!==JSON.stringify(expectedStage))throw new Error(`Stage ${stage} ${operation} prompt contradicts its allowed stage fields.`);
+  if(JSON.stringify(recordKeys)!==JSON.stringify(expectedCollections))throw new Error(`Stage ${stage} ${operation} prompt contradicts its writable collections.`);
+  for(const name of stageKeys){const def=schema.STAGE_FIELDS[stage]?.[name];if(def?.producer!==schema.PRODUCER.AGENT)throw new Error(`Stage ${stage} ${operation} exposes non-agent stage field ${name}.`);}
+  for(const [collection,items] of Object.entries(envelope.records||{})){if(!op.agentWritableCollections.includes(collection))throw new Error(`Stage ${stage} ${operation} exposes unauthorized collection ${collection}.`);const fields=Object.keys(items?.[0]?.fields||{});for(const name of fields)if(schema.RECORD_SCHEMAS[collection]?.fieldDefinitions?.[name]?.producer!==schema.PRODUCER.AGENT)throw new Error(`Stage ${stage} ${operation} exposes non-agent record field ${collection}.${name}.`);}
+  if(!record.prompt.includes('Never assign canonical application IDs')||!record.prompt.includes('Never set a HUMAN or HUMAN_DECISION-owned field'))throw new Error(`Stage ${stage} ${operation} is missing authority-separation instructions.`);
+  semanticPromptContracts++;
+}
 const pa=prompts.buildPromptRecord(2,blank('JOB-A')).prompt,pb=prompts.buildPromptRecord(2,blank('JOB-B')).prompt;if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');
 
 class MemoryStorage{constructor(seed={}){this.m=new Map(Object.entries(seed));}getItem(k){return this.m.has(k)?this.m.get(k):null;}setItem(k,v){this.m.set(k,String(v));}removeItem(k){this.m.delete(k);}clear(){this.m.clear();}}
@@ -60,7 +74,7 @@ const active=files.filter(f=>f.endsWith('.js')||f.endsWith('.html')).map(f=>fs.r
 if(/MutationObserver/.test(active))throw new Error('Patch-style MutationObserver remains active.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(retained)))throw new Error('Unauthorized product content remains.');
 const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');
-console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allStagePromptsVerified:30,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
+console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allStagePromptsVerified:30,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true,semanticPromptContracts},null,2));
 
 // Practical-100 schema/ownership contract.
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
