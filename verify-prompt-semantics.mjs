@@ -83,9 +83,22 @@ const mutants=[
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 
+// Contract identity must bind the complete stage/record validation contract, not only field names.
+{
+ const p=baseProject(),record=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'}),descriptor=prompts.responseContractDescriptor(12,'COMPLETE');
+ if(record.contractSha256!==globalThis.closedLoopHash.sha256Value(descriptor))throw new Error('CONTRACT_SHA256 is not the canonical descriptor hash.');
+ if(descriptor.contractVersion!=='closed-loop-response-contract/2.1')throw new Error('Versioned response-contract descriptor is missing.');
+ const stageField=Object.entries(descriptor.stageData)[0];if(stageField&&(!stageField[1].valueType||!Object.hasOwn(stageField[1],'nullable')||!Object.hasOwn(stageField[1],'provenanceRequired')))throw new Error('Stage-field type/nullability/provenance is not bound into the response contract.');
+ const verification=descriptor.records.verification;if(!verification||verification.commitPolicy!==schema.RECORD_SCHEMAS.verification.commitPolicy||verification.idField!==schema.RECORD_SCHEMAS.verification.idField)throw new Error('Record commit policy or identity field is not bound into the response contract.');
+ if(JSON.stringify(verification.relationships)!==JSON.stringify(schema.RECORD_SCHEMAS.verification.relationships))throw new Error('Relationship targets are not bound into the response contract.');
+ const observed=verification.agentFields.OBSERVED_RESULT;if(!observed?.valueType||!Object.hasOwn(observed,'nullable'))throw new Error('Record field type metadata is not bound into the response contract.');
+ if(!descriptor.envelope?.responseTypeRules?.DATA_PROPOSAL||!descriptor.envelope?.recordIdentityRule||!descriptor.envelope?.attachmentRule)throw new Error('Envelope identity/disposition/attachment semantics are not bound into the response contract.');
+ if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.1'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
+ const mutated=structuredClone(descriptor);mutated.records.verification.agentFields.OBSERVED_RESULT.valueType='BOOLEAN';if(globalThis.closedLoopHash.sha256Value(mutated)===record.contractSha256)throw new Error('A material field-contract change did not change CONTRACT_SHA256.');
+}
 
 {
- const p=baseProject();const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});const contract=r.prompt.split('STRICT RESPONSE CONTRACT\n')[1].split('\n\nEND COPY BLOCK')[0];if(contract.includes('<value>')||contract.includes('<exact current JOB_ID>')||contract.includes('<application-reserved-target-id>'))throw new Error('Copyable response contract still contains invalid placeholder data.');if(!contract.includes('\"jobId\": \"JOB-PROMPT-SEMANTICS\"'))throw new Error('Response contract does not contain the exact current JOB_ID.');if(!r.prompt.includes('empty shape skeleton, not a complete answer'))throw new Error('Response skeleton semantics are not explicit.');
+ const p=baseProject();const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});const contract=r.prompt.split('STRICT RESPONSE CONTRACT\n')[1].split('\n\nEND COPY BLOCK')[0];if(contract.includes('<value>')||contract.includes('<exact current JOB_ID>')||contract.includes('<application-reserved-target-id>'))throw new Error('Copyable response contract still contains invalid placeholder data.');if(!contract.includes('"jobId": "JOB-PROMPT-SEMANTICS"'))throw new Error('Response contract does not contain the exact current JOB_ID.');if(!r.prompt.includes('empty shape skeleton, not a complete answer'))throw new Error('Response skeleton semantics are not explicit.');
 }
 
 if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 completion language is not the exact verification triple.');
@@ -131,7 +144,6 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
 {const p=baseProject();p.revision=0;const a=prompts.buildPromptRecord(17,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}});engine.registerGeneratedPrompt(p,a);p.revision=1;const b=prompts.buildPromptRecord(17,{...p,revision:2},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}});engine.registerGeneratedPrompt(p,b);const active=p.projectData.generatedPrompts.filter(x=>!x.invalidatedBy);if(!active.some(x=>x.instructionId===a.instructionId)||!active.some(x=>x.instructionId===b.instructionId))throw new Error('Independent run prompt was superseded.');}
 // Desired source count participates in controlled User Job Input identity.
 {const p=baseProject();p.job.DESIRED_SOURCE_COUNT=5;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');const before=p.job.CURRENT_INPUT_VERSION;p.job.DESIRED_SOURCE_COUNT=9;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');if(p.job.CURRENT_INPUT_VERSION===before)throw new Error('Desired source count did not version User Job Input.');}
-
 
 // Residual recovery invariants after specialist-domain prompt hardening.
 {
