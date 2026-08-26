@@ -18,16 +18,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          ref=origin/practical-100/pr6-final-acceptance
           git fetch --no-tags origin practical-100/pr6-final-acceptance
-          {
-            git show origin/practical-100/pr6-final-acceptance:.pr6-transport/part00
-            git show origin/practical-100/pr6-final-acceptance:.pr6-transport/part01
-          } | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
+          mapfile -t parts < <(git ls-tree -r --name-only "$ref" .pr6-transport | grep '^.pr6-transport/part[0-9][0-9]$' | sort)
+          test "${#parts[@]}" -gt 0
+          expected=0
+          for part in "${parts[@]}"; do
+            printf -v expected_name '.pr6-transport/part%02d' "$expected"
+            test "$part" = "$expected_name"
+            expected=$((expected + 1))
+            git show "$ref:$part"
+          done | tr -d '\r\n' | base64 --decode > /tmp/pr6.patch.gz
           gzip -t /tmp/pr6.patch.gz
           gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch
           test -s /tmp/pr6.patch
           grep -q '^diff --git ' /tmp/pr6.patch
           sha256sum /tmp/pr6.patch.gz /tmp/pr6.patch > /tmp/pr6.sha256
+          printf 'parts=%s\n' "${#parts[@]}"
           wc -c -l /tmp/pr6.patch.gz /tmp/pr6.patch
       - uses: actions/upload-artifact@v4
         with:
