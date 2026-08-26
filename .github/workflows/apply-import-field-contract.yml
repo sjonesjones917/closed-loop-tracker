@@ -1,0 +1,39 @@
+name: Verify import field contract repair
+on:
+  push:
+    branches:
+      - reliability/import-field-contract-20260826
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimal responsible-layer change
+        run: python3 .import-field-contract.py
+      - name: Verify complete deterministic suite
+        run: |
+          node --check project-store.js
+          node --check verify.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Publish clean verified branch
+        if: success()
+        run: |
+          rm -f .import-field-contract.py .github/workflows/apply-import-field-contract.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Validate canonical field contracts on import'
+          git push origin HEAD:reliability/import-field-contract-20260826
