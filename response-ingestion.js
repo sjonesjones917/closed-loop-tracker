@@ -252,6 +252,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
 
   if(envelope.responseType==='HUMAN_INPUT_REQUIRED'){
     if(!safe(envelope.humanInputRequests).length)issues.push(issue('MISSING_HUMAN_INPUT_REQUESTS','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one question.'));
+    else if(!safe(envelope.humanInputRequests).some(request=>request.blocking!==false))issues.push(issue('MISSING_BLOCKING_HUMAN_INPUT_REQUEST','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one blocking human-authority question.'));
     if(Object.keys(envelope.stageData||{}).length)issues.push(issue('MIXED_RESPONSE_TYPE','/stageData','A clarification response cannot also propose canonical stage data.'));
     if(Object.values(envelope.records||{}).some(list=>safe(list).length))issues.push(issue('MIXED_RESPONSE_TYPE','/records','A clarification response cannot also propose canonical records.'));
     if(safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MIXED_RESPONSE_TYPE','/unresolved','HUMAN_INPUT_REQUIRED must use humanInputRequests, not a second blocking unresolved channel.'));

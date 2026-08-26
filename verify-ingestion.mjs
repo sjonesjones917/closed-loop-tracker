@@ -194,6 +194,16 @@ negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].res
   negativeCount++;
 }
 
+// HUMAN_INPUT_REQUIRED must contain real blocking human-authority work, not a nominal clarification shell.
+{
+ const p=project('JOB-NONBLOCKING-CLARIFICATION'),stage=1,promptRecord=savePrompt(p,stage);
+ const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-optional',question:'Optional preference?',whyRequired:'This preference is not required to continue.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:false}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+ const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
+ if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MISSING_BLOCKING_HUMAN_INPUT_REQUEST'))throw new Error('HUMAN_INPUT_REQUIRED without a blocking human question was accepted.');
+ if(prepared.project.projectData.acceptedChanges.length)throw new Error('Nominal clarification mutated canonical state.');
+ negativeCount++;
+}
+
 // Clarification loop: structured question -> accepted question record -> human answer -> INPUT version increments.
 {
   let p=project('JOB-CLARIFICATION'),stage=1,promptRecord=savePrompt(p,stage);
