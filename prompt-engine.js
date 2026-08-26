@@ -51,7 +51,7 @@ const samePromptScope=(a,b={})=>['iterationId','candidateId','runId','contextId'
 function recoveryFeedback(state,stage,operation,scope={}){
  const lane=x=>Number(x?.stage)===stage&&(!x?.operation||x.operation===operation)&&(!x?.scope||samePromptScope(x.scope,scope));
  const history=state?.projectData?.history||[];
- const accepted=(state?.projectData?.acceptedChanges||[]).filter(x=>lane(x)&&x.status==='COMMITTED'&&x.responseType==='DATA_PROPOSAL').at(-1);
+ const accepted=(state?.projectData?.acceptedChanges||[]).filter(x=>lane(x)&&x.status==='COMMITTED'&&x.responseType==='DATA_PROPOSAL').reduce((latest,item)=>!latest||Number(item.eventSequence||0)>Number(latest.eventSequence||0)?item:latest,null);
  const cutoff=Number(accepted?.eventSequence||0);
  const eventAfter=(field,id)=>!cutoff||history.some(event=>String(event?.[field]||'')===String(id||'')&&Number(event?.eventSequence||0)>cutoff);
  const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>lane(x)&&x.requestCorrection&&!x.invalidatedBy&&eventAfter('rejectedResponseId',x.rejectedResponseId)).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));

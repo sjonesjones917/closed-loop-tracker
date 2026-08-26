@@ -175,6 +175,8 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
  const duringRecovery=prompts.buildPromptRecord(2,p,{operation:'COMPLETE',scope:{...first.scope}});
  for(const expected of ['OLD CORRECTION MUST EXPIRE','OLD REFINEMENT MUST EXPIRE','OLD_VALIDATION_MUST_EXPIRE'])if(!duringRecovery.prompt.includes(expected))throw new Error(`Current recovery feedback missing before replacement acceptance: ${expected}`);
  p.projectData.acceptedChanges.push({changeId:'CHANGE-REPLACEMENT',status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-REPLACEMENT',promptId:first.instructionId,eventSequence:20,...lane});
+ // A valid import may preserve records in a different physical array order; canonical eventSequence still controls chronology.
+ p.projectData.acceptedChanges.push({changeId:'CHANGE-OLDER-OUT-OF-ORDER',status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-OLDER',promptId:first.instructionId,eventSequence:5,...lane});
  const afterRecovery=prompts.buildPromptRecord(2,p,{operation:'COMPLETE',scope:{...first.scope}});
  for(const stale of ['OLD CORRECTION MUST EXPIRE','OLD REFINEMENT MUST EXPIRE','OLD_VALIDATION_MUST_EXPIRE'])if(afterRecovery.prompt.includes(stale))throw new Error(`Resolved recovery feedback leaked into a later prompt: ${stale}`);
  if(afterRecovery.contextManifest.operatorCorrectionRequests.length||afterRecovery.contextManifest.acceptedResultRefinements.length||afterRecovery.contextManifest.latestValidationFailure.length)throw new Error('Resolved recovery feedback remains bound into the prompt context signature.');
