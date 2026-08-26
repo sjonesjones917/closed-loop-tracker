@@ -1,0 +1,20 @@
+name: PR6 source snapshot
+on:
+  push:
+    branches: [practical-100/pr6-completion]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package review source
+        shell: bash
+        run: tar --exclude=.git -czf /tmp/pr6-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr6-source-snapshot
+          path: /tmp/pr6-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
