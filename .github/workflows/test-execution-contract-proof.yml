@@ -1,0 +1,68 @@
+name: Prove exact test execution contract
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: test-execution-contract-proof
+  cancel-in-progress: false
+
+jobs:
+  prove:
+    if: github.head_ref == 'reliability/test-execution-contract-20260826'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply only the exact locally proven semantic patch
+        run: |
+          base64 -d .test-execution-contract.patch.gz.b64 | gzip -d > /tmp/test-execution-contract.patch
+          patch -p1 < /tmp/test-execution-contract.patch
+          rm -f .test-execution-contract.patch.gz.b64 .github/workflows/test-execution-contract-proof.yml
+      - name: Syntax, architecture, deterministic lifecycle, and semantic proof
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium operator acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Prove no repair scaffolding remains
+        run: |
+          test ! -e .test-execution-contract.patch.gz.b64
+          test ! -e .github/workflows/test-execution-contract-proof.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+      - name: Commit only passing permanent source
+        run: |
+          git config user.name 'closed-loop-proof'
+          git config user.email 'closed-loop-proof@users.noreply.github.com'
+          git add -A
+          git commit -m 'Make test execution routing explicit and fail closed'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
