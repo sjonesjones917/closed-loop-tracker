@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply exact semantic changes
-        run: node .semantic-fix.mjs
+        run: node .semantic-fix-v2.mjs
       - name: Syntax and deterministic acceptance
         run: |
           node --check app-core.js
@@ -37,7 +37,7 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit clean final tree
         run: |
-          rm -f .semantic-fix.mjs .github/workflows/temp-semantic-fix.yml
+          rm -f .semantic-fix.mjs .semantic-fix-v2.mjs .semantic-fix-exec.mjs .github/workflows/temp-semantic-fix.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
