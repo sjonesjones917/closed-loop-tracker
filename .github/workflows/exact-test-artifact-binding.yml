@@ -1,0 +1,118 @@
+name: Prove exact TEST artifact binding
+on:
+  push:
+    branches: [reliability/exact-test-artifact-binding-20260826]
+permissions: {contents: write}
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[artifact-binding-proved]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/exact-test-artifact-binding-20260826}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal permanent patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, hashlib
+          def one(path,old,new):
+              p=Path(path);s=p.read_text();n=s.count(old)
+              if n!=1: raise SystemExit(f'{path}: expected one anchor, found {n}: {old[:100]!r}')
+              p.write_text(s.replace(old,new,1))
+
+          # One existing TEST field becomes a closed structured value; no new collection/record/store.
+          one('workflow-schema.js',
+            "ARTIFACT_REQUIREMENTS:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})",
+            "ARTIFACT_REQUIREMENTS:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:false,normalizerKey:'resolveTestArtifactRefs',closedProperties:Object.freeze(['required','attachmentRefs','description'])})")
+
+          # Stage 6 prompt must tell the agent the exact machine-readable shape and external-access truth.
+          one('prompt-engine.js',
+            'Use ARTIFACT_REQUIREMENTS = NONE when no separate executable/input artifact is required.',
+            'Use ARTIFACT_REQUIREMENTS = {"required": false, "attachmentRefs": [], "description": "No separate executable/input artifact is required."} when no separate executable/input artifact is required. When exact artifacts are required, set required=true and list the exact response attachment temporaryKey values (or already-current canonical artifact IDs) in attachmentRefs.')
+          honesty='- Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred in the authorized execution context and evidence is available.'
+          one('prompt-engine.js',honesty,
+            '- Browser-local or application-stored artifact bytes are not automatically accessible to an external agent, reviewer, repository, CAD/CAM/CAE environment, external system, lab, or machine. Treat an artifact as accessible in an external execution context only when that exact context actually received it or independently proves access to its exact canonical identity.\n'+honesty)
+
+          # The one ingestion path validates and resolves response-local attachment keys into canonical artifact IDs.
+          p=Path('response-ingestion.js');s=p.read_text();anchor='  const evidenceIndex=new Map();'
+          if s.count(anchor)!=1: raise SystemExit('response-ingestion evidence anchor mismatch')
+          block='''  for(const [index,record] of safe(envelope.records?.tests).entries()){\n    const path=`/records/tests/${index}/fields/ARTIFACT_REQUIREMENTS`,requirements=record?.fields?.ARTIFACT_REQUIREMENTS;\n    if(!object(requirements)){issues.push(issue('INVALID_TEST_ARTIFACT_REQUIREMENTS',path,'ARTIFACT_REQUIREMENTS must be an object.'));continue;}\n    const refs=requirements.attachmentRefs;\n    if(typeof requirements.required!=='boolean')issues.push(issue('INVALID_TEST_ARTIFACT_REQUIREMENTS',`${path}/required`,'required must be BOOLEAN.'));\n    if(!Array.isArray(refs))issues.push(issue('INVALID_TEST_ARTIFACT_REQUIREMENTS',`${path}/attachmentRefs`,'attachmentRefs must be an array.'));\n    else {\n      if(refs.some(ref=>typeof ref!=='string'||!ref.trim()))issues.push(issue('INVALID_TEST_ARTIFACT_REQUIREMENTS',`${path}/attachmentRefs`,'attachmentRefs must contain only non-empty strings.'));\n      if(new Set(refs).size!==refs.length)issues.push(issue('DUPLICATE_TEST_ARTIFACT_REFERENCE',`${path}/attachmentRefs`,'attachmentRefs must be unique.'));\n      if(requirements.required&&refs.length===0)issues.push(issue('MISSING_REQUIRED_TEST_ARTIFACT',`${path}/attachmentRefs`,'A required test artifact must identify exact returned or canonical artifact bytes.'));\n      for(const ref of refs){const key=String(ref),declared=attachmentIndex.has(key),canonical=workflow.records(project,'artifacts',{active:true}).some(item=>workflow.recordId(item,'artifacts')===key);if(!declared&&!canonical)issues.push(issue('UNRESOLVED_TEST_ARTIFACT',`${path}/attachmentRefs`,`Test artifact reference ${key} does not resolve to verified returned bytes or a current canonical artifact.`));}\n    }\n    if(typeof requirements.description!=='string'||!requirements.description.trim())issues.push(issue('INVALID_TEST_ARTIFACT_REQUIREMENTS',`${path}/description`,'description is required.'));\n  }\n\n'''
+          s=s.replace(anchor,block+anchor,1)
+          field="      const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};"
+          repl="      const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      if(collection==='tests'&&object(fields.ARTIFACT_REQUIREMENTS)){const value=clone(fields.ARTIFACT_REQUIREMENTS);value.attachmentRefs=safe(value.attachmentRefs).map(ref=>tempToCanonical[String(ref)]?.id||String(ref));fields.ARTIFACT_REQUIREMENTS=value;}"
+          if s.count(field)!=1: raise SystemExit('response-ingestion field anchor mismatch')
+          s=s.replace(field,repl,1);p.write_text(s)
+
+          # Existing execution guidance gains exact-artifact readiness; availability remains derived, not stale canonical state.
+          p=Path('workflow-engine.js');s=p.read_text();start=s.index('const TEST_EXECUTION_ACTIONS=Object.freeze({');end=s.index('\n\nfunction operationalMetrics',start)
+          if start<0 or end<0: raise SystemExit('workflow-engine execution plan block missing')
+          block='''const TEST_EXECUTION_ACTIONS=Object.freeze({\n  APPLICATION_DETERMINISTIC:'No operator execution is required now. The application may execute only a native deterministic check it actually implements when the exact required inputs are available.',\n  EXTERNAL_AGENT_TOOL:'Use the generated verification instruction in an external agent/tool environment that actually has the declared capability and exact required artifacts, then ingest its structured result and evidence.',\n  INDEPENDENT_AGENT_REVIEW:'Use a fresh independent reviewer context with the declared inputs and evidence; do not reuse the producing context as its own verifier.',\n  HUMAN_INSPECTION:'Perform only the irreducible human/domain inspection described by the test, preserve the observation/evidence, and make that evidence available to the verification step.',\n  EXTERNAL_SYSTEM:'Obtain the result from the declared specialized system, lab, machine, or software; preserve exact report/output evidence and any returned files.',\n  UNAVAILABLE:'The required capability is unavailable. Do not claim execution; this remains blocking until a valid capability or equivalent verification path exists.'\n});\nfunction testExecutionPlan(project){\n  ensureShape(project);\n  const artifacts=new Map(records(project,'artifacts').map(item=>[recordId(item,'artifacts'),item]));\n  const items=recordsForCurrentScope(project,'tests').map(test=>{\n    const mode=upper(recordValue(test,'EXECUTION_MODE'))||'UNSPECIFIED',raw=recordValue(test,'ARTIFACT_REQUIREMENTS'),artifactRequirements=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:null,artifactIds=safe(artifactRequirements?.attachmentRefs).map(String),missingArtifactIds=artifactIds.filter(id=>!artifacts.has(id)),unverifiedArtifactIds=artifactIds.filter(id=>{const a=artifacts.get(id);return a&&upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED';});\n    return {testId:recordId(test,'tests'),requirementId:testRequirementId(test),testType:upper(recordValue(test,'TEST_TYPE'))||'UNKNOWN',executionMode:mode,requiredCapability:String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),artifactRequirements,artifactIds,missingArtifactIds,unverifiedArtifactIds,operatorAction:TEST_EXECUTION_ACTIONS[mode]||'Execution responsibility is not validly classified.'};\n  });\n  const counts=Object.fromEntries(Object.keys(TEST_EXECUTION_ACTIONS).map(mode=>[mode,items.filter(item=>item.executionMode===mode).length]));\n  const incompleteTestIds=items.filter(item=>!TEST_EXECUTION_ACTIONS[item.executionMode]||!item.requiredCapability||!item.artifactRequirements||typeof item.artifactRequirements.required!=='boolean'||!String(item.artifactRequirements.description||'').trim()||(item.artifactRequirements.required&&!item.artifactIds.length)).map(item=>item.testId);\n  const unavailableTestIds=items.filter(item=>item.executionMode==='UNAVAILABLE').map(item=>item.testId);\n  const missingArtifactTestIds=items.filter(item=>item.missingArtifactIds.length||item.unverifiedArtifactIds.length).map(item=>item.testId);\n  return {total:items.length,counts,incompleteTestIds,unavailableTestIds,missingArtifactTestIds,items};\n}'''
+          s=s[:start]+block+s[end:]
+          old="      const incomplete=mandatoryTests.filter(test=>!TEST_EXECUTION_ACTIONS[upper(recordValue(test,'EXECUTION_MODE'))]||!String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim()||!String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim());\n      if(incomplete.length)reasons.push(`${incomplete.length} mandatory test definition(s) lack complete execution responsibility, capability, or artifact requirements.`);\n      const unavailable=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='UNAVAILABLE');\n      if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);"
+          new="      const executionPlan=testExecutionPlan(project),mandatoryTestIds=new Set(mandatoryTests.map(test=>recordId(test,'tests'))),incomplete=executionPlan.incompleteTestIds.filter(id=>mandatoryTestIds.has(id)),unavailable=executionPlan.unavailableTestIds.filter(id=>mandatoryTestIds.has(id)),missingArtifacts=executionPlan.missingArtifactTestIds.filter(id=>mandatoryTestIds.has(id));\n      if(incomplete.length)reasons.push(`${incomplete.length} mandatory test definition(s) lack complete execution responsibility, capability, or artifact requirements.`);\n      if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);\n      if(missingArtifacts.length)reasons.push(`${missingArtifacts.length} mandatory test definition(s) require exact artifact bytes that are missing or unverified.`);"
+          if s.count(old)!=1: raise SystemExit('Stage 6 gate anchor mismatch')
+          p.write_text(s.replace(old,new,1))
+
+          # Existing schema-driven test builders use a valid no-artifact object.
+          one('test-fixtures.mjs',"  if(Object.hasOwn(overrides,name))return overrides[name];","  if(Object.hasOwn(overrides,name))return overrides[name];\n  if(name==='ARTIFACT_REQUIREMENTS')return {required:false,attachmentRefs:[],description:'No separate executable/input artifact is required.'};")
+          one('verify-ingestion.mjs',"function safeValue(name){\n  if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';","function safeValue(name){\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return {required:false,attachmentRefs:[],description:'No separate executable/input artifact is required.'};\n  if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';")
+          marker='// Clarification loop: structured question -> accepted question record -> human answer -> INPUT version increments.'
+          p=Path('verify-ingestion.mjs');s=p.read_text();cases="""// Exact TEST artifact linkage negatives.\nnegativeAt('malformed test artifact requirements',6,(e)=>{e.records.tests[0].fields.ARTIFACT_REQUIREMENTS={required:'yes',attachmentRefs:[],description:'bad'};},'INVALID_TEST_ARTIFACT_REQUIREMENTS');\nnegativeAt('missing required test artifact',6,(e)=>{e.records.tests[0].fields.ARTIFACT_REQUIREMENTS={required:true,attachmentRefs:[],description:'fixture required'};},'MISSING_REQUIRED_TEST_ARTIFACT');\nnegativeAt('unresolved test artifact',6,(e)=>{e.records.tests[0].fields.ARTIFACT_REQUIREMENTS={required:true,attachmentRefs:['not-present'],description:'fixture required'};},'UNRESOLVED_TEST_ARTIFACT');\n\n"""
+          if s.count(marker)!=1: raise SystemExit('verify-ingestion insertion anchor mismatch')
+          p.write_text(s.replace(marker,cases+marker,1))
+
+          # Strengthen existing semantic/gate proof, not a new test framework.
+          one('verify-prompt-semantics.mjs',
+            " const modes=test.fieldDefinitions.EXECUTION_MODE.enumValues;",
+            " if(test.fieldDefinitions.ARTIFACT_REQUIREMENTS.valueType!=='OBJECT')throw new Error('TEST artifact requirements are not a structured byte-bindable contract.');\n const modes=test.fieldDefinitions.EXECUTION_MODE.enumValues;")
+          one('verify-complete.mjs',
+            "ARTIFACT_REQUIREMENTS:'NONE'",
+            "ARTIFACT_REQUIREMENTS:{required:false,attachmentRefs:[],description:'No separate executable/input artifact is required.'}")
+
+          # Shared runtime cache identity only.
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def gitblob(path):
+              b=Path(path).read_bytes();return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          manifest=''.join(f'{f}:{gitblob(f)}\n' for f in runtime).encode();token='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
+          p=Path('index.html');s=p.read_text();s,n=re.subn(r'(src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]{16}(")',rf'\g<1>{token}\2',s)
+          if n!=8: raise SystemExit(f'expected 8 runtime tokens, replaced {n}')
+          p.write_text(s)
+          PY
+      - name: Rebuild and prove deterministic invariants
+        run: |
+          node build-test-project.mjs
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check test-fixtures.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/server.log 2>&1 &
+          PID=$!; trap 'kill $PID 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only permanent passing changes
+        run: |
+          rm -f .github/workflows/exact-test-artifact-binding.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Bind test artifact requirements to exact verified bytes [artifact-binding-proved]"
+          git push origin HEAD:reliability/exact-test-artifact-binding-20260826
