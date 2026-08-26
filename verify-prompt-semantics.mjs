@@ -17,6 +17,26 @@ function baseProject(){
   return p;
 }
 function arraysEqual(a,b){return JSON.stringify([...a].sort())===JSON.stringify([...b].sort());}
+function procedureIssues(stage,task){
+  const issues=[];
+  if(stage===1&&/Assign and preserve this job’s unique JOB_ID/.test(task))issues.push('AGENT_ASSIGNS_JOB_ID');
+  if(stage===2&&/Create SOURCE-SET-vN/.test(task))issues.push('AGENT_ASSIGNS_SOURCE_SET_VERSION');
+  if(stage===4&&/Each REQ_ID must express/.test(task))issues.push('AGENT_ASSIGNS_REQUIREMENT_ID');
+  if(stage===6&&(/valid TEST_ID/.test(task)||/Calculate mandatory requirement-to-test coverage/.test(task)))issues.push('AGENT_ASSIGN_TEST_OR_COVERAGE');
+  if(stage===10&&(/Assign CANDIDATE_ID/.test(task)||/Assign .*ITERATION_ID/.test(task)))issues.push('AGENT_ASSIGNS_CANDIDATE_ID');
+  if(stage===12&&!task.includes('REQ_ID × RUN_ID × TEST_ID triple'))issues.push('VERIFICATION_TRIPLE_MISSING');
+  if(stage===15&&(!task.includes('Do not require or claim post-correction success at this stage')||/preserve[^.]*post-correction result and evidence/i.test(task)))issues.push('STAGE15_TEMPORAL_CONTRADICTION');
+  if(stage===16&&/Create a controlled CHANGESET_ID/.test(task))issues.push('AGENT_ASSIGNS_CHANGESET_ID');
+  if(stage===17&&/new ITERATION_ID and CANDIDATE_ID/.test(task))issues.push('AGENT_ASSIGNS_ITERATION_ID');
+  if(stage===18&&(/Determine convergence/.test(task)||/Calculate mandatory requirement coverage/.test(task)))issues.push('AGENT_CALCULATES_CONVERGENCE');
+  if(stage===20&&/assign BASELINE_ID/i.test(task))issues.push('AGENT_ASSIGNS_BASELINE_ID');
+  if(stage===21&&(/Assign PRODUCT_ID/.test(task)||/Assign .*EXECUTION_ID/.test(task)))issues.push('AGENT_ASSIGNS_PRODUCT_ID');
+  if(stage===25&&/Preserve artifact inventory, filename, version, byte size, SHA-256/.test(task))issues.push('AGENT_ASSERTS_FILE_FACTS');
+  if(stage===27&&/produce exactly one determination/.test(task))issues.push('AGENT_SETS_RELEASE');
+  if(stage===28&&/^Only after Stage 27 is ACCEPTED, verify exact artifact identity/.test(task))issues.push('AGENT_ASSERTS_ARTIFACT_IDENTITY');
+  if(stage===29&&/^Preserve this job’s complete evidence chain/.test(task))issues.push('AGENT_CONSTRUCTS_EVIDENCE_CHAIN');
+  return issues;
+}
 function semanticIssues(record){
   const issues=[];
   const op=schema.operationContract(record.stage,record.operation);
@@ -36,7 +56,8 @@ function semanticIssues(record){
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
     if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
   }
-  return issues;
+  issues.push(...procedureIssues(record.stage,prompts.procedures[record.stage]||''));
+  return [...new Set(issues)];
 }
 
 const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}}; for(const [stage,operations] of Object.entries(expectedOperationWrites))for(const [operation,writes] of Object.entries(operations)){const actual=schema.operationContract(Number(stage),operation).agentWritableCollections;if(!arraysEqual(actual,writes))throw new Error(`Stage ${stage} ${operation} has semantically wrong writable collections: ${actual.join(', ')}`);} const runRead=schema.operationContract(17,'EXECUTE_RUN').readCollections;if(!runRead.includes('runs')||!runRead.includes('freshContexts'))throw new Error('Stage 17 EXECUTE_RUN cannot see reserved run/context slots.');
@@ -76,12 +97,21 @@ const mutants=[
   {...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
-
+const authorityMutants=[
+  [10,prompts.procedures[10].replace('the application assigns CANDIDATE_ID and ITERATION_ID','Assign CANDIDATE_ID and ITERATION_ID')],
+  [18,prompts.procedures[18].replace('Review convergence evidence','Determine convergence')],
+  [20,prompts.procedures[20].replace('the application assigns BASELINE_ID','assign BASELINE_ID')],
+  [21,prompts.procedures[21].replace('The application assigns PRODUCT_ID and execution identity','Assign PRODUCT_ID and EXECUTION_ID')],
+  [27,prompts.procedures[27].replace('Do not set a release state.','Apply the release gate and produce exactly one determination.')],
+  [28,'Only after Stage 27 is ACCEPTED, verify exact artifact identity immediately before release.'],
+  [29,'Preserve this job’s complete evidence chain for every mandatory requirement.']
+];
+for(const [stage,task] of authorityMutants)if(!procedureIssues(stage,task).length)throw new Error(`Stage ${stage} ownership contradiction mutation escaped detection.`);
 
 if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 completion language is not the exact verification triple.');
 if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||core.STAGES[14].completionGate.some(x=>x.toLowerCase().includes('succeeds after correction')))throw new Error('Stage 15 incorrectly requires future post-correction success.');
 {
- const p=baseProject();const r=prompts.buildPromptRecord(15,p,{operation:'COMPLETE'});if(!r.prompt.includes('Do not claim post-correction success at Stage 15'))throw new Error('Stage 15 prompt chronology is wrong.');
+ const p=baseProject();const r=prompts.buildPromptRecord(15,p,{operation:'COMPLETE'});if(!r.prompt.includes('Do not require or claim post-correction success at this stage'))throw new Error('Stage 15 prompt chronology is wrong.');
 }
 {
  const p=baseProject();p.projectData.responseValidations.push({validationId:'VALIDATION-X',stage:2,promptId:'PROMPT-X',valid:false,issues:[{code:'MISSING_PROVENANCE',path:'/evidence',message:'Evidence is required.'}]});const seed=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push({...seed,instructionId:'PROMPT-X',promptId:'PROMPT-X'});const r=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});if(!r.prompt.includes('LATEST APPLICATION VALIDATION FAILURE TO CORRECT')||!r.prompt.includes('MISSING_PROVENANCE'))throw new Error('Validation failure is not correction context.');
@@ -90,7 +120,7 @@ if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||c
  const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target audit/repair boundary is missing.');
 }
 
-console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
+console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length+authorityMutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true,authorityBoundaryChecks:true},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
 {const p=baseProject();p.projectData.runs.push({id:'RUN-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{RUN_ID:'RUN-ISO-A',COMPLETE_OUTPUT:'SECRET-OTHER-RUN'}},{id:'RUN-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{RUN_ID:'RUN-ISO-B',COMPLETE_OUTPUT:''}});p.projectData.freshContexts.push({id:'CTX-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{CONTEXT_ID:'CTX-ISO-A'}},{id:'CTX-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{CONTEXT_ID:'CTX-ISO-B'}});const pr=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'}});if(pr.prompt.includes('SECRET-OTHER-RUN'))throw new Error('Run prompt leaked another run output.');if(pr.contextManifest.readCollections.runs.length!==1||pr.contextManifest.readCollections.runs[0].id!=='RUN-ISO-B')throw new Error('Run prompt manifest was not scoped to the selected run.');}
