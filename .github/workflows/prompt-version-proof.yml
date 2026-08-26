@@ -1,0 +1,73 @@
+name: Prove prompt-version invalidation
+
+on:
+  push:
+    branches:
+      - 'fix/invalidate-prefixed-stage01-prompts-20260826'
+
+permissions:
+  contents: write
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bump prompt semantic version and runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/9';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/10';"
+          assert old in s
+          p.write_text(s.replace(old,new,1))
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
+          for f in files:
+              b=Path(f).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{f}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          p=Path('index.html'); html=p.read_text(); html=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)',lambda m:m.group(1)+token+m.group(2),html); p.write_text(html)
+          PY
+      - name: Verify complete application and stale-prompt invalidation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node --check prompt-engine.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          grep -q "closed-loop-prompt-engine/10" prompt-engine.js
+          grep -q "promptVersionCurrent" app-core.js
+          grep -q "STALE_PROMPT_ENGINE_VERSION" response-ingestion.js
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit verified permanent source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/prompt-version-proof.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add prompt-engine.js index.html .github/workflows/prompt-version-proof.yml
+          git commit -m 'Invalidate saved prompts after Stage 01 semantic repair'
+          git push origin HEAD
