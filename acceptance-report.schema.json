@@ -1,1 +1,0 @@
-{"type":"object","required":["commit","workflow","projectSchema","responseSchema","ownershipCoverage","derivationCoverage","relationshipCoverage","stagesCompleted","semanticPromptContractsPassed","negativeCasesPassed","storageFailureCasesPassed","artifactRoundTrip","deployedByteIdentity"]}
