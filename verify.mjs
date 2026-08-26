@@ -57,6 +57,7 @@ const prior=storage.getItem(store.STORE_KEY);globalThis.__closedLoopStorageFault
 const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.job,JOB_TITLE:'Updated'}},storage);if(replaced.length!==1||replaced[0].job.JOB_TITLE!=='Updated')throw new Error('Stable JOB_ID reconciliation duplicated a project.');
 
 const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
+const appRuntimeSource=fs.readFileSync('app-core.js','utf8');if(!appRuntimeSource.includes("get('acceptanceFixture')==='retained'"))throw new Error('Bundled acceptance project is not isolated from normal production startup.');if(!fs.readFileSync('verify-browser.mjs','utf8').includes('acceptanceFixture=retained')||!fs.readFileSync('verify-browser-extra.mjs','utf8').includes('acceptanceFixture=retained'))throw new Error('Browser acceptance does not explicitly activate its retained fixture.');
 const appSourceForStatus=fs.readFileSync('app-core.js','utf8');
 const statusSource=appSourceForStatus.match(/const statusClass=v=>\{.*?\};/)?.[0];
 if(!statusSource)throw new Error('Status classifier is not inspectable.');

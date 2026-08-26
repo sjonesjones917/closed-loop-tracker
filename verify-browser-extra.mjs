@@ -23,7 +23,7 @@ async function activeProject(cdp){return evalValue(cdp,`(async()=>{const id=docu
 
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?acceptanceFixture=retained&browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
 
@@ -55,7 +55,7 @@ async function main(){
   assert(artifactIdempotence?.artifactId==='ARTIFACT-BROWSER-BLOB'&&artifactIdempotence.byteSize===10&&artifactIdempotence.sha256===blobProof.stored,'Idempotent artifact registration did not return the verified existing artifact.');
 
   console.log('extra:two-tab-cas');
-  const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
+  const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?acceptanceFixture=retained&browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
   const sharedJob=newest.job.JOB_ID;
   const starting=await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID===${JSON.stringify(sharedJob)});return {revision:p.revision,project:p};})()`);
   const firstWrite=await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID===${JSON.stringify(sharedJob)});p.browserCasWinner='TAB1';return closedLoopProjectStore.writeProject(p,{expectedProjectRevision:${Number(starting.revision)}}).catch(e=>({__error:e.code||e.message}));})()`);

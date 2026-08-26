@@ -24,7 +24,7 @@ async function allProjects(cdp){return evalValue(cdp,`globalThis.closedLoopProje
 
 async function main(){
  await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
- const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+ const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?acceptanceFixture=retained&browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
  await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
  // Clean state: retained project is seeded exactly once and remains Stage 02 next.
  await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
