@@ -17,56 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Patch operator review selection only
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
-          p=Path('app-core.js'); s=p.read_text()
-          def sub(old,new,label):
-              global s
-              n=s.count(old)
-              if n!=1: raise SystemExit(f'{label}: expected 1 match, got {n}')
-              s=s.replace(old,new,1)
-          anchor="function promptMatches(record,n,options){"
-          helper="""const operatorScopeKeys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];
-function currentOperatorScope(n){const j=current.job||{},options=promptOptions(n),candidate=engine.records(current,'candidateFreezes').filter(x=>x?.active!==false&&!x?.invalidatedBy).at(-1);return {inputVersion:j.CURRENT_INPUT_VERSION||null,sourceSetVersion:j.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:j.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:j.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:j.CURRENT_INSTRUCTION_VERSION||null,iterationId:j.CURRENT_ITERATION||null,candidateId:candidate?engine.recordId(candidate,'candidateFreezes'):null,runId:options.scope?.runId||null,contextId:options.scope?.contextId||null,baselineId:j.CURRENT_BASELINE_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_BASELINE_ID))?j.CURRENT_BASELINE_ID:null,productId:j.CURRENT_PRODUCT_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_PRODUCT_ID))?j.CURRENT_PRODUCT_ID:null};}
-function operatorLaneMatches(item,n){if(Number(item?.stage)!==Number(n))return false;const operation=String(item?.envelope?.operation||item?.operation||'COMPLETE'),selected=selectedOperation(n);if(operation!==selected)return false;const actual=item?.envelope?.scope||item?.scope||{},expected=currentOperatorScope(n),required=schema.operationContract(n,operation)?.scopeRequirements||[];for(const key of operatorScopeKeys){const av=actual?.[key],ev=expected?.[key];if(av!==undefined&&av!==null&&av!==''&&ev!==undefined&&ev!==null&&ev!==''&&String(av)!==String(ev))return false;}for(const key of required){if(key==='projectRevision')continue;if(String(actual?.[key]??'')!==String(expected?.[key]??''))return false;}return true;}
-function validationLaneRecord(validation){return safe(current.projectData.generatedPrompts).find(x=>(x.instructionId||x.promptId)===validation?.promptId)||validation;}
-function acceptedLaneChanges(n){return engine.acceptedChanges(current,n).filter(x=>operatorLaneMatches(x,n));}
-"""
-          sub(anchor,helper+anchor,'lane helper')
-          old="function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n).at(-1);if(!v||v.valid)return '';"
-          new="function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n&&!x.valid&&operatorLaneMatches(validationLaneRecord(x),n)).at(-1);if(!v)return '';"
-          sub(old,new,'validation lane')
-          old="function proposalMarkup(n){const p=safe(current.projectData.responseProposals).filter(x=>Number(x.stage)===n&&x.status==='PENDING_OPERATOR_REVIEW').at(-1);if(!p)return validationMarkup(n);"
-          new="function proposalMarkup(n){const p=safe(current.projectData.responseProposals).filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,n)).at(-1);if(!p)return validationMarkup(n);"
-          sub(old,new,'proposal lane')
-          old="${engine.acceptedChanges(current,n).length&&!current.isRetainedTestProject?`<details class=\"record-card\"><summary>Refine accepted result"
-          new="${acceptedLaneChanges(n).length&&!current.isRetainedTestProject?`<details class=\"record-card\"><summary>Refine accepted result"
-          sub(old,new,'refinement visibility')
-          old="function pendingProposal(){return safe(current.projectData.responseProposals).filter(x=>Number(x.stage)===current.activeStage&&x.status==='PENDING_OPERATOR_REVIEW').at(-1);}"
-          new="function pendingProposal(){return safe(current.projectData.responseProposals).filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,current.activeStage)).at(-1);}"
-          sub(old,new,'pending proposal lane')
-          p.write_text(s)
-          p=Path('index.html'); s=p.read_text(); old='runtime-control-evidence-20260826-r2'
-          if s.count(old)!=8: raise SystemExit(f'runtime token expected 8, got {s.count(old)}')
-          p.write_text(s.replace(old,'runtime-operator-lane-20260826-r3'))
-          p=Path('verify-complete.mjs'); s=p.read_text()
-          marker="// Explicit workflow gates cannot be bypassed by manual assertions."
-          if s.count(marker)!=1: raise SystemExit('verify-complete insertion marker changed')
-          test="""// Multi-operation review controls must remain bound to the operator-selected operation/run lane.
-{
-  const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(appSource.includes('function operatorLaneMatches(item,n)'),'Operator review has no shared lane matcher.');
-  assert(appSource.includes("filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,n))"),'Proposal rendering is still stage-wide.');
-  assert(appSource.includes("filter(x=>x.status==='PENDING_OPERATOR_REVIEW'&&operatorLaneMatches(x,current.activeStage))"),'Accept/reject selection is still stage-wide.');
-  assert(appSource.includes('operatorLaneMatches(validationLaneRecord(x),n)'),'Validation feedback is still stage-wide.');
-  assert(appSource.includes('acceptedLaneChanges(n).length'),'Refinement control visibility is still stage-wide.');
-}
-
-"""
-          p.write_text(s.replace(marker,test+marker,1))
-          PY
+      - name: Apply exact source transformer
+        run: node apply-operator-lane-review.mjs
       - name: Verify full deterministic suite
         run: |
           node --check app-core.js
@@ -80,7 +32,7 @@ function acceptedLaneChanges(n){return engine.acceptedChanges(current,n).filter(
           node verify-prompt-semantics.mjs
       - name: Commit permanent delta only
         run: |
-          rm .github/workflows/apply-operator-lane-review.yml
+          rm apply-operator-lane-review.mjs .github/workflows/apply-operator-lane-review.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
