@@ -6,25 +6,20 @@ def rep(path, old, new, count=1):
     p.write_text(s.replace(old,new,count))
 
 # One active stage authority model: migrate the old alias once, then remove it.
-p=Path('workflow-engine.js');s=p.read_text()
 rep('workflow-engine.js',
 "      ...prior,\n      number:stage,\n      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)\n    };",
 "      ...prior,\n      number:stage,\n      authorizedFiles:safe(prior.authorizedFiles),revisions:safe(prior.revisions),agentData:prior.agentData&&typeof prior.agentData==='object'&&Object.keys(prior.agentData).length?prior.agentData:(prior.acceptedData&&typeof prior.acceptedData==='object'?prior.acceptedData:{}),humanData:prior.humanData&&typeof prior.humanData==='object'?prior.humanData:{},derivedData:prior.derivedData&&typeof prior.derivedData==='object'?prior.derivedData:{},acceptedDataChangeIds:safe(prior.acceptedDataChangeIds),acceptedControlEventIds:safe(prior.acceptedControlEventIds),acceptedResponseIds:safe(prior.acceptedResponseIds)\n    };\n    delete project.stages[stage].acceptedData;")
 rep('workflow-engine.js',"acceptedData:project.stages[stage].acceptedData","agentData:project.stages[stage].agentData,humanData:project.stages[stage].humanData")
 rep('workflow-engine.js',"return Boolean(Object.keys(project?.stages?.[stage]?.acceptedData||{}).length);","return Boolean(Object.keys(project?.stages?.[stage]?.agentData||{}).length||Object.keys(project?.stages?.[stage]?.humanData||{}).length);")
-p.write_text(s)
 
-p=Path('response-ingestion.js');s=p.read_text();rep('response-ingestion.js',"state.agentData={...state.agentData,...proposal.proposedStageData};state.acceptedData=state.agentData;","state.agentData={...state.agentData,...proposal.proposedStageData};")
-p.write_text(s)
+rep('response-ingestion.js',"state.agentData={...state.agentData,...clone(proposal.proposedStageData)};state.acceptedData=state.agentData;","state.agentData={...state.agentData,...clone(proposal.proposedStageData)};")
 
-p=Path('app-core.js');s=p.read_text()
 rep('app-core.js',"authorizedFiles:[],acceptedData:{},humanData:{},acceptedResponseIds:[]","authorizedFiles:[],agentData:{},humanData:{},acceptedResponseIds:[]")
 rep('app-core.js',"authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{}","authorizedFiles:safe(s.authorizedFiles),agentData:s.agentData&&typeof s.agentData==='object'?s.agentData:(s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{}),humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{}")
-p.write_text(s)
 
 # Prompt context must match gate scope; preserve only explicitly permanent/cross-iteration history.
-p=Path('prompt-engine.js');s=p.read_text()
 rep('prompt-engine.js',"const hash=globalThis.closedLoopHash;\nif(!core||!schema||!hash)throw new Error('workbook.js, hash.js, and workflow-schema.js must load before prompt-engine.js.');","const hash=globalThis.closedLoopHash;\nconst engine=globalThis.closedLoopWorkflowEngine;\nif(!core||!schema||!hash||!engine)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');")
+p=Path('prompt-engine.js');s=p.read_text()
 old="""function boundedCollection(state,collection){
  const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[];if(!list.length)return 'NONE';
  const active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);
@@ -35,7 +30,7 @@ new="""function contextRecords(stage,state,collection){
  const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[];if(!list.length)return [];
  const active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);
  const policy=schema.RECORD_SCHEMAS[collection]?.commitPolicy;
- const permanent=stage===30||policy==='APPEND_ONLY'||collection==='regressions';
+ const permanent=Number(stage)===30||policy==='APPEND_ONLY'||collection==='regressions';
  const crossIteration=[17,19,20].includes(Number(stage))&&['iterations','candidateFreezes','changes'].includes(collection);
  return permanent||crossIteration?active:engine.recordsForCurrentScope(state,collection);
 }
@@ -46,9 +41,10 @@ function boundedCollection(stage,state,collection){
 """
 if s.count(old)!=1: raise SystemExit('prompt boundedCollection block changed')
 s=s.replace(old,new,1)
+if s.count("agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{}")!=1: raise SystemExit('prior stage acceptedData fallback changed')
 s=s.replace("agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{}","agentData:state.stages[stage-1].agentData||{}",1)
+if s.count("${boundedCollection(state,collection)}`);")!=1: raise SystemExit('boundedCollection call changed')
 s=s.replace("${boundedCollection(state,collection)}`);","${boundedCollection(stage,state,collection)}`);",1)
-# Add the latest failed validation to retry context, with bounded issue fields only.
 anchor=""" if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\n${show(corrections)}`);
  const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);
 """
@@ -62,10 +58,8 @@ s=s.replace(anchor,insert,1)
 old_manifest="""contextManifest={stage,operation,scope,readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,(state?.projectData?.[collection]||[]).filter(x=>x?.active!==false&&!x?.invalidatedBy).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}))};"""
 new_manifest="""contextManifest={stage,operation,scope,readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,contextRecords(stage,state,collection).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId})),latestValidationFailure:(state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===stage&&x.valid===false&&!x.invalidatedBy).slice(-1).map(x=>({validationId:x.validationId,rawResponseId:x.rawResponseId,issues:(x.issues||[]).map(issue=>({code:issue.code,path:issue.path||null,message:issue.message||null}))}))[0]||null};"""
 if s.count(old_manifest)!=1: raise SystemExit('prompt contextManifest expression changed')
-s=s.replace(old_manifest,new_manifest,1)
-p.write_text(s)
+s=s.replace(old_manifest,new_manifest,1);p.write_text(s)
 
-# Tests for one-way legacy migration, current-scope prompts, and actionable retry context.
 p=Path('verify-complete.mjs');s=p.read_text();marker="// Stage 15 cannot require evidence from a correction that has not been executed yet."
 if marker not in s: raise SystemExit('verify-complete insertion marker missing')
 insert="""// Current schema has one active agent stage-data surface; legacy acceptedData migrates one-way only.
@@ -94,7 +88,6 @@ insert="""{
 """
 s=s.replace(marker,insert+marker,1);p.write_text(s)
 
-# Structural checks must reject resurrection of the alias or all-active prompt selection.
 p=Path('verify.mjs');s=p.read_text();anchor="if(fs.existsSync('app.js')||/document\\.write\\s*\\(/.test(html))throw new Error('Dynamic runtime injection remains.');"
 if anchor not in s: raise SystemExit('verify structural anchor missing')
 addition=anchor+"\nconst activeRuntime=['app-core.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'].map(f=>fs.readFileSync(f,'utf8')).join('\\n');if(/state\\.acceptedData\\s*=|stages\\[[^\\]]+\\]\\.acceptedData\\s*=/.test(activeRuntime))throw new Error('acceptedData remains an active write surface.');if(/All active records selected by the explicit stage readCollections contract/.test(activeRuntime))throw new Error('Prompt context still selects historical active records without current-scope filtering.');"
