@@ -33,6 +33,21 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(g.reasons.some(reason=>reason.includes('unavailable execution capability')),'Stage 06 did not fail closed on unavailable mandatory execution capability.');
 }
 
+
+// APPLICATION_DETERMINISTIC cannot satisfy Stage 06 unless an actual application-native executor is registered.
+{
+  assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');
+  const p=project('JOB-NATIVE-EXECUTOR-TRUTH');
+  Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
+  const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};
+  p.projectData.requirements.push({id:'REQ-NATIVE-1',stage:4,active:true,scope,fields:{REQ_ID:'REQ-NATIVE-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});
+  p.projectData.tests.push({id:'TEST-NATIVE-1',stage:6,active:true,scope:{...scope,testSuiteVersion:'TEST-SUITE-v001'},fields:{TEST_ID:'TEST-NATIVE-1',REQ_ID:'REQ-NATIVE-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'NONEXISTENT_NATIVE_EXECUTOR',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'canonical input',TOOLS:'application',PROCEDURE:'native check',EXPECTED_RESULT:'satisfied',FAILURE_CONDITION:'not satisfied',EVIDENCE_TO_PRESERVE:'derived evidence',STATUS:'READY'},relationships:{REQ_ID:'REQ-NATIVE-1'}});
+  const plan=engine.testExecutionPlan(p);
+  assert(plan.unsupportedApplicationTestIds.includes('TEST-NATIVE-1'),'Execution plan did not identify unsupported application-native test execution.');
+  const g=engine.gate(6,p);
+  assert(g.reasons.some(reason=>reason.includes('without a registered application-native executor')),'Stage 06 accepted an APPLICATION_DETERMINISTIC test with no actual executor.');
+}
+
 // Stage 06 continuously rechecks exact required artifact custody from canonical evidence and current verified bytes.
 {
   const p=project('JOB-TEST-ARTIFACT-CURRENT');
