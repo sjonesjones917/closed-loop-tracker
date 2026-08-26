@@ -78,3 +78,21 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
  for(const command of ['createHumanBlocker','registerFreshContext','invalidateAcceptedResponse','recordHumanDecision','freezeCandidate','freezeBaseline','reserveRunBatch','registerArtifactBytes'])if(!engineSource.includes(`function ${command}`))throw new Error(`Engine command missing ${command}.`);
  if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);
 }
+
+// First-class prompt-contract contradiction proof.
+{
+  let contradictions=0,operationsChecked=0;
+  const fail=message=>{contradictions+=1;throw new Error(`Prompt contract contradiction: ${message}`);};
+  for(let stage=1;stage<=schema.STAGE_COUNT;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
+    operationsChecked+=1;const op=schema.operationContract(stage,operation),stageDefs=schema.STAGE_FIELDS[stage]||{};
+    for(const field of op.allowedStageData||[])if(stageDefs[field]?.producer!==schema.PRODUCER.AGENT)fail(`Stage ${stage} ${operation} exposes non-agent stage field ${field}.`);
+    for(const collection of op.agentWritableCollections||[]){const policy=schema.RECORD_SCHEMAS[collection]?.commitPolicy;if(policy==='APPLICATION_DERIVED')fail(`Stage ${stage} ${operation} exposes application-derived collection ${collection}.`);if((op.applicationCollections||[]).includes(collection)&&policy!=='UPDATE_RESERVED')fail(`Stage ${stage} ${operation} exposes application collection ${collection} without reserved-update semantics.`);}
+    const p=blank(`JOB-CONTRADICTION-${stage}-${operation}`),record=prompts.buildPromptRecord(stage,p,{operation});
+    if(op.responseRequired){if(!(op.allowedStageData.length||op.agentWritableCollections.length))fail(`Stage ${stage} ${operation} requires a response without a writable agent surface.`);if(!record.prompt.includes('closed-loop-stage-response/2'))fail(`Stage ${stage} ${operation} lacks the strict versioned response contract.`);}
+    else {if(op.allowedStageData.length||op.agentWritableCollections.length)fail(`Stage ${stage} ${operation} is application-controlled but exposes writable agent data.`);if(!record.prompt.includes('APPLICATION-CONTROLLED OPERATION'))fail(`Stage ${stage} ${operation} does not explicitly prohibit an external response.`);}
+  }
+  if(schema.STAGE_FIELDS[27].SELECTED_RELEASE_STATE?.producer!==schema.PRODUCER.APPLICATION)fail('Stage 27 release state is not application-owned.');
+  if(schema.STAGE_FIELDS[28].RELEASE_GATE_STATE?.producer!==schema.PRODUCER.APPLICATION)fail('Stage 28 release-gate state is not application-owned.');
+  const s2=prompts.buildPromptRecord(2,blank('JOB-NO-SOURCE')).prompt;if(!s2.includes('NO_APPLICABLE_EXTERNAL_SOURCE'))fail('Stage 2 does not permit an evidence-supported no-source determination.');
+  console.log(JSON.stringify({promptContractContradictions:contradictions,promptOperationsChecked:operationsChecked},null,2));
+}

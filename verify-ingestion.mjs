@@ -24,8 +24,8 @@ function project(jobId='JOB-INGESTION-TEST'){
   engine.recalculate(p);
   return p;
 }
-function savePrompt(p,stage){
-  const record={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
+function savePrompt(p,stage,options={}){
+  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
   return record;
 }
@@ -46,12 +46,16 @@ function safeValue(name){
 }
 function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage];
+  const operationContract=schema.operationContract(stage,promptRecord.operation);
+  if(!operationContract)throw new Error(`Stage ${stage} operation ${promptRecord.operation} has no contract.`);
   const stageData={};
-  if(contract.allowedStageData.length)stageData[contract.allowedStageData[0]]=safeValue(contract.allowedStageData[0]);
+  if(operationContract.allowedStageData.length)stageData[operationContract.allowedStageData[0]]=safeValue(operationContract.allowedStageData[0]);
   const records={};
   if(!Object.keys(stageData).length){
-    const collection=contract.allowedCollections.find(name=>name!=='blockers')||contract.allowedCollections[0];
-    if(!collection)throw new Error(`Stage ${stage} has no ingestible response surface.`);
+    const collection=operationContract.agentWritableCollections.find(name=>name!=='blockers')||operationContract.agentWritableCollections[0];
+    if(!collection)return {
+      schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:JSON.parse(JSON.stringify(promptRecord.scope)),responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]
+    };
     const def=schema.RECORD_SCHEMAS[collection];
     const fields={};
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
@@ -62,7 +66,7 @@ function validEnvelope(p,stage,promptRecord){
     schema:schema.RESPONSE_SCHEMA,
     jobId:p.job.JOB_ID,
     stage,
-    operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,
+    operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:JSON.parse(JSON.stringify(promptRecord.scope)),
     responseType:'DATA_PROPOSAL',
     humanInputRequests:[],stageData,records,
     evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],
@@ -74,7 +78,13 @@ const allStages=[];
 for(let stage=1;stage<=30;stage++){
   let p=project(`JOB-E2E-${String(stage).padStart(2,'0')}`);
   p.activeStage=stage;
-  const promptRecord=savePrompt(p,stage);
+  const promptRecord=savePrompt(p,stage,stage===19?{operation:'COMPARE'}:{});
+  const operationContract=schema.operationContract(stage,promptRecord.operation);
+  if(!operationContract.responseRequired){
+    if(!promptRecord.prompt.includes('APPLICATION-CONTROLLED OPERATION')||!promptRecord.prompt.includes('do not submit an external-agent response'))throw new Error(`Stage ${stage} application-controlled operation is not explicit in the prompt contract.`);
+    allStages.push({stage,operation:promptRecord.operation,applicationControlled:true});
+    continue;
+  }
   const envelope=validEnvelope(p,stage,promptRecord);
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
   if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
@@ -92,7 +102,8 @@ for(let stage=1;stage<=30;stage++){
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
-function negative(name,mutate,expectedCode){
+let negativeCaseCount=0;
+function negative(name,mutate,expectedCode){negativeCaseCount+=1;
   const p=project(`JOB-NEG-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),stage=2,promptRecord=savePrompt(p,stage);
   let envelope=validEnvelope(p,stage,promptRecord); const mutated=mutate(envelope,p,promptRecord); if(mutated!==undefined)envelope=mutated;
   const text=typeof envelope==='string'?envelope:JSON.stringify(envelope);
@@ -115,6 +126,27 @@ negative('duplicate temp key',(e)=>{e.records.blockers=[{tempKey:'dup',fields:{M
 negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
 negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 
+
+negative('empty response',()=>'','EMPTY_RESPONSE');
+negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
+negative('duplicate JSON member',(e)=>JSON.stringify(e).replace(`"stage":2`,`"stage":2,"stage":3`),'DUPLICATE_JSON_MEMBER');
+negative('wrong root type',()=> '[]','INVALID_ROOT');
+negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');
+negative('unknown top property',(e)=>{e.unrecognized=true;},'UNKNOWN_PROPERTY');
+negative('wrong operation',(e)=>{e.operation='NOT_AN_OPERATION';},'WRONG_OPERATION');
+negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(64);},'STALE_CONTRACT_HASH');
+negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
+negative('stale project revision',(e)=>{e.scope.projectRevision+=100;},'STALE_SCOPE');
+negative('wrong value type',(e)=>{e.stageData.AUTHORITY_HIERARCHY=42;},'WRONG_VALUE_TYPE');
+negative('prohibited null',(e)=>{e.stageData.AUTHORITY_HIERARCHY=null;},'PROHIBITED_NULL');
+negative('placeholder value',(e)=>{e.stageData.AUTHORITY_HIERARCHY='<value>';},'PLACEHOLDER_VALUE');
+negative('unknown stage field',(e)=>{e.stageData.NOT_A_STAGE_FIELD='x';},'UNKNOWN_STAGE_FIELD');
+negative('invalid response type',(e)=>{e.responseType='MAYBE';},'INVALID_RESPONSE_TYPE');
+negative('mixed human-input response',(e)=>{e.responseType='HUMAN_INPUT_REQUIRED';e.humanInputRequests=[{temporaryKey:'q',question:'Q?',whyRequired:'Needed',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];e.stageData={AUTHORITY_HIERARCHY:'x'};},'MIXED_RESPONSE_TYPE');
+negative('invalid unresolved kind',(e)=>{e.responseType='BLOCKED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'u1',kind:'NOT_A_KIND',description:'Blocked',whyBlocking:'Cannot continue',affectedStageFields:[],affectedRecords:[],blocking:true}];},'INVALID_UNRESOLVED_KIND');
+negative('oversized raw response',(e)=>{e.warnings=[{code:'X',message:'x'.repeat((schema.STAGE_CONTRACTS[2].resourceLimits?.maxRawResponseBytes||1048576)+10),path:'/'}];},'OVERSIZED_RESPONSE');
+negative('excessive JSON depth',(e)=>{let x={};let root=x;for(let i=0;i<80;i++){x.n={};x=x.n;}e.warnings=[{code:'DEPTH',message:'depth',path:'/',extra:root}];},'EXCESSIVE_JSON_DEPTH');
+
 // Duplicate response is detected only after the first raw response has been preserved.
 {
   let p=project('JOB-NEG-DUPLICATE'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord),text=JSON.stringify(envelope);
@@ -127,7 +159,7 @@ negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON
 // Clarification loop: structured question -> accepted question record -> human answer -> INPUT version increments.
 {
   let p=project('JOB-CLARIFICATION'),stage=1,promptRecord=savePrompt(p,stage);
-  const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-1',question:'Which jurisdiction controls the requested release?',whyRequired:'The operator must establish jurisdictional scope.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+  const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:JSON.parse(JSON.stringify(promptRecord.scope)),responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-1',question:'Which jurisdiction controls the requested release?',whyRequired:'The operator must establish jurisdictional scope.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
   if(!prepared.validation.valid)throw new Error(`Clarification envelope rejected: ${JSON.stringify(prepared.validation.issues)}`);
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});p=committed.project;
@@ -138,7 +170,7 @@ negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON
   if(engine.unresolvedHumanRequests(p,stage).length)throw new Error('Answered clarification remained open.');
 }
 
-console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:12,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true},null,2));
+console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:negativeCaseCount,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true},null,2));
 
 // PR3 transaction/disposition invariants.
 {let p=project('JOB-PR3-IDEMP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);const first=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const accepted=ingestion.commit(first.project,first.proposal.proposalId,{operator:'VERIFY'});const again=ingestion.commit(accepted.project,first.proposal.proposalId,{operator:'VERIFY'});if(!again.idempotent||again.project.projectData.acceptedChanges.length!==accepted.project.projectData.acceptedChanges.length)throw new Error('Repeat acceptance was not idempotent.');const repeated=ingestion.prepare(accepted.project,{stage,text:JSON.stringify(e),promptRecord:pr});if(!repeated.duplicate||repeated.receipt?.receiptId!==accepted.receipt?.receiptId)throw new Error('Repeated canonical envelope did not return existing receipt/disposition.');const manifest=accepted.manifest;if(!manifest.entries.some(x=>/^\/records\/[^/]+\/0\/fields\//.test(x.jsonPointer||''))&&!manifest.entries.some(x=>/^\/stageData\//.test(x.jsonPointer||'')))throw new Error('Extraction manifest does not contain exact response JSON pointers.');}

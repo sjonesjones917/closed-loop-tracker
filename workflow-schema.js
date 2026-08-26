@@ -1046,9 +1046,9 @@ const STAGE_COLLECTIONS=Object.freeze({
   14:['defects','rootCauses'],
   15:['regressions','regressionExecutions'],
   16:['changes'],
-  17:['iterations','candidateFreezes','runs'],
+  17:['iterations','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','regressionExecutions','changes'],
   18:['convergenceRecords'],
-  19:['iterations','runs','confirmationRecords'],
+  19:['iterations','runs','verification','comparisons','regressionExecutions','confirmationRecords'],
   20:['baselines'],
   21:['products','artifacts'],
   22:['deterministicResults'],
@@ -1071,10 +1071,26 @@ const SUPPORT_COLLECTIONS=Object.freeze({
 
 
 const READ_COLLECTIONS=Object.freeze({1:[],2:[],3:['sources','sourceConflicts'],4:['research','candidateRequirements','sources'],5:['requirements','research','sourceConflicts'],6:['requirements','requirementResolutions'],7:['requirements','tests'],8:['requirements','tests','failureTests','requirementResolutions'],9:['instructions','instructionTraces','requirements','tests'],10:['instructions','preflightRecords','tests','failureTests'],11:['candidateFreezes','iterations','freshContexts'],12:['runs','requirements','tests','freshContexts'],13:['verification','runs','requirements'],14:['defects','comparisons','verification'],15:['defects','rootCauses'],16:['defects','rootCauses','regressions','regressionExecutions'],17:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions'],18:['iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','blockers'],19:['convergenceRecords','candidateFreezes','tests','regressions','regressionExecutions'],20:['confirmationRecords','candidateFreezes','iterations'],21:['baselines','freshContexts'],22:['products','tests','artifacts'],23:['products','requirements','sources'],24:['products','requirements','regressions','regressionExecutions'],25:['products','artifacts'],26:['products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections'],27:['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressionExecutions'],28:['releaseRecords','artifactIdentities','artifacts'],29:['sources','requirements','instructions','instructionTraces','runs','products','tests','verification','deterministicResults','meaningResults','releaseRecords','artifactIdentities','evidenceRecords'],30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines']});
-const APPLICATION_COLLECTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['blockers','freshContexts','artifacts','releaseRecords','artifactIdentities','evidenceChains'])])));
+const AGENT_WRITABLE_COLLECTIONS=Object.freeze({...STAGE_COLLECTIONS,
+  10:Object.freeze([]),
+  17:Object.freeze([]),
+  18:Object.freeze([]),
+  19:Object.freeze([]),
+  20:Object.freeze([]),
+  21:Object.freeze(['products'])
+});
+const APPLICATION_COLLECTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>{const stage=i+1,collections=['blockers','artifacts'];if([9,11,17,19,21,23,24,25].includes(stage))collections.push('freshContexts');if(stage===10)collections.push('iterations','candidateFreezes');if(stage===11)collections.push('runs');if(stage===17)collections.push('iterations','candidateFreezes','runs');if(stage===18)collections.push('convergenceRecords');if(stage===19)collections.push('iterations','runs');if(stage===20)collections.push('baselines');if(stage===21)collections.push('products');if(stage===27)collections.push('releaseRecords');if(stage===28)collections.push('artifactIdentities');if(stage===29)collections.push('evidenceChains');return [stage,Object.freeze([...new Set(collections)])];})));
 const HUMAN_ACTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['ANSWER_HUMAN_INPUT','REJECT_RESPONSE','REQUEST_CORRECTION'])])));
-const SCOPE_REQUIREMENTS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>{const s=i+1,keys=['projectRevision','inputVersion'];if(s>=3)keys.push('sourceSetVersion');if(s>=5)keys.push('requirementsVersion');if(s>=7)keys.push('testSuiteVersion');if(s>=9)keys.push('instructionVersion');if(s>=10&&s<=20)keys.push('iterationId','candidateId');if([11,12,17,19].includes(s))keys.push('runId','contextId');if(s>=20)keys.push('baselineId');if(s>=21)keys.push('productId');return [s,Object.freeze([...new Set(keys)])];})));
-function operationContract(stage,operation){const operations=STAGE_OPERATIONS[stage]||['COMPLETE'];if(!operations.includes(operation))return null;return Object.freeze({operation,readCollections:Object.freeze(READ_COLLECTIONS[stage]||[]),agentWritableCollections:Object.freeze(STAGE_COLLECTIONS[stage]||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage]||[]),scopeRequirements:Object.freeze(SCOPE_REQUIREMENTS[stage]||[])});}
+const SCOPE_REQUIREMENTS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>{const s=i+1,keys=['projectRevision','inputVersion'];if(s>=3)keys.push('sourceSetVersion');if(s>=5)keys.push('requirementsVersion');if(s>=7)keys.push('testSuiteVersion');if(s>=9)keys.push('instructionVersion');if(s>=10&&s<=20)keys.push('iterationId','candidateId');if(s===11)keys.push('runId','contextId');if(s>=20)keys.push('baselineId');if(s>=21)keys.push('productId');return [s,Object.freeze([...new Set(keys)])];})));
+const OPERATION_COLLECTIONS=Object.freeze({
+  17:Object.freeze({FREEZE:Object.freeze([]),EXECUTE_RUN:Object.freeze(['runs']),VERIFY:Object.freeze(['verification']),COMPARE:Object.freeze(['comparisons']),ROOT_CAUSE:Object.freeze(['defects','rootCauses']),REGRESSION:Object.freeze(['regressions','regressionExecutions']),CORRECT:Object.freeze(['changes'])}),
+  19:Object.freeze({CONFIRM_FREEZE:Object.freeze([]),EXECUTE_RUN:Object.freeze(['runs']),VERIFY:Object.freeze(['verification']),COMPARE:Object.freeze(['comparisons']),REGRESSION_VERIFY:Object.freeze(['regressionExecutions']),CONFIRM:Object.freeze(['confirmationRecords'])})
+});
+const OPERATION_STAGE_DATA=Object.freeze({
+  17:Object.freeze({FREEZE:Object.freeze([]),EXECUTE_RUN:Object.freeze(['EXECUTE_COMPLETED']),VERIFY:Object.freeze(['VERIFY_COMPLETED']),COMPARE:Object.freeze(['COMPARE_COMPLETED']),ROOT_CAUSE:Object.freeze(['ROOT_CAUSE_COMPLETED']),REGRESSION:Object.freeze(['REGRESSION_TESTS_ADDED']),CORRECT:Object.freeze(['CORRECTIONS_COMPLETED'])}),
+  19:Object.freeze({CONFIRM_FREEZE:Object.freeze([]),EXECUTE_RUN:Object.freeze(['COMPLETE_TEST_SUITE_RUN']),VERIFY:Object.freeze([]),COMPARE:Object.freeze(['CROSS_RUN_COMPARISON_COMPLETED','NEW_CORRECTNESS_AFFECTING_VARIANCE']),REGRESSION_VERIFY:Object.freeze(['INJECTED_DEFECTS_NOT_DETECTED']),CONFIRM:Object.freeze(['NEW_CRITICAL_DEFECTS','NEW_MAJOR_DEFECTS','NEW_REQUIREMENTS_DISCOVERED','CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED','REQUIRED_RETURN_STAGE'])})
+});
+function operationContract(stage,operation){const operations=STAGE_OPERATIONS[stage]||['COMPLETE'];if(!operations.includes(operation))return null;const stageContractFields=allowedAgentStageFields(stage);const scope=[...(SCOPE_REQUIREMENTS[stage]||[])];if((stage===17||stage===19)&&operation==='EXECUTE_RUN')scope.push('runId','contextId');const allowedStageData=Object.freeze(OPERATION_STAGE_DATA[stage]?.[operation]||stageContractFields),agentWritableCollections=Object.freeze(OPERATION_COLLECTIONS[stage]?.[operation]||AGENT_WRITABLE_COLLECTIONS[stage]||[]);return Object.freeze({operation,readCollections:Object.freeze(READ_COLLECTIONS[stage]||[]),allowedStageData,agentWritableCollections,applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage]||[]),scopeRequirements:Object.freeze([...new Set(scope)]),responseRequired:allowedStageData.length>0||agentWritableCollections.length>0});}
 
 const HUMAN_INTAKE_FIELDS=Object.freeze([
   'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT',
@@ -1089,8 +1105,8 @@ function recordHumanFields(collection){return Object.freeze(Object.values(RECORD
 
 const STAGE_CONTRACTS=Object.freeze(Object.fromEntries(core.STAGES.map(stage=>[stage.number,Object.freeze({
   stage:stage.number,title:stage.title,role:stage.role,allowedStageData:allowedAgentStageFields(stage.number),humanFields:humanStageFields(stage.number),
-  readCollections:Object.freeze(READ_COLLECTIONS[stage.number]||[]),agentWritableCollections:Object.freeze(STAGE_COLLECTIONS[stage.number]||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage.number]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage.number]||[]),
-  allowedCollections:Object.freeze(STAGE_COLLECTIONS[stage.number]||[]),primaryCollections:Object.freeze(STAGE_COLLECTIONS[stage.number]||[]),supportCollections:Object.freeze(SUPPORT_COLLECTIONS[stage.number]||[]),
+  readCollections:Object.freeze(READ_COLLECTIONS[stage.number]||[]),agentWritableCollections:Object.freeze(AGENT_WRITABLE_COLLECTIONS[stage.number]||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage.number]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage.number]||[]),
+  allowedCollections:Object.freeze(AGENT_WRITABLE_COLLECTIONS[stage.number]||[]),primaryCollections:Object.freeze(STAGE_COLLECTIONS[stage.number]||[]),supportCollections:Object.freeze(SUPPORT_COLLECTIONS[stage.number]||[]),
   operations:Object.freeze(STAGE_OPERATIONS[stage.number]||['COMPLETE']),scopeRequirements:Object.freeze(SCOPE_REQUIREMENTS[stage.number]||[]),resourceLimits:DEFAULT_RESOURCE_LIMITS,completionConditions:stage.completionGate,responseSchema:RESPONSE_SCHEMA,responseTypes:RESPONSE_TYPES
 })])));
 
@@ -1117,7 +1133,7 @@ function sourceClassificationIssues(fields={}){
 
 globalThis.closedLoopWorkflowSchema=Object.freeze({
   version:'closed-loop-workflow-schema/2',
-  PROJECT_SCHEMA,WORKFLOW_ID,STAGE_COUNT,VALUE_TYPES,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,APPLICATION_COLLECTIONS,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
+  PROJECT_SCHEMA,WORKFLOW_ID,STAGE_COUNT,VALUE_TYPES,COLLECTION_POLICIES,DEFAULT_RESOURCE_LIMITS,STAGE_OPERATIONS,READ_COLLECTIONS,AGENT_WRITABLE_COLLECTIONS,APPLICATION_COLLECTIONS,OPERATION_COLLECTIONS,OPERATION_STAGE_DATA,HUMAN_ACTIONS,SCOPE_REQUIREMENTS,RECORD_OWNERSHIP,
   PRODUCER,RESPONSE_SCHEMA,RESPONSE_TYPES,CONFLICT_POLICIES,
   JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,
   STAGE_FIELDS,STAGE_CONTRACTS,STAGE_COLLECTIONS,SUPPORT_COLLECTIONS,RECORD_SCHEMAS,
