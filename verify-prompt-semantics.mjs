@@ -77,6 +77,19 @@ const mutants=[
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 
+
+if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 completion language is not the exact verification triple.');
+if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||core.STAGES[14].completionGate.some(x=>x.toLowerCase().includes('succeeds after correction')))throw new Error('Stage 15 incorrectly requires future post-correction success.');
+{
+ const p=baseProject();const r=prompts.buildPromptRecord(15,p,{operation:'COMPLETE'});if(!r.prompt.includes('Do not claim post-correction success at Stage 15'))throw new Error('Stage 15 prompt chronology is wrong.');
+}
+{
+ const p=baseProject();p.projectData.responseValidations.push({validationId:'VALIDATION-X',stage:2,promptId:'PROMPT-X',valid:false,issues:[{code:'MISSING_PROVENANCE',path:'/evidence',message:'Evidence is required.'}]});const seed=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});p.projectData.generatedPrompts.push({...seed,instructionId:'PROMPT-X',promptId:'PROMPT-X'});const r=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});if(!r.prompt.includes('LATEST APPLICATION VALIDATION FAILURE TO CORRECT')||!r.prompt.includes('MISSING_PROVENANCE'))throw new Error('Validation failure is not correction context.');
+}
+{
+ const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target audit/repair boundary is missing.');
+}
+
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
