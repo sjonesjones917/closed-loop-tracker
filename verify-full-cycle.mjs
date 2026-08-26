@@ -193,5 +193,13 @@ const defectHistoryBefore=JSON.stringify(p.projectData.defects),regressionHistor
 // Reload/recalculation must preserve the entire completed canonical lifecycle.
 const reloaded=JSON.parse(JSON.stringify(p));engine.ensureShape(reloaded);engine.recalculate(reloaded);for(let stage=1;stage<=30;stage++)assert(engine.gate(stage,reloaded).complete,`Reloaded project lost Stage ${stage}: ${engine.gate(stage,reloaded).reasons.join('; ')}`);assert(reloaded.stages[30].status==='COMPLETE','Reloaded full-cycle project is not COMPLETE.');
 
+// Late-stage false-positive regression checks.
+{const q=engine.clone(p);q.projectData.products[0].fields.GENERATED_ARTIFACT_INVENTORY=['MISSING-ARTIFACT'];q.projectData.products[0].GENERATED_ARTIFACT_INVENTORY=['MISSING-ARTIFACT'];assert(!engine.gate(21,q).complete,'Stage 21 accepted an unresolved product artifact inventory.');}
+{const q=engine.clone(p),r=engine.clone(q.projectData.deterministicResults.at(-1));r.id='RESULT-DUPLICATE';r.RESULT_ID='RESULT-DUPLICATE';r.fields.RESULT_ID='RESULT-DUPLICATE';q.projectData.deterministicResults.push(r);assert(!engine.gate(22,q).complete,'Stage 22 accepted duplicate deterministic results.');}
+{const q=engine.clone(p);q.projectData.meaningResults=[];assert(!engine.gate(23,q).complete,'Stage 23 accepted incomplete meaning coverage.');}
+{const q=engine.clone(p);q.projectData.regressionExecutions.at(-1).fields.RESULT='VIOLATED';q.projectData.regressionExecutions.at(-1).RESULT='VIOLATED';assert(!engine.gate(24,q).complete,'Stage 24 ignored a failed active historical regression.');}
+{const q=engine.clone(p);q.projectData.representationInspections.pop();assert(!engine.gate(25,q).complete,'Stage 25 accepted an uninspected product artifact.');}
+{const q=engine.clone(p);q.projectData.processAudits.push(engine.clone(q.projectData.processAudits[0]));assert(!engine.gate(26,q).complete,'Stage 26 accepted duplicate current process audits.');}
+
 const result={continuousLifecycle:'STAGES_01_TO_30',stagesCompleted:30,artifactRoundTripReady:true,releaseByteIdentity:true,reloadIntegrity:true,currentStage:p.job.CURRENT_STAGE,revision:p.revision||0,acceptedDataChanges:p.projectData.acceptedChanges.length,rawResponses:p.projectData.rawResponses.length,stage8EvidenceRelationship:true,stage11InitialBoundary:true,verificationTriples:engine.verificationMatrix(p,iterationId).expected.length,correctedVerificationTriples:iteration17Evaluation.matrix.expected.length,confirmedDefect:defectId,permanentRegression:regId,correctedIteration:iteration17,correctedCandidate:candidate17};
 console.log(JSON.stringify(result,null,2));
