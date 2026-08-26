@@ -1,0 +1,19 @@
+name: PR6 current source export
+on:
+  push:
+    branches: [practical-100/pr6-current-completion]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact current branch source
+        run: tar --exclude=.git -czf /tmp/pr6-current-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr6-current-source
+          path: /tmp/pr6-current-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
