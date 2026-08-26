@@ -16,4 +16,4 @@ jobs:
           node --check test-fixtures.mjs
           node --check verify-full-cycle.mjs
           node verify-full-cycle.mjs
-          # This temporary workflow is removed before PR review.
+          # Temporary lifecycle runner; deleted before PR review.
