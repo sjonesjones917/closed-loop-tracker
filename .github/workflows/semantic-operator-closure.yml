@@ -1,0 +1,148 @@
+name: Apply semantic and operator closure
+'on':
+  push:
+    branches: [practical-100/semantic-operator-closure]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/semantic-operator-closure
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply guarded minimum corrections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          def one(path, old, new, label):
+              p=Path(path); s=p.read_text(); n=s.count(old)
+              if n != 1: raise SystemExit(f'{label}: expected 1 match, found {n}')
+              p.write_text(s.replace(old,new,1))
+
+          # Stage 01 / Stage 02 human source-count preference.
+          one('workbook.js',"      \"KNOWN_AUTHORITATIVE_SOURCES\",\n      \"AVAILABLE_TOOLS\",","      \"KNOWN_AUTHORITATIVE_SOURCES\",\n      \"DESIRED_SOURCE_COUNT\",\n      \"AVAILABLE_TOOLS\",",'workbook stage1 desired source field')
+          one('workbook.js',"'KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'","'KNOWN_AUTHORITATIVE_SOURCES','DESIRED_SOURCE_COUNT','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'",'workbook stage1 fields list')
+          one('workflow-schema.js',"  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES',\n  'AVAILABLE_TOOLS'","  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES','DESIRED_SOURCE_COUNT',\n  'AVAILABLE_TOOLS'",'schema human job source count')
+          one('workflow-schema.js',"  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT',\n  'DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS'","  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT',\n  'DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES','DESIRED_SOURCE_COUNT','AVAILABLE_TOOLS'",'schema intake source count')
+          one('response-ingestion.js',"'MISSING_HUMAN_INPUT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','MISSING_ARTIFACT'","'MISSING_HUMAN_INPUT','MISSING_APPLICATION_CONTEXT','MISSING_AUTHORITY','MISSING_EVIDENCE','MISSING_CAPABILITY','WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_ARTIFACT'",'unresolved recovery kinds')
+
+          # Prompt context must be the operation contract, with no blocker truncation.
+          one('prompt-engine.js','function contextFor(stage,state){','function contextFor(stage,state,operation){','operation-aware context signature')
+          one('prompt-engine.js',"if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\\n${show(open.slice(-20))}`);","if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\\n${show(open)}`);",'no blocker truncation')
+          one('prompt-engine.js',"for(const collection of contextCollections[stage]||[])parts.push", "const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);\n for(const collection of op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[])parts.push",'operation read collections')
+          one('prompt-engine.js','${contextFor(stage,state)}','${contextFor(stage,state,operation)}','operation passed to context')
+          one('prompt-engine.js','Create one applicable verification record for every required REQ_ID × RUN_ID relation, linked to TEST_ID.','Create exactly one current verification record for every applicable REQ_ID × RUN_ID × TEST_ID triple.','exact triple prompt semantics')
+          one('prompt-engine.js',"USER-SUPPLIED KNOWN AUTHORITY (classification preserved; do not automatically relabel as external authority):\n${show(j.KNOWN_AUTHORITATIVE_SOURCES)}\n\nAVAILABLE TOOLS:","USER-SUPPLIED KNOWN AUTHORITY (classification preserved; do not automatically relabel as external authority):\n${show(j.KNOWN_AUTHORITATIVE_SOURCES)}\n\nDESIRED OR SUGGESTED SOURCE COUNT (a search target, never permission to invent sources):\n${show(j.DESIRED_SOURCE_COUNT)}\n\nAVAILABLE TOOLS:",'source count in prompt')
+          one('prompt-engine.js',"- When the environment cannot perform a requested implementation or execution, provide an implementation-ready specification rather than pretending implementation occurred.\n", "- Before substantive work at this stage, determine whether the current human input, canonical application context, prior accepted outputs, available evidence, and available capabilities are sufficient to proceed reliably for this specific job. Do not use a hard-coded generic notion of sufficiency.\n- If missing information is genuinely human-authority information, return HUMAN_INPUT_REQUIRED. If required canonical/application context is absent, stale, or incomplete, return BLOCKED with kind MISSING_APPLICATION_CONTEXT. If an external capability is unavailable, return BLOCKED with MISSING_CAPABILITY or EXECUTION_FAILED when execution was attempted and failed. If the requested implementation is too large for the available environment, return BLOCKED with WORK_TOO_LARGE_FOR_ENVIRONMENT and provide an implementation-ready specification instead of pretending implementation occurred. Self-contained deliverables that can actually be produced in the available environment should still be produced.\n- If the current response is incomplete or needs refinement, preserve what was learned as evidence but do not claim completion; state the missing work precisely so a corrected response can be requested without restarting the project.\n- When the environment cannot perform a requested implementation or execution, provide an implementation-ready specification rather than pretending implementation occurred.\n",'sufficiency and recovery rules')
+          one('prompt-engine.js',"answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null}))};","answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}))};",'correction context signature')
+          one('prompt-engine.js',"if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\\n${show(answered)}`);","if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\\n${show(answered)}`);\n const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));\n if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\\n${show(corrections)}`);",'correction prompt context')
+
+          # Engine application controls missing from the normal operator path.
+          p=Path('workflow-engine.js'); s=p.read_text()
+          marker='function freezeBaseline(project,'
+          if 'function beginUnchangedConfirmationIteration(' not in s:
+              i=s.index(marker)
+              fn="""function beginUnchangedConfirmationIteration(project,{candidateId,operatorLabel='HUMAN_OPERATOR'}={}){\n  ensureShape(project);\n  const candidate=records(project,'candidateFreezes').find(record=>recordId(record,'candidateFreezes')===String(candidateId||'')&&isActiveRecord(record));\n  if(!candidate)throw new Error('A current frozen candidate is required for unchanged confirmation.');\n  const componentHashes=recordValue(candidate,'COMPONENT_HASHES')||{};\n  if(!componentHashes||typeof componentHashes!=='object'||Array.isArray(componentHashes)||!Object.keys(componentHashes).length)throw new Error('The unchanged-confirmation candidate must have application-computed component hashes.');\n  const previousIterationId=String(recordValue(candidate,'ITERATION_ID')||candidate.scope?.iterationId||'');\n  const previousIteration=records(project,'iterations').find(record=>recordId(record,'iterations')===previousIterationId);\n  if(!previousIteration)throw new Error('The candidate source iteration does not exist.');\n  const iterationId=allocateId(project,'iterations'),createdAt=now(),baseScope=clone(previousIteration.scope||candidate.scope||currentScope(project));\n  const fields={ITERATION_ID:iterationId,CANDIDATE_ID:String(candidateId),PREVIOUS_ITERATION_ID:previousIterationId,CHANGESET_ID:'',PURPOSE:'UNCHANGED_CONFIRMATION',STATUS:'FROZEN',LINEAGE:hash.sha256Value({candidateId:String(candidateId),componentHashes}),EVIDENCE:'Application allocated a new unchanged-confirmation iteration using the exact existing frozen candidate identity.'};\n  const iteration={id:iterationId,stage:19,createdAt,active:true,scope:{...baseScope,iterationId,candidateId:String(candidateId)},fields,...fields,source:'APPLICATION_DERIVATION'};\n  iteration.contentSha256=hash.contentRecordSha256(iteration,'ITERATION_ID');iteration.recordSha256=hash.recordSha256(iteration);iteration.sha256=iteration.recordSha256;\n  project.projectData.iterations.push(iteration);project.job.CURRENT_ITERATION=iterationId;addHistory(project,'UNCHANGED_CONFIRMATION_ITERATION_STARTED',{stage:19,iterationId,candidateId:String(candidateId),previousIterationId,operatorLabel,identityAssurance:'SELF_ASSERTED'});recalculate(project);return iteration;\n}\n"""
+              s=s[:i]+fn+s[i:]
+          old="const contexts=recordsForCurrentScope(project,'freshContexts').filter(r=>!recordValue(r,'RUN_ID')),context=contexts.at(-1);"
+          if old in s: s=s.replace(old,"const contexts=recordsForCurrentScope(project,'freshContexts').filter(r=>{const runId=upper(recordValue(r,'RUN_ID'));return !runId||runId==='NOT APPLICABLE';}),context=contexts.at(-1);",1)
+          if 'beginUnchangedConfirmationIteration' not in s[s.rfind('globalThis.closedLoopWorkflowEngine'):]:
+              old='freezeCandidate,freezeBaseline,reserveProductExecution'
+              if s.count(old)!=1: raise SystemExit(f'engine export: expected 1, found {s.count(old)}')
+              s=s.replace(old,'freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution',1)
+          p.write_text(s)
+
+          # UI: source count, correction feedback, post-acceptance refinement, operation/run prompt controls, corrected freeze, and atomic release-file metadata.
+          p=Path('app-core.js'); s=p.read_text()
+          s=s.replace("['KNOWN_AUTHORITATIVE_SOURCES','Known authority supplied by user','textarea'],['AVAILABLE_TOOLS'","['KNOWN_AUTHORITATIVE_SOURCES','Known authority supplied by user','textarea'],['DESIRED_SOURCE_COUNT','Desired or suggested source count (optional)','input'],['AVAILABLE_TOOLS'",1)
+          s=s.replace("knownAuthorities:next.job.KNOWN_AUTHORITATIVE_SOURCES,availableTools:","knownAuthorities:next.job.KNOWN_AUTHORITATIVE_SOURCES,desiredSourceCount:next.job.DESIRED_SOURCE_COUNT,availableTools:",1)
+          s=s.replace("KNOWN_AUTHORITATIVE_SOURCES:raw.userJobInput?.knownAuthorities||'',AVAILABLE_TOOLS:","KNOWN_AUTHORITATIVE_SOURCES:raw.userJobInput?.knownAuthorities||'',DESIRED_SOURCE_COUNT:raw.userJobInput?.desiredSourceCount||'',AVAILABLE_TOOLS:",1)
+          s=s.replace("<button id=\"request-correction\">Request correction</button>","<button id=\"request-correction\">Request correction</button></div><div class=\"field\"><label>Correction / refinement needed</label><textarea id=\"correction-reason\" placeholder=\"State exactly what is missing, incorrect, or should be made more complete.\"></textarea><div class=\"button-row\">",1)
+          old="async function rejectPendingProposal(requestCorrection=false){const p=pendingProposal();if(!p)return;const result=ingestion.reject(current,p.proposalId,{operator:'HUMAN_OPERATOR',reason:requestCorrection?'Correction requested after proposal review.':'Rejected after proposal review.',requestCorrection});"
+          new="async function rejectPendingProposal(requestCorrection=false){const p=pendingProposal();if(!p)return;const correction=$('#correction-reason')?.value.trim()||'';if(requestCorrection&&!correction){alert('Describe the correction or refinement that is required.');$('#correction-reason')?.focus();return;}const result=ingestion.reject(current,p.proposalId,{operator:'HUMAN_OPERATOR',reason:requestCorrection?correction:'Rejected after proposal review.',requestCorrection});"
+          if old not in s: raise SystemExit('reject refinement hook missing')
+          s=s.replace(old,new,1)
+          # accepted refinement UI
+          old="${s.gate?.reasons?.length?`<div class=\"notice warn\"><strong>Completion gate is not satisfied.</strong><br>${s.gate.reasons.map(esc).join('<br>')}</div>`:`<div class=\"notice success\">Completion gate is satisfied by canonical evidence.</div>`}</div>`;}"
+          new="${s.gate?.reasons?.length?`<div class=\"notice warn\"><strong>Completion gate is not satisfied.</strong><br>${s.gate.reasons.map(esc).join('<br>')}</div>`:`<div class=\"notice success\">Completion gate is satisfied by canonical evidence.</div>`}${engine.acceptedChanges(current,n).length&&!current.isRetainedTestProject?`<details class=\"record-card\"><summary>Refine accepted result<span>Controlled</span></summary><div class=\"record-body\"><div class=\"field\"><label>Why refinement is required</label><textarea id=\"accepted-refinement-reason\"></textarea></div><button id=\"refine-accepted-response\">Invalidate current accepted result and request refinement</button></div></details>`:''}</div>`;}"
+          if old not in s: raise SystemExit('accepted refinement markup hook missing')
+          s=s.replace(old,new,1)
+          # operation-aware prompt helpers
+          old="function currentPromptRecord(n){return safe(current.projectData.generatedPrompts).filter(x=>Number(x.stage)===Number(n)&&!x.invalidatedBy&&Number(x.scope?.projectRevision)===Number(current.revision||0)).at(-1)||null;}\nfunction currentStagePrompt(n){const saved=currentPromptRecord(n);if(saved?.prompt)return saved.prompt;const preview=clone(current);preview.revision=Number(current.revision||0)+1;return globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview).prompt;}"
+          new="const promptSelections={};\nfunction promptSelection(n){const contract=schema.STAGE_CONTRACTS[n],ops=contract.operations||['COMPLETE'],state=promptSelections[n]||{},operation=ops.includes(state.operation)?state.operation:ops[0],needsRun=(schema.operationContract(n,operation)?.scopeRequirements||contract.scopeRequirements||[]).includes('runId'),runs=engine.records(current,'runs').filter(r=>String(recordValue(r,'ITERATION_ID')||'')===String(current.job.CURRENT_ITERATION||'')),selected=runs.find(r=>engine.recordId(r,'runs')===state.runId)||runs[0]||null,scope=needsRun&&selected?{runId:engine.recordId(selected,'runs'),contextId:recordValue(selected,'CONTEXT_ID'),iterationId:recordValue(selected,'ITERATION_ID'),candidateId:recordValue(selected,'CANDIDATE_ID')}:{ };return {operation,scope,runId:scope.runId||null,contextId:scope.contextId||null};}\nfunction currentPromptRecord(n){const sel=promptSelection(n);return safe(current.projectData.generatedPrompts).filter(x=>Number(x.stage)===Number(n)&&!x.invalidatedBy&&Number(x.scope?.projectRevision)===Number(current.revision||0)&&x.operation===sel.operation&&String(x.scope?.runId||'')===String(sel.runId||'')&&String(x.scope?.contextId||'')===String(sel.contextId||'')).at(-1)||null;}\nfunction currentStagePrompt(n){const saved=currentPromptRecord(n);if(saved?.prompt)return saved.prompt;const preview=clone(current);preview.revision=Number(current.revision||0)+1;const sel=promptSelection(n);return globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview,{operation:sel.operation,scope:sel.scope}).prompt;}"
+          if old not in s: raise SystemExit('prompt selection helper hook missing')
+          s=s.replace(old,new,1)
+          old="const candidate=globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview),next=clone(current)"
+          new="const sel=promptSelection(n),candidate=globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview,{operation:sel.operation,scope:sel.scope}),next=clone(current)"
+          if old not in s: raise SystemExit('save prompt selection hook missing')
+          s=s.replace(old,new,1)
+          # workflow selectors before generated instruction
+          old="${humanStageMarkup(n,locked)}${clarificationMarkup(n,locked)}<div class=\"panel\"><h2 class=\"section-title\">Generated instruction</h2>"
+          new="${humanStageMarkup(n,locked)}${clarificationMarkup(n,locked)}${schema.STAGE_CONTRACTS[n].operations.length>1?`<div class=\"panel\"><h2 class=\"section-title\">Stage operation</h2><div class=\"field\"><label>Operation</label><select id=\"operation-picker\">${schema.STAGE_CONTRACTS[n].operations.map(op=>`<option value=\"${esc(op)}\"${promptSelection(n).operation===op?' selected':''}>${esc(op)}</option>`).join('')}</select></div></div>`:''}${(schema.operationContract(n,promptSelection(n).operation)?.scopeRequirements||[]).includes('runId')?`<div class=\"panel\"><h2 class=\"section-title\">Run-scoped instruction</h2><div class=\"field\"><label>Run / context slot</label><select id=\"run-prompt-picker\">${engine.records(current,'runs').filter(r=>String(recordValue(r,'ITERATION_ID')||'')===String(current.job.CURRENT_ITERATION||'')).map(r=>`<option value=\"${esc(engine.recordId(r,'runs'))}\"${promptSelection(n).runId===engine.recordId(r,'runs')?' selected':''}>${esc(engine.recordId(r,'runs'))} · ${esc(recordValue(r,'CONTEXT_ID'))}</option>`).join('')}</select></div></div>`:''}<div class=\"panel\"><h2 class=\"section-title\">Generated instruction</h2>"
+          if old not in s: raise SystemExit('workflow selector insertion hook missing')
+          s=s.replace(old,new,1)
+          # corrected artifact controls and Stage19 control
+          s=s.replace("const applicable=[10,20,21,25,28].includes(n)","const applicable=[10,17,20,21,25,28].includes(n)",1)
+          s=s.replace("${n===10?`<button id=\"freeze-candidate\"${locked?' disabled':''}>Freeze selected candidate</button>`:''}","${(n===10||n===17)?`<button id=\"freeze-candidate\"${locked?' disabled':''}>Freeze selected candidate</button>`:''}${n===19?`<button id=\"begin-unchanged-confirmation\"${locked?' disabled':''}>Begin unchanged confirmation from Stage 17 candidate</button>`:''}",1)
+          s=s.replace("engine.freezeCandidate(next,{artifactIds:selectedArtifactIds(),operatorLabel:","engine.freezeCandidate(next,{stage:current.activeStage,artifactIds:selectedArtifactIds(),operatorLabel:",1)
+          # hashFile no global-current mutation; callers persist one project atomically.
+          old="async function hashFile(file){const artifactId=crypto.randomUUID?.()||`ARTIFACT-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,blob=file.slice(0,file.size,file.type||'application/octet-stream'),stored=await projectStore.putArtifact({artifactId,jobId:current.job.JOB_ID,blob,filename:file.name,mediaType:file.type||'application/octet-stream',lineage:{stage:current.activeStage,role:core.STAGES[current.activeStage-1]?.role||'UNKNOWN'}});const next=clone(current);engine.registerArtifactBytes(next,{stage:current.activeStage,artifactId,filename:stored.filename,mediaType:stored.mediaType,byteSize:stored.byteSize,sha256:stored.sha256,lineage:stored.lineage});current=next;return"
+          new="async function hashFile(file,targetProject,stage=targetProject.activeStage){const artifactId=crypto.randomUUID?.()||`ARTIFACT-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,blob=file.slice(0,file.size,file.type||'application/octet-stream'),stored=await projectStore.putArtifact({artifactId,jobId:targetProject.job.JOB_ID,blob,filename:file.name,mediaType:file.type||'application/octet-stream',lineage:{stage,role:core.STAGES[stage-1]?.role||'UNKNOWN'}});engine.registerArtifactBytes(targetProject,{stage,artifactId,filename:stored.filename,mediaType:stored.mediaType,byteSize:stored.byteSize,sha256:stored.sha256,lineage:stored.lineage});return"
+          if old not in s: raise SystemExit('hashFile stale-clone hook missing')
+          s=s.replace(old,new,1)
+          old="if($('#stage-files'))$('#stage-files').onchange=async e=>{try{const files=[];for(const file of Array.from(e.target.files||[]))files.push(await hashFile(file));const next=clone(current);next.stages[current.activeStage].authorizedFiles.push(...files);"
+          new="if($('#stage-files'))$('#stage-files').onchange=async e=>{try{const next=clone(current),files=[];for(const file of Array.from(e.target.files||[]))files.push(await hashFile(file,next,current.activeStage));next.stages[current.activeStage].authorizedFiles.push(...files);"
+          if old not in s: raise SystemExit('stage file atomic hook missing')
+          s=s.replace(old,new,1)
+          old="if($('#hash-audited'))$('#hash-audited').onclick=async()=>{const next=clone(current);next.release.auditedDraft=await Promise.all(af.map(hashFile));persistReplacement(next);render();};if($('#hash-release'))$('#hash-release').onclick=async()=>{const next=clone(current);next.release.releaseDraft=await Promise.all(rf.map(hashFile));persistReplacement(next);render();};if($('#compare-release'))$('#compare-release').onclick=()=>{try{const next=clone(current);engine.verifyArtifactIdentity(next,next.release.auditedDraft,next.release.releaseDraft);persistReplacement(next);render();}catch(error){alert(error.message||error);}};"
+          new="if($('#hash-audited'))$('#hash-audited').onclick=async()=>{try{const next=clone(current);next.release.auditedDraft=[];for(const file of af)next.release.auditedDraft.push(await hashFile(file,next,28));await persistReplacement(next);announce('saved');render();}catch(error){announce('storage failed');alert(error.message||error);}};if($('#hash-release'))$('#hash-release').onclick=async()=>{try{const next=clone(current);next.release.releaseDraft=[];for(const file of rf)next.release.releaseDraft.push(await hashFile(file,next,28));await persistReplacement(next);announce('saved');render();}catch(error){announce('storage failed');alert(error.message||error);}};if($('#compare-release'))$('#compare-release').onclick=async()=>{try{const next=clone(current);engine.verifyArtifactIdentity(next,next.release.auditedDraft,next.release.releaseDraft);await persistReplacement(next);announce('saved');render();}catch(error){alert(error.message||error);}};"
+          if old not in s: raise SystemExit('release atomic hashing hook missing')
+          s=s.replace(old,new,1)
+          # wire selectors, accepted refinement, unchanged confirmation.
+          hook="if($('#stage-picker'))$('#stage-picker').onchange=e=>{current.activeStage=Number(e.target.value);render();};"
+          insertion=hook+"if($('#operation-picker'))$('#operation-picker').onchange=e=>{promptSelections[current.activeStage]={...(promptSelections[current.activeStage]||{}),operation:e.target.value,runId:null};render();};if($('#run-prompt-picker'))$('#run-prompt-picker').onchange=e=>{promptSelections[current.activeStage]={...(promptSelections[current.activeStage]||{}),runId:e.target.value};render();};"
+          if s.count(hook)!=1: raise SystemExit('selector wire hook missing')
+          s=s.replace(hook,insertion,1)
+          hook="if($('#reject-proposal'))$('#reject-proposal').onclick=()=>rejectPendingProposal(false);"
+          insertion=hook+"if($('#refine-accepted-response'))$('#refine-accepted-response').onclick=async()=>{const reason=$('#accepted-refinement-reason')?.value.trim();if(!reason){alert('Describe why the accepted result must be refined.');$('#accepted-refinement-reason')?.focus();return;}try{const next=clone(current),change=engine.acceptedChanges(next,current.activeStage).at(-1);if(!change)throw new Error('No current accepted response exists to refine.');engine.invalidateAcceptedResponse(next,{stage:current.activeStage,rawResponseId:change.rawResponseId,reason,operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('saved');render();}catch(error){alert(error.message||error);}};"
+          if s.count(hook)!=1: raise SystemExit('refinement wire hook missing')
+          s=s.replace(hook,insertion,1)
+          hook="if($('#freeze-baseline'))"
+          insertion="if($('#begin-unchanged-confirmation'))$('#begin-unchanged-confirmation').onclick=async()=>{try{const next=clone(current),candidate=engine.records(next,'candidateFreezes').filter(r=>Number(r.stage)===17&&engine.isActiveRecord(r)).at(-1);if(!candidate)throw new Error('A current Stage 17 frozen candidate is required.');engine.beginUnchangedConfirmationIteration(next,{candidateId:engine.recordId(candidate,'candidateFreezes'),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('saved');render();}catch(error){alert(error.message||error);}};"+hook
+          if s.count(hook)!=1: raise SystemExit('unchanged confirmation wire hook missing')
+          s=s.replace(hook,insertion,1)
+          p.write_text(s)
+
+          # Strong semantic source assertions in the existing verifier, without a new test framework.
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          s += """\n// Semantic/operator closure assertions added after source audit.\nassert(schema.HUMAN_JOB_FIELDS.includes('DESIRED_SOURCE_COUNT'),'Desired source count is not a declared human input.');\nassert(ingestion.UNRESOLVED_KINDS?.includes('MISSING_APPLICATION_CONTEXT')||fs.readFileSync('response-ingestion.js','utf8').includes('MISSING_APPLICATION_CONTEXT'),'Missing application context has no explicit recovery classification.');\nconst pe=fs.readFileSync('prompt-engine.js','utf8'),ui=fs.readFileSync('app-core.js','utf8');\nassert(pe.includes('REQ_ID × RUN_ID × TEST_ID triple'),'Stage 12 prompt does not state exact verification triples.');\nassert(!pe.includes('open.slice(-20)'),'Prompt context silently truncates blockers.');\nassert(pe.includes('operation||schema.STAGE_CONTRACTS[stage].operations[0]'),'Prompt body is not operation-context aware.');\nassert(pe.includes('WORK_TOO_LARGE_FOR_ENVIRONMENT')&&pe.includes('MISSING_APPLICATION_CONTEXT'),'Prompt does not distinguish environmental scale from missing application context.');\nassert(ui.includes('operation-picker')&&ui.includes('run-prompt-picker'),'Normal UI cannot select operation/run scoped prompts.');\nassert(ui.includes('accepted-refinement-reason'),'Normal UI cannot refine an accepted response without restarting.');\nassert(ui.includes('begin-unchanged-confirmation'),'Normal UI cannot start unchanged confirmation from the converged candidate.');\nassert(ui.includes('for(const file of af)')&&ui.includes('for(const file of rf)'),'Release file hashing is still concurrent/stale-clone prone.');\nconsole.log(JSON.stringify({semanticOperatorClosure:true,desiredSourceCount:true,operationPromptUI:true,postAcceptanceRefinement:true,noBlockerTruncation:true,releaseHashingAtomic:true},null,2));\n"""
+          p.write_text(s)
+          PY
+      - name: Verify source and lifecycle
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-prompt-semantics.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit verified source and remove one-time workflow
+        run: |
+          rm .github/workflows/semantic-operator-closure.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close semantic recovery and operator workflow gaps"
+          git push origin HEAD:practical-100/semantic-operator-closure
