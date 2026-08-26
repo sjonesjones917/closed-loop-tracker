@@ -1,0 +1,18 @@
+name: Workbench PR77 source export
+on:
+  push:
+    branches: [workbench/pr77-source-export]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package checked-out source
+        run: zip -qr source.zip . -x source.zip -x '.git/*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr77-source
+          path: source.zip
+          retention-days: 1
