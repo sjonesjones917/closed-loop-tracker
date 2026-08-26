@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const path='.repair-test-execution-routing.mjs';
+let s=fs.readFileSync(path,'utf8');
+const old="  'MUTATION-EXEC':Object.freeze({DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})}),";
+const scalar=name=>`${name}:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})`;
+const reference=name=>`${name}:Object.freeze({valueType:'REFERENCE',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})`;
+const replacement=`  'MUTATION-EXEC':Object.freeze({${scalar('FAILURE_EXEC_ID')},${reference('MUTATION_ID')},${reference('REQ_ID')},${scalar('EXECUTOR')},${scalar('TOOL_AND_VERSION')},${scalar('OBSERVED_RESULT')},DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null}),${scalar('EVIDENCE')}}),`;
+if(!s.includes(old))throw new Error('MUTATION-EXEC override anchor not found exactly.');
+s=s.replace(old,replacement);
+fs.writeFileSync(path,s);
+console.log('Added explicit types for every failure-test execution field.');
