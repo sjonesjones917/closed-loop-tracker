@@ -46,6 +46,8 @@ function semanticIssues(record){
 
 const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}}; for(const [stage,operations] of Object.entries(expectedOperationWrites))for(const [operation,writes] of Object.entries(operations)){const actual=schema.operationContract(Number(stage),operation).agentWritableCollections;if(!arraysEqual(actual,writes))throw new Error(`Stage ${stage} ${operation} has semantically wrong writable collections: ${actual.join(', ')}`);} const runRead=schema.operationContract(17,'EXECUTE_RUN').readCollections;if(!runRead.includes('runs')||!runRead.includes('freshContexts'))throw new Error('Stage 17 EXECUTE_RUN cannot see reserved run/context slots.');
 if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');
+if(!schema.operationContract(12,'COMPLETE').readCollections.includes('verification'))throw new Error('Stage 12 continuation prompts cannot see accepted verification progress.');
+for(const stage of [17,19])if(!schema.operationContract(stage,'VERIFY').readCollections.includes('verification'))throw new Error(`Stage ${stage} VERIFY continuation prompts cannot see accepted verification progress.`);
 let checked=0;
 for(let stage=1;stage<=30;stage++){
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
@@ -114,6 +116,14 @@ for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('S
  const p=baseProject();const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});const contract=r.prompt.split('STRICT RESPONSE CONTRACT\n')[1].split('\n\nEND COPY BLOCK')[0];if(contract.includes('<value>')||contract.includes('<exact current JOB_ID>')||contract.includes('<application-reserved-target-id>'))throw new Error('Copyable response contract still contains invalid placeholder data.');if(!contract.includes('"jobId": "JOB-PROMPT-SEMANTICS"'))throw new Error('Response contract does not contain the exact current JOB_ID.');if(!r.prompt.includes('empty shape skeleton, not a complete answer'))throw new Error('Response skeleton semantics are not explicit.');
 }
 
+{
+ const p=baseProject();
+ const complete={id:'VERIFICATION-CONTINUATION',stage:12,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:p.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:p.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:p.job.CURRENT_INSTRUCTION_VERSION,iterationId:p.job.CURRENT_ITERATION,candidateId:null},fields:{REQ_ID:'REQ-000001',RUN_ID:'RUN-000001',TEST_ID:'TEST-000001',DETERMINATION:'SATISFIED',EXACT_EVIDENCE:'large prose that must not be replayed in a continuation prompt'}};p.projectData.verification.push(complete);
+ const r=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'});
+ if(!r.prompt.includes('currently missing required REQ_ID × RUN_ID × TEST_ID')||!r.prompt.includes('deterministic non-overlapping batch')||!r.prompt.includes('compact completion manifest'))throw new Error('Stage 12 prompt lacks bounded verification continuation semantics.');
+ if(!r.prompt.includes('VERIFICATION-CONTINUATION')||!r.prompt.includes('REQ-000001')||!r.prompt.includes('RUN-000001')||!r.prompt.includes('TEST-000001'))throw new Error('Stage 12 continuation prompt omits accepted triple identity.');
+ if(r.prompt.includes('large prose that must not be replayed'))throw new Error('Stage 12 continuation prompt replays full prior verification prose instead of compact progress.');
+}
 if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 completion language is not the exact verification triple.');
 if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||core.STAGES[14].completionGate.some(x=>x.toLowerCase().includes('succeeds after correction')))throw new Error('Stage 15 incorrectly requires future post-correction success.');
 {
