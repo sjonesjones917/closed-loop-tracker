@@ -1,0 +1,61 @@
+name: Apply scoped reliability repair
+on:
+  push:
+    branches: [reliability/scoped-refinement-operation-isolation-20260826]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/scoped-refinement-operation-isolation-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact scoped reliability repair
+        run: python3 apply-scoped-reliability.py
+      - name: Syntax checks
+        run: |
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node --check test-fixtures.mjs
+          node --check verify-hash.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-live.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Verify complete deterministic lifecycle
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit only verified permanent source changes
+        run: |
+          rm apply-scoped-reliability.py
+          rm .github/workflows/apply-scoped-reliability.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          test ! -e apply-scoped-reliability.py
+          test ! -e .github/workflows/apply-scoped-reliability.yml
+          git commit -m 'Isolate operation responses and scope accepted-result refinement'
+          git push origin HEAD:reliability/scoped-refinement-operation-isolation-20260826
