@@ -1,11 +1,14 @@
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17
-async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
-                                                                                                                                ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:15
+const assert=(x,m)=>{if(!x)throw new Error(m);};
+                                 ^
 
-Error: Waiting: globalThis.closedLoopAppReady===true
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17:129
-    at async poll (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:13:110)
-    at async main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:28:57)
+Error: Error: Canonical project integrity validation failed: History eventSequence is missing, duplicated, or non-monotonic.
+    at storageError (http://127.0.0.1:4173/project-store.js?v=20260826-storage-boundary:20:50)
+    at assertProjectIntegrity (http://127.0.0.1:4173/project-store.js?v=20260826-storage-boundary:48:135)
+    at writeAllIndexed (http://127.0.0.1:4173/project-store.js?v=20260826-storage-boundary:86:1001)
+    at async load (http://127.0.0.1:4173/app-core.js?v=20260826-storage-boundary:92:1352)
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:15:34)
+    at main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:28:227)
     at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:63:5
 
 Node.js v22.23.2
