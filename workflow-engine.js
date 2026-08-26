@@ -279,6 +279,8 @@ function gate(stage,project){
       if(incomplete.length)reasons.push(`${incomplete.length} mandatory test definition(s) lack complete execution responsibility, capability, or artifact requirements.`);
       const unavailable=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='UNAVAILABLE');
       if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);
+      const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim()));
+      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
       break;
     }
     case 7:{
@@ -519,8 +521,10 @@ function registerGeneratedPrompt(project,promptRecord){
 }
 
 
+const APPLICATION_TEST_EXECUTORS=Object.freeze({});
+function applicationTestCapabilities(){return Object.freeze(Object.keys(APPLICATION_TEST_EXECUTORS));}
 const TEST_EXECUTION_ACTIONS=Object.freeze({
-  APPLICATION_DETERMINISTIC:'No operator execution is required now. The application may execute only a native deterministic check it actually implements when the exact required inputs are available.',
+  APPLICATION_DETERMINISTIC:'No operator execution is required only when the exact REQUIRED_CAPABILITY names a registered application-native test executor. Otherwise request a corrected test definition; the browser must not pretend it can run the test.',
   EXTERNAL_AGENT_TOOL:'Use the generated verification instruction in an external agent/tool environment that actually has the declared capability and exact required artifacts, then ingest its structured result and evidence.',
   INDEPENDENT_AGENT_REVIEW:'Use a fresh independent reviewer context with the declared inputs and evidence; do not reuse the producing context as its own verifier.',
   HUMAN_INSPECTION:'Perform only the irreducible human/domain inspection described by the test, preserve the observation/evidence, and make that evidence available to the verification step.',
@@ -531,12 +535,15 @@ function testExecutionPlan(project){
   ensureShape(project);
   const items=recordsForCurrentScope(project,'tests').map(test=>{
     const mode=upper(recordValue(test,'EXECUTION_MODE'))||'UNSPECIFIED';
-    return {testId:recordId(test,'tests'),requirementId:testRequirementId(test),testType:upper(recordValue(test,'TEST_TYPE'))||'UNKNOWN',executionMode:mode,requiredCapability:String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),artifactRequirements:String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim(),operatorAction:TEST_EXECUTION_ACTIONS[mode]||'Execution responsibility is not validly classified.'};
+    const requiredCapability=String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),applicationExecutorSupported=mode!=='APPLICATION_DETERMINISTIC'||Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability);
+    const operatorAction=mode==='APPLICATION_DETERMINISTIC'&&!applicationExecutorSupported?`Request a corrected test definition. No application-native executor is registered for ${requiredCapability||'the declared capability'}; use the real capable execution mode or UNAVAILABLE.`:(TEST_EXECUTION_ACTIONS[mode]||'Execution responsibility is not validly classified.');
+    return {testId:recordId(test,'tests'),requirementId:testRequirementId(test),testType:upper(recordValue(test,'TEST_TYPE'))||'UNKNOWN',executionMode:mode,requiredCapability,artifactRequirements:String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim(),applicationExecutorSupported,operatorAction};
   });
   const counts=Object.fromEntries(Object.keys(TEST_EXECUTION_ACTIONS).map(mode=>[mode,items.filter(item=>item.executionMode===mode).length]));
   const incompleteTestIds=items.filter(item=>!TEST_EXECUTION_ACTIONS[item.executionMode]||!item.requiredCapability||!item.artifactRequirements).map(item=>item.testId);
   const unavailableTestIds=items.filter(item=>item.executionMode==='UNAVAILABLE').map(item=>item.testId);
-  return {total:items.length,counts,incompleteTestIds,unavailableTestIds,items};
+  const unsupportedApplicationTestIds=items.filter(item=>item.executionMode==='APPLICATION_DETERMINISTIC'&&!item.applicationExecutorSupported).map(item=>item.testId);
+  return {total:items.length,counts,incompleteTestIds,unavailableTestIds,unsupportedApplicationTestIds,items};
 }
 
 function operationalMetrics(project){ensureShape(project);const history=safe(project.projectData.history),validations=safe(project.projectData.responseValidations),proposals=safe(project.projectData.responseProposals),releases=safe(project.projectData.releaseRecords);return {rawResponses:safe(project.projectData.rawResponses).length,validationFailures:validations.filter(x=>x.valid===false).length,staleResponses:proposals.filter(x=>x.status==='STALE'||x.invalidatedBy).length,rejectedProposals:safe(project.projectData.rejectedResponses).length,acceptedDataChanges:safe(project.projectData.acceptedChanges).length,clarificationCycles:safe(project.projectData.humanInputAnswers).length,controlledCorrections:history.filter(x=>['ACCEPTED_RESPONSE_INVALIDATED','STAGE_AUTHORITY_CHANGED','DOWNSTREAM_INVALIDATED'].includes(x.type)).length,storageFailures:history.filter(x=>String(x.type||'').includes('STORAGE')&&String(x.type||'').includes('FAIL')).length,gateRegressions:history.filter(x=>x.type==='DOWNSTREAM_INVALIDATED').length,releaseRejections:releases.filter(x=>upper(recordValue(x,'DETERMINATION'))==='REJECTED').length,releaseBlocks:releases.filter(x=>upper(recordValue(x,'DETERMINATION'))==='BLOCKED').length};}
@@ -546,7 +553,7 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
   unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
-  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,testExecutionPlan,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
+  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,testExecutionPlan,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
   recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
 })();
