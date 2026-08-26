@@ -1,151 +1,23 @@
 name: Semantic final consolidation
 on:
   push:
-    branches: [practical-100/semantic-final-consolidated]
+    branches:
+      - practical-100/semantic-final-consolidated
 permissions:
   contents: write
 jobs:
   consolidate:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: practical-100/semantic-final-consolidated
           fetch-depth: 0
-      - name: Consolidate verified semantic fixes
-        shell: bash
+      - name: Apply consolidated semantic patch
+        run: python3 semantic-consolidate.py
+      - name: Verify consolidated source
+        if: github.actor != 'github-actions[bot]'
         run: |
-          set -euo pipefail
-          git fetch origin practical-100/semantic-recovery-final practical-100/final-semantic-operator-correctness
-          python3 - <<'PY'
-          from pathlib import Path
-          import subprocess,re
-
-          def show(ref,path):
-              return subprocess.check_output(['git','show',f'{ref}:{path}'],text=True)
-          def replace_line_from(text, source, prefix):
-              src=next((line for line in source.splitlines() if line.startswith(prefix)),None)
-              if src is None: raise SystemExit(f'missing source line {prefix}')
-              lines=text.splitlines()
-              hits=[i for i,line in enumerate(lines) if line.startswith(prefix)]
-              if len(hits)!=1: raise SystemExit(f'expected one target line {prefix}, got {len(hits)}')
-              lines[hits[0]]=src
-              return '\n'.join(lines)+'\n'
-
-          # Prompt authority: keep PR106 current-scope/recovery structure, but replace all stage procedures
-          # with PR105's authority-correct wording and remove the duplicate manual collection map.
-          p=Path('prompt-engine.js'); s=p.read_text(); p105=show('origin/practical-100/semantic-recovery-final','prompt-engine.js')
-          proc=re.search(r'const procedures=\{\n.*?\n\};\n',p105,re.S)
-          if not proc: raise SystemExit('PR105 procedures block missing')
-          s,n=re.subn(r'const procedures=\{\n.*?\n\};\n',proc.group(0),s,count=1,flags=re.S)
-          if n!=1: raise SystemExit('current procedures block replacement failed')
-          s,n=re.subn(r'const contextCollections=\{\n.*?\n\};\n','',s,count=1,flags=re.S)
-          if n!=1: raise SystemExit('duplicate contextCollections block was not removed')
-          s=s.replace('function contextFor(stage,state){','function contextFor(stage,state,operation){',1)
-          lines=s.splitlines(); out=[]
-          replaced_loop=False
-          for line in lines:
-              if 'for(const collection of contextCollections[stage]||[])' in line:
-                  out.append(" const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);")
-                  out.append(" for(const collection of op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\\n${boundedCollection(stage,state,collection)}`);")
-                  replaced_loop=True
-              else: out.append(line)
-          if not replaced_loop: raise SystemExit('context collection loop not found')
-          s='\n'.join(out)+'\n'
-          s=s.replace('${contextFor(stage,state)}','${contextFor(stage,state,operation)}',1)
-          s=s.replace(',procedures,contextCollections,contextFor,',',procedures,contextFor,',1)
-          # Shared recovery semantics: capability absence is not the same as attempted execution failure,
-          # and a feasible specification fallback must not dead-end Stage 01.
-          s=re.sub(r'- If execution or a required tool/capability is unavailable,.*?Never describe unexecuted work as executed\.',
-                   '- If an execution or tool required by the currently confirmed workflow deliverable is attempted and fails, return EXECUTION_FAILED with the exact failed capability and evidence. If a capability required by the currently confirmed deliverable is absent before an attempt and prevents reliable completion, return BLOCKED with MISSING_CAPABILITY. Never describe unexecuted work as executed.',s,count=1)
-          s=re.sub(r'- If the requested implementation is too large or requires external-repository/runtime access that is not actually available,.*?that way\.',
-                   '- If the original requested implementation is too large or requires external-repository/runtime access that is not actually available, do not simulate completion. At Stage 01, when a complete implementation-ready specification is a legitimate feasible substitute, propose that specification as the workflow deliverable and require normal human intent confirmation; this is not a failure merely because direct implementation is unavailable. Return BLOCKED only when the current confirmed deliverable itself cannot be completed reliably.',s,count=1)
-          s=re.sub(r'- The operating application itself has no external repository, service, deployment, or remote execution capability\..*?instead\.',
-                   '- The operating application itself has no external repository, service, deployment, or remote execution capability. Use only capabilities actually available to the external agent and established for this job. Never claim repository or deployment work occurred unless that external execution context actually performed it. When Stage 01 has established and the human has confirmed an implementation-ready specification as the feasible workflow deliverable, later stages operate on that specification as the product rather than repeatedly blocking on the unavailable original implementation.',s,count=1)
-          # Reuse correction/validation selectors in both displayed context and the signed context manifest.
-          helper="""function acceptedAtForStage(state,stage){const latest=(state?.projectData?.acceptedChanges||[]).filter(x=>Number(x.stage)===Number(stage)&&x.status==='COMMITTED'&&!x.invalidatedBy).at(-1);return latest?.committedAt||'';}\nfunction correctionRequestsForStage(state,stage){const acceptedAt=acceptedAtForStage(state,stage);return (state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===Number(stage)&&x.requestCorrection===true&&!x.invalidatedBy&&(!acceptedAt||String(x.rejectedAt||'')>acceptedAt));}\nfunction latestValidationFailureForStage(state,stage){const acceptedAt=acceptedAtForStage(state,stage);return (state?.projectData?.responseValidations||[]).filter(x=>Number(x.stage)===Number(stage)&&x.valid===false&&(!acceptedAt||String(x.createdAt||'')>acceptedAt)).at(-1)||null;}\n"""
-          marker='function contextFor(stage,state,operation){'
-          if marker not in s: raise SystemExit('contextFor marker missing')
-          s=s.replace(marker,helper+marker,1)
-          s=re.sub(r" const latestAccepted=.*?if\(latestValidationFailure\)parts\.push\(`LATEST APPLICATION VALIDATION FAILURE TO CORRECT\\n\$\{show\(\{validationId:latestValidationFailure\.validationId,issues:latestValidationFailure\.issues\|\|\[\]\}\)\}`\);",
-                   " const corrections=correctionRequestsForStage(state,stage);\n if(corrections.length)parts.push(`OPERATOR CORRECTION REQUESTS SINCE THE LAST ACCEPTED STAGE RESPONSE\\n${show(corrections.map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,operatorLabel:x.operator||'HUMAN_OPERATOR',rejectedAt:x.rejectedAt})))}`);\n const latestValidationFailure=latestValidationFailureForStage(state,stage);\n if(latestValidationFailure)parts.push(`LATEST APPLICATION VALIDATION FAILURE TO CORRECT\\n${show({validationId:latestValidationFailure.validationId,issues:latestValidationFailure.issues||[]})}`);",s,count=1,flags=re.S)
-          old='answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null}))}'
-          new="answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:correctionRequestsForStage(state,stage).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rejectedAt:x.rejectedAt})),latestValidationFailure:(()=>{const x=latestValidationFailureForStage(state,stage);return x?{validationId:x.validationId,issues:x.issues||[]}:null;})()}"
-          if old not in s: raise SystemExit('context manifest tail missing')
-          s=s.replace(old,new,1)
-          p.write_text(s)
-
-          # Schema/ingestion semantic distinctions and schema-driven per-run scope from PR107.
-          Path('response-ingestion.js').write_text(show('origin/practical-100/final-semantic-operator-correctness','response-ingestion.js'))
-          Path('workflow-schema.js').write_text(show('origin/practical-100/final-semantic-operator-correctness','workflow-schema.js'))
-
-          # Engine: retain PR106 release-current-scope fix and add PR107 unchanged-confirmation command.
-          e=Path('workflow-engine.js'); es=e.read_text(); e107=show('origin/practical-100/final-semantic-operator-correctness','workflow-engine.js')
-          if 'function beginUnchangedConfirmationIteration' not in es:
-              m=re.search(r'function beginUnchangedConfirmationIteration\(.*?\n}\n(?=function freezeBaseline)',e107,re.S)
-              if not m: raise SystemExit('unchanged confirmation function missing in PR107')
-              es=es.replace('function freezeBaseline',m.group(0)+'function freezeBaseline',1)
-          old='registerArtifactBytes,freezeCandidate,freezeBaseline,reserveProductExecution'
-          if old in es: es=es.replace(old,'registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution',1)
-          e.write_text(es)
-
-          # UI: retain PR106 current-scope read-only review and correction feedback; add PR107
-          # schema-driven run selection, controlled accepted-result refinement, and exact Stage19 candidate reuse.
-          a=Path('app-core.js'); ac=a.read_text(); a107=show('origin/practical-100/final-semantic-operator-correctness','app-core.js')
-          for prefix in ['function promptOptions(','function artifactControlMarkup(','function runBatchMarkup(','function wire(']:
-              ac=replace_line_from(ac,a107,prefix)
-          lines=ac.splitlines(); hits=[i for i,l in enumerate(lines) if l.startswith('function acceptedStageMarkup(')]
-          if len(hits)!=1: raise SystemExit('acceptedStageMarkup target missing')
-          line=lines[hits[0]]
-          if 'refine-accepted-response' not in line:
-              frag="${engine.acceptedChanges(current,n).length&&!current.isRetainedTestProject?`<details class=\"record-card\"><summary>Refine accepted result<span>Controlled</span></summary><div class=\"record-body\"><div class=\"field\"><label>Why refinement is required</label><textarea id=\"accepted-refinement-reason\"></textarea></div><button id=\"refine-accepted-response\">Invalidate accepted result and request refinement</button></div></details>`:''}"
-              idx=line.rfind('</div>`;}')
-              if idx<0: raise SystemExit('acceptedStageMarkup closing marker missing')
-              line=line[:idx]+frag+line[idx:]
-              lines[hits[0]]=line
-          ac='\n'.join(lines)+'\n'
-          a.write_text(ac)
-
-          # Visible workflow wording must describe the approved deliverable, not always the original implementation.
-          w=Path('workbook.js'); ws=w.read_text()
-          ws=ws.replace("'GENERATE THE FINISHED PRODUCT'","'GENERATE THE APPROVED DELIVERABLE'",1)
-          ws=ws.replace("'Generate the actual requested deliverable in a fresh context using only the approved baseline materials.'","'Generate the human-confirmed workflow deliverable in a fresh context using only the approved baseline materials.'",1)
-          ws=ws.replace("'Assign exactly one release state using the verified requirement, test, defect, blocker, and evidence records.'","'Have the application assign exactly one release state using the verified requirement, test, defect, blocker, and evidence records.'",1)
-          w.write_text(ws)
-
-          # Strengthen semantic contradiction proof beyond token presence.
-          v=Path('verify-prompt-semantics.mjs'); vs=v.read_text()
-          insert="""
-{
-  const p=baseProject();
-  const checks=[
-    [1,'The application owns JOB_ID'],
-    [4,'The application assigns REQ_ID'],
-    [6,'The application assigns TEST_ID'],
-    [10,'the application assigns CANDIDATE_ID and ITERATION_ID'],
-    [11,'application-reserved RUN_ID'],
-    [15,'The application assigns REG_ID'],
-    [16,'the application assigns CHANGESET_ID'],
-    [18,'The application calculates mandatory requirement coverage'],
-    [20,'the application assigns BASELINE_ID'],
-    [21,'The application assigns PRODUCT_ID and execution identity'],
-    [27,'Do not set a release state'],
-    [28,'The application performs the authoritative immediate pre-release byte comparison'],
-    [29,'The application constructs the complete evidence graph'],
-    [30,'The application maintains append-only defect and regression history']
-  ];
-  for(const [stage,required] of checks){const text=prompts.buildPromptRecord(stage,p).prompt;if(!text.includes(required))throw new Error(`Stage ${stage} prompt ownership semantics missing: ${required}`);}
-  for(const stage of [1,10,20,21]){const text=prompts.buildPromptRecord(stage,p).prompt;for(const forbidden of ['Assign CANDIDATE_ID','Assign BASELINE_ID','Assign PRODUCT_ID','Assign and preserve this job’s unique JOB_ID'])if(text.includes(forbidden))throw new Error(`Stage ${stage} still instructs the agent to perform application-owned identity work: ${forbidden}`);}
-  const s1=prompts.buildPromptRecord(1,p).prompt;if(!s1.includes('this is not a failure merely because direct implementation is unavailable')||!s1.includes('require normal human intent confirmation'))throw new Error('Stage 01 feasible specification fallback can still dead-end as a capability failure.');
-}
-"""
-          marker='const p=baseProject();\nconst original='
-          if marker not in vs: raise SystemExit('semantic insertion marker missing')
-          vs=vs.replace(marker,insert+'\n'+marker,1)
-          v.write_text(vs)
-          PY
-
           node --check prompt-engine.js
           node --check app-core.js
           node --check workflow-engine.js
@@ -160,6 +32,9 @@ jobs:
           node verify-browser.mjs
           node verify-browser-extra.mjs
           git diff --check
+      - name: Commit consolidated source
+        if: github.actor != 'github-actions[bot]'
+        run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js verify-prompt-semantics.mjs
