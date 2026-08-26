@@ -1,0 +1,44 @@
+name: Production test-data isolation proof
+on:
+  push:
+    branches: [practical-100/final-deliverable-semantics]
+permissions:
+  contents: write
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply production/test isolation
+        run: python .isolate-test-project.py
+      - name: Verify source and lifecycle
+        run: |
+          node --check app-core.js
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Verify local Chromium production and explicit test mode
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit only proved permanent changes
+        if: success()
+        run: |
+          rm .isolate-test-project.py .github/workflows/isolate-test-project.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Keep repository test data out of production startup"
+          git push
