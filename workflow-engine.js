@@ -106,6 +106,8 @@ const VERSION_BY_STAGE=Object.freeze({
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });
 function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}
+const VERSION_SCOPE_KEY_BY_STAGE=Object.freeze({2:'sourceSetVersion',4:'requirementsVersion',5:'requirementsVersion',6:'testSuiteVersion',8:'instructionVersion'});
+function stampCurrentVersionMembership(project,stage,version){const key=VERSION_SCOPE_KEY_BY_STAGE[stage];if(!key||!version)return;const collections=stage===5?[...new Set(['requirements',...versionCollections(stage)])]:versionCollections(stage);for(const collection of collections)for(const record of records(project,collection)){record.scope={...(record.scope||{}),[key]:version};refreshRecordHashes(record,collection);}}
 function registerStageVersion(project,stage,acceptedChangeId){
   ensureShape(project);
   const config=VERSION_BY_STAGE[stage];
@@ -115,11 +117,12 @@ function registerStageVersion(project,stage,acceptedChangeId){
   const payload={stage,collections:Object.fromEntries(versionCollections(stage).map(collection=>[collection,records(project,collection).map(record=>({id:recordId(record,collection),fields:recordFields(record),relationships:record.relationships||{},sha256:record.sha256||null}))])),acceptedData:project.stages[stage].acceptedData};
   const sha256=hash.sha256Value(payload);
   const latest=safe(project.projectData.artifactVersions).filter(item=>item.stage===stage&&item.kind===prefix).at(-1);
-  if(latest?.sha256===sha256){project.job[jobField]=latest.version;return latest;}
+  if(latest?.sha256===sha256){project.job[jobField]=latest.version;stampCurrentVersionMembership(project,stage,latest.version);return latest;}
   const version=nextVersion(project.job[jobField],prefix);
   const record={versionId:allocateInfrastructureId(project,'VERSION','artifactVersions'),stage,kind:prefix,version,sha256,createdAt:now(),acceptedChangeId,payload};
   project.projectData.artifactVersions.push(record);
   project.job[jobField]=version;
+  stampCurrentVersionMembership(project,stage,version);
   return record;
 }
 
@@ -174,8 +177,9 @@ function iterationCandidateId(project,iterationId){const iteration=records(proje
 const SCOPE_KEYS=Object.freeze(['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','baselineId','productId']);
 const scopeValue=value=>{const text=String(value??'').trim();return !text||['NONE','NOT APPLICABLE','UNKNOWN','PENDING','UNASSIGNED'].includes(text.toUpperCase())?null:value;};
 function currentScope(project){return {inputVersion:scopeValue(project.job.CURRENT_INPUT_VERSION),sourceSetVersion:scopeValue(project.job.CURRENT_SOURCE_SET_VERSION),requirementsVersion:scopeValue(project.job.CURRENT_REQUIREMENTS_VERSION),testSuiteVersion:scopeValue(project.job.CURRENT_TEST_SUITE_VERSION),instructionVersion:scopeValue(project.job.CURRENT_INSTRUCTION_VERSION),iterationId:scopeValue(recordId(latestIteration(project,[10,17,19]),'iterations')||project.job.CURRENT_ITERATION),candidateId:scopeValue(recordId(records(project,'candidateFreezes').at(-1),'candidateFreezes')),baselineId:scopeValue(recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID),productId:scopeValue(recordId(records(project,'products').at(-1),'products')||project.job.CURRENT_PRODUCT_ID)};}
-function scopeMatches(record,scopeRule={}){const rs=record?.scope||{};for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}
-function recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable));}
+function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('inputVersion','sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}
+function scopeMatches(record,scopeRule={},requiredKeys=[]){const rs=record?.scope||{};for(const key of requiredKeys){const expected=scopeRule[key];if(expected===undefined||expected===null)continue;if(!Object.prototype.hasOwnProperty.call(rs,key)||rs[key]===undefined||rs[key]===null||rs[key]!==expected)return false;}for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}
+function recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null)),required=requiredVersionScopeKeys(collection).filter(key=>Object.prototype.hasOwnProperty.call(applicable,key));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable,required));}
 function recordsForCurrentScope(project,collection,scopeRule={}){return recordsForScope(project,collection,{...currentScope(project),...scopeRule});}
 function scopeForIteration(project,iterationId){const id=String(iterationId||''),iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===id);if(!iteration)return {iterationId:id||null};const candidateId=String(recordValue(iteration,'CANDIDATE_ID')||iteration.relationships?.CANDIDATE_ID||iteration.scope?.candidateId||'');return {...clone(iteration.scope||{}),iterationId:id,candidateId:candidateId||null};}
 function recordsForIteration(project,collection,iterationId){return recordsForScope(project,collection,scopeForIteration(project,iterationId));}
