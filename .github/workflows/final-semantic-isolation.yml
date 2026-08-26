@@ -1,0 +1,131 @@
+name: Apply final semantic isolation repair
+on:
+  push:
+    branches: [practical-100/final-semantic-isolation]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal semantic corrections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('workflow-schema.js');s=p.read_text()
+          s=s.replace("11:['candidateFreezes','iterations','freshContexts']","11:['candidateFreezes','iterations','runs','freshContexts']")
+          s=s.replace("if([11,12,17,19].includes(s))keys.push('runId','contextId');","if(s===11)keys.push('runId','contextId');")
+          s=s.replace("'DEADLINE_OR_TEMPORAL_SCOPE','KNOWN_AUTHORITATIVE_SOURCES'","'DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES'")
+          p.write_text(s)
+
+          p=Path('prompt-engine.js');s=p.read_text();a=s.index('function boundedCollection(');b=s.index('function scopeFor(',a)
+          new=r'''function selectedContextRecords(state,collection,scope={}){
+           const list=Array.isArray(state?.projectData?.[collection])?state.projectData[collection]:[],active=list.filter(x=>x?.active!==false&&!x?.invalidatedBy);
+           const keys=['inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'];
+           return active.filter(record=>{const rs=record?.scope||{};for(const key of keys){const expected=scope?.[key];if(expected===undefined||expected===null||expected==='')continue;const actual=rs?.[key];if(actual!==undefined&&actual!==null&&actual!==''&&String(actual)!==String(expected))return false;}if(collection==='runs'&&scope?.runId&&recordId(record,'runs')!==String(scope.runId))return false;if(collection==='freshContexts'&&scope?.contextId&&recordId(record,'freshContexts')!==String(scope.contextId))return false;return true;});
+          }
+          function boundedCollection(state,collection,scope={}){
+           const selected=selectedContextRecords(state,collection,scope);if(!selected.length)return 'NONE';
+           return show({totalSelected:selected.length,records:selected.map(record=>({id:recordId(record,collection),stage:record.stage??'UNKNOWN',scope:record.scope||{},fields:record.fields||record,relationships:record.relationships||{},contentSha256:record.contentSha256||record.sha256||'UNKNOWN'})),omitted:0,selectionRule:'Only active records matching the explicit operation read contract and controlling prompt scope are selected; large artifact bytes are referenced by canonical artifact identity.'});
+          }
+          const samePromptScope=(a,b={})=>['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>String(a?.[key]??'')===String(b?.[key]??''));
+          function contextFor(stage,state,operation,scope={}){
+           const parts=[];
+           if(stage>1){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:state.stages[stage-1].derivedData||{}}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
+           const open=(state?.projectData?.blockers||[]).filter(x=>!x.invalidatedBy&&!['CLOSED','RESOLVED','RETIRED'].includes(String(x?.fields?.STATUS||x?.STATUS||x?.status||'OPEN').toUpperCase()));if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\n${show(open)}`);
+           const questions=(state?.projectData?.humanInputRequests||[]).filter(x=>Number(x.stage)===stage&&String(x.status||'OPEN').toUpperCase()==='OPEN'&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope)));if(questions.length)parts.push(`UNRESOLVED HUMAN INPUT REQUESTS\n${show(questions)}`);
+           const answered=(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({questionId:x.requestId,question:x.question,answer:x.answer,answerType:x.answerType||'UNKNOWN',inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||'UNKNOWN',operatorLabel:x.operatorLabel||x.operator||'UNSPECIFIED',affectedStageFields:x.affectedStageFields||[],affectedRecords:x.affectedRecords||[]}));if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\n${show(answered)}`);
+           const corrections=(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}));if(corrections.length)parts.push(`OPERATOR REQUESTED CORRECTIONS / REFINEMENTS\n${show(corrections)}`);
+           const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);for(const collection of op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[])parts.push(`${collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase()}\n${boundedCollection(state,collection,scope)}`);
+           return parts.join('\n\n')||'No additional stage-specific canonical records are established.';
+          }
+          '''
+          s=s[:a]+new+s[b:]
+          s=s.replace('function body(stage,state,operation){','function body(stage,state,operation,scope){').replace('${contextFor(stage,state,operation)}','${contextFor(stage,state,operation,scope)}')
+          start=s.index(' const opContract=schema.operationContract(stage,operation);const scope=scopeFor(');end=s.index('\n const contextSignature=',start)
+          manifest=" const opContract=schema.operationContract(stage,operation);const scope=scopeFor(stage,state,options.scope||{}),contextManifest={stage,operation,scope,readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,selectedContextRecords(state,collection,scope).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:(state?.projectData?.rejectedResponses||[]).filter(x=>Number(x.stage)===stage&&x.requestCorrection&&!x.invalidatedBy&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({rejectedResponseId:x.rejectedResponseId,reason:x.reason,rawResponseId:x.rawResponseId}))};"
+          s=s[:start]+manifest+s[end:]
+          s=s.replace('bodyText=body(stage,state,operation)','bodyText=body(stage,state,operation,scope)')
+          s=s.replace("[{tempKey:'response-local-key',targetId:null,fields:","[{tempKey:'response-local-key',targetId:(schema.RECORD_SCHEMAS[collection]?.commitPolicy==='UPDATE_RESERVED'?(scope.runId||scope.productId||'<application-reserved-target-id>'):null),fields:")
+          p.write_text(s)
+
+          p=Path('workflow-engine.js');s=p.read_text();a=s.index('function registerGeneratedPrompt(');b=s.index('\nglobalThis.closedLoopWorkflowEngine',a)
+          new=r'''function samePromptTarget(a,b){return Number(a?.stage)===Number(b?.stage)&&String(a?.operation||'COMPLETE')===String(b?.operation||'COMPLETE')&&['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>String(a?.scope?.[key]??'')===String(b?.scope?.[key]??''));}
+          function registerGeneratedPrompt(project,promptRecord){
+            ensureShape(project);if(!promptRecord?.instructionId||!Number.isInteger(Number(promptRecord?.stage)))throw new Error('A complete generated prompt record is required.');
+            const expectedRevision=Number(project.revision||0)+1;if(Number(promptRecord.scope?.projectRevision)!==expectedRevision)throw new Error(`Generated prompt revision ${promptRecord.scope?.projectRevision} does not match next committed revision ${expectedRevision}.`);
+            const existing=safe(project.projectData.generatedPrompts).find(x=>x.instructionId===promptRecord.instructionId);if(existing)return existing;
+            const invalidationId=`PROMPT-SUPERSEDED-${promptRecord.instructionId}`;for(const prior of safe(project.projectData.generatedPrompts).filter(x=>!x.invalidatedBy&&samePromptTarget(x,promptRecord)))prior.invalidatedBy=invalidationId;
+            const record={...clone(promptRecord),source:'APPLICATION_PROMPT_REGISTRATION'};project.projectData.generatedPrompts.push(record);project.stages[Number(record.stage)].currentPromptId=record.instructionId;
+            addHistory(project,'INSTRUCTION_SAVED',{recordId:record.instructionId,stage:Number(record.stage),sha256:record.bodySha256||record.sha256,projectRevision:expectedRevision});return record;
+          }
+          '''
+          s=s[:a]+new+s[b:]
+          needle="  const blockers=openBlockers(project,stage);\n  if(blockers.length)reasons.push(`${blockers.length} open mandatory blocker${blockers.length===1?' affects':'s affect'} this stage.`);"
+          s=s.replace(needle,needle+"\n  const executionFailures=safe(project.projectData.executionFailures).filter(x=>Number(x.stage)===Number(stage)&&!x.invalidatedBy&&!x.resolvedBy&&upper(x.status||'OPEN')!=='RESOLVED');\n  if(executionFailures.length)reasons.push(`${executionFailures.length} accepted execution failure${executionFailures.length===1?' blocks':'s block'} this stage until a successful replacement response is accepted.`);",1)
+          s=s.replace('const blocked=questions.length>0||blockers.length>0;','const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;',1)
+          p.write_text(s)
+
+          p=Path('response-ingestion.js');s=p.read_text()
+          s=s.replace("const latest=safe(project.projectData.generatedPrompts).filter(record=>Number(record.stage)===Number(proposal.stage)&&!record.invalidatedBy).at(-1);if(!latest)throw new Error('The controlling generated instruction no longer exists.');","const latest=safe(project.projectData.generatedPrompts).find(record=>(record.instructionId||record.promptId)===proposal.promptId&&!record.invalidatedBy);if(!latest)throw new Error('The exact controlling generated instruction no longer exists or was superseded.');",1)
+          s=s.replace("promptId:proposal.promptId,question:request.question","promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),question:request.question",1)
+          s=s.replace("next.projectData.executionFailures.push({failureId,stage,jobId:next.job.JOB_ID,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,scope:clone(proposal.envelope.scope||{}),unresolved","next.projectData.executionFailures.push({failureId,stage,jobId:next.job.JOB_ID,rawResponseId:proposal.rawResponseId,promptId:proposal.promptId,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),status:'OPEN',unresolved",1)
+          needle="const state=next.stages[stage];state.agentData={...state.agentData,...clone(proposal.proposedStageData)};"
+          repl="for(const failure of safe(next.projectData.executionFailures).filter(x=>Number(x.stage)===stage&&!x.resolvedBy&&!x.invalidatedBy)){const scalar=x=>String(x??'');const sameTarget=String(failure.operation||'COMPLETE')===String(proposal.envelope.operation||'COMPLETE')&&['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>scalar(failure.scope?.[key])===scalar(proposal.envelope.scope?.[key]));if(sameTarget){failure.status='RESOLVED';failure.resolvedBy=changeId;failure.resolvedAt=now();}}const state=next.stages[stage];state.agentData={...state.agentData,...clone(proposal.proposedStageData)};"
+          s=s.replace(needle,repl,1)
+          s=s.replace("stage:proposal.stage,operator,reason,requestCorrection:Boolean(requestCorrection),rejectedAt","stage:proposal.stage,operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{}),operator,reason,requestCorrection:Boolean(requestCorrection),rejectedAt",1)
+          old="workflow.addHistory(next,rejected.status,{stage:proposal.stage,rawResponseId:proposal.rawResponseId,proposalId,rejectedResponseId,reason});workflow.recalculate(next);return {project:next,rejected,receipt};"
+          new="workflow.addHistory(next,rejected.status,{stage:proposal.stage,rawResponseId:proposal.rawResponseId,proposalId,rejectedResponseId,reason});if(requestCorrection){const controlling=safe(next.projectData.generatedPrompts).find(x=>(x.instructionId||x.promptId)===proposal.promptId&&!x.invalidatedBy);if(controlling)controlling.invalidatedBy=rejectedResponseId;const promptEngine=globalThis.closedLoopPromptEngine;if(promptEngine){const preview=clone(next);preview.revision=Number(next.revision||0)+1;const generated=promptEngine.buildPromptRecord(proposal.stage,preview,{operation:proposal.envelope.operation,scope:clone(proposal.envelope.scope||{})});workflow.registerGeneratedPrompt(next,{...generated,generatedAt:now()});}}workflow.recalculate(next);return {project:next,rejected,receipt};"
+          s=s.replace(old,new,1)
+          s=s.replace("stage:request.stage,question:request.question","stage:request.stage,operation:request.operation||'COMPLETE',scope:clone(request.scope||{}),question:request.question",1)
+          p.write_text(s)
+          PY
+      - name: Add permanent regression assertions
+        run: |
+          cat >> verify-prompt-semantics.mjs <<'EOF'
+          
+          // Exact operation scope must prevent cross-run output contamination.
+          {const p=baseProject();p.projectData.runs.push({id:'RUN-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{RUN_ID:'RUN-ISO-A',COMPLETE_OUTPUT:'SECRET-OTHER-RUN'}},{id:'RUN-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{RUN_ID:'RUN-ISO-B',COMPLETE_OUTPUT:''}});p.projectData.freshContexts.push({id:'CTX-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{CONTEXT_ID:'CTX-ISO-A'}},{id:'CTX-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{CONTEXT_ID:'CTX-ISO-B'}});const pr=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'}});if(pr.prompt.includes('SECRET-OTHER-RUN'))throw new Error('Run prompt leaked another run output.');if(pr.contextManifest.readCollections.runs.length!==1||pr.contextManifest.readCollections.runs[0].id!=='RUN-ISO-B')throw new Error('Run prompt manifest was not scoped to the selected run.');}
+          // Independent run prompts remain active simultaneously.
+          {const p=baseProject();p.revision=0;const a=prompts.buildPromptRecord(17,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}});engine.registerGeneratedPrompt(p,a);p.revision=1;const b=prompts.buildPromptRecord(17,{...p,revision:2},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}});engine.registerGeneratedPrompt(p,b);const active=p.projectData.generatedPrompts.filter(x=>!x.invalidatedBy);if(!active.some(x=>x.instructionId===a.instructionId)||!active.some(x=>x.instructionId===b.instructionId))throw new Error('Independent run prompt was superseded.');}
+          // Desired source count participates in controlled User Job Input identity.
+          {const p=baseProject();p.job.DESIRED_SOURCE_COUNT=5;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');const before=p.job.CURRENT_INPUT_VERSION;p.job.DESIRED_SOURCE_COUNT=9;engine.recordHumanInputVersion(p,['DESIRED_SOURCE_COUNT'],'VERIFY');if(p.job.CURRENT_INPUT_VERSION===before)throw new Error('Desired source count did not version User Job Input.');}
+          EOF
+          cat >> verify-ingestion.mjs <<'EOF'
+          
+          // Rejected output refinement becomes explicit controlling prompt context.
+          {let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});p=result.project;const old=p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===pr.instructionId),replacement=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy).at(-1);if(!old?.invalidatedBy||!replacement||replacement.instructionId===pr.instructionId||!replacement.prompt.includes('Add the missing controlling-source rationale and make the result more complete.'))throw new Error('Correction request was not bound into a replacement prompt.');}
+          // EXECUTION_FAILED is fail-closed and a successful exact-scope replacement resolves it.
+          {let p=project('JOB-EXECUTION-FAIL-CLOSED'),stage=1,pr=savePrompt(p,stage);const fail={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'EXECUTION_FAILED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'failure-1',kind:'TOOL_FAILURE',description:'Required tool failed.',whyBlocking:'The operation could not be executed.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(fail),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.stages[stage].status!=='BLOCKED'||!engine.gate(stage,p).reasons.some(x=>x.includes('execution failure')))throw new Error('Accepted execution failure did not fail closed.');const replacement=validEnvelope(p,stage,pr);prepared=ingestion.prepare(p,{stage,text:JSON.stringify(replacement),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.projectData.executionFailures.some(x=>Number(x.stage)===stage&&!x.resolvedBy&&!x.invalidatedBy))throw new Error('Successful replacement did not resolve execution failure.');}
+          EOF
+      - name: Run full deterministic and Chromium verification
+        run: |
+          set -e
+          node build-test-project.mjs
+          for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .1; done
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit only verified permanent files
+        run: |
+          git rm .github/workflows/final-semantic-isolation.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js prompt-engine.js workflow-engine.js response-ingestion.js verify-prompt-semantics.mjs verify-ingestion.mjs
+          git commit -m "Close scoped prompt and failure-state gaps"
+          git push origin HEAD:practical-100/final-semantic-isolation
