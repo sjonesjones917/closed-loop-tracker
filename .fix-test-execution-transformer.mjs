@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const path='.apply-test-execution-orchestration.mjs';
+let text=fs.readFileSync(path,'utf8');
+const marker="insertBefore('README.md','## Data and backup responsibility',`## Verification execution and returned files";
+const start=text.indexOf(marker);
+if(start<0)throw new Error('README transformer marker not found.');
+const open=text.indexOf('`',start);
+const close=text.indexOf('`);',open+1);
+if(open<0||close<0)throw new Error('README transformer template boundaries not found.');
+const body=text.slice(open+1,close).replaceAll('`',"'");
+text=text.slice(0,open+1)+body+text.slice(close);
+fs.writeFileSync(path,text);
