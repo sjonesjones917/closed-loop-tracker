@@ -1,67 +1,64 @@
-name: Recover PR6 reviewable source
+name: Materialize verified PR6 source
 
 on:
   push:
     branches: [practical-100/pr6-acceptance-proof]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  recover:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Reconstruct and validate exact transported patch
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Fetch immutable patch blob and apply it
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PATCH_BLOB: 3c98b1ac259b9a252b8e617c35a7a27bb3750ff6
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$PATCH_BLOB" > /tmp/blob.json
+          python3 - <<'PY'
+          import base64,json,pathlib
+          obj=json.load(open('/tmp/blob.json'))
+          pathlib.Path('/tmp/pr6.patch.gz').write_bytes(base64.b64decode(obj['content']))
+          PY
+          gzip -t /tmp/pr6.patch.gz
+          gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch
+          git apply --check /tmp/pr6.patch
+          git apply /tmp/pr6.patch
+      - name: Prove source before commit
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-full-cycle.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Commit only verified PR6 source and remove transport scaffolding
         shell: bash
         run: |
           set -euo pipefail
-          ref=origin/practical-100/pr6-final-acceptance
-          git fetch --no-tags origin practical-100/pr6-final-acceptance
-          python - <<'PY'
-          import base64, gzip, itertools, pathlib, subprocess
-          ref='origin/practical-100/pr6-final-acceptance'
-          paths=subprocess.check_output(['git','ls-tree','-r','--name-only',ref,'.pr6-transport'],text=True).splitlines()
-          paths=sorted(p for p in paths if pathlib.PurePosixPath(p).name.startswith('part'))
-          if not paths:
-              raise SystemExit('No transport chunks found')
-          chunks={p:subprocess.check_output(['git','show',f'{ref}:{p}'],text=True).strip() for p in paths}
-          valid=[]
-          diagnostics=[]
-          for order in itertools.permutations(paths):
-              try:
-                  encoded=''.join(chunks[p] for p in order)
-                  compressed=base64.b64decode(encoded,validate=True)
-                  patch=gzip.decompress(compressed)
-                  if not patch.startswith(b'diff --git '):
-                      raise ValueError('decompressed payload is not a git patch')
-                  valid.append((order,compressed,patch))
-              except Exception as exc:
-                  diagnostics.append(f'{order}: {type(exc).__name__}: {exc}')
-          pathlib.Path('/tmp/pr6-order-diagnostics.txt').write_text('\n'.join(diagnostics)+'\n')
-          if len(valid)!=1:
-              raise SystemExit(f'Expected exactly one valid chunk order, found {len(valid)}')
-          order,compressed,patch=valid[0]
-          pathlib.Path('/tmp/pr6.patch.gz').write_bytes(compressed)
-          pathlib.Path('/tmp/pr6.patch').write_bytes(patch)
-          pathlib.Path('/tmp/pr6-order.txt').write_text('\n'.join(order)+'\n')
-          print('valid order:',*order,sep='\n')
-          print('compressed bytes:',len(compressed),'patch bytes:',len(patch))
-          PY
-          gzip -t /tmp/pr6.patch.gz
-          sha256sum /tmp/pr6.patch.gz /tmp/pr6.patch > /tmp/pr6.sha256
-          wc -c -l /tmp/pr6.patch.gz /tmp/pr6.patch
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: pr6-exact-transport
-          path: |
-            /tmp/pr6.patch.gz
-            /tmp/pr6.patch
-            /tmp/pr6.sha256
-            /tmp/pr6-order.txt
-            /tmp/pr6-order-diagnostics.txt
-          if-no-files-found: warn
-          retention-days: 1
+          rm -rf .pr6-patch .pr6-transport
+          rm -f .github/workflows/pr6-recover-source.yml .github/workflows/pr6-source-export.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'PR 6: materialize verified acceptance source'
+          git push origin HEAD:practical-100/pr6-acceptance-proof
