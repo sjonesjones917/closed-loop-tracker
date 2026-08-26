@@ -34,7 +34,7 @@ jobs:
           p=Path('verify.mjs');s=p.read_text().replace("record.prompt.includes('genuinely independent external governing sources')","record.prompt.includes('independent external source inventory')").replace("record.prompt.includes('Research only the legitimate Stage 02 external governing source set')","record.prompt.includes('Research only the current accepted Stage 02 independent external source set')");p.write_text(s)
       - name: Apply exact runtime closure
         run: python .final_patch.py
-      - name: Keep regenerated prompt versions current while preserving target identity
+      - name: Keep regenerated prompt versions current and match scoped feedback safely
         shell: python
         run: |
           from pathlib import Path
@@ -42,7 +42,11 @@ jobs:
           old="function scopeFor(stage,state,overrides={}){const j=state?.job||{},has=key=>Object.prototype.hasOwnProperty.call(overrides,key),pick=(key,fallback)=>has(key)?overrides[key]:fallback;return {projectRevision:pick('projectRevision',Number(state?.revision||0)),inputVersion:pick('inputVersion',j.CURRENT_INPUT_VERSION||null),sourceSetVersion:pick('sourceSetVersion',j.CURRENT_SOURCE_SET_VERSION||null),requirementsVersion:pick('requirementsVersion',j.CURRENT_REQUIREMENTS_VERSION||null),testSuiteVersion:pick('testSuiteVersion',j.CURRENT_TEST_SUITE_VERSION||null),instructionVersion:pick('instructionVersion',j.CURRENT_INSTRUCTION_VERSION||null),iterationId:pick('iterationId',j.CURRENT_ITERATION||null),candidateId:pick('candidateId',state?.projectData?.candidateFreezes?.filter(x=>x?.active!==false&&!x?.invalidatedBy).at(-1)?.id||null),runId:pick('runId',null),contextId:pick('contextId',null),baselineId:pick('baselineId',j.CURRENT_BASELINE_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_BASELINE_ID))?j.CURRENT_BASELINE_ID:null),productId:pick('productId',j.CURRENT_PRODUCT_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_PRODUCT_ID))?j.CURRENT_PRODUCT_ID:null)};}"
           new="function scopeFor(stage,state,overrides={}){const j=state?.job||{},has=key=>Object.prototype.hasOwnProperty.call(overrides,key),pick=(key,fallback)=>has(key)?overrides[key]:fallback;return {projectRevision:Number(state?.revision||0),inputVersion:j.CURRENT_INPUT_VERSION||null,sourceSetVersion:j.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:j.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:j.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:j.CURRENT_INSTRUCTION_VERSION||null,iterationId:pick('iterationId',j.CURRENT_ITERATION||null),candidateId:pick('candidateId',state?.projectData?.candidateFreezes?.filter(x=>x?.active!==false&&!x?.invalidatedBy).at(-1)?.id||null),runId:pick('runId',null),contextId:pick('contextId',null),baselineId:pick('baselineId',j.CURRENT_BASELINE_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_BASELINE_ID))?j.CURRENT_BASELINE_ID:null),productId:pick('productId',j.CURRENT_PRODUCT_ID&&!['NONE','NOT APPLICABLE'].includes(String(j.CURRENT_PRODUCT_ID))?j.CURRENT_PRODUCT_ID:null)};}"
           if s.count(old)!=1: raise SystemExit('scopeFor generated form not found exactly once')
-          p.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          old_scope="const samePromptScope=(a,b={})=>['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>String(a?.[key]??'')===String(b?.[key]??''));"
+          new_scope="const samePromptScope=(declared,current={})=>['iterationId','candidateId','runId','contextId','baselineId','productId'].every(key=>{const value=declared?.[key];return value===undefined||value===null||value===''||String(value)===String(current?.[key]??'');});"
+          if s.count(old_scope)!=1: raise SystemExit('samePromptScope form not found exactly once')
+          p.write_text(s.replace(old_scope,new_scope,1))
       - name: Run strict verifier and capture exact exit
         id: verify
         continue-on-error: true
