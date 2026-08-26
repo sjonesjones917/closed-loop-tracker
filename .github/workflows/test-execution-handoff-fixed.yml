@@ -32,7 +32,7 @@ jobs:
             exit "$STATUS"
           fi
       - name: Remove temporary proof machinery before acceptance
-        run: rm -f .tmp-test-execution-handoff.mjs .tmp-run-test-execution-handoff.mjs PATCH_DIAGNOSTIC.txt .github/workflows/test-execution-handoff.yml .github/workflows/test-execution-handoff-fixed.yml
+        run: rm -f .tmp-test-execution-handoff.mjs .tmp-run-test-execution-handoff.mjs PATCH_DIAGNOSTIC.txt TEST_DIAGNOSTIC.txt .github/workflows/test-execution-handoff.yml .github/workflows/test-execution-handoff-fixed.yml
       - name: Verify clean architecture boundary
         run: |
           test ! -f app.js
@@ -42,14 +42,28 @@ jobs:
           ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
       - name: Run complete deterministic acceptance stack
         run: |
-          node build-test-project.mjs
-          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$file"; done
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+          set +e
+          {
+            node build-test-project.mjs &&
+            for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$file" || exit $?; done &&
+            node verify-hash.mjs &&
+            node verify.mjs &&
+            node verify-ingestion.mjs &&
+            node verify-complete.mjs &&
+            node verify-full-cycle.mjs &&
+            node verify-prompt-semantics.mjs
+          } > /tmp/test.log 2>&1
+          STATUS=$?
+          cat /tmp/test.log
+          if [ "$STATUS" -ne 0 ]; then
+            cp /tmp/test.log TEST_DIAGNOSTIC.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add TEST_DIAGNOSTIC.txt
+            git commit -m "Record deterministic acceptance diagnostic" || true
+            git push origin HEAD:reliability/test-execution-handoff-20260826 || true
+            exit "$STATUS"
+          fi
       - name: Run local Chromium acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
