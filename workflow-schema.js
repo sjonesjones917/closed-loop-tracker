@@ -56,6 +56,7 @@ const AGENT_JOB_FIELDS=Object.freeze([
 
 function jobFieldDefinition(name){
   if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});
+  if(name==='DESIRED_SOURCE_COUNT')return field(name,PRODUCER.HUMAN,{requiredAtStage:null,provenanceRequired:false,valueType:'INTEGER',nullable:true,help:'Optional source-breadth target; never a quota or substitute for authority.'});
   if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:1,provenanceRequired:false});
   if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1});
   return field(name,PRODUCER.APPLICATION,{derivation:`Application owns unclassified job-control field ${name}.`});

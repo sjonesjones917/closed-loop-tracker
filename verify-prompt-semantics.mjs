@@ -30,7 +30,9 @@ function semanticIssues(record){
   if(!record.prompt.includes(`BODY_SHA256: ${record.bodySha256}`)||!record.prompt.includes(`CONTRACT_SHA256: ${record.contractSha256}`)||!record.prompt.includes(`CONTEXT_SIGNATURE: ${record.contextSignature}`))issues.push('PROMPT_HASH_IDENTITY_MISSING');
   if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('return BLOCKED'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
   if(!record.prompt.includes('rejected data is not canonical'))issues.push('REFINEMENT_RULE_MISSING');
-  if(!record.prompt.includes('implementation-ready specification rather than pretending implementation occurred'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
+  if(!record.prompt.includes('Work too large for the available environment requires BLOCKED with WORK_TOO_LARGE_FOR_ENVIRONMENT')||!record.prompt.includes('complete implementation-ready specification')||!record.prompt.includes('external project repository'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
+  if(!record.prompt.includes('INADEQUATE_PRIOR_OUTPUT'))issues.push('PRIOR_OUTPUT_RECOVERY_MISSING');
+  if(record.stage===12&&!record.prompt.includes('REQ_ID × RUN_ID × TEST_ID'))issues.push('VERIFICATION_TRIPLE_WORDING_MISSING');
   if(record.stage===2){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
@@ -43,7 +45,9 @@ const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verif
 let checked=0;
 for(let stage=1;stage<=30;stage++){
   for(const operation of schema.STAGE_CONTRACTS[stage].operations){
-    const p=baseProject();
+    const recovery=baseProject();recovery.projectData.responseValidations.push({validationId:'VALIDATION-RECOVERY',rawResponseId:'RAW-RECOVERY',stage:8,valid:false,issues:[{code:'MISSING_REQUIRED_FIELD',path:'/stageData/OUTPUT_CONTRACT',message:'OUTPUT_CONTRACT is required.'}]});const recoveryPrompt=prompts.buildPromptRecord(8,recovery);if(!recoveryPrompt.prompt.includes('VALIDATION-RECOVERY')||!recoveryPrompt.prompt.includes('OUTPUT_CONTRACT is required.'))throw new Error('Validation failure feedback is not carried into the next prompt.');
+if(schema.JOB_FIELDS.DESIRED_SOURCE_COUNT?.valueType!=='INTEGER'||schema.JOB_FIELDS.DESIRED_SOURCE_COUNT?.requiredAtStage!==null)throw new Error('Desired source count must be optional integer guidance.');
+const p=baseProject();
     const op=schema.operationContract(stage,operation);
     const scope={};
     for(const key of op.scopeRequirements){
@@ -73,8 +77,8 @@ const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
   {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
   {...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},
-  {...original,prompt:original.prompt.replace('implementation-ready specification rather than pretending implementation occurred','assume implementation occurred')}
+  {...original,prompt:original.prompt.replace('WORK_TOO_LARGE_FOR_ENVIRONMENT plus a complete implementation-ready specification','WORK_TOO_LARGE_FOR_ENVIRONMENT and assume implementation occurred')}
 ];
-for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
+const expectedMutationIssues=['READ_COLLECTION_CONTRADICTION','OPERATION_IDENTITY_MISSING','REFINEMENT_RULE_MISSING','ENVIRONMENT_LIMIT_RULE_MISSING'];for(const [index,mutant] of mutants.entries()){if(mutant.prompt===original.prompt&&JSON.stringify(mutant.contextManifest)===JSON.stringify(original.contextManifest))throw new Error(`Semantic mutation ${index} did not alter the prompt or context manifest.`);const detected=semanticIssues(mutant);if(!detected.includes(expectedMutationIssues[index]))throw new Error(`Semantic mutation ${index} did not trigger ${expectedMutationIssues[index]}; detected: ${detected.join(', ')}`);}
 
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
