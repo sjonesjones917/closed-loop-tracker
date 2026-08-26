@@ -2,7 +2,7 @@
 
 Live application: https://sjonesjones917.github.io/closed-loop-tracker/
 
-This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages and retains `JOB-20260823144121` as the authorized Stage 01-complete, Stage 02-next project.
+This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages. Normal production startup never injects repository test data; the retained legacy project is available only to explicit automated migration/acceptance tests.
 
 ## Responsibility boundaries
 

@@ -31,6 +31,7 @@ if(!schema.sourceClassificationIssues(badSource).length)throw new Error('Target-
 const goodSource={TITLE:'Web Content Accessibility Guidelines (WCAG) 2.2',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/'};
 if(schema.sourceClassificationIssues(goodSource).length)throw new Error('Legitimate independent external source classification was rejected.');
 
+if(!fs.readFileSync('app-core.js','utf8').includes("new URLSearchParams(location.search).get('testProject')==='1'"))throw new Error('Repository test project is not isolated behind explicit test mode.');
 const retained=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 if(retained.jobId!=='JOB-20260823144121'||retained.title!=='Mobile Closed-Loop Agent Reliability Workbook'||retained.currentStage!==2||retained.currentState!=='READY')throw new Error('Retained project identity/state mismatch.');
 if(retained.stageRecords['1'].status!=='COMPLETE')throw new Error('Retained Stage 01 is not COMPLETE.');

@@ -23,9 +23,13 @@ async function activeProject(cdp){return evalValue(cdp,`(async()=>{const id=docu
 
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?testProject=1&browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
+
+  console.log('extra:clean-production-state');
+  const cleanBase=PAGE_URL.replace('127.0.0.1','localhost');
+  const cleanTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${cleanBase}?cleanProduction=${Date.now()}`)}`,{method:'PUT'}),cleanCdp=new CDP(cleanTarget.webSocketDebuggerUrl);await cleanCdp.ready;await cleanCdp.send('Runtime.enable');await cleanCdp.send('Page.enable');await waitExpr(cleanCdp,`globalThis.closedLoopAppReady===true`,20000);const cleanProjects=await projects(cleanCdp);assert(!cleanProjects.some(p=>p.job?.JOB_ID==='JOB-20260823144121'),'Production startup injected the retained repository test project.');assert(cleanProjects.length===1&&cleanProjects[0].job?.CURRENT_STAGE==='STAGE 01','Clean production startup did not create exactly one blank Stage 01 project.');cleanCdp.close();
 
   console.log('extra:prompt-copy');
   await openStage(cdp,2);await click(cdp,'#save-prompt');let retained=await activeProject(cdp);const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved canonically.');
@@ -45,7 +49,7 @@ async function main(){
   assert(blobProof?.byteSize===10&&blobProof.stored===blobProof.actual&&blobProof.filename==='blob-proof.txt','Actual IndexedDB Blob bytes did not survive read-back and rehash.');
 
   console.log('extra:two-tab-cas');
-  const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
+  const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?testProject=1&browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
   const sharedJob=newest.job.JOB_ID;
   const starting=await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID===${JSON.stringify(sharedJob)});return {revision:p.revision,project:p};})()`);
   const firstWrite=await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID===${JSON.stringify(sharedJob)});p.browserCasWinner='TAB1';return closedLoopProjectStore.writeProject(p,{expectedProjectRevision:${Number(starting.revision)}}).catch(e=>({__error:e.code||e.message}));})()`);
