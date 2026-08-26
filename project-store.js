@@ -47,16 +47,22 @@ function validateProjectIntegrity(project,{verifyDerived=true}={}){
 }
 function assertProjectIntegrity(project,options){const result=validateProjectIntegrity(project,options);if(!result.valid){const error=storageError(`Canonical project integrity validation failed: ${result.issues.join(' | ')}`,'PROJECT_INTEGRITY_FAILED');error.issues=result.issues;throw error;}return result;}
 
-let databasePromise=null;
+let databasePromise=null,databaseConnection=null;
+function invalidateDatabase(db){if(databaseConnection===db){databaseConnection=null;databasePromise=null;}}
 function openDatabase(){
   if(!globalThis.indexedDB)return Promise.reject(Object.assign(new Error('IndexedDB is required by the supported browser contract.'),{code:'INDEXEDDB_REQUIRED'}));
+  if(databaseConnection)return Promise.resolve(databaseConnection);
   if(databasePromise)return databasePromise;
-  databasePromise=new Promise((resolve,reject)=>{
+  let opening=null;
+  opening=new Promise((resolve,reject)=>{
     const req=indexedDB.open(DB_NAME,DB_VERSION);
     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(PROJECTS))db.createObjectStore(PROJECTS,{keyPath:'jobId'});if(!db.objectStoreNames.contains(ARTIFACTS))db.createObjectStore(ARTIFACTS,{keyPath:'artifactId'});if(!db.objectStoreNames.contains(META))db.createObjectStore(META,{keyPath:'key'});};
-    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB open failed.'));req.onblocked=()=>reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));
+    req.onsuccess=()=>{const db=req.result;databaseConnection=db;db.onversionchange=()=>{invalidateDatabase(db);try{db.close();}catch{}};db.onclose=()=>invalidateDatabase(db);resolve(db);};
+    req.onerror=()=>{if(databasePromise===opening)databasePromise=null;reject(req.error||new Error('IndexedDB open failed.'));};
+    req.onblocked=()=>{if(databasePromise===opening)databasePromise=null;reject(Object.assign(new Error('IndexedDB upgrade is blocked by another tab.'),{code:'INDEXEDDB_BLOCKED'}));};
   });
-  return databasePromise;
+  databasePromise=opening;
+  return opening;
 }
 
 function parseLegacy(storage=globalThis.localStorage){const out=[],seen=new Set();if(!storage)return out;for(const key of LEGACY_KEYS){let raw=null;try{raw=storage.getItem(key);}catch(error){throw storageError(`Legacy project storage could not be read from ${key}: ${error.message||error}`,'LEGACY_MIGRATION_READ_FAILED');}if(!raw)continue;let parsed;try{parsed=JSON.parse(raw);}catch(error){throw storageError(`Legacy project storage ${key} contains malformed JSON: ${error.message||error}`,'LEGACY_MIGRATION_PARSE_FAILED');}const items=Array.isArray(parsed)?parsed:[parsed];for(let index=0;index<items.length;index++){const item=items[index];if(!item||typeof item!=='object'||Array.isArray(item))throw storageError(`Legacy project storage ${key}[${index}] is not a project object.`,'LEGACY_MIGRATION_INVALID_PROJECT');const id=projectIdentity(item);if(!id)throw storageError(`Legacy project storage ${key}[${index}] has no JOB_ID.`,'LEGACY_MIGRATION_INVALID_PROJECT');if(seen.has(id))continue;seen.add(id);out.push(item);}}return out;}
