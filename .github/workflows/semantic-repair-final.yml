@@ -22,6 +22,7 @@ jobs:
         run: |
           python3 .github/semantic-patch.py
           python3 .github/semantic-freeze-binding.py
+          python3 .github/semantic-migration-history.py
       - name: Check workflow engine syntax
         run: node --check workflow-engine.js
       - name: Check project store syntax
@@ -54,7 +55,7 @@ jobs:
         run: |
           git config user.name "closed-loop-reliability-bot"
           git config user.email "closed-loop-reliability-bot@users.noreply.github.com"
-          git rm .github/semantic-patch.py .github/semantic-freeze-binding.py .github/workflows/semantic-minimum-fix.yml .github/workflows/semantic-repair-final.yml
-          git add workflow-engine.js project-store.js verify-complete.mjs verify-browser-extra.mjs
+          git rm .github/semantic-patch.py .github/semantic-freeze-binding.py .github/semantic-migration-history.py .github/workflows/semantic-minimum-fix.yml .github/workflows/semantic-repair-final.yml
+          git add workflow-engine.js project-store.js app-core.js verify-complete.mjs verify-browser.mjs verify-browser-extra.mjs
           git commit -m "Close iteration, regression, version, identity, and storage semantics"
           git push origin HEAD:reliability/semantic-current-scope-integrity-20260826
