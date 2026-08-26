@@ -1,3 +1,4 @@
+# Temporary branch-only transformer; self-deletes after a green proof.
 name: Strict current-scope closure
 on:
   push:
@@ -24,15 +25,7 @@ jobs:
           from pathlib import Path
           import hashlib, re
 
-          def replace_once(path, old, new, label):
-              p=Path(path); s=p.read_text()
-              n=s.count(old)
-              if n != 1:
-                  raise SystemExit(f'{label}: expected one anchor, found {n}')
-              p.write_text(s.replace(old,new,1))
-
-          engine=Path('workflow-engine.js')
-          s=engine.read_text()
+          engine=Path('workflow-engine.js'); s=engine.read_text()
           old="""function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}
           function registerStageVersion(project,stage,acceptedChangeId){
             ensureShape(project);
@@ -86,8 +79,7 @@ jobs:
           function recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null)),required=requiredVersionScopeKeys(collection).filter(key=>Object.prototype.hasOwnProperty.call(applicable,key));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable,required));}
           """
           if s.count(old)!=1: raise SystemExit(f'scope selector anchor: {s.count(old)}')
-          s=s.replace(old,new,1)
-          engine.write_text(s)
+          s=s.replace(old,new,1); engine.write_text(s)
 
           verify=Path('verify-complete.mjs'); s=verify.read_text()
           old="""  const current=record('requirements',4,{OBLIGATION:'current',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-CURRENT');current.scope={requirementsVersion:'REQUIREMENTS-v002'};
@@ -103,18 +95,15 @@ jobs:
           new="""  const unscoped=record('requirements',4,{OBLIGATION:'unscoped historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-UNSCOPED');delete unscoped.scope;p.projectData.requirements.push(unscoped);const partial=record('requirements',4,{OBLIGATION:'partial historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-PARTIAL');partial.scope={requirementsVersion:'REQUIREMENTS-v002'};p.projectData.requirements.push(partial);const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');assert(!scopedIds.includes('REQ-PARTIAL'),'Partially scoped historical record satisfied current selector by omitting an applicable version identity.');
           """
           if s.count(old)!=1: raise SystemExit(f'partial scope insertion anchor: {s.count(old)}')
-          s=s.replace(old,new,1)
-          verify.write_text(s)
+          s=s.replace(old,new,1); verify.write_text(s)
 
           files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          def git_blob_sha(path):
+          def blob(path):
               b=Path(path).read_bytes(); return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
-          manifest=''.join(f'{f}:{git_blob_sha(f)}\n' for f in files).encode()
-          token='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
+          manifest=''.join(f'{f}:{blob(f)}\n' for f in files).encode(); token='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
           index=Path('index.html'); h=index.read_text(); h2=re.sub(r'(?<=\?v=)runtime-[a-f0-9]{16}',token,h)
           if h2==h: raise SystemExit('runtime token was not refreshed')
-          index.write_text(h2)
-          print(token)
+          index.write_text(h2); print(token)
           PY
       - name: Prove source, ingestion, gates, lifecycle, prompts, and Chromium
         run: |
