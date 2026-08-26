@@ -16,22 +16,40 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Fetch immutable patch blob and apply it
+      - name: Reconstruct verified patch and apply it
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          PATCH_BLOB: 3c98b1ac259b9a252b8e617c35a7a27bb3750ff6
+          PATCH_SHA256: 581ce3b61c60bc8c227669614c9b9cec1e4ea9a907268e68e5663eb51a6e94d8
+          PATCH_BLOBS: >-
+            044e25439da1d8d5f87d94905427ae3306ab70f3
+            77b48bc5cc61ab015da26b35fb26caa5cbfc5e42
+            3b77dc6554873a5030629a4d1a91030c42f79bad
+            e462e763b808f74d141a9e6e43eb2519f0dfa95c
+            e76d9193853c2097f5273b03bfef12a17ee61918
+            02c919028f0bac6767788f6e51477a13a6355d7a
+            0f1bf5c9ff2a7403d2ac226cfc248e6b0940bcb1
+            1d11f55d20e237f5a9fc02f9799958dfeaeb06b6
         run: |
           set -euo pipefail
-          curl --fail-with-body --silent --show-error \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$PATCH_BLOB" > /tmp/blob.json
-          python3 - <<'PY'
-          import base64,json,pathlib
-          obj=json.load(open('/tmp/blob.json'))
-          pathlib.Path('/tmp/pr6.patch.gz').write_bytes(base64.b64decode(obj['content']))
+          : > /tmp/pr6.patch.gz
+          n=0
+          for blob in $PATCH_BLOBS; do
+            curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$blob" > "/tmp/blob-$n.json"
+            python3 - "$n" <<'PY'
+          import base64,json,pathlib,sys
+          n=sys.argv[1]
+          obj=json.load(open(f'/tmp/blob-{n}.json'))
+          with open('/tmp/pr6.patch.gz','ab') as out:
+              out.write(base64.b64decode(obj['content']))
           PY
+            n=$((n+1))
+          done
+          echo "$PATCH_SHA256  /tmp/pr6.patch.gz" | sha256sum --check --strict
+          test "$(wc -c < /tmp/pr6.patch.gz)" -eq 37734
           gzip -t /tmp/pr6.patch.gz
           gzip -dc /tmp/pr6.patch.gz > /tmp/pr6.patch
           git apply --check /tmp/pr6.patch
@@ -56,7 +74,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf .pr6-patch .pr6-transport
-          rm -f .github/workflows/pr6-recover-source.yml .github/workflows/pr6-source-export.yml
+          rm -f .github/workflows/pr6-recover-source.yml .github/workflows/pr6-source-export.yml .github/workflows/pr6-export-partial.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
