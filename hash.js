@@ -70,6 +70,6 @@ function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
 function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
-function recordSha256(record){return sha256Value(record);}
+function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
 globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/2',stableStringify,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 })();
