@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 import subprocess
 
+subprocess.run(['git','config','user.name','sjonesjones917'],check=True)
+subprocess.run(['git','config','user.email','sjones.jones917@gmail.com'],check=True)
 commit='3f5b20ae1b8565eb73b6f84f4399af36671448b4'
 result=subprocess.run(['git','cherry-pick',commit])
 if result.returncode:
