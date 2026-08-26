@@ -22,7 +22,7 @@ jobs:
           p=Path('prompt-engine.js')
           s=p.read_text()
           stage1_old='If required repository, runtime, account, network, deployment, or tool access is absent, do not pretend implementation occurred; define the most complete reliable implementation-ready specification, architecture, patch plan, acceptance criteria, or other feasible deliverable.'
-          stage1_new='If required repository, runtime, account, network, deployment, or tool access is absent, do not pretend implementation occurred; define a complete implementation-ready specification, architecture, patch plan, acceptance criteria, or other feasible deliverable. When such a substitute is feasible, propose it as the workflow deliverable and require normal human intent confirmation before downstream work.'
+          stage1_new='If required repository, runtime, account, network, deployment, or tool access is absent, do not pretend implementation occurred; define a complete implementation-ready specification, architecture, patch plan, acceptance criteria, or other feasible deliverable. When such a substitute is feasible, propose it as the workflow deliverable and require normal human intent confirmation before downstream work. This is not a failure merely because direct implementation is unavailable.'
           if stage1_old not in s: raise SystemExit('Stage 1 capability fallback sentence missing')
           s=s.replace(stage1_old,stage1_new,1)
           stage21_old="21:'Produce the job’s finished deliverable only when the actual authorized execution environment can do so reliably from the approved baseline."
