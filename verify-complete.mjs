@@ -118,4 +118,15 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(failed&&storage.getItem(store.STORE_KEY)===priorBytes,'Storage failure during accepted-state persistence did not roll back exact prior state.');
 }
 
+
+// A corrected historical material defect remains preserved but cannot poison the current release; a current material defect still rejects it.
+{
+  const p=project('JOB-RELEASE-DEFECT-SCOPE');p.job.CURRENT_ITERATION='ITERATION-NEW';
+  const it=record('iterations',19,{CANDIDATE_ID:'CANDIDATE-NEW',STATUS:'FROZEN'},'ITERATION-NEW');it.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.iterations.push(it);
+  const old=record('defects',14,{SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-OLD');old.scope={iterationId:'ITERATION-OLD',candidateId:'CANDIDATE-OLD'};p.projectData.defects.push(old);
+  let metrics=engine.releaseMetrics(p);assert(metrics.majorDefects===0&&metrics.determination!=='REJECTED','Historical corrected-scope major defect incorrectly rejects the current release.');
+  const current=record('defects',24,{SEVERITY:'MAJOR',STATUS:'CONFIRMED'},'DEFECT-CURRENT');current.scope={iterationId:'ITERATION-NEW',candidateId:'CANDIDATE-NEW'};p.projectData.defects.push(current);
+  metrics=engine.releaseMetrics(p);assert(metrics.majorDefects===1&&metrics.determination==='REJECTED','Current major defect does not reject release.');
+}
+
 console.log(JSON.stringify({finalRequirementRegression:true,formalStates:true,noStage31:true,invalidRelationshipRejected:true,humanQuestionGate:true,stage8PrerequisiteGate:true,tenRunGate:true,verificationMatrixGate:true,convergenceStrict:true,unchangedConfirmationGate:true,downstreamInvalidation:true,preReleaseIdentityBlocked:true,identityMismatchBlocked:true,evidenceChainNoFabrication:true,acceptedStateStorageRollback:true},null,2));
