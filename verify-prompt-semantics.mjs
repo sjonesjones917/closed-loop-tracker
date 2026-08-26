@@ -123,6 +123,16 @@ if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||c
  for(const [stage,phrase] of forbidden){const r=prompts.buildPromptRecord(stage,baseProject(),{operation:schema.STAGE_CONTRACTS[stage].operations[0]});if(r.prompt.includes(phrase))throw new Error(`Stage ${stage} still tells the agent to perform application-owned work: ${phrase}`);}
 }
 
+
+// Stage 02 distinguishes governing authority from legitimate independent evidentiary sources.
+{
+ const p=baseProject(),record=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});
+ if(!/no legitimate independent external source of any justified authority or evidentiary role/i.test(record.prompt))throw new Error('Stage 02 no-source rule still means only no governing authority.');
+ if(core.STAGES[1].completionGate.some(x=>/every governing source/i.test(x)))throw new Error('Stage 02 completion still requires every useful source to be governing authority.');
+ if(core.STAGES[2].completionGate.some(x=>/every controlling source/i.test(x)))throw new Error('Stage 03 completion still ignores accepted non-controlling Stage 02 sources.');
+ if(!core.STAGES[2].completionGate.some(x=>/every current accepted Stage 02 source/i.test(x)))throw new Error('Stage 03 does not require research for the complete current Stage 02 source set.');
+}
+
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true,applicationOwnership:true,specialistDomains:['patent','software-multifile','physical-engineering-cad-cam-cnc-additive']},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
