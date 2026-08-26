@@ -40,19 +40,27 @@ jobs:
           new="stage=Number(runs[0]?.stage||iteration?.stage||0);"
           if text.count(old)!=1: raise SystemExit(f'Iteration run-stage precedence match {text.count(old)}')
           text=text.replace(old,new,1)
-          marker='function freezeBaseline(project,'
-          i=text.index(marker)
+
+          old="baselineId:recordId(records(project,'baselines').at(-1),'baselines')||project.job.CURRENT_BASELINE_ID||null,productId:recordId(records(project,'products').at(-1),'products')||project.job.CURRENT_PRODUCT_ID||null"
+          new="baselineId:recordId(records(project,'baselines').at(-1),'baselines')||(upper(project.job.CURRENT_BASELINE_ID)==='NONE'?null:project.job.CURRENT_BASELINE_ID)||null,productId:recordId(records(project,'products').at(-1),'products')||(upper(project.job.CURRENT_PRODUCT_ID)==='NONE'?null:project.job.CURRENT_PRODUCT_ID)||null"
+          if text.count(old)!=1: raise SystemExit(f'Identity sentinel scope match {text.count(old)}')
+          text=text.replace(old,new,1)
+
+          old="function unresolvedMaterialDefects(project){\n  return confirmedDefects(project).filter(record=>{\n    const severity=upper(recordValue(record,'SEVERITY'));\n    const status=upper(recordValue(record,'STATUS'));\n    return ['CRITICAL','MAJOR'].includes(severity)&&!['CLOSED','CLOSED VERIFIED','CLOSED_VERIFIED','RESOLVED','CORRECTED AND VERIFIED','RETIRED'].includes(status);\n  });\n}"
+          new="function defectResolvedByRegression(project,defect){const defectId=recordId(defect,'defects'),regressions=records(project,'regressions').filter(record=>String(recordValue(record,'DEFECT_ID')||record.relationships?.DEFECT_ID||'')===defectId&&upper(recordValue(record,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');if(!regressions.length)return false;return regressions.every(regression=>{const regId=recordId(regression,'regressions'),executions=records(project,'regressionExecutions').filter(record=>String(recordValue(record,'REG_ID')||record.relationships?.REG_ID||'')===regId);const latest=executions.at(-1);return Boolean(latest)&&['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT')))&&upper(recordValue(latest,'PHASE'))!=='PRE_CORRECTION';});}\nfunction unresolvedMaterialDefects(project){\n  return confirmedDefects(project).filter(record=>{\n    const severity=upper(recordValue(record,'SEVERITY'));\n    const status=upper(recordValue(record,'STATUS'));\n    return ['CRITICAL','MAJOR'].includes(severity)&&!['CLOSED','CLOSED VERIFIED','CLOSED_VERIFIED','RESOLVED','CORRECTED AND VERIFIED','RETIRED'].includes(status)&&!defectResolvedByRegression(project,record);\n  });\n}"
+          if text.count(old)!=1: raise SystemExit(f'Defect lifecycle derivation match {text.count(old)}')
+          text=text.replace(old,new,1)
+
+          marker='function freezeBaseline(project,'; i=text.index(marker)
           fn="""function beginUnchangedConfirmationIteration(project,{candidateId,operatorLabel='HUMAN_OPERATOR'}={}){\n  ensureShape(project);const candidate=records(project,'candidateFreezes').find(record=>recordId(record,'candidateFreezes')===String(candidateId||'')&&isActiveRecord(record));if(!candidate)throw new Error('A current frozen candidate is required for unchanged confirmation.');const componentHashes=recordValue(candidate,'COMPONENT_HASHES')||{};if(!componentHashes||typeof componentHashes!=='object'||Array.isArray(componentHashes)||!Object.keys(componentHashes).length)throw new Error('The unchanged-confirmation candidate must have application-computed component hashes.');const previousIterationId=String(recordValue(candidate,'ITERATION_ID')||candidate.scope?.iterationId||'');const previousIteration=records(project,'iterations').find(record=>recordId(record,'iterations')===previousIterationId);if(!previousIteration)throw new Error('The candidate source iteration does not exist.');const iterationId=allocateId(project,'iterations'),createdAt=now(),baseScope=clone(previousIteration.scope||candidate.scope||currentScope(project));const fields={ITERATION_ID:iterationId,CANDIDATE_ID:String(candidateId),PREVIOUS_ITERATION_ID:previousIterationId,CHANGESET_ID:'',PURPOSE:'UNCHANGED_CONFIRMATION',STATUS:'FROZEN',LINEAGE:hash.sha256Value({candidateId:String(candidateId),componentHashes}),EVIDENCE:'Application allocated a new unchanged-confirmation iteration using the exact existing frozen candidate identity.'};const iteration={id:iterationId,stage:19,createdAt,active:true,scope:{...baseScope,iterationId,candidateId:String(candidateId)},fields,...fields,source:'APPLICATION_DERIVATION'};iteration.contentSha256=hash.contentRecordSha256(iteration,'ITERATION_ID');iteration.recordSha256=hash.recordSha256(iteration);iteration.sha256=iteration.recordSha256;project.projectData.iterations.push(iteration);project.job.CURRENT_ITERATION=iterationId;addHistory(project,'UNCHANGED_CONFIRMATION_ITERATION_STARTED',{stage:19,iterationId,candidateId:String(candidateId),previousIterationId,operatorLabel,identityAssurance:'SELF_ASSERTED'});recalculate(project);return iteration;\n}\n"""
           text=text[:i]+fn+text[i:]
           old="const contexts=recordsForCurrentScope(project,'freshContexts').filter(r=>!recordValue(r,'RUN_ID')),context=contexts.at(-1);"
           new="const contexts=recordsForCurrentScope(project,'freshContexts').filter(r=>{const runId=upper(recordValue(r,'RUN_ID'));return !runId||runId==='NOT APPLICABLE';}),context=contexts.at(-1);"
           if text.count(old)!=1: raise SystemExit(f'Production context selector match {text.count(old)}')
           text=text.replace(old,new,1)
-          old='freezeCandidate,freezeBaseline,reserveProductExecution'
-          new='freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution'
+          old='freezeCandidate,freezeBaseline,reserveProductExecution'; new='freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution'
           if text.count(old)!=1: raise SystemExit(f'Engine export insertion match {text.count(old)}')
-          text=text.replace(old,new,1)
-          p.write_text(text)
+          text=text.replace(old,new,1); p.write_text(text)
 
           p=Path('verify-complete.mjs'); text=p.read_text()
           old="p.projectData.candidateFreezes.push(record('candidateFreezes',10,{ITERATION_ID:'ITERATION-STAGE11',STATUS:'FROZEN'},'CANDIDATE-STAGE11'));"
@@ -71,22 +79,16 @@ jobs:
           if marker not in segment: raise SystemExit('Iteration-scope fixture relationship marker missing.')
           segment=segment.replace(marker,"req.scope={...baseScope};test.scope={...baseScope};"+marker,1); text=text[:a]+segment+text[b:]; p.write_text(text)
 
-          p=Path('verify-full-cycle.mjs'); text=p.read_text(); marker="acceptStage(17,{operation:'REGRESSION',records:{regressionExecutions:"; i=text.index(marker); text=text[:i]+"acceptStage(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:true}});\n"+text[i:]
-          old="engine.recordReleaseDetermination(p);assertStage(p,27);const releaseId=id('releaseRecords');assert(engine.recordValue(rec('releaseRecords'),'DETERMINATION')==='ACCEPTED','Release was not ACCEPTED.');"
-          new="engine.recordReleaseDetermination(p);assertStage(p,27);const releaseId=id('releaseRecords');if(engine.recordValue(rec('releaseRecords'),'DETERMINATION')!=='ACCEPTED')console.error('RELEASE_METRICS',JSON.stringify(engine.releaseMetrics(p),null,2));assert(engine.recordValue(rec('releaseRecords'),'DETERMINATION')==='ACCEPTED','Release was not ACCEPTED.');"
-          if text.count(old)!=1: raise SystemExit(f'Release diagnostic insertion match {text.count(old)}')
-          p.write_text(text.replace(old,new,1))
+          p=Path('verify-full-cycle.mjs'); text=p.read_text(); marker="acceptStage(17,{operation:'REGRESSION',records:{regressionExecutions:"; i=text.index(marker); text=text[:i]+"acceptStage(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:true}});\n"+text[i:]; p.write_text(text)
 
           p=Path('app-core.js'); text=p.read_text()
-          old="const applicable=[10,20,21,25,28].includes(n)"
-          new="const applicable=[10,17,20,21,25,28].includes(n)"
+          old="const applicable=[10,20,21,25,28].includes(n)"; new="const applicable=[10,17,20,21,25,28].includes(n)"
           if text.count(old)!=1: raise SystemExit(f'Artifact stage list match {text.count(old)}')
           text=text.replace(old,new,1)
           old="${n===10?`<button id=\"freeze-candidate\"${locked?' disabled':''}>Freeze selected candidate</button>`:''}"
           new="${(n===10||n===17)?`<button id=\"freeze-candidate\"${locked?' disabled':''}>Freeze selected candidate</button>`:''}${n===19?`<button id=\"begin-unchanged-confirmation\"${locked?' disabled':''}>Begin unchanged confirmation</button>`:''}"
           if text.count(old)!=1: raise SystemExit(f'Freeze candidate button match {text.count(old)}')
-          text=text.replace(old,new,1)
-          hook="if($('#freeze-baseline'))"; i=text.index(hook)
+          text=text.replace(old,new,1); hook="if($('#freeze-baseline'))"; i=text.index(hook)
           insertion="if($('#begin-unchanged-confirmation'))$('#begin-unchanged-confirmation').onclick=async()=>{try{const next=clone(current),candidate=engine.records(next,'candidateFreezes').filter(r=>Number(r.stage)===17&&engine.isActiveRecord(r)).at(-1);if(!candidate)throw new Error('A current Stage 17 frozen candidate is required.');engine.beginUnchangedConfirmationIteration(next,{candidateId:engine.recordId(candidate,'candidateFreezes'),operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('saved');render();}catch(error){alert(error.message||error);}};"
           text=text[:i]+insertion+text[i:]; p.write_text(text)
           PY
