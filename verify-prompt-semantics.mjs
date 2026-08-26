@@ -77,4 +77,39 @@ const mutants=[
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 
+
+// Workbook/prompt chronology and matrix language must match the engine.
+if(!core.STAGES[11].completionGate.some(x=>x.includes('REQ_ID × RUN_ID × TEST_ID')))throw new Error('Stage 12 workbook gate does not state the exact verification triple.');
+if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||core.STAGES[14].completionGate.some(x=>x.toLowerCase().includes('succeeds after correction')))throw new Error('Stage 15 incorrectly requires future post-correction success.');
+{
+  const p=baseProject();
+  const r=prompts.buildPromptRecord(15,p,{operation:'COMPLETE'});
+  if(!r.prompt.includes('Do not claim post-correction success at Stage 15'))throw new Error('Stage 15 prompt does not enforce correct chronology.');
+}
+// Exact run/context scoping must affect both displayed context and hashed context manifest.
+{
+  const p=baseProject();p.job.CURRENT_ITERATION='ITERATION-000001';
+  p.projectData.runs.push({id:'RUN-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-A',contextId:'CONTEXT-A'},fields:{RUN_ID:'RUN-A',ITERATION_ID:'ITERATION-000001',CANDIDATE_ID:'CANDIDATE-000001',CONTEXT_ID:'CONTEXT-A',COMPLETE_OUTPUT:'A'}},{id:'RUN-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-B',contextId:'CONTEXT-B'},fields:{RUN_ID:'RUN-B',ITERATION_ID:'ITERATION-000001',CANDIDATE_ID:'CANDIDATE-000001',CONTEXT_ID:'CONTEXT-B',COMPLETE_OUTPUT:'B'}});
+  p.projectData.freshContexts.push({id:'CONTEXT-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-A',contextId:'CONTEXT-A'},fields:{CONTEXT_ID:'CONTEXT-A',RUN_ID:'RUN-A',EXTERNAL_CONTEXT_IDENTIFIER:'external-a'}},{id:'CONTEXT-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-B',contextId:'CONTEXT-B'},fields:{CONTEXT_ID:'CONTEXT-B',RUN_ID:'RUN-B',EXTERNAL_CONTEXT_IDENTIFIER:'external-b'}});
+  const scope={projectRevision:0,inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001',instructionVersion:'INSTRUCTION-v001',iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-A',contextId:'CONTEXT-A'};
+  const r=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope});
+  if(!r.prompt.includes('RUN-A')||r.prompt.includes('RUN-B')||!r.prompt.includes('CONTEXT-A')||r.prompt.includes('CONTEXT-B'))throw new Error('Run-scoped prompt leaked another independent run/context.');
+  if((r.contextManifest.readCollections.runs||[]).some(x=>x.id==='RUN-B')||(r.contextManifest.readCollections.freshContexts||[]).some(x=>x.id==='CONTEXT-B'))throw new Error('Run-scoped context signature includes another run/context.');
+}
+// Application validation failures and operator refinement are explicit next-prompt context.
+{
+  const p=baseProject();
+  p.projectData.responseValidations.push({validationId:'VALIDATION-X',stage:2,valid:false,issues:[{code:'MISSING_PROVENANCE',path:'/evidence',message:'Evidence is required.'}]});
+  p.projectData.rejectedResponses.push({rejectedResponseId:'REJECTED-X',stage:2,requestCorrection:true,reason:'Add the missing authoritative publication date.',rawResponseId:'RAW-X'});
+  const r=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});
+  if(!r.prompt.includes('LATEST APPLICATION VALIDATION FAILURE TO CORRECT')||!r.prompt.includes('MISSING_PROVENANCE'))throw new Error('Validation failure is not usable correction context.');
+  if(!r.prompt.includes('Add the missing authoritative publication date.'))throw new Error('Operator refinement reason is not in the next prompt.');
+}
+// Capability/size and existing-target boundaries must be explicit and non-deceptive.
+{
+  const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});
+  for(const phrase of ['WORK_TOO_LARGE_FOR_ENVIRONMENT','MISSING_APPLICATION_CONTEXT','does not itself read from or write to an external project repository','implementation-ready specification'])if(!r.prompt.includes(phrase))throw new Error(`Stage 01 missing recovery/environment rule: ${phrase}`);
+  if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target projects are incorrectly treated as nonexistent.');
+}
+
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
