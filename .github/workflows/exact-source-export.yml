@@ -1,7 +1,9 @@
 name: Temporary exact-current-source export
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches:
+      - audit/exact-current-source-export-20260826
+  workflow_dispatch:
 permissions: {contents: read}
 
 jobs:
