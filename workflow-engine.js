@@ -227,7 +227,7 @@ function gate(stage,project){
     }
     case 2:{
       requireAccepted();const determination=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION);const sources=collection('sources');
-      if(!sources.length){if(determination!=='NO_APPLICABLE_EXTERNAL_SOURCE')reasons.push('Either at least one legitimate external governing source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');else{const latest=changes.at(-1),proposal=safe(project.projectData.responseProposals).find(x=>x.proposalId===latest?.proposalId);if(!safe(proposal?.evidence).length)reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE requires preserved supporting evidence.');}}
+      if(!sources.length){if(determination!=='NO_APPLICABLE_EXTERNAL_SOURCE')reasons.push('Either at least one legitimate independent external source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');else{const latest=changes.at(-1),proposal=safe(project.projectData.responseProposals).find(x=>x.proposalId===latest?.proposalId);if(!safe(proposal?.evidence).length)reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE requires preserved supporting evidence.');}}
       else if(determination!=='APPLICABLE_SOURCES_ESTABLISHED')reasons.push('Established source records require SOURCE_APPLICABILITY_DETERMINATION = APPLICABLE_SOURCES_ESTABLISHED.');
       for(const source of sources)reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
       if(collection('sourceConflicts').some(record=>['UNRESOLVED','BLOCKED','UNKNOWN','OPEN'].includes(upper(recordValue(record,'RESOLUTION_STATUS')))))reasons.push('An external-source conflict remains unresolved or blocked.');
