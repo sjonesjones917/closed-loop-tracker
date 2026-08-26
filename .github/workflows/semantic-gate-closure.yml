@@ -18,20 +18,22 @@ jobs:
           node-version: '22'
       - name: Apply focused semantic changes
         run: python3 .semantic-gate-closure.py
-      - name: Run deterministic verification
-        run: |
-          node build-test-project.mjs
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check app-core.js
-          node --check verify-complete.mjs
-          node --check verify-full-cycle.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-prompt-semantics.mjs
-          node verify-full-cycle.mjs
+      - name: Build retained project
+        run: node build-test-project.mjs
+      - name: Syntax
+        run: node --check workflow-schema.js && node --check workflow-engine.js && node --check app-core.js && node --check verify-complete.mjs && node --check verify-full-cycle.mjs
+      - name: Hash
+        run: node verify-hash.mjs
+      - name: Canonical verification
+        run: node verify.mjs
+      - name: Ingestion verification
+        run: node verify-ingestion.mjs
+      - name: Gate verification
+        run: node verify-complete.mjs
+      - name: Prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Full 30-stage lifecycle
+        run: node verify-full-cycle.mjs
       - name: Run Chromium verification
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
