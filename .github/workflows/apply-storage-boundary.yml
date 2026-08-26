@@ -33,7 +33,7 @@ jobs:
         run: node verify-full-cycle.mjs
       - name: Verify prompt semantics
         run: node verify-prompt-semantics.mjs
-      - name: Browser verification
+      - name: Verify primary browser workflow
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -41,6 +41,13 @@ jobs:
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser.mjs
+      - name: Verify browser persistence and edge cases
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http-extra.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser-extra.mjs
       - name: Commit proven repair and remove branch-only tooling
         run: |
