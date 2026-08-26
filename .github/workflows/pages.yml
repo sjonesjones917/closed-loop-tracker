@@ -1,42 +1,26 @@
-name: Apply recovery response-lane validation repair
+name: Repair recovery response lanes
 on:
   push:
-    branches: [reliability/recovery-response-lanes]
-permissions: {contents: write}
+    branches:
+      - reliability/recovery-response-lanes
+permissions:
+  contents: write
 jobs:
   repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {ref: reliability/recovery-response-lanes}
+        with:
+          ref: reliability/recovery-response-lanes
       - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Apply guarded two-file repair
+        with:
+          node-version: '22'
+      - name: Apply guarded repair
+        run: python3 .repair-response-lanes.py
+      - name: Restore production workflow and remove helper
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('response-ingestion.js')
-          s=p.read_text()
-          old="""  if(envelope.responseType==='BLOCKED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','BLOCKED must not contain stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length)issues.push(issue('MISSING_BLOCKER_DETAIL','/unresolved','BLOCKED requires structured unresolved detail.'));else if(!safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MISSING_BLOCKING_UNRESOLVED','/unresolved','BLOCKED requires at least one actually blocking unresolved item.'));}
-  if(envelope.responseType==='EXECUTION_FAILED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','EXECUTION_FAILED must not contain canonical stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length&&!safe(envelope.warnings).length)issues.push(issue('MISSING_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires failure detail.'));}
-"""
-          new="""  if(envelope.responseType==='BLOCKED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','BLOCKED must not contain stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length)issues.push(issue('MISSING_BLOCKER_DETAIL','/unresolved','BLOCKED requires structured unresolved detail.'));else if(!safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MISSING_BLOCKING_UNRESOLVED','/unresolved','BLOCKED requires at least one actually blocking unresolved item.'));if(safe(envelope.unresolved).some(item=>item.kind==='MISSING_HUMAN_INPUT'))issues.push(issue('WRONG_RECOVERY_CHANNEL','/unresolved','Missing human-authority information must use HUMAN_INPUT_REQUIRED rather than BLOCKED.'));}
-  if(envelope.responseType==='EXECUTION_FAILED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','EXECUTION_FAILED must not contain canonical stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length&&!safe(envelope.warnings).length)issues.push(issue('MISSING_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires failure detail.'));if(!safe(envelope.unresolved).some(item=>['EXECUTION_FAILURE','TOOL_FAILURE'].includes(item.kind)))issues.push(issue('MISSING_EXECUTION_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires an actual execution or tool failure; missing context, authority, evidence, or capability without an attempted failure must use BLOCKED.'));}
-"""
-          assert s.count(old)==1, s.count(old)
-          p.write_text(s.replace(old,new))
-
-          p=Path('verify-ingestion.mjs')
-          s=p.read_text()
-          marker="negative('cross-project response',(e)=>{e.jobId='JOB-CROSS-PROJECT';},'WRONG_JOB_ID');\n"
-          insert="""negative('blocked human input uses wrong recovery lane',(e)=>{e.responseType='BLOCKED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'human-needed',kind:'MISSING_HUMAN_INPUT',description:'Human decision required',whyBlocking:'Only the human can supply this authority.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'WRONG_RECOVERY_CHANNEL');
-negative('execution failed without an attempted failure',(e)=>{e.responseType='EXECUTION_FAILED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'capability-missing',kind:'MISSING_CAPABILITY',description:'Required capability is unavailable',whyBlocking:'The operation cannot begin without the capability.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MISSING_EXECUTION_FAILURE_DETAIL');
-"""
-          assert s.count(marker)==1, s.count(marker)
-          p.write_text(s.replace(marker,insert+marker))
-          PY
-      - name: Restore production workflow
-        run: git checkout 456465f29a6ddc6d04cf8dcf8491fcf0eb6ac5a3 -- .github/workflows/pages.yml
+          git checkout 456465f29a6ddc6d04cf8dcf8491fcf0eb6ac5a3 -- .github/workflows/pages.yml
+          rm .repair-response-lanes.py
       - name: Run deterministic acceptance
         run: |
           node build-test-project.mjs
@@ -52,7 +36,7 @@ negative('execution failed without an attempted failure',(e)=>{e.responseType='E
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          test -z "$(git diff --name-only | grep -vE '^(response-ingestion.js|verify-ingestion.mjs|.github/workflows/pages.yml)$' || true)"
+          test -z "$(git diff --name-only | grep -vE '^(response-ingestion.js|verify-ingestion.mjs|.github/workflows/pages.yml|.repair-response-lanes.py)$' || true)"
           git add -A
           git commit -m "Enforce distinct recovery response lanes"
           git push origin HEAD:reliability/recovery-response-lanes
