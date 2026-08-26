@@ -31,6 +31,8 @@ function semanticIssues(record){
   if(!record.prompt.includes('HUMAN_INPUT_REQUIRED')||!record.prompt.includes('EXECUTION_FAILED')||!record.prompt.includes('return BLOCKED'))issues.push('INSUFFICIENCY_RECOVERY_MISSING');
   if(!record.prompt.includes('rejected data is not canonical'))issues.push('REFINEMENT_RULE_MISSING');
   if(!record.prompt.includes('implementation-ready specification rather than pretending implementation occurred'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');
+  if(!record.prompt.includes('current human input, authorized application context, and accepted prior-stage output is sufficient'))issues.push('INFORMATION_SUFFICIENCY_RULE_MISSING');
+  if(record.stage===12&&(!record.prompt.includes('REQ_ID × RUN_ID × TEST_ID triple')||record.prompt.includes('REQ_ID × RUN_ID relation, linked to TEST_ID')))issues.push('VERIFICATION_TRIPLE_CONTRADICTION');
   if(record.stage===2){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
