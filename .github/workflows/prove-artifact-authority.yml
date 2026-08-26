@@ -1,0 +1,33 @@
+name: Prove exact artifact authority
+on: [push]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[artifact-authority-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/exact-baseline-product-artifacts-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python3 repair-artifact-authority.py
+      - name: Verify exact artifact authority and full deterministic stack
+        run: |
+          node --check workflow-engine.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing source
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Bind baseline and product bytes to exact canonical identities [artifact-authority-complete]"
+          git push origin HEAD:reliability/exact-baseline-product-artifacts-20260826
