@@ -1,0 +1,154 @@
+name: Apply operator-loop reliability repair
+on:
+  push:
+    branches:
+      - reliability/operator-loop-closure-20260826
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/operator-loop-closure-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply exact minimum semantic repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_line(text,prefix,new_line):
+              lines=text.splitlines()
+              hits=[i for i,line in enumerate(lines) if line.startswith(prefix)]
+              if len(hits)!=1: raise SystemExit(f'{prefix}: expected one line, found {len(hits)}')
+              lines[hits[0]]=new_line
+              return '\n'.join(lines)+'\n'
+
+          p=Path('app-core.js'); s=p.read_text()
+          s=replace_line(s,'function overview(){',"function overview(){const currentStage=Math.max(1,Math.min(30,Number(String(current.job.CURRENT_STAGE||'').match(/\\d+/)?.[0]||1))),done=completion(),blockers=engine.openBlockers(current).length;return `<div class=\"hero project-hero\"><div class=\"hero-top\"><div><h2>${esc(current.job.JOB_TITLE)}</h2><p>${esc(current.job.JOB_ID)}</p></div><span class=\"status ${statusClass(current.job.CURRENT_STATE)}\">${esc(current.job.CURRENT_STATE)}</span></div><div class=\"facts overview-counts\"><div class=\"fact\"><strong>${done}/30</strong><span>Completed</span></div><div class=\"fact\"><strong>${String(currentStage).padStart(2,'0')}</strong><span>Current stage</span></div><div class=\"fact\"><strong>${safe(current.projectData.generatedPrompts).length}</strong><span>Instructions</span></div><div class=\"fact\"><strong>${safe(current.projectData.generatedOutputs).length}</strong><span>Outputs</span></div></div></div><div class=\"panel next-action-panel\"><h2 class=\"section-title\">Next required action</h2><div class=\"notice\">${esc(current.job.NEXT_REQUIRED_ACTION||'No next action recorded.')}</div><div class=\"button-row overview-actions\"><button class=\"primary\" data-stage=\"${currentStage}\">Continue current stage</button></div></div>${blockers?`<div class=\"notice warn\">${blockers} open mandatory blocker${blockers===1?'':'s'} affect progression.</div>`:''}<div class=\"panel completed-work-panel\"><h2 class=\"section-title\">Completed work</h2>${stageList(core.STAGES.filter(d=>current.stages[d.number].status==='COMPLETE'))}</div>`;}")
+          prompt_line="function promptOptions(n){const operation=selectedOperation(n),options={operation},requiresRun=(schema.operationContract(n,operation)?.scopeRequirements||[]).includes('runId');if(requiresRun){const run=selectedRun(n);if(run){const runId=engine.recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||run.scope?.contextId||'');options.scope={runId,contextId};}}return options;}"
+          helpers="\n".join([
+          "function responseLaneDescriptor(item){if(!item)return {operation:'',scope:{}};if(item.envelope)return {operation:item.envelope.operation||item.operation||'',scope:item.envelope.scope||item.scope||{}};if(item.operation||item.scope)return {operation:item.operation||'',scope:item.scope||{}};const prompt=safe(current.projectData.generatedPrompts).find(x=>(x.instructionId||x.promptId)===item.promptId);return {operation:prompt?.operation||'',scope:prompt?.scope||{}};}",
+          "function responseLaneMatches(item,n){const options=promptOptions(n),lane=responseLaneDescriptor(item);if(String(lane.operation||'COMPLETE')!==String(options.operation||'COMPLETE'))return false;for(const [key,value] of Object.entries(options.scope||{}))if(String(lane.scope?.[key]??'')!==String(value??''))return false;return true;}",
+          "function acceptedResponseForCurrentLane(n){return engine.acceptedChanges(current,n).filter(x=>responseLaneMatches(x,n)).at(-1)||null;}"
+          ])
+          if helpers not in s:
+              if s.count(prompt_line)!=1: raise SystemExit('promptOptions source mismatch')
+              s=s.replace(prompt_line,prompt_line+'\n'+helpers,1)
+          s=replace_line(s,'function validationMarkup(n){',"function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n&&responseLaneMatches(x,n)).at(-1);if(!v||v.valid)return '';return `<div class=\"notice danger\" id=\"validation-report\" tabindex=\"-1\"><strong>Response rejected before canonical mutation.</strong><br>${safe(v.issues).map(x=>esc(`${x.code}: ${x.message}`)).join('<br>')}</div>`;}")
+          s=replace_line(s,'function proposalMarkup(n){',"function proposalMarkup(n){const p=safe(current.projectData.responseProposals).filter(x=>Number(x.stage)===n&&x.status==='PENDING_OPERATOR_REVIEW'&&responseLaneMatches(x,n)).at(-1);if(!p)return validationMarkup(n);const rows=safe(p.changes).map(c=>({recordType:c.canonicalRecordType||c.canonicalCollection||'stageData',temporaryKey:c.temporaryResponseKey||'',canonicalId:c.canonicalRecordId||'APPLICATION_ASSIGNED',field:c.canonicalField||c.canonicalRelationship||'',proposedValue:c.normalizedValue,jsonPointer:c.jsonPointer||'',evidence:c.evidenceIds||'',validation:'SATISFIED'}));return `<div class=\"panel\" id=\"proposal-heading\" tabindex=\"-1\"><h2 class=\"section-title\">Proposed extracted changes</h2><p class=\"section-intro\">Nothing below is canonical until you accept the complete validated proposal.</p>${details('Proposal diff',rows,true)}<details class=\"record-card\"><summary>Advanced raw proposal<span>Audit</span></summary><div class=\"record-body\">${details('Complete proposal',p)}</div></details><div class=\"button-row\"><button class=\"primary\" id=\"accept-proposal\">Accept response</button><button id=\"reject-proposal\">Reject response</button><button id=\"request-correction\">Request correction</button></div><div class=\"field\"><label>Correction or refinement needed</label><textarea id=\"correction-reason\" placeholder=\"State exactly what is missing, incorrect, or should be made more complete.\"></textarea></div></div>`;}")
+          old_acc=[line for line in s.splitlines() if line.startswith('function acceptedStageMarkup(n){')]
+          if len(old_acc)!=1: raise SystemExit('acceptedStageMarkup source mismatch')
+          acc=old_acc[0].replace("records=collections.flatMap(c=>engine.records(current,c,{stage:n}).map(r=>({collection:c,...r})));","records=collections.flatMap(c=>engine.records(current,c,{stage:n}).map(r=>({collection:c,...r}))),laneAccepted=acceptedResponseForCurrentLane(n);").replace("${engine.acceptedChanges(current,n).length&&!current.isRetainedTestProject?","${laneAccepted&&!current.isRetainedTestProject?").replace('Invalidate accepted result and request refinement','Invalidate this operation/run result and request refinement')
+          s=replace_line(s,'function acceptedStageMarkup(n){',acc)
+          old_controls=[line for line in s.splitlines() if line.startswith('function controls(d,locked){')]
+          if len(old_controls)!=1: raise SystemExit('controls source mismatch')
+          c=old_controls[0].replace("runBatch=[11,17,19].includes(n);","runBatch=n===11||([17,19].includes(n)&&selectedOperation(n)==='EXECUTE_RUN'),humanBlockers=engine.openBlockers(current,n).filter(x=>x.source==='HUMAN_DECISION');")
+          needle="</button></div>${allowFresh?"
+          block="</button></div>${humanBlockers.length?`<div class=\"field\"><label>Resolution evidence for human-created blocker</label><textarea id=\"blocker-resolution-evidence\"></textarea></div>${humanBlockers.map(b=>`<div class=\"button-row\"><button data-resolve-blocker=\"${esc(engine.recordId(b,'blockers'))}\">Resolve ${esc(engine.recordId(b,'blockers'))}</button></div>`).join('')}`:''}${allowFresh?"
+          if needle not in c: raise SystemExit('controls insertion source mismatch')
+          c=c.replace(needle,block,1)
+          s=replace_line(s,'function controls(d,locked){',c)
+          s=replace_line(s,'function pendingProposal(){',"function pendingProposal(){return safe(current.projectData.responseProposals).filter(x=>Number(x.stage)===current.activeStage&&x.status==='PENDING_OPERATOR_REVIEW'&&responseLaneMatches(x,current.activeStage)).at(-1);}")
+          add_line=[line for line in s.splitlines() if line.startswith('async function addBlocker(){')]
+          if len(add_line)!=1: raise SystemExit('addBlocker source mismatch')
+          resolve="async function resolveHumanBlocker(blockerId){const resolutionEvidence=$('#blocker-resolution-evidence')?.value.trim(),operatorLabel=$('#operator-label')?.value.trim()||'HUMAN_OPERATOR';if(!resolutionEvidence){alert('Resolution evidence is required before closing a human-created blocker.');$('#blocker-resolution-evidence')?.focus();return;}try{const next=clone(current);engine.resolveHumanBlocker(next,{blockerId,resolutionEvidence,operatorLabel});await persistReplacement(next);announce('human blocker resolved');render();}catch(error){alert(error.message||error);}}"
+          if resolve not in s: s=s.replace(add_line[0],add_line[0]+'\n'+resolve,1)
+          wire=[line for line in s.splitlines() if line.startswith('function wire(){')]
+          if len(wire)!=1: raise SystemExit('wire source mismatch')
+          w=wire[0]
+          old="if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);await navigator.clipboard?.writeText(record.prompt);announce('instruction saved and copied');};"
+          new="if($('#copy-prompt'))$('#copy-prompt').onclick=async()=>{const record=await savePromptRecord(current.activeStage);try{if(!navigator.clipboard?.writeText)throw new Error('Clipboard API unavailable.');await navigator.clipboard.writeText(record.prompt);announce('instruction saved and copied');}catch(error){console.error(error);announce('instruction saved; clipboard copy failed');}};"
+          if old not in w: raise SystemExit('clipboard source mismatch')
+          w=w.replace(old,new,1)
+          old="if($('#refine-accepted-response'))$('#refine-accepted-response').onclick=async()=>{const reason=$('#accepted-refinement-reason')?.value.trim();if(!reason){alert('Describe why the accepted result must be refined.');$('#accepted-refinement-reason')?.focus();return;}try{const next=clone(current),change=engine.acceptedChanges(next,current.activeStage).at(-1);if(!change)throw new Error('No current accepted response exists to refine.');engine.invalidateAcceptedResponse(next,{stage:current.activeStage,rawResponseId:change.rawResponseId,reason,operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('accepted result invalidated for refinement');render();}catch(error){alert(error.message||error);}};"
+          new="if($('#refine-accepted-response'))$('#refine-accepted-response').onclick=async()=>{const reason=$('#accepted-refinement-reason')?.value.trim();if(!reason){alert('Describe why the accepted result must be refined.');$('#accepted-refinement-reason')?.focus();return;}try{const next=clone(current),change=acceptedResponseForCurrentLane(current.activeStage);if(!change)throw new Error('No accepted response exists for the selected operation/run lane.');engine.invalidateAcceptedResponse(next,{stage:current.activeStage,rawResponseId:change.rawResponseId,reason,operatorLabel:$('#operator-label')?.value.trim()||'HUMAN_OPERATOR'});await persistReplacement(next);announce('accepted result invalidated for refinement');render();}catch(error){alert(error.message||error);}};"
+          if old not in w: raise SystemExit('refinement source mismatch')
+          w=w.replace(old,new,1)
+          old="if($('#add-blocker'))$('#add-blocker').onclick=addBlocker;if($('#add-fresh-context'))"
+          new="if($('#add-blocker'))$('#add-blocker').onclick=addBlocker;document.querySelectorAll('[data-resolve-blocker]').forEach(b=>b.onclick=()=>resolveHumanBlocker(b.dataset.resolveBlocker));if($('#add-fresh-context'))"
+          if old not in w: raise SystemExit('blocker wire source mismatch')
+          w=w.replace(old,new,1)
+          s=replace_line(s,'function wire(){',w)
+          load=[line for line in s.splitlines() if line.startswith('async function load(){')]
+          if len(load)!=1: raise SystemExit('load source mismatch')
+          l=load[0]
+          old="await projectStore.ready;projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;"
+          new="await projectStore.ready;const savedSelectedProjectId=await projectStore.metaGet('selectedProject');projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;"
+          if old not in l: raise SystemExit('load selection source mismatch')
+          l=l.replace(old,new,1)
+          old="if(!projects.length){projects=[ensureState(core.createBlankState(createUniqueJobId()))];needsPersist=true;}current=projects[0];if(needsPersist){const selectedId=current.job.JOB_ID;projects=await projectStore.writeAll(projects);current=projects.find(p=>p.job?.JOB_ID===selectedId)||projects[0];}"
+          new="if(!projects.length){projects=[ensureState(core.createBlankState(createUniqueJobId()))];needsPersist=true;}current=projects.find(p=>p.job?.JOB_ID===savedSelectedProjectId)||projects[0];if(needsPersist){const selectedId=current.job.JOB_ID;projects=await projectStore.writeAll(projects);current=projects.find(p=>p.job?.JOB_ID===selectedId)||projects[0];await projectStore.metaPut('selectedProject',current.job.JOB_ID);}"
+          if old not in l: raise SystemExit('load current source mismatch')
+          l=l.replace(old,new,1)
+          s=replace_line(s,'async function load(){',l)
+          picker="$('#project-picker').onchange=e=>{current=projects[Number(e.target.value)];render();};"
+          if picker not in s: raise SystemExit('project picker source mismatch')
+          s=s.replace(picker,"$('#project-picker').onchange=async e=>{current=projects[Number(e.target.value)];await projectStore.metaPut('selectedProject',current.job.JOB_ID);render();};",1)
+          p.write_text(s)
+
+          p=Path('workflow-engine.js'); s=p.read_text()
+          start=s.index("function createHumanBlocker(project,{stage=project.activeStage,reason,operatorLabel='HUMAN_OPERATOR'}={}){")
+          end=s.index('function registerFreshContext',start)
+          human=s[start:end]
+          resolve_engine="""function resolveHumanBlocker(project,{blockerId,resolutionEvidence,operatorLabel='HUMAN_OPERATOR'}={}){\n  ensureShape(project);const id=String(blockerId||'').trim(),evidence=String(resolutionEvidence||'').trim();if(!id)throw new Error('A blocker identity is required.');if(!evidence)throw new Error('Resolution evidence is required.');const blocker=records(project,'blockers',{active:false}).find(record=>recordId(record,'blockers')===id);if(!blocker)throw new Error(`Blocker ${id} does not exist.`);if(blocker.source!=='HUMAN_DECISION')throw new Error('Only independently human-created blockers may be resolved by this human authority control.');if(!isActiveRecord(blocker)||!['OPEN','BLOCKED','IN PROGRESS','UNKNOWN'].includes(upper(recordValue(blocker,'STATUS')||'OPEN')))throw new Error(`Blocker ${id} is not open.`);\n  const updates={STATUS:'RESOLVED',RESOLUTION_EVIDENCE:evidence,CLOSURE:'CLOSED',REEVALUATION:'COMPLETED',REQUIRED_REVALIDATION:'RECALCULATED'};blocker.fields=blocker.fields&&typeof blocker.fields==='object'?blocker.fields:{};for(const [key,value] of Object.entries(updates)){blocker.fields[key]=value;blocker[key]=value;}blocker.updatedAt=now();blocker.resolvedBy=operatorLabel;blocker.identityAssurance='SELF_ASSERTED';blocker.contentSha256=hash.contentRecordSha256?hash.contentRecordSha256(blocker,'BLOCKER_ID'):hash.sha256Value(blocker.fields);blocker.recordSha256=hash.recordSha256?hash.recordSha256(blocker):hash.sha256Value(blocker);blocker.sha256=blocker.recordSha256;addHistory(project,'HUMAN_BLOCKER_RESOLVED',{stage:Number(blocker.stage||0),recordId:id,operatorLabel,identityAssurance:'SELF_ASSERTED',resolutionEvidence:evidence});recalculate(project);return blocker;\n}\n"""
+          if 'function resolveHumanBlocker(' not in s: s=s[:end]+resolve_engine+s[end:]
+          start=s.index("function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){")
+          end=s.index('function registerArtifactBytes',start)
+          reserve="""function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){\n  ensureShape(project);if(count!==10)throw new Error('Run batches must contain exactly ten slots.');const resolvedIteration=iterationId||project.job.CURRENT_ITERATION;if(!resolvedIteration)throw new Error('A current iteration is required before reserving runs.');const stageNumber=Number(stage),existingRuns=records(project,'runs').filter(run=>Number(run.stage)===stageNumber&&String(recordValue(run,'ITERATION_ID')||run.scope?.iterationId||'')===String(resolvedIteration));\n  if(existingRuns.length){if(existingRuns.length!==count)throw new Error(`The current Stage ${String(stageNumber).padStart(2,'0')} iteration already contains ${existingRuns.length} active run slots; expected exactly ${count}. Resolve the partial or contradictory batch instead of allocating more.`);const existing=existingRuns.map(run=>{const runId=recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||'');const context=records(project,'freshContexts').find(item=>recordId(item,'freshContexts')===contextId&&String(recordValue(item,'ITERATION_ID')||item.scope?.iterationId||'')===String(resolvedIteration));if(!context)throw new Error(`Existing run ${runId} does not resolve to its active fresh-context slot.`);return {runId,contextId};});if(new Set(existing.map(item=>item.contextId)).size!==count)throw new Error('The existing run batch does not contain ten distinct active context slots.');return existing;}\n  const created=[];for(let i=0;i<count;i++){const context=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:'UNASSIGNED',ROLE:core.STAGES[stageNumber-1]?.role||'UNKNOWN',ITERATION_ID:resolvedIteration,RUN_ID:'PENDING',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE',EVIDENCE:'Application-reserved context slot.',USABILITY_DETERMINATION:'PENDING'},{stage:stageNumber,source:'APPLICATION_RESERVATION'});const run=commandRecord(project,'runs',{ITERATION_ID:resolvedIteration,CANDIDATE_ID:candidateId||'PENDING',CONTEXT_ID:context.id,FRESH_CONTEXT_RECORD:context.id,CONTAMINATION_CHECK:'PENDING',TOOL_CONFIGURATION:'PENDING',EXECUTION_STATUS:'RESERVED',COMPLETE_OUTPUT:''},{stage:stageNumber,source:'APPLICATION_RESERVATION'});context.fields.RUN_ID=context.RUN_ID=run.id;created.push({runId:run.id,contextId:context.id});}\n  addHistory(project,'RUN_BATCH_RESERVED',{stage:stageNumber,iterationId:resolvedIteration,count,slots:created});recalculate(project);return created;\n}\n"""
+          s=s[:start]+reserve+s[end:]
+          export_old='registerGeneratedPrompt,createHumanBlocker,registerFreshContext'
+          if export_old not in s: raise SystemExit('engine export source mismatch')
+          s=s.replace(export_old,'registerGeneratedPrompt,createHumanBlocker,resolveHumanBlocker,registerFreshContext',1)
+          p.write_text(s)
+
+          p=Path('verify-complete.mjs'); s=p.read_text(); marker="console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));"
+          tests="""// Run-batch reservation is idempotent and partial batches fail closed.\n{\n const p=project('JOB-RUN-BATCH-IDEMPOTENT');p.job.CURRENT_ITERATION='ITERATION-IDEMPOTENT';\n const first=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10}),historyCount=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;\n const second=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});\n assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:17}).length===10&&engine.records(p,'freshContexts',{stage:17}).length===10,'Repeated run-batch reservation allocated duplicate slots.');\n assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===historyCount,'Idempotent run-batch reservation created a second reservation event.');\n engine.records(p,'runs',{stage:17})[0].active=false;let threw=false;try{engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});}catch{threw=true;}assert(threw,'Partial active run batch was silently topped up instead of failing closed.');\n}\n\n// Human-created blockers have a controlled human-resolution inverse and cannot resolve agent blockers.\n{\n const p=project('JOB-HUMAN-BLOCKER-RESOLUTION'),human=engine.createHumanBlocker(p,{stage:1,reason:'Human-only prerequisite is missing.',operatorLabel:'VERIFY'});assert(engine.openBlockers(p).some(x=>engine.recordId(x,'blockers')===human.id),'Human blocker did not open.');\n const resolved=engine.resolveHumanBlocker(p,{blockerId:human.id,resolutionEvidence:'The prerequisite was supplied and reviewed.',operatorLabel:'VERIFY'});assert(engine.recordValue(resolved,'STATUS')==='RESOLVED'&&engine.recordValue(resolved,'CLOSURE')==='CLOSED'&&!engine.openBlockers(p).some(x=>engine.recordId(x,'blockers')===human.id),'Human blocker did not close through the controlled resolution path.');\n const agent=record('blockers',1,{STATUS:'OPEN',CLOSURE:'OPEN'},'BLOCKER-AGENT');agent.source='APPLICATION_DISPOSITION';p.projectData.blockers.push(agent);let rejected=false;try{engine.resolveHumanBlocker(p,{blockerId:'BLOCKER-AGENT',resolutionEvidence:'not authorized',operatorLabel:'VERIFY'});}catch{rejected=true;}assert(rejected,'Human resolution control was allowed to close a non-human blocker.');\n}\n\n"""
+          if tests not in s:
+              if marker not in s: raise SystemExit('verify-complete marker missing')
+              s=s.replace(marker,tests+marker,1)
+          p.write_text(s)
+
+          p=Path('verify-browser-extra.mjs'); s=p.read_text(); marker="  console.log('extra:blob-persistence');"
+          lane="""  console.log('extra:operator-lane-selection');\n  const laneSetup=await evalValue(cdp,`(async()=>{const store=closedLoopProjectStore,engine=closedLoopWorkflowEngine,jobId=${JSON.stringify(newest.job.JOB_ID)},p=(await store.readAll()).find(x=>x.job?.JOB_ID===jobId);p.job.CURRENT_ITERATION='ITERATION-BROWSER-LANE';const slots=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-BROWSER-LANE',candidateId:'CANDIDATE-BROWSER-LANE',count:10});const make=(slot,label)=>({proposalId:'PROPOSAL-BROWSER-'+label,rawResponseId:'RAW-BROWSER-'+label,validationId:'VALIDATION-BROWSER-'+label,promptId:'PROMPT-BROWSER-'+label,jobId,stage:17,responseType:'DATA_PROPOSAL',status:'PENDING_OPERATOR_REVIEW',scope:{iterationId:'ITERATION-BROWSER-LANE',runId:slot.runId,contextId:slot.contextId},envelope:{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-BROWSER-LANE',runId:slot.runId,contextId:slot.contextId}},changes:[],proposedStageData:{},canonicalRecords:[],humanInputRequests:[],unresolved:[],warnings:[],attachments:[]});p.projectData.responseProposals.push(make(slots[0],'A'),make(slots[1],'B'));const saved=await store.writeProject(p,{expectedProjectRevision:p.revision});return {slots,revision:saved.revision};})()`);\n  await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);let selectedAfterReload=await activeProject(cdp);assert(selectedAfterReload.job.JOB_ID===newest.job.JOB_ID,'Reload ignored the persisted selected project and returned to another project.');\n  await openStage(cdp,17);assert(!(await evalValue(cdp,`Boolean(document.querySelector('#reserve-run-batch'))`)),'Run reservation control was exposed for non-execution Stage 17 operation.');await evalValue(cdp,`(()=>{const e=document.querySelector('#operation-picker');e.value='EXECUTE_RUN';e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.querySelector('#operation-picker')?.value==='EXECUTE_RUN'`);assert(await evalValue(cdp,`Boolean(document.querySelector('#reserve-run-batch'))`),'Run reservation control was missing for Stage 17 EXECUTE_RUN.');\n  assert(await evalValue(cdp,`document.querySelector('#proposal-heading')?.innerText.includes('PROPOSAL-BROWSER-A')&&!document.querySelector('#proposal-heading')?.innerText.includes('PROPOSAL-BROWSER-B')`),'Selected run A displayed the wrong pending proposal.');await evalValue(cdp,`(()=>{const e=document.querySelector('#run-slot-picker');e.value=${JSON.stringify(laneSetup.slots[1].runId)};e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.querySelector('#run-slot-picker')?.value===${JSON.stringify(laneSetup.slots[1].runId)}`);assert(await evalValue(cdp,`document.querySelector('#proposal-heading')?.innerText.includes('PROPOSAL-BROWSER-B')&&!document.querySelector('#proposal-heading')?.innerText.includes('PROPOSAL-BROWSER-A')`),'Selected run B displayed the wrong pending proposal.');await click(cdp,'#reject-proposal');await sleep(250);const laneState=await activeProject(cdp);const pa=laneState.projectData.responseProposals.find(x=>x.proposalId==='PROPOSAL-BROWSER-A'),pb=laneState.projectData.responseProposals.find(x=>x.proposalId==='PROPOSAL-BROWSER-B');assert(pa?.status==='PENDING_OPERATOR_REVIEW'&&pb?.status==='REJECTED','Reject action applied to the wrong run-scoped proposal.');\n\n"""
+          if lane not in s:
+              if marker not in s: raise SystemExit('browser lane marker missing')
+              s=s.replace(marker,lane+marker,1)
+          old="  await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');"
+          new="  await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).some(x=>x.source==='HUMAN_DECISION')&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');assert(await evalValue(cdp,`Boolean(document.querySelector('[data-resolve-blocker]'))`),'Human-created blocker has no resolution control.');await fill(cdp,'#blocker-resolution-evidence','Missing input was supplied and reviewed.');await click(cdp,'[data-resolve-blocker]');support=await activeProject(cdp);assert(!(support.projectData.blockers||[]).some(x=>x.source==='HUMAN_DECISION'&&String(x.STATUS||x.fields?.STATUS).toUpperCase()==='OPEN'),'Human-created blocker remained open after controlled resolution.');assert(support.job.CURRENT_STATE!=='BLOCKED','Resolved human blocker continued to deadlock the job.');await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');"
+          if old not in s: raise SystemExit('browser blocker source mismatch')
+          s=s.replace(old,new,1)
+          old="browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true"
+          new="browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,runScopedProposalSelection:true,selectedProjectRestored:true,runReservationControlContextual:true,successfulExport:true"
+          if old not in s: raise SystemExit('browser summary source mismatch')
+          s=s.replace(old,new,1).replace('blockerControl:true,freshContextControlContextual:true','blockerControl:true,humanBlockerResolution:true,freshContextControlContextual:true',1)
+          p.write_text(s)
+          PY
+      - name: Verify deterministic application contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node --check verify-browser-extra.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit permanent repair and remove executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/operator-loop-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js workflow-engine.js verify-complete.mjs verify-browser-extra.mjs .github/workflows/operator-loop-repair.yml TEST_PROJECT.json
+          git commit -m "Close operator recovery and run-lane gaps"
+          git push origin HEAD:reliability/operator-loop-closure-20260826
