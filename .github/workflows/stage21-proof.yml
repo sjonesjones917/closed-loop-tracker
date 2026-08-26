@@ -1,0 +1,90 @@
+name: Prove exact target and context contracts
+on:
+  push:
+    branches: [reliability/exact-target-context-current-20260826]
+permissions: {contents: write}
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/exact-target-context-current-20260826}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimum target/context repair
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          def once(path,old,new,label):
+            p=Path(path);s=p.read_text();n=s.count(old)
+            if n!=1: raise SystemExit(f'{label}: expected one anchor, found {n}')
+            p.write_text(s.replace(old,new,1))
+          once('workflow-schema.js',"10:['instructions','preflightRecords','tests','failureTests']","10:['instructions','preflightRecords','tests','failureTests','candidateFreezes','iterations','artifacts']",'stage10 read context')
+          once('workflow-schema.js',"21:['baselines','freshContexts']","21:['baselines','products','freshContexts','artifacts']",'stage21 read context')
+          once('workflow-schema.js',"if(s>=10&&s<=20)keys.push('iterationId','candidateId');if(s===11)keys.push('runId','contextId');if(s>=20)keys.push('baselineId');if(s>=21)keys.push('productId');","if(s>=10&&s<=20)keys.push('iterationId','candidateId');if([11,17,19].includes(s))keys.push('runId','contextId');if(s>=21)keys.push('baselineId','productId');",'scope target ordering')
+          once('prompt-engine.js',"function assertRequiredPromptScope(stage,operation,scope){const required=schema.operationContract(stage,operation)?.scopeRequirements||[],laneKeys=['runId','contextId'],missing=required.filter(key=>laneKeys.includes(key)&&scopePlaceholder(scope?.[key]));if(missing.length){const error=new Error(`Controlling instruction cannot be created until application execution-lane identity exists for: ${missing.join(', ')}.`);error.code='MISSING_REQUIRED_PROMPT_SCOPE';error.missingScope=missing;throw error;}return scope;}","function assertRequiredPromptScope(stage,operation,scope){const required=schema.operationContract(stage,operation)?.scopeRequirements||[],targetKeys=['iterationId','candidateId','runId','contextId','baselineId','productId'],missing=required.filter(key=>targetKeys.includes(key)&&scopePlaceholder(scope?.[key]));if(missing.length){const error=new Error(`Controlling instruction cannot be created until application target identity exists for: ${missing.join(', ')}.`);error.code='MISSING_REQUIRED_PROMPT_SCOPE';error.missingScope=missing;throw error;}return scope;}",'prompt target guard')
+          once('response-ingestion.js',"const expected=currentScope(project,promptRecord),placeholder=value=>['','UNKNOWN','NONE','NOT APPLICABLE','UNASSIGNED','PENDING'].includes(String(value??'').trim().toUpperCase()),laneKeys=['runId','contextId'];for(const key of operationContract?.scopeRequirements||[])if(laneKeys.includes(key)){if(placeholder(envelope.scope[key]))issues.push(issue('MISSING_REQUIRED_SCOPE',`/scope/${key}`,`Required execution-lane scope ${key} is missing or unresolved.`));if(placeholder(expected[key]))issues.push(issue('INVALID_CONTROLLING_PROMPT_SCOPE',`/scope/${key}`,`The saved controlling prompt is missing required execution-lane scope ${key}.`));}","const expected=currentScope(project,promptRecord),placeholder=value=>['','UNKNOWN','NONE','NOT APPLICABLE','UNASSIGNED','PENDING'].includes(String(value??'').trim().toUpperCase()),targetKeys=['iterationId','candidateId','runId','contextId','baselineId','productId'];for(const key of operationContract?.scopeRequirements||[])if(targetKeys.includes(key)){if(placeholder(envelope.scope[key]))issues.push(issue('MISSING_REQUIRED_SCOPE',`/scope/${key}`,`Required application target scope ${key} is missing or unresolved.`));if(placeholder(expected[key]))issues.push(issue('INVALID_CONTROLLING_PROMPT_SCOPE',`/scope/${key}`,`The saved controlling prompt is missing required application target scope ${key}.`));}",'ingestion target guard')
+          p=Path('verify-ingestion.mjs');s=p.read_text()
+          old="""function savePrompt(p,stage){
+  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
+  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
+"""
+          new="""function promptOptions(p,stage,operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0]){
+  const scope={};
+  for(const key of schema.operationContract(stage,operation).scopeRequirements){
+    if(key==='projectRevision')scope[key]=Number(p.revision||0); else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION; else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001'; else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001'; else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001'; else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001'; else if(key==='iterationId')scope[key]='ITERATION-INGESTION-FIXTURE'; else if(key==='candidateId')scope[key]='CANDIDATE-INGESTION-FIXTURE'; else if(key==='runId')scope[key]='RUN-INGESTION-FIXTURE'; else if(key==='contextId')scope[key]='CONTEXT-INGESTION-FIXTURE'; else if(key==='baselineId')scope[key]='BASELINE-INGESTION-FIXTURE'; else if(key==='productId')scope[key]='PRODUCT-INGESTION-FIXTURE';
+  }
+  return {operation,scope};
+}
+function savePrompt(p,stage){
+  const options=promptOptions(p,stage);
+  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
+"""
+          if s.count(old)!=1: raise SystemExit('savePrompt fixture anchor changed')
+          s=s.replace(old,new,1)
+          old="if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{};const nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt;"
+          new="if(stage<30){const nextStage=stage+1,nextOptions=promptOptions(reloaded,nextStage);const nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt;"
+          if s.count(old)!=1: raise SystemExit('next prompt fixture anchor changed')
+          s=s.replace(old,new,1).replace("['baseline',20,'baselineId']","['baseline',21,'baselineId']",1)
+          anchor="scopeNegative('non-required populated scope identity',2,'baselineId');\n"
+          extra="""for(const [name,stage,operation,key] of [['missing candidate target',10,'COMPLETE','candidateId'],['missing run target',11,'COMPLETE','runId'],['missing context target',11,'COMPLETE','contextId'],['missing Stage 17 run target',17,'EXECUTE_RUN','runId'],['missing Stage 17 context target',17,'VERIFY','contextId'],['missing Stage 19 run target',19,'EXECUTE_RUN','runId'],['missing Stage 19 context target',19,'VERIFY','contextId'],['missing baseline target',21,'COMPLETE','baselineId'],['missing product target',21,'COMPLETE','productId']]){const p=project(`JOB-MISSING-${key}-${stage}`),options=promptOptions(p,stage,operation),pr={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=blockedEnvelope(p,stage,pr);e.scope[key]=null;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MISSING_REQUIRED_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: missing required application target was not rejected.`);negativeCount++;}
+"""
+          if s.count(anchor)!=1: raise SystemExit('target negative insertion anchor changed')
+          p.write_text(s.replace(anchor,anchor+extra,1))
+          p=Path('verify-prompt-semantics.mjs');s=p.read_text();anchor="if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');\n"
+          proof="""if(!schema.operationContract(10,'COMPLETE').readCollections.includes('candidateFreezes')||!schema.operationContract(10,'COMPLETE').readCollections.includes('iterations')||!schema.operationContract(10,'COMPLETE').readCollections.includes('artifacts'))throw new Error('Stage 10 cannot inspect its exact frozen candidate context.');
+if(!schema.operationContract(21,'COMPLETE').readCollections.includes('products')||!schema.operationContract(21,'COMPLETE').readCollections.includes('artifacts'))throw new Error('Stage 21 cannot inspect its reserved product/artifact context.');
+if(schema.operationContract(20,'COMPLETE').scopeRequirements.includes('baselineId'))throw new Error('Stage 20 requires BASELINE_ID before baseline creation.');
+for(const stage of [17,19])for(const operation of ['EXECUTE_RUN','VERIFY'])for(const key of ['runId','contextId'])if(!schema.operationContract(stage,operation).scopeRequirements.includes(key))throw new Error(`Stage ${stage} ${operation} does not require ${key}.`);
+for(const key of ['baselineId','productId'])if(!schema.operationContract(21,'COMPLETE').scopeRequirements.includes(key))throw new Error(`Stage 21 does not require ${key}.`);
+for(const [stage,operation,scope,key] of [[10,'COMPLETE',{iterationId:'ITERATION-X'},'candidateId'],[17,'EXECUTE_RUN',{iterationId:'ITERATION-X',candidateId:'CANDIDATE-X',contextId:'CONTEXT-X'},'runId'],[19,'VERIFY',{iterationId:'ITERATION-X',candidateId:'CANDIDATE-X',runId:'RUN-X'},'contextId'],[21,'COMPLETE',{baselineId:'BASELINE-X'},'productId']]){let code='';try{prompts.assertRequiredPromptScope(stage,operation,scope);}catch(error){code=error.code;}if(code!=='MISSING_REQUIRED_PROMPT_SCOPE')throw new Error(`Stage ${stage} ${operation} did not fail closed on missing ${key}.`);}
+"""
+          if s.count(anchor)!=1: raise SystemExit('prompt semantics anchor changed')
+          p.write_text(s.replace(anchor,anchor+proof,1))
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+            b=Path(path).read_bytes();return hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{f}:{blob(f)}\n' for f in files).encode()).hexdigest()[:16]
+          p=Path('index.html');h=p.read_text();h2=re.sub(r'(?<=\?v=)runtime-[a-f0-9]{16}',token,h)
+          if h2==h: raise SystemExit('runtime token not refreshed')
+          p.write_text(h2)
+          PY
+      - name: Prove complete application
+        run: |
+          node build-test-project.mjs
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-ingestion.mjs verify-prompt-semantics.mjs; do node --check "$f"; done
+          node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/target-context-http.log 2>&1 & P=$!; trap 'kill $P 2>/dev/null || true' EXIT
+          run_browser_verifier(){ script="$1"; for attempt in 1 2 3; do log="/tmp/${script}.${attempt}.log"; if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi; cat "$log"; grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log" || return 1; test "$attempt" -lt 3 || return 1; done; }
+          run_browser_verifier verify-browser.mjs && run_browser_verifier verify-browser-extra.mjs
+      - name: Commit only proven source
+        run: |
+          rm -f .github/workflows/exact-target-context-proof.yml .github/workflows/stage21-proof.yml .target-context-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Bind prompts and responses to exact application targets [target-context-complete]'
+          git push origin HEAD:reliability/exact-target-context-current-20260826
