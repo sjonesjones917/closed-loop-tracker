@@ -40,7 +40,10 @@ function semanticIssues(record){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
     if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
+    if(!record.prompt.includes('no legitimate independent external source or evidence applies'))issues.push('SOURCE_EVIDENCE_NO_SOURCE_RULE_MISSING');
+    if(record.prompt.includes('no legitimate external authority applies'))issues.push('SOURCE_AUTHORITY_EVIDENCE_CONFLATION');
   }
+  if(record.stage===9){if(!record.prompt.includes('in an independent context.'))issues.push('PREFLIGHT_INDEPENDENCE_MISSING');if(record.prompt.includes('independent context where required'))issues.push('PREFLIGHT_INDEPENDENCE_CONDITIONAL');}
   return issues;
 }
 
