@@ -34,34 +34,25 @@ jobs:
           p=Path('verify.mjs');s=p.read_text().replace("record.prompt.includes('genuinely independent external governing sources')","record.prompt.includes('independent external source inventory')").replace("record.prompt.includes('Research only the legitimate Stage 02 external governing source set')","record.prompt.includes('Research only the current accepted Stage 02 independent external source set')");p.write_text(s)
       - name: Apply exact runtime closure
         run: python .final_patch.py
-      - name: Verify deterministic acceptance and capture output
-        id: verify
-        continue-on-error: true
+      - name: Verify deterministic acceptance
         run: |
-          set -o pipefail
-          {
-            node --check prompt-engine.js &&
-            node --check workflow-schema.js &&
-            node --check workflow-engine.js &&
-            node --check response-ingestion.js &&
-            node --check app-core.js &&
-            node build-test-project.mjs &&
-            node verify.mjs &&
-            node verify-ingestion.mjs &&
-            node verify-complete.mjs &&
-            node verify-full-cycle.mjs &&
-            node verify-prompt-semantics.mjs
-          } 2>&1 | tee .integration-test.log
-      - name: Persist diagnostic or clean result
+          node --check prompt-engine.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean result
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          if [ "${{ steps.verify.outcome }}" = success ]; then
-            rm .final_patch.py .github/workflows/organic-final-integrate.yml .integration-test.log
-            git add -A
-            git commit -m "Close prompt, recovery, operation, and evidence workflow gaps"
-          else
-            git add .integration-test.log
-            git commit -m "Capture final integration verifier failure"
-          fi
+          rm -f .final_patch.py .integration-test.log .github/workflows/organic-final-integrate.yml
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m "Close prompt, recovery, operation, and evidence workflow gaps"
           git push origin HEAD:practical-100/organic-self-spec-final
