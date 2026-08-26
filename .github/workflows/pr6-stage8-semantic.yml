@@ -1,0 +1,184 @@
+name: Repair a Stage 8 ownership-gate contradiction
+on:
+  push:
+    branches: [practical-100/pr6-final]
+permissions:
+  contents: write
+concurrency:
+  group: pr6-stage8-semantic
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Establish current lifecycle status
+        id: before
+        shell: bash
+        run: |
+          set +e
+          node verify-full-cycle.mjs > /tmp/before.log 2>&1
+          status=$?
+          set -e
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+      - name: Apply the ownership-consistent Stage 8 candidate when required
+        if: steps.before.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp workflow-engine.js /tmp/workflow-engine.before.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          schema=Path('workflow-schema.js').read_text()
+          engine_path=Path('workflow-engine.js')
+          engine=engine_path.read_text()
+          report=[]
+          # Limit the schema check to the instructionTraces declaration.
+          i=schema.find('instructionTraces')
+          if i < 0:
+              raise SystemExit('instructionTraces schema is missing')
+          schema_segment=schema[max(0,i-1500):i+6000]
+          status_application_owned=bool(re.search(r'application\s*:\s*\[[^\]]*["\']STATUS["\']', schema_segment, re.S))
+          report.append(f'STATUS application-owned: {status_application_owned}')
+          # Limit source replacement to the Stage 8 gate region.
+          candidates=[]
+          for pattern in [r'function\s+\w*(?:stage|Stage)0?8\w*\s*\(', r'case\s+8\s*:', r'\bstage(?:Number)?\s*===?\s*8\b']:
+              m=re.search(pattern, engine)
+              if m: candidates.append(m.start())
+          if not candidates:
+              raise SystemExit('Stage 8 gate region not found')
+          start=min(candidates)
+          later=[]
+          for pattern in [r'function\s+\w*(?:stage|Stage)0?9\w*\s*\(', r'case\s+9\s*:', r'\bstage(?:Number)?\s*===?\s*9\b']:
+              m=re.search(pattern, engine[start+1:])
+              if m: later.append(start+1+m.start())
+          end=min(later) if later else min(len(engine), start+16000)
+          segment=engine[start:end]
+          report.append(f'Stage 8 segment contains instructionTraces: {"instructionTraces" in segment}')
+          report.append(f'Stage 8 segment contains STATUS: {"STATUS" in segment}')
+          if not (status_application_owned and 'instructionTraces' in segment and 'STATUS' in segment):
+              raise SystemExit('\n'.join(report)+"\nNo ownership-gate contradiction candidate applies")
+          helper='''\n  function instructionTraceSubstantiveComplete(record) {\n    const fields = record && record.fields && typeof record.fields === "object" ? record.fields : {};\n    const relationships = record && record.relationships && typeof record.relationships === "object" ? record.relationships : {};\n    const present = (value) => {\n      if (Array.isArray(value)) return value.length > 0;\n      if (value && typeof value === "object") {\n        return Boolean(value.targetId || value.recordId || value.id || value.value || value.tempKey);\n      }\n      return value !== null && value !== undefined && String(value).trim() !== "";\n    };\n    const value = (key) => fields[key] ?? relationships[key] ?? record?.[key];\n    const evidencePresent = present(value("EVIDENCE_ID")) || (Array.isArray(record?.evidenceRefs) && record.evidenceRefs.length > 0);\n    return present(value("REQ_ID")) &&\n      present(value("INSTRUCTION_ID")) &&\n      present(value("INSTRUCTION_LOCATION")) &&\n      present(value("IMPLEMENTED_BEHAVIOR")) &&\n      evidencePresent;\n  }\n\n'''
+          if 'function instructionTraceSubstantiveComplete' not in engine:
+              anchor=re.search(r'(?m)^\s*function\s+recordsForCurrentScope\s*\(', engine)
+              if not anchor:
+                  raise SystemExit('recordsForCurrentScope insertion anchor not found')
+              engine=engine[:anchor.start()]+helper+engine[anchor.start():]
+              delta=len(helper)
+              start+=delta
+              end+=delta
+              segment=engine[start:end]
+          # Replace only a trace callback predicate that depends on STATUS.
+          lines=segment.splitlines(True)
+          changed=False
+          for idx,line in enumerate(lines):
+              if 'STATUS' not in line:
+                  continue
+              if not any(token in line for token in ('.filter(', '.some(', '.every(', '=>')):
+                  continue
+              arrow=re.search(r'(?:\(\s*)?([A-Za-z_$][\w$]*)(?:\s*\))?\s*=>', line)
+              if not arrow:
+                  continue
+              var=arrow.group(1)
+              # Preserve the collection method and replace only its callback expression.
+              method=re.search(r'\.(filter|some|every)\(.*$', line)
+              if not method:
+                  continue
+              prefix=line[:method.start()]
+              indent=re.match(r'\s*', line).group(0)
+              trailer='\n' if line.endswith('\n') else ''
+              lines[idx]=prefix+f'.{method.group(1)}(({var}) => instructionTraceSubstantiveComplete({var}));'+trailer
+              changed=True
+              report.append(f'Replaced Stage 8 STATUS callback on line {idx+1}')
+              break
+          if not changed:
+              # Handle a direct STATUS comparison inside a multiline callback.
+              pattern=re.compile(r'(?P<access>[A-Za-z_$][\w$]*\s*=>[\s\S]{0,500}?["\']STATUS["\'][\s\S]{0,300}?)(?:===|==)\s*["\'](?:COMPLETE|SATISFIED|ACTIVE)["\']')
+              m=pattern.search(segment)
+              if m:
+                  var=re.match(r'([A-Za-z_$][\w$]*)\s*=>', m.group('access').lstrip()).group(1)
+                  segment=segment[:m.start()]+f'{var} => instructionTraceSubstantiveComplete({var})'+segment[m.end():]
+                  changed=True
+                  report.append('Replaced multiline Stage 8 STATUS callback')
+              else:
+                  segment=''.join(lines)
+          else:
+              segment=''.join(lines)
+          if not changed:
+              raise SystemExit('\n'.join(report)+"\nNo exact STATUS callback was replaced")
+          engine=engine[:start]+segment+engine[end:]
+          engine_path.write_text(engine)
+          Path('/tmp/stage8-semantic-report.txt').write_text('\n'.join(report))
+          PY
+          cat /tmp/stage8-semantic-report.txt
+      - name: Verify candidate
+        id: candidate
+        if: steps.before.outputs.exit_code != '0'
+        shell: bash
+        run: |
+          set +e
+          for file in *.js *.mjs; do node --check "$file" || exit 20; done
+          node build-test-project.mjs && \
+          node verify.mjs && \
+          node verify-prompt-semantics.mjs && \
+          node verify-ingestion.mjs && \
+          node verify-complete.mjs && \
+          node verify-full-cycle.mjs > /tmp/after.log 2>&1
+          status=$?
+          set -e
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+      - name: Keep only a fully passing candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          before='${{ steps.before.outputs.exit_code }}'
+          after='${{ steps.candidate.outputs.exit_code }}'
+          if [ "$before" = 0 ]; then
+            cp /tmp/before.log /tmp/accepted.log
+          elif [ "$after" = 0 ]; then
+            cp /tmp/after.log /tmp/accepted.log
+          else
+            cp /tmp/workflow-engine.before.js workflow-engine.js
+            {
+              echo "Stage 8 semantic candidate did not pass; runtime source was restored."
+              test -f /tmp/stage8-semantic-report.txt && cat /tmp/stage8-semantic-report.txt
+              echo '--- ORIGINAL LIFECYCLE ---'
+              tail -n 300 /tmp/before.log
+              echo '--- CANDIDATE LIFECYCLE ---'
+              test -f /tmp/after.log && tail -n 300 /tmp/after.log
+            } > PR6_FULL_CYCLE_DIAGNOSTIC.txt
+            rm -f .github/workflows/pr6-stage8-semantic.yml
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add -A
+            git commit -m "PR 6: preserve failed Stage 8 semantic diagnostic"
+            git push origin HEAD:practical-100/pr6-final
+            exit 1
+          fi
+          rm -f PR6_FULL_CYCLE_DIAGNOSTIC.txt
+          rm -f .github/workflows/pr6-stage8-semantic.yml .github/workflows/pr6-finalize.yml .github/workflows/pr6-finalize-robust.yml .github/workflows/pr6-stage8-contract.yml .github/workflows/pr6-materialize.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          text=p.read_text()
+          for anchor, command in [('node verify.mjs','node verify-prompt-semantics.mjs'),('node verify-complete.mjs','node verify-full-cycle.mjs')]:
+              if command in text: continue
+              pos=text.find(anchor)
+              if pos < 0: raise SystemExit(f'missing anchor {anchor}')
+              eol=text.find('\n',pos)
+              prefix=text[text.rfind('\n',0,pos)+1:pos]
+              text=text[:eol+1]+prefix+command+'\n'+text[eol+1:]
+          p.write_text(text)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "PR 6: resolve Stage 8 ownership-gate contradiction"
+          git push origin HEAD:practical-100/pr6-final
