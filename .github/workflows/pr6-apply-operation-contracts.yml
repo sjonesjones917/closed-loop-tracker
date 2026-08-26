@@ -1,0 +1,25 @@
+name: PR6 apply exact operation contracts
+on:
+  push:
+    branches: [practical-100/pr6-completion]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply schema ingestion prompt alignment
+        run: |
+          python .pr6-operation-contracts.py
+          rm -f .pr6-operation-contracts.py .github/workflows/pr6-apply-operation-contracts.yml .github/workflows/pr6-inspect-stage17-contract.yml
+          node --check workflow-schema.js
+          node --check response-ingestion.js
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Enforce exact repeated-stage operation contracts'
+          git push
