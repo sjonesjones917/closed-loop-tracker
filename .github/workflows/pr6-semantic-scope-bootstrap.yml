@@ -1,4 +1,4 @@
-name: Bootstrap semantic scope correction
+name: Restore corrupted workflow engine
 'on':
   push:
     branches:
@@ -6,7 +6,8 @@ name: Bootstrap semantic scope correction
 permissions:
   contents: write
 jobs:
-  apply:
+  restore:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,34 +17,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Execute guarded transformer source
+      - name: Restore exact last plaintext workflow engine
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          source=Path('.github/workflows/pr6-semantic-scope-fix.yml').read_text()
-          start=source.index("          python - <<'PY'\n")+len("          python - <<'PY'\n")
-          end=source.index("\n          PY\n",start)
-          code='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())
-          code=code.replace("\nold_scope=", "\ntext=engine.read_text()\n\nold_scope=", 1)
-          exec(compile(code,'pr6-semantic-scope-transform.py','exec'),{})
-          PY
-      - name: Verify corrected source and lifecycle
-        run: |
+          git checkout 7718b8dbbb587fdddabcdbb118853507d79db3da -- workflow-engine.js
           node --check workflow-engine.js
-          node --check response-ingestion.js
-          node --check app-core.js
-          node --check verify-complete.mjs
-          node --check verify-full-cycle.mjs
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-prompt-semantics.mjs
-          node verify-full-cycle.mjs
-      - name: Commit corrected responsible layers
+      - name: Commit restoration and remove temporary workflow
         run: |
-          rm .github/workflows/pr6-semantic-scope-fix.yml .github/workflows/pr6-semantic-scope-bootstrap.yml
+          rm .github/workflows/pr6-semantic-scope-bootstrap.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js response-ingestion.js app-core.js verify-complete.mjs verify-full-cycle.mjs .github/workflows/pr6-semantic-scope-fix.yml .github/workflows/pr6-semantic-scope-bootstrap.yml
-          git commit -m "Fix iteration scope and repeated-cycle semantics"
+          git add workflow-engine.js .github/workflows/pr6-semantic-scope-bootstrap.yml
+          git commit -m "Restore plaintext workflow engine"
           git push origin HEAD:practical-100/pr6-final-proof-current
