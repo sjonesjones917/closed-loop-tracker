@@ -43,7 +43,19 @@ if(retained.generatedPrompts?.length!==1||retained.outputReceipts?.length!==1)th
 
 function blank(jobId){const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Verification project';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Controlled verification objective';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;}
 const generated=[];
-for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);const record=prompts.buildPromptRecord(stage,p);generated.push(record.prompt);for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/2','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);if(stage===2&&!record.prompt.includes('genuinely independent external governing sources'))throw new Error('Stage 02 non-circular authority rule missing.');if(stage===3&&!record.prompt.includes('Research only the legitimate Stage 02 external governing source set'))throw new Error('Stage 03 external-source research boundary missing.');}
+for(let stage=1;stage<=30;stage++){
+ const p=blank(`JOB-PROMPT-${stage}`),record=prompts.buildPromptRecord(stage,p),text=record.prompt;
+ generated.push(text);
+ for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/2','PROMPT IDENTITY — ECHO EXACTLY'])if(!text.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);
+ if(stage===2){
+  if(!/independent external/i.test(text)||!/authoritative|official|primary|controlling|reputable/i.test(text))throw new Error('Stage 02 independent external-source authority rule missing.');
+  if(!/target product|operating application|repository/i.test(text)||!/never|prohibit|cannot|must not/i.test(text))throw new Error('Stage 02 anti-circular source boundary missing.');
+ }
+ if(stage===3){
+  if(!/Stage 02/i.test(text)||!/accepted|current/i.test(text)||!/source/i.test(text))throw new Error('Stage 03 current accepted source-set research boundary missing.');
+  if(!/target product|operating application|repository/i.test(text)||!/authority/i.test(text))throw new Error('Stage 03 anti-circular research authority boundary missing.');
+ }
+}
 if(new Set(generated).size!==30)throw new Error('Prompts are not stage-specific.');
 const pa=prompts.buildPromptRecord(2,blank('JOB-A')).prompt,pb=prompts.buildPromptRecord(2,blank('JOB-B')).prompt;if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');
 

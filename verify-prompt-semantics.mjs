@@ -34,7 +34,13 @@ function semanticIssues(record){
   if(record.stage===2){
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
-    if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
+    if(!record.prompt.includes('strongest source type for each proposition'))issues.push('SOURCE_QUALITY_RULE_MISSING');
+    if(record.prompt.includes('Stage 02 may contain only genuinely independent external governing sources'))issues.push('SOURCE_SCOPE_TOO_NARROW');
+  }
+  if(record.stage===12&&!record.prompt.includes('REQ_ID × RUN_ID × TEST_ID'))issues.push('VERIFICATION_TRIPLE_MISSING');
+  if(record.stage===15){
+    if(!record.prompt.includes('Do not claim a correction or post-correction success in this stage'))issues.push('REGRESSION_TEMPORAL_RULE_MISSING');
+    if(!record.prompt.includes('NOT APPLICABLE AT STAGE 15'))issues.push('LEGACY_REGRESSION_FIELD_RULE_MISSING');
   }
   return issues;
 }
@@ -77,7 +83,15 @@ const mutants=[
 ];
 for(const mutant of mutants)if(!semanticIssues(mutant).length)throw new Error('Semantic contradiction mutation escaped detection.');
 
-console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,insufficiencyRecovery:true,operationIsolation:true},null,2));
+const recovery=baseProject();
+recovery.projectData.responseValidations.push({validationId:'VALIDATION-RECOVERY',stage:2,operation:'COMPLETE',rawResponseId:'RAW-BAD',valid:false,issues:[{code:'WRONG_VALUE_TYPE',path:'/records/sources/0/fields/TITLE',message:'Expected STRING.'}]});
+recovery.projectData.history.push({eventId:'EVENT-REFINE',eventSequence:1,type:'ACCEPTED_RESPONSE_INVALIDATED',stage:2,operation:'COMPLETE',rawResponseId:'RAW-OLD',reason:'Add the omitted authoritative source and explain its applicability.',operatorLabel:'HUMAN_OPERATOR',identityAssurance:'SELF_ASSERTED'});
+const recoveryPrompt=prompts.buildPromptRecord(2,recovery,{operation:'COMPLETE'});
+if(!recoveryPrompt.prompt.includes('APPLICATION VALIDATION FEEDBACK')||!recoveryPrompt.prompt.includes('WRONG_VALUE_TYPE')||!recoveryPrompt.prompt.includes('Expected STRING.'))throw new Error('Application validation feedback is not carried into the next controlling prompt.');
+if(!recoveryPrompt.prompt.includes('OPERATOR REQUESTED CORRECTIONS / REFINEMENTS')||!recoveryPrompt.prompt.includes('Add the omitted authoritative source and explain its applicability.'))throw new Error('Accepted-result refinement reason is not carried into the next controlling prompt.');
+if(!recoveryPrompt.contextManifest.validationFeedback?.length||!recoveryPrompt.contextManifest.acceptedResultRefinements?.length)throw new Error('Recovery feedback is not bound into the prompt context signature.');
+
+console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,sourceRoleSemantics:true,verificationTriplePrompt:true,stage15TemporalSemantics:true,insufficiencyRecovery:true,validationRecovery:true,acceptedRefinementRecovery:true,operationIsolation:true},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
 {const p=baseProject();p.projectData.runs.push({id:'RUN-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{RUN_ID:'RUN-ISO-A',COMPLETE_OUTPUT:'SECRET-OTHER-RUN'}},{id:'RUN-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{RUN_ID:'RUN-ISO-B',COMPLETE_OUTPUT:''}});p.projectData.freshContexts.push({id:'CTX-ISO-A',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-A',contextId:'CTX-ISO-A'},fields:{CONTEXT_ID:'CTX-ISO-A'}},{id:'CTX-ISO-B',stage:17,active:true,scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'},fields:{CONTEXT_ID:'CTX-ISO-B'}});const pr=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-000001',candidateId:'CANDIDATE-000001',runId:'RUN-ISO-B',contextId:'CTX-ISO-B'}});if(pr.prompt.includes('SECRET-OTHER-RUN'))throw new Error('Run prompt leaked another run output.');if(pr.contextManifest.readCollections.runs.length!==1||pr.contextManifest.readCollections.runs[0].id!=='RUN-ISO-B')throw new Error('Run prompt manifest was not scoped to the selected run.');}
