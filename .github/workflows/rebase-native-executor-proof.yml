@@ -20,6 +20,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin 7f6d4b438ae3ebf04dece5e59c5e59551447f9e0
           for file in README.md app-core.js prompt-engine.js test-fixtures.mjs verify-complete.mjs verify-prompt-semantics.mjs workflow-engine.js; do
             git show "7f6d4b438ae3ebf04dece5e59c5e59551447f9e0:${file}" > "${file}"
           done
