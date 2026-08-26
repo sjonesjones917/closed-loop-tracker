@@ -1,0 +1,46 @@
+name: Replay integrity closure after recovery lanes
+on:
+  push:
+    branches: [reliability/integrity-authority-after-214-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[integrity-after-214-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/integrity-authority-after-214-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Replay exact proven files and nonoverlapping ingestion delta
+        shell: bash
+        run: |
+          git checkout 10af649423b6ed920351c44a0714ac0b0106e4b8 -- project-store.js workflow-schema.js workflow-engine.js verify-complete.mjs verify-full-cycle.mjs
+          git diff 3f9e62d187a0039255f599364dee866acd473a65 32202649fb159045cf6dec955c702182167364ca -- response-ingestion.js > /tmp/integrity-ingestion.patch
+          git apply --3way /tmp/integrity-ingestion.patch
+          rm -f .github/workflows/replay-integrity-after-214.yml
+      - name: Run complete deterministic acceptance
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing tree
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close integrity and authority gaps after recovery lanes [integrity-after-214-complete]"
+          git push origin HEAD:reliability/integrity-authority-after-214-20260826
