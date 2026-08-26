@@ -20,10 +20,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Validate repair transformer
-        run: node --check stage01-minimum-intake-repair.mjs
+      - name: Validate repair transformers
+        run: |
+          node --check stage01-minimum-intake-repair.mjs
+          node --check stage01-minimum-intake-adjust.mjs
       - name: Apply responsible-layer repair
-        run: node stage01-minimum-intake-repair.mjs
+        run: |
+          node stage01-minimum-intake-repair.mjs
+          node stage01-minimum-intake-adjust.mjs
       - name: Verify syntax and canonical runtime identity
         run: |
           node --check prompt-engine.js
@@ -41,6 +45,7 @@ jobs:
       - name: Remove temporary repair mechanism and commit proven tree
         run: |
           rm stage01-minimum-intake-repair.mjs
+          rm stage01-minimum-intake-adjust.mjs
           rm .github/workflows/stage01-minimum-intake-repair.yml
           git config user.name "sjonesjones917"
           git config user.email "sjones.jones917@gmail.com"
