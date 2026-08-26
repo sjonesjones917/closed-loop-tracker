@@ -16,7 +16,20 @@ jobs:
         with:
           node-version: 22
       - name: Apply exact residual repair
-        run: python3 .apply-stage01-patent-residuals.py
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.apply-stage01-patent-residuals.py')
+          s=p.read_text()
+          for name in ('old','new'):
+              marker=f'{name} = """ await openStage'
+              start=s.index(marker)
+              s=s[:start]+s[start:].replace(marker,f"{name} = r''' await openStage",1)
+              close=s.index('\n"""',start)
+              s=s[:close]+"\n'''"+s[close+4:]
+          p.write_text(s)
+          PY
+          python3 .apply-stage01-patent-residuals.py
       - name: Full deterministic and browser acceptance
         run: |
           node build-test-project.mjs
