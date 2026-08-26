@@ -1,0 +1,87 @@
+name: Replay integrity on exact current main
+on:
+  push:
+    branches:
+      - reliability/integrity-authority-on-456-20260826
+permissions:
+  contents: write
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Replay and verify integrity closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          BASE=3f9e62d187a0039255f599364dee866acd473a65
+          OURS=456465f29a6ddc6d04cf8dcf8491fcf0eb6ac5a3
+          THEIRS=32202649fb159045cf6dec955c702182167364ca
+          for f in project-store.js response-ingestion.js workflow-schema.js verify-full-cycle.mjs; do git show "$THEIRS:$f" > "$f"; done
+          for f in verify-complete.mjs workflow-engine.js; do
+            git show "$OURS:$f" > "/tmp/$f.ours"
+            git show "$BASE:$f" > "/tmp/$f.base"
+            git show "$THEIRS:$f" > "/tmp/$f.theirs"
+            git merge-file -p "/tmp/$f.ours" "/tmp/$f.base" "/tmp/$f.theirs" > "$f" || true
+          done
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          start=s.index('function reserveRunBatch('); end=s.index('\nfunction registerArtifactBytes',start)
+          combined="""function reserveRunBatch(project,{stage=project.activeStage,iterationId=null,candidateId=null,count=10}={}){
+            ensureShape(project);if(count!==10)throw new Error('Run batches must contain exactly ten slots.');const resolvedIteration=String(iterationId||project.job.CURRENT_ITERATION||'');if(!resolvedIteration)throw new Error('A current iteration is required before reserving runs.');const stageNumber=Number(stage),iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===resolvedIteration&&isActiveRecord(r));if(!iteration)throw new Error('The requested current iteration does not exist or is inactive.');const iterationCandidate=iterationCandidateId(project,resolvedIteration),resolvedCandidate=String(candidateId||iterationCandidate||'');if(!resolvedCandidate)throw new Error('A frozen candidate is required before reserving runs.');if(iterationCandidate&&resolvedCandidate!==iterationCandidate)throw new Error('The requested candidate does not match the current iteration candidate.');const candidate=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===resolvedCandidate&&isActiveRecord(r));if(!candidate||!candidateComponentIdentity(project,resolvedCandidate))throw new Error('The current iteration must resolve to one active frozen candidate with application-computed component hashes.');const iterationScope=scopeForIteration(project,resolvedIteration),existingRuns=records(project,'runs').filter(run=>Number(run.stage)===stageNumber&&String(recordValue(run,'ITERATION_ID')||run.scope?.iterationId||'')===resolvedIteration);
+            if(existingRuns.length){if(existingRuns.length!==count)throw new Error(`The current Stage ${String(stageNumber).padStart(2,'0')} iteration already contains ${existingRuns.length} active run slots; expected exactly ${count}. Resolve the partial or contradictory batch instead of allocating more.`);const existing=existingRuns.map(run=>{const runId=recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''),runCandidate=String(recordValue(run,'CANDIDATE_ID')||run.scope?.candidateId||'');if(runCandidate!==resolvedCandidate)throw new Error(`Existing run ${runId} is bound to candidate ${runCandidate||'UNKNOWN'}, not current candidate ${resolvedCandidate}.`);const context=records(project,'freshContexts').find(item=>recordId(item,'freshContexts')===contextId&&String(recordValue(item,'ITERATION_ID')||item.scope?.iterationId||'')===resolvedIteration);if(!context)throw new Error(`Existing run ${runId} does not resolve to its active fresh-context slot.`);return {runId,contextId};});if(new Set(existing.map(item=>item.contextId)).size!==count)throw new Error('The existing run batch does not contain ten distinct active context slots.');return existing;}
+            const created=[];for(let i=0;i<count;i++){const context=commandRecord(project,'freshContexts',{EXTERNAL_CONTEXT_IDENTIFIER:'UNASSIGNED',ROLE:core.STAGES[stageNumber-1]?.role||'UNKNOWN',ITERATION_ID:resolvedIteration,RUN_ID:'PENDING',AUTHORIZED_PROJECT_INPUTS:project.job.CURRENT_INPUT_VERSION||'UNKNOWN',AUTHORIZED_EXTERNAL_SOURCE_MATERIAL:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',FROZEN_ARTIFACT_VERSIONS:'CURRENT AUTHORIZED VERSIONS',TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN',OUTPUT_IDENTITY:'UNKNOWN',DEVIATIONS:'NONE',EVIDENCE:'Application-reserved context slot.',USABILITY_DETERMINATION:'PENDING'},{stage:stageNumber,source:'APPLICATION_RESERVATION',scope:iterationScope});const run=commandRecord(project,'runs',{ITERATION_ID:resolvedIteration,CANDIDATE_ID:resolvedCandidate,CONTEXT_ID:context.id,FRESH_CONTEXT_RECORD:context.id,CONTAMINATION_CHECK:'PENDING',TOOL_CONFIGURATION:'PENDING',EXECUTION_STATUS:'RESERVED',COMPLETE_OUTPUT:''},{stage:stageNumber,source:'APPLICATION_RESERVATION',scope:{...iterationScope,contextId:context.id}});context.fields.RUN_ID=context.RUN_ID=run.id;context.scope={...iterationScope,runId:run.id,contextId:context.id};run.scope={...iterationScope,runId:run.id,contextId:context.id};refreshRecordHashes(context,'freshContexts');refreshRecordHashes(run,'runs');created.push({runId:run.id,contextId:context.id});}
+            addHistory(project,'RUN_BATCH_RESERVED',{stage:stageNumber,iterationId:resolvedIteration,candidateId:resolvedCandidate,count,slots:created});recalculate(project);return created;
+          }"""
+          s=s[:start]+combined+s[end:]
+          if '<<<<<<<' in s:
+            cs=s.index('<<<<<<<',s.index('globalThis.closedLoopWorkflowEngine')); ce=s.index('>>>>>>>',cs); ce=s.index('\n',ce)+1
+            line="  clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,\n"
+            s=s[:cs]+line+s[ce:]
+          p.write_text(s)
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          old="""{
+           const p=project('JOB-RUN-BATCH-IDEMPOTENT');p.job.CURRENT_ITERATION='ITERATION-IDEMPOTENT';
+           const first=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10}),events=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;
+           const second=engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});
+           assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:17}).length===10&&engine.records(p,'freshContexts',{stage:17}).length===10,'Repeated run-batch reservation allocated duplicate slots.');assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===events,'Idempotent reservation created another reservation event.');
+           engine.records(p,'runs',{stage:17})[0].active=false;let threw=false;try{engine.reserveRunBatch(p,{stage:17,iterationId:'ITERATION-IDEMPOTENT',candidateId:'CANDIDATE-IDEMPOTENT',count:10});}catch{threw=true;}assert(threw,'Partial active batch was silently topped up.');
+          }"""
+          new="""{
+           const p=project('JOB-RUN-BATCH-IDEMPOTENT');engine.registerArtifactBytes(p,{stage:10,artifactId:'ARTIFACT-IDEMPOTENT',filename:'candidate.bin',mediaType:'application/octet-stream',byteSize:1,sha256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'});const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-IDEMPOTENT'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');
+           const first=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10}),events=p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length;
+           const second=engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});
+           assert(first.length===10&&second.length===10&&engine.records(p,'runs',{stage:11}).length===10&&engine.records(p,'freshContexts',{stage:11}).length===10,'Repeated run-batch reservation allocated duplicate slots.');assert(p.projectData.history.filter(x=>x.type==='RUN_BATCH_RESERVED').length===events,'Idempotent reservation created another reservation event.');
+           engine.records(p,'runs',{stage:11})[0].active=false;let threw=false;try{engine.reserveRunBatch(p,{stage:11,iterationId,candidateId,count:10});}catch{threw=true;}assert(threw,'Partial active batch was silently topped up.');
+          }"""
+          if old not in s: raise SystemExit('Expected idempotency regression block not found')
+          p.write_text(s.replace(old,new))
+          PY
+          sha256sum -c <<'EOF'
+          56d0d5fb7b1210a48ecc568b74c7e5abbfb0c4ab25f89de6a1adfbaafa7c9754  project-store.js
+          7664148646307e78cae049f16a31d0b2ae7b790994317581bee9cf0497750d8b  response-ingestion.js
+          3153a3be47ba621905956012c9410f9a324690033fc9aeca394bacb6615cba67  workflow-schema.js
+          42769a05ddce957511fd36f47f9887db5051cf9bda06a4ea04d94678a1058c2e  workflow-engine.js
+          e4774ad7b110a929969d1be1a2881fd0620a4c9cb83c91389c668d598ddf987e  verify-complete.mjs
+          8885ab587ceb34248950135795709508826ac0ece3a994df622b46d4eedb7de7  verify-full-cycle.mjs
+          EOF
+          node build-test-project.mjs
+          node --check hash.js && node --check workbook.js && node --check workflow-schema.js && node --check workflow-engine.js && node --check project-store.js && node --check prompt-engine.js && node --check response-ingestion.js && node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          rm .github/workflows/replay-integrity-on-456.yml
+          git add project-store.js response-ingestion.js workflow-schema.js workflow-engine.js verify-complete.mjs verify-full-cycle.mjs .github/workflows/replay-integrity-on-456.yml
+          git commit -m 'Replay canonical integrity closure on latest main'
+          git push origin HEAD
