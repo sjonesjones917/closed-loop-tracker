@@ -134,19 +134,14 @@ acceptStage(17,{operation:'CORRECT',stageData:{CORRECTIONS_COMPLETED:true}});ass
 // Stage 18 deterministic convergence from latest corrected iteration.
 acceptStage(18,{stageData:{REGRESSION_TEST_SUCCESS:1}});assertStage(p,18);
 
-// Stage 19 unchanged confirmation uses exact same corrected candidate identity and ten new contexts.
-// Create iteration record through normal ingestion, but point it at the unchanged candidate.
-{
-  const pr=savePrompt(p,19,{operation:'CONFIRM_FREEZE'});
-  const iteration=proposal('iterations',{tempKey:'iteration-19',fields:{PURPOSE:'UNCHANGED_CONFIRMATION',LINEAGE:'Exact candidate unchanged.',EVIDENCE:'Candidate identity and hashes unchanged.'},relationships:{CANDIDATE_ID:rel(candidate17)}});
-  p=acceptResponse(p,pr,{stageData:normalizeStageData(19,{COMPLETE_TEST_SUITE_RUN:true}),records:{iterations:[iteration]}}).project;
-}
-const iteration19=id('iterations');
-p.job.CURRENT_ITERATION=iteration19;engine.recalculate(p);
-runBatch(19,iteration19,candidate17,{operation:'EXECUTE_RUN'});
+// Stage 19 unchanged confirmation freezes the same exact component bytes through the application, then uses ten new contexts.
+const frozen19=engine.freezeCandidate(p,{stage:19,artifactIds:[engine.recordId(correctedArtifact,'artifacts')],operatorLabel:OP,purpose:'UNCHANGED_CONFIRMATION'});
+const iteration19=engine.recordId(frozen19.iteration,'iterations'),candidate19=engine.recordId(frozen19.candidate,'candidateFreezes');
+acceptStage(19,{operation:'CONFIRM_FREEZE',stageData:{COMPLETE_TEST_SUITE_RUN:true}});
+runBatch(19,iteration19,candidate19,{operation:'EXECUTE_RUN'});
 acceptStage(19,{operation:'VERIFY',records:{verification:verificationRecords(iteration19,19)},stageData:{COMPLETE_TEST_SUITE_RUN:true}});
 acceptStage(19,{operation:'COMPARE',records:{comparisons:[proposal('comparisons',{tempKey:'comparison-19',fields:{RUN_DETERMINATIONS:'10/10 SATISFIED',INTERPRETATION_VARIANCE:'NONE',OUTPUT_VARIANCE:'NONE',AUTHORIZED_VARIANCE:'NONE',INCONCLUSIVE_TESTS:'NONE',REPEATED_FAILURE_PATTERNS:'NONE',UNIQUE_FAILURES:'NONE',CORRECTNESS_AFFECTING_VARIANCE:'NONE',EVIDENCE:'Unchanged confirmation comparison.'},relationships:{REQ_ID:rel(reqId)}})]},stageData:{CROSS_RUN_COMPARISON_COMPLETED:true}});
-acceptStage(19,{operation:'REGRESSION_VERIFY',records:{regressionExecutions:[proposal('regressionExecutions',{tempKey:'regexec-post19',fields:{PHASE:'UNCHANGED_CONFIRMATION',RESULT:'SATISFIED'},relationships:{REG_ID:rel(regId),ITERATION_ID:rel(iteration19),CANDIDATE_ID:rel(candidate17)}})]},stageData:{CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED:true}});
+acceptStage(19,{operation:'REGRESSION_VERIFY',records:{regressionExecutions:[proposal('regressionExecutions',{tempKey:'regexec-post19',fields:{PHASE:'UNCHANGED_CONFIRMATION',RESULT:'SATISFIED'},relationships:{REG_ID:rel(regId),ITERATION_ID:rel(iteration19),CANDIDATE_ID:rel(candidate19)}})]},stageData:{CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED:true}});
 acceptStage(19,{operation:'CONFIRM',records:{confirmationRecords:[proposal('confirmationRecords',{fields:{ZERO_MATERIAL_CHANGES:'TRUE',VERSION_HASH_COMPARISON:'IDENTICAL',TEN_NEW_CONTEXTS:'TRUE',COMPLETE_TEST_RESULTS:'SATISFIED',REGRESSION_RESULTS:'SATISFIED',COMPARISON_RESULTS:'SATISFIED',NEW_DEFECTS:'NONE',NEW_REQUIREMENTS:'NONE',NEW_FAILURE_CASES:'NONE',NEW_VARIANCE:'NONE',DETERMINATION:'SATISFIED',EVIDENCE:'Complete unchanged confirmation evidence.'},relationships:{SOURCE_ITERATION_ID:rel(iteration17),CONFIRMATION_ITERATION_ID:rel(iteration19)}})]}});assertStage(p,19);
 
 // Stage 20 baseline is human-authorized and application-frozen from exact bytes.
