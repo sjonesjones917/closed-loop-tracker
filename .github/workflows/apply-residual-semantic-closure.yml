@@ -1,0 +1,60 @@
+name: Apply residual semantic closure
+on:
+  push:
+    branches:
+      - reliability/residual-semantic-closure-current-20260826
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/residual-semantic-closure-current-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimal residual corrections
+        run: python3 .residual-semantic-patch.py
+      - name: Verify deterministic source and lifecycle
+        run: |
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify-residual-semantic.mjs
+          node --check verify-full-cycle.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-residual-semantic.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Verify local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/residual-semantic-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.1
+          done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only fully verified source
+        run: |
+          rm .residual-semantic-patch.py
+          git rm .github/workflows/apply-residual-semantic-closure.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "Close residual semantic reliability gaps"
+          git push origin HEAD:reliability/residual-semantic-closure-current-20260826
