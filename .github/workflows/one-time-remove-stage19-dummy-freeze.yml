@@ -1,0 +1,76 @@
+name: One-time remove Stage 19 dummy freeze
+on:
+  push:
+    branches: [remove-stage19-dummy-freeze-20260826]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: remove-stage19-dummy-freeze-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply narrow semantic correction
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js'); s=p.read_text()
+          old="STAGE_OPERATIONS[19]=Object.freeze(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']);"
+          new="STAGE_OPERATIONS[19]=Object.freeze(['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']);"
+          if old not in s: raise SystemExit('Stage 19 operation declaration already changed or missing')
+          s=s.replace(old,new,1)
+          start=s.index('const OPERATION_CONTRACT_OVERRIDES=')
+          end=s.index('\nfunction operationContract',start)
+          block=s[start:end]
+          target="CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations'],agentWritableCollections:[],allowedStageData:['COMPLETE_TEST_SUITE_RUN']}),"
+          if target not in block: raise SystemExit('Stage 19 CONFIRM_FREEZE contract already changed or missing')
+          block=block.replace(target,'',1)
+          p.write_text(s[:start]+block+s[end:])
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="stage===19?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[]"
+          new="stage===19?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[]"
+          if old not in s: raise SystemExit('Stage 19 required operation gate already changed or missing')
+          p.write_text(s.replace(old,new,1))
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          old="19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}"
+          new="19:{EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}"
+          if old not in s: raise SystemExit('Stage 19 semantic write fixture already changed or missing')
+          s=s.replace(old,new,1)
+          anchor='let checked=0;'
+          proof="if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');\n"
+          if anchor not in s: raise SystemExit('Prompt semantic proof anchor missing')
+          p.write_text(s.replace(anchor,proof+anchor,1))
+          p=Path('verify-full-cycle.mjs'); s=p.read_text()
+          old="data(19,{operation:'CONFIRM_FREEZE',stageData:{COMPLETE_TEST_SUITE_RUN:'PENDING'}});engine.freezeCandidate"
+          if old not in s: raise SystemExit('Stage 19 full-cycle dummy response already changed or missing')
+          p.write_text(s.replace(old,'engine.freezeCandidate',1))
+          PY
+      - name: Verify exact branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit green correction and remove workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-time-remove-stage19-dummy-freeze.yml
+          git add workflow-schema.js workflow-engine.js verify-prompt-semantics.mjs verify-full-cycle.mjs
+          git commit -m 'Remove synthetic Stage 19 freeze response'
+          git push origin HEAD:remove-stage19-dummy-freeze-20260826
