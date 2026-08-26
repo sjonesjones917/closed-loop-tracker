@@ -61,6 +61,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   for(let i=0;i<10;i++){
     const run=record('runs',11,{ITERATION_ID:'ITERATION-STAGE11',CANDIDATE_ID:'CANDIDATE-STAGE11',CONTEXT_ID:`CONTEXT-STAGE11-${i}`,CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:`output-${i}`},`RUN-STAGE11-${i}`);
     run.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.runs.push(run);
+    const context=record('freshContexts',11,{EXTERNAL_CONTEXT_IDENTIFIER:`external-stage11-${i}`,ITERATION_ID:'ITERATION-STAGE11',RUN_ID:`RUN-STAGE11-${i}`},`CONTEXT-STAGE11-${i}`);context.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.freshContexts.push(context);
     p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});
   }
   const stage11=engine.gate(11,p);assert(stage11.complete,`Stage 11 incorrectly depends on Stage 12 verification data: ${stage11.reasons.join('; ')}`);
