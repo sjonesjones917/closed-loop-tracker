@@ -22,6 +22,7 @@ jobs:
           node .repair-test-execution-types.mjs
           node .repair-test-execution-routing.mjs
           node .repair-runtime-token.mjs
+          rm -f .repair-test-execution-anchor.mjs .repair-test-execution-template.mjs .repair-test-execution-types.mjs .repair-test-execution-routing.mjs .repair-runtime-token.mjs
       - name: Syntax and deterministic model
         run: |
           node --check workbook.js
@@ -48,7 +49,7 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit only verified permanent changes
         run: |
-          rm -f .repair-test-execution-anchor.mjs .repair-test-execution-template.mjs .repair-test-execution-types.mjs .repair-test-execution-routing.mjs .repair-runtime-token.mjs .github/workflows/test-execution-routing-repair.yml
+          rm -f .github/workflows/test-execution-routing-repair.yml
           git config user.name closed-loop-reliability-bot
           git config user.email closed-loop-reliability-bot@users.noreply.github.com
           git add -A
