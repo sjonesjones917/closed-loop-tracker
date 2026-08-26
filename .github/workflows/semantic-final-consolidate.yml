@@ -19,16 +19,24 @@ jobs:
           sed -i 's/Research only the legitimate Stage 02 external governing source set/Research only the current accepted Stage 02 external governing source set/g' verify.mjs build-test-project.mjs
           python3 - <<'PY'
           from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          anchor='- The operating application itself has no external repository, service, deployment, or remote execution capability. Use only capabilities actually available to the external agent and established for this job. Never claim repository or deployment work occurred unless that external execution context actually performed it. When Stage 01 has established and the human has confirmed an implementation-ready specification as the feasible workflow deliverable, later stages operate on that specification as the product rather than repeatedly blocking on the unavailable original implementation.'
+          rule=anchor+'\n- Do not simulate completion. If the original requested implementation cannot be performed reliably in the available environment, use the human-confirmed implementation-ready specification or other feasible workflow deliverable established at Stage 01. Return BLOCKED only when the currently confirmed workflow deliverable itself cannot be completed reliably; use EXECUTION_FAILED only for an actual attempted execution or tool failure.'
+          if anchor not in s: raise SystemExit('shared capability anchor missing')
+          s=s.replace(anchor,rule,1)
+          p.write_text(s)
+
           p=Path('verify-prompt-semantics.mjs')
           s=p.read_text()
           old="if(!record.prompt.includes('do not claim it occurred; produce the complete implementation-ready specification'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
-          new="if(!record.prompt.includes('do not simulate completion')||!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('Never claim repository or deployment work occurred unless'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
           if old not in s:
               old="if(!record.prompt.includes('do not simulate completion')||!record.prompt.includes('implementation-ready specification')||!record.prompt.includes('current confirmed deliverable'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
+          new="if(!record.prompt.includes('Do not simulate completion')||!record.prompt.includes('human-confirmed implementation-ready specification')||!record.prompt.includes('currently confirmed workflow deliverable'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
           if old not in s: raise SystemExit('environment semantic assertion not found')
           s=s.replace(old,new,1)
           old_mut="original.prompt.replace('do not claim it occurred; produce the complete implementation-ready specification','assume implementation occurred')"
-          if old_mut in s:s=s.replace(old_mut,"original.prompt.replace('do not simulate completion','simulate completion')",1)
+          if old_mut in s:s=s.replace(old_mut,"original.prompt.replace('Do not simulate completion','Simulate completion')",1)
           p.write_text(s)
           PY
       - name: Verify consolidated source
