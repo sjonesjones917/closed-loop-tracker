@@ -5,7 +5,6 @@ def once(s, old, new, label):
     if n!=1: raise SystemExit(f'{label}: expected one match, found {n}')
     return s.replace(old,new,1)
 
-# workflow-engine: recovery, exact candidate reservation, derived Stage17/19 operation sequencing.
 p=Path('workflow-engine.js');s=p.read_text()
 old="""function invalidateAcceptedResponse(project,{stage=project.activeStage,rawResponseId,reason='Corrected response required.',operatorLabel='HUMAN_OPERATOR'}={}){
   ensureShape(project);const change=acceptedChanges(project,stage).find(item=>!rawResponseId||item.rawResponseId===rawResponseId);if(!change)throw new Error('No current accepted data change exists for invalidation.');
@@ -38,22 +37,14 @@ insert="""function nextPromptOperation(project,stage){
 """
 if marker not in s: raise SystemExit('operation insertion marker missing')
 s=s.replace(marker,insert+marker,1)
-old_export="records,registerGeneratedPrompt,createHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch"
-new_export="records,registerGeneratedPrompt,createHumanBlocker,registerFreshContext,recordHumanDecision,acceptedChangeScope,acceptedChangeOperation,nextPromptOperation,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch"
-s=once(s,old_export,new_export,'workflow export')
+s=once(s,"records,registerGeneratedPrompt,createHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch","records,registerGeneratedPrompt,createHumanBlocker,registerFreshContext,recordHumanDecision,acceptedChangeScope,acceptedChangeOperation,nextPromptOperation,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch",'workflow export')
 p.write_text(s)
 
-# response-ingestion: accepted change and receipt retain controlling operation/scope.
 p=Path('response-ingestion.js');s=p.read_text()
-old="contextId:'UNKNOWN',iteration:project.job.CURRENT_ITERATION||'NOT APPLICABLE',runId:'NOT APPLICABLE'"
-new="operation:promptRecord.operation||'COMPLETE',contextId:promptRecord.scope?.contextId||'NOT APPLICABLE',iteration:promptRecord.scope?.iterationId||project.job.CURRENT_ITERATION||'NOT APPLICABLE',runId:promptRecord.scope?.runId||'NOT APPLICABLE'"
-s=once(s,old,new,'receipt operation scope')
-old="status:'COMMITTED',canonicalRecordIds:committedRecordIds,stageFields:Object.keys(proposal.proposedStageData)"
-new="status:'COMMITTED',operation:proposal.envelope.operation||'COMPLETE',scope:clone(proposal.envelope.scope||{}),canonicalRecordIds:committedRecordIds,stageFields:Object.keys(proposal.proposedStageData)"
-s=once(s,old,new,'accepted change operation scope')
+s=once(s,"role:globalThis.closedLoopCore?.STAGES?.[Number(stage)-1]?.role||'UNKNOWN',contextId:promptRecord.scope?.contextId||'NOT APPLICABLE'","role:globalThis.closedLoopCore?.STAGES?.[Number(stage)-1]?.role||'UNKNOWN',operation:promptRecord.operation||'COMPLETE',contextId:promptRecord.scope?.contextId||'NOT APPLICABLE'",'receipt operation')
+s=once(s,"status:'COMMITTED',canonicalRecordIds:committedRecordIds,stageFields:Object.keys(proposal.proposedStageData)","status:'COMMITTED',operation:proposal.envelope.operation||'COMPLETE',scope:clone(proposal.envelope.scope||{}),canonicalRecordIds:committedRecordIds,stageFields:Object.keys(proposal.proposedStageData)",'accepted change operation scope')
 p.write_text(s)
 
-# app-core: derived operation sequence, exact refinement target, Stage29 derivation action, accurate Stage2 screen wording.
 p=Path('app-core.js');s=p.read_text()
 old="function promptOptions(n){const operation=selectedOperation(n),options={operation},requiresRun=(schema.operationContract(n,operation)?.scopeRequirements||[]).includes('runId');if(requiresRun){const run=selectedRun(n);if(run){const runId=engine.recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||run.scope?.contextId||'');options.scope={runId,contextId};}}return options;}"
 new="function promptOptions(n){const plan=engine.nextPromptOperation(current,n),operation=[17,19].includes(Number(n))?plan.operation:selectedOperation(n),options={operation,scope:{...(plan.scope||{})}},requiresRun=(schema.operationContract(n,operation)?.scopeRequirements||[]).includes('runId');if(requiresRun&&!options.scope.runId){const run=selectedRun(n);if(run){const runId=engine.recordId(run,'runs'),contextId=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||run.scope?.contextId||'');options.scope={...options.scope,runId,contextId};}}return options;}"
@@ -62,7 +53,6 @@ start=s.index('function operationMarkup(n,locked){');end=s.index('\nfunction val
 s=s[:start]+"function operationMarkup(n,locked){const operations=stageOperations(n);if(operations.length<=1)return '';if([17,19].includes(Number(n))){const plan=engine.nextPromptOperation(current,n);return `<div class=\"panel\"><h2 class=\"section-title\">Current required operation</h2><p class=\"section-intro\">The application selects the next operation from current canonical evidence. The operator does not coordinate internal operation ordering or identities.</p><div class=\"record-row\"><div class=\"record-key\">Operation</div><div class=\"record-value\">${esc(plan.operation.replaceAll('_',' '))}</div></div>${plan.blockedReason?`<div class=\"notice warn\">${esc(plan.blockedReason)}</div>`:''}</div>`;}const active=selectedOperation(n);return `<div class=\"panel\"><h2 class=\"section-title\">Stage operation</h2><div class=\"record-row\"><div class=\"record-key\">Operation</div><div class=\"record-value\">${esc(active.replaceAll('_',' '))}</div></div></div>`;}"+s[end:]
 s=s.replace("const picker=(schema.operationContract(n,selectedOperation(n))?.scopeRequirements||[]).includes('runId')&&runs.length?","const picker=n===11&&(schema.operationContract(n,selectedOperation(n))?.scopeRequirements||[]).includes('runId')&&runs.length?",1)
 s=s.replace('<strong>External governing sources only.</strong> The target product, this operating application, repository, source code, UI, screenshots, stored project state, prior generated targets, and project-generated artifacts cannot receive Stage 02 source authority.','<strong>Independent external sources appropriate to this job.</strong> Prefer the most authoritative, reputable, direct, and current sources for each proposition. Supplied or existing target/repository artifacts may be implementation evidence for an explicit audit or repair job, but they are not independent external authority merely because they exist.',1)
-# exact accepted-response selector (preserve existing control wording)
 needle='<div class="field"><label>Why refinement is required</label><textarea id="accepted-refinement-reason"></textarea></div><button id="refine-accepted-response">Invalidate accepted result and request refinement</button>'
 replacement='<div class="field"><label>Accepted response to refine</label><select id="accepted-refinement-target">${engine.acceptedChanges(current,n).map(change=>`<option value="${esc(change.rawResponseId)}">${esc(engine.acceptedChangeOperation(current,change))}${engine.acceptedChangeScope(current,change).runId?` · ${esc(engine.acceptedChangeScope(current,change).runId)}`:""} · ${esc(change.changeId)}</option>`).join("")}</select></div><div class="field"><label>Why refinement is required</label><textarea id="accepted-refinement-reason"></textarea></div><button id="refine-accepted-response">Invalidate accepted result and request refinement</button>'
 s=once(s,needle,replacement,'refinement selector')
