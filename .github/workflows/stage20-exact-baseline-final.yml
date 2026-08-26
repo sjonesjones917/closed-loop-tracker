@@ -1,0 +1,45 @@
+name: Stage20 exact baseline final proof
+on:
+  push:
+    branches: [reliability/stage20-exact-baseline-final-1712]
+permissions: {contents: write}
+jobs:
+  prove:
+    if: "!contains(github.event.head_commit.message, '[stage20-final-complete]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/stage20-exact-baseline-final-1712, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact previously-proven correction
+        run: python3 apply-baseline-boundary.py
+      - name: Remove proof machinery before testing
+        run: rm -f apply-baseline-boundary.py .github/workflows/stage20-exact-baseline-final.yml
+      - name: Full deterministic and semantic proof
+        run: |
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/stage20-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit tested source only
+        run: |
+          git config user.name 'closed-loop-proof'
+          git config user.email 'closed-loop-proof@users.noreply.github.com'
+          git add -A
+          git commit -m 'Bind Stage 20 baseline to exact confirmed candidate [stage20-final-complete]'
+          git push origin HEAD:reliability/stage20-exact-baseline-final-1712
