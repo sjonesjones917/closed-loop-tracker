@@ -125,7 +125,7 @@ DOMAIN / DELIVERABLE ADAPTATION — APPLY ONLY WHAT IS RELEVANT
 
 ${stage===2?`STAGE 02 SOURCE DISCOVERY GUIDANCE
 DESIRED OR SUGGESTED SOURCE COUNT: ${show(j.DESIRED_SOURCE_COUNT)}
-Treat this count as guidance, not a quota. When web access is available, search broadly enough to discover the relevant source landscape, then inspect and prefer original authoritative publications rather than summaries or search snippets. Prefer the most authoritative and reputable sources appropriate to the domain, prioritizing primary, official, controlling sources where they exist. Verify identity, currency, applicability, and authority before proposing a source. If no legitimate external governing source applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.
+Treat this count as guidance, not a quota. When web access is available, search broadly enough to discover the relevant source landscape, then inspect and prefer original authoritative publications rather than summaries or search snippets. Prefer the most authoritative and reputable sources appropriate to the domain, prioritizing primary, official, controlling sources where they exist. Verify identity, currency, applicability, and authority before proposing a source. If no legitimate independent external source of any justified authority or evidentiary role applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.
 `:''}
 AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE
 ${contextFor(stage,state,operation,scope)}
