@@ -75,8 +75,8 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
   if(envelope.schema!==schema.RESPONSE_SCHEMA)issues.push(issue('WRONG_SCHEMA','/schema',`Expected ${schema.RESPONSE_SCHEMA}.`));
   if(String(envelope.jobId||'')!==String(project.job.JOB_ID||''))issues.push(issue('WRONG_JOB_ID','/jobId',`Response JOB_ID ${envelope.jobId||'MISSING'} does not match ${project.job.JOB_ID}.`));
   if(Number(envelope.stage)!==stageNumber)issues.push(issue('WRONG_STAGE','/stage',`Response stage ${envelope.stage??'MISSING'} does not match Stage ${stageNumber}.`));
-  const expectedOperation=promptRecord?.operation||contract?.operations?.[0];if(String(envelope.operation||'')!==String(expectedOperation||''))issues.push(issue('WRONG_OPERATION','/operation',`Expected operation ${expectedOperation||'UNKNOWN'}.`));
-  if(!object(envelope.scope))issues.push(issue('INVALID_SCOPE','/scope','scope must be an object.'));else{unknownKeys(envelope.scope,['projectRevision','inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'],'/scope',issues);const expected=currentScope(project,promptRecord);for(const key of contract?.scopeRequirements||[])if(JSON.stringify(envelope.scope[key]??null)!==JSON.stringify(expected[key]??null))issues.push(issue('STALE_SCOPE',`/scope/${key}`,`Scope ${key} does not match the controlling prompt.`));}
+  const expectedOperation=promptRecord?.operation||contract?.operations?.[0];const operationContract=schema.operationContract(stageNumber,expectedOperation);if(String(envelope.operation||'')!==String(expectedOperation||''))issues.push(issue('WRONG_OPERATION','/operation',`Expected operation ${expectedOperation||'UNKNOWN'}.`));
+  if(!object(envelope.scope))issues.push(issue('INVALID_SCOPE','/scope','scope must be an object.'));else{unknownKeys(envelope.scope,['projectRevision','inputVersion','sourceSetVersion','requirementsVersion','testSuiteVersion','instructionVersion','iterationId','candidateId','runId','contextId','baselineId','productId'],'/scope',issues);const expected=currentScope(project,promptRecord);for(const key of operationContract?.scopeRequirements||contract?.scopeRequirements||[])if(JSON.stringify(envelope.scope[key]??null)!==JSON.stringify(expected[key]??null))issues.push(issue('STALE_SCOPE',`/scope/${key}`,`Scope ${key} does not match the controlling prompt.`));}
   if(!schema.RESPONSE_TYPES.includes(envelope.responseType))issues.push(issue('INVALID_RESPONSE_TYPE','/responseType',`Response type must be one of ${schema.RESPONSE_TYPES.join(', ')}.`));
 
   if(!object(envelope.promptIdentity))issues.push(issue('MISSING_PROMPT_IDENTITY','/promptIdentity','promptIdentity must be an object.'));
@@ -120,7 +120,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256}={}){
     }
   }
 
-  const allowedCollections=new Set(contract?.agentWritableCollections||contract?.allowedCollections||[]);
+  const allowedCollections=new Set(operationContract?.agentWritableCollections||contract?.agentWritableCollections||contract?.allowedCollections||[]);
   for(const [collection,list] of Object.entries(envelope.records||{}))if(Array.isArray(list)&&list.length>(contract?.resourceLimits?.maxRecordsPerCollection||250))issues.push(issue('RESOURCE_LIMIT_EXCEEDED',`/records/${pointerEscape(collection)}`,'Too many records in collection.'));
   if(safe(envelope.evidence).length>(contract?.resourceLimits?.maxEvidenceRecords||500))issues.push(issue('RESOURCE_LIMIT_EXCEEDED','/evidence','Too many evidence records.'));if(safe(envelope.attachments).length>(contract?.resourceLimits?.maxAttachments||25))issues.push(issue('RESOURCE_LIMIT_EXCEEDED','/attachments','Too many attachments.'));
   const responseRecordIndex=new Map();
