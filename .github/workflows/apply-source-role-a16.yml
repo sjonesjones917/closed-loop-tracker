@@ -1,0 +1,50 @@
+name: Apply source-role semantics on current main
+on:
+  push:
+    branches:
+      - semantic-reliability/source-role-a16
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact four-source-role edits
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          def r(path, old, new):
+              p=Path(path); s=p.read_text()
+              if old not in s: raise SystemExit(f'{path}: pattern missing: {old[:100]}')
+              p.write_text(s.replace(old,new,1))
+          r('workbook.js',"'Extract every material requirement, restriction, exception, condition, and dependency from the governing sources.'","'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'")
+          r('workbook.js',"2:['Every governing source has a complete record','Every relied-upon supplied file was inspected','Authority hierarchy is recorded','Every controlling conflict is resolved or blocked'],3:['Every controlling source has a research record'","2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked'],3:['Every current accepted Stage 02 source has a research record'")
+          r('prompt-engine.js',"If no legitimate external governing source applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.","If no legitimate independent external source of any justified authority or evidentiary role applies, return SOURCE_APPLICABILITY_DETERMINATION = NO_APPLICABLE_EXTERNAL_SOURCE with evidence; never invent a source merely to satisfy a count.")
+          r('workflow-engine.js',"Either at least one legitimate external governing source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.","Either at least one legitimate independent external source or an explicit NO_APPLICABLE_EXTERNAL_SOURCE determination is required.")
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text(); s += '''\n\n// Legitimate independent external evidence is not falsely required to be governing authority.\n{\n  const p=baseProject();\n  const s2=prompts.buildPromptRecord(2,p,{operation:'COMPLETE'});\n  if(!/no legitimate independent external source of any justified authority or evidentiary role/i.test(s2.prompt))throw new Error('Stage 02 no-source rule still incorrectly means no governing authority.');\n  if(core.STAGES[1].completionGate.some(x=>/every governing source/i.test(x))||core.STAGES[2].completionGate.some(x=>/every controlling source/i.test(x)))throw new Error('Workbook source completion language still treats every useful external source as governing authority.');\n}\n'''; p.write_text(s)
+          PY
+      - name: Verify deterministic contracts
+        run: |
+          node --check workbook.js
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean source delta
+        if: success()
+        run: |
+          rm -f .github/workflows/apply-source-role-a16.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Align Stage 2 source authority and evidence roles'
+          git push origin HEAD:semantic-reliability/source-role-a16
