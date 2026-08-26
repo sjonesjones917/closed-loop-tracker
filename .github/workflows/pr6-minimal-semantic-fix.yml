@@ -35,6 +35,12 @@ jobs:
               code=code[:i]+code[j+2:]
           exec(compile(code,'pr6-minimum-semantic-transform.py','exec'),{})
 
+          p=Path('workflow-engine.js'); text=p.read_text()
+          old="stage=Number(iteration?.stage||runs[0]?.stage||0);"
+          new="stage=Number(runs[0]?.stage||iteration?.stage||0);"
+          if text.count(old)!=1: raise SystemExit(f'Iteration run-stage precedence match {text.count(old)}')
+          p.write_text(text.replace(old,new,1))
+
           p=Path('verify-complete.mjs'); text=p.read_text()
           old="p.projectData.candidateFreezes.push(record('candidateFreezes',10,{ITERATION_ID:'ITERATION-STAGE11',STATUS:'FROZEN'},'CANDIDATE-STAGE11'));"
           new="p.projectData.candidateFreezes.push(record('candidateFreezes',10,{ITERATION_ID:'ITERATION-STAGE11',COMPONENT_HASHES:{'ARTIFACT-STAGE11':'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'},STATUS:'FROZEN'},'CANDIDATE-STAGE11'));"
