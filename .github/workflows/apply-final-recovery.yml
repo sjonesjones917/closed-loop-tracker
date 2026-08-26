@@ -17,8 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply exact audited transform
-        run: python3 .repair-final-recovery.py
+      - name: Apply exact audited transform and remove helper
+        run: |
+          python3 .repair-final-recovery.py
+          rm .repair-final-recovery.py
       - name: Full deterministic acceptance
         run: |
           node --check workflow-engine.js
@@ -42,7 +44,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          rm .github/workflows/apply-final-recovery.yml .repair-final-recovery.py
+          rm .github/workflows/apply-final-recovery.yml
           git add -A
           git commit -m "Close accepted-result refinement and specification fallback semantics"
           git push origin HEAD:practical-100/final-recovery-closure
