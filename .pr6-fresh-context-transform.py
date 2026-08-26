@@ -28,3 +28,14 @@ old="return {mode,iterationId,runs:runs.map(r=>recordId(r,'runs')),contextCount:
 new="return {mode,iterationId,runs:runs.map(r=>recordId(r,'runs')),contextCount:contexts.size,contextRecordIds:resolvedContexts.map(item=>item.id),externalContextIdentifiers:resolvedContexts.map(item=>item.externalIdentifier),candidateIds:[...candidates],matrix,"
 assert old in s
 p.write_text(s.replace(old,new,1))
+
+p=Path('verify-complete.mjs'); s=p.read_text()
+old="""    const run=record('runs',11,{ITERATION_ID:'ITERATION-STAGE11',CANDIDATE_ID:'CANDIDATE-STAGE11',CONTEXT_ID:`CONTEXT-STAGE11-${i}`,CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:`output-${i}`},`RUN-STAGE11-${i}`);
+    run.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.runs.push(run);
+    p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});"""
+new="""    const run=record('runs',11,{ITERATION_ID:'ITERATION-STAGE11',CANDIDATE_ID:'CANDIDATE-STAGE11',CONTEXT_ID:`CONTEXT-STAGE11-${i}`,CONTAMINATION_CHECK:'NONE',COMPLETE_OUTPUT:`output-${i}`},`RUN-STAGE11-${i}`);
+    run.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.runs.push(run);
+    const context=record('freshContexts',11,{EXTERNAL_CONTEXT_IDENTIFIER:`external-stage11-${i}`,ITERATION_ID:'ITERATION-STAGE11',RUN_ID:`RUN-STAGE11-${i}`},`CONTEXT-STAGE11-${i}`);context.scope={iterationId:'ITERATION-STAGE11',candidateId:'CANDIDATE-STAGE11'};p.projectData.freshContexts.push(context);
+    p.projectData.rawResponses.push({rawResponseId:`RAW-STAGE11-${i}`,stage:11});p.projectData.outputReceipts.push({receiptId:`RECEIPT-STAGE11-${i}`,stage:11});"""
+assert old in s
+p.write_text(s.replace(old,new,1))
