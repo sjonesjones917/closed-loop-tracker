@@ -1,0 +1,57 @@
+name: Final organic prompt closure v2
+on:
+  push:
+    branches: [practical-100/final-organic-prompt-closure]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: practical-100/final-organic-prompt-closure
+          fetch-depth: 50
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reapply verified source patch from prior one-time workflow
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          y=subprocess.check_output(['git','show','4f0725249442c9482946349a885b44b75187da48:.github/workflows/final-organic-prompt-closure.yml'],text=True)
+          def block(name):
+            start=y.index('      - name: '+name)
+            run=y.index('        run: |',start)+len('        run: |\n')
+            end=y.find('\n      - name:',run)
+            if end<0:end=len(y)
+            lines=[]
+            for line in y[run:end].splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+            return '\n'.join(lines)+'\n'
+          for i,name in enumerate(['Patch existing responsible layers only','Strengthen permanent semantic verifier'],1):
+            f=Path(f'/tmp/patch{i}.py');f.write_text(block(name));subprocess.run(['python',str(f)],check=True)
+          # Update only obsolete wording assertions; do not weaken them.
+          p=Path('build-test-project.mjs');s=p.read_text();s=s.replace("'genuinely independent external governing sources','Research only the legitimate Stage 02 external governing source set'","'independent external source inventory','Research only the current accepted Stage 02 independent external source set'");p.write_text(s)
+          p=Path('verify.mjs');s=p.read_text();s=s.replace("record.prompt.includes('genuinely independent external governing sources')","record.prompt.includes('independent external source inventory')").replace("record.prompt.includes('Research only the legitimate Stage 02 external governing source set')","record.prompt.includes('Research only the current accepted Stage 02 independent external source set')");p.write_text(s)
+      - name: Run deterministic acceptance
+        run: |
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit permanent source and remove temporary workflow
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/final-organic-prompt-closure-v2.yml
+          git add prompt-engine.js response-ingestion.js verify-prompt-semantics.mjs build-test-project.mjs verify.mjs .github/workflows/final-organic-prompt-closure-v2.yml
+          git commit -m "Close prompt authority and recovery contradictions"
+          git push origin HEAD:practical-100/final-organic-prompt-closure
