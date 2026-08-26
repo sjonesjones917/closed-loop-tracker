@@ -22,17 +22,14 @@ jobs:
           python3 <<'PY'
           from pathlib import Path
           import re
-
           p=Path('response-ingestion.js')
           s=p.read_text()
-
           def sub(old,new,label):
               global s
               n=s.count(old)
               if n!=1:
                   raise SystemExit(f'{label}: expected 1 match, got {n}')
               s=s.replace(old,new,1)
-
           sub("    const byName=suppliedFiles.filter(",
               "    if(attachment.required!==undefined&&typeof attachment.required!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/required`,'required must be BOOLEAN when supplied.'));\n    const byName=suppliedFiles.filter(",
               'attachment boolean')
@@ -63,46 +60,44 @@ jobs:
           sub("receipt.completionState=type;receipt.nextRequiredVerificationStage=",
               "receipt.completionState=type;receipt.evidenceIds=clone(evidenceIds);receipt.nextRequiredVerificationStage=",
               'receipt evidence')
-
           pattern=re.compile(r"  const committedRecordIds=\[\],reservedTargetSnapshots=\[\];for\(const evidence of proposal\.evidence\)\{.*?committedRecordIds\.push\(evidence\.id\);\}")
           s,n=pattern.subn("  const committedRecordIds=commitEvidence(next,proposal),reservedTargetSnapshots=[];",s,count=1)
           if n!=1:
               raise SystemExit(f'data evidence helper: expected 1 match, got {n}')
           p.write_text(s)
-
           p=Path('index.html')
           s=p.read_text()
           old='runtime-scoped-reliability-20260826-r1'
           if s.count(old)!=8:
               raise SystemExit('runtime token count changed')
           p.write_text(s.replace(old,'runtime-control-evidence-20260826-r2'))
-
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
           marker="console.log(JSON.stringify({stages:allStages.length,negativeCases:negativeCount,status:'PASS'},null,2));"
           if s.count(marker)!=1:
               raise SystemExit('verify-ingestion marker changed')
-          test='''
-// Accepted control responses preserve evidence; supplied control flags are typed.
-{
- const p=project('JOB-NEG-CONTROL-BOOLEAN'),pr=savePrompt(p,1);
- const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-bool',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:'false'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
- const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
- if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path==='/humanInputRequests/0/blocking'))throw new Error('String blocking flag was accepted as Boolean.');
- negativeCount++;
-}
-for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']){
- let p=project(`JOB-CONTROL-EVIDENCE-${responseType}`),pr=savePrompt(p,1);
- const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType,humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence'}],unresolved:[],warnings:[],attachments:[]};
- if(responseType==='HUMAN_INPUT_REQUIRED')e.humanInputRequests=[{temporaryKey:'q',question:'Exact value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];
- else e.unresolved=[{temporaryKey:'u',kind:responseType==='BLOCKED'?'MISSING_HUMAN_INPUT':'TOOL_FAILURE',description:'Cannot proceed.',whyBlocking:'Required condition unavailable.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],blocking:true}];
- const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
- if(!prepared.validation.valid)throw new Error(`${responseType} control evidence fixture rejected: ${JSON.stringify(prepared.validation.issues)}`);
- const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});
- const ids=committed.disposition?.evidenceIds||[];
- if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);
-}
-'''
+          test=r'''
+          // Accepted control responses preserve evidence; supplied control flags are typed.
+          {
+            const p=project('JOB-NEG-CONTROL-BOOLEAN'),pr=savePrompt(p,1);
+            const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-bool',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:'false'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+            const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
+            if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path==='/humanInputRequests/0/blocking'))throw new Error('String blocking flag was accepted as Boolean.');
+            negativeCount++;
+          }
+          for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']){
+            let p=project(`JOB-CONTROL-EVIDENCE-${responseType}`),pr=savePrompt(p,1);
+            const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType,humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence'}],unresolved:[],warnings:[],attachments:[]};
+            if(responseType==='HUMAN_INPUT_REQUIRED')e.humanInputRequests=[{temporaryKey:'q',question:'Exact value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];
+            else e.unresolved=[{temporaryKey:'u',kind:responseType==='BLOCKED'?'MISSING_HUMAN_INPUT':'TOOL_FAILURE',description:'Cannot proceed.',whyBlocking:'Required condition unavailable.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],blocking:true}];
+            const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
+            if(!prepared.validation.valid)throw new Error(`${responseType} control evidence fixture rejected: ${JSON.stringify(prepared.validation.issues)}`);
+            const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});
+            const ids=committed.disposition?.evidenceIds||[];
+            if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);
+          }
+          '''
+          test='\n'.join(line[10:] if line.startswith('          ') else line for line in test.splitlines())
           p.write_text(s.replace(marker,test+'\n'+marker,1))
           PY
       - name: Verify deterministic suite
