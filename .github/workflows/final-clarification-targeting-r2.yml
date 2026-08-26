@@ -1,0 +1,72 @@
+name: Verify scoped clarification targeting r2
+on:
+  push:
+    branches: [practical-100/final-semantic-isolation]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Correct exact-target prompt validation and clarification regeneration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('response-ingestion.js');s=p.read_text()
+          marker="function promptRecordFor(project,prompt){";idx=s.index(marker)
+          helper="const PROMPT_TARGET_SCOPE_KEYS=Object.freeze(['iterationId','candidateId','runId','contextId','baselineId','productId']);\nconst samePromptTarget=(a,b)=>Number(a?.stage)===Number(b?.stage)&&String(a?.operation||'COMPLETE')===String(b?.operation||'COMPLETE')&&PROMPT_TARGET_SCOPE_KEYS.every(key=>String(a?.scope?.[key]??'')===String(b?.scope?.[key]??''));\n\n"
+          assert 'PROMPT_TARGET_SCOPE_KEYS' not in s;s=s[:idx]+helper+s[idx:]
+          old="const latest=safe(project.projectData.generatedPrompts).filter(record=>Number(record.stage)===stageNumber&&!record.invalidatedBy).at(-1);\n    if(latest&&String(latest.instructionId||latest.promptId)!==String(expectedId||''))issues.push(issue('STALE_PROMPT_IDENTITY','/promptIdentity/instructionId','A newer generated instruction exists for this stage.'));"
+          new="const latest=safe(project.projectData.generatedPrompts).filter(record=>!record.invalidatedBy&&samePromptTarget(record,promptRecord)).at(-1);\n    if(latest&&String(latest.instructionId||latest.promptId)!==String(expectedId||''))issues.push(issue('STALE_PROMPT_IDENTITY','/promptIdentity/instructionId','A newer generated instruction exists for this exact operation and scope.'));"
+          assert old in s;s=s.replace(old,new,1)
+          a=s.index('function answerHumanInput(');b=s.index('\nglobalThis.closedLoopResponseIngestion',a)
+          func=r'''function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
+            const next=clone(project);workflow.ensureShape(next);const answerMap=object(answers)?answers:{},changed=[],newAnswers=[];const clarifications=safe(next.projectData.userEntered.clarifications);
+            for(const request of safe(next.projectData.humanInputRequests).filter(item=>upper(item.status)==='OPEN')){if(!Object.hasOwn(answerMap,request.requestId))continue;const value=answerMap[request.requestId];validateHumanAnswer(request,value,next);const answerId=workflow.allocateInfrastructureId(next,'HUMAN-INPUT-ANSWER','humanInputAnswers');const record={answerId,requestId:request.requestId,jobId:next.job.JOB_ID,stage:request.stage,operation:request.operation||'COMPLETE',scope:clone(request.scope||{}),question:request.question,answer:clone(value),answerType:request.answerType,operatorLabel:operator,identityAssurance:'SELF_ASSERTED',affectedStageFields:clone(request.affectedStageFields||[]),affectedRecords:clone(request.affectedRecords||[]),answeredAt:now(),authority:'User Job Input'};next.projectData.humanInputAnswers.push(record);newAnswers.push(record);request.status='ANSWERED';request.answerId=answerId;request.answeredAt=record.answeredAt;clarifications.push({requestId:request.requestId,question:request.question,answer:clone(value),answerType:request.answerType,answerId,stage:request.stage,operation:record.operation,scope:clone(record.scope),operatorLabel:operator,affectedStageFields:clone(request.affectedStageFields||[]),affectedRecords:clone(request.affectedRecords||[]),answeredAt:record.answeredAt});changed.push(`CLARIFICATION:${request.requestId}`);}
+            if(!changed.length)throw new Error('No open human-input request received an answer.');next.projectData.userEntered.clarifications=clarifications;const version=workflow.recordHumanInputVersion(next,changed,operator);for(const answer of newAnswers)answer.inputVersion=version.version;
+            const affectedStages=[...new Set(newAnswers.map(x=>Number(x.stage)))],generatedPromptIds=[];const promptEngine=globalThis.closedLoopPromptEngine;
+            for(const stage of affectedStages){const activePrompts=safe(next.projectData.generatedPrompts).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy).map(x=>({stage,operation:x.operation||schema.STAGE_CONTRACTS[stage].operations[0],scope:clone(x.scope||{})}));const requestTargets=newAnswers.filter(x=>Number(x.stage)===stage).map(x=>({stage,operation:x.operation||schema.STAGE_CONTRACTS[stage].operations[0],scope:clone(x.scope||{})}));const targets=[];for(const target of [...activePrompts,...requestTargets])if(!targets.some(existing=>samePromptTarget(existing,target)))targets.push(target);for(const proposal of safe(next.projectData.responseProposals).filter(x=>Number(x.stage)===stage&&x.status==='PENDING_OPERATOR_REVIEW')){proposal.status='STALE';proposal.invalidatedBy=version.inputVersionId;}for(const prompt of safe(next.projectData.generatedPrompts).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy))prompt.invalidatedBy=version.inputVersionId;for(const confirmation of safe(next.projectData.stageConfirmations).filter(x=>Number(x.stage)===stage&&!x.invalidatedBy))confirmation.invalidatedBy=version.inputVersionId;if(promptEngine){for(const target of targets){const preview=clone(next);preview.revision=Number(next.revision||0)+1;const generated={...promptEngine.buildPromptRecord(stage,preview,{operation:target.operation,scope:clone(target.scope||{})}),generatedAt:now()};workflow.registerGeneratedPrompt(next,generated);generatedPromptIds.push(generated.instructionId);}}}
+            workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed,generatedPromptIds});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds};
+          }
+          '''
+          s=s[:a]+func+s[b:];p.write_text(s)
+          PY
+      - name: Add exact regression cases
+        run: |
+          cat >> verify-ingestion.mjs <<'EOF'
+          
+          // A newer prompt for a different run must not stale an earlier independent run prompt.
+          {let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;const a={...prompts.buildPromptRecord(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(a);const b={...prompts.buildPromptRecord(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(b);const q={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:a.operation,promptIdentity:{instructionId:a.instructionId,bodySha256:a.bodySha256,contractSha256:a.contractSha256,contextSignature:a.contextSignature},scope:a.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'parallel-q',question:'Provide the missing run-specific value.',whyRequired:'The selected run cannot continue without it.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:a});if(!prepared.validation.valid)throw new Error('Unrelated newer run prompt incorrectly staled the controlling run prompt: '+JSON.stringify(prepared.validation.issues));}
+          // Clarification regenerates the exact operation/run target, not the stage default operation.
+          {let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr={...prompts.buildPromptRecord(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-CLARIFY',contextId:'CTX-CLARIFY'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const q={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'scoped-q',question:'Provide the run-specific missing input.',whyRequired:'This exact run is missing required human authority.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Scoped clarification response invalid: '+JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);const answered=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'});p=answered.project;const active=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId==='RUN-CLARIFY'&&x.scope?.contextId==='CTX-CLARIFY'))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');if(active.some(x=>x.operation==='FREEZE'))throw new Error('Scoped clarification incorrectly regenerated the stage default operation.');}
+          EOF
+      - name: Run complete verification
+        run: |
+          set -e
+          node build-test-project.mjs
+          for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .1; done
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit only permanent verified changes
+        run: |
+          git rm .github/workflows/final-clarification-targeting.yml .github/workflows/final-clarification-targeting-r2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add response-ingestion.js verify-ingestion.mjs
+          git commit -m "Preserve exact prompt targets through clarification"
+          git push origin HEAD:practical-100/final-semantic-isolation
