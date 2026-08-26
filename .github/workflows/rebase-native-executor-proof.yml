@@ -1,0 +1,77 @@
+name: Rebase and prove native-executor boundary
+
+on:
+  push:
+    branches:
+      - reliability/test-execution-truth-current-20260826
+
+permissions:
+  contents: write
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replay only the seven nonoverlapping proven files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in README.md app-core.js prompt-engine.js test-fixtures.mjs verify-complete.mjs verify-prompt-semantics.mjs workflow-engine.js; do
+            git show "7f6d4b438ae3ebf04dece5e59c5e59551447f9e0:${file}" > "${file}"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+              data=Path(path).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          manifest=''.join(f'{path}:{blob(path)}\n' for path in files).encode()
+          token='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
+          p=Path('index.html');text=p.read_text();text,count=re.subn(r'runtime-[0-9a-f]{16}',token,text)
+          if count!=8: raise SystemExit(f'Expected eight shared runtime tokens; changed {count}.')
+          p.write_text(text)
+          PY
+
+      - name: Verify architecture, ingestion, gates, prompts, full cycle, and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          sleep 1
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$server" 2>/dev/null || true
+          trap - EXIT
+          git diff --check
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(grep -RIl 'MutationObserver\|document.write' --include='*.js' --include='*.html' . || true)"
+
+      - name: Commit only permanent verified source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/rebase-native-executor-proof.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add README.md app-core.js index.html prompt-engine.js test-fixtures.mjs verify-complete.mjs verify-prompt-semantics.mjs workflow-engine.js .github/workflows/rebase-native-executor-proof.yml
+          git diff --cached --check
+          git commit -m "Fail closed on nonexistent application-native test executors"
+          git push origin HEAD:reliability/test-execution-truth-current-20260826
