@@ -11,9 +11,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Syntax and continuous lifecycle
+      - name: Semantic contracts and continuous lifecycle
         run: |
           node --check test-fixtures.mjs
           node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-prompt-semantics.mjs
           node verify-full-cycle.mjs
-          # Temporary lifecycle runner; delete before PR6 review.
+          # Temporary lifecycle runner; remove before opening PR6.
