@@ -9,12 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Package review source
+        with:
+          fetch-depth: 0
+      - name: Package review source and transported diagnostic
         shell: bash
-        run: tar --exclude=.git -czf /tmp/pr6-source.tar.gz .
+        run: |
+          set -euo pipefail
+          tar --exclude=.git -czf /tmp/pr6-source.tar.gz .
+          git fetch --no-tags origin ea845ac01a10a96fba8f000cb37b7d9e00efcb33
+          { git show 'ea845ac01a10a96fba8f000cb37b7d9e00efcb33:.pr6-patch/part00'; git show 'ea845ac01a10a96fba8f000cb37b7d9e00efcb33:.pr6-patch/part01'; } | tr -d '\r\n' | base64 --decode > /tmp/pr6-transport.patch.gz
+          gzip -dc /tmp/pr6-transport.patch.gz > /tmp/pr6-transport.partial.patch || true
       - uses: actions/upload-artifact@v4
         with:
           name: pr6-source-snapshot
-          path: /tmp/pr6-source.tar.gz
+          path: |
+            /tmp/pr6-source.tar.gz
+            /tmp/pr6-transport.patch.gz
+            /tmp/pr6-transport.partial.patch
           if-no-files-found: error
           retention-days: 1
