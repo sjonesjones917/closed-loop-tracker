@@ -1,0 +1,115 @@
+name: Temporary semantic closure proof
+on:
+  push:
+    branches: [reliability/semantic-closure-current-20260826]
+permissions:
+  contents: write
+concurrency:
+  group: semantic-closure-current-20260826
+  cancel-in-progress: false
+jobs:
+  apply-prove-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/semantic-closure-current-20260826
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply only demonstrated semantic repairs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p=Path(path); s=p.read_text(); n=s.count(old)
+              if n != 1: raise SystemExit(f'{label}: expected exactly one anchor, found {n}')
+              p.write_text(s.replace(old,new,1))
+
+          # Normal production startup must never seed the acceptance fixture.
+          p=Path('app-core.js'); s=p.read_text()
+          old="projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);let test=importSeed(await res.json()),i=projects.findIndex(p=>p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID);if(i>=0){const stored=projects[i];projects.splice(i,1);if(stored.retainedSpecRevision&&stored.retainedSpecRevision===test.retainedSpecRevision)test=stored;else needsPersist=true;}else needsPersist=true;projects.unshift(test);}catch(error){console.error('Bundled retained project could not load',error);}if(!projects.length)"
+          new="projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;const acceptanceFixture=new URLSearchParams(location.search).get('acceptanceFixture')==='retained';if(acceptanceFixture){try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);let test=importSeed(await res.json()),i=projects.findIndex(p=>p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID);if(i>=0){const stored=projects[i];projects.splice(i,1);if(stored.retainedSpecRevision&&stored.retainedSpecRevision===test.retainedSpecRevision)test=stored;else needsPersist=true;}else needsPersist=true;projects.unshift(test);}catch(error){console.error('Bundled retained acceptance project could not load',error);}}if(!projects.length)"
+          if s.count(old)!=1: raise SystemExit(f'app acceptance fixture anchor: {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+
+          # Browser acceptance explicitly requests its fixture; production does not.
+          for path in ['verify-browser.mjs','verify-browser-extra.mjs']:
+              p=Path(path); s=p.read_text()
+              s=s.replace("${PAGE_URL}?browser=${Date.now()}", "${PAGE_URL}?acceptanceFixture=retained&browser=${Date.now()}")
+              s=s.replace("${PAGE_URL}?browserExtra=${Date.now()}", "${PAGE_URL}?acceptanceFixture=retained&browserExtra=${Date.now()}")
+              s=s.replace("${PAGE_URL}?browserExtraTab2=${Date.now()}", "${PAGE_URL}?acceptanceFixture=retained&browserExtraTab2=${Date.now()}")
+              p.write_text(s)
+
+          # Fail closed when a canonical collection record omits a current version dimension
+          # that must apply at that collection's owning stage. Stamp newly controlled sets with
+          # their resulting application-owned version so this remains satisfiable by real data.
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}\nfunction registerStageVersion(project,stage,acceptedChangeId){"
+          new="function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}\nconst VERSION_SCOPE_KEY_BY_STAGE=Object.freeze({2:'sourceSetVersion',4:'requirementsVersion',5:'requirementsVersion',6:'testSuiteVersion',8:'instructionVersion'});\nfunction stampCurrentVersionMembership(project,stage,version){const key=VERSION_SCOPE_KEY_BY_STAGE[stage];if(!key||!version)return;const collections=stage===5?[...new Set(['requirements',...versionCollections(stage)])]:versionCollections(stage);for(const collection of collections)for(const record of records(project,collection)){record.scope={...(record.scope||{}),[key]:version};refreshRecordHashes(record,collection);}}\nfunction registerStageVersion(project,stage,acceptedChangeId){"
+          if s.count(old)!=1: raise SystemExit(f'version scope anchor: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="if(latest?.sha256===sha256){project.job[jobField]=latest.version;return latest;}"
+          new="if(latest?.sha256===sha256){project.job[jobField]=latest.version;stampCurrentVersionMembership(project,stage,latest.version);return latest;}"
+          if s.count(old)!=1: raise SystemExit(f'existing version membership anchor: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="project.projectData.artifactVersions.push(record);\n  project.job[jobField]=version;\n  return record;"
+          new="project.projectData.artifactVersions.push(record);\n  project.job[jobField]=version;\n  stampCurrentVersionMembership(project,stage,version);\n  return record;"
+          if s.count(old)!=1: raise SystemExit(f'new version membership anchor: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="function scopeMatches(record,scopeRule={}){const rs=record?.scope||{};for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}\nfunction recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable));}"
+          new="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('inputVersion','sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}\nfunction scopeMatches(record,scopeRule={},requiredKeys=[]){const rs=record?.scope||{};for(const key of requiredKeys){const expected=scopeRule[key];if(expected===undefined||expected===null)continue;if(!Object.prototype.hasOwnProperty.call(rs,key)||rs[key]===undefined||rs[key]===null||rs[key]!==expected)return false;}for(const [key,value] of Object.entries(rs)){if(value===undefined||value===null)continue;if(Object.prototype.hasOwnProperty.call(scopeRule,key)&&(scopeRule[key]??null)!==value)return false;}return true;}\nfunction recordsForScope(project,collection,scopeRule={}){const applicable=Object.fromEntries(Object.entries(scopeRule||{}).filter(([,v])=>v!==undefined&&v!==null)),required=requiredVersionScopeKeys(collection).filter(key=>Object.prototype.hasOwnProperty.call(applicable,key));return records(project,collection).filter(record=>record.scope&&Object.keys(record.scope).length>0&&scopeMatches(record,applicable,required));}"
+          if s.count(old)!=1: raise SystemExit(f'scope matcher anchor: {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+
+          # Strengthen the existing current-scope regression so a partially scoped record cannot pass.
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          old="const current=record('requirements',4,{OBLIGATION:'current',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-CURRENT');current.scope={requirementsVersion:'REQUIREMENTS-v002'};\n  const stale=record('requirements',4,{OBLIGATION:'stale',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-STALE');stale.scope={requirementsVersion:'REQUIREMENTS-v001'};p.projectData.requirements.push(current,stale);"
+          new="const current=record('requirements',4,{OBLIGATION:'current',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-CURRENT');current.scope={inputVersion:'INPUT-v001',requirementsVersion:'REQUIREMENTS-v002'};\n  const stale=record('requirements',4,{OBLIGATION:'stale',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-STALE');stale.scope={inputVersion:'INPUT-v001',requirementsVersion:'REQUIREMENTS-v001'};p.projectData.requirements.push(current,stale);"
+          if s.count(old)!=1: raise SystemExit(f'current scope fixture anchor: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');"
+          new="const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');const partial=record('requirements',4,{OBLIGATION:'partially scoped historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-PARTIAL');partial.scope={requirementsVersion:'REQUIREMENTS-v002'};p.projectData.requirements.push(partial);assert(!engine.recordsForCurrentScope(p,'requirements').some(x=>engine.recordId(x,'requirements')==='REQ-PARTIAL'),'Partially scoped historical record satisfied current selector.');"
+          if s.count(old)!=1: raise SystemExit(f'partial scope regression anchor: {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+
+          # Static proof that acceptance-only data has an explicit activation condition.
+          p=Path('verify.mjs'); s=p.read_text()
+          anchor="const appSourceForStatus=fs.readFileSync('app-core.js','utf8');"
+          insert="const appRuntimeSource=fs.readFileSync('app-core.js','utf8');if(!appRuntimeSource.includes(\"get('acceptanceFixture')==='retained'\"))throw new Error('Bundled acceptance project is not isolated from normal production startup.');if(!fs.readFileSync('verify-browser.mjs','utf8').includes('acceptanceFixture=retained')||!fs.readFileSync('verify-browser-extra.mjs','utf8').includes('acceptanceFixture=retained'))throw new Error('Browser acceptance does not explicitly activate its retained fixture.');\n"+anchor
+          if s.count(anchor)!=1: raise SystemExit(f'fixture isolation verifier anchor: {s.count(anchor)}')
+          p.write_text(s.replace(anchor,insert,1))
+          PY
+      - name: Syntax and deterministic acceptance
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check verify.mjs
+          node --check verify-complete.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit proven source-only repair and remove this workflow
+        run: |
+          rm .github/workflows/semantic-closure-temp.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js workflow-engine.js verify.mjs verify-complete.mjs verify-browser.mjs verify-browser-extra.mjs .github/workflows/semantic-closure-temp.yml
+          git diff --cached --check
+          git commit -m "Isolate acceptance fixture and fail closed on partial current scope"
+          git push origin HEAD:reliability/semantic-closure-current-20260826
