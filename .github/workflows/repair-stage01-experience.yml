@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: 22
       - name: Apply only Stage 01 clarification experience correction
-        run: node .repair-stage01-experience.mjs
+        run: |
+          node .repair-stage01-experience.mjs
+          rm -f .repair-stage01-experience.mjs .github/workflows/repair-stage01-experience.yml
       - name: Verify exact responsible-layer correction
         run: |
           node --check prompt-engine.js
@@ -34,7 +36,6 @@ jobs:
           node verify-browser.mjs
       - name: Commit only verified permanent files
         run: |
-          rm -f .repair-stage01-experience.mjs .github/workflows/repair-stage01-experience.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs index.html .repair-stage01-experience.mjs .github/workflows/repair-stage01-experience.yml
