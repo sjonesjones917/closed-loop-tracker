@@ -56,10 +56,8 @@ v.write_text(t)
 # 4. Rotate the one shared runtime build token because prompt semantics changed.
 h=Path('index.html')
 html=h.read_text()
-tokens=re.findall(r'([A-Za-z0-9._-]+\.js)\\?v=([^\"&]+)',html)
-if not tokens: raise SystemExit('runtime build tokens missing')
-for file,token in tokens:
-    html=html.replace(f'{file}?v={token}',f'{file}?v=20260826-current-job-boundary-1')
-h.write_text(html)
+updated,count=re.subn(r'(\.js\?v=)[^\"&]+',r'\g<1>20260826-current-job-boundary-1',html)
+if count==0: raise SystemExit('runtime build tokens missing')
+h.write_text(updated)
 
 print('current-job authority boundary patch applied')
