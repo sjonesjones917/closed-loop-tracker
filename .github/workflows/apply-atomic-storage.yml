@@ -1,0 +1,48 @@
+name: Apply atomic bulk storage correction
+on:
+  push:
+    branches:
+      - reliability/atomic-bulk-storage-current-20260826
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/atomic-bulk-storage-current-20260826
+      - name: Apply exact atomic storage correction
+        run: python3 .atomic-storage-repair.py
+      - name: Syntax checks
+        run: |
+          node --check project-store.js
+          node --check verify-browser-extra.mjs
+      - name: Deterministic verification
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Browser verification
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit proven repair and remove branch-only tooling
+        run: |
+          rm .atomic-storage-repair.py
+          rm .github/workflows/apply-atomic-storage.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Make bulk project persistence atomic and stale-safe"
+          git push origin HEAD:reliability/atomic-bulk-storage-current-20260826
