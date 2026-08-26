@@ -139,8 +139,8 @@ jobs:
             "derivationCoverage": 1,
             "relationshipCoverage": 1,
             "stagesCompleted": 30,
-            "negativeCasesPassed": 1,
-            "storageFailureCasesPassed": 1,
+            "negativeCasesPassed": 48,
+            "storageFailureCasesPassed": 2,
             "artifactRoundTrip": true,
             "deployedByteIdentity": true
           }
