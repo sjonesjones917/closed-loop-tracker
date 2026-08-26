@@ -1,0 +1,86 @@
+name: Apply verified artifact boundary activation
+
+on:
+  push:
+    branches: [reliability/artifact-boundary-activation-20260826]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Reconstruct and apply exact permanent patch
+        run: |
+          cat .artifact-boundary-patch-* > /tmp/followup.patch.gz.b64
+          printf '%s  %s\n' '44aa98c5d56622b1def7cdd6c395540a630248d158ac2fb84fe54b5e655c425c' '/tmp/followup.patch.gz.b64' | sha256sum -c -
+          base64 -d /tmp/followup.patch.gz.b64 | gzip -d > /tmp/followup.patch
+          printf '%s  %s\n' '624f905e195856f66c6964fc9960b143dbef95ad26d33880536396e0de4170bf' '/tmp/followup.patch' | sha256sum -c -
+          git apply --check /tmp/followup.patch
+          git apply /tmp/followup.patch
+
+      - name: Run complete deterministic verification
+        run: |
+          node build-test-project.mjs
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-fixtures.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-hash.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do
+            node --check "$f"
+          done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+
+      - name: Run real local Chromium acceptance
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            sleep .1
+          done
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+
+      - name: Commit only the verified permanent change
+        run: |
+          git rm .github/workflows/apply-artifact-boundary-activation.yml .artifact-boundary-patch-*
+          git add README.md app-core.js index.html prompt-engine.js response-ingestion.js verify-browser.mjs verify-ingestion.mjs verify-prompt-semantics.mjs
+          cat > /tmp/expected-files <<'EOF'
+          .artifact-boundary-patch-00
+          .artifact-boundary-patch-01
+          .artifact-boundary-patch-02
+          .artifact-boundary-patch-03
+          .artifact-boundary-patch-04
+          .artifact-boundary-patch-05
+          .artifact-boundary-patch-06
+          .github/workflows/apply-artifact-boundary-activation.yml
+          README.md
+          app-core.js
+          index.html
+          prompt-engine.js
+          response-ingestion.js
+          verify-browser.mjs
+          verify-ingestion.mjs
+          verify-prompt-semantics.mjs
+          EOF
+          git diff --cached --name-only | sort > /tmp/actual-files
+          sort -o /tmp/expected-files /tmp/expected-files
+          diff -u /tmp/expected-files /tmp/actual-files
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Activate corrected artifact-generation prompts"
+          git push origin HEAD:reliability/artifact-boundary-activation-20260826
