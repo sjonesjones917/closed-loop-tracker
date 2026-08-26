@@ -1,0 +1,21 @@
+name: PR6 apply regression schema
+on:
+  push:
+    branches: [practical-100/pr6-completion]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply exact schema correction
+        run: |
+          python .pr6-fix-regression-schema.py
+          rm -f .pr6-fix-regression-schema.py .github/workflows/pr6-apply-regression-schema.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Keep regression post-correction fields optional'
+          git push
