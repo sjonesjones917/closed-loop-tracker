@@ -178,6 +178,14 @@ if(core.STAGES[14].result.toLowerCase().includes('succeeds after correction')||c
  for(const [stage,phrase] of forbidden){const r=prompts.buildPromptRecord(stage,baseProject(),{operation:schema.STAGE_CONTRACTS[stage].operations[0]});if(r.prompt.includes(phrase))throw new Error(`Stage ${stage} still tells the agent to perform application-owned work: ${phrase}`);}
 }
 
+{
+ const engineSource=fs.readFileSync('workflow-engine.js','utf8'),ui=fs.readFileSync('app-core.js','utf8');
+ if(!engineSource.includes('missingArtifactTestIds')||!engineSource.includes('BYTES_PERSISTED_AND_VERIFIED'))throw new Error('Current TEST artifact custody is not a deterministic gate input.');
+ if(!ui.includes('exact artifact bytes that are missing or unverified')||!ui.includes('browser storage alone does not give an external executor access'))throw new Error('Operator UI does not explain missing TEST bytes and external access truth.');
+ const stage6=prompts.buildPromptRecord(6,core.createBlankState('JOB-SEMANTIC-ARTIFACT')).prompt;
+ if(!stage6.includes('Stage 06 remains blocked')||!stage6.includes('Browser-local custody does not give a later external executor access'))throw new Error('Stage 06 prompt does not state current custody and external-access boundaries.');
+}
+
 console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChecked:checked,mutationCasesRejected:mutants.length,stage2SourceCount:true,testExecutionOrchestration:true,insufficiencyRecovery:true,operationIsolation:true,applicationOwnership:true,specialistDomains:['patent','software-multifile','physical-engineering-cad-cam-cnc-additive']},null,2));
 
 // Exact operation scope must prevent cross-run output contamination.
