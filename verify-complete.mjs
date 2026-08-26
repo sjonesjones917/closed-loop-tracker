@@ -18,6 +18,21 @@ assert(JSON.stringify(engine.STAGE_STATES)===JSON.stringify(['NOT STARTED','IN P
 assert(JSON.stringify(engine.FORMAL_STATES)===JSON.stringify(['UNKNOWN','NONE','NOT APPLICABLE','TRUE','FALSE','SATISFIED','VIOLATED','UNDETERMINED','ACCEPTED','REJECTED','BLOCKED']),'Formal states changed.');
 assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
+// Verification definitions explicitly separate execution responsibility and unavailable capability fails closed.
+{
+  const def=schema.RECORD_SCHEMAS.tests;
+  for(const field of ['EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS'])assert(def.required.includes(field)&&def.fieldDefinitions[field]?.producer===schema.PRODUCER.AGENT,`Missing required TEST execution field ${field}.`);
+  const p=project('JOB-TEST-EXECUTION');
+  Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
+  const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};
+  p.projectData.requirements.push({id:'REQ-EXEC-1',stage:4,active:true,scope,fields:{REQ_ID:'REQ-EXEC-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});
+  p.projectData.tests.push({id:'TEST-EXEC-1',stage:6,active:true,scope:{...scope,testSuiteVersion:'TEST-SUITE-v001'},fields:{TEST_ID:'TEST-EXEC-1',REQ_ID:'REQ-EXEC-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'UNAVAILABLE',REQUIRED_CAPABILITY:'specialized-capability-not-present',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'controlled input',TOOLS:'specialized system',PROCEDURE:'execute controlled verification',EXPECTED_RESULT:'satisfied',FAILURE_CONDITION:'required result not established',EVIDENCE_TO_PRESERVE:'execution evidence',STATUS:'READY'},relationships:{REQ_ID:'REQ-EXEC-1'}});
+  const plan=engine.testExecutionPlan(p);
+  assert(plan.total===1&&plan.unavailableTestIds.includes('TEST-EXEC-1'),'Execution plan did not identify unavailable mandatory capability.');
+  const g=engine.gate(6,p);
+  assert(g.reasons.some(reason=>reason.includes('unavailable execution capability')),'Stage 06 did not fail closed on unavailable mandatory execution capability.');
+}
+
 // Invalid canonical relationship is rejected before mutation.
 {
   const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);

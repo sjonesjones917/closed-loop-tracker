@@ -31,6 +31,14 @@ There is no second parser, store, workflow engine, prompt layer, application she
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
 - Stage 21 product artifacts are accepted only after the application reserves the current product execution. Finished-product bytes are then bound to that application-owned `PRODUCT_ID`, hashed, persisted, and included in the product artifact inventory.
 
+## Verification execution and returned files
+
+A canonical 'TEST' is a verification definition, not proof that a script/file exists and not proof that execution occurred. Each test declares an execution mode ('APPLICATION_DETERMINISTIC', 'EXTERNAL_AGENT_TOOL', 'INDEPENDENT_AGENT_REVIEW', 'HUMAN_INSPECTION', 'EXTERNAL_SYSTEM', or 'UNAVAILABLE'), the required capability, any required artifacts, its procedure, expected result, failure condition, and evidence to preserve. 'UNAVAILABLE' remains blocking for a mandatory test until a valid capability or equivalent verification path exists.
+
+The static browser is authoritative only for deterministic operations it actually implements. Tool-dependent checks run in the capable external environment; independent reviews use an independent context; irreducible inspections remain human/reviewer work; specialized systems/labs provide their own execution evidence. A test definition, executable/input artifact, and execution result are distinct records of reality.
+
+When an external agent returns an actual file, its response declares the attachment and the operator attaches the exact returned bytes in the stage file control before parsing. The application then verifies the actual filename/media type/byte size/SHA-256 and stores the Blob. A filename, hash claim, repository path, or code block alone never counts as possession of a file, and browser-local bytes are not assumed to be accessible to an external agent.
+
 ## Data and backup responsibility
 
 The application requests persistent browser storage and reports storage usage/quota, but browser-local persistence is not protection against device destruction, browser-profile deletion, private-mode eviction, or an operator clearing site data. The operator must create and retain complete project exports. Complete exports include canonical project state, response/validation/proposal/receipt/manifest history, artifact metadata and bytes, schema identities, and package integrity data. The application fails closed when storage cannot preserve a response or canonical transaction.
