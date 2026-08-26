@@ -16,94 +16,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply guarded semantic repair
-        shell: bash
+      - name: Apply guarded repairs
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          schema=Path('workflow-schema.js'); s=schema.read_text()
-          old='''    "application": [\n      "MEANING_REVIEW_ID",\n      "REQ_ID",\n      "PRODUCT_ID",\n      "DEFECT_ID"\n    ]'''; new='''    "application": [\n      "MEANING_REVIEW_ID",\n      "REQ_ID",\n      "TEST_ID",\n      "PRODUCT_ID",\n      "DEFECT_ID"\n    ]'''
-          if s.count(old)!=1: raise SystemExit(f'meaning ownership match count {s.count(old)}')
-          s=s.replace(old,new,1)
-          old='''    "application": [\n      "ATTACK_ID",\n      "PRODUCT_ID",\n      "DEFECT_ID"\n    ]'''; new='''    "application": [\n      "ATTACK_ID",\n      "PRODUCT_ID",\n      "TEST_ID",\n      "REG_ID",\n      "DEFECT_ID"\n    ]'''
-          if s.count(old)!=1: raise SystemExit(f'adversarial ownership match count {s.count(old)}')
-          s=s.replace(old,new,1)
-          old="""  meaningResults:recordSchema({ownership:RECORD_OWNERSHIP.meaningResults,title:'Independent meaning verification',idField:'MEANING_REVIEW_ID',prefix:'MEANING-REVIEW',stage:23,fields:[\n    'MEANING_REVIEW_ID','REQ_ID','PRODUCT_ID','PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'\n  ],required:['PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION'],relationships:{REQ_ID:'requirements',PRODUCT_ID:'products',DEFECT_ID:'defects'}}),\n  adversarialResults:recordSchema({ownership:RECORD_OWNERSHIP.adversarialResults,title:'Adversarial product verification',idField:'ATTACK_ID',prefix:'ATTACK',stage:24,fields:[\n    'ATTACK_ID','PRODUCT_ID','ATTACK','METHOD','EXPECTED_BEHAVIOR','ACTUAL_RESULT','DETERMINATION','DEFECT_ID','SEVERITY','EVIDENCE'\n  ],required:['ATTACK','METHOD','EXPECTED_BEHAVIOR','ACTUAL_RESULT','DETERMINATION','SEVERITY','EVIDENCE'],relationships:{PRODUCT_ID:'products',DEFECT_ID:'defects'}}),"""
-          new="""  meaningResults:recordSchema({ownership:RECORD_OWNERSHIP.meaningResults,title:'Independent meaning verification',idField:'MEANING_REVIEW_ID',prefix:'MEANING-REVIEW',stage:23,fields:[\n    'MEANING_REVIEW_ID','REQ_ID','TEST_ID','PRODUCT_ID','PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'\n  ],required:['TEST_ID','PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION'],relationships:{REQ_ID:'requirements',TEST_ID:'tests',PRODUCT_ID:'products',DEFECT_ID:'defects'}}),\n  adversarialResults:recordSchema({ownership:RECORD_OWNERSHIP.adversarialResults,title:'Adversarial product verification',idField:'ATTACK_ID',prefix:'ATTACK',stage:24,fields:[\n    'ATTACK_ID','PRODUCT_ID','TEST_ID','REG_ID','ATTACK','METHOD','EXPECTED_BEHAVIOR','ACTUAL_RESULT','DETERMINATION','DEFECT_ID','SEVERITY','EVIDENCE'\n  ],required:['ATTACK','METHOD','EXPECTED_BEHAVIOR','ACTUAL_RESULT','DETERMINATION','SEVERITY','EVIDENCE'],relationships:{PRODUCT_ID:'products',TEST_ID:'tests',REG_ID:'regressions',DEFECT_ID:'defects'}}),"""
-          if s.count(old)!=1: raise SystemExit(f'result schemas match count {s.count(old)}')
-          s=s.replace(old,new,1)
-          marker="const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({\n"
-          addition="""const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({\n  'TEST':Object.freeze({TEST_TYPE:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['DETERMINISTIC','MEANING','ADVERSARIAL']),nullable:false,normalizerKey:null,closedProperties:null})}),\n  'MEANING-REVIEW':Object.freeze({TEST_ID:Object.freeze({valueType:'REFERENCE',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),\n  'ATTACK':Object.freeze({TEST_ID:Object.freeze({valueType:'REFERENCE',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),REG_ID:Object.freeze({valueType:'REFERENCE',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),\n"""
-          if s.count(marker)!=1: raise SystemExit(f'override marker count {s.count(marker)}')
-          s=s.replace(marker,addition,1); schema.write_text(s)
-          engine=Path('workflow-engine.js'); s=engine.read_text(); pattern=re.compile(r"    case 22:\{.*?    case 25:\{",re.S); matches=list(pattern.finditer(s))
-          if len(matches)!=1: raise SystemExit(f'gate block match count {len(matches)}')
-          replacement="""    case 22:{
-      requireAccepted();
-      const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId));
-      const expected=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='DETERMINISTIC'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));
-      const results=recordsForCurrentScope(project,'deterministicResults'),counts=new Map();
-      for(const result of results){const id=String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||'');counts.set(id,(counts.get(id)||0)+1);}
-      const expectedIds=new Set(expected.map(test=>recordId(test,'tests'))),missing=[...expectedIds].filter(id=>counts.get(id)!==1),unexpected=results.filter(result=>!expectedIds.has(String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||'')));
-      if(missing.length)reasons.push('Exactly one deterministic result is required for each applicable deterministic test: '+missing.join(', ')+'.');
-      if(unexpected.length)reasons.push('Unexpected deterministic results exist outside the current applicable deterministic-test set.');
-      if(results.some(record=>upper(recordValue(record,'DETERMINATION'))!=='SATISFIED'))reasons.push('A deterministic finished-product verification is violated or undetermined.');
-      break;
-    }
-    case 23:{
-      requireAccepted();
-      const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId));
-      const expected=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='MEANING'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));
-      const expectedById=new Map(expected.map(test=>[recordId(test,'tests'),test])),expectedIds=new Set(expectedById.keys()),results=recordsForCurrentScope(project,'meaningResults'),counts=new Map();
-      for(const result of results){const id=String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||'');counts.set(id,(counts.get(id)||0)+1);}
-      const missing=[...expectedIds].filter(id=>counts.get(id)!==1),unexpected=results.filter(result=>!expectedIds.has(String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||''))),mismatched=results.filter(result=>{const test=expectedById.get(String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||''));return test&&String(recordValue(result,'REQ_ID')||result.relationships?.REQ_ID||'')!==testRequirementId(test);});
-      if(missing.length)reasons.push('Exactly one meaning review is required for every current applicable meaning test: '+missing.join(', ')+'.');
-      if(unexpected.length)reasons.push('Unexpected meaning-review records exist outside the current meaning-test set.');
-      if(mismatched.length)reasons.push('A meaning-review requirement identity does not match its controlling Stage 6 test.');
-      if(results.some(record=>upper(recordValue(record,'DETERMINATION'))!=='SATISFIED'))reasons.push('A meaning verification is violated or undetermined.');
-      break;
-    }
-    case 24:{
-      requireAccepted();
-      const mandatoryIds=new Set(mandatoryRequirements(project,currentScope(project)).map(requirementId));
-      const expectedTests=recordsForCurrentScope(project,'tests').filter(test=>mandatoryIds.has(testRequirementId(test))&&upper(recordValue(test,'TEST_TYPE'))==='ADVERSARIAL'&&!['RETIRED','BLOCKED','NOT READY'].includes(upper(recordValue(test,'STATUS')||'READY')));
-      const expectedTestIds=new Set(expectedTests.map(test=>recordId(test,'tests')));
-      const expectedRegs=records(project,'regressions').filter(reg=>upper(recordValue(reg,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED'&&upper(recordValue(reg,'APPLICABILITY')||'APPLICABLE')!=='NOT APPLICABLE');
-      const expectedRegIds=new Set(expectedRegs.map(reg=>recordId(reg,'regressions'))),results=recordsForCurrentScope(project,'adversarialResults'),testCounts=new Map(),regCounts=new Map();
-      for(const result of results){const testId=String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||''),regId=String(recordValue(result,'REG_ID')||result.relationships?.REG_ID||'');if(testId)testCounts.set(testId,(testCounts.get(testId)||0)+1);if(regId)regCounts.set(regId,(regCounts.get(regId)||0)+1);}
-      const missingTests=[...expectedTestIds].filter(id=>testCounts.get(id)!==1),missingRegs=[...expectedRegIds].filter(id=>regCounts.get(id)!==1),orphan=results.filter(result=>!String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||'')&&!String(recordValue(result,'REG_ID')||result.relationships?.REG_ID||'')),unexpected=results.filter(result=>{const testId=String(recordValue(result,'TEST_ID')||result.relationships?.TEST_ID||''),regId=String(recordValue(result,'REG_ID')||result.relationships?.REG_ID||'');return (testId&&!expectedTestIds.has(testId))||(regId&&!expectedRegIds.has(regId));});
-      if(!expectedTestIds.size)reasons.push('At least one current mandatory adversarial verification test must be defined at Stage 6.');
-      if(missingTests.length)reasons.push('Exactly one adversarial result is required for every current applicable adversarial test: '+missingTests.join(', ')+'.');
-      if(missingRegs.length)reasons.push('Exactly one adversarial regression challenge is required for every active applicable permanent regression: '+missingRegs.join(', ')+'.');
-      if(orphan.length)reasons.push('Every adversarial result must identify the Stage 6 adversarial test or permanent regression it challenges.');
-      if(unexpected.length)reasons.push('Unexpected adversarial results exist outside the current required adversarial/regression set.');
-      if(results.some(record=>upper(recordValue(record,'DETERMINATION'))!=='SATISFIED'))reasons.push('Adversarial verification found a violated, failed, or undetermined result.');
-      break;
-    }
-    case 25:{"""
-          s=pattern.sub(replacement,s,count=1); engine.write_text(s)
-          full=Path('verify-full-cycle.mjs'); s=full.read_text(); old="INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_AND_MEANING'"; new="INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_AND_INDEPENDENT_CONTENT_REVIEW'"
-          if s.count(old)!=1: raise SystemExit(f'verification prose match count {s.count(old)}')
-          s=s.replace(old,new,1)
-          pattern=re.compile(r"data\(6,\{records:\{tests:.*?complete\(6\);",re.S); matches=list(pattern.finditer(s))
-          if len(matches)!=1: raise SystemExit(f'stage6 fixture match count {len(matches)}')
-          replacement="""data(6,{records:{tests:[recordProposal(schema,'tests',{tempKey:'test-det',relationships:{REQ_ID:{recordId:reqId}},overrides:{TEST_TYPE:'DETERMINISTIC',INPUTS:'Product bytes',TOOLS:'Verifier',PROCEDURE:'Inspect required content deterministically.',EXPECTED_RESULT:'Content present',FAILURE_CONDITION:'Content missing',EVIDENCE_TO_PRESERVE:'Deterministic verifier result'}}),recordProposal(schema,'tests',{tempKey:'test-meaning',relationships:{REQ_ID:{recordId:reqId}},overrides:{TEST_TYPE:'MEANING',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.',EXPECTED_RESULT:'Meaning preserved',FAILURE_CONDITION:'Meaning differs or is unsupported',EVIDENCE_TO_PRESERVE:'Independent meaning review'}}),recordProposal(schema,'tests',{tempKey:'test-adversarial',relationships:{REQ_ID:{recordId:reqId}},overrides:{TEST_TYPE:'ADVERSARIAL',INPUTS:'Finished product and requirement',TOOLS:'Independent adversarial reviewer',PROCEDURE:'Attack omissions, edge cases, contradictions, and unsupported conclusions.',EXPECTED_RESULT:'No material adversarial defect',FAILURE_CONDITION:'A material attack succeeds',EVIDENCE_TO_PRESERVE:'Adversarial challenge evidence'}})]}});const stage6Tests=engine.recordsForCurrentScope(p,'tests'),testId=engine.recordId(stage6Tests.find(t=>engine.recordValue(t,'TEST_TYPE')==='DETERMINISTIC'),'tests'),meaningTestId=engine.recordId(stage6Tests.find(t=>engine.recordValue(t,'TEST_TYPE')==='MEANING'),'tests'),adversarialTestId=engine.recordId(stage6Tests.find(t=>engine.recordValue(t,'TEST_TYPE')==='ADVERSARIAL'),'tests');assert(testId&&meaningTestId&&adversarialTestId,'Stage 6 did not preserve all controlled verification modes.');complete(6);"""
-          s=pattern.sub(replacement,s,count=1)
-          pattern=re.compile(r"data\(23,\{records:\{meaningResults:.*?complete\(23\);",re.S); matches=list(pattern.finditer(s))
-          if len(matches)!=1: raise SystemExit(f'stage23 fixture match count {len(matches)}')
-          replacement="""data(23,{records:{meaningResults:[recordProposal(schema,'meaningResults',{tempKey:'meaning',relationships:{REQ_ID:{recordId:reqId},TEST_ID:{recordId:meaningTestId},PRODUCT_ID:{recordId:productId}},overrides:{PRODUCT_LOCATION:'product.bin',EXTERNAL_SOURCE_EVIDENCE:'User Job Input',REQUIRED_MEANING:'Required content',OBSERVED_MEANING:'Required content',EVIDENCE_BASED_COMPARISON:'MATCH',DETERMINATION:'SATISFIED'}})]}});const savedMeaningReview=p.projectData.meaningResults.pop();const missingMeaningGate=engine.gate(23,p);assert(!missingMeaningGate.complete&&missingMeaningGate.reasons.some(reason=>/meaning review.*test/i.test(reason)),'Stage 23 completed after its required meaning-test result was removed.');p.projectData.meaningResults.push(savedMeaningReview);complete(23);"""
-          s=pattern.sub(replacement,s,count=1)
-          pattern=re.compile(r"data\(24,\{records:\{adversarialResults:.*?complete\(24\);",re.S); matches=list(pattern.finditer(s))
-          if len(matches)!=1: raise SystemExit(f'stage24 fixture match count {len(matches)}')
-          replacement="""data(24,{records:{adversarialResults:[recordProposal(schema,'adversarialResults',{tempKey:'adv-test',relationships:{PRODUCT_ID:{recordId:productId},TEST_ID:{recordId:adversarialTestId}},overrides:{ATTACK:'Missing required content and unsupported conclusion',METHOD:'Adversarial omission and contradiction check',EXPECTED_BEHAVIOR:'Reject a material adversarial defect',ACTUAL_RESULT:'No material adversarial defect found',DETERMINATION:'SATISFIED',SEVERITY:'MINOR',EVIDENCE:'Stage 6 adversarial-test evidence'}}),recordProposal(schema,'adversarialResults',{tempKey:'adv-reg',relationships:{PRODUCT_ID:{recordId:productId},REG_ID:{recordId:regId}},overrides:{ATTACK:'Reintroduce the permanent historical defect pattern',METHOD:'Replay permanent regression as an adversarial challenge',EXPECTED_BEHAVIOR:'Previously corrected defect remains absent',ACTUAL_RESULT:'Permanent regression remains satisfied',DETERMINATION:'SATISFIED',SEVERITY:'MAJOR',EVIDENCE:'Permanent regression adversarial evidence'}})]}});const savedRegressionAttack=p.projectData.adversarialResults.pop();const missingRegressionAttackGate=engine.gate(24,p);assert(!missingRegressionAttackGate.complete&&missingRegressionAttackGate.reasons.some(reason=>/permanent regression/i.test(reason)),'Stage 24 completed while an active permanent regression challenge was missing.');p.projectData.adversarialResults.push(savedRegressionAttack);complete(24);"""
-          s=pattern.sub(replacement,s,count=1); full.write_text(s)
-          PY
-      - name: Restore workflow and run deterministic acceptance
-        shell: bash
+          python3 .repair-schema.py
+          python3 .repair-engine.py
+          python3 .repair-fullcycle.py
+      - name: Restore original workflow and remove helpers
         run: |
           git checkout 276fc3e2920ff91a81e1f49243a9894d64c79011 -- .github/workflows/pages.yml
-          rm -f .github/workflows/repair-verification-mode.yml
+          rm -f .repair-schema.py .repair-engine.py .repair-fullcycle.py
+      - name: Run deterministic acceptance
+        run: |
           node --check workflow-schema.js
           node --check workflow-engine.js
           node --check verify-full-cycle.mjs
@@ -113,7 +36,6 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
       - name: Commit source-only repair
-        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
