@@ -23,12 +23,17 @@ jobs:
           new='- If the requested implementation is too large or requires external-repository/runtime access that is not actually available, do not simulate completion. Produce an implementation-ready specification rather than pretending implementation occurred, using the most complete reliable specification or implementation-ready plan permitted by the current stage and requested deliverable; return BLOCKED if the controlling deliverable cannot legitimately be satisfied that way.'
           if s.count(old)!=1:
               raise SystemExit(f'expected exactly one shared capability rule, found {s.count(old)}')
-          p.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          old2='Treat any desired or suggested source count in User Job Input as a search target, never as authority to invent or pad sources.'
+          new2='Treat any DESIRED OR SUGGESTED SOURCE COUNT in User Job Input as a search target, never as authority to invent or pad sources.'
+          if s.count(old2)!=1:
+              raise SystemExit(f'expected exactly one Stage 2 source-count rule, found {s.count(old2)}')
+          p.write_text(s.replace(old2,new2,1))
           PY
           node --check prompt-engine.js
           node verify-prompt-semantics.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add prompt-engine.js
-          git commit -m "Make capability failure semantics explicit"
+          git commit -m "Make capability and source-count semantics explicit"
           git push origin HEAD:semantic-reliability-final
