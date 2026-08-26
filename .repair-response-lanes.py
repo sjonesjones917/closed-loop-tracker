@@ -16,4 +16,8 @@ insert="""negative('blocked human input uses wrong recovery lane',(e)=>{e.respon
 negative('execution failed without an attempted failure',(e)=>{e.responseType='EXECUTION_FAILED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'capability-missing',kind:'MISSING_CAPABILITY',description:'Required capability is unavailable',whyBlocking:'The operation cannot begin without the capability.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MISSING_EXECUTION_FAILURE_DETAIL');
 """
 assert s.count(marker)==1, s.count(marker)
-p.write_text(s.replace(marker,insert+marker))
+s=s.replace(marker,insert+marker)
+old_fixture="kind:responseType==='BLOCKED'?'MISSING_HUMAN_INPUT':'TOOL_FAILURE'"
+new_fixture="kind:responseType==='BLOCKED'?'MISSING_APPLICATION_CONTEXT':'TOOL_FAILURE'"
+assert s.count(old_fixture)==1, s.count(old_fixture)
+p.write_text(s.replace(old_fixture,new_fixture))
