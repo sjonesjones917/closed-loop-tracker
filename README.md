@@ -69,6 +69,22 @@ node verify-prompt-semantics.mjs
 node verify-full-cycle.mjs
 ```
 
+For the local Chromium acceptance path, serve the repository and point the browser verifiers at it:
+
+```bash
+python3 -m http.server 4173
+PAGE_URL=http://127.0.0.1:4173 node verify-browser.mjs
+PAGE_URL=http://127.0.0.1:4173 node verify-browser-extra.mjs
+```
+
+For exact deployed-source verification, set `PAGE_URL` to the deployed Pages URL and run:
+
+```bash
+PAGE_URL=https://sjonesjones917.github.io/closed-loop-tracker/ node verify-live.mjs
+PAGE_URL=https://sjonesjones917.github.io/closed-loop-tracker/ node verify-browser.mjs
+PAGE_URL=https://sjonesjones917.github.io/closed-loop-tracker/ node verify-browser-extra.mjs
+```
+
 The Pages workflow is the single deployment workflow. Pull requests run the source/schema/ingestion/gate/full-cycle/semantic and local Chromium acceptance checks. Only `main` deploys. A successful main run then verifies exact deployed bytes and the deployed Chromium application before publishing the machine-readable acceptance artifact.
 
-Local and deployed Chromium verification run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL. These browser tests cover the primary operator cycle, responsive layouts, actual Blob persistence, compressed package round-trip, injected storage rollback, and stale multi-tab revision rejection.
+The browser tests cover the primary operator cycle, responsive layouts, actual Blob persistence, compressed package round-trip, injected storage rollback, and stale multi-tab revision rejection.
