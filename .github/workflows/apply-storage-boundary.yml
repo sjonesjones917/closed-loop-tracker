@@ -14,7 +14,9 @@ jobs:
         with:
           ref: reliability/storage-boundary-current-20260826
       - name: Apply exact storage correction
-        run: python3 .storage-repair.py
+        run: |
+          python3 .storage-repair.py
+          python3 .browser-diagnostic.py
       - name: Syntax checks
         run: |
           node --check project-store.js
@@ -69,6 +71,7 @@ jobs:
         if: success()
         run: |
           rm .storage-repair.py
+          rm .browser-diagnostic.py
           rm .github/workflows/apply-storage-boundary.yml
           rm -f .browser-failure.log
           git config user.name github-actions[bot]
