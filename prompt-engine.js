@@ -107,6 +107,9 @@ ${show(j.SUPPLIED_MATERIALS_INVENTORY)}
 USER-SUPPLIED KNOWN AUTHORITY (classification preserved; do not automatically relabel as external authority):
 ${show(j.KNOWN_AUTHORITATIVE_SOURCES)}
 
+DESIRED OR SUGGESTED SOURCE COUNT (search target only; never fabricate sources to satisfy it):
+${show(j.DESIRED_SOURCE_COUNT)}
+
 AVAILABLE TOOLS:
 ${show(j.AVAILABLE_TOOLS)}
 
@@ -140,8 +143,8 @@ MANDATORY RESPONSE RULES
 - Include evidence for every agent-produced canonical value that requires provenance.
 - Do not include collections or fields outside the current stage contract.
 - Preserve TRUE/FALSE/UNKNOWN/NONE/NOT APPLICABLE and SATISFIED/VIOLATED/UNDETERMINED meanings exactly.
-- Stage 02 may contain only genuinely independent external governing sources; target-product and repository artifacts are prohibited.
-- Stage 03 may research only accepted Stage 02 external governing sources.
+- Stage 02 may contain only genuinely independent external governing sources; target-product and repository artifacts are prohibited. If diligent inspection establishes that no legitimate external governing source applies, set AUTHORITY_HIERARCHY to 'NO_APPLICABLE_EXTERNAL_SOURCE: <evidence-supported rationale>', set KNOWN_CONTROLLING_SOURCES_EXAMINED to true, return no source records, and never invent a source to satisfy a desired count.
+- Stage 03 may research only accepted Stage 02 external governing sources; when Stage 02 has the valid NO_APPLICABLE_EXTERNAL_SOURCE determination, Stage 03 research is explicitly not applicable and no source may be invented.
 - If required authority, evidence, capability, or decision rule is unavailable, return BLOCKED or HUMAN_INPUT_REQUIRED as applicable rather than inventing data.
 - If execution itself is unavailable, return EXECUTION_FAILED; do not represent unexecuted work as completed.
 - A rejected response or rejected data is not canonical and must not be reused as accepted project truth.

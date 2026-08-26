@@ -76,6 +76,13 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   const ids=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(ids.includes('REQ-CURRENT')&&!ids.includes('REQ-STALE'),'Historical scope satisfied current selector.');
   const unscoped=record('requirements',4,{OBLIGATION:'unscoped historical',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'yes',INTENDED_VERIFICATION_METHOD:'test',EXPECTED_EVIDENCE:'e',FAILURE_CONDITION:'f',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-UNSCOPED');delete unscoped.scope;p.projectData.requirements.push(unscoped);const scopedIds=engine.recordsForCurrentScope(p,'requirements').map(x=>engine.recordId(x,'requirements'));assert(!scopedIds.includes('REQ-UNSCOPED'),'Unscoped historical record satisfied current selector.');
 }
+// Valid evidence-supported no-source determination must not force fabricated authority.
+{
+  const p=project('JOB-NO-SOURCE');p.stages[1].status='COMPLETE';p.projectData.acceptedChanges.push({changeId:'CHANGE-NO-SOURCE-2',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL'});p.stages[2].agentData={AUTHORITY_HIERARCHY:'NO_APPLICABLE_EXTERNAL_SOURCE: Diligent inspection found no independent external governing authority for this synthetic job.',KNOWN_CONTROLLING_SOURCES_EXAMINED:true};
+  const stage2=engine.gate(2,p);assert(stage2.complete,`Valid no-source Stage 02 was blocked: ${stage2.reasons.join('; ')}`);p.stages[2].status='COMPLETE';p.projectData.acceptedChanges.push({changeId:'CHANGE-NO-SOURCE-3',stage:3,status:'COMMITTED',responseType:'DATA_PROPOSAL'});const stage3=engine.gate(3,p);assert(stage3.complete,`No-source Stage 03 not-applicable path was blocked: ${stage3.reasons.join('; ')}`);
+  const invalid=project('JOB-NO-SOURCE-MISSING');invalid.stages[1].status='COMPLETE';invalid.projectData.acceptedChanges.push({changeId:'CHANGE-BAD-NO-SOURCE',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL'});invalid.stages[2].agentData={AUTHORITY_HIERARCHY:'NO_APPLICABLE_EXTERNAL_SOURCE: unsupported',KNOWN_CONTROLLING_SOURCES_EXAMINED:false};assert(!engine.gate(2,invalid).complete,'Unsupported no-source assertion completed Stage 02.');
+}
+
 // Artifact identity is independent of file-selection order.
 {
   const p=project('JOB-ORDER');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-ORDER'));

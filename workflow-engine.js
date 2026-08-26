@@ -220,14 +220,21 @@ function gate(stage,project){
       if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');
       break;
     }
-    case 2:
-      requireAccepted();requireCount('sources',1,'At least one inspected independent external governing source is required.');
+    case 2:{
+      requireAccepted();
+      const noSource=upper(project.stages[2]?.agentData?.AUTHORITY_HIERARCHY).startsWith('NO_APPLICABLE_EXTERNAL_SOURCE')&&truth(project.stages[2]?.agentData?.KNOWN_CONTROLLING_SOURCES_EXAMINED);
+      if(!collection('sources').length&&!noSource)reasons.push('At least one inspected independent external governing source or an evidence-supported NO_APPLICABLE_EXTERNAL_SOURCE determination is required.');
+      if(collection('sources').length&&noSource)reasons.push('NO_APPLICABLE_EXTERNAL_SOURCE cannot coexist with current external source records.');
       for(const source of collection('sources'))reasons.push(...schema.sourceClassificationIssues(recordFields(source)).map(issue=>`${recordId(source,'sources')}: ${issue}`));
       if(collection('sourceConflicts').some(record=>['UNRESOLVED','BLOCKED','UNKNOWN','OPEN'].includes(upper(recordValue(record,'RESOLUTION_STATUS')))))reasons.push('An external-source conflict remains unresolved or blocked.');
       break;
+    }
     case 3:{
-      requireAccepted();requireCount('research',1);
+      requireAccepted();
+      const noSource=upper(project.stages[2]?.agentData?.AUTHORITY_HIERARCHY).startsWith('NO_APPLICABLE_EXTERNAL_SOURCE')&&truth(project.stages[2]?.agentData?.KNOWN_CONTROLLING_SOURCES_EXAMINED);
       const sourceIds=all('sources').map(record=>recordId(record,'sources'));
+      if(noSource){if(sourceIds.length)reasons.push('Stage 02 no-source determination conflicts with current source records.');if(collection('research').length)reasons.push('Stage 03 research must remain empty when external source research is not applicable.');break;}
+      requireCount('research',1);
       const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')));
       const missing=sourceIds.filter(id=>!researched.has(id));
       if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);
