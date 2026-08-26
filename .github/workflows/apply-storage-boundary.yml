@@ -18,6 +18,7 @@ jobs:
       - name: Syntax checks
         run: |
           node --check project-store.js
+          node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
       - name: Verify retained project
         run: node build-test-project.mjs
@@ -34,14 +35,29 @@ jobs:
       - name: Verify prompt semantics
         run: node verify-prompt-semantics.mjs
       - name: Verify primary browser workflow
+        id: primary_browser
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
+          set +e
+          node verify-browser.mjs >.browser-failure.log 2>&1
+          STATUS=$?
+          set -e
+          cat .browser-failure.log
+          exit "$STATUS"
+      - name: Persist browser diagnostic
+        if: failure() && steps.primary_browser.outcome == 'failure'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .browser-failure.log
+          git commit -m "Record storage repair browser diagnostic"
+          git push origin HEAD:reliability/storage-boundary-current-20260826
       - name: Verify browser persistence and edge cases
+        if: success()
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -50,9 +66,11 @@ jobs:
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser-extra.mjs
       - name: Commit proven repair and remove branch-only tooling
+        if: success()
         run: |
           rm .storage-repair.py
           rm .github/workflows/apply-storage-boundary.yml
+          rm -f .browser-failure.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
