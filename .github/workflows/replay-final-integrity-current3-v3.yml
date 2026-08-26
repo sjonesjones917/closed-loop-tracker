@@ -1,0 +1,60 @@
+name: Replay semantic integrity closure current3 v3
+on:
+  push:
+    branches: [reliability/final-integrity-authority-current3-20260826]
+permissions:
+  contents: write
+jobs:
+  replay:
+    if: ${{ !contains(github.event.head_commit.message, '[semantic-replay-current3-v3-complete]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/final-integrity-authority-current3-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply proved repair with valid Stage 17 fixture
+        shell: bash
+        run: |
+          git show e31f4c0ef8a96d1dee1d20d846a04df1f37acace:.github/workflows/replay-final-integrity-current3-v2.yml > /tmp/v2.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          y=Path('/tmp/v2.yml').read_text()
+          marker="      - name: Apply semantic repair and canonical fixtures\n        shell: bash\n        run: |\n"
+          body=y.split(marker,1)[1].split("\n      - name: Run deterministic acceptance",1)[0]
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in body.splitlines())+'\n'
+          Path('/tmp/apply.sh').write_text(body)
+          PY
+          bash /tmp/apply.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          s=s.replace("registerArtifactBytes(p,{stage:16,artifactId:'ARTIFACT-IDEMPOTENT'","registerArtifactBytes(p,{stage:17,artifactId:'ARTIFACT-IDEMPOTENT'",1)
+          s=s.replace("freezeCandidate(p,{stage:16,artifactIds:['ARTIFACT-IDEMPOTENT']","freezeCandidate(p,{stage:17,artifactIds:['ARTIFACT-IDEMPOTENT']",1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/replay-final-integrity-current3.yml .github/workflows/replay-final-integrity-current3-v2.yml .github/workflows/replay-final-integrity-current3-v3.yml
+      - name: Run deterministic acceptance
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node verify-hash.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit exact passing replay
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Replay final authority and integrity closure on current main [semantic-replay-current3-v3-complete]"
+          git push origin HEAD:reliability/final-integrity-authority-current3-20260826
