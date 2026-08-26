@@ -27,7 +27,7 @@ There is no second parser, store, workflow engine, prompt layer, application she
 - Response schema: `closed-loop-stage-response/2`.
 - Workflow identity: `mobile-closed-loop/30` with exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
-- Required browser capabilities: IndexedDB, Web Crypto, Blob, and CompressionStream for complete compressed package export.
+- Required browser capabilities: IndexedDB, Web Crypto, Blob, CompressionStream, and DecompressionStream for complete compressed package export/import.
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
 
 ## Data and backup responsibility
@@ -62,7 +62,6 @@ node --check verify-live.mjs
 node --check verify-browser.mjs
 node --check verify-browser-extra.mjs
 node verify.mjs
-node verify.mjs --semantic-only
 node verify-ingestion.mjs
 node verify-complete.mjs
 node verify-prompt-semantics.mjs
