@@ -15,7 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: python3 .semantic-prompt-closure.py
+      - run: |
+          python3 .semantic-prompt-closure.py
+          python3 .semantic-prompt-partition-fix.py
       - name: Verify prompt closure and full deterministic lifecycle
         run: |
           node --check workbook.js
@@ -29,7 +31,7 @@ jobs:
           node verify-prompt-semantics.mjs
       - name: Commit clean source-only result
         run: |
-          rm -f .semantic-prompt-closure.py .github/workflows/apply-prompt-closure.yml
+          rm -f .semantic-prompt-closure.py .semantic-prompt-partition-fix.py .github/workflows/apply-prompt-closure.yml
           git config user.name 'sjonesjones917'
           git config user.email 'sjones.jones917@gmail.com'
           git add -A
