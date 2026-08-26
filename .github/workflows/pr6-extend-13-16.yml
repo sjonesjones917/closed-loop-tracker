@@ -1,0 +1,44 @@
+name: PR6 extend lifecycle 13-16
+on:
+  push:
+    branches: [practical-100/pr6-completion]
+permissions:
+  contents: write
+jobs:
+  extend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extend normal-ingestion lifecycle and self-remove
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          marker='const result={continuousLifecycle:'
+          assert marker in s
+          prefix=s[:s.index(marker)]
+          tail=r'''// Stage 13: one comparison covers all ten current runs with no correctness-affecting variance.
+pr=savePrompt(13);accept(13,pr,{stageData:stageData(13),records:{comparisons:[proposal('comparison-1',requiredAgentFields('comparisons',{RUN_DETERMINATIONS:currentRuns.map(r=>`${engine.recordId(r,'runs')}:SATISFIED`).join('|'),INTERPRETATION_VARIANCE:'NONE',OUTPUT_VARIANCE:'NONE',AUTHORIZED_VARIANCE:'NONE',INCONCLUSIVE_TESTS:'NONE',REPEATED_FAILURE_PATTERNS:'NONE',UNIQUE_FAILURES:'NONE',CORRECTNESS_AFFECTING_VARIANCE:'NONE',DEFECT_IDS:'NONE',EVIDENCE:'All ten current runs and their verification records were compared.'}),{REQ_ID:refId(reqId)})]}});assertComplete(13);
+
+// Stage 14: one independently identified material defect and evidence-supported earliest-layer RCA.
+pr=savePrompt(14);accept(14,pr,{stageData:stageData(14),records:{defects:[proposal('defect-1',requiredAgentFields('defects',{OBSERVED_FAILURE:'The failure fixture exposes an execution-layer defect requiring a controlled correction.',EXPECTED_CONDITION:'Invalid bytes must be rejected without ambiguity.',EVIDENCE:'Failure-test and verification evidence identify the defect.',SEVERITY:'MAJOR',ROOT_CAUSE_CATEGORY:'EXECUTION',ROOT_CAUSE:'The execution path failed to preserve the required rejection behavior.',CORRECTION:'Correct the responsible execution layer and rerun the complete iteration.',CHANGED_ARTIFACTS:'Candidate execution implementation.',VERIFICATION_RESULT:'CONFIRMED',RELATIONSHIPS:'Requirement and current run evidence.'}),{REQ_ID:refId(reqId),RUN_ID:refId(engine.recordId(currentRuns[0],'runs'))})],rootCauses:[proposal('rca-1',requiredAgentFields('rootCauses',{CATEGORY:'EXECUTION',LAYER_TRACE:'Requirement -> instruction -> candidate -> execution -> observed failure.',EARLIEST_DEFECTIVE_LAYER:'EXECUTION',ROOT_CAUSE:'Execution implementation is the earliest defective layer.',EVIDENCE:'Canonical failure and verification records support the backward trace.',DOWNSTREAM_INVALIDATION:'Invalidate Stages 16-30 and require a corrected iteration.'}),{DEFECT_ID:refTemp('defect-1')})]}});engine.recalculate(p);assertComplete(14);const defectId=recordId('defects');
+
+// Stage 15: permanent regression definition plus actual pre-correction failing execution.
+pr=savePrompt(15);accept(15,pr,{stageData:stageData(15),records:{regressions:[proposal('regression-1',requiredAgentFields('regressions',{FAILURE_FIXTURE:'The exact pre-correction invalid-byte fixture.',REPRODUCTION_PROCEDURE:'Execute the invalid-byte case against the frozen candidate.',DETECTION_METHOD:'Exact deterministic rejection assertion.',PRE_CORRECTION_RESULT:'VIOLATED',PRE_CORRECTION_EVIDENCE:'The pre-correction execution reproduced the defect.',CORRECTION:'Apply the responsible execution-layer correction.',PERMANENT_TEST_LOCATION:'Permanent regression suite.',APPLICABILITY:'ACTIVE'}),{DEFECT_ID:refId(defectId),REQ_ID:refId(reqId)})],regressionExecutions:[proposal('reg-exec-pre',requiredAgentFields('regressionExecutions',{PHASE:'PRE_CORRECTION',RESULT:'VIOLATED'}),{REG_ID:refTemp('regression-1'),ITERATION_ID:refId(iterationId),CANDIDATE_ID:refId(candidateId),EVIDENCE_ID:refTemp('evidence-1')})]}});engine.recalculate(p);assertComplete(15);const regId=recordId('regressions');
+
+// Stage 16: controlled responsible-layer correction proposal; application remains authority for authorization and invalidation.
+pr=savePrompt(16);accept(16,pr,{stageData:stageData(16,{INSTRUCTION_CHANGED:'NO',IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED:'YES',PREFLIGHT_REPEATED_IF_CHANGED:'NOT_REQUIRED',ARTIFACTS_CHANGED:'EXECUTION_IMPLEMENTATION',NEW_VERSIONS_CREATED:'YES',IN_PLACE_MODIFICATIONS:'NONE',DOWNSTREAM_VERIFICATIONS_INVALIDATED:'YES'}),records:{changes:[proposal('change-1',requiredAgentFields('changes',{TRIGGERING_DEFECT_IDS:defectId,ROOT_CAUSE_ANALYSIS:'Execution is the earliest defective layer.',RESPONSIBLE_LAYER:'EXECUTION',OLD_ARTIFACT_VERSION:'candidate-v1',EXACT_MODIFICATION:'Correct invalid-byte rejection behavior without changing the instruction.',NEW_ARTIFACT_VERSION:'candidate-v2',DOWNSTREAM_INVALIDATION:'Invalidate later verification and release work.',REQUIRED_RERUNS:'Full corrected ten-run iteration and downstream verification.',INSTRUCTION_CHANGE_DETERMINATION:'UNCHANGED',REQUIRED_REPEATED_PREFLIGHT:'NOT_REQUIRED',JUSTIFIED_UNCHANGED_ARTIFACTS:'Instruction remains semantically unchanged.',EVIDENCE:'RCA and regression evidence justify the correction.'}))]}});engine.recalculate(p);assertComplete(16);
+
+const result={continuousLifecycle:'STAGES_01_TO_16',stagesCompleted:16,currentStage:p.job.CURRENT_STAGE,revision:p.revision||0,acceptedDataChanges:p.projectData.acceptedChanges.length,rawResponses:p.projectData.rawResponses.length,stage8EvidenceRelationship:true,stage11InitialBoundary:true,verificationTriples:engine.verificationMatrix(p,iterationId).expected.length,confirmedDefect:defectId,permanentRegression:regId};
+console.log(JSON.stringify(result,null,2));
+'''
+          p.write_text(prefix+tail)
+          PY
+          rm -f .github/workflows/pr6-extend-13-16.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Extend full-cycle proof through controlled correction'
+          git push
