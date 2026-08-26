@@ -1,0 +1,59 @@
+name: Materialize test execution orchestration repair
+on:
+  push:
+    branches: [reliability/test-execution-orchestration-20260826]
+permissions:
+  contents: write
+jobs:
+  materialize-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/test-execution-orchestration-20260826
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact guarded repair and remove proof scaffolding
+        run: |
+          node .apply-test-execution-orchestration.mjs
+          rm .apply-test-execution-orchestration.mjs
+          rm .github/workflows/test-execution-orchestration-materialize.yml
+      - name: Prove no prohibited architecture was introduced
+        run: |
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+      - name: Syntax and deterministic acceptance
+        run: |
+          node build-test-project.mjs
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only verified permanent source
+        run: |
+          test ! -e .apply-test-execution-orchestration.mjs
+          test ! -e .github/workflows/test-execution-orchestration-materialize.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Clarify test execution and artifact orchestration"
+          git push origin HEAD:reliability/test-execution-orchestration-20260826
