@@ -1,0 +1,42 @@
+name: Apply six-file semantic closure
+on:
+  push:
+    branches:
+      - semantic-reliability/minimal-closure-38a-current
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact semantic source delta
+        run: |
+          git diff be8d4dfa4665aa34c4d1a59f202bb2fab006c0fa 101b443a64b864c50d25437c84edab9af532fb22 -- workbook.js prompt-engine.js response-ingestion.js workflow-engine.js verify-ingestion.mjs verify-prompt-semantics.mjs > /tmp/semantic.patch
+          test -s /tmp/semantic.patch
+          git apply --3way /tmp/semantic.patch
+      - name: Verify deterministic contracts
+        run: |
+          node --check workbook.js
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit clean source delta
+        if: success()
+        run: |
+          rm -f .github/workflows/apply-six-file-semantic-closure.yml
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add -A
+          git commit -m 'Close remaining prompt recovery and audit semantics'
+          git push origin HEAD:semantic-reliability/minimal-closure-38a-current
