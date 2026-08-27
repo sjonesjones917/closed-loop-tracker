@@ -1,0 +1,65 @@
+name: Apply chat-first UX patch
+on:
+  push:
+    branches: [fix/chat-first-agent-ux]
+permissions:
+  contents: write
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/chat-first-agent-ux
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply targeted source changes
+        run: node apply-chat-first-ux.mjs
+      - name: Remove one-time patch machinery before verification
+        run: rm apply-chat-first-ux.mjs .github/workflows/apply-chat-first-ux.yml
+      - name: Rebuild retained fixture
+        run: node build-test-project.mjs
+      - name: Syntax checks
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check test-fixtures.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Deterministic and semantic verification
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium verification
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Make all stages chat-first and human-readable"
+          git push origin HEAD:fix/chat-first-agent-ux
