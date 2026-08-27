@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply minimum semantic fixes
-        run: node .github/apply-stage2-provenance-contract-fix.mjs
+        run: |
+          node .github/apply-stage2-provenance-contract-fix.mjs
+          sed -i 's#closed-loop-response-contract/2.3#closed-loop-response-contract/2.4#g' verify-prompt-semantics.mjs
       - name: Syntax checks
         run: |
           node --check workflow-schema.js
