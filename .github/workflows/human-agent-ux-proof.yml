@@ -19,16 +19,20 @@ jobs:
         run: |
           node --check .repair-human-agent-ux.mjs
           node .repair-human-agent-ux.mjs
-      - name: Prove deterministic behavior
-        run: |
-          node --check prompt-engine.js
-          node --check app-core.js
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+      - name: Syntax
+        run: node --check prompt-engine.js && node --check app-core.js
+      - name: Hash identity
+        run: node verify-hash.mjs
+      - name: Architecture and ownership
+        run: node verify.mjs
+      - name: Ingestion
+        run: node verify-ingestion.mjs
+      - name: Gates
+        run: node verify-complete.mjs
+      - name: Full lifecycle
+        run: node verify-full-cycle.mjs
+      - name: Prompt interaction semantics
+        run: node verify-prompt-semantics.mjs
       - name: Commit verified permanent source only
         run: |
           git config user.name github-actions[bot]
