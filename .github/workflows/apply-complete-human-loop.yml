@@ -1,0 +1,68 @@
+name: Apply complete human conversation UX
+
+on:
+  push:
+    branches:
+      - fix/complete-human-conversation-ux
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[complete-human-loop-applied]') && !contains(github.event.head_commit.message, '[complete-human-loop-debug]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply minimal repair
+        run: node .maintenance-complete-human-loop.mjs
+      - name: Run complete verification and preserve exact output
+        run: |
+          run_checks() {
+            node build-test-project.mjs || return $?
+            node --check workbook.js || return $?
+            node --check hash.js || return $?
+            node --check workflow-schema.js || return $?
+            node --check workflow-engine.js || return $?
+            node --check prompt-engine.js || return $?
+            node --check response-ingestion.js || return $?
+            node --check project-store.js || return $?
+            node --check app-core.js || return $?
+            node --check test-fixtures.mjs || return $?
+            node --check verify.mjs || return $?
+            node --check verify-ingestion.mjs || return $?
+            node --check verify-complete.mjs || return $?
+            node --check verify-full-cycle.mjs || return $?
+            node --check verify-prompt-semantics.mjs || return $?
+            node --check verify-live.mjs || return $?
+            node --check verify-browser.mjs || return $?
+            node --check verify-browser-extra.mjs || return $?
+            node verify.mjs || return $?
+            node verify-ingestion.mjs || return $?
+            node verify-complete.mjs || return $?
+            node verify-prompt-semantics.mjs || return $?
+            node verify-full-cycle.mjs || return $?
+          }
+          set +e
+          run_checks > .maintenance-complete-human-loop.log 2>&1
+          status=$?
+          set -e
+          printf '%s\n' "$status" > .maintenance-complete-human-loop.exit
+      - name: Commit verified repair or diagnostic state
+        run: |
+          status=$(cat .maintenance-complete-human-loop.exit)
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ "$status" = "0" ]; then
+            rm .maintenance-complete-human-loop.mjs .github/workflows/apply-complete-human-loop.yml .maintenance-complete-human-loop.log .maintenance-complete-human-loop.exit
+            git add -A
+            git commit -m "Complete conversational stage UX and stale-response guidance [complete-human-loop-applied]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            git add -A
+            git commit -m "Capture complete human-loop verification failure [complete-human-loop-debug]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            exit "$status"
+          fi
