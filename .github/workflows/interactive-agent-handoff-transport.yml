@@ -1,0 +1,50 @@
+name: Apply interactive agent handoff repair
+on:
+  push:
+    branches: [fix/interactive-agent-handoff]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/interactive-agent-handoff
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact locally verified patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/interactive-handoff-patch-00.b64 .github/interactive-handoff-patch-01.b64 .github/interactive-handoff-patch-02.b64 .github/interactive-handoff-patch-03.b64 .github/interactive-handoff-patch-04.b64 | base64 -d | gzip -d > /tmp/interactive.patch
+          git apply /tmp/interactive.patch
+          cat > /tmp/expected.sha256 <<'SUMS'
+          6643ba7ca3cc1fb82dc295cc892eb15d5618c5234e8409369b7fabf9fe463a76  prompt-engine.js
+          0dcd3ac26d92f39b6e37b30cc7a1645e46c6b98e347f21d42bdd2fb18d0e8a09  response-ingestion.js
+          464d8b2b968fa47e6b1cb91865f5f520525fd7001564022c431ab4583bac0f5b  app-core.js
+          21f7d3c7d40b70942c7f2168feb48229805b2e3254407ac5b791d868c781799c  index.html
+          e65e1c62e6f5e88f6e30f0d3a72f780cd0fa1135dbbc3e6244512a022cccac19  verify-prompt-semantics.mjs
+          b31db34c40b6da09c677e9adb33eafb399168c3c960f3f7b7aac593a2cc4529e  verify-browser.mjs
+          6a3f78fa536538db96b3eea3d73198659d5960c5f9168152f6055a23777c3ab4  verify-ingestion.mjs
+          SUMS
+          sha256sum -c /tmp/expected.sha256
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node --check verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          rm .github/interactive-handoff-patch-00.b64 .github/interactive-handoff-patch-01.b64 .github/interactive-handoff-patch-02.b64 .github/interactive-handoff-patch-03.b64 .github/interactive-handoff-patch-04.b64 .github/workflows/interactive-agent-handoff-transport.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Make agent interaction conversational before final app handoff"
+          git push origin HEAD:fix/interactive-agent-handoff
