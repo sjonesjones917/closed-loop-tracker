@@ -1,4 +1,4 @@
-name: patch-stage2-external-source-only
+name: patch-stage-help-artifact-handoff
 on:
   push:
     branches: [main]
@@ -16,69 +16,97 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply minimal Stage 02 source-boundary repair
+      - name: Apply stage-aware artifact handoff guidance
         shell: bash
         run: |
           node <<'NODE'
           const fs=require('node:fs');
+          const {createHash}=require('node:crypto');
           function mustReplace(text,oldValue,newValue,label){
             if(!text.includes(oldValue))throw new Error(`Missing expected ${label}`);
             return text.replace(oldValue,newValue);
           }
+
+          let app=fs.readFileSync('app-core.js','utf8');
+          const workflowAnchor='function workflow(){const n=current.activeStage,d=core.STAGES[n-1]';
+          const helper=String.raw`function suppliedMaterialInventory(){const value=String(current.job.SUPPLIED_MATERIALS_INVENTORY||'').trim();return value&&!['UNKNOWN','NONE','NOT APPLICABLE'].includes(value.toUpperCase())?value:'';}
+          function stageArtifactGuidance(n){const inventory=suppliedMaterialInventory(),sameChat=' If those exact files are already attached and still accessible in the same ChatGPT conversation, do not upload duplicate copies.';if(n===1&&inventory)return \`<div class="notice"><strong>Files to include when they are needed to understand your request:</strong> attach the human-supplied project material listed below with the Stage 01 instruction.\${sameChat}<div class="record-value" style="margin-top:6px">\${esc(inventory)}</div></div>\`;if(n===2)return \`<div class="notice"><strong>Required with the Stage 02 instruction:</strong> attach the actual human-supplied project artifact(s) listed under <em>Project → Supplied materials / files</em>. Stage 02 must inspect the real material; the generated prompt carries the inventory text, not the file bytes.\${sameChat}\${inventory?\`<div class="record-value" style="margin-top:6px">\${esc(inventory)}</div>\`:''}</div>\`;if(n===3)return '<div class="notice"><strong>Files to include only when applicable:</strong> attach any accepted Stage 02 source artifact that is file-backed and cannot be retrieved by ChatGPT from its cited URL/reference. Do not automatically reattach the original project packet unless the current Stage 02 source set explicitly requires that file.</div>';if(n===10)return '<div class="notice"><strong>Required with the instruction:</strong> make the exact candidate files/folder being reviewed available to ChatGPT. Candidate IDs, filenames, sizes, and hashes do not give the agent the file contents.</div>';if(n===11)return '<div class="notice"><strong>Required with each run instruction:</strong> make the exact frozen candidate package available to that execution context. Every run must receive the identical candidate bytes.</div>';if(n===12)return '<div class="notice"><strong>Required when the current tests use files:</strong> make the exact run output artifacts being verified and every file/fixture required by the current TEST ARTIFACT_REQUIREMENTS available to the verifier. Metadata or a claimed hash is not a substitute for the bytes.</div>';if(n===17){const op=selectedOperation(17),byOp={FREEZE:'the exact corrected candidate files/folder being frozen',EXECUTE_RUN:'the exact corrected frozen candidate package',VERIFY:'the exact corrected run output artifacts plus every test artifact required by the current verification records',COMPARE:'the exact corrected run output artifacts when comparison depends on file content',ROOT_CAUSE:'the exact file-backed defect evidence needed for the selected root-cause investigation',REGRESSION:'the exact regression fixture/input and corrected output artifacts required by the selected regression execution',CORRECT:'the exact file-backed component(s) at the responsible layer that the correction must change'};return byOp[op]?\`<div class="notice"><strong>Required for \${esc(op.replaceAll('_',' '))}:</strong> make \${esc(byOp[op])} available to ChatGPT with this instruction.</div>\`:'';}if(n===19)return '<div class="notice"><strong>Required for unchanged confirmation:</strong> make the exact converged candidate package available to ChatGPT. For VERIFY, COMPARE, or REGRESSION VERIFY operations, also provide the exact run/test artifacts required by that operation.</div>';if(n===20)return '<div class="notice"><strong>Required with the instruction:</strong> make the exact proposed production-baseline files/package available to ChatGPT for inspection.</div>';if(n===21)return '<div class="notice"><strong>Required with the instruction:</strong> make the exact approved baseline inputs/package available to the production agent. The baseline identity and hashes in the prompt do not supply the underlying file contents.</div>';if([22,23,24,25].includes(n))return \`<div class="notice"><strong>Required with the instruction:</strong> make the exact finished-product artifact(s) available to the \${n===22?'deterministic verifier':n===23?'independent meaning reviewer':n===24?'adversarial verifier':'representation inspector'}. Stage \${String(n).padStart(2,'0')} is evaluating the actual delivered representation, not only its metadata.</div>\`;return '';}
+          function stageHelpMarkup(n){const artifact=stageArtifactGuidance(n);return \`<details><summary><b>?</b> How to use this stage</summary><div class="help-body">\${artifact}<ol><li><strong>Send the current instruction to ChatGPT.</strong> Keep using the same chat for this stage.</li><li><strong>Include any stage-required files shown above with the instruction.</strong> If no file notice is shown, do not attach unrelated artifacts just because they exist.</li><li><strong>Answer the agent normally.</strong> It should ask concise human-only questions in chat and wait for your answer when needed.</li><li><strong>Paste only the final JSON into this app</strong>, then tap <em>Parse / validate response</em> and review the proposal before accepting it.</li></ol><p>If later research or verification reveals a new human-only decision, the agent may ask you then. If you replace a rejected response, tap <em>Parse / validate response</em> again; the replacement is not evaluated merely by pasting it.</p></div></details>\`;}
+          `;
+          if(!app.includes(workflowAnchor))throw new Error('Missing workflow anchor');
+          app=app.replace(workflowAnchor,helper+workflowAnchor);
+          app=mustReplace(app,'<div class="panel"><h2 class="section-title">Agent loop</h2><div class="operator-loop" aria-label="Normal stage workflow"><div class="operator-step"><b>1</b><span>Send instruction</span></div><div class="operator-step"><b>2</b><span>Answer agent questions</span></div><div class="operator-step"><b>3</b><span>Paste final JSON</span></div><div class="operator-step"><b>4</b><span>Validate and review</span></div></div></div>','','redundant Agent loop panel');
+          app=mustReplace(app,"function render(){if(!current)return;header();$('#screen').innerHTML=({Overview:overview,Project:projectView,Workflow:workflow,Records:records,Files:files,Release:release}[current.activeView]||overview)();wire();}","function render(){if(!current)return;header();const stageHelp=$('#stage-help');if(stageHelp){stageHelp.hidden=false;stageHelp.innerHTML=stageHelpMarkup(current.activeStage);}$('#screen').innerHTML=({Overview:overview,Project:projectView,Workflow:workflow,Records:records,Files:files,Release:release}[current.activeView]||overview)();wire();}",'dynamic stage help render');
+          fs.writeFileSync('app-core.js',app);
+
+          let index=fs.readFileSync('index.html','utf8');
+          const oldHelp='<div class="app-help"><details><summary><b>?</b> How to use this stage</summary><div class="help-body"><ol><li><strong>Copy or send the current instruction to ChatGPT.</strong> Keep using the same chat for that stage.</li><li><strong>Answer the agent normally.</strong> If it needs information only you can provide, it should ask short plain-language questions in ChatGPT and wait for your answer. Keep talking there until it says the stage is ready for the final JSON. Do not paste the conversation into this app.</li><li><strong>Wait for the final JSON.</strong> When the agent has enough information, it should return one JSON object with no extra prose.</li><li><strong>Paste only that final JSON into the response box</strong>, then tap <em>Parse / validate response</em>. Review the proposed change before accepting it.</li></ol><p>If research or requirements reveal a new human-only decision later, the agent may ask you then. That is expected; it must not guess. After you replace a rejected response, the status changes to <strong>Replacement not evaluated</strong> until you tap <em>Parse / validate response</em> again.</p></div></details></div>';
+          index=mustReplace(index,oldHelp,'<div class="app-help" id="stage-help"></div>','static stage help');
+          fs.writeFileSync('index.html',index);
+
           let prompt=fs.readFileSync('prompt-engine.js','utf8');
-          prompt=mustReplace(prompt,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/17';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/18';",'prompt engine version');
+          const versionMatch=prompt.match(/const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine\/(\d+)'/);
+          if(!versionMatch)throw new Error('Missing prompt engine version');
+          prompt=prompt.replace(versionMatch[0],`const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/${Number(versionMatch[1])+1}'`);
           prompt=mustReplace(prompt,
-            'This limited intake inspection is Stage 01 job-definition work; Stage 02 owns that inventory and formal inspection. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here. A later source/material stage owns formal discovery, inventory, provenance, formal inspection status, authority, currency, supersession, applicability, and conflicts.',
-            'This limited intake inspection is Stage 01 job-definition work. Human-supplied project materials remain authorized project input for later stages that actually need them; they are not Stage 02 external sources and do not belong in the Stage 02 source inventory. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here. Do not classify them as independent governing authority merely because they were supplied.',
-            'Stage 01/02 supplied-material boundary');
-          const s2Start=prompt.indexOf("2:'Build the complete source and supplied-material inventory");
-          const s3Start=prompt.indexOf("3:'Research only",s2Start);
-          if(s2Start<0||s3Start<0)throw new Error('Could not locate Stage 02 procedure boundary');
-          const newStage2="2:'Build only the independent external source inventory needed to determine the governing, mandatory, advisory, and evidentiary authorities for the requested outcome. Stage 02 is external source discovery and authority classification only. It is not an inventory or inspection stage for human-supplied project materials, target artifacts, repositories, source code, screenshots, prior outputs, or other implementation evidence. Do not block Stage 02 because project-material bytes are absent; those materials are authorized project inputs, not independent external sources. Use authorized web/research tools to discover the source landscape required by the domain and requested outcome. Prefer primary, official, controlling authority where it exists; otherwise prefer authoritative, reputable, direct, and current external evidence. Discover enough independent external sources to let Stage 03 research what must be true for the requested outcome, including applicable law, regulations, official rules, filing/format/procedure requirements, standards, authoritative technical references, or other external constraints as the domain requires. Treat any DESIRED OR SUGGESTED SOURCE COUNT as search guidance, not a quota. If no legitimate independent external source or evidence applies after a genuine search, return an explicit no-applicable-source determination with evidence; never substitute project materials or invent a source. Establish for each proposed external source its identity, issuer or author, source type, publication origin, URL/reference, version/date/retrieval date where applicable, authority level and role, relevance, applicable portions, inspection state, currency, supersession, and controlling status. Establish the authority hierarchy and any source conflicts. Stage 03 performs substantive source research and requirement extraction from the accepted Stage 02 external source set; do not derive the requirement set in Stage 02. Never use the target product, this operating application, its repository, source code, UI, stored state, screenshots, human-supplied project packet, prior generated targets, project outputs, generated prompts/instructions, or another implementation of the same target as an independent external source merely because it exists.',\n";
-          prompt=prompt.slice(0,s2Start)+newStage2+prompt.slice(s3Start);
+            "2:'Build the complete source and supplied-material inventory for this current job only. Stage 02 owns inventory and inspection: enumerate human-supplied files, links, references, records, and other materials without treating them as automatically independent governing authority, and discover independent external sources only where the job actually needs them.",
+            "2:'Build the complete source and supplied-material inventory for this current job only. Before inventory or inspection, confirm that every human-supplied file or other material named for this job that Stage 02 must inspect is actually available in the executing ChatGPT context. A filename, inventory entry, hash, or prior mention is not the file itself. If a required supplied material is missing, ask the human conversationally to attach that exact material and do not finalize Stage 02 until it is available or the stage is correctly blocked. Stage 02 owns inventory and inspection: enumerate human-supplied files, links, references, records, and other materials without treating them as automatically independent governing authority, and discover independent external sources only where the job actually needs them.",
+            'Stage 02 supplied-material byte handoff');
           fs.writeFileSync('prompt-engine.js',prompt);
 
-          let workbook=fs.readFileSync('workbook.js','utf8');
-          workbook=mustReplace(workbook,
-            'Identify every source that may control, inform, or prove correctness and establish the authority hierarchy.',
-            'Identify every independent external source that may control, inform, or prove correctness and establish the external authority hierarchy.',
-            'Stage 02 result');
-          workbook=mustReplace(workbook,
-            "2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked']",
-            "2:['Every accepted independent external source has a complete record','Every source has a justified authority or evidentiary role','External authority hierarchy is recorded','Every controlling external-source conflict is resolved or blocked']",
-            'Stage 02 completion gate');
-          fs.writeFileSync('workbook.js',workbook);
+          let browser=fs.readFileSync('verify-browser.mjs','utf8');
+          browser=mustReplace(browser,
+            "for(const token of ['Independent external sources only.','closed-loop-stage-response/2','PROMPT IDENTITY','Parse / validate response','Send instruction','Answer agent questions','Paste final JSON','Validate and review','Expand preview','exact controlling copy block','Complete JSON only'])",
+            "for(const token of ['Independent external sources only.','closed-loop-stage-response/2','PROMPT IDENTITY','Parse / validate response','Required with the Stage 02 instruction:','Supplied materials / files','generated prompt carries the inventory text, not the file bytes','Expand preview','exact controlling copy block','Complete JSON only'])",
+            'Stage 02 browser guidance assertions');
+          browser=mustReplace(browser,
+            "for(const token of ['Stage 01 is an intake conversation','remaining human-only questions in normal chat','COPY BLOCK — STAGE 01 — INITIALIZE THE JOB','HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','Answer agent questions','Paste final JSON'])",
+            "for(const token of ['Stage 01 is an intake conversation','remaining human-only questions in normal chat','COPY BLOCK — STAGE 01 — INITIALIZE THE JOB','HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','How to use this stage','Paste only the final JSON'])",
+            'Stage 01 browser guidance assertions');
+          browser=mustReplace(browser,
+            "assert(await evalValue(cdp,`(()=>{const n=document.querySelector('#generated-prompt');return Boolean(n&&n.scrollHeight>n.clientHeight+1);})()`),'Compact prompt preview is not actually bounded.');",
+            "assert(!text.includes('Agent loop'),'Redundant Agent loop panel is still rendered.');assert(await evalValue(cdp,`(()=>{const n=document.querySelector('#generated-prompt');return Boolean(n&&n.scrollHeight>n.clientHeight+1);})()`),'Compact prompt preview is not actually bounded.');",
+            'Agent loop browser absence assertion');
+          fs.writeFileSync('verify-browser.mjs',browser);
 
           let semantics=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
           semantics=mustReplace(semantics,
-            " const required2=[/complete source and supplied-material inventory/i,/Stage 02 owns inventory and inspection/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];",
-            " const required2=[/external source discovery and authority classification only/i,/Do not block Stage 02 because project-material bytes are absent/i,/Stage 03 performs substantive source research and requirement extraction/i];",
-            'legacy Stage 02 locality regression');
-          const marker="    if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');";
-          const insertion=marker+"\n    if(record.prompt.includes('source and supplied-material inventory')||record.prompt.includes('enumerate human-supplied files')||record.prompt.includes('Stage 02 owns that inventory and formal inspection'))issues.push('STAGE02_PROJECT_MATERIAL_SCOPE_LEAK');\n    if(!record.prompt.includes('external source discovery and authority classification only')||!record.prompt.includes('Do not block Stage 02 because project-material bytes are absent')||!record.prompt.includes('Stage 03 performs substantive source research and requirement extraction'))issues.push('STAGE02_EXTERNAL_SOURCE_BOUNDARY_MISSING');\n    if(!record.prompt.includes('applicable law, regulations, official rules, filing/format/procedure requirements, standards, authoritative technical references'))issues.push('STAGE02_REQUIREMENT_AUTHORITY_DISCOVERY_MISSING');";
-          semantics=mustReplace(semantics,marker,insertion,'Stage 02 semantic regression checks');
+            "if(!ui.includes('Stage 01 is an intake conversation')||!ui.includes('remaining human-only questions in normal chat')||!ui.includes('HUMAN_INPUT_REQUIRED in this app is only a fallback')||!ui.includes('Answer agent questions')||!ui.includes('Paste final JSON'))throw new Error('Stage 01 operator UI does not explain the human conversation and final JSON handoff.');",
+            "if(!ui.includes('Stage 01 is an intake conversation')||!ui.includes('remaining human-only questions in normal chat')||!ui.includes('HUMAN_INPUT_REQUIRED in this app is only a fallback')||!ui.includes('stageHelpMarkup')||!ui.includes('Required with the Stage 02 instruction:')||!ui.includes('generated prompt carries the inventory text, not the file bytes')||!ui.includes('Paste only the final JSON'))throw new Error('Stage help does not explain the human conversation, required artifact handoff, and final JSON boundary.');\n if(ui.includes('Agent loop</h2>')||ui.includes('class=\"operator-loop\"'))throw new Error('Redundant Agent loop panel still exists.');",
+            'stage help semantic assertions');
+          semantics=mustReplace(semantics,
+            "if(record.stage===2){\n    if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');",
+            "if(record.stage===2){\n    if(!record.prompt.includes('A filename, inventory entry, hash, or prior mention is not the file itself')||!record.prompt.includes('ask the human conversationally to attach that exact material'))issues.push('STAGE02_SUPPLIED_MATERIAL_HANDOFF_MISSING');\n    if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');",
+            'Stage 02 prompt handoff semantic assertion');
           fs.writeFileSync('verify-prompt-semantics.mjs',semantics);
 
-          let index=fs.readFileSync('index.html','utf8');
-          index=index.replace(/prompt-engine\.js\?v=[^\"']+/g,'prompt-engine.js?v=18');
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          index=fs.readFileSync('index.html','utf8').replace(/runtime-[0-9a-f]+/g,token);
           fs.writeFileSync('index.html',index);
+          console.log({token});
           NODE
-      - name: Verify changed source
+      - name: Remove stale patch workflow
+        run: git rm .github/workflows/patch-stage2-external-source-only.yml
+      - name: Verify complete application
         run: |
-          node --check workbook.js
+          node --check app-core.js
           node --check prompt-engine.js
+          node --check verify-browser.mjs
           node --check verify-prompt-semantics.mjs
-          node verify-prompt-semantics.mjs
+          node verify-hash.mjs
           node verify.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
-      - name: Commit patch
+          node verify-prompt-semantics.mjs
+      - name: Commit repair
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/patch-stage2-external-source-only.yml
-          git add prompt-engine.js workbook.js verify-prompt-semantics.mjs index.html
-          git commit -m 'Make Stage 02 external-source discovery only'
+          git add app-core.js index.html prompt-engine.js verify-browser.mjs verify-prompt-semantics.mjs .github/workflows/patch-stage2-external-source-only.yml
+          git commit -m 'Make stage help name required agent artifacts'
           git push origin HEAD:main
