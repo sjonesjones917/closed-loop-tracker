@@ -29,10 +29,11 @@ jobs:
 
           p=Path('app-core.js')
           s=p.read_text()
-          old="function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n).at(-1);if(!v||v.valid)return '';return `<div class=\"notice danger\" id=\"validation-report\" tabindex=\"-1\"><strong>Response rejected before canonical mutation.</strong><br>${safe(v.issues).map(x=>esc(`${x.code}: ${x.message}`)).join('<br>')}</div>`;}"
           new="function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n).at(-1);if(!v||v.valid)return '';const issues=safe(v.issues),staleCodes=new Set(['STALE_SCOPE','STALE_PROMPT_IDENTITY','STALE_PROMPT_HASH','STALE_CONTRACT_HASH','STALE_CONTEXT_SIGNATURE']),stale=issues.some(x=>staleCodes.has(String(x.code||''))),typographyNormalized=issues.some(x=>String(x.code||'')==='JSON_TYPOGRAPHY_NORMALIZED');if(stale){const prompt=currentPromptRecord(n),expected=prompt?.instructionId||prompt?.promptId||'the current saved instruction',technical=issues.map(x=>esc(`${x.code}: ${x.message}`)).join('<br>');return `<div class=\"notice danger\" id=\"validation-report\" tabindex=\"-1\"><strong>This response belongs to an older instruction.</strong><br>Nothing was accepted or changed. The current controlling instruction is <strong>${esc(expected)}</strong>. Do not edit the JSON or repair hashes yourself. Tap <strong>Save and copy instruction</strong> above, paste that current instruction into the same ChatGPT conversation, and ask ChatGPT to return the final JSON for that exact instruction. Then replace the response here and tap <strong>Parse / validate response</strong> again.${typographyNormalized?'<br><br>The smart quotation marks were normalized successfully; they are not the reason this response was rejected.':''}<details class=\"record-card\"><summary>Technical validation details<span>Audit</span></summary><div class=\"record-body\">${technical}</div></details></div>`;}return `<div class=\"notice danger\" id=\"validation-report\" tabindex=\"-1\"><strong>Response rejected before canonical mutation.</strong><br>${issues.map(x=>esc(`${x.code}: ${x.message}`)).join('<br>')}</div>`;}"
-          assert old in s
-          s=s.replace(old,new,1)
+          pattern=r"function validationMarkup\(n\)\{.*?\nfunction proposalMarkup\(n\)\{"
+          m=re.search(pattern,s,flags=re.S)
+          assert m
+          s=s[:m.start()]+new+'\nfunction proposalMarkup(n){'+s[m.end():]
           p.write_text(s)
 
           runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
