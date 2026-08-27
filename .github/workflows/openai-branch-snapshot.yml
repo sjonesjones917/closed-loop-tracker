@@ -1,0 +1,20 @@
+name: OpenAI branch snapshot
+on:
+  push:
+    branches: [openai/reliability-evidence-independence-routing]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact branch working tree
+        run: tar --exclude=.git --exclude=repo-snapshot.tgz -czf repo-snapshot.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openai-branch-snapshot-${{ github.sha }}
+          path: repo-snapshot.tgz
+          if-no-files-found: error
+          retention-days: 1
