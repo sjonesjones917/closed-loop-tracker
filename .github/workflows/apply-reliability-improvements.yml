@@ -1,0 +1,58 @@
+name: Apply reliability improvements
+
+on:
+  push:
+    branches:
+      - reliability-execution-evidence-20260827
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply deterministic patch and run fast acceptance
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            node .apply-payload/run.mjs
+            node --check workflow-engine.js
+            node --check prompt-engine.js
+            node --check app-core.js
+            node --check verify-complete.mjs
+            node --check verify-prompt-semantics.mjs
+            node --check verify-browser-extra.mjs
+            node build-test-project.mjs
+            node verify.mjs
+            node verify-ingestion.mjs
+            node verify-complete.mjs
+            node verify-prompt-semantics.mjs
+            node verify-full-cycle.mjs
+          } 2>&1 | tee .apply-payload/result.log
+      - name: Preserve diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reliability-apply-log
+          path: .apply-payload/result.log
+          if-no-files-found: warn
+      - name: Remove one-time patch machinery and commit production changes
+        if: success()
+        shell: bash
+        run: |
+          rm -rf .apply-payload .github/workflows/apply-reliability-improvements.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: make execution evidence and independence operational"
+          git push
