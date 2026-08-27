@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 let prompt=fs.readFileSync('prompt-engine.js','utf8');
 const before='Inspect supplied invention materials first and never ask the human to repeat facts already present there.';
-const after='Inspect any supplied invention disclosure and other supplied invention materials first and never ask the human to repeat facts already present there.';
+const after='Inspect any supplied invention disclosure and other supplied invention materials first and never ask the human to repeat facts already present there. A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01; after recognizing that job, continue the practical human intake for foreseeable human-only facts needed to pursue the requested outcome reliably.';
 if(!prompt.includes(before))throw new Error('Specialist intake phrase anchor missing.');
 prompt=prompt.replace(before,after);
 fs.writeFileSync('prompt-engine.js',prompt);
