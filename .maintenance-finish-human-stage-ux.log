@@ -1,0 +1,134 @@
+Applied final human-first stage prompt and operator UX repair.
+Committed retained project requires no source materialization.
+{
+  "singleApplicationShell": true,
+  "stages": 30,
+  "retainedJobId": "JOB-20260823144121",
+  "currentStage": 2,
+  "stage1": "COMPLETE",
+  "downstreamFabricated": false,
+  "responseSchema": "closed-loop-stage-response/2",
+  "obsoleteRuntimeWrappers": false
+}
+{
+  "application": "single",
+  "stages": 30,
+  "ownershipLedger": true,
+  "responseSchema": "closed-loop-stage-response/2",
+  "allStagePromptsVerified": 30,
+  "externalSourceNonCircularity": true,
+  "retainedProject": "JOB-20260823144121",
+  "retainedStage1": "COMPLETE",
+  "retainedCurrentStage": 2,
+  "retainedDownstreamFabricated": false,
+  "legacyProjectPreservation": true,
+  "unknownFieldRoundTrip": true,
+  "transactionRollback": true,
+  "ingestionCycle": "30/30",
+  "negativeIngestion": true
+}
+{
+  "stagesExercised": 30,
+  "responseSchema": "closed-loop-stage-response/2",
+  "negativeCases": 70,
+  "clarificationLoop": true,
+  "atomicPrecommit": true,
+  "extractionManifest": true,
+  "canonicalIdsApplicationAssigned": true,
+  "scopeIdentityMatrix": true,
+  "verifiedAttachmentBinding": true
+}
+{
+  "pr3Dispositions": true,
+  "preconditions": true,
+  "promptEnginePreconditions": true,
+  "idempotentAcceptance": true,
+  "canonicalEnvelopeIdempotency": true,
+  "typedHumanAnswers": true,
+  "clarificationPromptInvalidation": true,
+  "exactManifestPointers": true,
+  "acceptanceAfterRejectionBlocked": true,
+  "staleProjectRevisionBlocked": true,
+  "totalNegativeCases": 74
+}
+{
+  "operationStageDataIsolation": true,
+  "reservedTargetPolicy": true,
+  "completedReservedTargetBlocked": true,
+  "targetScopeIsolation": true,
+  "totalNegativeCases": 79
+}
+{
+  "persistedPromptAuthority": true,
+  "readableClarificationTargets": true,
+  "humanInputResponseExclusivity": true,
+  "choiceContractValidation": true,
+  "humanAnswerEdgeValidation": true,
+  "totalNegativeCases": 86
+}
+{
+  "finalRequirementRegression": true,
+  "formalStates": true,
+  "noStage31": true,
+  "invalidRelationshipRejected": true,
+  "humanQuestionGate": true,
+  "stage8PrerequisiteGate": true,
+  "tenRunGate": true,
+  "verificationMatrixGate": true,
+  "convergenceStrict": true,
+  "unchangedConfirmationGate": true,
+  "downstreamInvalidation": true,
+  "preReleaseIdentityBlocked": true,
+  "identityMismatchBlocked": true,
+  "evidenceChainNoFabrication": true,
+  "acceptedStateStorageRollback": true
+}
+{
+  "scopedAcceptedResultRefinement": true
+}
+{
+  "stage5RequirementVersionIsolation": true,
+  "iterationOperationIsolation": true,
+  "currentRegressionClosure": true,
+  "stage28CurrentBatch": true
+}
+{
+  "promptSemanticContradictions": true,
+  "stageOperationsChecked": 40,
+  "mutationCasesRejected": 9,
+  "stage2SourceCount": true,
+  "testExecutionOrchestration": true,
+  "artifactGenerationBoundary": true,
+  "promptVersionBoundary": true,
+  "insufficiencyRecovery": true,
+  "operationIsolation": true,
+  "applicationOwnership": true,
+  "specialistDomains": [
+    "patent",
+    "software-multifile",
+    "building-aec",
+    "physical-engineering-cad-cam-cnc-additive"
+  ]
+}
+{
+  "stagesCompleted": 30,
+  "clarificationCycles": 1,
+  "confirmedDefects": 1,
+  "correctedIterationRuns": 10,
+  "unchangedConfirmationRuns": 10,
+  "verificationTripleCoverage": 1,
+  "release": "ACCEPTED",
+  "artifactIdentity": true,
+  "evidenceChains": true,
+  "reloadIntegrity": true
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:15
+const assert=(x,m)=>{if(!x)throw new Error(m);};
+                                 ^
+
+Error: Stage 02 UI/prompt missing Complete JSON only.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:15:34)
+    at main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:42:333)
+    at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:66:5
+
+Node.js v22.23.2
