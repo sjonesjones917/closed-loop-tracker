@@ -148,13 +148,13 @@ for(const [index,mutant] of mutants.entries()){const issues=semanticIssues(mutan
 {
  const p=baseProject(),record=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'}),descriptor=prompts.responseContractDescriptor(12,'COMPLETE');
  if(record.contractSha256!==globalThis.closedLoopHash.sha256Value(descriptor))throw new Error('CONTRACT_SHA256 is not the canonical descriptor hash.');
- if(descriptor.contractVersion!=='closed-loop-response-contract/2.2')throw new Error('Versioned response-contract descriptor is missing.');
+ if(descriptor.contractVersion!=='closed-loop-response-contract/2.3')throw new Error('Versioned response-contract descriptor is missing.');
  const stageField=Object.entries(descriptor.stageData)[0];if(stageField&&(!stageField[1].valueType||!Object.hasOwn(stageField[1],'nullable')||!Object.hasOwn(stageField[1],'provenanceRequired')))throw new Error('Stage-field type/nullability/provenance is not bound into the response contract.');
  const verification=descriptor.records.verification;if(!verification||verification.commitPolicy!==schema.RECORD_SCHEMAS.verification.commitPolicy||verification.idField!==schema.RECORD_SCHEMAS.verification.idField)throw new Error('Record commit policy or identity field is not bound into the response contract.');
  if(JSON.stringify(verification.relationships)!==JSON.stringify(schema.RECORD_SCHEMAS.verification.relationships))throw new Error('Relationship targets are not bound into the response contract.');
  const observed=verification.agentFields.OBSERVED_RESULT;if(!observed?.valueType||!Object.hasOwn(observed,'nullable'))throw new Error('Record field type metadata is not bound into the response contract.');
  if(!descriptor.envelope?.responseTypeRules?.DATA_PROPOSAL||!descriptor.envelope?.recordIdentityRule||!descriptor.envelope?.attachmentRule)throw new Error('Envelope identity/disposition/attachment semantics are not bound into the response contract.');
- if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.2'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
+ if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.3'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
  const mutated=structuredClone(descriptor);mutated.records.verification.agentFields.OBSERVED_RESULT.valueType='BOOLEAN';if(globalThis.closedLoopHash.sha256Value(mutated)===record.contractSha256)throw new Error('A material field-contract change did not change CONTRACT_SHA256.');
 }
 
@@ -373,4 +373,12 @@ import fsStageBoundary from 'node:fs';
  ];
  for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);
  if(r.prompt.includes('Treat any human-supplied files, links, references, records, or other materials as opaque authorized inputs'))throw new Error('Stage 01 still treats supplied human material as opaque instead of usable intake.');
+}
+
+
+// response-transport-and-stage01-package-boundary-v1
+{
+ const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='Turn the supplied ZIP packet into a patent application.';p.job.SUPPLIED_MATERIALS_INVENTORY='packet.zip';const r=prompts.buildPromptRecord(1,p);
+ for(const token of ['closed-loop-response-contract/2.3','evidenceContract','supports','/stageData/FIELD','exactly one fenced code block labeled json','Treat an uploaded ZIP or package as one top-level supplied input at Stage 01','do not enumerate its member files or evidence tree here'])if(!r.prompt.includes(token))throw new Error('Response transport/evidence/Stage 01 package boundary missing: '+token);
+ if(r.prompt.includes('Complete JSON only — no Markdown wrapper'))throw new Error('Obsolete brittle transport instruction remains.');
 }

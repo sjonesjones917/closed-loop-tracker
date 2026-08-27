@@ -68,7 +68,7 @@ function validEnvelope(p,stage,promptRecord){
     operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,
     responseType:'DATA_PROPOSAL',
     humanInputRequests:[],stageData,records,
-    evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],
+    evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`,supports:Object.keys(stageData).map(name=>`/stageData/${name}`)}],
     unresolved:[],warnings:[],attachments:[]
   };
 }
@@ -121,7 +121,9 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
-negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\n'+JSON.stringify(e)+'\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}
+{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),ascii=JSON.stringify(e);let opening=true;const smart=ascii.replace(/\"/g,()=>String.fromCodePoint((opening=!opening)?0x201d:0x201c));const prepared=ingestion.prepare(p,{stage:2,text:smart,promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Typographic JSON transport was not normalized: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}
+negative('prose wrapped JSON',(e)=>'Here is the JSON:\n```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
 negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
@@ -157,6 +159,7 @@ negative('prohibited null',(e)=>{e.stageData={};const r=sourceProposal('source-n
 negative('empty required string',(e)=>{e.stageData={};const r=sourceProposal('source-empty');r.fields.TITLE='';e.records={sources:[r]};},'EMPTY_REQUIRED_STRING');
 negative('placeholder value',(e)=>{e.stageData={};const r=sourceProposal('source-placeholder');r.fields.TITLE='<value>';e.records={sources:[r]};},'PLACEHOLDER_VALUE');
 {const issues=[];ingestion.validateValue({valueType:'STRING',enumValues:['ALLOWED'],nullable:false},'__INVALID_ENUM__','/invalid-enum',issues,{required:true});if(!issues.some(i=>i.code==='INVALID_ENUM_VALUE'))throw new Error('invalid enum: expected INVALID_ENUM_VALUE.');negativeCount++;}
+negativeAt('missing stageData provenance',1,(e)=>{e.evidence.forEach(x=>x.supports=[]);},'MISSING_STAGE_DATA_PROVENANCE');
 negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
 negative('unresolved evidence reference',(e)=>{e.stageData={};const r=sourceProposal('source-evidence');r.evidenceRefs=['does-not-exist'];e.records={sources:[r]};},'UNRESOLVED_EVIDENCE_REFERENCE');
 negative('unresolved evidence source',(e)=>{e.evidence[0].sourceRef={recordId:'SOURCE-NOT-THERE'};},'UNRESOLVED_EVIDENCE_SOURCE');

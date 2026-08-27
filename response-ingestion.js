@@ -8,7 +8,7 @@ if(!schema||!workflow||!hash)throw new Error('workflow-schema.js, workflow-engin
 
 const TOP_LEVEL_KEYS=Object.freeze(['schema','jobId','stage','operation','promptIdentity','scope','responseType','humanInputRequests','stageData','records','evidence','unresolved','warnings','attachments']);
 const RECORD_KEYS=Object.freeze(['tempKey','targetId','fields','relationships','evidenceRefs','notes']);
-const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes']);
+const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes','supports']);
 const QUESTION_KEYS=Object.freeze(['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking']);
 const ATTACHMENT_KEYS=Object.freeze(['temporaryKey','filename','mediaType','byteSize','sha256','required']);
 const UNRESOLVED_KEYS=Object.freeze(['temporaryKey','kind','description','whyBlocking','affectedStageFields','affectedRecords','blocking']);
@@ -35,17 +35,40 @@ function validateValue(definition,value,path,issues,{required=false,maxTextField
 function currentScope(project,promptRecord){return clone(promptRecord?.scope||{});}
 function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.version||null;}
 
+function unwrapJsonTransport(trimmed){
+  if(!trimmed.startsWith('```')&&!trimmed.endsWith('```'))return trimmed;
+  const match=trimmed.match(/^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n```$/i);
+  if(!match)throw Object.assign(new Error('Use exactly one JSON code fence with no prose before or after it.'),{code:'NON_JSON_WRAPPER'});
+  return match[1].trim();
+}
+function normalizeTypographicJsonTransport(candidate){
+  let out='',inSmart=false;
+  for(let i=0;i<candidate.length;i++){
+    const c=candidate[i];
+    if(!inSmart&&c==='“'){out+='"';inSmart=true;continue;}
+    if(inSmart&&c==='”'){out+='"';inSmart=false;continue;}
+    if(!inSmart&&c==='”')throw Object.assign(new Error('Unmatched typographic JSON quote.'),{code:'MALFORMED_JSON'});
+    if(inSmart&&c==='"'){out+='\\"';continue;}
+    out+=c;
+  }
+  if(inSmart)throw Object.assign(new Error('Unterminated typographic JSON string.'),{code:'TRUNCATED_RESPONSE'});
+  return out;
+}
+function parseCandidate(candidate,limits){scanJsonAmbiguity(candidate,limits.maxJsonDepth);return JSON.parse(candidate);}
 function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
   const raw=String(text??'');
   const trimmed=raw.trim();
   if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});
   if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});
-  try{scanJsonAmbiguity(trimmed,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}
-  if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
-  let envelope;
-  try{envelope=JSON.parse(trimmed);}catch(error){
-    const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);
-    throw Object.assign(new Error(`Response JSON could not be parsed: ${error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:error});
+  const candidate=unwrapJsonTransport(trimmed);
+  let envelope,firstError;
+  try{envelope=parseCandidate(candidate,limits);}catch(error){firstError=error;if(['DUPLICATE_JSON_MEMBER','EXCESSIVE_JSON_DEPTH'].includes(error.code))throw error;}
+  if(!envelope&&/[“”]/.test(candidate)){
+    try{envelope=parseCandidate(normalizeTypographicJsonTransport(candidate),limits);}catch(error){if(error.code)throw error;firstError=error;}
+  }
+  if(!envelope){
+    const likelyTruncated=!candidate.endsWith('}')||((candidate.match(/{/g)||[]).length!==(candidate.match(/}/g)||[]).length);
+    throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||'invalid JSON'}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError});
   }
   if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});
   return envelope;
@@ -208,9 +231,12 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     const tempKey=registerTemp(evidence.temporaryKey,`${path}/temporaryKey`,'evidence');
     if(tempKey)evidenceIndex.set(tempKey,{evidence,path});
     for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));
+    if(evidence.supports!==undefined&&(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length))issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers when supplied.'));else for(const pointer of safe(evidence.supports)){const match=String(pointer).match(/^\/stageData\/([^/]+)$/),field=match?.[1];if(!field||!allowedStageData.has(field))issues.push(issue('INVALID_EVIDENCE_SUPPORT_POINTER',`${path}/supports`,`Evidence support pointer ${pointer} is not a permitted current-stage stageData field.`));}
     if(evidence.sourceRef!==undefined){if(!object(evidence.sourceRef))issues.push(issue('INVALID_EVIDENCE_SOURCE_REF',`${path}/sourceRef`,'sourceRef must be a relationship object.'));else{unknownKeys(evidence.sourceRef,['tempKey','recordId'],`${path}/sourceRef`,issues);const count=Number(Boolean(evidence.sourceRef.tempKey))+Number(Boolean(evidence.sourceRef.recordId));if(count!==1)issues.push(issue('INVALID_EVIDENCE_SOURCE_REF',`${path}/sourceRef`,'Provide exactly one of tempKey or recordId.'));else if(evidence.sourceRef.tempKey){const target=responseRecordIndex.get(String(evidence.sourceRef.tempKey));if(!target||target.collection!=='sources')issues.push(issue('UNRESOLVED_EVIDENCE_SOURCE',`${path}/sourceRef`,'Evidence source must resolve to a response source record.'));}else if(!workflow.records(project,'sources',{active:true}).some(x=>workflow.recordId(x,'sources')===String(evidence.sourceRef.recordId)))issues.push(issue('UNRESOLVED_EVIDENCE_SOURCE',`${path}/sourceRef`,'Evidence source must resolve to a current active source.'));}}
     if(evidence.attachmentRef!==undefined){if(!object(evidence.attachmentRef))issues.push(issue('INVALID_EVIDENCE_ATTACHMENT_REF',`${path}/attachmentRef`,'attachmentRef must be a relationship object.'));else{const count=Number(Boolean(evidence.attachmentRef.tempKey))+Number(Boolean(evidence.attachmentRef.recordId));if(count!==1)issues.push(issue('INVALID_EVIDENCE_ATTACHMENT_REF',`${path}/attachmentRef`,'Provide exactly one of tempKey or recordId.'));else if(evidence.attachmentRef.tempKey&&!attachmentIndex.has(String(evidence.attachmentRef.tempKey)))issues.push(issue('UNRESOLVED_EVIDENCE_ATTACHMENT',`${path}/attachmentRef`,'Attachment reference must resolve to supplied, application-verified bytes.'));else if(evidence.attachmentRef.recordId&&!workflow.records(project,'artifacts',{active:true}).some(x=>workflow.recordId(x,'artifacts')===String(evidence.attachmentRef.recordId)))issues.push(issue('UNRESOLVED_EVIDENCE_ATTACHMENT',`${path}/attachmentRef`,'Canonical attachment does not exist or is inactive.'));}}
   });
+
+  for(const field of allowedStageData){const definition=schema.STAGE_FIELDS[stageNumber]?.[field];if(definition?.provenanceRequired&&Object.prototype.hasOwnProperty.call(envelope.stageData||{},field)){const pointer=`/stageData/${field}`,covered=[...evidenceIndex.values()].some(entry=>safe(entry.evidence?.supports).includes(pointer));if(!covered)issues.push(issue('MISSING_STAGE_DATA_PROVENANCE',pointer,`Agent-produced stageData ${field} requires at least one evidence.supports reference to ${pointer}.`));}}
 
   if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{
     const path=`/records/${pointerEscape(collection)}/${index}`;
