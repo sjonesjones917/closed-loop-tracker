@@ -55,6 +55,14 @@ jobs:
           fs.writeFileSync('index.html',html);
           console.log(token);
           NODE
+          python <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs'); s=p.read_text()
+          needle="await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));"
+          diagnostic="await waitExpr(cdp,`document.readyState==='complete'`);await sleep(2500);console.log('BROWSER_STARTUP_DIAGNOSTIC',await evalValue(cdp,`JSON.stringify({ready:globalThis.closedLoopAppReady,error:globalThis.closedLoopAppError,core:typeof globalThis.closedLoopCore,schema:typeof globalThis.closedLoopWorkflowSchema,engine:typeof globalThis.closedLoopWorkflowEngine,prompt:typeof globalThis.closedLoopPromptEngine,ingestion:typeof globalThis.closedLoopResponseIngestion,store:typeof globalThis.closedLoopProjectStore,body:document.body.innerText.slice(0,1200)})`));await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));"
+          if needle not in s: raise SystemExit('browser startup diagnostic anchor not found')
+          p.write_text(s.replace(needle,diagnostic,1))
+          PY
       - name: Verify complete deterministic and browser path
         run: |
           node --check prompt-engine.js
