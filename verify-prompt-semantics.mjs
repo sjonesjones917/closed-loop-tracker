@@ -360,11 +360,11 @@ import fsStageBoundary from 'node:fs';
  const r=prompts.buildPromptRecord(1,p);
  const required=[
   'do not ask the human to re-enter facts that are already present in those materials',
-  'Do not block Stage 01 merely because information will be needed by a later',
+  'At Stage 01, collect every human-only fact or decision that domain knowledge already establishes will be needed',
   'Stage 01 does not require every fact needed to execute later stages',
   'A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01',
-  'Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01',
-  'Never ask for information merely because a later stage will need it',
+  'Ask the human now, conversationally, only for missing human-only facts in those categories that are already clearly necessary',
+  'Do not ask the human to decide a technical, legal, filing, design, or execution strategy that the agent should first research and explain',
   'humanInputRequestContract',
   'temporaryKey',
   'whyRequired',
