@@ -23,7 +23,7 @@ jobs:
           p=Path('prompt-engine.js')
           text=p.read_text()
           old='- PATENT / REGULATED FILING: use only the minimum human-supplied invention facts needed to recognize and define the requested patent-application drafting job. A request such as "prepare a patent application for this project"'
-          new='- PATENT / REGULATED FILING: use only the minimum human-supplied invention facts needed to recognize and define the requested patent-application drafting job. Use any supplied invention disclosure only for the minimum Stage 01 job-definition facts; do not perform Stage 02 inventory or patent research from it here. A request such as "prepare a patent application for this project"'
+          new='- PATENT / REGULATED FILING: use only the minimum human-supplied invention facts needed to recognize and define the requested patent-application drafting job. Use any supplied invention disclosure only for the minimum Stage 01 job-definition facts; do not perform Stage 02 inventory or patent research from it here. Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers. A request such as "prepare a patent application for this project"'
           if text.count(old)!=1: raise SystemExit(f'patent wording anchor count={text.count(old)}')
           p.write_text(text.replace(old,new,1))
           PY
