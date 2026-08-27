@@ -29,3 +29,19 @@ function replaceOnce(text,search,replacement,label){
     'Stage 01 practical intake regression');
   fs.writeFileSync(path,text);
 }
+
+{
+  const path='verify-browser.mjs';
+  let text=fs.readFileSync(path,'utf8');
+  text=replaceOnce(
+    text,
+    "for(const token of ['Independent external sources only.','closed-loop-stage-response/2','PROMPT IDENTITY','Parse / validate response','Send instruction','Paste full response','Review and accept','Expand preview','exact controlling copy block','Complete JSON only'])",
+    "for(const token of ['Independent external sources only.','closed-loop-stage-response/2','PROMPT IDENTITY','Parse / validate response','Send instruction','Answer agent questions','Paste final JSON','Validate, review, accept','Expand preview','exact controlling copy block','Complete JSON only'])",
+    'Stage 02 browser workflow labels');
+  text=replaceOnce(
+    text,
+    "await openStage(cdp,1);text=(await snapshot(cdp)).text;for(const token of ['Start with one thing: save the verbatim job request','one structured HUMAN_INPUT_REQUIRED response','STAGE 01 NEEDS YOUR JOB REQUEST'])assert(text.includes(token),`Stage 01 clarification experience missing ${token}.`);assert(!text.includes('plain-language questions before final JSON'),'Stage 01 UI still advertises the contradictory conversational-before-JSON path.');",
+    "await openStage(cdp,1);text=(await snapshot(cdp)).text;for(const token of ['Talk first; paste JSON last.','Answer agent questions','Paste final JSON','STAGE 01 NEEDS YOUR JOB REQUEST'])assert(text.includes(token),`Stage 01 clarification experience missing ${token}.`);for(const forbidden of ['record the answer in User Job Input and regenerate this instruction','Paste full response'])assert(!text.includes(forbidden),`Stage 01 still exposes obsolete machine-first guidance: ${forbidden}.`);",
+    'Stage 01 browser conversation workflow');
+  fs.writeFileSync(path,text);
+}
