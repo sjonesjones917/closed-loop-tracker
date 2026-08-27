@@ -1126,7 +1126,7 @@ function authorizeMutation({fieldDefinition,actor,mutationType}){
   return {authorized:true,reason:'AUTHORIZED'};
 }
 
-const TARGET_PRODUCT_REFERENCE_PATTERN=/(?:closed-loop-tracker|current\s+application|existing\s+application|target\s+product|current\s+ui|target\s+screenshot|app-core\.js|workbook\.js|prompt-engine\.js|TEST_PROJECT\.json|github\.com\/sjonesjones917\/closed-loop-tracker)/i;
+const TARGET_PRODUCT_REFERENCE_PATTERN=/(?:closed-loop-tracker|(?:current|existing)\s+(?:operating\s+)?application\s+(?:repository|source\s+code|ui|stored\s+state|implementation|artifact|screenshot)|target\s+product|current\s+ui|target\s+screenshot|app-core\.js|workbook\.js|prompt-engine\.js|TEST_PROJECT\.json|github\.com\/sjonesjones917\/closed-loop-tracker)/i;
 function sourceClassificationIssues(fields={}){
   const issues=[];
   const combined=Object.values(fields).join(' ');

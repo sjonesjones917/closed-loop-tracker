@@ -67,6 +67,9 @@ function semanticIssues(record){
   if(record.stage===12&&!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\nNONE'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');
   if(![6,12].includes(record.stage)&&record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_LEAK');
   if(record.stage===2){
+    if(!record.prompt.includes('Stage 02 is not a supplied-project-material inventory stage'))issues.push('STAGE02_PROJECT_MATERIAL_INVENTORY_LEAK');
+    if(!record.prompt.includes('Missing project-material bytes do not by themselves block Stage 02'))issues.push('STAGE02_FALSE_PROJECT_FILE_BLOCKER');
+    if(!record.prompt.includes('Every proposed record containing any AGENT-owned canonical field MUST include a non-empty evidenceRefs array'))issues.push('RECORD_PROVENANCE_PROMPT_RULE_MISSING');
     if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');
     if(!record.prompt.includes('no-applicable-source determination'))issues.push('NO_SOURCE_PATH_MISSING');
     if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');
@@ -85,7 +88,7 @@ if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContr
  const ui=fs.readFileSync('app-core.js','utf8');
  if(!ui.includes('Verification execution')||!ui.includes('a filename, hash claim, or code block is not file possession')||!ui.includes('Who performs the current tests'))throw new Error('Operator UI does not explain test execution responsibility and returned-file transfer.');
  if(!ui.includes('Stage 01 is an intake conversation')||!ui.includes('remaining human-only questions in normal chat')||!ui.includes('HUMAN_INPUT_REQUIRED in this app is only a fallback'))throw new Error('Stage 01 operator UI does not explain the human conversation and final JSON handoff.');
- if(!ui.includes('Include the original supplied project artifact(s) with the Stage 02 prompt')||!ui.includes('suppliedFileMaterialLabels'))throw new Error('Stage 02 guide does not conditionally tell the human to provide actual supplied file artifacts.');
+ if(!ui.includes('Stage 02 researches independent external sources. Supplied project artifacts are not required for this stage'))throw new Error('Stage 02 operator guide does not explain the external-source-only boundary.');
  if(ui.includes('<h2 class=\"section-title\">Agent loop</h2>'))throw new Error('Redundant Agent loop section still exists.');
  if(!ui.includes('Output format (optional)')||!ui.includes('You do not need to know the final file format in advance')||!ui.includes('A specification substitute requires human confirmation'))throw new Error('Project-input UI still requires specialist format knowledge or permits an automatic specification downgrade.');
  if(!ui.includes('promptVersionCurrent')||!ui.includes('Obsolete instruction version'))throw new Error('The UI can still treat a saved prompt/proposal from an obsolete prompt engine as current.');
@@ -158,13 +161,13 @@ for(const [index,mutant] of mutants.entries()){const issues=semanticIssues(mutan
 {
  const p=baseProject(),record=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'}),descriptor=prompts.responseContractDescriptor(12,'COMPLETE');
  if(record.contractSha256!==globalThis.closedLoopHash.sha256Value(descriptor))throw new Error('CONTRACT_SHA256 is not the canonical descriptor hash.');
- if(descriptor.contractVersion!=='closed-loop-response-contract/2.3')throw new Error('Versioned response-contract descriptor is missing.');
+ if(descriptor.contractVersion!=='closed-loop-response-contract/2.4')throw new Error('Versioned response-contract descriptor is missing.');
  const stageField=Object.entries(descriptor.stageData)[0];if(stageField&&(!stageField[1].valueType||!Object.hasOwn(stageField[1],'nullable')||!Object.hasOwn(stageField[1],'provenanceRequired')))throw new Error('Stage-field type/nullability/provenance is not bound into the response contract.');
  const verification=descriptor.records.verification;if(!verification||verification.commitPolicy!==schema.RECORD_SCHEMAS.verification.commitPolicy||verification.idField!==schema.RECORD_SCHEMAS.verification.idField)throw new Error('Record commit policy or identity field is not bound into the response contract.');
  if(JSON.stringify(verification.relationships)!==JSON.stringify(schema.RECORD_SCHEMAS.verification.relationships))throw new Error('Relationship targets are not bound into the response contract.');
  const observed=verification.agentFields.OBSERVED_RESULT;if(!observed?.valueType||!Object.hasOwn(observed,'nullable'))throw new Error('Record field type metadata is not bound into the response contract.');
  if(!descriptor.envelope?.responseTypeRules?.DATA_PROPOSAL||!descriptor.envelope?.recordIdentityRule||!descriptor.envelope?.attachmentRule)throw new Error('Envelope identity/disposition/attachment semantics are not bound into the response contract.');
- if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.3'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
+ if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.4'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
  const mutated=structuredClone(descriptor);mutated.records.verification.agentFields.OBSERVED_RESULT.valueType='BOOLEAN';if(globalThis.closedLoopHash.sha256Value(mutated)===record.contractSha256)throw new Error('A material field-contract change did not change CONTRACT_SHA256.');
 }
 
@@ -353,7 +356,7 @@ import fsStageBoundary from 'node:fs';
  for(const re of forbidden1)if(re.test(s1))throw new Error('Stage 01 leaks Stage 02/03 work: '+re);
  const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
  for(const re of required1)if(!re.test(s1))throw new Error('Stage 01 missing locality boundary: '+re);
- const required2=[/complete source and supplied-material inventory/i,/Stage 02 owns inventory and inspection/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
+ const required2=[/Stage 02 is not a supplied-project-material inventory stage/i,/Missing project-material bytes do not by themselves block Stage 02/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
  for(const re of required2)if(!re.test(s2))throw new Error('Stage 02 missing ownership boundary: '+re);
  const forbidden2=[/compile atomic requirement proposals/i,/define this job’s verification suite/i,/author this job’s production instruction/i];
  for(const re of forbidden2)if(re.test(s2))throw new Error('Stage 02 leaks later-stage work: '+re);
