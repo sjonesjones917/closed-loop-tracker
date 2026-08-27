@@ -1,0 +1,44 @@
+name: Apply original stage guide fix
+on:
+  push:
+    branches:
+      - fix/restore-original-stage-guide-v2
+    paths:
+      - .github/workflows/apply-original-stage-guide-fix.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-original-stage-guide-v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply repair
+        run: python3 tools/fix_original_stage_guide.py
+      - name: Verify repair
+        run: |
+          node --check app-core.js
+          node --check verify-browser.mjs
+          node verify-hash.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/stage-guide-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+      - name: Commit verified application change
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js index.html verify-browser.mjs verify-prompt-semantics.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Restore original stage guide with conditional artifact note'
+          git push origin HEAD:fix/restore-original-stage-guide-v2
