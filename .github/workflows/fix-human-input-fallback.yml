@@ -1,0 +1,68 @@
+name: Fix final HUMAN_INPUT_REQUIRED fallback
+on:
+  push:
+    branches:
+      - fix/human-input-required-final-fallback
+permissions:
+  contents: write
+jobs:
+  repair-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/human-input-required-final-fallback
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Apply final fallback repair
+        run: python3 patch-human-input-fallback.py
+      - name: Calculate exact runtime cache identity
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          const matches=[...html.matchAll(/\?v=runtime-[^"']+/g)];
+          if(matches.length!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime tokens; found ${matches.length}.`);
+          html=html.replace(/\?v=runtime-[^"']+/g,`?v=${identity}`);
+          fs.writeFileSync('index.html',html);
+          console.log(identity);
+          NODE
+      - name: Remove one-time patch machinery
+        run: rm patch-human-input-fallback.py .github/workflows/fix-human-input-fallback.yml
+      - name: Rebuild retained fixture
+        run: node build-test-project.mjs
+      - name: Syntax checks
+        run: |
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+      - name: Full deterministic and semantic verification
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium verification
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified minimal repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Make HUMAN_INPUT_REQUIRED a true fallback"
+          git push origin HEAD:fix/human-input-required-final-fallback
