@@ -44,7 +44,7 @@ jobs:
             'Identify every independent external source that may control, inform, or prove correctness and establish the external authority hierarchy.',
             'Stage 02 result');
           workbook=mustReplace(workbook,
-            "2:['Every governing source has a complete record','Every relied-upon supplied file was inspected','Authority hierarchy is recorded','Every controlling conflict is resolved or blocked']",
+            "2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked']",
             "2:['Every accepted independent external source has a complete record','Every source has a justified authority or evidentiary role','External authority hierarchy is recorded','Every controlling external-source conflict is resolved or blocked']",
             'Stage 02 completion gate');
           fs.writeFileSync('workbook.js',workbook);
