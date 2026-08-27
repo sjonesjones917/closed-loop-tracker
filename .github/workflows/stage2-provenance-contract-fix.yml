@@ -20,6 +20,19 @@ jobs:
         run: |
           node .github/apply-stage2-provenance-contract-fix.mjs
           sed -i 's#closed-loop-response-contract/2.3#closed-loop-response-contract/2.4#g' verify-prompt-semantics.mjs
+          sed -i 's#Stage 02 owns independent external-source discovery, inspection, authority classification, currency, supersession, applicability, and external-source conflicts.#Stage 02 owns independent external-source discovery and assessment.#' prompt-engine.js
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const id=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/runtime-[0-9a-f]{16}/g,id);
+          fs.writeFileSync('index.html',html);
+          console.log(JSON.stringify({runtimeBuildIdentity:id}));
+          NODE
       - name: Syntax checks
         run: |
           node --check workflow-schema.js
