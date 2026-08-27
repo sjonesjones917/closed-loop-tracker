@@ -1,0 +1,82 @@
+name: Apply human-first stage UX hotfix
+on:
+  push:
+    branches: [fix/human-first-stage-ux-20260826]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/human-first-stage-ux-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch prompt semantics and stage UX
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new, count=1):
+              p=Path(path); text=p.read_text()
+              actual=text.count(old)
+              if actual != count:
+                  raise SystemExit(f'{path}: expected {count} occurrence(s), found {actual}: {old[:120]!r}')
+              p.write_text(text.replace(old,new,count))
+
+          replace_exact('prompt-engine.js', "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/12';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/13';")
+
+          replace_exact('prompt-engine.js', " if(stage===1&&!String(state?.job?.EXACT_USER_OBJECTIVE_VERBATIM||'').trim()){const error=new Error('Stage 01 needs one thing before an instruction can be generated: enter the verbatim job request in User Job Input and save it. Additional details may be clarified by the agent afterward.');error.code='MISSING_MINIMUM_HUMAN_INPUT';throw error;}\n", "")
+
+          replace_exact('prompt-engine.js',
+          "When Stage 01 cannot proceed without a genuinely human-only fact or decision, return HUMAN_INPUT_REQUIRED as the one machine response for this turn. Put only the smallest set of genuinely blocking questions in humanInputRequests using the exact contract below. Do not ask conversational questions outside the JSON response and do not ask the human to manually rewrite those answers into unrelated fields. The application will render the questions as normal human-facing controls, type-check the answers, version them as User Job Input, invalidate this prompt, and regenerate Stage 01.",
+          "When Stage 01 needs a genuinely human-only fact or decision and this ChatGPT conversation can continue, ask the human directly in concise plain language and wait for the answer before producing the final machine response. Do not encode ordinary conversational questions in JSON and do not make the human shuttle answers through the application. Use HUMAN_INPUT_REQUIRED only as a fallback when conversational clarification cannot continue and the application must route a machine-readable question.")
+
+          replace_exact('prompt-engine.js',
+          "If such a genuinely Stage-01-blocking fact is missing, return HUMAN_INPUT_REQUIRED—not DATA_PROPOSAL—as the single response. Put only the smallest set of blocking questions inside humanInputRequests using the exact question contract below. Ask necessary human questions conversationally before the final JSON response; do not encode a question as JSON merely to talk to the human. The application will display and type-check those questions, version the answers as User Job Input, invalidate this prompt, and generate a replacement Stage 01 instruction.",
+          "If such a genuinely Stage-01-blocking fact is missing and this ChatGPT conversation can continue, ask the human directly in concise plain language and wait for the answer before producing the final JSON. Do not encode an ordinary conversational question in JSON. Use HUMAN_INPUT_REQUIRED only as a fallback when conversational clarification cannot continue and the application must route the question as a machine-readable handoff.")
+
+          replace_exact('prompt-engine.js',
+          "- Never set a HUMAN or HUMAN_DECISION-owned field. When unavailable human information is required, return HUMAN_INPUT_REQUIRED and structured humanInputRequests. Do not convert a missing human fact, choice, legal assertion, engineering parameter, or authority decision into an assumption.",
+          "- Never set a HUMAN or HUMAN_DECISION-owned field. When required human information is missing, ask conversationally first whenever this chat can continue. Use HUMAN_INPUT_REQUIRED with structured humanInputRequests only when a machine-routed clarification handoff is actually necessary. Do not convert a missing human fact, choice, legal assertion, engineering parameter, or authority decision into an assumption.")
+
+          replace_exact('prompt-engine.js',
+          "- Missing human-authority information requires HUMAN_INPUT_REQUIRED. Missing, stale, incomplete, or contradictory canonical application context requires BLOCKED with MISSING_APPLICATION_CONTEXT.",
+          "- Missing human-authority information requires conversational clarification first when this chat can continue; HUMAN_INPUT_REQUIRED is the fallback machine handoff only when it cannot. Missing, stale, incomplete, or contradictory canonical application context requires BLOCKED with MISSING_APPLICATION_CONTEXT.")
+
+          replace_exact('app-core.js',
+          "Start with one thing: save the verbatim job request. Add files or constraints you already have; everything else can be clarified later. If more human information is needed now, the agent must return one structured HUMAN_INPUT_REQUIRED response. Paste it once and the application will show the plain-language questions here, validate your answers, version them as User Job Input, and regenerate Stage 01.",
+          "Start with the job request and any files or constraints you already have. Then send the generated instruction to ChatGPT. If the agent needs a human-only fact, it should ask you directly in the chat and continue there until it can return the final JSON. HUMAN_INPUT_REQUIRED is only a fallback for cases where conversational clarification cannot continue.")
+
+          replace_exact('app-core.js',
+          "<strong>Clarify before final JSON.</strong> If the external agent asks a question, answer it there, then record the answer in User Job Input and regenerate this instruction. Do not paste or accept a placeholder DATA_PROPOSAL just to discover what information is missing.",
+          "<strong>Talk to the agent normally.</strong> If ChatGPT needs a human-only fact, answer it in the same chat. The agent should continue until it has enough information, then return the final strict JSON. Do not paste conversational questions into the response box.")
+
+          replace_exact('index.html','runtime-916178475daeb452','runtime-human-first-20260826b',8)
+
+          p=Path('verify-prompt-semantics.mjs'); text=p.read_text()
+          old="if(!record.prompt.includes('STAGE 01 CLARIFICATION EXPERIENCE')||!record.prompt.includes('return HUMAN_INPUT_REQUIRED—not DATA_PROPOSAL')||!record.prompt.includes('Ask necessary human questions conversationally before the final JSON response')||!record.prompt.includes('display and type-check those questions')||!record.prompt.includes('generate a replacement Stage 01 instruction'))issues.push('STAGE01_STRUCTURED_CLARIFICATION_MISSING');"
+          new="if(!record.prompt.includes('STAGE 01 CLARIFICATION EXPERIENCE')||!record.prompt.includes('ask the human directly in concise plain language')||!record.prompt.includes('Use HUMAN_INPUT_REQUIRED only as a fallback')||!record.prompt.includes('Do not encode an ordinary conversational question in JSON'))issues.push('STAGE01_HUMAN_FIRST_CLARIFICATION_MISSING');"
+          if old not in text:
+              raise SystemExit('verify-prompt-semantics.mjs: expected Stage 01 clarification assertion not found')
+          p.write_text(text.replace(old,new,1))
+          PY
+
+          node --check app-core.js
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node build-test-project.mjs
+
+      - name: Commit patch and remove temporary workflow
+        run: |
+          rm .github/workflows/human-first-hotfix.yml
+          git config user.name "closed-loop-hotfix"
+          git config user.email "actions@users.noreply.github.com"
+          git add app-core.js prompt-engine.js index.html verify-prompt-semantics.mjs .github/workflows/human-first-hotfix.yml
+          git commit -m "Fix missing prompt and human-first clarification flow"
+          git push origin HEAD:fix/human-first-stage-ux-20260826
