@@ -12,16 +12,20 @@ jobs:
   export:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out exact branch commit
+      - name: Check out exact repository history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Package exact tracked source tree
-        run: git archive --format=tar.gz --output=/tmp/closed-loop-tracker-source.tar.gz HEAD
-      - name: Upload source tree
+      - name: Package current main source and candidate reliability payload
+        run: |
+          git archive --format=tar.gz --output=/tmp/current-main.tar.gz cc4e9a19d3ba512a2d8573fe4a2eb0ac9b195d49
+          git archive --format=tar.gz --output=/tmp/reliability-payload.tar.gz origin/reliability-execution-evidence-20260827
+      - name: Upload source trees
         uses: actions/upload-artifact@v4
         with:
-          name: closed-loop-tracker-source
-          path: /tmp/closed-loop-tracker-source.tar.gz
+          name: closed-loop-reliability-inspection
+          path: |
+            /tmp/current-main.tar.gz
+            /tmp/reliability-payload.tar.gz
           if-no-files-found: error
           retention-days: 1
