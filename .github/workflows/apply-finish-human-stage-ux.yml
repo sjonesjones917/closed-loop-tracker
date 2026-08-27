@@ -22,11 +22,19 @@ jobs:
           from pathlib import Path
           path=Path('verify-browser.mjs')
           text=path.read_text(encoding='utf-8')
-          before="'Complete JSON only'"
-          after="'Final JSON only'"
-          if before not in text:
-              raise SystemExit('Expected stale browser label assertion was not found.')
-          path.write_text(text.replace(before,after),encoding='utf-8')
+          replacements=[
+              ("'Complete JSON only'", "'Final JSON only'", 'stale final-JSON label assertion'),
+              (
+                  "await click(cdp,'[data-view=\"Project\"]');text=(await snapshot(cdp)).text;for(const token of ['You do not need to know the final file format in advance','Stage 01 determines the actual artifact set and suitable formats','A specification substitute requires human confirmation'])",
+                  "await click(cdp,'[data-view=\"Project\"]');await click(cdp,'details.record-card summary');text=(await snapshot(cdp)).text;for(const token of ['You do not need to know the final file format in advance','Stage 01 determines the actual artifact set and suitable formats','A specification substitute requires human confirmation'])",
+                  'collapsed project-help browser assertion'
+              ),
+          ]
+          for before,after,label in replacements:
+              if before not in text:
+                  raise SystemExit(f'Expected {label} was not found.')
+              text=text.replace(before,after)
+          path.write_text(text,encoding='utf-8')
           PY
           run_checks() {
             node build-test-project.mjs || return $?
