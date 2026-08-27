@@ -1,0 +1,46 @@
+name: Prove final human-first handoff
+on:
+  push:
+    branches:
+      - fix/final-human-handoff-20260827
+permissions:
+  contents: write
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply minimal candidate
+        run: |
+          node --check .tmp-final-human-patch.mjs
+          node .tmp-final-human-patch.mjs
+          rm .tmp-final-human-patch.mjs .tmp-framed-parser.txt
+      - name: Syntax and exact runtime identity
+        run: |
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-hash.mjs
+      - name: Architecture and ingestion
+        run: |
+          node verify.mjs
+          node verify-ingestion.mjs
+      - name: Gates and continuous lifecycle
+        run: |
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Semantic prompt acceptance
+        run: node verify-prompt-semantics.mjs
+      - name: Commit verified permanent changes only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/final-human-handoff-proof.yml
+          git add -A
+          git commit -m "Make ChatGPT interaction human-first with strict final handoff"
+          git push origin HEAD
