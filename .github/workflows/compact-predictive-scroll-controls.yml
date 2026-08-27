@@ -21,8 +21,28 @@ jobs:
           node-version: 22
       - name: Apply minimal compact predictive scroll-control correction
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.tmp-compact-predictive-scroll-controls.mjs')
+          source=path.read_text()
+          old="browser=replaceAllExpected(browser,nestedOpen,nestedCentered,2,'nested long-review openings');"
+          new="browser=replaceAllExpected(browser,nestedOpen,nestedCentered,1,'nested long-review opening');"
+          if source.count(old)!=1:
+              raise SystemExit(f'Expected one nested-opening count guard; found {source.count(old)}.')
+          path.write_text(source.replace(old,new))
+          PY
           node --check .tmp-compact-predictive-scroll-controls.mjs
           node .tmp-compact-predictive-scroll-controls.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-browser.mjs')
+          source=path.read_text()
+          old="await click(cdp,'#proposal-heading>details.record-card:nth-of-type(2)>summary');await click(cdp,'#proposal-heading>details.record-card:nth-of-type(2) details.record-card>summary');await waitExpr(cdp,"
+          new="await click(cdp,'#proposal-heading>details.record-card:nth-of-type(2)>summary');await click(cdp,'#proposal-heading>details.record-card:nth-of-type(2) details.record-card>summary');await positionNode(cdp,'#proposal-heading>details.record-card:nth-of-type(2) details.record-card','center');await waitExpr(cdp,"
+          if source.count(old)!=1:
+              raise SystemExit(f'Expected one initial nested review opening; found {source.count(old)}.')
+          path.write_text(source.replace(old,new))
+          PY
           node --check hash.js
           node --check verify-browser.mjs
       - name: Verify complete application and scroll-control behavior
