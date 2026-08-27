@@ -1,0 +1,53 @@
+name: Apply exact runtime identity
+
+on:
+  push:
+    branches:
+      - fix/human-chat-fallback-contradiction-20260826
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[runtime-token-clean]') && !contains(github.event.head_commit.message, '[runtime-token-failed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Apply exact runtime identity
+        run: node .maintenance-runtime-token.mjs
+      - name: Verify hash and complete deterministic suite
+        run: |
+          set +e
+          {
+            node build-test-project.mjs &&
+            node verify-hash.mjs &&
+            node verify.mjs &&
+            node verify-ingestion.mjs &&
+            node verify-complete.mjs &&
+            node verify-prompt-semantics.mjs &&
+            node verify-full-cycle.mjs
+          } > .maintenance-runtime-token.log 2>&1
+          status=$?
+          set -e
+          printf '%s\n' "$status" > .maintenance-runtime-token.exit
+      - name: Commit verified source only
+        run: |
+          status=$(cat .maintenance-runtime-token.exit)
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ "$status" = "0" ]; then
+            rm .maintenance-runtime-token.mjs .github/workflows/apply-runtime-token.yml .maintenance-runtime-token.log .maintenance-runtime-token.exit
+            git add -A
+            git commit -m "Use exact deterministic runtime cache identity [runtime-token-clean]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            git add -A
+            git commit -m "Capture runtime identity verification failure [runtime-token-failed]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            cat .maintenance-runtime-token.log
+            exit "$status"
+          fi
