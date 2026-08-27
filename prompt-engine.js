@@ -4,7 +4,7 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/15';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/16';
 if(!core||!schema||!hash||!workflow)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
 function humanInputBlock(job){
@@ -110,6 +110,12 @@ function body(stage,state,operation,scope){
  return `COPY BLOCK — STAGE ${String(stage).padStart(2,'0')} — ${d.title}
 
 HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE
+CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION
+- When a value or decision can only come from the human and is not already known, ask the human directly in concise plain language in this same chat. Do not emit the final JSON in that turn.
+- Continue the same conversation from the human answer. Ask only the next genuinely useful human-only question(s); do not interrogate the human for facts available in supplied materials, common domain knowledge, or authorized research/tools.
+- humanInputRequests is NOT the normal conversation channel. It is a fallback machine handoff used only when a required human answer remains unavailable or explicitly deferred after conversation, or when interactive conversation is unavailable.
+- If research, source analysis, requirements, verification, production, or audit later reveals a new human-only fact or decision, use this same conversational rule at that later stage before final JSON.
+
 Do not start by emitting JSON when a human-only answer is needed. Talk to the human first; JSON is the final handoff to the application, not the conversation.
 You are working with a human in a normal ChatGPT conversation, commonly on a phone. Make the human experience simple. If the current stage needs a human-specific fact, preference, observation, authorization, or decision that is not already available, ask the smallest useful set of plain-language questions conversationally before producing the final machine response. Briefly explain why a question matters when that is not obvious. Do not make the human read or answer JSON. Do not ask for information already present in supplied materials or canonical context, and do not ask the human for facts you can reliably determine from authorized sources, tools, or ordinary domain knowledge. Continue the conversation until you have enough information for the current stage, or the human says an item is unknown/unavailable. Then produce the final JSON response only.
 Stage 01 should collect all human-specific information already foreseeable as needed to achieve the requested outcome, not merely the minimum needed to name the job. Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision; when that happens, ask the human conversationally at that later stage rather than guessing. Keep human-facing explanations concise, complete, accurate, and action-oriented.
@@ -160,6 +166,15 @@ Use domain knowledge only to determine what the human is asking for, what suppli
 `}
 
 ${stage===1?`STAGE 01 CLARIFICATION EXPERIENCE
+MANDATORY STAGE 01 HUMAN-INTAKE GATE
+Before any final Stage 01 JSON, classify every missing item into exactly one category:
+- BLOCKING_NOW: human-only and required to identify the objective, intended deliverable, or input boundary. Ask now. Stage 01 cannot finish without an answer.
+- ASK_NOW_NONBLOCKING: human-only, foreseeably needed to achieve the requested outcome, and not already supplied. Ask now conversationally, but "unknown", "I do not know", or explicit deferral is an acceptable answer; then record it as unresolved and continue when Stage 01 is otherwise sufficient. Nonblocking means the human may defer; it does not mean the agent may skip the question.
+- LATER_RESOLVABLE: obtainable from supplied materials, common domain knowledge, authorized research/tools, or genuinely dependent on later research. Do not ask the human now. Let the earliest stage that can resolve it do so.
+Conversational questions are not humanInputRequests. Ask BLOCKING_NOW and ASK_NOW_NONBLOCKING questions in normal chat before the final machine response. HUMAN_INPUT_REQUIRED is reserved only for still-unanswered BLOCKING_NOW items after conversation or a noninteractive context.
+For PATENT / REGULATED FILING jobs, when not already known from human input or supplied materials, ASK_NOW_NONBLOCKING includes: intended jurisdiction(s); filing-route/application-type preference or existing filing; inventor identities; ownership, assignment, employment, or other rights obligations; priority/continuity/related-application history; public disclosure, sale, offer-for-sale, publication, demonstration, or other disclosure history and dates; known filing or business deadlines; government funding or joint-development circumstances; desired endpoint (inventor review, counsel review, filing-ready, or another stated endpoint); and whether additional human-controlled invention materials exist. Ask only the parts that truly require the human. Do not turn researchable legal strategy into a human question.
+Before Stage 01 submission verify: objective/deliverable defined; supplied materials identified without doing Stage 02 inventory work; every foreseeable human-only item was already supplied, answered conversationally, or explicitly marked unknown/deferred by the human; no later-stage research or drafting was performed; then choose the final response type.
+
 Before the final Stage 01 machine response, determine whether the human-authority input plus any supplied materials actually available in this executing context are sufficient for Stage 01. When a genuinely human-only fact or decision is needed, ask it conversationally first under HUMAN COLLABORATION MODE. Never ask the human to repeat information available in supplied materials, and do not ask for facts the agent can reliably determine from authorized tools, sources, or ordinary domain knowledge. Continue the normal chat until enough information is available or the human says the item is unknown or unavailable. Use HUMAN_INPUT_REQUIRED only as the final machine fallback when a genuinely blocking human answer remains unavailable or explicitly deferred after that conversation, or when interactive conversation is unavailable. In that fallback, include only the smallest set of still-unanswered blocking questions in humanInputRequests. Do not hide missing human information behind UNKNOWN, placeholders, empty strings, or guessed assumptions.
 `:''}
 
@@ -202,6 +217,12 @@ ${collections}
 COMPLETION CONDITIONS
 ${(d.completionGate||[]).map(x=>`- ${x}`).join('\n')}
 
+
+FINAL RESPONSE SERIALIZATION GATE — APPLIES ONLY WHEN THE CONVERSATION IS FINISHED
+Before sending the final machine response, silently serialize and self-check the complete response. The user must never be asked to repair agent JSON.
+- Return one JSON object only. Use ASCII U+0022 (") for every JSON key/string delimiter; never U+201C/U+201D typographic quotes.
+- Escape any ASCII double quote that occurs inside a JSON string value. Escape control characters/newlines as valid JSON requires.
+- Verify the final text is syntactically parseable JSON, contains no Markdown wrapper or chat prose, and uses only contract-declared keys. If the check fails, repair your own serialization before sending it.
 
 MANDATORY RESPONSE RULES
 - A materially inadequate accepted prior-stage result requires BLOCKED with INADEQUATE_PRIOR_OUTPUT and must identify the earliest accepted result that needs refinement. This is distinct from missing application context and from missing human input.
