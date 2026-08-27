@@ -35,11 +35,11 @@ b=b.replace(needle,needle+"\n assert(await evalValue(cdp,`Boolean(document.query
 p.write_text(b)
 
 p=Path('verify-prompt-semantics.mjs'); v=p.read_text()
-anchor='console.log(JSON.stringify('
-idx=v.rfind(anchor)
-assert idx!=-1
-proof="""\n// Human collaboration contract: every generated stage prompt must support concise dialogue before final JSON.\nfor(let stage=1;stage<=30;stage++){\n const p=make(stage);\n for(const token of ['HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','ask the smallest useful set of plain-language questions conversationally','Then produce the final JSON response only.','Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision'])if(!p.prompt.includes(token))throw new Error(`Stage ${stage} human collaboration contract missing: ${token}`);\n}\n{const p=make(1).prompt;for(const token of ['Stage 01 also owns proactive human intake','collect all human-specific information already foreseeable as needed to achieve the requested outcome','do not ask the human for common domain knowledge'])if(!p.includes(token))throw new Error('Stage 01 proactive intake contract missing: '+token);}\n\n"""
-v=v[:idx]+proof+v[idx:]
+v=v.replace("!record.prompt.includes('Do not ask conversational questions outside the JSON response')","!record.prompt.includes('Ask necessary human questions conversationally before the final JSON response')")
+needle="if(!record.prompt.includes('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred'))issues.push('EXTERNAL_ACTION_HONESTY_RULE_MISSING');"
+assert needle in v
+collab="if(!record.prompt.includes('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE')||!record.prompt.includes('ask the smallest useful set of plain-language questions conversationally')||!record.prompt.includes('Then produce the final JSON response only.')||!record.prompt.includes('Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision'))issues.push('HUMAN_COLLABORATION_MODE_MISSING');\n  "+needle
+v=v.replace(needle,collab,1)
 p.write_text(v)
 
 p=Path('index.html'); h=p.read_text(); files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; manifest=''
