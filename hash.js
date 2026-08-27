@@ -72,4 +72,33 @@ function contentRecordValue(record,idField){const fields={...(record?.fields||{}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
 function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
 globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/2',stableStringify,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
+
+if(typeof document!=='undefined'){
+  const jumpId='prompt-bottom-jump';
+  function promptBottomJump(){
+    let button=document.getElementById(jumpId);
+    if(button)return button;
+    button=document.createElement('button');
+    button.id=jumpId;
+    button.type='button';
+    button.textContent='↓ Bottom of message';
+    button.setAttribute('aria-label','Scroll to bottom of expanded message');
+    Object.assign(button.style,{position:'fixed',right:'max(14px, env(safe-area-inset-right))',bottom:'calc(18px + env(safe-area-inset-bottom))',zIndex:'40',minHeight:'44px',padding:'9px 14px',border:'1px solid #164f45',borderRadius:'999px',background:'#164f45',color:'#fff',font:'700 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',boxShadow:'0 6px 22px rgba(21,24,23,.18)',cursor:'pointer'});
+    button.hidden=true;
+    button.addEventListener('click',()=>{
+      const prompt=document.getElementById('generated-prompt');
+      if(!prompt?.classList.contains('expanded'))return;
+      const toolbar=prompt.parentElement?.querySelector('.prompt-toolbar');
+      toolbar?.scrollIntoView({behavior:'smooth',block:'end'});
+    });
+    document.body.append(button);
+    return button;
+  }
+  function syncPromptBottomJump(){
+    const prompt=document.getElementById('generated-prompt');
+    promptBottomJump().hidden=!prompt?.classList.contains('expanded');
+  }
+  document.addEventListener('click',()=>queueMicrotask(syncPromptBottomJump));
+  document.addEventListener('change',()=>queueMicrotask(syncPromptBottomJump));
+}
 })();
