@@ -20,8 +20,13 @@ jobs:
           node-version: '22'
       - name: Apply repair
         run: python3 .repair-agent-json.py
+      - name: Remove one-time repair scaffolding before proof
+        shell: bash
+        run: rm .repair-agent-json.py .github/workflows/agent-json-contract-proof.yml
       - name: Syntax
+        shell: bash
         run: |
+          set -euo pipefail
           node --check workbook.js
           node --check prompt-engine.js
           node --check response-ingestion.js
@@ -66,9 +71,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm .repair-agent-json.py .github/workflows/agent-json-contract-proof.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workbook.js prompt-engine.js response-ingestion.js app-core.js verify-prompt-semantics.mjs verify-ingestion.mjs index.html .repair-agent-json.py .github/workflows/agent-json-contract-proof.yml
+          git add -A
           git commit -m 'Make agent response JSON exact and recoverable'
           git push origin HEAD
