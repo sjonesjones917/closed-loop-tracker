@@ -121,7 +121,14 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
-negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+{
+ const p=project('JOB-JSON-CODE-BLOCK'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),text='```json\n'+JSON.stringify(e)+'\n```',prepared=ingestion.prepare(p,{stage,text,promptRecord:pr});
+ if(!prepared.validation.valid)throw new Error('Single json code block was rejected: '+JSON.stringify(prepared.validation.issues));
+ if(!prepared.validation.issues.some(i=>i.code==='JSON_CODE_BLOCK_UNWRAPPED'&&i.severity==='WARNING'))throw new Error('JSON code-block normalization was not auditable.');
+ if(prepared.rawRecord.completeRawResponse!==text)throw new Error('JSON code-block normalization changed the preserved raw response.');
+}
+negative('prose around markdown block',(e)=>'Here is the response:\n```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+negative('multiple markdown blocks',(e)=>'```json\n'+JSON.stringify(e)+'\n```\n```json\n{}\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
 negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
@@ -426,6 +433,11 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
   if(!prepared.validation.issues.some(x=>x.code==='JSON_TYPOGRAPHY_NORMALIZED'&&x.severity==='WARNING'))throw new Error('Smart-quote recovery was not auditable.');
   if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote recovery changed the preserved raw response.');
+  const nestedQuoted=ingestion.strictParse('{“a”: “Verbatim: \"hello\" end”}'.replaceAll('\\"','"'));
+  if(nestedQuoted.a!=='Verbatim: "hello" end')throw new Error('Smart-quote recovery damaged straight quotation marks inside a string value.');
+  // Build the fenced fixture on one project so prompt identity and project scope are identical.
+  const fp=project('JOB-SMART-FENCED-JSON-2'),fpr=savePrompt(fp,1),fe=validEnvelope(fp,1,fpr);fe.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};const fsmart=JSON.stringify(fe).replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”'),ftext='```json\n'+fsmart+'\n```',combined=ingestion.prepare(fp,{stage:1,text:ftext,promptRecord:fpr});
+  if(!combined.validation.valid||!combined.validation.issues.some(x=>x.code==='JSON_CODE_BLOCK_UNWRAPPED')||!combined.validation.issues.some(x=>x.code==='JSON_TYPOGRAPHY_NORMALIZED'))throw new Error('Combined code-block and smart-quote recovery failed: '+JSON.stringify(combined.validation.issues));
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
   if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
 }
