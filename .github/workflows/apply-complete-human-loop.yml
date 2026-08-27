@@ -16,9 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply minimal repair
-        run: node .maintenance-complete-human-loop.mjs
-      - name: Run complete verification and preserve exact output
+      - name: Apply repair and run complete verification
         run: |
           run_checks() {
             node build-test-project.mjs || return $?
@@ -46,8 +44,12 @@ jobs:
             node verify-full-cycle.mjs || return $?
           }
           set +e
-          run_checks > .maintenance-complete-human-loop.log 2>&1
+          node .maintenance-complete-human-loop.mjs > .maintenance-complete-human-loop.log 2>&1
           status=$?
+          if [ "$status" = "0" ]; then
+            run_checks >> .maintenance-complete-human-loop.log 2>&1
+            status=$?
+          fi
           set -e
           printf '%s\n' "$status" > .maintenance-complete-human-loop.exit
       - name: Commit verified repair or diagnostic state
@@ -61,7 +63,12 @@ jobs:
             git commit -m "Complete conversational stage UX and stale-response guidance [complete-human-loop-applied]"
             git push origin HEAD:${GITHUB_REF_NAME}
           else
-            git add -A
+            cp .maintenance-complete-human-loop.log /tmp/complete-human-loop.log
+            cp .maintenance-complete-human-loop.exit /tmp/complete-human-loop.exit
+            git reset --hard HEAD
+            cp /tmp/complete-human-loop.log .maintenance-complete-human-loop.log
+            cp /tmp/complete-human-loop.exit .maintenance-complete-human-loop.exit
+            git add .maintenance-complete-human-loop.log .maintenance-complete-human-loop.exit
             git commit -m "Capture complete human-loop verification failure [complete-human-loop-debug]"
             git push origin HEAD:${GITHUB_REF_NAME}
             exit "$status"
