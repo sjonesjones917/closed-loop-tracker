@@ -19,7 +19,8 @@ jobs:
         run: |
           node --check .tmp-human-first-patch.mjs
           node .tmp-human-first-patch.mjs
-          rm .tmp-human-first-patch.mjs .tmp-strict-parse.txt
+          node .tmp-semantic-phrase-fix.mjs
+          rm .tmp-human-first-patch.mjs .tmp-strict-parse.txt .tmp-semantic-phrase-fix.mjs
       - name: Syntax and runtime identity
         run: |
           node --check prompt-engine.js
