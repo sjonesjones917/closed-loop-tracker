@@ -16,17 +16,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore specification-substitute safeguard
+      - name: Align practical-intake regression
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const path='app-core.js';
-          const source=fs.readFileSync(path,'utf8');
-          const before='The external agent may use only capabilities actually available in its execution context, and downstream filing, building, execution, manufacturing, or testing remains separately verified.</div></details>';
-          const after='The external agent may use only capabilities actually available in its execution context, and downstream filing, building, execution, manufacturing, or testing remains separately verified. A specification substitute requires human confirmation and is used only when the requested artifact cannot be generated reliably.</div></details>';
-          if(!source.includes(before))throw new Error('Expected collapsible project guidance was not found.');
-          if(source.includes(after))throw new Error('Specification-substitute safeguard was already restored unexpectedly.');
-          fs.writeFileSync(path,source.replace(before,after));
+          const path='verify-prompt-semantics.mjs';
+          let source=fs.readFileSync(path,'utf8');
+          const replacements=[
+            ["'Do not block Stage 01 merely because information will be needed by a later'","'At Stage 01, collect every human-only fact or decision that domain knowledge already establishes will be needed'"],
+            ["'Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01'","'Ask the human now, conversationally, only for missing human-only facts in those categories that are already clearly necessary'"],
+            ["'Never ask for information merely because a later stage will need it'","'Do not ask the human to decide a technical, legal, filing, design, or execution strategy that the agent should first research and explain'"],
+          ];
+          for(const [before,after] of replacements){
+            if(!source.includes(before))throw new Error(`Expected regression token not found: ${before}`);
+            if(source.includes(after))throw new Error(`Replacement regression token already exists: ${after}`);
+            source=source.replace(before,after);
+          }
+          fs.writeFileSync(path,source);
           NODE
       - name: Run complete verification and preserve exact output
         run: |
