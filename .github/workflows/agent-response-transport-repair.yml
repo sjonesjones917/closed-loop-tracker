@@ -44,6 +44,12 @@ jobs:
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
           if 'closed-loop-response-contract/2.2' not in s: raise SystemExit('stale response contract semantic assertions not found')
           p.write_text(s.replace('closed-loop-response-contract/2.2','closed-loop-response-contract/2.3'))
+
+          p=Path('verify-browser.mjs'); s=p.read_text()
+          old="'Complete JSON only'"
+          new="'Raw JSON or one json code block'"
+          if old not in s: raise SystemExit('stale browser response transport assertion not found')
+          p.write_text(s.replace(old,new,1))
           PY
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto');
@@ -55,14 +61,6 @@ jobs:
           fs.writeFileSync('index.html',html);
           console.log(token);
           NODE
-          python <<'PY'
-          from pathlib import Path
-          p=Path('verify-browser.mjs'); s=p.read_text()
-          needle="await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));"
-          diagnostic="await waitExpr(cdp,`document.readyState==='complete'`);await sleep(2500);console.log('BROWSER_STARTUP_DIAGNOSTIC',await evalValue(cdp,`JSON.stringify({ready:globalThis.closedLoopAppReady,error:globalThis.closedLoopAppError,core:typeof globalThis.closedLoopCore,schema:typeof globalThis.closedLoopWorkflowSchema,engine:typeof globalThis.closedLoopWorkflowEngine,prompt:typeof globalThis.closedLoopPromptEngine,ingestion:typeof globalThis.closedLoopResponseIngestion,store:typeof globalThis.closedLoopProjectStore,body:document.body.innerText.slice(0,1200)})`));await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));"
-          if needle not in s: raise SystemExit('browser startup diagnostic anchor not found')
-          p.write_text(s.replace(needle,diagnostic,1))
-          PY
       - name: Verify complete deterministic and browser path
         run: |
           node --check prompt-engine.js
@@ -74,12 +72,20 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
       - name: Commit permanent source only
         run: |
           git rm .agent-response-transport-repair.py .github/workflows/agent-response-transport-repair.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workbook.js prompt-engine.js response-ingestion.js app-core.js verify-ingestion.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs index.html
+          git add workbook.js prompt-engine.js response-ingestion.js app-core.js verify-ingestion.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-browser.mjs index.html
           git commit -m "Make agent response transport and evidence contract practical"
           git push origin HEAD:fix/agent-response-transport-contract-20260826
