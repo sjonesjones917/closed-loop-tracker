@@ -55,10 +55,26 @@ ingestion = replaceOnce(ingestion, targetNegative,
   'add false-positive regression for current application phrase');
 fs.writeFileSync('verify-ingestion.mjs', ingestion);
 
+const oldStage2Guide = 'Include the original supplied project artifact(s) with the Stage 02 prompt';
+const newStage2Guide = 'Stage 02 researches independent external sources. Supplied project artifacts are not required for this stage';
+let app = fs.readFileSync('app-core.js', 'utf8');
+if (!app.includes(oldStage2Guide)) throw new Error('Stage 02 operator guide anchor not found');
+app = app.replaceAll(oldStage2Guide, newStage2Guide);
+fs.writeFileSync('app-core.js', app);
+let browser = fs.readFileSync('verify-browser.mjs', 'utf8');
+browser = browser.replaceAll(oldStage2Guide, newStage2Guide);
+fs.writeFileSync('verify-browser.mjs', browser);
+
 let semantics = fs.readFileSync('verify-prompt-semantics.mjs', 'utf8');
-const anchor = "if(!stage2Prompt.includes('independent external source'))throw new Error('Stage 02 prompt does not require independent external sources.');";
-if (!semantics.includes(anchor)) throw new Error('prompt semantic anchor not found');
-semantics = semantics.replace(anchor, anchor + "\nif(!stage2Prompt.includes('Stage 02 is not a supplied-project-material inventory stage'))throw new Error('Stage 02 prompt still permits supplied-project-material inventory.');\nif(!stage2Prompt.includes('Missing project-material bytes do not by themselves block Stage 02'))throw new Error('Stage 02 prompt does not prevent missing project bytes from becoming a false blocker.');\nif(!stage2Prompt.includes('Every proposed record containing any AGENT-owned canonical field MUST include a non-empty evidenceRefs array'))throw new Error('Generated response contract does not make record provenance explicit.');\nif(stage1Prompt.includes('Stage 02 owns that inventory and formal inspection'))throw new Error('Stage 01 still delegates supplied-project-material inventory to Stage 02.');");
+semantics = semantics.replaceAll(oldStage2Guide, newStage2Guide);
+const stage2Anchor = "if(record.stage===2){\n    if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');";
+if (!semantics.includes(stage2Anchor)) throw new Error('Stage 02 semantic block anchor not found');
+semantics = semantics.replace(stage2Anchor,
+  "if(record.stage===2){\n    if(!record.prompt.includes('Stage 02 is not a supplied-project-material inventory stage'))issues.push('STAGE02_PROJECT_MATERIAL_INVENTORY_LEAK');\n    if(!record.prompt.includes('Missing project-material bytes do not by themselves block Stage 02'))issues.push('STAGE02_FALSE_PROJECT_FILE_BLOCKER');\n    if(!record.prompt.includes('Every proposed record containing any AGENT-owned canonical field MUST include a non-empty evidenceRefs array'))issues.push('RECORD_PROVENANCE_PROMPT_RULE_MISSING');\n    if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');");
+const oldUiAssertion = "if(!ui.includes('Stage 02 researches independent external sources. Supplied project artifacts are not required for this stage')||!ui.includes('suppliedFileMaterialLabels'))throw new Error('Stage 02 guide does not conditionally tell the human to provide actual supplied file artifacts.');";
+if (semantics.includes(oldUiAssertion)) {
+  semantics = semantics.replace(oldUiAssertion, "if(!ui.includes('Stage 02 researches independent external sources. Supplied project artifacts are not required for this stage'))throw new Error('Stage 02 operator guide does not explain the external-source-only boundary.');");
+}
 fs.writeFileSync('verify-prompt-semantics.mjs', semantics);
 
-console.log(JSON.stringify({patched:['prompt-engine.js','workflow-schema.js','verify-ingestion.mjs','verify-prompt-semantics.mjs'],fixes:['Stage 02 external-source-only boundary','explicit forward record provenance','external-source false-positive classifier']}, null, 2));
+console.log(JSON.stringify({patched:['prompt-engine.js','workflow-schema.js','app-core.js','verify-ingestion.mjs','verify-prompt-semantics.mjs','verify-browser.mjs'],fixes:['Stage 02 external-source-only boundary','explicit forward record provenance','external-source false-positive classifier','Stage 02 operator guidance']}, null, 2));
