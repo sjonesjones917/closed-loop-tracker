@@ -73,7 +73,7 @@ jobs:
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
-      - name: Commit patch
+      - name: Commit patch to review branch
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
@@ -81,4 +81,4 @@ jobs:
           git rm .github/workflows/patch-stage2-external-source-only.yml
           git add prompt-engine.js workbook.js verify-prompt-semantics.mjs index.html
           git commit -m 'Make Stage 02 external-source discovery only'
-          git push origin HEAD:main
+          git push origin HEAD:refs/heads/fix/stage2-external-source-generated-v18
