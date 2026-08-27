@@ -137,18 +137,48 @@ if(typeof document!=='undefined'){
   const promptTopJump=matchedScrollJump('prompt-top-jump','↑ Top of message','Scroll to top of expanded message',70,()=>scrollToMatchedTarget(document.getElementById('prompt-heading'),'start'));
   const reviewTopJump=matchedScrollJump('review-top-jump','↑ Top of review','Scroll to top of proposal review',70,()=>scrollToMatchedTarget(document.getElementById('proposal-heading'),'start'));
   const reviewBottomJump=matchedScrollJump('review-bottom-jump','↓ Bottom of review','Scroll to bottom of proposal review',18,()=>scrollToMatchedTarget(document.getElementById('proposal-actions'),'end'));
+  let activeLongSection=null;
+  function sectionSummary(section){
+    const first=section?.firstElementChild;
+    return first?.tagName==='SUMMARY'?first:section?.querySelector('summary');
+  }
+  function sectionDepth(section){
+    let depth=0,node=section;
+    while(node?.parentElement){depth++;node=node.parentElement;}
+    return depth;
+  }
+  function visibleLongSection(){
+    const candidates=[...document.querySelectorAll('details.record-card[open]')]
+      .filter(section=>!section.closest('#proposal-heading'))
+      .map(section=>({section,rect:section.getBoundingClientRect(),depth:sectionDepth(section)}))
+      .filter(({rect})=>rect.height>innerHeight&&rect.bottom>0&&rect.top<innerHeight)
+      .sort((a,b)=>b.depth-a.depth||Math.abs(a.rect.top)-Math.abs(b.rect.top));
+    return candidates[0]?.section||null;
+  }
+  const sectionTopJump=matchedScrollJump('section-top-jump','↑ Top of section','Scroll to top of long section',70,()=>scrollToMatchedTarget(sectionSummary(activeLongSection)||activeLongSection,'start'));
+  const sectionBottomJump=matchedScrollJump('section-bottom-jump','↓ Bottom of section','Scroll to bottom of long section',18,()=>scrollToMatchedTarget(activeLongSection,'end'));
   function syncMatchedScrollJumps(){
     const prompt=document.getElementById('generated-prompt');
+    const promptRect=prompt?.getBoundingClientRect();
     const review=document.getElementById('proposal-heading');
     const reviewRect=review?.getBoundingClientRect();
     const longReview=Boolean(review&&[...review.querySelectorAll('details.record-card[open]')].some(details=>details.getBoundingClientRect().height>innerHeight));
     const reviewActive=Boolean(longReview&&reviewRect&&reviewRect.bottom>0&&reviewRect.top<innerHeight);
     const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
-    const promptActive=Boolean(prompt?.classList.contains('expanded')&&prompt?.scrollHeight>innerHeight&&!reviewActive&&!reviewPast);
+    const promptActive=Boolean(prompt?.classList.contains('expanded')&&prompt?.scrollHeight>innerHeight&&promptRect&&promptRect.bottom>0&&promptRect.top<innerHeight&&!reviewActive&&!reviewPast);
+    activeLongSection=!reviewActive&&!promptActive?visibleLongSection():null;
+    const sectionActive=Boolean(activeLongSection);
     promptBottomJump().hidden=!promptActive;
     promptTopJump.hidden=!promptActive;
     reviewTopJump.hidden=!reviewActive;
     reviewBottomJump.hidden=!reviewActive;
+    sectionTopJump.hidden=!sectionActive;
+    sectionBottomJump.hidden=!sectionActive;
+    if(sectionActive){
+      const name=String(sectionSummary(activeLongSection)?.textContent||'section').replace(/\s+/g,' ').trim()||'section';
+      sectionTopJump.setAttribute('aria-label','Scroll to top of '+name);
+      sectionBottomJump.setAttribute('aria-label','Scroll to bottom of '+name);
+    }
   }
   document.addEventListener('click',()=>queueMicrotask(syncMatchedScrollJumps));
   document.addEventListener('change',()=>queueMicrotask(syncMatchedScrollJumps));
