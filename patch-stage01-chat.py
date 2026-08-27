@@ -68,6 +68,12 @@ text = replace_once(
 old = " const patent=baseProject();patent.job.EXACT_USER_OBJECTIVE_VERBATIM='I need a patent application for my project.';const record=prompts.buildPromptRecord(1,patent,{operation:'COMPLETE'});if(!record.prompt.includes('ASCII U+0022')||!record.prompt.includes('never use typographic/curly quotation marks'))throw new Error('Strict JSON quote syntax is not explicit.');if(record.prompt.includes('ask only the necessary clarification questions in normal plain language first'))throw new Error('Stage 01 still contains the conversational-vs-JSON contradiction.');"
 new = " const patent=baseProject();patent.job.EXACT_USER_OBJECTIVE_VERBATIM='I need a patent application for my project.';const record=prompts.buildPromptRecord(1,patent,{operation:'COMPLETE'});if(!record.prompt.includes('ASCII U+0022')||!record.prompt.includes('never use typographic/curly quotation marks'))throw new Error('Strict JSON quote syntax is not explicit.');for(const banned of ['Ask for clarification only when an irreducible human fact or decision is needed now','Never ask for information merely because a later stage will need it','When unavailable human information is required, return HUMAN_INPUT_REQUIRED','Do not ask conversational questions outside the JSON response'])if(record.prompt.includes(banned))throw new Error(`Stage 01 still contains the machine-first contradiction: ${banned}`);if(!record.prompt.includes('collect every foreseeable human-only fact or decision that can materially affect achieving the requested outcome'))throw new Error('Stage 01 no longer performs proactive human intake.');"
 text = replace_once(text, old, new, "Stage 01 patent regression")
+text = replace_once(
+    text,
+    "  'Never ask for information merely because a later stage will need it',",
+    "  'collect every foreseeable human-only fact or decision that can materially affect achieving the requested outcome',",
+    "Stage 01 practical intake regression",
+)
 verify.write_text(text)
 
 browser = Path("verify-browser.mjs")
