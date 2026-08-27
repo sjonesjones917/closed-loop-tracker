@@ -30,6 +30,7 @@ function validateProjectIntegrity(project,{verifyDerived=true}={}){
   if(Number(project.stageCount)!==Number(schemaApi.STAGE_COUNT))issues.push(`Stage count ${project.stageCount} does not match ${schemaApi.STAGE_COUNT}.`);
   if(Object.keys(project.stages||{}).length!==Number(schemaApi.STAGE_COUNT))issues.push('Canonical project does not contain exactly the declared workflow stages.');
   if(!projectIdentity(project))issues.push('Canonical project has no JOB_ID.');
+  const desiredSourceCount=project?.job?.DESIRED_SOURCE_COUNT;if(desiredSourceCount!==null&&desiredSourceCount!==undefined&&desiredSourceCount!==''&&(!Number.isSafeInteger(desiredSourceCount)||desiredSourceCount<1))issues.push('DESIRED_SOURCE_COUNT must be null/blank or a positive integer.');
   const idsByCollection=new Map();
   for(const [collection,definition] of Object.entries(schemaApi.RECORD_SCHEMAS)){
     const list=project.projectData?.[collection];if(list!==undefined&&!Array.isArray(list)){issues.push(`${collection} is not an array.`);continue;}
