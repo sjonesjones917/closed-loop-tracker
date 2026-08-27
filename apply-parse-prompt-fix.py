@@ -1,5 +1,5 @@
 from pathlib import Path
-import re
+import re, hashlib
 
 p=Path('app-core.js')
 text=p.read_text()
@@ -25,9 +25,14 @@ if vt.count(marker)!=1: raise SystemExit(f'verify marker count={vt.count(marker)
 vt=vt.replace(marker,reg,1)
 v.write_text(vt)
 
-# New app-core bytes must be fetched on mobile immediately.
+runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+def git_blob_sha(path):
+    data=Path(path).read_bytes()
+    return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+manifest=''.join(f'{name}:{git_blob_sha(name)}\n' for name in runtime_files).encode()
+runtime_id='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
 i=Path('index.html')
 it=i.read_text()
-it2=re.sub(r'runtime-[0-9a-z-]+','runtime-parse-prompt-fix-20260827',it)
+it2=re.sub(r'runtime-[0-9a-f]{16}',runtime_id,it)
 if it2==it: raise SystemExit('runtime token not replaced')
 i.write_text(it2)
