@@ -61,6 +61,24 @@ jobs:
           source=source[:start_index]+replacement+source[end_index:]
           path.write_text(source)
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
+          for filename in runtime_files:
+              data=Path(filename).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              manifest+=f'{filename}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          path=Path('index.html')
+          source=path.read_text()
+          old='runtime-compact-scroll-8f2c6d1a4b7e'
+          if source.count(old)!=8:
+              raise SystemExit(f'Expected eight provisional runtime tokens; found {source.count(old)}.')
+          path.write_text(source.replace(old,token))
+          print(token)
+          PY
           node --check hash.js
           node --check verify-browser.mjs
       - name: Verify complete application and scroll-control behavior
