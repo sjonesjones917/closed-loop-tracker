@@ -1,0 +1,54 @@
+name: Apply Pages rerun artifact fix
+
+on:
+  push:
+    branches:
+      - fix/pages-rerun-artifact-identity-20260826
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[pages-rerun-clean]') && !contains(github.event.head_commit.message, '[pages-rerun-failed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Apply minimal Pages rerun fix
+        run: node .maintenance-pages-rerun.mjs
+      - name: Verify source and deployment contract
+        run: |
+          set +e
+          {
+            node build-test-project.mjs &&
+            node --check verify.mjs &&
+            node verify-hash.mjs &&
+            node verify.mjs &&
+            node verify-ingestion.mjs &&
+            node verify-complete.mjs &&
+            node verify-prompt-semantics.mjs &&
+            node verify-full-cycle.mjs
+          } > .maintenance-pages-rerun.log 2>&1
+          status=$?
+          set -e
+          printf '%s\n' "$status" > .maintenance-pages-rerun.exit
+      - name: Commit verified source only
+        run: |
+          status=$(cat .maintenance-pages-rerun.exit)
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ "$status" = "0" ]; then
+            rm .maintenance-pages-rerun.mjs .github/workflows/apply-pages-rerun-fix.yml .maintenance-pages-rerun.log .maintenance-pages-rerun.exit
+            git add -A
+            git commit -m "Make Pages deployment reruns artifact-unique [pages-rerun-clean]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            git add -A
+            git commit -m "Capture Pages rerun verification failure [pages-rerun-failed]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            cat .maintenance-pages-rerun.log
+            exit "$status"
+          fi
