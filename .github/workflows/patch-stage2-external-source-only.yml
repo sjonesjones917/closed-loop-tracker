@@ -29,7 +29,7 @@ jobs:
           prompt=mustReplace(prompt,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/17';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/18';",'prompt engine version');
           prompt=mustReplace(prompt,
             'This limited intake inspection is Stage 01 job-definition work; Stage 02 owns that inventory and formal inspection. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here. A later source/material stage owns formal discovery, inventory, provenance, formal inspection status, authority, currency, supersession, applicability, and conflicts.',
-            'This limited intake inspection is Stage 01 job-definition work. Human-supplied project materials remain authorized project input for later stages that actually need them; they are not Stage 02 external sources and do not belong in the Stage 02 source inventory. Do not classify them as independent governing authority merely because they were supplied.',
+            'This limited intake inspection is Stage 01 job-definition work. Human-supplied project materials remain authorized project input for later stages that actually need them; they are not Stage 02 external sources and do not belong in the Stage 02 source inventory. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here. Do not classify them as independent governing authority merely because they were supplied.',
             'Stage 01/02 supplied-material boundary');
           const s2Start=prompt.indexOf("2:'Build the complete source and supplied-material inventory");
           const s3Start=prompt.indexOf("3:'Research only",s2Start);
