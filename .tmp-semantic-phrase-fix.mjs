@@ -13,7 +13,7 @@ const oldBlock=` const required=[
   'Do not block Stage 01 merely because information will be needed by a later',
   'Stage 01 does not require every fact needed to execute later stages',
   'A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01',
-  'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers',
+  'Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01',
   'Never ask for information merely because a later stage will need it',
   'humanInputRequestContract',
   'temporaryKey',
