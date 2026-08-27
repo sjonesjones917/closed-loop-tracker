@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 
 const hashPath='hash.js';
 let hash=fs.readFileSync(hashPath,'utf8');
@@ -29,11 +30,13 @@ if(!browser.includes(marker))throw new Error('Expected review navigation browser
 browser=browser.replace(marker,replacement);
 fs.writeFileSync(browserPath,browser);
 
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const runtimeToken=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
 const indexPath='index.html';
 let index=fs.readFileSync(indexPath,'utf8');
-const oldToken='runtime-647463b908c4b9b5';
-const newToken='runtime-2b7d1e79d8f4c6a3';
-const count=index.split(oldToken).length-1;
-if(count!==8)throw new Error(`Expected 8 runtime tokens, found ${count}.`);
-index=index.replaceAll(oldToken,newToken);
+const sources=[...index.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)];
+if(sources.length!==8)throw new Error(`Expected 8 runtime scripts, found ${sources.length}.`);
+index=index.replace(/(<script\s+defer\s+src="[^"]+\?v=)[^"]+("\s*><\/script>)/g,`$1${runtimeToken}$2`);
 fs.writeFileSync(indexPath,index);
