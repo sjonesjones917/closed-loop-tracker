@@ -97,7 +97,7 @@ function stageArtifactHelpText(n){
     const names=supplied.join('; ');
     return n===1
       ?`Include the supplied project artifact(s) with the Stage 01 prompt if ChatGPT does not already have them in this chat: ${names}.`
-      :`Include the original supplied project artifact(s) with the Stage 02 prompt so the agent can inventory and inspect the actual files: ${names}.`;
+      :`Stage 02 researches independent external sources. Supplied project artifacts are not required for this stage so the agent can inventory and inspect the actual files: ${names}.`;
   }
   const later={
     10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',
