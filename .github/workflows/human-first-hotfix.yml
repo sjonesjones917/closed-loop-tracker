@@ -52,6 +52,10 @@ jobs:
           old="if(!ui.includes('Start with one thing: save the verbatim job request')||!ui.includes('one structured HUMAN_INPUT_REQUIRED response')||!ui.includes('validate your answers, version them as User Job Input, and regenerate Stage 01'))throw new Error('Stage 01 operator UI does not explain minimum intake and structured clarification.');"
           new="if(!ui.includes('Send the generated instruction to ChatGPT')||!ui.includes('ask what you want to accomplish in normal conversation')||!ui.includes('HUMAN_INPUT_REQUIRED is only a fallback'))throw new Error('Stage 01 operator UI does not explain the human-first conversation and fallback clarification path.');"
           if old not in text: raise SystemExit('verify-prompt-semantics.mjs: expected Stage 01 UI assertion not found')
+          text=text.replace(old,new,1)
+          old="const empty=core.createBlankState('JOB-STAGE01-MINIMUM');engine.ensureShape(empty);let error=null;try{prompts.buildPromptRecord(1,empty,{operation:'COMPLETE'});}catch(caught){error=caught;}if(error?.code!=='MISSING_MINIMUM_HUMAN_INPUT')throw new Error('Stage 01 still creates an UNKNOWN-objective instruction.');"
+          new="const empty=core.createBlankState('JOB-STAGE01-MINIMUM');engine.ensureShape(empty);const emptyPrompt=prompts.buildPromptRecord(1,empty,{operation:'COMPLETE'});if(!emptyPrompt?.prompt?.includes('COPY BLOCK — STAGE 01 — INITIALIZE THE JOB')||!emptyPrompt.prompt.includes('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE')||!emptyPrompt.prompt.includes('EXACT_USER_OBJECTIVE_VERBATIM:\\nUNKNOWN'))throw new Error('Blank Stage 01 no longer produces the real human-first agent intake instruction.');"
+          if old not in text: raise SystemExit('verify-prompt-semantics.mjs: expected blank Stage 01 hard-guard assertion not found')
           p.write_text(text.replace(old,new,1))
 
           p=Path('verify-browser.mjs'); text=p.read_text()
