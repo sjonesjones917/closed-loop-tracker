@@ -31,6 +31,10 @@ There is no second parser, store, workflow engine, prompt layer, application she
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
 - Stage 21 product artifacts are accepted only after the application reserves the current product execution. Finished-product bytes are then bound to that application-owned `PRODUCT_ID`, hashed, persisted, and included in the product artifact inventory.
 
+## Human conversation before machine ingestion
+
+The generated instruction is run by a human in a normal ChatGPT conversation. The agent may ask concise human-facing questions before producing the machine response. Interim questions and answers stay in ChatGPT; only the final single JSON object is pasted into the application. `HUMAN_INPUT_REQUIRED` remains a fallback for required human information that is genuinely unavailable or deferred. The same path remains available after research or later analysis discovers a new human-only fact or decision.
+
 ## Artifact generation and downstream execution
 
 The workflow determines the actual artifact set and suitable file formats that constitute completion; the operator is not expected to know in advance whether the correct deliverable is source code, DXF, OpenSCAD, STEP, STL, IFC, SVG, XML, a controller-specific machine program, documents, or a multi-file package. When the available environment can reliably construct exact artifact bytes from a defined representation and sufficient controlling inputs, it must produce the actual requested artifact even if the downstream application that commonly consumes that format is unavailable. Missing downstream software is not, by itself, a reason to replace a real file with prose.
