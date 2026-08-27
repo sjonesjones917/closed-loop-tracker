@@ -39,10 +39,10 @@ jobs:
           idx.write_text(h.replace(old_help,new_help,1))
           vb=Path('verify-browser.mjs')
           t=vb.read_text()
-          old_test="await fill(cdp,'#stage-output','{\\\"schema\\\":}');await click(cdp,'#parse-output');await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`);assert(await evalValue(cdp,`(()=>{const v=document.querySelector('#validation-report'),o=document.querySelector('#stage-output');return Boolean(v&&o&&(v.compareDocumentPosition(o)&Node.DOCUMENT_POSITION_FOLLOWING));})()`),'Validation status must appear before the response box so a phone user can see what the currently rejected response means.');"
-          new_test=old_test+"assert(await evalValue(cdp,`document.querySelector('#validation-report')?.innerText.includes('automatically prepared an updated correction instruction preview')`),'Rejected response does not explain automatic correction-prompt preparation.');assert(await evalValue(cdp,`document.querySelector('#generated-prompt')?.innerText.includes('LATEST APPLICATION VALIDATION FAILURE TO CORRECT')`),'Updated prompt preview does not carry the latest validation failure.');assert((await snapshot(cdp)).text.includes('Updated correction instruction preview.'),'Generated-instruction panel does not identify the automatic correction preview.');"
-          if old_test not in t: raise SystemExit('browser rejection anchor not found')
-          vb.write_text(t.replace(old_test,new_test,1))
+          marker="await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`);"
+          inserted=marker+"assert(await evalValue(cdp,`document.querySelector('#validation-report')?.innerText.includes('automatically prepared an updated correction instruction preview')`),'Rejected response does not explain automatic correction-prompt preparation.');assert(await evalValue(cdp,`document.querySelector('#generated-prompt')?.innerText.includes('LATEST APPLICATION VALIDATION FAILURE TO CORRECT')`),'Updated prompt preview does not carry the latest validation failure.');assert((await snapshot(cdp)).text.includes('Updated correction instruction preview.'),'Generated-instruction panel does not identify the automatic correction preview.');"
+          if marker not in t: raise SystemExit('browser rejection marker not found')
+          vb.write_text(t.replace(marker,inserted,1))
           PY
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
