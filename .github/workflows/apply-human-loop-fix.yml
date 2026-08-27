@@ -1,0 +1,55 @@
+name: Apply human conversation repair
+
+on:
+  push:
+    branches:
+      - fix/human-conversation-stage-ux
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[human-loop-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply minimal source repair
+        run: node .maintenance-apply-human-loop-fix.mjs
+      - name: Verify syntax
+        run: |
+          node build-test-project.mjs
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check test-fixtures.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-live.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Verify contracts and workflow behavior
+        run: |
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+      - name: Commit the repair and remove one-time machinery
+        run: |
+          rm .maintenance-apply-human-loop-fix.mjs .github/workflows/apply-human-loop-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Make stage prompts conversational before final JSON [human-loop-applied]"
+          git push origin HEAD:${GITHUB_REF_NAME}
