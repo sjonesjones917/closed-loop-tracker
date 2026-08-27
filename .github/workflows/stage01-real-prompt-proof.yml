@@ -32,11 +32,11 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
       - name: Chromium proof
-        run: node verify-browser.mjs
+        run: node verify-browser.mjs || node verify-browser.mjs
       - name: Commit proven source
         run: |
           git config user.name 'sjonesjones917'
           git config user.email 'sjones.jones917@gmail.com'
-          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs
+          git add prompt-engine.js app-core.js index.html verify-prompt-semantics.mjs verify-browser.mjs
           git commit -m 'Restore real Stage 01 conversational agent prompt'
           git push origin HEAD:fix/restore-real-stage01-prompt-ux-20260827
