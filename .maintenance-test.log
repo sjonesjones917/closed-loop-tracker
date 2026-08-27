@@ -91,12 +91,30 @@ Committed retained project requires no source materialization.
   "currentRegressionClosure": true,
   "stage28CurrentBatch": true
 }
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:81
- if(!ui.includes('Output format (optional)')||!ui.includes('You do not need to know the final file format in advance')||!ui.includes('A specification substitute requires human confirmation'))throw new Error('Project-input UI still requires specialist format knowledge or permits an automatic specification downgrade.');
-                                                                                                                                                                                                     ^
+{
+  "promptSemanticContradictions": true,
+  "stageOperationsChecked": 40,
+  "mutationCasesRejected": 9,
+  "stage2SourceCount": true,
+  "testExecutionOrchestration": true,
+  "artifactGenerationBoundary": true,
+  "promptVersionBoundary": true,
+  "insufficiencyRecovery": true,
+  "operationIsolation": true,
+  "applicationOwnership": true,
+  "specialistDomains": [
+    "patent",
+    "software-multifile",
+    "building-aec",
+    "physical-engineering-cad-cam-cnc-additive"
+  ]
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:376
+ for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);
+                                                                ^
 
-Error: Project-input UI still requires specialist format knowledge or permits an automatic specification downgrade.
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:81:198
+Error: Stage 01 practical intake/clarification contract missing: Do not block Stage 01 merely because information will be needed by a later
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:376:65
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
