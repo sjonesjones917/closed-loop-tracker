@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 
 function replaceOnce(text, from, to, label) {
   const count = text.split(from).length - 1;
@@ -77,4 +78,15 @@ if (semantics.includes(oldUiAssertion)) {
 }
 fs.writeFileSync('verify-prompt-semantics.mjs', semantics);
 
-console.log(JSON.stringify({patched:['prompt-engine.js','workflow-schema.js','app-core.js','verify-ingestion.mjs','verify-prompt-semantics.mjs','verify-browser.mjs'],fixes:['Stage 02 external-source-only boundary','explicit forward record provenance','external-source false-positive classifier','Stage 02 operator guidance']}, null, 2));
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const runtimeBuildIdentity=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
+let html=fs.readFileSync('index.html','utf8');
+const runtimeTokenPattern=/runtime-[0-9a-f]{16}/g;
+const existing=[...html.matchAll(runtimeTokenPattern)].map(x=>x[0]);
+if(existing.length!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime cache tokens in index.html; found ${existing.length}.`);
+html=html.replace(runtimeTokenPattern,runtimeBuildIdentity);
+fs.writeFileSync('index.html',html);
+
+console.log(JSON.stringify({patched:['prompt-engine.js','workflow-schema.js','app-core.js','index.html','verify-ingestion.mjs','verify-prompt-semantics.mjs','verify-browser.mjs'],runtimeBuildIdentity,fixes:['Stage 02 external-source-only boundary','explicit forward record provenance','external-source false-positive classifier','Stage 02 operator guidance']}, null, 2));
