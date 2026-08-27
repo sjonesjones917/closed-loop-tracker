@@ -3,7 +3,7 @@ name: Apply tested agent patch
 on:
   push:
     branches: [fix/conversation-first-agent-ux]
-    paths: [.github/agent-patch.b64]
+    paths: [.github/agent-patch.ready]
 
 permissions:
   contents: write
@@ -19,11 +19,11 @@ jobs:
       - name: Apply exact patch, verify, and commit source
         run: |
           set -euo pipefail
-          base64 --decode .github/agent-patch.b64 | gzip --decompress > /tmp/agent.patch
+          cat .github/agent-patch-[0-9][0-9].b64 | base64 --decode | gzip --decompress > /tmp/agent.patch
           test "$(sha256sum /tmp/agent.patch | cut -d' ' -f1)" = "5526f4e0717ef126693615b054f0d9cde50ebf99b197bc8c8b1310f35f8e90d6"
           git apply -p1 --check /tmp/agent.patch
           git apply -p1 /tmp/agent.patch
-          rm .github/agent-patch.b64 .github/workflows/apply-agent-patch.yml
+          rm .github/agent-patch-[0-9][0-9].b64 .github/agent-patch.ready .github/workflows/apply-agent-patch.yml
           node build-test-project.mjs
           node --check prompt-engine.js
           node --check response-ingestion.js
