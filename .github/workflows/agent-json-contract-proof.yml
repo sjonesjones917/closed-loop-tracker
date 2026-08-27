@@ -38,6 +38,9 @@ jobs:
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
           s=s.replace("'internal material inventory is deferred to Stage 02'","'Do not turn it into a Stage 02 archive/file inventory'")
           p.write_text(s)
+          p=Path('verify-browser.mjs'); s=p.read_text()
+          s=s.replace("document.body.innerText.includes('Response rejected before canonical mutation.')","document.body.innerText.includes('Last parsed response was rejected before canonical mutation.')")
+          p.write_text(s)
           files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest=''
           for f in files:
@@ -47,7 +50,7 @@ jobs:
           PY
       - name: Remove one-time repair scaffolding before proof
         shell: bash
-        run: rm .repair-agent-json.py .github/workflows/agent-json-contract-proof.yml
+        run: rm -f .repair-agent-json.py .github/workflows/agent-json-contract-proof.yml semantic-failure.txt
       - name: Syntax
         run: |
           node --check prompt-engine.js
@@ -55,6 +58,7 @@ jobs:
           node --check app-core.js
           node --check verify-prompt-semantics.mjs
           node --check verify-ingestion.mjs
+          node --check verify-browser.mjs
       - name: Build fixture
         run: node build-test-project.mjs
       - name: Hash proof
@@ -68,21 +72,7 @@ jobs:
       - name: Full cycle proof
         run: node verify-full-cycle.mjs
       - name: Prompt semantic proof
-        shell: bash
-        run: |
-          set +e
-          node verify-prompt-semantics.mjs > semantic-failure.txt 2>&1
-          STATUS=$?
-          if [ "$STATUS" -ne 0 ]; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add semantic-failure.txt
-            git commit -m '[diagnostic] Capture prompt semantic proof failure'
-            git push origin HEAD
-            cat semantic-failure.txt
-            exit "$STATUS"
-          fi
-          rm semantic-failure.txt
+        run: node verify-prompt-semantics.mjs
       - name: Boundary assertions
         run: |
           grep -q 'closed-loop-prompt-engine/11' prompt-engine.js
@@ -90,6 +80,7 @@ jobs:
           grep -q 'JSON_TYPOGRAPHY_NORMALIZED' response-ingestion.js
           grep -q 'evidenceKeys' prompt-engine.js
           grep -q 'Last parsed response was rejected' app-core.js
+          grep -q 'Last parsed response was rejected before canonical mutation.' verify-browser.mjs
       - name: Chromium verification
         shell: bash
         run: |
