@@ -27,6 +27,9 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,re
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace('Stage 02 owns that inventory and formal inspection.','This limited intake inspection is Stage 01 job-definition work; Stage 02 owns that inventory and formal inspection.',1)
+          p.write_text(s)
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
           s=s.replace("'internal material inventory is deferred to Stage 02'","'Do not turn it into a Stage 02 archive/file inventory'")
           p.write_text(s)
