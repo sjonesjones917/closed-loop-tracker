@@ -1,0 +1,43 @@
+name: Sync verified runtime token
+on:
+  push:
+    branches: [fix/human-first-stage-flow-20260827]
+    paths: [.github/workflows/zz-sync-runtime-token.yml]
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/human-first-stage-flow-20260827
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact derived token
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+          old='runtime-44d9c63bfec28a71'
+          new='runtime-618ff669e5632b00'
+          count=text.count(old)
+          if count!=8:
+              raise SystemExit(f'Expected 8 old runtime tokens, found {count}')
+          p.write_text(text.replace(old,new),encoding='utf-8')
+          Path('.github/workflows/zz-sync-runtime-token.yml').unlink()
+      - name: Verify bundle identity and focused behavior
+        run: |
+          node verify-hash.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+      - name: Commit verified token
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html .github/workflows/zz-sync-runtime-token.yml
+          git diff --cached --check
+          git commit -m "Use exact verified runtime bundle token"
+          git push origin HEAD:fix/human-first-stage-flow-20260827
