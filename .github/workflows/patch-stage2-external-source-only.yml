@@ -50,6 +50,10 @@ jobs:
           fs.writeFileSync('workbook.js',workbook);
 
           let semantics=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
+          semantics=mustReplace(semantics,
+            " const required2=[/complete source and supplied-material inventory/i,/Stage 02 owns inventory and inspection/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];",
+            " const required2=[/external source discovery and authority classification only/i,/Do not block Stage 02 because project-material bytes are absent/i,/Stage 03 performs substantive source research and requirement extraction/i];",
+            'legacy Stage 02 locality regression');
           const marker="    if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');";
           const insertion=marker+"\n    if(record.prompt.includes('source and supplied-material inventory')||record.prompt.includes('enumerate human-supplied files')||record.prompt.includes('Stage 02 owns that inventory and formal inspection'))issues.push('STAGE02_PROJECT_MATERIAL_SCOPE_LEAK');\n    if(!record.prompt.includes('external source discovery and authority classification only')||!record.prompt.includes('Do not block Stage 02 because project-material bytes are absent')||!record.prompt.includes('Stage 03 performs substantive source research and requirement extraction'))issues.push('STAGE02_EXTERNAL_SOURCE_BOUNDARY_MISSING');\n    if(!record.prompt.includes('applicable law, regulations, official rules, filing/format/procedure requirements, standards, authoritative technical references'))issues.push('STAGE02_REQUIREMENT_AUTHORITY_DISCOVERY_MISSING');";
           semantics=mustReplace(semantics,marker,insertion,'Stage 02 semantic regression checks');
