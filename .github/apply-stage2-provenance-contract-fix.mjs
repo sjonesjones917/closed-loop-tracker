@@ -68,6 +68,10 @@ fs.writeFileSync('verify-browser.mjs', browser);
 
 let semantics = fs.readFileSync('verify-prompt-semantics.mjs', 'utf8');
 semantics = semantics.replaceAll(oldStage2Guide, newStage2Guide);
+semantics = replaceOnce(semantics,
+  "descriptor.contractVersion!=='closed-loop-response-contract/2.3'",
+  "descriptor.contractVersion!=='closed-loop-response-contract/2.4'",
+  'align semantic response contract version');
 const stage2Anchor = "if(record.stage===2){\n    if(!record.prompt.includes('DESIRED OR SUGGESTED SOURCE COUNT'))issues.push('SOURCE_COUNT_MISSING');";
 if (!semantics.includes(stage2Anchor)) throw new Error('Stage 02 semantic block anchor not found');
 semantics = semantics.replace(stage2Anchor,
