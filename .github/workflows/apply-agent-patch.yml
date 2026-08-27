@@ -1,0 +1,44 @@
+name: Apply tested agent patch
+
+on:
+  push:
+    branches: [fix/conversation-first-agent-ux]
+    paths: [.github/agent-patch.b64]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/conversation-first-agent-ux
+          fetch-depth: 0
+      - name: Apply exact patch, verify, and commit source
+        run: |
+          set -euo pipefail
+          base64 --decode .github/agent-patch.b64 | gzip --decompress > /tmp/agent.patch
+          test "$(sha256sum /tmp/agent.patch | cut -d' ' -f1)" = "e26445851a2fa2f3ed36060d36b1eb270f85a5996cc118d85dfae3d388cb788b"
+          git apply -p1 --check /tmp/agent.patch
+          git apply -p1 /tmp/agent.patch
+          rm .github/agent-patch.b64 .github/workflows/apply-agent-patch.yml
+          node build-test-project.mjs
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node --check verify-ingestion.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          git config user.name "closed-loop-agent"
+          git config user.email "closed-loop-agent@users.noreply.github.com"
+          git add -A
+          git commit -m "Make agent interaction conversational and JSON handoff reliable"
+          git push origin HEAD:fix/conversation-first-agent-ux
