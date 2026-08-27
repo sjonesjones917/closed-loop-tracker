@@ -17,6 +17,17 @@ jobs:
           node-version: '22'
       - name: Apply targeted source changes
         run: node apply-chat-first-ux.mjs
+      - name: Align retained semantic assertion
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path='verify-prompt-semantics.mjs';
+          let text=fs.readFileSync(path,'utf8');
+          const before="if(!ui.includes('Output format (optional)')||!ui.includes('You do not need to know the final file format in advance')||!ui.includes('A specification substitute requires human confirmation'))throw new Error('Project-input UI still requires specialist format knowledge or permits an automatic specification downgrade.');";
+          const after="if(!ui.includes('Output format (optional)')||!ui.includes('You do not need to know the final file format or research official requirements')||!ui.includes('A specification substitute is used only when the requested artifact itself cannot be generated reliably and still requires human confirmation'))throw new Error('Project-input UI still requires specialist format knowledge or permits an automatic specification downgrade.');";
+          if(text.split(before).length!==2)throw new Error('Expected exactly one retained project-input semantic assertion.');
+          fs.writeFileSync(path,text.replace(before,after));
+          NODE
       - name: Calculate exact runtime cache identity
         run: |
           node --input-type=module <<'NODE'
