@@ -93,11 +93,26 @@ function suppliedFileMaterialLabels(){
 }
 function stageArtifactHelpText(n){
   const supplied=suppliedFileMaterialLabels();
-  if((n===1||n===2)&&supplied.length){
+  const rawSupplied=String(current?.job?.SUPPLIED_MATERIALS_INVENTORY||'').trim();
+  let hasNonMessageSuppliedMaterial=false;
+  if(rawSupplied&&!/^(UNKNOWN|NONE|NOT APPLICABLE)$/i.test(rawSupplied)){
+    try{
+      const parsed=JSON.parse(rawSupplied),items=Array.isArray(parsed)?parsed:[parsed];
+      hasNonMessageSuppliedMaterial=items.some(item=>{
+        if(!item||typeof item!=='object')return true;
+        const type=String(item.type||item.materialType||item.kind||'').trim();
+        return !/^(MESSAGE|TEXT|PROMPT|USER_MESSAGE|CHAT)$/i.test(type);
+      });
+    }catch{hasNonMessageSuppliedMaterial=true;}
+  }
+  if((n===1||n===2)&&(supplied.length||hasNonMessageSuppliedMaterial)){
     const names=supplied.join('; ');
-    return n===1
+    if(n===1)return names
       ?`Include the supplied project artifact(s) with the Stage 01 prompt if ChatGPT does not already have them in this chat: ${names}.`
-      :`Include the original supplied project artifact(s) with the Stage 02 prompt so the agent can inventory and inspect the actual files: ${names}.`;
+      :'Include the supplied project artifact(s) with the Stage 01 prompt if ChatGPT does not already have those files in this chat.';
+    return names
+      ?`Include the original supplied project artifact(s) with the Stage 02 prompt so the agent can inventory and inspect the actual files: ${names}.`
+      :'Include the original supplied project artifact(s) with the Stage 02 prompt so the agent can inventory and inspect the actual files. The prompt text alone does not provide the artifact bytes.';
   }
   const later={
     10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',
