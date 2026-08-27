@@ -25,6 +25,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import hashlib
           import re
 
           p = Path('prompt-engine.js')
@@ -69,11 +70,18 @@ jobs:
           s = s.replace(ui_old, ui_new, 1)
           p.write_text(s)
 
+          runtime_files = ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest = ''
+          for file in runtime_files:
+              data = Path(file).read_bytes()
+              blob_sha = hashlib.sha1(f'blob {len(data)}\0'.encode() + data).hexdigest()
+              manifest += f'{file}:{blob_sha}\n'
+          runtime_id = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
           p = Path('index.html')
           s = p.read_text()
           ids = set(re.findall(r'runtime-[A-Za-z0-9]+', s))
           assert len(ids) == 1, ids
-          s = s.replace(next(iter(ids)), 'runtime-humanintake16')
+          s = s.replace(next(iter(ids)), runtime_id)
           p.write_text(s)
           PY
       - name: Verify minimal patch
