@@ -1,0 +1,53 @@
+name: Apply exact runtime bundle identity
+
+on:
+  push:
+    branches:
+      - fix/human-stage-conversation-ux-20260827
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[runtime-bundle-clean]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Apply exact bundle identity
+        run: node .maintenance-runtime-bundle-token.mjs
+      - name: Build retained fixture
+        run: node build-test-project.mjs
+      - name: Verify canonical serialization and SHA-256
+        run: node verify-hash.mjs
+      - name: Verify canonical workflow and persistence
+        run: node verify.mjs
+      - name: Exercise all ingestion contracts and mobile smart-quote repair
+        run: node verify-ingestion.mjs
+      - name: Verify complete architecture
+        run: node verify-complete.mjs
+      - name: Prove the full lifecycle
+        run: node verify-full-cycle.mjs
+      - name: Reject prompt contradictions
+        run: node verify-prompt-semantics.mjs
+      - name: Run browser workflow checks
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-runtime-bundle-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          sleep 1
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified source only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .maintenance-runtime-bundle-token.mjs .github/workflows/apply-runtime-bundle-token.yml
+          git add -A
+          git commit -m "Use exact runtime bundle cache identity [runtime-bundle-clean]"
+          git push origin HEAD:${GITHUB_REF_NAME}
