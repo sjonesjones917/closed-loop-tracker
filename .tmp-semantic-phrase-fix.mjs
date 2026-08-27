@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+let prompt=fs.readFileSync('prompt-engine.js','utf8');
+const before='Inspect supplied invention materials first and never ask the human to repeat facts already present there.';
+const after='Inspect any supplied invention disclosure and other supplied invention materials first and never ask the human to repeat facts already present there.';
+if(!prompt.includes(before))throw new Error('Specialist intake phrase anchor missing.');
+prompt=prompt.replace(before,after);
+fs.writeFileSync('prompt-engine.js',prompt);
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const blob=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const manifest=runtimeFiles.map(file=>`${file}:${blob(file)}\n`).join('');
+const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+let html=fs.readFileSync('index.html','utf8');html=html.replaceAll(/runtime-[A-Za-z0-9_-]+/g,identity);fs.writeFileSync('index.html',html);
+console.log(identity);
