@@ -7,12 +7,10 @@ def replace_once(path, old, new):
         raise SystemExit(f'missing expected text in {path}: {old[:120]}')
     p.write_text(s.replace(old,new,1))
 
-# Stage 01 owns top-level intake identity, not archive-member inventory.
 replace_once('workbook.js',
 "'Every supplied item and material unknown recorded'",
 "'Every top-level human-supplied input and every material unknown needed to define the job is recorded; internal package inventory remains Stage 02 work'")
 
-# Prompt contract: exact transport + every structured auxiliary object shape.
 replace_once('prompt-engine.js',
 "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/10';",
 "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/11';")
@@ -33,7 +31,6 @@ replace_once('prompt-engine.js',
 "- Include evidence for every agent-produced canonical value that requires provenance.",
 "- Include evidence for every agent-produced canonical value that requires provenance. Use only the exact evidenceContract keys. For provenance-required stageData, add the exact /stageData/FIELD pointer to evidence.supports. For record fields, use the record's evidenceRefs array; do not invent sourceType, sourceReference, locator, excerpt, or other evidence properties.")
 
-# Ingestion: accept one exact JSON fence and safely normalize common smart-quote transport corruption only after ordinary JSON fails.
 p=Path('response-ingestion.js'); s=p.read_text()
 s=s.replace("const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes']);","const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes','supports']);",1)
 old="""function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
@@ -96,13 +93,13 @@ s=s.replace(old,new,1)
 old2="""    for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));
 """
 new2="""    for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));
-    if(evidence.supports!==undefined){if(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length)issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers.'));else for(const pointer of evidence.supports){const match=String(pointer).match(/^\\/stageData\\/([^/]+)$/),field=match?.[1];if(!field||!stageFields.includes(field))issues.push(issue('INVALID_EVIDENCE_SUPPORT_POINTER',`${path}/supports`,`Evidence support pointer ${pointer} is not a permitted current-stage stageData field.`));}}
+    if(evidence.supports===undefined)issues.push(issue('MISSING_EVIDENCE_SUPPORTS',`${path}/supports`,'supports is required; use [] when this evidence supports records only.'));else if(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length)issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers.'));else for(const pointer of evidence.supports){const match=String(pointer).match(/^\\/stageData\\/([^/]+)$/),field=match?.[1];if(!field||!allowedStageData.has(field))issues.push(issue('INVALID_EVIDENCE_SUPPORT_POINTER',`${path}/supports`,`Evidence support pointer ${pointer} is not a permitted current-stage stageData field.`));}
 """
 if old2 not in s: raise SystemExit('evidence validation anchor not found')
 s=s.replace(old2,new2,1)
 anchor="""  if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{
 """
-insert="""  for(const field of stageFields){const definition=schema.STAGE_FIELDS[stageNumber]?.[field];if(definition?.provenanceRequired&&Object.prototype.hasOwnProperty.call(envelope.stageData||{},field)){const pointer=`/stageData/${field}`,covered=[...evidenceIndex.values()].some(entry=>safe(entry.evidence?.supports).includes(pointer));if(!covered)issues.push(issue('MISSING_STAGE_DATA_PROVENANCE',pointer,`Agent-produced stageData ${field} requires at least one evidence.supports reference to ${pointer}.`));}}
+insert="""  for(const field of allowedStageData){const definition=schema.STAGE_FIELDS[stageNumber]?.[field];if(definition?.provenanceRequired&&Object.prototype.hasOwnProperty.call(envelope.stageData||{},field)){const pointer=`/stageData/${field}`,covered=[...evidenceIndex.values()].some(entry=>safe(entry.evidence?.supports).includes(pointer));if(!covered)issues.push(issue('MISSING_STAGE_DATA_PROVENANCE',pointer,`Agent-produced stageData ${field} requires at least one evidence.supports reference to ${pointer}.`));}}
 
   if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{
 """
@@ -110,7 +107,6 @@ if anchor not in s: raise SystemExit('stage provenance anchor not found')
 s=s.replace(anchor,insert,1)
 p.write_text(s)
 
-# UI: make transport contract practical and ensure an edited response does not visually inherit the previous parse failure.
 replace_once('app-core.js',
 "Paste the complete strict JSON response. Parse / validate preserves the raw response first, then validates it without changing canonical project records.",
 "Paste the complete structured response as raw JSON or one JSON code block. Parse / validate preserves the exact raw response first, safely removes only the permitted transport wrapper or typographic delimiter corruption, then validates without changing canonical project records.")
@@ -121,15 +117,9 @@ replace_once('app-core.js',
 "if($('#parse-output'))$('#parse-output').onclick=prepareStageResponse;",
 "if($('#stage-output'))$('#stage-output').oninput=e=>{const count=$('#stage-output-count');if(count)count.textContent=e.target.value?`${e.target.value.length.toLocaleString()} characters pasted · not yet parsed`:'No response pasted yet';const report=$('#validation-report');if(report){report.classList.remove('danger');report.classList.add('warn');report.innerHTML='<strong>Response changed since the previous validation.</strong><br>The previous error remains preserved in Records but does not describe the edited text. Parse / validate again to evaluate this response.';}};if($('#parse-output'))$('#parse-output').onclick=prepareStageResponse;")
 
-# Tests: stageData evidence linkage; exact fence accepted; smart-quote transport repaired; arbitrary wrappers still rejected.
 p=Path('verify-ingestion.mjs'); s=p.read_text()
 s=s.replace("evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],","evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`,supports:Object.keys(stageData).map(name=>`/stageData/${name}`)}],",1)
 old_test="negative('markdown wrapped',(e)=>'```json\\n'+JSON.stringify(e)+'\\n```','NON_JSON_WRAPPER');"
-new_test="""{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\\n'+JSON.stringify(e)+'\\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}
-{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr);const ascii=JSON.stringify(e);let open=True
-}
-"""
-# Build smart-quote test without putting curly quotes in Python source.
 smart_js="{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),ascii=JSON.stringify(e);let opening=true;const smart=ascii.replace(/\\\"/g,()=>String.fromCodePoint((opening=!opening)?0x201d:0x201c));const prepared=ingestion.prepare(p,{stage:2,text:smart,promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Typographic JSON transport was not normalized: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}"
 replacement="{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\\n'+JSON.stringify(e)+'\\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}\n"+smart_js+"\nnegative('prose wrapped JSON',(e)=>'Here is the JSON:\\n```json\\n'+JSON.stringify(e)+'\\n```','NON_JSON_WRAPPER');"
 if old_test not in s: raise SystemExit('markdown wrapper test anchor not found')
@@ -140,7 +130,6 @@ if marker not in s: raise SystemExit('missing evidence test anchor not found')
 s=s.replace(marker,replacement2,1)
 p.write_text(s)
 
-# Prompt semantic regression checks.
 p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
 s += """
 
