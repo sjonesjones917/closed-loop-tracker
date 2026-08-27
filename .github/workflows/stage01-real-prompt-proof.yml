@@ -32,7 +32,9 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
       - name: Chromium proof
-        run: node verify-browser.mjs || node verify-browser.mjs
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          node verify-browser.mjs
       - name: Commit proven source
         run: |
           git config user.name 'sjonesjones917'
