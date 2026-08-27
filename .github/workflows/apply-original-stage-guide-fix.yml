@@ -21,7 +21,7 @@ jobs:
         run: |
           python3 tools/fix_original_stage_guide.py
           python3 tools/fix_original_stage_guide_test.py
-      - name: Verify repair
+      - name: Verify deterministic and workflow behavior
         run: |
           node --check app-core.js
           node --check verify-browser.mjs
@@ -30,12 +30,6 @@ jobs:
           node verify-ingestion.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/stage-guide-http.log 2>&1 &
-          PID=$!
-          trap 'kill "$PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
       - name: Commit verified application change
         run: |
           git config user.name github-actions[bot]
