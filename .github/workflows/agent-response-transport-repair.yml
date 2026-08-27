@@ -40,6 +40,12 @@ jobs:
           new="evidence:[{...evidence(`stage-${stage}-${pr.operation}`),supports:Object.keys(stageData).map(name=>`/stageData/${name}`)}],unresolved:[]"
           if old not in s: raise SystemExit('full cycle evidence fixture anchor not found')
           p.write_text(s.replace(old,new,1))
+
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          old="descriptor.contractVersion!=='closed-loop-response-contract/2.2'"
+          new="descriptor.contractVersion!=='closed-loop-response-contract/2.3'"
+          if old not in s: raise SystemExit('stale response contract semantic assertion not found')
+          p.write_text(s.replace(old,new))
           PY
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto');
