@@ -13,7 +13,7 @@ jobs:
         with: {node-version: '22'}
       - name: Apply asserted source edits
         run: |
-          cat .ux-fix/apply.part1 .ux-fix/apply.part2 > apply-ux-fix.mjs
+          cat .ux-fix/apply.part1 .ux-fix/apply.part2 .ux-fix/apply.part3 > apply-ux-fix.mjs
           node --check apply-ux-fix.mjs
           node apply-ux-fix.mjs
           node --check prompt-engine.js
