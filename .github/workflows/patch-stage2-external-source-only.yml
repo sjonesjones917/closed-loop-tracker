@@ -60,7 +60,7 @@ jobs:
           fs.writeFileSync('verify-prompt-semantics.mjs',semantics);
 
           let index=fs.readFileSync('index.html','utf8');
-          index=index.replace(/prompt-engine\.js\?v=[^\"']+/g,'prompt-engine.js?v=18');
+          index=index.replace(/([A-Za-z0-9._-]+\.js)\?v=[^\"']+/g,'$1?v=runtime-stage2-external-v18');
           fs.writeFileSync('index.html',index);
           NODE
       - name: Verify changed source
