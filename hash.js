@@ -88,8 +88,7 @@ if(typeof document!=='undefined'){
     button.addEventListener('click',()=>{
       const prompt=document.getElementById('generated-prompt');
       if(!prompt?.classList.contains('expanded'))return;
-      const toolbar=prompt.parentElement?.querySelector('.prompt-toolbar');
-      toolbar?.scrollIntoView({behavior:'smooth',block:'end'});
+      prompt.parentElement?.querySelector('.prompt-toolbar')?.scrollIntoView({behavior:'smooth',block:'end'});
     });
     document.body.append(button);
     return button;
@@ -98,7 +97,14 @@ if(typeof document!=='undefined'){
     const prompt=document.getElementById('generated-prompt');
     promptBottomJump().hidden=!prompt?.classList.contains('expanded');
   }
-  document.addEventListener('click',()=>queueMicrotask(syncPromptBottomJump));
+  document.addEventListener('click',event=>{
+    const prompt=document.getElementById('generated-prompt');
+    const collapsing=Boolean(event.target?.closest?.('#toggle-prompt')&&prompt?.classList.contains('expanded'));
+    queueMicrotask(()=>{
+      syncPromptBottomJump();
+      if(collapsing&&!prompt?.classList.contains('expanded'))prompt.parentElement?.querySelector('.prompt-toolbar')?.scrollIntoView({block:'end'});
+    });
+  });
   document.addEventListener('change',()=>queueMicrotask(syncPromptBottomJump));
 }
 })();
