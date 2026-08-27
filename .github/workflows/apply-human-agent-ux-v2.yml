@@ -13,7 +13,7 @@ jobs:
         with: {node-version: '22'}
       - name: Apply asserted centralized edits
         run: |
-          cat .ux-fix/apply.part1 .ux-fix/apply.part2 .ux-fix/apply.part3 .ux-fix/apply.part4 > apply-ux-fix.mjs
+          cat .ux-fix/apply.part1 .ux-fix/apply.part2 .ux-fix/apply.part3 .ux-fix/apply.part4 .ux-fix/apply.part5 > apply-ux-fix.mjs
           node --check apply-ux-fix.mjs
           node apply-ux-fix.mjs
       - name: Run the complete source and lifecycle proof

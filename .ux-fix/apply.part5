@@ -1,0 +1,12 @@
+
+{
+  const path = 'index.html';
+  let text = fs.readFileSync(path, 'utf8');
+  const provisional = 'runtime-5f2c91d8a4e7630b';
+  const computed = 'runtime-79bcd941b1a8ded4';
+  const count = text.split(provisional).length - 1;
+  if (count !== 8) throw new Error(`Expected 8 provisional runtime tokens; found ${count}.`);
+  text = text.replaceAll(provisional, computed);
+  writeChanged(path, text);
+  console.log(JSON.stringify({computedRuntimeIdentity: computed}, null, 2));
+}
