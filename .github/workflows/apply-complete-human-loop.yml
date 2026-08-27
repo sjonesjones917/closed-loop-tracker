@@ -18,6 +18,15 @@ jobs:
           fetch-depth: 0
       - name: Apply repair and run complete verification
         run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path='.maintenance-complete-human-loop.mjs';
+          const before="'Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01'";
+          const after="'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers'";
+          const source=fs.readFileSync(path,'utf8');
+          if(!source.includes(before))throw new Error('Expected prior practical-intake assertion token was not found.');
+          fs.writeFileSync(path,source.replace(before,after));
+          NODE
           run_checks() {
             node build-test-project.mjs || return $?
             node --check workbook.js || return $?
