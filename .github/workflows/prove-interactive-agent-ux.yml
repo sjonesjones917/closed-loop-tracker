@@ -16,7 +16,10 @@ jobs:
         with:
           node-version: 22
       - name: Apply exact interactive UX repair
-        run: python3 .apply-interactive-agent-ux.py
+        run: |
+          python3 .apply-interactive-agent-ux.py
+          grep -q "'Paste full response'" verify-browser.mjs
+          sed -i "s/'Paste full response'/'Wait for APP RESPONSE READY'/" verify-browser.mjs
       - name: Full deterministic and browser acceptance
         run: |
           node build-test-project.mjs
