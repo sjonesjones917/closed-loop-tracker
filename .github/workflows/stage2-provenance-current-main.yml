@@ -18,6 +18,8 @@ jobs:
           node-version: '22'
       - name: Apply verified production commit without regressing newer UI work
         run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           set +e
           git cherry-pick 1991a9749890a8a18fdb2c49c30160cb7fac21b6
           rc=$?
