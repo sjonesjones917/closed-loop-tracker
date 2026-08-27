@@ -18,9 +18,9 @@ jobs:
           fetch-depth: 0
       - name: Package exact branch source
         shell: bash
-        run: tar --exclude=.git -czf closed-loop-source.tgz .
+        run: tar --exclude=.git -czf /tmp/closed-loop-source.tgz .
       - uses: actions/upload-artifact@v4
         with:
           name: closed-loop-source-snapshot
-          path: closed-loop-source.tgz
+          path: /tmp/closed-loop-source.tgz
           if-no-files-found: error
