@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 import re
 
 app = Path('app-core.js')
@@ -25,10 +26,29 @@ if test.count(anchor) != 1:
     raise SystemExit('browser proposal anchor not found exactly once')
 browser.write_text(test.replace(anchor, insertion, 1))
 
+runtime_files = [
+    'workbook.js',
+    'hash.js',
+    'workflow-schema.js',
+    'workflow-engine.js',
+    'prompt-engine.js',
+    'response-ingestion.js',
+    'project-store.js',
+    'app-core.js',
+]
+def git_blob_sha(path):
+    data = Path(path).read_bytes()
+    return hashlib.sha1(f'blob {len(data)}\0'.encode() + data).hexdigest()
+manifest = ''.join(f'{path}:{git_blob_sha(path)}\n' for path in runtime_files)
+runtime_token = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
 index = Path('index.html')
 html = index.read_text()
 modules = r'(workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)'
-html, count = re.subn(rf'(<script defer src="{modules}\.js\?v=)[^"]+', rf'\1proposal-jump-20260827', html)
+html, count = re.subn(
+    rf'(<script defer src="{modules}\.js\?v=)[^"]+',
+    lambda match: match.group(1) + runtime_token,
+    html,
+)
 if count != 8:
     raise SystemExit(f'expected 8 runtime cache-token replacements, found {count}')
 index.write_text(html)
