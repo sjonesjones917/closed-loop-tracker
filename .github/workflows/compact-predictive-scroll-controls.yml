@@ -29,7 +29,13 @@ jobs:
           new="browser=replaceAllExpected(browser,nestedOpen,nestedCentered,1,'nested long-review opening');"
           if source.count(old)!=1:
               raise SystemExit(f'Expected one nested-opening count guard; found {source.count(old)}.')
-          path.write_text(source.replace(old,new))
+          source=source.replace(old,new)
+          lines=source.splitlines()
+          targets=[line for line in lines if "'generic-section navigation sequence'" in line]
+          if len(targets)!=1:
+              raise SystemExit(f'Expected one generic-section sequence generator; found {len(targets)}.')
+          source=source.replace(targets[0],"// Generic-section navigation sequence is patched below with bounded markers.")
+          path.write_text(source)
           PY
           node --check .tmp-compact-predictive-scroll-controls.mjs
           node .tmp-compact-predictive-scroll-controls.mjs
@@ -41,7 +47,19 @@ jobs:
           new="await click(cdp,'#proposal-heading>details.record-card:nth-of-type(2)>summary');await click(cdp,'#proposal-heading>details.record-card:nth-of-type(2) details.record-card>summary');await positionNode(cdp,'#proposal-heading>details.record-card:nth-of-type(2) details.record-card','center');await waitExpr(cdp,"
           if source.count(old)!=1:
               raise SystemExit(f'Expected one initial nested review opening; found {source.count(old)}.')
-          path.write_text(source.replace(old,new))
+          source=source.replace(old,new)
+          start="await click(cdp,'#section-bottom-jump');await waitExpr(cdp,`"
+          top="await click(cdp,'#section-top-jump');"
+          end="`,8000);"
+          start_index=source.find(start)
+          top_index=source.find(top,start_index+1) if start_index>=0 else -1
+          end_index=source.find(end,top_index+1) if top_index>=0 else -1
+          if min(start_index,top_index,end_index)<0:
+              raise SystemExit('Could not isolate the existing generic-section navigation sequence.')
+          end_index+=len(end)
+          replacement="await click(cdp,'#section-top-jump');await waitExpr(cdp,`(()=>{const summary=document.querySelector('#provenance-long-section > summary'),r=summary?.getBoundingClientRect();return Boolean(r&&r.bottom>0&&r.top<innerHeight);})()`,8000);await positionNode(cdp,'#provenance-long-section','center');await waitExpr(cdp,`(()=>{const t=document.querySelector('#section-top-jump'),b=document.querySelector('#section-bottom-jump');return Boolean(t&&!t.hidden&&b&&!b.hidden);})()`);await click(cdp,'#section-bottom-jump');await waitExpr(cdp,`(()=>{const r=document.querySelector('#provenance-long-section')?.getBoundingClientRect();return Boolean(r&&r.bottom>0&&r.bottom<=innerHeight+2);})()`,8000);await positionNode(cdp,'#provenance-long-section','sliver');await waitExpr(cdp,`(()=>{const t=document.querySelector('#section-top-jump'),b=document.querySelector('#section-bottom-jump');return Boolean(t?.hidden&&b?.hidden);})()`);"
+          source=source[:start_index]+replacement+source[end_index:]
+          path.write_text(source)
           PY
           node --check hash.js
           node --check verify-browser.mjs
