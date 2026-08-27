@@ -1,10 +1,28 @@
 runtime-3be8f3ec01b8cfa4
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:193
- if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');
-                                                                                                                                                                                                                                                                                                                 ^
+{
+  "promptSemanticContradictions": true,
+  "stageOperationsChecked": 40,
+  "mutationCasesRejected": 9,
+  "stage2SourceCount": true,
+  "testExecutionOrchestration": true,
+  "artifactGenerationBoundary": true,
+  "promptVersionBoundary": true,
+  "insufficiencyRecovery": true,
+  "operationIsolation": true,
+  "applicationOwnership": true,
+  "specialistDomains": [
+    "patent",
+    "software-multifile",
+    "building-aec",
+    "physical-engineering-cad-cam-cnc-additive"
+  ]
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:378
+ for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);
+                                                                ^
 
-Error: Stage 01 specialist intake adaptation is missing.
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:193:306
+Error: Stage 01 practical intake/clarification contract missing: Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:378:65
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
