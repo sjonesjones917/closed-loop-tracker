@@ -23,6 +23,7 @@ jobs:
         run: |
           node .tmp-matched-scroll-controls.mjs
           node .tmp-fix-runtime-token.mjs
+          node .tmp-fix-scroll-test-wait.mjs
       - name: Syntax and complete verification
         run: |
           node --check app-core.js
@@ -47,7 +48,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .tmp-matched-scroll-controls.mjs .tmp-fix-runtime-token.mjs .github/workflows/matched-floating-scroll-controls-fix.yml
+          git rm .tmp-matched-scroll-controls.mjs .tmp-fix-runtime-token.mjs .tmp-fix-scroll-test-wait.mjs .github/workflows/matched-floating-scroll-controls-fix.yml
           git add app-core.js hash.js index.html verify-browser.mjs
           git commit -m "Match all prompt and review scroll controls"
           git push origin HEAD:fix/matched-floating-scroll-controls-20260827
