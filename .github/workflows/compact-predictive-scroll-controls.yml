@@ -1,0 +1,49 @@
+name: Compact predictive scroll controls
+
+on:
+  push:
+    branches:
+      - fix/compact-predictive-scroll-controls-20260827
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/compact-predictive-scroll-controls-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal compact predictive scroll-control correction
+        run: |
+          node --check .tmp-compact-predictive-scroll-controls.mjs
+          node .tmp-compact-predictive-scroll-controls.mjs
+          node --check hash.js
+          node --check verify-browser.mjs
+      - name: Verify complete application and scroll-control behavior
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+      - name: Commit only the verified minimal correction
+        run: |
+          rm .tmp-compact-predictive-scroll-controls.mjs .github/workflows/compact-predictive-scroll-controls.yml
+          git config user.name "sjonesjones917"
+          git config user.email "sjones.jones917@gmail.com"
+          git add hash.js verify-browser.mjs index.html .tmp-compact-predictive-scroll-controls.mjs .github/workflows/compact-predictive-scroll-controls.yml
+          git commit -m "Tighten contextual scroll controls"
+          git push origin HEAD:fix/compact-predictive-scroll-controls-20260827
