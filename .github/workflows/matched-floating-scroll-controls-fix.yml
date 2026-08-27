@@ -1,0 +1,51 @@
+name: Matched floating scroll controls fix
+
+on:
+  push:
+    branches:
+      - fix/matched-floating-scroll-controls-20260827
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/matched-floating-scroll-controls-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal matched floating scroll controls correction
+        run: node .tmp-matched-scroll-controls.mjs
+      - name: Syntax and complete verification
+        run: |
+          node --check app-core.js
+          node --check hash.js
+          node --check verify-browser.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Browser verification
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 1
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Remove temporary patch files and commit verified result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .tmp-matched-scroll-controls.mjs .github/workflows/matched-floating-scroll-controls-fix.yml
+          git add app-core.js hash.js index.html verify-browser.mjs
+          git commit -m "Match all prompt and review scroll controls"
+          git push origin HEAD:fix/matched-floating-scroll-controls-20260827
