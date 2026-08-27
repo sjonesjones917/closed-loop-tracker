@@ -1,0 +1,12 @@
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:17
+for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);
+                                                                       ^
+
+Error: Repair scaffolding remains: .repair-human-agent-ux.mjs
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:17:72
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.20.2
+exit_code=1
