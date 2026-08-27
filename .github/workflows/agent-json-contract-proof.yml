@@ -20,23 +20,30 @@ jobs:
           node-version: '22'
       - name: Apply repair
         run: python3 .repair-agent-json.py
-      - name: Syntax and deterministic verification
-        shell: bash
+      - name: Syntax
         run: |
-          set -euo pipefail
-          node build-test-project.mjs
           node --check workbook.js
           node --check prompt-engine.js
           node --check response-ingestion.js
           node --check app-core.js
           node --check verify-prompt-semantics.mjs
           node --check verify-ingestion.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+      - name: Build fixture
+        run: node build-test-project.mjs
+      - name: Hash proof
+        run: node verify-hash.mjs
+      - name: Architecture proof
+        run: node verify.mjs
+      - name: Ingestion proof
+        run: node verify-ingestion.mjs
+      - name: Gate proof
+        run: node verify-complete.mjs
+      - name: Full cycle proof
+        run: node verify-full-cycle.mjs
+      - name: Prompt semantic proof
+        run: node verify-prompt-semantics.mjs
+      - name: Boundary assertions
+        run: |
           grep -q 'closed-loop-prompt-engine/11' prompt-engine.js
           grep -q 'closed-loop-response-ingestion/4' response-ingestion.js
           grep -q 'JSON_TYPOGRAPHY_NORMALIZED' response-ingestion.js
