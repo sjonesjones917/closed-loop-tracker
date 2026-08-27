@@ -112,5 +112,50 @@ if(typeof document!=='undefined'){
     }
   });
   document.addEventListener('change',()=>queueMicrotask(syncPromptBottomJump));
+
+
+  function matchedScrollJump(id,text,ariaLabel,bottomOffset,handler){
+    let button=document.getElementById(id);
+    if(button)return button;
+    button=document.createElement('button');
+    button.id=id;
+    button.type='button';
+    button.textContent=text;
+    button.setAttribute('aria-label',ariaLabel);
+    button.style.cssText=promptBottomJump().style.cssText;
+    button.style.bottom=`calc(${bottomOffset}px + env(safe-area-inset-bottom))`;
+    button.hidden=true;
+    button.addEventListener('click',handler);
+    document.body.append(button);
+    return button;
+  }
+  function scrollToMatchedTarget(target,block){
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block,inline:'nearest'});
+    requestAnimationFrame(()=>target.focus?.({preventScroll:true}));
+  }
+  const promptTopJump=matchedScrollJump('prompt-top-jump','↑ Top of message','Scroll to top of expanded message',70,()=>scrollToMatchedTarget(document.getElementById('prompt-heading'),'start'));
+  const reviewTopJump=matchedScrollJump('review-top-jump','↑ Top of review','Scroll to top of proposal review',70,()=>scrollToMatchedTarget(document.getElementById('proposal-heading'),'start'));
+  const reviewBottomJump=matchedScrollJump('review-bottom-jump','↓ Bottom of review','Scroll to bottom of proposal review',18,()=>scrollToMatchedTarget(document.getElementById('proposal-actions'),'end'));
+  function syncMatchedScrollJumps(){
+    const prompt=document.getElementById('generated-prompt');
+    const review=document.getElementById('proposal-heading');
+    const reviewRect=review?.getBoundingClientRect();
+    const longReview=review?.dataset.longReview==='true';
+    const reviewActive=Boolean(longReview&&reviewRect&&reviewRect.bottom>0&&reviewRect.top<innerHeight);
+    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
+    const promptActive=Boolean(prompt?.classList.contains('expanded')&&!reviewActive&&!reviewPast);
+    promptBottomJump().hidden=!promptActive;
+    promptTopJump.hidden=!promptActive;
+    reviewTopJump.hidden=!reviewActive;
+    reviewBottomJump.hidden=!reviewActive;
+  }
+  document.addEventListener('click',()=>queueMicrotask(syncMatchedScrollJumps));
+  document.addEventListener('change',()=>queueMicrotask(syncMatchedScrollJumps));
+  document.addEventListener('closed-loop-rendered',()=>queueMicrotask(syncMatchedScrollJumps));
+  addEventListener('scroll',syncMatchedScrollJumps,{passive:true});
+  addEventListener('resize',syncMatchedScrollJumps,{passive:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>queueMicrotask(syncMatchedScrollJumps),{once:true});
+  else queueMicrotask(syncMatchedScrollJumps);
 }
 })();
