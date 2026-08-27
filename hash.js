@@ -141,8 +141,7 @@ if(typeof document!=='undefined'){
     const prompt=document.getElementById('generated-prompt');
     const review=document.getElementById('proposal-heading');
     const reviewRect=review?.getBoundingClientRect();
-    const reviewDetails=review?.querySelector(':scope>details.record-card');
-    const longReview=Boolean(review?.dataset.longReview==='true'&&reviewDetails?.open&&review?.scrollHeight>innerHeight);
+    const longReview=Boolean(review&&[...review.querySelectorAll('details.record-card[open]')].some(details=>details.getBoundingClientRect().height>innerHeight));
     const reviewActive=Boolean(longReview&&reviewRect&&reviewRect.bottom>0&&reviewRect.top<innerHeight);
     const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
     const promptActive=Boolean(prompt?.classList.contains('expanded')&&prompt?.scrollHeight>innerHeight&&!reviewActive&&!reviewPast);
