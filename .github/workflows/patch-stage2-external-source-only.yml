@@ -1,0 +1,79 @@
+name: patch-stage2-external-source-only
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal Stage 02 source-boundary repair
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          function mustReplace(text,oldValue,newValue,label){
+            if(!text.includes(oldValue))throw new Error(`Missing expected ${label}`);
+            return text.replace(oldValue,newValue);
+          }
+          let prompt=fs.readFileSync('prompt-engine.js','utf8');
+          prompt=mustReplace(prompt,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/17';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/18';",'prompt engine version');
+          prompt=mustReplace(prompt,
+            'This limited intake inspection is Stage 01 job-definition work; Stage 02 owns that inventory and formal inspection. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here. A later source/material stage owns formal discovery, inventory, provenance, formal inspection status, authority, currency, supersession, applicability, and conflicts.',
+            'This limited intake inspection is Stage 01 job-definition work. Human-supplied project materials remain authorized project input for later stages that actually need them; they are not Stage 02 external sources and do not belong in the Stage 02 source inventory. Do not classify them as independent governing authority merely because they were supplied.',
+            'Stage 01/02 supplied-material boundary');
+          const s2Start=prompt.indexOf("2:'Build the complete source and supplied-material inventory");
+          const s3Start=prompt.indexOf("3:'Research only",s2Start);
+          if(s2Start<0||s3Start<0)throw new Error('Could not locate Stage 02 procedure boundary');
+          const newStage2="2:'Build only the independent external source inventory needed to determine the governing, mandatory, advisory, and evidentiary authorities for the requested outcome. Stage 02 is external source discovery and authority classification only. It is not an inventory or inspection stage for human-supplied project materials, target artifacts, repositories, source code, screenshots, prior outputs, or other implementation evidence. Do not block Stage 02 because project-material bytes are absent; those materials are authorized project inputs, not independent external sources. Use authorized web/research tools to discover the source landscape required by the domain and requested outcome. Prefer primary, official, controlling authority where it exists; otherwise prefer authoritative, reputable, direct, and current external evidence. Discover enough independent external sources to let Stage 03 research what must be true for the requested outcome, including applicable law, regulations, official rules, filing/format/procedure requirements, standards, authoritative technical references, or other external constraints as the domain requires. Treat any DESIRED OR SUGGESTED SOURCE COUNT as search guidance, not a quota. If no legitimate independent external source applies after a genuine search, return an explicit no-applicable-source determination with evidence; never substitute project materials or invent a source. Establish for each proposed external source its identity, issuer or author, source type, publication origin, URL/reference, version/date/retrieval date where applicable, authority level and role, relevance, applicable portions, inspection state, currency, supersession, and controlling status. Establish the authority hierarchy and any source conflicts. Stage 03 performs substantive source research and requirement extraction from the accepted Stage 02 external source set; do not derive the requirement set in Stage 02. Never use the target product, this operating application, its repository, source code, UI, stored state, screenshots, human-supplied project packet, prior generated targets, project outputs, generated prompts/instructions, or another implementation of the same target as an independent external source merely because it exists.',\n";
+          prompt=prompt.slice(0,s2Start)+newStage2+prompt.slice(s3Start);
+          fs.writeFileSync('prompt-engine.js',prompt);
+
+          let workbook=fs.readFileSync('workbook.js','utf8');
+          workbook=mustReplace(workbook,
+            'Identify every source that may control, inform, or prove correctness and establish the authority hierarchy.',
+            'Identify every independent external source that may control, inform, or prove correctness and establish the external authority hierarchy.',
+            'Stage 02 result');
+          workbook=mustReplace(workbook,
+            "2:['Every governing source has a complete record','Every relied-upon supplied file was inspected','Authority hierarchy is recorded','Every controlling conflict is resolved or blocked']",
+            "2:['Every accepted independent external source has a complete record','Every source has a justified authority or evidentiary role','External authority hierarchy is recorded','Every controlling external-source conflict is resolved or blocked']",
+            'Stage 02 completion gate');
+          fs.writeFileSync('workbook.js',workbook);
+
+          let semantics=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
+          const marker="    if(!record.prompt.includes('primary, official, controlling'))issues.push('SOURCE_QUALITY_RULE_MISSING');";
+          const insertion=marker+"\n    if(record.prompt.includes('source and supplied-material inventory')||record.prompt.includes('enumerate human-supplied files')||record.prompt.includes('Stage 02 owns that inventory and formal inspection'))issues.push('STAGE02_PROJECT_MATERIAL_SCOPE_LEAK');\n    if(!record.prompt.includes('external source discovery and authority classification only')||!record.prompt.includes('Do not block Stage 02 because project-material bytes are absent')||!record.prompt.includes('Stage 03 performs substantive source research and requirement extraction'))issues.push('STAGE02_EXTERNAL_SOURCE_BOUNDARY_MISSING');\n    if(!record.prompt.includes('applicable law, regulations, official rules, filing/format/procedure requirements, standards, authoritative technical references'))issues.push('STAGE02_REQUIREMENT_AUTHORITY_DISCOVERY_MISSING');";
+          semantics=mustReplace(semantics,marker,insertion,'Stage 02 semantic regression checks');
+          fs.writeFileSync('verify-prompt-semantics.mjs',semantics);
+
+          let index=fs.readFileSync('index.html','utf8');
+          index=index.replace(/prompt-engine\.js\?v=[^\"']+/g,'prompt-engine.js?v=18');
+          fs.writeFileSync('index.html',index);
+          NODE
+      - name: Verify changed source
+        run: |
+          node --check workbook.js
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-prompt-semantics.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add prompt-engine.js workbook.js verify-prompt-semantics.mjs index.html
+          git commit -m 'Make Stage 02 external-source discovery only'
+          git push origin HEAD:main
