@@ -21,10 +21,16 @@ jobs:
           python .agent-response-transport-repair.py
           python <<'PY'
           from pathlib import Path
-          p=Path('verify-ingestion.mjs'); s=p.read_text()
-          old="evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence'}]"
-          new="evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence',supports:[]}]"
-          if old not in s: raise SystemExit('control evidence fixture anchor not found')
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="requiredValues:{temporaryKey:'unique non-empty response-local string',kind:'non-empty string',description:'non-empty string',location:'non-empty string',content:'non-empty string',supports:'array of unique /stageData/FIELD JSON pointers covered by this evidence; use [] when this evidence supports records only'},optionalValues:{authorityType:'optional string',sourceRef:'optional relationship object containing exactly one of tempKey or recordId and resolving to sources',attachmentRef:'optional relationship object containing exactly one of tempKey or recordId and resolving to verified artifact bytes',notes:'optional string'}"
+          new="requiredValues:{temporaryKey:'unique non-empty response-local string',kind:'non-empty string',description:'non-empty string',location:'non-empty string',content:'non-empty string'},optionalValues:{authorityType:'optional string',sourceRef:'optional relationship object containing exactly one of tempKey or recordId and resolving to sources',attachmentRef:'optional relationship object containing exactly one of tempKey or recordId and resolving to verified artifact bytes',notes:'optional string',supports:'optional array of unique /stageData/FIELD JSON pointers; required only when this evidence proves provenance-required stageData and otherwise may be omitted or []'}"
+          if old not in s: raise SystemExit('evidence contract required-supports anchor not found')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('response-ingestion.js'); s=p.read_text()
+          old="if(evidence.supports===undefined)issues.push(issue('MISSING_EVIDENCE_SUPPORTS',`${path}/supports`,'supports is required; use [] when this evidence supports records only.'));else if(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length)issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers.'));else for(const pointer of evidence.supports)"
+          new="if(evidence.supports!==undefined&&(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length))issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers when supplied.'));else for(const pointer of safe(evidence.supports))"
+          if old not in s: raise SystemExit('evidence validator required-supports anchor not found')
           p.write_text(s.replace(old,new,1))
           PY
           node <<'NODE'
