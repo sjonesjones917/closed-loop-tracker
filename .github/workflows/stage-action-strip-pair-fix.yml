@@ -32,10 +32,12 @@ jobs:
           browser = Path('verify-browser.mjs')
           test = browser.read_text()
           anchor = " await setWidth(cdp,393);\n // All 30 stages reachable through the one workflow shell."
-          replacement = """ // Current state and next required action are one related pair and must stay beside each other.
- for(const width of [320,393,1280]){await setWidth(cdp,width);await openStage(cdp,2);const pair=await evalValue(cdp,`(()=>{const spans=[...document.querySelectorAll('.stage-action-strip span')];if(spans.length!==2)return null;const first=spans[0].getBoundingClientRect(),second=spans[1].getBoundingClientRect(),strip=spans[0].parentElement.getBoundingClientRect();return {firstTop:first.top,secondTop:second.top,firstRight:first.right,secondLeft:second.left,secondRight:second.right,stripRight:strip.right};})()`);assert(pair&&Math.abs(pair.firstTop-pair.secondTop)<=1&&pair.secondLeft>=pair.firstRight&&pair.secondRight<=pair.stripRight+1,`Current state and next action separated at ${width}px: ${JSON.stringify(pair)}`);}
- await setWidth(cdp,393);
- // All 30 stages reachable through the one workflow shell."""
+          replacement = (
+              " // Current state and next required action are one related pair and must stay beside each other.\n"
+              " for(const width of [320,393,1280]){await setWidth(cdp,width);await openStage(cdp,2);const pair=await evalValue(cdp,`(()=>{const spans=[...document.querySelectorAll('.stage-action-strip span')];if(spans.length!==2)return null;const first=spans[0].getBoundingClientRect(),second=spans[1].getBoundingClientRect(),strip=spans[0].parentElement.getBoundingClientRect();return {firstTop:first.top,secondTop:second.top,firstRight:first.right,secondLeft:second.left,secondRight:second.right,stripRight:strip.right};})()`);assert(pair&&Math.abs(pair.firstTop-pair.secondTop)<=1&&pair.secondLeft>=pair.firstRight&&pair.secondRight<=pair.stripRight+1,`Current state and next action separated at ${width}px: ${JSON.stringify(pair)}`);}\n"
+              " await setWidth(cdp,393);\n"
+              " // All 30 stages reachable through the one workflow shell."
+          )
           if anchor not in test:
               raise SystemExit('browser width anchor not found')
           browser.write_text(test.replace(anchor, replacement, 1))
