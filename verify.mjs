@@ -59,6 +59,9 @@ const replaced=store.replaceProject(migrated,{...oldProject,job:{...oldProject.j
 
 const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
 const appSourceForStatus=fs.readFileSync('app-core.js','utf8');
+const prepareSource=appSourceForStatus.match(/async function prepareStageResponse\(\)\{[\s\S]*?\n\}/)?.[0]||'';
+if(!prepareSource||prepareSource.includes('savePromptRecord(n)'))throw new Error('Parse / validate still creates a new controlling instruction before validation.');
+for(const token of ['function responsePromptRecord(n,text)','ingestion.strictParse(text)','Parse / validate does not create a new instruction.'])if(!appSourceForStatus.includes(token))throw new Error(`Returned-instruction validation regression missing ${token}.`);
 const statusSource=appSourceForStatus.match(/const statusClass=v=>\{.*?\};/)?.[0];
 if(!statusSource)throw new Error('Status classifier is not inspectable.');
 const statusProbe=vm.runInNewContext(`${statusSource};({notReady:statusClass('NOT READY'),notAuthorized:statusClass('NOT AUTHORIZED'),notComplete:statusClass('NOT COMPLETE'),unauthorized:statusClass('UNAUTHORIZED'),accepted:statusClass('ACCEPTED'),ready:statusClass('READY'),blocked:statusClass('BLOCKED')})`);
