@@ -81,9 +81,10 @@ if(typeof document!=='undefined'){
     button=document.createElement('button');
     button.id=jumpId;
     button.type='button';
-    button.textContent='↓ Bottom of message';
+    button.textContent='↓';
     button.setAttribute('aria-label','Scroll to bottom of expanded message');
-    Object.assign(button.style,{position:'fixed',right:'max(14px, env(safe-area-inset-right))',bottom:'calc(18px + env(safe-area-inset-bottom))',zIndex:'40',minHeight:'44px',padding:'9px 14px',border:'1px solid #164f45',borderRadius:'999px',background:'#164f45',color:'#fff',font:'700 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',boxShadow:'0 6px 22px rgba(21,24,23,.18)',cursor:'pointer'});
+    button.title='Scroll to bottom of expanded message';
+    Object.assign(button.style,{position:'fixed',right:'max(6px, env(safe-area-inset-right))',bottom:'calc(12px + env(safe-area-inset-bottom))',zIndex:'40',width:'44px',height:'44px',minWidth:'44px',minHeight:'44px',padding:'0',border:'1px solid #164f45',borderRadius:'999px',background:'#164f45',color:'#fff',font:'800 22px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',boxShadow:'0 4px 14px rgba(21,24,23,.16)',cursor:'pointer',display:'grid',placeItems:'center',touchAction:'manipulation'});
     button.hidden=true;
     button.addEventListener('click',()=>{
       const prompt=document.getElementById('generated-prompt');
@@ -94,10 +95,7 @@ if(typeof document!=='undefined'){
     document.body.append(button);
     return button;
   }
-  function syncPromptBottomJump(){
-    const prompt=document.getElementById('generated-prompt');
-    promptBottomJump().hidden=!prompt?.classList.contains('expanded');
-  }
+  function syncPromptBottomJump(){syncMatchedScrollJumps();}
   document.addEventListener('click',event=>{
     const toggle=event.target?.closest?.('#toggle-prompt');
     const prompt=document.getElementById('generated-prompt');
@@ -122,6 +120,7 @@ if(typeof document!=='undefined'){
     button.type='button';
     button.textContent=text;
     button.setAttribute('aria-label',ariaLabel);
+    button.title=ariaLabel;
     button.style.cssText=promptBottomJump().style.cssText;
     button.style.bottom=`calc(${bottomOffset}px + env(safe-area-inset-bottom))`;
     button.hidden=true;
@@ -134,9 +133,9 @@ if(typeof document!=='undefined'){
     target.scrollIntoView({behavior:'smooth',block,inline:'nearest'});
     requestAnimationFrame(()=>target.focus?.({preventScroll:true}));
   }
-  const promptTopJump=matchedScrollJump('prompt-top-jump','↑ Top of message','Scroll to top of expanded message',70,()=>scrollToMatchedTarget(document.getElementById('prompt-heading'),'start'));
-  const reviewTopJump=matchedScrollJump('review-top-jump','↑ Top of review','Scroll to top of proposal review',70,()=>scrollToMatchedTarget(document.getElementById('proposal-heading'),'start'));
-  const reviewBottomJump=matchedScrollJump('review-bottom-jump','↓ Bottom of review','Scroll to bottom of proposal review',18,()=>scrollToMatchedTarget(document.getElementById('proposal-actions'),'end'));
+  const promptTopJump=matchedScrollJump('prompt-top-jump','↑','Scroll to top of expanded message',62,()=>scrollToMatchedTarget(document.getElementById('prompt-heading'),'start'));
+  const reviewTopJump=matchedScrollJump('review-top-jump','↑','Scroll to top of proposal review',62,()=>scrollToMatchedTarget(document.getElementById('proposal-heading'),'start'));
+  const reviewBottomJump=matchedScrollJump('review-bottom-jump','↓','Scroll to bottom of proposal review',12,()=>scrollToMatchedTarget(document.getElementById('proposal-actions'),'end'));
   let activeLongSection=null;
   function sectionSummary(section){
     const first=section?.firstElementChild;
@@ -147,37 +146,50 @@ if(typeof document!=='undefined'){
     while(node?.parentElement){depth++;node=node.parentElement;}
     return depth;
   }
+  function scrollJumpBounds(rect){
+    if(!rect||rect.height<=innerHeight)return {active:false,top:false,bottom:false};
+    const visible=Math.max(0,Math.min(rect.bottom,innerHeight)-Math.max(rect.top,0));
+    const minimumVisible=Math.min(320,Math.max(180,innerHeight*.38));
+    if(visible<minimumVisible)return {active:false,top:false,bottom:false};
+    const edgeInset=Math.min(112,Math.max(72,innerHeight*.1));
+    return {active:true,top:rect.top<-edgeInset,bottom:rect.bottom>innerHeight+edgeInset};
+  }
   function visibleLongSection(){
     const candidates=[...document.querySelectorAll('details.record-card[open]')]
       .filter(section=>!section.closest('#proposal-heading'))
       .map(section=>({section,rect:section.getBoundingClientRect(),depth:sectionDepth(section)}))
-      .filter(({rect})=>rect.height>innerHeight&&rect.bottom>0&&rect.top<innerHeight)
+      .filter(({rect})=>scrollJumpBounds(rect).active)
       .sort((a,b)=>b.depth-a.depth||Math.abs(a.rect.top)-Math.abs(b.rect.top));
     return candidates[0]?.section||null;
   }
-  const sectionTopJump=matchedScrollJump('section-top-jump','↑ Top of section','Scroll to top of long section',70,()=>scrollToMatchedTarget(sectionSummary(activeLongSection)||activeLongSection,'start'));
-  const sectionBottomJump=matchedScrollJump('section-bottom-jump','↓ Bottom of section','Scroll to bottom of long section',18,()=>scrollToMatchedTarget(activeLongSection,'end'));
+  const sectionTopJump=matchedScrollJump('section-top-jump','↑','Scroll to top of long section',62,()=>scrollToMatchedTarget(sectionSummary(activeLongSection)||activeLongSection,'start'));
+  const sectionBottomJump=matchedScrollJump('section-bottom-jump','↓','Scroll to bottom of long section',12,()=>scrollToMatchedTarget(activeLongSection,'end'));
   function syncMatchedScrollJumps(){
     const prompt=document.getElementById('generated-prompt');
     const promptRect=prompt?.getBoundingClientRect();
+    const promptBounds=scrollJumpBounds(promptRect);
     const review=document.getElementById('proposal-heading');
     const reviewRect=review?.getBoundingClientRect();
+    const reviewBounds=scrollJumpBounds(reviewRect);
     const longReview=Boolean(review&&[...review.querySelectorAll('details.record-card[open]')].some(details=>details.getBoundingClientRect().height>innerHeight));
-    const reviewActive=Boolean(longReview&&reviewRect&&reviewRect.bottom>0&&reviewRect.top<innerHeight);
+    const reviewActive=Boolean(longReview&&reviewBounds.active);
     const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
-    const promptActive=Boolean(prompt?.classList.contains('expanded')&&prompt?.scrollHeight>innerHeight&&promptRect&&promptRect.bottom>0&&promptRect.top<innerHeight&&!reviewActive&&!reviewPast);
+    const promptActive=Boolean(prompt?.classList.contains('expanded')&&promptBounds.active&&!reviewActive&&!reviewPast);
     activeLongSection=!reviewActive&&!promptActive?visibleLongSection():null;
-    const sectionActive=Boolean(activeLongSection);
-    promptBottomJump().hidden=!promptActive;
-    promptTopJump.hidden=!promptActive;
-    reviewTopJump.hidden=!reviewActive;
-    reviewBottomJump.hidden=!reviewActive;
-    sectionTopJump.hidden=!sectionActive;
-    sectionBottomJump.hidden=!sectionActive;
+    const sectionBounds=scrollJumpBounds(activeLongSection?.getBoundingClientRect());
+    const sectionActive=Boolean(activeLongSection&&sectionBounds.active);
+    promptBottomJump().hidden=!(promptActive&&promptBounds.bottom);
+    promptTopJump.hidden=!(promptActive&&promptBounds.top);
+    reviewTopJump.hidden=!(reviewActive&&reviewBounds.top);
+    reviewBottomJump.hidden=!(reviewActive&&reviewBounds.bottom);
+    sectionTopJump.hidden=!(sectionActive&&sectionBounds.top);
+    sectionBottomJump.hidden=!(sectionActive&&sectionBounds.bottom);
     if(sectionActive){
       const name=String(sectionSummary(activeLongSection)?.textContent||'section').replace(/\s+/g,' ').trim()||'section';
       sectionTopJump.setAttribute('aria-label','Scroll to top of '+name);
       sectionBottomJump.setAttribute('aria-label','Scroll to bottom of '+name);
+      sectionTopJump.title='Scroll to top of '+name;
+      sectionBottomJump.title='Scroll to bottom of '+name;
     }
   }
   document.addEventListener('click',()=>queueMicrotask(syncMatchedScrollJumps));
