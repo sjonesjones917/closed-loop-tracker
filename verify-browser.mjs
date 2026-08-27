@@ -26,6 +26,7 @@ async function main(){
  await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
  await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
+ assert(await evalValue(cdp,`Boolean(document.querySelector('.app-help details')&&!document.querySelector('.app-help details').open)`),'Human guide must exist and start collapsed.');
  // Clean state: retained project is seeded exactly once and remains Stage 02 next.
  await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
  assert((await allProjects(cdp)).filter(p=>p.job?.JOB_ID==='JOB-20260823144121').length===1,'Retained project missing or duplicated in clean state.');
