@@ -1,0 +1,125 @@
+name: Apply minimal human-agent prompt gates
+on:
+  push:
+    branches: [tmp/apply-human-agent-prompt-gates]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/human-agent-prompt-gates
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch only prompt decision gates and regressions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('prompt-engine.js')
+          text=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/15';"
+          if text.count(old)!=1: raise SystemExit(f'prompt engine version target count={text.count(old)}')
+          text=text.replace(old,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/16';",1)
+
+          marker='HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE\n'
+          addition=(
+          'CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION\n'
+          '- When a value or decision can only come from the human and is not already known, ask the human directly in concise plain language in this same chat. Do not emit the final JSON in that turn.\n'
+          '- Continue the same conversation from the human answer. Ask only the next genuinely useful human-only question(s); do not interrogate the human for facts available in supplied materials, common domain knowledge, or authorized research/tools.\n'
+          '- humanInputRequests is NOT the normal conversation channel. It is a fallback machine handoff used only when a required human answer remains unavailable or explicitly deferred after conversation, or when interactive conversation is unavailable.\n'
+          '- If research, source analysis, requirements, verification, production, or audit later reveals a new human-only fact or decision, use this same conversational rule at that later stage before final JSON.\n\n')
+          if text.count(marker)!=1: raise SystemExit(f'human collaboration marker count={text.count(marker)}')
+          if 'CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION' not in text:
+              text=text.replace(marker,marker+addition,1)
+
+          marker='STAGE 01 CLARIFICATION EXPERIENCE\n'
+          gate=(
+          'MANDATORY STAGE 01 HUMAN-INTAKE GATE\n'
+          'Before any final Stage 01 JSON, classify every missing item into exactly one category:\n'
+          '- BLOCKING_NOW: human-only and required to identify the objective, intended deliverable, or input boundary. Ask now. Stage 01 cannot finish without an answer.\n'
+          '- ASK_NOW_NONBLOCKING: human-only, foreseeably needed to achieve the requested outcome, and not already supplied. Ask now conversationally, but "unknown", "I do not know", or explicit deferral is an acceptable answer; then record it as unresolved and continue when Stage 01 is otherwise sufficient. Nonblocking means the human may defer; it does not mean the agent may skip the question.\n'
+          '- LATER_RESOLVABLE: obtainable from supplied materials, common domain knowledge, authorized research/tools, or genuinely dependent on later research. Do not ask the human now. Let the earliest stage that can resolve it do so.\n'
+          'Conversational questions are not humanInputRequests. Ask BLOCKING_NOW and ASK_NOW_NONBLOCKING questions in normal chat before the final machine response. HUMAN_INPUT_REQUIRED is reserved only for still-unanswered BLOCKING_NOW items after conversation or a noninteractive context.\n'
+          'For PATENT / REGULATED FILING jobs, when not already known from human input or supplied materials, ASK_NOW_NONBLOCKING includes: intended jurisdiction(s); filing-route/application-type preference or existing filing; inventor identities; ownership, assignment, employment, or other rights obligations; priority/continuity/related-application history; public disclosure, sale, offer-for-sale, publication, demonstration, or other disclosure history and dates; known filing or business deadlines; government funding or joint-development circumstances; desired endpoint (inventor review, counsel review, filing-ready, or another stated endpoint); and whether additional human-controlled invention materials exist. Ask only the parts that truly require the human. Do not turn researchable legal strategy into a human question.\n'
+          'Before Stage 01 submission verify: objective/deliverable defined; supplied materials identified without doing Stage 02 inventory work; every foreseeable human-only item was already supplied, answered conversationally, or explicitly marked unknown/deferred by the human; no later-stage research or drafting was performed; then choose the final response type.\n\n')
+          if text.count(marker)!=1: raise SystemExit(f'stage01 clarification marker count={text.count(marker)}')
+          if 'MANDATORY STAGE 01 HUMAN-INTAKE GATE' not in text:
+              text=text.replace(marker,marker+gate,1)
+
+          marker='MANDATORY RESPONSE RULES\n'
+          serial=(
+          'FINAL RESPONSE SERIALIZATION GATE — APPLIES ONLY WHEN THE CONVERSATION IS FINISHED\n'
+          'Before sending the final machine response, silently serialize and self-check the complete response. The user must never be asked to repair agent JSON.\n'
+          '- Return one JSON object only. Use ASCII U+0022 (\") for every JSON key/string delimiter; never U+201C/U+201D typographic quotes.\n'
+          '- Escape any ASCII double quote that occurs inside a JSON string value. Escape control characters/newlines as valid JSON requires.\n'
+          '- Verify the final text is syntactically parseable JSON, contains no Markdown wrapper or chat prose, and uses only contract-declared keys. If the check fails, repair your own serialization before sending it.\n\n')
+          if text.count(marker)!=1: raise SystemExit(f'mandatory response marker count={text.count(marker)}')
+          if 'FINAL RESPONSE SERIALIZATION GATE — APPLIES ONLY WHEN THE CONVERSATION IS FINISHED' not in text:
+              text=text.replace(marker,serial+marker,1)
+          p.write_text(text)
+
+          p=Path('verify-prompt-semantics.mjs')
+          text=p.read_text()
+          anchor="  if(!record.prompt.includes('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE')||!record.prompt.includes('ask the smallest useful set of plain-language questions conversationally')||!record.prompt.includes('Then produce the final JSON response only.')||!record.prompt.includes('Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision'))issues.push('HUMAN_COLLABORATION_MODE_MISSING');"
+          if anchor not in text: raise SystemExit('human collaboration semantic anchor missing')
+          extra=(anchor+"\n  if(!record.prompt.includes('CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION')||!record.prompt.includes('humanInputRequests is NOT the normal conversation channel')||!record.prompt.includes('Do not emit the final JSON in that turn'))issues.push('HUMAN_CONVERSATION_PRECEDENCE_MISSING');\n  if(!record.prompt.includes('FINAL RESPONSE SERIALIZATION GATE — APPLIES ONLY WHEN THE CONVERSATION IS FINISHED')||!record.prompt.includes('The user must never be asked to repair agent JSON')||!record.prompt.includes('never U+201C/U+201D typographic quotes')||!record.prompt.includes('repair your own serialization before sending it'))issues.push('FINAL_JSON_SELF_CHECK_MISSING');")
+          text=text.replace(anchor,extra,1)
+          stage_anchor="    if(!record.prompt.includes('STAGE 01 CLARIFICATION EXPERIENCE')||!record.prompt.includes('ask it conversationally first under HUMAN COLLABORATION MODE')||!record.prompt.includes('Use HUMAN_INPUT_REQUIRED only as the final machine fallback'))issues.push('STAGE01_CONVERSATION_FIRST_CLARIFICATION_MISSING');"
+          if stage_anchor not in text: raise SystemExit('stage01 semantic anchor missing')
+          stage_extra=(stage_anchor+"\n    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');")
+          text=text.replace(stage_anchor,stage_extra,1)
+          p.write_text(text)
+
+          p=Path('index.html')
+          text=p.read_text()
+          old='<li><strong>Answer the agent normally.</strong> If it needs information only you can provide, it should ask short plain-language questions. Do not paste those questions into this app.</li>'
+          new='<li><strong>Answer the agent normally.</strong> If it needs information only you can provide, it should ask short plain-language questions in ChatGPT and wait for your answer. Keep talking there until it says the stage is ready for the final JSON. Do not paste the conversation into this app.</li>'
+          if text.count(old)!=1: raise SystemExit(f'guide answer-step count={text.count(old)}')
+          text=text.replace(old,new,1)
+          p.write_text(text)
+          PY
+
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blobSha(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/(src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+/g,`$1${token}`);
+          fs.writeFileSync('index.html',html);
+          console.log(token);
+          NODE
+      - name: Verify complete existing acceptance stack
+        run: |
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/human-agent-gates-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only permanent minimal files
+        run: |
+          git config user.name "closed-loop-prompt-fix"
+          git config user.email "actions@users.noreply.github.com"
+          git add prompt-engine.js verify-prompt-semantics.mjs index.html
+          git diff --cached --quiet && exit 1 || true
+          git commit -m "Make human intake and final JSON behavior deterministic"
+          git push origin HEAD:fix/human-agent-prompt-gates
