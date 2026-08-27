@@ -1,4 +1,4 @@
-name: Verify and commit final human-agent UX repair
+name: Diagnose final human-agent UX mobile proof
 on:
   pull_request:
     branches: [main]
@@ -8,10 +8,10 @@ concurrency:
   group: final-human-agent-ux-${{ github.head_ref }}
   cancel-in-progress: true
 jobs:
-  verify-and-commit:
+  diagnose:
     if: github.head_ref == 'fix/human-agent-stage-ux-v3'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,49 +22,46 @@ jobs:
         run: |
           node --check .ux-final/apply.mjs
           node .ux-final/apply.mjs
-      - name: Verify retained project and source architecture
-        run: node build-test-project.mjs
-      - name: Syntax checks
-        run: |
-          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$file"; done
-      - name: Run deterministic, ingestion, lifecycle, and prompt proofs
-        run: |
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
-      - name: Run mobile Chromium workflow proofs
-        timeout-minutes: 9
+          node --check verify-browser.mjs
+      - name: Run instrumented mobile workflow once
+        timeout-minutes: 5
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            for attempt in 1 2 3; do
-              echo "BEGIN $script attempt $attempt"
-              if timeout --signal=TERM --kill-after=10s 240s node "$script"; then
-                echo "END $script"
-                return 0
-              fi
-              status=$?
-              echo "$script failed with status $status"
-              test "$attempt" -lt 3 || return "$status"
-            done
-          }
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
-      - name: Commit only verified product and regression files
-        run: |
-          git fetch origin main
-          rm -rf .ux-final
-          git checkout origin/main -- .github/workflows/pages.yml
-          git config user.name "closed-loop-fix-bot"
-          git config user.email "closed-loop-fix-bot@users.noreply.github.com"
-          git add -A
-          git commit -m "Fix human-agent handoff and response validation recovery [ux-final-applied]"
-          git push origin HEAD:${{ github.head_ref }}
+          SOURCE_FILE=verify-browser.mjs TARGET_FILE=/tmp/debug-verify-browser.mjs node <<'NODE'
+          import fs from 'node:fs';
+          let text=fs.readFileSync(process.env.SOURCE_FILE,'utf8');
+          let sequence=0;
+          text=text.replace(/\n(\s*)\/\/ ([^\n]+)/g,(_,indent,label)=>`\n${indent}console.error(${JSON.stringify('[browser-step] ')}+${JSON.stringify(String(++sequence).padStart(2,'0')+' '+label)});\n${indent}// ${label}`);
+          const originalClick="async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(160);}";
+          const diagnosticClick="async function click(cdp,selector){console.error('[click] before '+selector);const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(160);const dialogs=cdp.events.filter(e=>e.method==='Page.javascriptDialogOpening');const latest=dialogs.at(-1);if(latest){console.error('[dialog] '+JSON.stringify(latest.params));try{await cdp.send('Page.handleJavaScriptDialog',{accept:true});console.error('[dialog] dismissed');}catch(error){console.error('[dialog] dismissal failed '+String(error));}}console.error('[click] after '+selector);}";
+          if(!text.includes(originalClick))throw new Error('click helper target missing');
+          text=text.replace(originalClick,diagnosticClick);
+          const blockStart=text.indexOf('// Malformed response preserves raw/validation and does not mutate canonical sources.');
+          const blockEnd=text.indexOf('// State activity may legitimately regenerate the controlling instruction.',blockStart);
+          if(blockStart<0||blockEnd<0)throw new Error('Malformed-response block missing');
+          let block=text.slice(blockStart,blockEnd);
+          const probes=[
+            ["await fill(cdp,'#stage-output','{\"schema\":}');",'invalid fill'],
+            ["await waitExpr(cdp,`document.body.innerText.includes('Response rejected before canonical mutation.')`);",'rejection wait'],
+            ["retained=await activeProject(cdp);",'project read'],
+            ["const rejectedRawCount=retained.projectData.rawResponses.length;",'raw count'],
+            ["await fill(cdp,'#stage-output','{\"replacement\":\"not evaluated yet\"}');",'replacement fill'],
+            ["await waitExpr(cdp,`document.body.innerText.includes('Replacement not evaluated.')`);",'replacement wait'],
+            ["await click(cdp,'#revalidate-current-response');",'direct validation'],
+            ["assert(retained.projectData.responseValidations.at(-1).responseSchema===null",'null identity assertion']
+          ];
+          for(const [needle,label] of probes){if(!block.includes(needle))continue;block=block.replaceAll(needle,`console.error(${JSON.stringify('[probe] before '+label)});${needle}console.error(${JSON.stringify('[probe] after '+label)});`);}
+          text=text.slice(0,blockStart)+block+text.slice(blockEnd);
+          fs.writeFileSync(process.env.TARGET_FILE,text);
+          NODE
+          node --check /tmp/debug-verify-browser.mjs
+          set +e
+          timeout --signal=TERM --kill-after=10s 220s node /tmp/debug-verify-browser.mjs
+          status=$?
+          set -e
+          echo "instrumented browser exit status: $status"
+          exit "$status"
