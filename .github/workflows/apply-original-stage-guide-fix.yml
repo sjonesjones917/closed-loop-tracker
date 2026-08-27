@@ -18,7 +18,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply repair
-        run: python3 tools/fix_original_stage_guide.py
+        run: |
+          python3 tools/fix_original_stage_guide.py
+          python3 tools/fix_original_stage_guide_test.py
       - name: Verify repair
         run: |
           node --check app-core.js
