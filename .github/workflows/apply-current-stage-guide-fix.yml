@@ -20,9 +20,8 @@ jobs:
           node-version: '22'
       - name: Apply narrow repair to current main
         run: |
-          git fetch origin fix/restore-original-stage-guide-v2
-          git show origin/fix/restore-original-stage-guide-v2:tools/fix_original_stage_guide.py > /tmp/fix_original_stage_guide.py
-          git show origin/fix/restore-original-stage-guide-v2:tools/fix_original_stage_guide_test.py > /tmp/fix_original_stage_guide_test.py
+          git show d6a78e1f72c77e572f86413bceb4ee699e9c3ed1:tools/fix_original_stage_guide.py > /tmp/fix_original_stage_guide.py
+          git show d6a78e1f72c77e572f86413bceb4ee699e9c3ed1:tools/fix_original_stage_guide_test.py > /tmp/fix_original_stage_guide_test.py
           python3 /tmp/fix_original_stage_guide.py
           python3 /tmp/fix_original_stage_guide_test.py
       - name: Verify deterministic and workflow behavior
