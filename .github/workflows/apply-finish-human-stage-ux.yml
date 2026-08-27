@@ -25,14 +25,16 @@ jobs:
           replacements=[
               ("'Complete JSON only'", "'Final JSON only'", 'stale final-JSON label assertion'),
               (
-                  "await click(cdp,'[data-view=\"Project\"]');text=(await snapshot(cdp)).text;for(const token of ['You do not need to know the final file format in advance','Stage 01 determines the actual artifact set and suitable formats','A specification substitute requires human confirmation'])",
-                  "await click(cdp,'[data-view=\"Project\"]');await click(cdp,'details.record-card summary');text=(await snapshot(cdp)).text;for(const token of ['You do not need to know the final file format in advance','Stage 01 determines the actual artifact set and suitable formats','A specification substitute requires human confirmation'])",
+                  "await click(cdp,'[data-view=\"Project\"]');text=(await snapshot(cdp)).text;for(const token of [",
+                  "await click(cdp,'[data-view=\"Project\"]');await click(cdp,'details.record-card summary');text=(await snapshot(cdp)).text;for(const token of [",
                   'collapsed project-help browser assertion'
               ),
           ]
           for before,after,label in replacements:
               if before not in text:
                   raise SystemExit(f'Expected {label} was not found.')
+              if text.count(before) != 1:
+                  raise SystemExit(f'Expected one {label}; found {text.count(before)}.')
               text=text.replace(before,after)
           path.write_text(text,encoding='utf-8')
           PY
