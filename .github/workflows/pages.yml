@@ -51,8 +51,7 @@ jobs:
             ["const rejectedRawCount=retained.projectData.rawResponses.length;",'raw count'],
             ["await fill(cdp,'#stage-output','{\"replacement\":\"not evaluated yet\"}');",'replacement fill'],
             ["await waitExpr(cdp,`document.body.innerText.includes('Replacement not evaluated.')`);",'replacement wait'],
-            ["await click(cdp,'#revalidate-current-response');",'direct validation'],
-            ["assert(retained.projectData.responseValidations.at(-1).responseSchema===null",'null identity assertion']
+            ["await click(cdp,'#revalidate-current-response');",'direct validation']
           ];
           for(const [needle,label] of probes){if(!block.includes(needle))continue;block=block.replaceAll(needle,`console.error(${JSON.stringify('[probe] before '+label)});${needle}console.error(${JSON.stringify('[probe] after '+label)});`);}
           text=text.slice(0,blockStart)+block+text.slice(blockEnd);
