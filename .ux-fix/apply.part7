@@ -1,0 +1,12 @@
+
+{
+  const path = 'verify-browser.mjs';
+  let text = fs.readFileSync(path, 'utf8');
+  text = replaceOnce(
+    text,
+    "await click(cdp,'[data-view=\"Project\"]');text=(await snapshot(cdp)).text;for(const token of ['Output format (optional)','You do not need to know the final file format in advance','A specification substitute requires human confirmation'])assert(text.includes(token),`Project intake artifact-generation guidance missing ${token}.`);",
+    "await click(cdp,'[data-view=\"Project\"]');text=await evalValue(cdp,`document.body.textContent`);for(const token of ['Output format (optional)','You do not need to know the final file format in advance','A specification substitute requires human confirmation'])assert(text.includes(token),`Project intake artifact-generation guidance missing ${token}.`);",
+    'collapsed project intake guidance browser assertion'
+  );
+  writeChanged(path, text);
+}
