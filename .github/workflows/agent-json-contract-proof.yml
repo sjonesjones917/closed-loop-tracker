@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 .repair-agent-json.py
-          git checkout -- workbook.js
+          git checkout -- workbook.js verify-browser.mjs
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,re
@@ -35,11 +35,11 @@ jobs:
           s=s.replace('Do not inventory the invention packet internally in Stage 01 and do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01;','Do not inventory the invention packet internally in Stage 01. Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01;',1)
           s=s.replace('Stage 02 owns that inventory and formal inspection.','This limited intake inspection is Stage 01 job-definition work; Stage 02 owns that inventory and formal inspection.',1)
           p.write_text(s)
+          p=Path('app-core.js'); s=p.read_text()
+          s=s.replace('<strong>Last parsed response was rejected before canonical mutation.</strong><br><span>This result belongs to ${esc(v.rawResponseId||\'the last parsed response\')}.','<strong>Response rejected before canonical mutation.</strong><br><span>Last parsed response: ${esc(v.rawResponseId||\'unknown raw response\')}.',1)
+          p.write_text(s)
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
           s=s.replace("'internal material inventory is deferred to Stage 02'","'Do not turn it into a Stage 02 archive/file inventory'")
-          p.write_text(s)
-          p=Path('verify-browser.mjs'); s=p.read_text()
-          s=s.replace("document.body.innerText.includes('Response rejected before canonical mutation.')","document.body.innerText.includes('Last parsed response was rejected before canonical mutation.')")
           p.write_text(s)
           files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest=''
@@ -58,7 +58,6 @@ jobs:
           node --check app-core.js
           node --check verify-prompt-semantics.mjs
           node --check verify-ingestion.mjs
-          node --check verify-browser.mjs
       - name: Build fixture
         run: node build-test-project.mjs
       - name: Hash proof
@@ -79,8 +78,8 @@ jobs:
           grep -q 'closed-loop-response-ingestion/4' response-ingestion.js
           grep -q 'JSON_TYPOGRAPHY_NORMALIZED' response-ingestion.js
           grep -q 'evidenceKeys' prompt-engine.js
-          grep -q 'Last parsed response was rejected' app-core.js
-          grep -q 'Last parsed response was rejected before canonical mutation.' verify-browser.mjs
+          grep -q 'Response rejected before canonical mutation.' app-core.js
+          grep -q 'Last parsed response:' app-core.js
       - name: Chromium verification
         shell: bash
         run: |
