@@ -1,0 +1,98 @@
+name: Apply human-stage residual
+
+on:
+  push:
+    branches:
+      - fix/human-stage-residual-b16
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[human-stage-residual-applied]') && !contains(github.event.head_commit.message, '[human-stage-residual-debug]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact residual and verify
+        run: |
+          run_checks() {
+            node verify-hash.mjs || return $?
+            node build-test-project.mjs || return $?
+            node --check workbook.js || return $?
+            node --check hash.js || return $?
+            node --check workflow-schema.js || return $?
+            node --check workflow-engine.js || return $?
+            node --check prompt-engine.js || return $?
+            node --check response-ingestion.js || return $?
+            node --check project-store.js || return $?
+            node --check app-core.js || return $?
+            node --check test-fixtures.mjs || return $?
+            node --check verify.mjs || return $?
+            node --check verify-ingestion.mjs || return $?
+            node --check verify-complete.mjs || return $?
+            node --check verify-full-cycle.mjs || return $?
+            node --check verify-prompt-semantics.mjs || return $?
+            node --check verify-live.mjs || return $?
+            node --check verify-browser.mjs || return $?
+            node --check verify-browser-extra.mjs || return $?
+            node verify.mjs || return $?
+            node verify-ingestion.mjs || return $?
+            node verify-complete.mjs || return $?
+            node verify-prompt-semantics.mjs || return $?
+            node verify-full-cycle.mjs || return $?
+            python3 -m http.server 4173 > /tmp/closed-loop-http.log 2>&1 &
+            server_pid=$!
+            PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs || { kill "$server_pid" 2>/dev/null || true; return 1; }
+            PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs || { kill "$server_pid" 2>/dev/null || true; return 1; }
+            kill "$server_pid" 2>/dev/null || true
+          }
+          set +e
+          node .maintenance-apply-human-stage-residual.mjs > .maintenance-human-stage-residual.log 2>&1
+          status=$?
+          if [ "$status" = "0" ]; then
+            node --input-type=module <<'NODE' >> .maintenance-human-stage-residual.log 2>&1
+          import fs from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          const path='index.html',source=fs.readFileSync(path,'utf8');
+          let count=0;
+          const updated=source.replace(/\?v=runtime-[A-Za-z0-9-]+/g,()=>{count+=1;return `?v=${identity}`;});
+          if(count!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime cache tokens; found ${count}.`);
+          fs.writeFileSync(path,updated);
+          console.log(`Updated runtime identity to ${identity}.`);
+          NODE
+            status=$?
+          fi
+          if [ "$status" = "0" ]; then
+            run_checks >> .maintenance-human-stage-residual.log 2>&1
+            status=$?
+          fi
+          set -e
+          printf '%s\n' "$status" > .maintenance-human-stage-residual.exit
+      - name: Commit verified result or diagnostic
+        run: |
+          status=$(cat .maintenance-human-stage-residual.exit)
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ "$status" = "0" ]; then
+            rm .maintenance-apply-human-stage-residual.mjs .github/workflows/apply-human-stage-residual.yml .maintenance-human-stage-residual.log .maintenance-human-stage-residual.exit
+            git add -A
+            git commit -m "Finish human-first stage intake and response-state UX [human-stage-residual-applied]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            cp .maintenance-human-stage-residual.log /tmp/human-stage-residual.log
+            cp .maintenance-human-stage-residual.exit /tmp/human-stage-residual.exit
+            git reset --hard HEAD
+            cp /tmp/human-stage-residual.log .maintenance-human-stage-residual.log
+            cp /tmp/human-stage-residual.exit .maintenance-human-stage-residual.exit
+            git add .maintenance-human-stage-residual.log .maintenance-human-stage-residual.exit
+            git commit -m "Capture human-stage residual verification failure [human-stage-residual-debug]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            exit "$status"
+          fi
