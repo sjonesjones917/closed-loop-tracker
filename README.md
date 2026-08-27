@@ -31,6 +31,14 @@ There is no second parser, store, workflow engine, prompt layer, application she
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
 - Stage 21 product artifacts are accepted only after the application reserves the current product execution. Finished-product bytes are then bound to that application-owned `PRODUCT_ID`, hashed, persisted, and included in the product artifact inventory.
 
+## Human-agent interaction
+
+Every generated stage instruction uses one chat-first protocol. The external agent first explains the current stage in plain language, inspects supplied material, and asks only human-only facts or decisions that cannot be established through authorized research, computation, or ordinary domain reasoning. Stage 01 proactively collects foreseeable human inputs; Stages 02–05 may reopen clarification when source, research, or requirement work reveals a new human-only issue.
+
+When sufficient information exists, the agent returns a short human explanation followed by one `FINAL APP RESPONSE` JSON block. The application preserves the complete raw response, deterministically extracts exactly one unambiguous JSON block, validates it, and keeps canonical state unchanged until operator acceptance. A bare JSON object remains accepted for compatibility. Multiple or ambiguous JSON blocks fail closed.
+
+The Workflow view keeps this process in a collapsed **How to use this stage** guide so experienced operators are not forced through repeated instruction text.
+
 ## Artifact generation and downstream execution
 
 The workflow determines the actual artifact set and suitable file formats that constitute completion; the operator is not expected to know in advance whether the correct deliverable is source code, DXF, OpenSCAD, STEP, STL, IFC, SVG, XML, a controller-specific machine program, documents, or a multi-file package. When the available environment can reliably construct exact artifact bytes from a defined representation and sufficient controlling inputs, it must produce the actual requested artifact even if the downstream application that commonly consumes that format is unavailable. Missing downstream software is not, by itself, a reason to replace a real file with prose.

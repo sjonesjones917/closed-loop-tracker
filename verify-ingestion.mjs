@@ -121,7 +121,15 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
-negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+{
+  const p=project('JOB-FINAL-APP-WRAPPER'),promptRecord=savePrompt(p,2),envelope=validEnvelope(p,2,promptRecord);
+  const wrapped=`Stage 02 is complete and ready for app review.\n\nFINAL APP RESPONSE\n\`\`\`json\n${JSON.stringify(envelope)}\n\`\`\``;
+  const prepared=ingestion.prepare(p,{stage:2,text:wrapped,promptRecord});
+  if(!prepared.validation.valid)throw new Error(`One final app-response wrapper was rejected: ${JSON.stringify(prepared.validation.issues)}`);
+  if(!prepared.validation.issues.some(item=>item.code==='FINAL_APP_RESPONSE_WRAPPER_PARSED'))throw new Error('Final app-response wrapper normalization warning was not preserved.');
+  if(prepared.project.projectData.rawResponses.at(-1)?.completeRawResponse!==wrapped)throw new Error('Complete human-facing raw response was not preserved unchanged.');
+}
+negative('ambiguous multiple JSON blocks',(e)=>`FINAL APP RESPONSE\n\`\`\`json\n${JSON.stringify(e)}\n\`\`\`\n\`\`\`json\n${JSON.stringify(e)}\n\`\`\``, 'AMBIGUOUS_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
 negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
