@@ -1,0 +1,37 @@
+from pathlib import Path
+import re
+
+# Prompt engine: always generate a real agent instruction, even before the human has entered the objective.
+p=Path('prompt-engine.js'); s=p.read_text()
+s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/12';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/13';")
+old=" if(stage===1&&!String(state?.job?.EXACT_USER_OBJECTIVE_VERBATIM||'').trim()){const error=new Error('Stage 01 needs one thing before an instruction can be generated: enter the verbatim job request in User Job Input and save it. Additional details may be clarified by the agent afterward.');error.code='MISSING_MINIMUM_HUMAN_INPUT';throw error;}\n"
+assert old in s
+s=s.replace(old,'',1)
+# Remove the old machine-question behavior from Stage 01 procedure while preserving strict final JSON ingestion.
+s=s.replace('When Stage 01 cannot proceed without a genuinely human-only fact or decision, return HUMAN_INPUT_REQUIRED as the one machine response for this turn. Put only the smallest set of genuinely blocking questions in humanInputRequests using the exact contract below. Do not ask conversational questions outside the JSON response and do not ask the human to manually rewrite those answers into unrelated fields. The application will render the questions as normal human-facing controls, type-check the answers, version them as User Job Input, invalidate this prompt, and regenerate Stage 01.', 'When Stage 01 needs a genuinely human-only fact or decision, ask the human conversationally in plain language before the final machine response. Continue until the information is sufficient or the human says the item is unknown or unavailable. HUMAN_INPUT_REQUIRED remains a final machine disposition only when the stage must stop awaiting a human answer that cannot be obtained in the current conversation; do not use it merely as a transport format for ordinary dialogue.')
+# Make the first-contact behavior explicit when objective itself is missing.
+needle='HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE\n'
+assert needle in s
+s=s.replace(needle,needle+'For Stage 01 first contact, if the verbatim job objective is missing, do not refuse to generate an instruction and do not emit a placeholder. Introduce your role in one short sentence, ask the human what outcome they want, then gather only the human-specific facts and decisions you can already foresee as necessary. Treat the conversation itself as intake; the human does not need to pre-fill the application before talking to you.\n',1)
+p.write_text(s)
+
+# App: remove dead-end placeholder path and explain the actual human-agent loop.
+p=Path('app-core.js'); a=p.read_text()
+old="try{return globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview,promptOptions(n)).prompt;}catch(error){if(error?.code==='MISSING_MINIMUM_HUMAN_INPUT')return `STAGE 01 NEEDS YOUR JOB REQUEST\\n\\n${error.message}`;if(error?.code==='MISSING_REQUIRED_PROMPT_SCOPE')"
+assert old in a
+a=a.replace(old,"try{return globalThis.closedLoopPromptEngine.buildPromptRecord(n,preview,promptOptions(n)).prompt;}catch(error){if(error?.code==='MISSING_REQUIRED_PROMPT_SCOPE')",1)
+old2='Start with one thing: save the verbatim job request. Add files or constraints you already have; everything else can be clarified later. If more human information is needed now, the agent must return one structured HUMAN_INPUT_REQUIRED response. Paste it once and the application will show the plain-language questions here, validate your answers, version them as User Job Input, and regenerate Stage 01.'
+new2='You can start by sending the generated Stage 01 instruction to ChatGPT even if this project form is incomplete. The agent should talk with you normally, ask concise plain-language questions, inspect supplied material when available, and gather the human-only information it needs. When intake is complete, the agent returns one final strict JSON response for this app. You may also enter or correct human-owned job facts here at any time.'
+assert old2 in a
+a=a.replace(old2,new2,1)
+p.write_text(a)
+
+# Semantic/browser tests: replace obsolete expectation that missing objective blocks prompt generation.
+p=Path('verify-prompt-semantics.mjs'); v=p.read_text()
+v=v.replace("let missingObjectiveBlocked=false;try{prompts.buildPromptRecord(1,missingObjective);}catch(error){missingObjectiveBlocked=error?.code==='MISSING_MINIMUM_HUMAN_INPUT';}if(!missingObjectiveBlocked)throw new Error('Stage 01 must not generate a controlling prompt without a verbatim human objective.');", "const firstContact=prompts.buildPromptRecord(1,missingObjective);if(!firstContact.prompt.includes('For Stage 01 first contact, if the verbatim job objective is missing'))throw new Error('Stage 01 first-contact prompt must remain a real conversational agent instruction when objective is missing.');")
+v=v.replace("'MISSING_MINIMUM_HUMAN_INPUT'", "'For Stage 01 first contact, if the verbatim job objective is missing'")
+p.write_text(v)
+
+p=Path('verify-browser.mjs'); b=p.read_text()
+b=b.replace("assert((await evalValue(cdp,`document.querySelector('#generated-prompt').textContent`)).includes('STAGE 01 NEEDS YOUR JOB REQUEST'),'Blank Stage 01 must explain the minimum human input instead of emitting a pseudo controlling prompt.');", "{const firstPrompt=await evalValue(cdp,`document.querySelector('#generated-prompt').textContent`);assert(firstPrompt.includes('COPY BLOCK — STAGE 01 — INITIALIZE THE JOB'),'Blank Stage 01 must still render a real controlling agent prompt.');assert(firstPrompt.includes('For Stage 01 first contact, if the verbatim job objective is missing'),'Blank Stage 01 prompt must instruct normal conversational intake.');}")
+p.write_text(b)
