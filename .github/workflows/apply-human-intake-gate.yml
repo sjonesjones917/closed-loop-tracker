@@ -94,6 +94,7 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           node verify-browser.mjs
       - name: Commit patch and remove one-time workflow
         shell: bash
