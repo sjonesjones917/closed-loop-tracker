@@ -1,0 +1,98 @@
+name: Apply Stage 01 boundary and help
+
+on:
+  push:
+    branches:
+      - fix/stage01-research-boundary-help
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[stage01-boundary-help-applied]') && !contains(github.event.head_commit.message, '[stage01-boundary-help-debug]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact patch and run complete verification
+        run: |
+          run_checks() {
+            node verify-hash.mjs || return $?
+            node build-test-project.mjs || return $?
+            node --check workbook.js || return $?
+            node --check hash.js || return $?
+            node --check workflow-schema.js || return $?
+            node --check workflow-engine.js || return $?
+            node --check prompt-engine.js || return $?
+            node --check response-ingestion.js || return $?
+            node --check project-store.js || return $?
+            node --check app-core.js || return $?
+            node --check test-fixtures.mjs || return $?
+            node --check verify.mjs || return $?
+            node --check verify-ingestion.mjs || return $?
+            node --check verify-complete.mjs || return $?
+            node --check verify-full-cycle.mjs || return $?
+            node --check verify-prompt-semantics.mjs || return $?
+            node --check verify-live.mjs || return $?
+            node --check verify-browser.mjs || return $?
+            node --check verify-browser-extra.mjs || return $?
+            node verify.mjs || return $?
+            node verify-ingestion.mjs || return $?
+            node verify-complete.mjs || return $?
+            node verify-prompt-semantics.mjs || return $?
+            node verify-full-cycle.mjs || return $?
+            python3 -m http.server 4173 > /tmp/closed-loop-http.log 2>&1 &
+            server_pid=$!
+            PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs || { kill "$server_pid" 2>/dev/null || true; return 1; }
+            PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs || { kill "$server_pid" 2>/dev/null || true; return 1; }
+            kill "$server_pid" 2>/dev/null || true
+          }
+          set +e
+          node .maintenance-stage01-boundary-help.mjs > .maintenance-stage01-boundary-help.log 2>&1
+          status=$?
+          if [ "$status" = "0" ]; then
+            node --input-type=module <<'NODE' >> .maintenance-stage01-boundary-help.log 2>&1
+          import fs from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          const path='index.html',source=fs.readFileSync(path,'utf8');
+          let count=0;
+          const updated=source.replace(/\?v=runtime-[A-Za-z0-9-]+/g,()=>{count+=1;return `?v=${identity}`;});
+          if(count!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime cache tokens; found ${count}.`);
+          fs.writeFileSync(path,updated);
+          console.log(`Updated runtime identity to ${identity}.`);
+          NODE
+            status=$?
+          fi
+          if [ "$status" = "0" ]; then
+            run_checks >> .maintenance-stage01-boundary-help.log 2>&1
+            status=$?
+          fi
+          set -e
+          printf '%s\n' "$status" > .maintenance-stage01-boundary-help.exit
+      - name: Commit verified result or diagnostic
+        run: |
+          status=$(cat .maintenance-stage01-boundary-help.exit)
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ "$status" = "0" ]; then
+            rm .maintenance-stage01-boundary-help.mjs .github/workflows/apply-stage01-boundary-help.yml .maintenance-stage01-boundary-help.log .maintenance-stage01-boundary-help.exit
+            git add -A
+            git commit -m "Clarify Stage 01 research boundary and collapse intake help [stage01-boundary-help-applied]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            cp .maintenance-stage01-boundary-help.log /tmp/stage01-boundary-help.log
+            cp .maintenance-stage01-boundary-help.exit /tmp/stage01-boundary-help.exit
+            git reset --hard HEAD
+            cp /tmp/stage01-boundary-help.log .maintenance-stage01-boundary-help.log
+            cp /tmp/stage01-boundary-help.exit .maintenance-stage01-boundary-help.exit
+            git add .maintenance-stage01-boundary-help.log .maintenance-stage01-boundary-help.exit
+            git commit -m "Capture Stage 01 boundary/help verification failure [stage01-boundary-help-debug]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            exit "$status"
+          fi
