@@ -18,6 +18,18 @@ jobs:
           node-version: 22
       - name: Apply responsible-layer repair
         run: |
+          python <<'PY'
+          from pathlib import Path
+          p=Path('.agent-response-transport-repair.py')
+          lines=p.read_text().splitlines()
+          for i,line in enumerate(lines):
+              if line.startswith('s=s.replace("negative(\'markdown wrapped\''):
+                  lines[i] = "s=s.replace(\"negative('markdown wrapped',(e)=>'```json\\\\n'+JSON.stringify(e)+'\\\\n```','NON_JSON_WRAPPER');\",\"{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\\\\n'+JSON.stringify(e)+'\\\\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}\\n{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr);let open=true;const smart=JSON.stringify(e).replace(/\\\"/g,()=>String.fromCodePoint((open=!open)?0x201d:0x201c));const prepared=ingestion.prepare(p,{stage:2,text:smart,promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Typographic JSON transport was not normalized: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}\\nnegative('prose wrapped JSON',(e)=>'Here is the JSON:\\\\n```json\\\\n'+JSON.stringify(e)+'\\\\n```','NON_JSON_WRAPPER');\",1)"
+                  break
+          else:
+              raise SystemExit('broken verify-ingestion replacement line not found')
+          p.write_text('\n'.join(lines)+'\n')
+          PY
           python .agent-response-transport-repair.py
           node <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto');
