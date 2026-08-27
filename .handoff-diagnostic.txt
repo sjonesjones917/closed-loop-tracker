@@ -1,0 +1,13 @@
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.tmp-human-agent-handoff.mjs:48
+  const raw=String(text??'');const trimmed=raw.trim();if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});if(trimmed.startsWith('\\`\\`\\`')||trimmed.endsWith('\\`\\`\\`'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
+                                                                                                                                                                                                                                                                                                                                          ^
+
+SyntaxError: Invalid or unexpected token
+    at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:146:18)
+    at #translate (node:internal/modules/esm/loader:497:12)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:544:27)
+    at async ModuleJob._link (node:internal/modules/esm/module_job:148:19)
+
+Node.js v20.20.2
+exit_code=1
