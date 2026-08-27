@@ -1,0 +1,44 @@
+name: Prove human-first agent handoff
+on:
+  push:
+    branches:
+      - fix/human-first-agent-handoff-20260826
+permissions:
+  contents: write
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply candidate repair
+        run: |
+          node --check .tmp-human-agent-handoff.mjs
+          node .tmp-human-agent-handoff.mjs
+          rm .tmp-human-agent-handoff.mjs
+      - name: Syntax
+        run: node --check prompt-engine.js && node --check response-ingestion.js && node --check app-core.js
+      - name: Hash identity
+        run: node verify-hash.mjs
+      - name: Architecture
+        run: node verify.mjs
+      - name: Ingestion including framed handoff
+        run: node verify-ingestion.mjs
+      - name: Gates
+        run: node verify-complete.mjs
+      - name: Full 30-stage lifecycle
+        run: node verify-full-cycle.mjs
+      - name: Prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Commit verified source only
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/human-first-handoff-proof.yml
+          git add prompt-engine.js response-ingestion.js app-core.js verify-prompt-semantics.mjs verify-ingestion.mjs verify-browser.mjs index.html
+          git commit -m "Make agent interaction human-first with strict final handoff"
+          git push origin HEAD
