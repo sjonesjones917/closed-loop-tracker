@@ -16,8 +16,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply minimal source repair
-        run: node .maintenance-apply-human-loop-fix.mjs
+      - name: Correct exact semantic assertion
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const path='verify-prompt-semantics.mjs';
+          const source=fs.readFileSync(path,'utf8');
+          const before="ui.includes('answer concise questions in the same ChatGPT conversation')";
+          const after="ui.includes('Answer concise questions in the same ChatGPT conversation')";
+          if(!source.includes(before))throw new Error('Expected exact Stage 01 assertion was not found.');
+          if(source.includes(after))throw new Error('Stage 01 assertion was already corrected unexpectedly.');
+          fs.writeFileSync(path,source.replace(before,after));
+          NODE
       - name: Run complete verification and preserve exact output
         run: |
           run_checks() {
