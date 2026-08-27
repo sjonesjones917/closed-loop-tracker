@@ -1,4 +1,4 @@
-name: Prove human-first agent handoff
+name: Diagnose human-first agent handoff
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 jobs:
-  prove:
+  diagnose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,30 +15,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Apply candidate repair
+      - name: Capture candidate patch output
         run: |
-          node --check .tmp-human-agent-handoff.mjs
-          node .tmp-human-agent-handoff.mjs
-          rm .tmp-human-agent-handoff.mjs
-      - name: Syntax
-        run: node --check prompt-engine.js && node --check response-ingestion.js && node --check app-core.js
-      - name: Hash identity
-        run: node verify-hash.mjs
-      - name: Architecture
-        run: node verify.mjs
-      - name: Ingestion including framed handoff
-        run: node verify-ingestion.mjs
-      - name: Gates
-        run: node verify-complete.mjs
-      - name: Full 30-stage lifecycle
-        run: node verify-full-cycle.mjs
-      - name: Prompt semantics
-        run: node verify-prompt-semantics.mjs
-      - name: Commit verified source only
-        run: |
+          set +e
+          node .tmp-human-agent-handoff.mjs > .handoff-diagnostic.txt 2>&1
+          code=$?
+          echo "exit_code=$code" >> .handoff-diagnostic.txt
+          cat .handoff-diagnostic.txt
+          if [ "$code" -eq 0 ]; then exit 0; fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm .github/workflows/human-first-handoff-proof.yml
-          git add prompt-engine.js response-ingestion.js app-core.js verify-prompt-semantics.mjs verify-ingestion.mjs verify-browser.mjs index.html
-          git commit -m "Make agent interaction human-first with strict final handoff"
+          git rm .tmp-human-agent-handoff.mjs .github/workflows/human-first-handoff-proof.yml
+          git add .handoff-diagnostic.txt
+          git commit -m "Capture human-first handoff patch diagnosis"
           git push origin HEAD
+          exit 1
