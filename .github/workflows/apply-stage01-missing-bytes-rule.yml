@@ -40,7 +40,7 @@ jobs:
 
           p=Path('verify-prompt-semantics.mjs')
           s=p.read_text()
-          anchor="if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question.')||!record.prompt.includes('Conversational questions are not humanInputRequests.')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('whether additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
+          anchor="if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
           replacement=anchor+"\n    if(!record.prompt.includes('If a material is named in SUPPLIED_MATERIALS_INVENTORY but its bytes are not available')||!record.prompt.includes('Do not ask the human to describe or re-enter its contents during Stage 01')||!record.prompt.includes('never infer substantive facts merely from the filename'))issues.push('STAGE01_MISSING_SUPPLIED_BYTES_RULE_MISSING');"
           assert anchor in s
           s=s.replace(anchor,replacement,1)
