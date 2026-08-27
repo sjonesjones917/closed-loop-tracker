@@ -21,6 +21,7 @@ jobs:
           node-version: 22
       - name: Apply minimal safe project-deletion correction
         run: |
+          sed -i 's/browser:true/browserVerified:true/' .tmp-safe-project-deletion.mjs
           node --check .tmp-safe-project-deletion.mjs
           node .tmp-safe-project-deletion.mjs
           node --check app-core.js
