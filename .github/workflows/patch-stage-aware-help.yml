@@ -19,9 +19,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-
-          app=Path('app-core.js')
-          s=app.read_text()
+          app=Path('app-core.js'); s=app.read_text()
           if 'function stageHelpMarkup(n)' not in s:
               insert=r'''
           function stageHelpMarkup(n){
@@ -55,24 +53,17 @@ jobs:
           if old in s: s=s.replace(old,new)
           elif '<h2 class="section-title">Agent loop</h2>' in s: raise SystemExit('Agent loop markup changed unexpectedly')
           app.write_text(s)
-
-          idx=Path('index.html')
-          t=idx.read_text()
-          start='<div class="app-help"><details><summary><b>?</b> How to use this stage</summary>'
+          idx=Path('index.html'); t=idx.read_text(); start='<div class="app-help"><details><summary><b>?</b> How to use this stage</summary>'
           if start in t:
               a=t.index(start); b=t.index('<main>',a); t=t[:a]+t[b:]
-          t=re.sub(r'([A-Za-z0-9._-]+\.js)\?v=[^\"\']+',r'\1?v=runtime-stage-aware-help-v1',t)
-          idx.write_text(t)
-
-          sem=Path('verify-prompt-semantics.mjs')
-          q=sem.read_text()
+          t=re.sub(r'([A-Za-z0-9._-]+\.js)\?v=[^\"\']+',r'\1?v=runtime-stage-aware-help-v1',t); idx.write_text(t)
+          sem=Path('verify-prompt-semantics.mjs'); q=sem.read_text()
           oldq="if(!ui.includes('Stage 01 is an intake conversation')||!ui.includes('remaining human-only questions in normal chat')||!ui.includes('HUMAN_INPUT_REQUIRED in this app is only a fallback')||!ui.includes('Answer agent questions')||!ui.includes('Paste final JSON'))throw new Error('Stage 01 operator UI does not explain the human conversation and final JSON handoff.');"
           newq="if(!ui.includes('Stage 01 is an intake conversation')||!ui.includes('remaining human-only questions in normal chat')||!ui.includes('HUMAN_INPUT_REQUIRED in this app is only a fallback')||!ui.includes('? How to use this stage')||!ui.includes('Paste only the final JSON here'))throw new Error('Stage 01 operator UI does not explain the human conversation and final JSON handoff.');\n if(!ui.includes('original supplied invention packet')||!ui.includes('The prompt text alone does not give ChatGPT the file bytes'))throw new Error('Stage 02 guide does not tell the human to provide the supplied project artifact.');\n if(ui.includes('<h2 class=\\\"section-title\\\">Agent loop</h2>'))throw new Error('Redundant Agent loop section still exists.');"
           if oldq in q: q=q.replace(oldq,newq)
           sem.write_text(q)
-
-          browser=Path('verify-browser.mjs')
-          q=browser.read_text()
+          browser=Path('verify-browser.mjs'); q=browser.read_text()
+          q=q.replace("assert(await evalValue(cdp,`Boolean(document.querySelector('.app-help details')&&!document.querySelector('.app-help details').open)`),'Human guide must exist and start collapsed.');","await openStage(cdp,2);assert(await evalValue(cdp,`Boolean(document.querySelector('.stage-help')&&!document.querySelector('.stage-help').open)`),'Stage guide must exist and start collapsed.');")
           q=q.replace("['Independent external sources only.','closed-loop-stage-response/2','PROMPT IDENTITY','Parse / validate response','Send instruction','Answer agent questions','Paste final JSON','Validate and review','Expand preview','exact controlling copy block','Complete JSON only']","['Independent external sources only.','closed-loop-stage-response/2','PROMPT IDENTITY','Parse / validate response','How to use this stage','original supplied invention packet','The prompt text alone does not give ChatGPT the file bytes','Expand preview','exact controlling copy block','Complete JSON only']")
           q=q.replace("['Stage 01 is an intake conversation','remaining human-only questions in normal chat','COPY BLOCK — STAGE 01 — INITIALIZE THE JOB','HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','Answer agent questions','Paste final JSON']","['Stage 01 is an intake conversation','remaining human-only questions in normal chat','COPY BLOCK — STAGE 01 — INITIALIZE THE JOB','HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','How to use this stage','Paste only the final JSON here']")
           browser.write_text(q)
