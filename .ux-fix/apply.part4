@@ -1,9 +1,0 @@
-
-let builder = fs.readFileSync('build-test-project.mjs', 'utf8');
-builder = replaceOnce(
-  builder,
-  "for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])",
-  "for(const token of ['Validate current text','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])",
-  'retained-project UI label assertion'
-);
-writeChanged('build-test-project.mjs', builder);
