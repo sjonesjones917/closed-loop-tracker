@@ -1,4 +1,4 @@
-name: Prove human-agent stage UX repair
+name: Diagnose human-agent stage UX repair
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 jobs:
-  prove:
+  diagnose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,29 +15,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Apply minimal repair
+      - name: Apply candidate repair
         run: |
-          node --check .repair-human-agent-ux.mjs
           node .repair-human-agent-ux.mjs
-      - name: Syntax
-        run: node --check prompt-engine.js && node --check app-core.js
-      - name: Hash identity
-        run: node verify-hash.mjs
-      - name: Architecture and ownership
-        run: node verify.mjs
-      - name: Ingestion
-        run: node verify-ingestion.mjs
-      - name: Gates
-        run: node verify-complete.mjs
-      - name: Full lifecycle
-        run: node verify-full-cycle.mjs
-      - name: Prompt interaction semantics
-        run: node verify-prompt-semantics.mjs
-      - name: Commit verified permanent source only
+          node verify-hash.mjs
+      - name: Capture architecture verifier
         run: |
+          set +e
+          node verify.mjs > .verify-diagnostic.txt 2>&1
+          code=$?
+          echo "exit_code=$code" >> .verify-diagnostic.txt
+          cat .verify-diagnostic.txt
+          if [ "$code" -eq 0 ]; then exit 0; fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .repair-human-agent-ux.mjs .github/workflows/human-agent-ux-proof.yml
-          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs index.html
-          git commit -m "Make agent conversation human-first and JSON final"
+          git add .verify-diagnostic.txt
+          git commit -m "Capture UX repair verifier diagnosis"
           git push origin HEAD
+          exit 1
