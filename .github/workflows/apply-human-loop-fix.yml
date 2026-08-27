@@ -16,16 +16,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Correct exact semantic assertion
+      - name: Restore specification-substitute safeguard
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const path='verify-prompt-semantics.mjs';
+          const path='app-core.js';
           const source=fs.readFileSync(path,'utf8');
-          const before="ui.includes('answer concise questions in the same ChatGPT conversation')";
-          const after="ui.includes('Answer concise questions in the same ChatGPT conversation')";
-          if(!source.includes(before))throw new Error('Expected exact Stage 01 assertion was not found.');
-          if(source.includes(after))throw new Error('Stage 01 assertion was already corrected unexpectedly.');
+          const before='The external agent may use only capabilities actually available in its execution context, and downstream filing, building, execution, manufacturing, or testing remains separately verified.</div></details>';
+          const after='The external agent may use only capabilities actually available in its execution context, and downstream filing, building, execution, manufacturing, or testing remains separately verified. A specification substitute requires human confirmation and is used only when the requested artifact cannot be generated reliably.</div></details>';
+          if(!source.includes(before))throw new Error('Expected collapsible project guidance was not found.');
+          if(source.includes(after))throw new Error('Specification-substitute safeguard was already restored unexpectedly.');
           fs.writeFileSync(path,source.replace(before,after));
           NODE
       - name: Run complete verification and preserve exact output
