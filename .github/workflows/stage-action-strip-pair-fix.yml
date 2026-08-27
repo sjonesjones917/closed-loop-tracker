@@ -1,0 +1,71 @@
+name: Stage action pairing fix
+on:
+  push:
+    branches: [fix/stage-action-strip-pair-20260827]
+permissions:
+  contents: write
+jobs:
+  patch-test-clean:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage-action-strip-pair-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Keep current state beside next action
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index = Path('index.html')
+          html = index.read_text()
+          old_css = ".stage-action-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:9.5px;color:var(--muted);font-weight:750}.stage-action-strip span{padding:3px 6px;border-radius:999px;background:#f0f3f1;max-width:100%;white-space:normal}.stage-action-strip span:last-child{flex:1 1 260px}"
+          new_css = ".stage-action-strip{display:flex;gap:6px;flex-wrap:nowrap;margin-top:8px;font-size:9.5px;color:var(--muted);font-weight:750}.stage-action-strip span{padding:3px 6px;border-radius:999px;background:#f0f3f1;max-width:100%;white-space:normal}.stage-action-strip span:last-child{flex:1 1 260px;min-width:0;overflow-wrap:anywhere}"
+          if old_css not in html:
+              raise SystemExit('stage action strip CSS anchor not found')
+          index.write_text(html.replace(old_css, new_css, 1))
+
+          browser = Path('verify-browser.mjs')
+          test = browser.read_text()
+          anchor = " await setWidth(cdp,393);\n // All 30 stages reachable through the one workflow shell."
+          replacement = """ // Current state and next required action are one related pair and must stay beside each other.
+ for(const width of [320,393,1280]){await setWidth(cdp,width);await openStage(cdp,2);const pair=await evalValue(cdp,`(()=>{const spans=[...document.querySelectorAll('.stage-action-strip span')];if(spans.length!==2)return null;const first=spans[0].getBoundingClientRect(),second=spans[1].getBoundingClientRect(),strip=spans[0].parentElement.getBoundingClientRect();return {firstTop:first.top,secondTop:second.top,firstRight:first.right,secondLeft:second.left,secondRight:second.right,stripRight:strip.right};})()`);assert(pair&&Math.abs(pair.firstTop-pair.secondTop)<=1&&pair.secondLeft>=pair.firstRight&&pair.secondRight<=pair.stripRight+1,`Current state and next action separated at ${width}px: ${JSON.stringify(pair)}`);}
+ await setWidth(cdp,393);
+ // All 30 stages reachable through the one workflow shell."""
+          if anchor not in test:
+              raise SystemExit('browser width anchor not found')
+          browser.write_text(test.replace(anchor, replacement, 1))
+          PY
+      - name: Syntax and complete verification
+        run: |
+          node --check verify-browser.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Browser verification
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/stage-action-pair-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove temporary workflow and commit verified result
+        run: |
+          rm -f .github/workflows/stage-action-strip-pair-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet || git commit -m "Keep current state beside next required action"
+          git push origin HEAD:fix/stage-action-strip-pair-20260827
