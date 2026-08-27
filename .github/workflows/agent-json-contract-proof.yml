@@ -1,0 +1,200 @@
+name: Prove agent JSON contract repair
+
+on:
+  push:
+    branches:
+      - 'fix/agent-json-contract-20260826'
+
+permissions:
+  contents: write
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimum response-contract repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+
+          # 1) Prompt semantics: exact machine sub-object schemas, Stage 01 locality, and new semantic identity.
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/10';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/11';"
+          assert old in s, 'prompt engine version base changed'
+          s=s.replace(old,new,1)
+
+          old_sentence='If their actual contents are available in the current executing context, inspect them only as needed to understand the requested job and extract facts explicitly supplied by the human; do not ask the human to re-enter facts that are already present in those materials. This limited intake inspection is Stage 01 job-definition work, not later source/material inventory or authority research. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here.'
+          new_sentence='If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present. Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows, detailed disclosure chronology, reference lists, or other internal packet inventory in Stage 01. Stage 02 owns that inventory and formal inspection. Do not classify, validate, rank, establish provenance for, or determine authority/currency/conflicts among supplied materials here.'
+          assert old_sentence in s, 'Stage 01 intake sentence changed'
+          s=s.replace(old_sentence,new_sentence,1)
+
+          patent_old='- PATENT / REGULATED FILING: first extract job-definition facts already present in any supplied invention disclosure, drawings, notes, prior filing records, or other human-provided materials that are actually available in the executing context. Do not ask the human to repeat those facts. A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01 unless the human has expressed mutually incompatible deliverables. Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01; when not already supplied, record them as unresolved later-needed information for the stage that must use them. Do not research patent authority or draft the application here.'
+          patent_new='- PATENT / REGULATED FILING: use only the minimum human-supplied invention facts needed to recognize and define the requested patent-application drafting job. A request such as "prepare a patent application for this project" is sufficient at Stage 01 unless the human has expressed mutually incompatible deliverables. Do not inventory the invention packet internally in Stage 01 and do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01; when not already controlling the job definition, record them as unresolved later-needed information for the stage that must use them. Do not research patent authority, prior art, or draft the application here.'
+          assert patent_old in s, 'Stage 01 patent guidance changed'
+          s=s.replace(patent_old,patent_new,1)
+
+          lines=s.splitlines()
+          idx=next(i for i,line in enumerate(lines) if line.startswith(" return {contractVersion:'closed-loop-response-contract/2.2'"))
+          lines[idx]=" return {contractVersion:'closed-loop-response-contract/2.3',schema:schema.RESPONSE_SCHEMA,stage,operation,responseTypes:[...schema.RESPONSE_TYPES],scopeRequirements:[...(op?.scopeRequirements||contract.scopeRequirements)],agentStageFields:[...stageFields],agentWritableCollections:[...writable],stageData,records,resourceLimits:{...contract.resourceLimits},envelope:{topLevelKeys:['schema','jobId','stage','operation','promptIdentity','scope','responseType','humanInputRequests','stageData','records','evidence','unresolved','warnings','attachments'],recordKeys:['tempKey','targetId','fields','relationships','evidenceRefs','notes'],humanInputRequestKeys:['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking'],unresolvedKeys:['temporaryKey','kind','description','whyBlocking','affectedStageFields','affectedRecords','blocking'],warningKeys:['code','message','path'],evidenceKeys:['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes'],attachmentKeys:['temporaryKey','filename','mediaType','byteSize','sha256','required'],humanInputRequestContract:{exactKeys:['temporaryKey','question','whyRequired','affectedStageFields','affectedRecords','answerType','allowedValues','blocking'],requiredValues:{temporaryKey:'unique non-empty response-local string',question:'non-empty string',whyRequired:'non-empty string',affectedStageFields:'array of current-stage field names; use [] when none',affectedRecords:'array of current-operation collection names; use [] when none',answerType:'TEXT | LONG_TEXT | BOOLEAN | NUMBER | CHOICE | MULTI_CHOICE | DATE | FILE_REFERENCE',allowedValues:'array; non-empty unique strings only for CHOICE/MULTI_CHOICE, otherwise []',blocking:'BOOLEAN; HUMAN_INPUT_REQUIRED questions should be true unless genuinely nonblocking'}},evidenceContract:{requiredKeys:['temporaryKey','kind','description','location','content'],optionalKeys:['authorityType','sourceRef','attachmentRef','notes'],sourceRef:'when supplied, exactly one of tempKey or recordId and it must resolve to a source record',attachmentRef:'when supplied, exactly one of tempKey or recordId and it must resolve to verified artifact bytes',stageDataProvenance:'response-level evidence supports agent-produced stageData; do not invent supports, sourceType, sourceReference, locator, excerpt, or other undeclared evidence keys'},recordIdentityRule:'Exactly one of tempKey or targetId; UPDATE_RESERVED uses targetId and new proposals use tempKey.',relationshipReferenceRule:'Exactly one of tempKey or recordId and target collection must match the declared relationship.',evidenceRule:'Evidence references must resolve completely; claimed source or attachment references may not resolve to UNKNOWN. Every evidence object must use only evidenceKeys.',responseTypeRules:{DATA_PROPOSAL:'May contain permitted agent stageData, records, evidence, attachments, and nonblocking warnings; blocking humanInputRequests or unresolved items are prohibited. DATA_PROPOSAL requires evidence. Every object in evidence, warnings, attachments, records, and humanInputRequests must use only the exact declared keys.',HUMAN_INPUT_REQUIRED:'stageData and records must be empty; structured humanInputRequests carry the blocking questions and every question must follow humanInputRequestContract exactly.',BLOCKED:'stageData, records, and humanInputRequests must be empty; structured unresolved items carry the blocker using only unresolvedKeys.',EXECUTION_FAILED:'Canonical stageData is prohibited; structured failure information and evidence identify the failed current execution.'},attachmentRule:'Declared required attachments must match operator-supplied filename, byteSize, and application-computed SHA-256 before acceptance.'}};"
+          s='\n'.join(lines)+'\n'
+
+          marker='AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE\n${contextFor(stage,state,operation,scope)}'
+          guidance='''${stage===1?`STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS\nWhen responseType is DATA_PROPOSAL, populate all four Stage 01 stageData strings and include at least one evidence object. For Stage 01 stageData, response-level evidence is the provenance set; do not add a supports field or any other evidence-to-stageData mapping property. Every evidence object may contain only: temporaryKey, kind, description, authorityType, sourceRef, location, content, attachmentRef, notes. Required evidence fields are temporaryKey, kind, description, location, and content. sourceRef and attachmentRef are optional and must be omitted when not applicable. Do not use sourceType, sourceReference, locator, excerpt, supports, citations, evidenceRefs, or any other undeclared evidence property.\n\nA minimal valid human-input evidence object is:\n{\n  "temporaryKey": "evidence-1",\n  "kind": "HUMAN_INPUT",\n  "description": "Human job input supporting the Stage 01 job definition",\n  "authorityType": "HUMAN",\n  "location": "AUTHORIZED USER JOB INPUT",\n  "content": "Concise faithful description of the human input used",\n  "notes": ""\n}\n\nINPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.\n`:''}\n\nAUTHORIZED BOUNDED CONTEXT FOR THIS STAGE\n${contextFor(stage,state,operation,scope)}'''
+          assert marker in s, 'bounded context marker changed'
+          s=s.replace(marker,guidance,1)
+
+          rule='- Include evidence for every agent-produced canonical value that requires provenance.'
+          replacement=rule+'\n- Never invent sub-object keys. Objects in humanInputRequests, evidence, unresolved, warnings, attachments, and records must use only the exact keys declared in RESPONSE CONTRACT DEFINITIONS; unknown keys are rejected.'
+          assert rule in s
+          s=s.replace(rule,replacement,1)
+          p.write_text(s)
+
+          # 2) Workbook Stage 01 completion language must not demand a Stage 02 internal inventory.
+          p=Path('workbook.js'); s=p.read_text()
+          old='Every supplied item and material unknown recorded'
+          new='Every top-level supplied input/material reference and material unknown needed to define the job is recorded; internal material inventory is deferred to Stage 02'
+          assert old in s, 'Stage 01 completion wording changed'
+          p.write_text(s.replace(old,new,1))
+
+          # 3) Ingestion: preserve exact raw bytes, but deterministically recover JSON delimiter typography only.
+          p=Path('response-ingestion.js'); s=p.read_text()
+          anchor="const byteLength=text=>new TextEncoder().encode(String(text??'')).byteLength;\n"
+          assert anchor in s
+          helper=r'''const byteLength=text=>new TextEncoder().encode(String(text??'')).byteLength;
+function normalizeSmartJsonDelimiters(raw){
+  const text=String(raw??'');if(!/[“”]/.test(text))return {text,changed:false};let out='',inAscii=false,inSmart=false,escaped=false,changed=false;
+  const previousNonWhitespace=()=>{for(let j=out.length-1;j>=0;j--)if(!/\s/.test(out[j]))return out[j];return '';};
+  const nextNonWhitespace=start=>{for(let j=start;j<text.length;j++)if(!/\s/.test(text[j]))return text[j];return '';};
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inAscii){out+=c;if(escaped){escaped=false;continue;}if(c==='\\'){escaped=true;continue;}if(c==='"')inAscii=false;continue;}
+    if(inSmart){if(escaped){out+=c;escaped=false;continue;}if(c==='\\'){out+=c;escaped=true;continue;}if(c==='"'){out+='\\"';changed=true;continue;}if((c==='“'||c==='”')&&['',':',',','}',']'].includes(nextNonWhitespace(i+1))){out+='"';inSmart=false;changed=true;continue;}out+=c;continue;}
+    if(c==='"'){out+=c;inAscii=true;continue;}
+    if((c==='“'||c==='”')&&['','{','[',',',':'].includes(previousNonWhitespace())){out+='"';inSmart=true;changed=true;continue;}
+    out+=c;
+  }
+  return {text:out,changed};
+}
+'''
+          s=s.replace(anchor,helper,1)
+
+          start=s.index('function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){')
+          end=s.index('\n\nfunction disposition(',start)
+          strict=r'''function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
+  const raw=String(text??'');const trimmed=raw.trim();if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
+  const parseCandidate=(candidate)=>{try{scanJsonAmbiguity(candidate,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}return JSON.parse(candidate);};
+  let envelope,normalization=null,firstError=null;try{envelope=parseCandidate(trimmed);}catch(error){if(error.code)throw error;firstError=error;const repaired=normalizeSmartJsonDelimiters(trimmed);if(repaired.changed){try{envelope=parseCandidate(repaired.text);normalization='SMART_JSON_DELIMITERS';}catch(repairError){if(repairError.code)throw repairError;firstError=repairError;}}if(!envelope){const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError||error});}}
+  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});if(normalization)Object.defineProperty(envelope,'__parseNormalization',{value:normalization,enumerable:false});return envelope;
+}'''
+          s=s[:start]+strict+s[end:]
+
+          needle="let validation;if(parseError)validation={valid:false,issues:[issue(parseError.code||'MALFORMED_JSON','/',parseError.message)],errorCount:1,warningCount:0,checkedAt:now(),responseSchema:null,responseType:null};else validation=validateEnvelope(next,envelope,{stage:stageNumber,promptRecord:prompt,rawSha256:rawRecord.sha256,files:rawRecord.files});"
+          repl=needle+"if(envelope?.__parseNormalization){validation.issues.push(issue('JSON_TYPOGRAPHY_NORMALIZED','/','Typographic JSON delimiter quotes were deterministically normalized for parsing; the exact raw response remains preserved unchanged.','WARNING'));validation.warningCount=validation.issues.filter(item=>item.severity==='WARNING').length;}"
+          assert needle in s, 'prepareCaptured validation line changed'
+          s=s.replace(needle,repl,1)
+
+          old_manifest="evidenceIds:[],normalizedValue:clone(value),temporaryResponseKey:null});"
+          new_manifest="evidenceIds:evidence.map(record=>record.id),normalizedValue:clone(value),temporaryResponseKey:null});"
+          assert old_manifest in s, 'stageData manifest provenance line changed'
+          s=s.replace(old_manifest,new_manifest,1)
+          assert "version:'closed-loop-response-ingestion/3'" in s
+          s=s.replace("version:'closed-loop-response-ingestion/3'","version:'closed-loop-response-ingestion/4'",1)
+          p.write_text(s)
+
+          # 4) Operator clarity: persisted prior failure explicitly identifies the last parsed response.
+          p=Path('app-core.js'); s=p.read_text()
+          old="function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n&&!x.valid&&operatorLaneMatches(validationLaneRecord(x),n)).at(-1);if(!v)return '';return `<div class=\"notice danger\" id=\"validation-report\" tabindex=\"-1\"><strong>Response rejected before canonical mutation.</strong><br>${safe(v.issues).map(x=>esc(`${x.code}: ${x.message}`)).join('<br>')}</div>`;}"
+          new="function validationMarkup(n){const v=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n&&!x.valid&&operatorLaneMatches(validationLaneRecord(x),n)).at(-1);if(!v)return '';return `<div class=\"notice danger\" id=\"validation-report\" tabindex=\"-1\"><strong>Last parsed response was rejected before canonical mutation.</strong><br><span>This result belongs to ${esc(v.rawResponseId||'the last parsed response')}. If you pasted or edited a replacement afterward, that replacement has not been evaluated yet; press Parse / validate response again.</span><br>${safe(v.issues).map(x=>esc(`${x.code}: ${x.message}`)).join('<br>')}</div>`;}"
+          assert old in s, 'validationMarkup changed'
+          p.write_text(s.replace(old,new,1))
+
+          # 5) Permanent regression tests for the demonstrated failures.
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          s=s.replace("descriptor.contractVersion!=='closed-loop-response-contract/2.2'","descriptor.contractVersion!=='closed-loop-response-contract/2.3'")
+          s=s.replace("'closed-loop-response-contract/2.2'","'closed-loop-response-contract/2.3'")
+          s += r'''
+
+// demonstrated-stage01-output-contract-regression-v2
+{
+ const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='I need to turn my project packet into a patent application.';p.job.SUPPLIED_MATERIALS_INVENTORY='invention-packet.zip';
+ const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}),d=prompts.responseContractDescriptor(1,'COMPLETE');
+ for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','internal material inventory is deferred to Stage 02'])if(!r.prompt.includes(token))throw new Error('Stage 01 exact-output/locality contract missing: '+token);
+ const expectedEvidence=['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes'];if(JSON.stringify(d.envelope.evidenceKeys)!==JSON.stringify(expectedEvidence))throw new Error('Prompt evidence schema does not match ingestion evidence keys.');
+}
+'''
+          p.write_text(s)
+
+          p=Path('verify-ingestion.mjs'); s=p.read_text()
+          s += r'''
+
+// demonstrated-smart-quote-and-stageData-provenance-regression-v1
+{
+  let p=project('JOB-SMART-JSON-RECOVERY'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
+  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};
+  const standard=JSON.stringify(e);
+  const smart=standard.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”');
+  const prepared=ingestion.prepare(p,{stage:1,text:smart,promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
+  if(!prepared.validation.issues.some(x=>x.code==='JSON_TYPOGRAPHY_NORMALIZED'&&x.severity==='WARNING'))throw new Error('Smart-quote recovery was not auditable.');
+  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote recovery changed the preserved raw response.');
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});
+  const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
+  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
+}
+'''
+          p.write_text(s)
+
+          # 6) Recompute the existing single shared runtime identity.
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
+          for f in files:
+              b=Path(f).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{f}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          p=Path('index.html'); html=p.read_text(); html=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)',lambda m:m.group(1)+token+m.group(2),html); p.write_text(html)
+          PY
+      - name: Verify complete application and demonstrated response failures
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for f in workbook.js prompt-engine.js response-ingestion.js app-core.js verify-prompt-semantics.mjs verify-ingestion.mjs; do node --check "$f"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          grep -q "closed-loop-prompt-engine/11" prompt-engine.js
+          grep -q "closed-loop-response-ingestion/4" response-ingestion.js
+          grep -q "JSON_TYPOGRAPHY_NORMALIZED" response-ingestion.js
+          grep -q "evidenceKeys" prompt-engine.js
+          grep -q "Last parsed response was rejected" app-core.js
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit verified permanent source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/agent-json-contract-proof.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workbook.js prompt-engine.js response-ingestion.js app-core.js verify-prompt-semantics.mjs verify-ingestion.mjs index.html .github/workflows/agent-json-contract-proof.yml
+          git commit -m 'Make agent response JSON exact and recoverable'
+          git push origin HEAD
