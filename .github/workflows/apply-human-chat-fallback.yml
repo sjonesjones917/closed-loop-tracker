@@ -1,0 +1,56 @@
+name: Apply human-chat fallback cleanup
+
+on:
+  push:
+    branches:
+      - fix/human-chat-fallback-contradiction-20260826
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[human-chat-clean]') && !contains(github.event.head_commit.message, '[human-chat-failed]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal semantic cleanup
+        run: node .maintenance-human-chat-fallback.mjs
+      - name: Verify complete deterministic workflow
+        run: |
+          set +e
+          {
+            node build-test-project.mjs &&
+            node --check prompt-engine.js &&
+            node --check verify-prompt-semantics.mjs &&
+            node verify.mjs &&
+            node verify-ingestion.mjs &&
+            node verify-complete.mjs &&
+            node verify-prompt-semantics.mjs &&
+            node verify-full-cycle.mjs
+          } > .maintenance-human-chat-test.log 2>&1
+          status=$?
+          set -e
+          printf '%s\n' "$status" > .maintenance-human-chat-test.exit
+      - name: Commit verified source only
+        run: |
+          status=$(cat .maintenance-human-chat-test.exit)
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          if [ "$status" = "0" ]; then
+            rm .maintenance-human-chat-fallback.mjs .github/workflows/apply-human-chat-fallback.yml .maintenance-human-chat-test.log .maintenance-human-chat-test.exit
+            git add -A
+            git commit -m "Remove machine-first human clarification contradictions [human-chat-clean]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            git add -A
+            git commit -m "Capture human-chat cleanup failure [human-chat-failed]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            cat .maintenance-human-chat-test.log
+            exit "$status"
+          fi
