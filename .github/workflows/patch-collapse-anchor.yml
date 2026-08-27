@@ -1,0 +1,37 @@
+name: Patch collapse anchor cache token
+
+on:
+  push:
+    branches: [collapse-prompt-anchor]
+    paths: [.github/workflows/patch-collapse-anchor.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: collapse-prompt-anchor
+      - name: Patch runtime token
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='runtime-6ece767c89c7c19d'
+          new='runtime-27353a07b54117e2'
+          if old not in s and new not in s:
+              raise SystemExit('expected runtime token not found')
+          p.write_text(s.replace(old,new))
+          PY
+      - name: Commit token update
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m 'Refresh runtime cache token'
+          git push origin HEAD:collapse-prompt-anchor
