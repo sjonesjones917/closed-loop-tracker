@@ -36,6 +36,7 @@ p.write_text(b)
 
 p=Path('verify-prompt-semantics.mjs'); v=p.read_text()
 v=v.replace("!record.prompt.includes('Do not ask conversational questions outside the JSON response')","!record.prompt.includes('Ask necessary human questions conversationally before the final JSON response')")
+v=v.replace("'Do not require jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices merely to finish Stage 01'","'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers'")
 needle="if(!record.prompt.includes('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred'))issues.push('EXTERNAL_ACTION_HONESTY_RULE_MISSING');"
 assert needle in v
 collab="if(!record.prompt.includes('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE')||!record.prompt.includes('ask the smallest useful set of plain-language questions conversationally')||!record.prompt.includes('Then produce the final JSON response only.')||!record.prompt.includes('Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision'))issues.push('HUMAN_COLLABORATION_MODE_MISSING');\n  "+needle
