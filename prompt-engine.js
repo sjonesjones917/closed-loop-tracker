@@ -4,7 +4,7 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/13';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/14';
 if(!core||!schema||!hash||!workflow)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
 function humanInputBlock(job){
@@ -109,6 +109,11 @@ function body(stage,state,operation,scope){
  const collections=writable.length?writable.map(c=>`- ${c}: ${schema.recordAgentFields(c).map(name=>{const d=schema.RECORD_SCHEMAS[c].fieldDefinitions[name];return `${name} (${d.valueType}${d.enumValues?.length?`; ${d.enumValues.join(' | ')}`:''})`;}).join(', ')||'no agent-owned fields'}`).join('\n'):'- NONE';
  return `COPY BLOCK — STAGE ${String(stage).padStart(2,'0')} — ${d.title}
 
+HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE
+Do not start by emitting JSON when a human-only answer is needed. Talk to the human first; JSON is the final handoff to the application, not the conversation.
+You are working with a human in a normal ChatGPT conversation, commonly on a phone. Make the human experience simple. If the current stage needs a human-specific fact, preference, observation, authorization, or decision that is not already available, ask the smallest useful set of plain-language questions conversationally before producing the final machine response. Briefly explain why a question matters when that is not obvious. Do not make the human read or answer JSON. Do not ask for information already present in supplied materials or canonical context, and do not ask the human for facts you can reliably determine from authorized sources, tools, or ordinary domain knowledge. Continue the conversation until you have enough information for the current stage, or the human says an item is unknown/unavailable. Then produce the final JSON response only.
+Stage 01 should collect all human-specific information already foreseeable as needed to achieve the requested outcome, not merely the minimum needed to name the job. Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision; when that happens, ask the human conversationally at that later stage rather than guessing. Keep human-facing explanations concise, complete, accurate, and action-oriented.
+
 ROLE
 You are the ${d.role}. Perform only Stage ${String(stage).padStart(2,'0')} for this single current project.
 
@@ -155,7 +160,7 @@ Use domain knowledge only to determine what the human is asking for, what suppli
 `}
 
 ${stage===1?`STAGE 01 CLARIFICATION EXPERIENCE
-Before returning the Stage 01 machine response, determine whether the human-authority input plus any supplied materials actually available in this executing context are sufficient for the Stage 01 job-definition result only. Ask for clarification only when an irreducible human fact or decision is needed now to identify the objective, intended deliverable, or input boundary. Never ask for information merely because a later stage will need it, and never ask the human to repeat information you can directly read from supplied materials. If such a genuinely Stage-01-blocking fact is missing, return HUMAN_INPUT_REQUIRED—not DATA_PROPOSAL—as the single response. Put only the smallest set of blocking questions inside humanInputRequests using the exact question contract below. Ask necessary human questions conversationally before the final JSON response; do not encode a question as JSON merely to talk to the human. The application will display and type-check those questions, version the answers as User Job Input, invalidate this prompt, and generate a replacement Stage 01 instruction. Do not hide missing human information behind UNKNOWN, placeholders, empty strings, or guessed assumptions.
+Before the final Stage 01 machine response, determine whether the human-authority input plus any supplied materials actually available in this executing context are sufficient for Stage 01. When a genuinely human-only fact or decision is needed, ask it conversationally first under HUMAN COLLABORATION MODE. Never ask the human to repeat information available in supplied materials, and do not ask for facts the agent can reliably determine from authorized tools, sources, or ordinary domain knowledge. Continue the normal chat until enough information is available or the human says the item is unknown or unavailable. Use HUMAN_INPUT_REQUIRED only as the final machine fallback when a genuinely blocking human answer remains unavailable or explicitly deferred after that conversation, or when interactive conversation is unavailable. In that fallback, include only the smallest set of still-unanswered blocking questions in humanInputRequests. Do not hide missing human information behind UNKNOWN, placeholders, empty strings, or guessed assumptions.
 `:''}
 
 ${stage===2?`STAGE 02 SOURCE DISCOVERY GUIDANCE
@@ -197,9 +202,6 @@ ${collections}
 COMPLETION CONDITIONS
 ${(d.completionGate||[]).map(x=>`- ${x}`).join('\n')}
 
-HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE
-You are working with a human in a normal ChatGPT conversation, commonly on a phone. Make the human experience simple. If the current stage needs a human-specific fact, preference, observation, authorization, or decision that is not already available, ask the smallest useful set of plain-language questions conversationally before producing the final machine response. Briefly explain why a question matters when that is not obvious. Do not make the human read or answer JSON. Do not ask for information already present in supplied materials or canonical context, and do not ask the human for facts you can reliably determine from authorized sources, tools, or ordinary domain knowledge. Continue the conversation until you have enough information for the current stage, or the human says an item is unknown/unavailable. Then produce the final JSON response only.
-Stage 01 should collect all human-specific information already foreseeable as needed to achieve the requested outcome, not merely the minimum needed to name the job. Later research, source, requirement, verification, production, or audit stages may discover a new human-only fact or decision; when that happens, ask the human conversationally at that later stage rather than guessing. Keep human-facing explanations concise, complete, accurate, and action-oriented.
 
 MANDATORY RESPONSE RULES
 - A materially inadequate accepted prior-stage result requires BLOCKED with INADEQUATE_PRIOR_OUTPUT and must identify the earliest accepted result that needs refinement. This is distinct from missing application context and from missing human input.
@@ -231,7 +233,6 @@ END HASHED INSTRUCTION BODY`;
 }
 function buildPromptRecord(stageOrDefinition,state,options={}){
  const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);
- if(stage===1&&!String(state?.job?.EXACT_USER_OBJECTIVE_VERBATIM||'').trim()){const error=new Error('Stage 01 needs one thing before an instruction can be generated: enter the verbatim job request in User Job Input and save it. Additional details may be clarified by the agent afterward.');error.code='MISSING_MINIMUM_HUMAN_INPUT';throw error;}
  const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),activeExisting=existing.filter(x=>!x.invalidatedBy&&x.promptEngineVersion===PROMPT_ENGINE_VERSION);const operation=options.operation||schema.STAGE_CONTRACTS[stage].operations[0];if(!schema.STAGE_CONTRACTS[stage].operations.includes(operation))throw new Error(`Operation ${operation} is not valid for Stage ${stage}.`);
  const opContract=schema.operationContract(stage,operation);const scope=assertRequiredPromptScope(stage,operation,scopeFor(stage,state,options.scope||{})),feedback=recoveryFeedback(state,stage,operation,scope),batchPlan=verificationBatchPlan(stage,state,operation,scope),contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,contextRecordsFor(state,collection,scope,batchPlan).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:feedback.corrections,acceptedResultRefinements:feedback.acceptedRefinements,latestValidationFailure:feedback.validationFailures};
  const contextSignature=hash.sha256Value(contextManifest),bodyText=body(stage,state,operation,scope),bodySha256=hash.sha256Text(bodyText),descriptor=responseContractDescriptor(stage,operation),contractSha256=hash.sha256Value(descriptor);
