@@ -31,6 +31,7 @@ jobs:
           p=Path('prompt-engine.js'); s=p.read_text()
           s=s.replace('do not ask the human to re-enter facts that are already present.','do not ask the human to re-enter facts that are already present in those materials.',1)
           s=s.replace('A request such as "prepare a patent application for this project" is sufficient at Stage 01 unless','A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01 unless',1)
+          s=s.replace('- PATENT / REGULATED FILING: use only the minimum human-supplied invention facts needed to recognize and define the requested patent-application drafting job.','- PATENT / REGULATED FILING: use only the minimum human-supplied invention facts needed to recognize and define the requested patent-application drafting job. Use any supplied invention disclosure only for those minimum Stage 01 job-definition facts.',1)
           s=s.replace('Stage 02 owns that inventory and formal inspection.','This limited intake inspection is Stage 01 job-definition work; Stage 02 owns that inventory and formal inspection.',1)
           p.write_text(s)
           p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
