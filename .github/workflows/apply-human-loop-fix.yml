@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ !contains(github.event.head_commit.message, '[human-loop-applied]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[human-loop-applied]') && !contains(github.event.head_commit.message, '[human-loop-debug]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,38 +18,51 @@ jobs:
           fetch-depth: 0
       - name: Apply minimal source repair
         run: node .maintenance-apply-human-loop-fix.mjs
-      - name: Verify syntax
+      - name: Run complete verification and preserve exact output
         run: |
-          node build-test-project.mjs
-          node --check workbook.js
-          node --check hash.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node --check test-fixtures.mjs
-          node --check verify.mjs
-          node --check verify-ingestion.mjs
-          node --check verify-complete.mjs
-          node --check verify-full-cycle.mjs
-          node --check verify-prompt-semantics.mjs
-          node --check verify-live.mjs
-          node --check verify-browser.mjs
-          node --check verify-browser-extra.mjs
-      - name: Verify contracts and workflow behavior
+          run_checks() {
+            node build-test-project.mjs || return $?
+            node --check workbook.js || return $?
+            node --check hash.js || return $?
+            node --check workflow-schema.js || return $?
+            node --check workflow-engine.js || return $?
+            node --check prompt-engine.js || return $?
+            node --check response-ingestion.js || return $?
+            node --check project-store.js || return $?
+            node --check app-core.js || return $?
+            node --check test-fixtures.mjs || return $?
+            node --check verify.mjs || return $?
+            node --check verify-ingestion.mjs || return $?
+            node --check verify-complete.mjs || return $?
+            node --check verify-full-cycle.mjs || return $?
+            node --check verify-prompt-semantics.mjs || return $?
+            node --check verify-live.mjs || return $?
+            node --check verify-browser.mjs || return $?
+            node --check verify-browser-extra.mjs || return $?
+            node verify.mjs || return $?
+            node verify-ingestion.mjs || return $?
+            node verify-complete.mjs || return $?
+            node verify-prompt-semantics.mjs || return $?
+            node verify-full-cycle.mjs || return $?
+          }
+          set +e
+          run_checks > .maintenance-test.log 2>&1
+          status=$?
+          set -e
+          printf '%s\n' "$status" > .maintenance-test-exit
+      - name: Commit verified repair or diagnostic state
         run: |
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-prompt-semantics.mjs
-          node verify-full-cycle.mjs
-      - name: Commit the repair and remove one-time machinery
-        run: |
-          rm .maintenance-apply-human-loop-fix.mjs .github/workflows/apply-human-loop-fix.yml
+          status=$(cat .maintenance-test-exit)
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          git commit -m "Make stage prompts conversational before final JSON [human-loop-applied]"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          if [ "$status" = "0" ]; then
+            rm .maintenance-apply-human-loop-fix.mjs .github/workflows/apply-human-loop-fix.yml .maintenance-test.log .maintenance-test-exit
+            git add -A
+            git commit -m "Make stage prompts conversational before final JSON [human-loop-applied]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          else
+            git add -A
+            git commit -m "Capture human-loop repair verification failure [human-loop-debug]"
+            git push origin HEAD:${GITHUB_REF_NAME}
+            exit "$status"
+          fi
