@@ -20,7 +20,7 @@ jobs:
         run: |
           set -euo pipefail
           base64 --decode .github/agent-patch.b64 | gzip --decompress > /tmp/agent.patch
-          test "$(sha256sum /tmp/agent.patch | cut -d' ' -f1)" = "e26445851a2fa2f3ed36060d36b1eb270f85a5996cc118d85dfae3d388cb788b"
+          test "$(sha256sum /tmp/agent.patch | cut -d' ' -f1)" = "5526f4e0717ef126693615b054f0d9cde50ebf99b197bc8c8b1310f35f8e90d6"
           git apply -p1 --check /tmp/agent.patch
           git apply -p1 /tmp/agent.patch
           rm .github/agent-patch.b64 .github/workflows/apply-agent-patch.yml
