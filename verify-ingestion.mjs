@@ -118,6 +118,26 @@ function negativeAt(name,stage,mutate,expectedCode){
 }
 function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);e.scope[key]=`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);negativeCount++;}
 const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
+
+// Smart punctuation from mobile/chat copy-paste is normalized without weakening the strict envelope contract.
+{
+  const p=project('JOB-SMART-QUOTE-JSON'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord);
+  envelope.evidence[0].content='He said "keep the exact words".';
+  const canonical=JSON.stringify(envelope);
+  let smart='',inString=false;
+  for(let i=0;i<canonical.length;i++){
+    const c=canonical[i];
+    if(!inString&&c==='"'){smart+='“';inString=true;continue;}
+    if(inString){
+      if(c==='\\'&&canonical[i+1]==='"'){smart+='"';i++;continue;}
+      if(c==='"'){smart+='”';inString=false;continue;}
+    }
+    smart+=c;
+  }
+  const prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});
+  if(!prepared.validation.valid)throw new Error(`Smart-quoted mobile JSON was not normalized: ${JSON.stringify(prepared.validation.issues)}`);
+  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state before operator acceptance.');
+}
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
