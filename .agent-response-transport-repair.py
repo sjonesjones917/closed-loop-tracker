@@ -14,8 +14,8 @@ replace_once('workbook.js',
 
 # Prompt contract: exact transport + every structured auxiliary object shape.
 replace_once('prompt-engine.js',
-"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/9';",
-"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/10';")
+"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/10';",
+"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/11';")
 replace_once('prompt-engine.js',
 "Use domain knowledge only to determine what the human is asking for, what supplied materials exist, what deliverable/artifact set is intended, what human-only facts or decisions are missing, and what capabilities may later be required.",
 "Use domain knowledge only to determine what the human is asking for, what top-level supplied inputs exist, what deliverable/artifact set is intended, what human-only facts or decisions are missing, and what capabilities may later be required. Do not enumerate archive members, internal package files, or evidence subtrees merely to satisfy Stage 01; Stage 02 owns that inventory.")
@@ -36,16 +36,76 @@ replace_once('prompt-engine.js',
 # Ingestion: accept one exact JSON fence and safely normalize common smart-quote transport corruption only after ordinary JSON fails.
 p=Path('response-ingestion.js'); s=p.read_text()
 s=s.replace("const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes']);","const EVIDENCE_KEYS=Object.freeze(['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes','supports']);",1)
-old="""function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){\n  const raw=String(text??'');\n  const trimmed=raw.trim();\n  if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});\n  if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});\n  try{scanJsonAmbiguity(trimmed,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}\n  if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});\n  let envelope;\n  try{envelope=JSON.parse(trimmed);}catch(error){\n    const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);\n    throw Object.assign(new Error(`Response JSON could not be parsed: ${error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:error});\n  }\n  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});\n  return envelope;\n}\n"""
-new="""function unwrapJsonTransport(trimmed){\n  if(!trimmed.startsWith('```')&&!trimmed.endsWith('```'))return trimmed;\n  const match=trimmed.match(/^```(?:json)?[ \\t]*\\r?\\n([\\s\\S]*?)\\r?\\n```$/i);\n  if(!match)throw Object.assign(new Error('Use exactly one JSON code fence with no prose before or after it.'),{code:'NON_JSON_WRAPPER'});\n  return match[1].trim();\n}\nfunction normalizeTypographicJsonTransport(candidate){\n  let out='',inSmart=false;\n  for(let i=0;i<candidate.length;i++){\n    const c=candidate[i];\n    if(!inSmart&&c==='“'){out+='"';inSmart=true;continue;}\n    if(inSmart&&c==='”'){out+='"';inSmart=false;continue;}\n    if(!inSmart&&c==='”')throw Object.assign(new Error('Unmatched typographic JSON quote.'),{code:'MALFORMED_JSON'});\n    if(inSmart&&c==='"'){out+='\\\\"';continue;}\n    out+=c;\n  }\n  if(inSmart)throw Object.assign(new Error('Unterminated typographic JSON string.'),{code:'TRUNCATED_RESPONSE'});\n  return out;\n}\nfunction parseCandidate(candidate,limits){scanJsonAmbiguity(candidate,limits.maxJsonDepth);return JSON.parse(candidate);}\nfunction strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){\n  const raw=String(text??'');\n  const trimmed=raw.trim();\n  if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});\n  if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});\n  const candidate=unwrapJsonTransport(trimmed);\n  let envelope,firstError;\n  try{envelope=parseCandidate(candidate,limits);}catch(error){firstError=error;if(error.code)throw error;}\n  if(!envelope&&/[“”]/.test(candidate)){\n    try{envelope=parseCandidate(normalizeTypographicJsonTransport(candidate),limits);}catch(error){if(error.code)throw error;firstError=error;}\n  }\n  if(!envelope){\n    const likelyTruncated=!candidate.endsWith('}')||((candidate.match(/{/g)||[]).length!==(candidate.match(/}/g)||[]).length);\n    throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||'invalid JSON'}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError});\n  }\n  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});\n  return envelope;\n}\n"""
+old="""function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
+  const raw=String(text??'');
+  const trimmed=raw.trim();
+  if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});
+  if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});
+  try{scanJsonAmbiguity(trimmed,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}
+  if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
+  let envelope;
+  try{envelope=JSON.parse(trimmed);}catch(error){
+    const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);
+    throw Object.assign(new Error(`Response JSON could not be parsed: ${error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:error});
+  }
+  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});
+  return envelope;
+}
+"""
+new="""function unwrapJsonTransport(trimmed){
+  if(!trimmed.startsWith('```')&&!trimmed.endsWith('```'))return trimmed;
+  const match=trimmed.match(/^```(?:json)?[ \\t]*\\r?\\n([\\s\\S]*?)\\r?\\n```$/i);
+  if(!match)throw Object.assign(new Error('Use exactly one JSON code fence with no prose before or after it.'),{code:'NON_JSON_WRAPPER'});
+  return match[1].trim();
+}
+function normalizeTypographicJsonTransport(candidate){
+  let out='',inSmart=false;
+  for(let i=0;i<candidate.length;i++){
+    const c=candidate[i];
+    if(!inSmart&&c==='“'){out+='"';inSmart=true;continue;}
+    if(inSmart&&c==='”'){out+='"';inSmart=false;continue;}
+    if(!inSmart&&c==='”')throw Object.assign(new Error('Unmatched typographic JSON quote.'),{code:'MALFORMED_JSON'});
+    if(inSmart&&c==='"'){out+='\\\\"';continue;}
+    out+=c;
+  }
+  if(inSmart)throw Object.assign(new Error('Unterminated typographic JSON string.'),{code:'TRUNCATED_RESPONSE'});
+  return out;
+}
+function parseCandidate(candidate,limits){scanJsonAmbiguity(candidate,limits.maxJsonDepth);return JSON.parse(candidate);}
+function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
+  const raw=String(text??'');
+  const trimmed=raw.trim();
+  if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});
+  if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});
+  const candidate=unwrapJsonTransport(trimmed);
+  let envelope,firstError;
+  try{envelope=parseCandidate(candidate,limits);}catch(error){firstError=error;if(['DUPLICATE_JSON_MEMBER','EXCESSIVE_JSON_DEPTH'].includes(error.code))throw error;}
+  if(!envelope&&/[“”]/.test(candidate)){
+    try{envelope=parseCandidate(normalizeTypographicJsonTransport(candidate),limits);}catch(error){if(error.code)throw error;firstError=error;}
+  }
+  if(!envelope){
+    const likelyTruncated=!candidate.endsWith('}')||((candidate.match(/{/g)||[]).length!==(candidate.match(/}/g)||[]).length);
+    throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||'invalid JSON'}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError});
+  }
+  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});
+  return envelope;
+}
+"""
 if old not in s: raise SystemExit('strictParse block not found')
 s=s.replace(old,new,1)
-old2="""    for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));\n"""
-new2="""    for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));\n    if(evidence.supports!==undefined){if(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length)issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers.'));else for(const pointer of evidence.supports){const match=String(pointer).match(/^\\/stageData\\/([^/]+)$/),field=match?.[1];if(!field||!stageFields.includes(field))issues.push(issue('INVALID_EVIDENCE_SUPPORT_POINTER',`${path}/supports`,`Evidence support pointer ${pointer} is not a permitted current-stage stageData field.`));}}\n"""
+old2="""    for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));
+"""
+new2="""    for(const name of ['kind','description','location','content'])if(!String(evidence[name]??'').trim())issues.push(issue('MISSING_EVIDENCE_FIELD',`${path}/${name}`,`${name} is required.`));
+    if(evidence.supports!==undefined){if(!Array.isArray(evidence.supports)||evidence.supports.some(value=>typeof value!=='string'||!value.trim())||new Set(evidence.supports).size!==evidence.supports.length)issues.push(issue('INVALID_EVIDENCE_SUPPORTS',`${path}/supports`,'supports must be an array of unique non-empty stageData JSON pointers.'));else for(const pointer of evidence.supports){const match=String(pointer).match(/^\\/stageData\\/([^/]+)$/),field=match?.[1];if(!field||!stageFields.includes(field))issues.push(issue('INVALID_EVIDENCE_SUPPORT_POINTER',`${path}/supports`,`Evidence support pointer ${pointer} is not a permitted current-stage stageData field.`));}}
+"""
 if old2 not in s: raise SystemExit('evidence validation anchor not found')
 s=s.replace(old2,new2,1)
-anchor="""  if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{\n"""
-insert="""  for(const field of stageFields){const definition=schema.STAGE_FIELDS[stageNumber]?.[field];if(definition?.provenanceRequired&&Object.prototype.hasOwnProperty.call(envelope.stageData||{},field)){const pointer=`/stageData/${field}`,covered=[...evidenceIndex.values()].some(entry=>safe(entry.evidence?.supports).includes(pointer));if(!covered)issues.push(issue('MISSING_STAGE_DATA_PROVENANCE',pointer,`Agent-produced stageData ${field} requires at least one evidence.supports reference to ${pointer}.`));}}\n\n  if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{\n"""
+anchor="""  if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{
+"""
+insert="""  for(const field of stageFields){const definition=schema.STAGE_FIELDS[stageNumber]?.[field];if(definition?.provenanceRequired&&Object.prototype.hasOwnProperty.call(envelope.stageData||{},field)){const pointer=`/stageData/${field}`,covered=[...evidenceIndex.values()].some(entry=>safe(entry.evidence?.supports).includes(pointer));if(!covered)issues.push(issue('MISSING_STAGE_DATA_PROVENANCE',pointer,`Agent-produced stageData ${field} requires at least one evidence.supports reference to ${pointer}.`));}}
+
+  if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(Array.isArray(list))list.forEach((record,index)=>{
+"""
 if anchor not in s: raise SystemExit('stage provenance anchor not found')
 s=s.replace(anchor,insert,1)
 p.write_text(s)
@@ -53,7 +113,7 @@ p.write_text(s)
 # UI: make transport contract practical and ensure an edited response does not visually inherit the previous parse failure.
 replace_once('app-core.js',
 "Paste the complete strict JSON response. Parse / validate preserves the raw response first, then validates it without changing canonical project records.",
-"Paste the complete structured response as raw JSON or one JSON code block. Parse / validate preserves the exact raw response first, safely removes only the permitted transport wrapper/typographic delimiter corruption, then validates without changing canonical project records.")
+"Paste the complete structured response as raw JSON or one JSON code block. Parse / validate preserves the exact raw response first, safely removes only the permitted transport wrapper or typographic delimiter corruption, then validates without changing canonical project records.")
 replace_once('app-core.js',
 "<span>Complete JSON only — no Markdown wrapper.</span><span>${s.responseDraft?`${s.responseDraft.length.toLocaleString()} characters pasted`:'No response pasted yet'}</span>",
 "<span>Raw JSON or one json code block; no surrounding prose.</span><span id=\"stage-output-count\">${s.responseDraft?`${s.responseDraft.length.toLocaleString()} characters pasted`:'No response pasted yet'}</span>")
@@ -64,15 +124,31 @@ replace_once('app-core.js',
 # Tests: stageData evidence linkage; exact fence accepted; smart-quote transport repaired; arbitrary wrappers still rejected.
 p=Path('verify-ingestion.mjs'); s=p.read_text()
 s=s.replace("evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],","evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`,supports:Object.keys(stageData).map(name=>`/stageData/${name}`)}],",1)
-s=s.replace("negative('markdown wrapped',(e)=>'```json\\n'+JSON.stringify(e)+'\\n```','NON_JSON_WRAPPER');","{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\\n'+JSON.stringify(e)+'\\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}\n{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),smart=JSON.stringify(e).replaceAll('\\\"','§Q§').replaceAll('"','“').replaceAll('§Q§','"').replaceAll('“:', '”:').replaceAll('“,', '”,').replaceAll('“}', '”}').replaceAll('“]', '”]');const prepared=ingestion.prepare(p,{stage:2,text:smart,promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Typographic JSON transport was not normalized: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}\nnegative('prose wrapped JSON',(e)=>'Here is the JSON:\\n```json\\n'+JSON.stringify(e)+'\\n```','NON_JSON_WRAPPER');",1)
-# Explicit Stage 01 provenance regression.
+old_test="negative('markdown wrapped',(e)=>'```json\\n'+JSON.stringify(e)+'\\n```','NON_JSON_WRAPPER');"
+new_test="""{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\\n'+JSON.stringify(e)+'\\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}
+{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr);const ascii=JSON.stringify(e);let open=True
+}
+"""
+# Build smart-quote test without putting curly quotes in Python source.
+smart_js="{const p=project('JOB-SMART-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),ascii=JSON.stringify(e);let opening=true;const smart=ascii.replace(/\\\"/g,()=>String.fromCodePoint((opening=!opening)?0x201d:0x201c));const prepared=ingestion.prepare(p,{stage:2,text:smart,promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Typographic JSON transport was not normalized: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}"
+replacement="{const p=project('JOB-FENCED-JSON'),pr=savePrompt(p,2),e=validEnvelope(p,2,pr),prepared=ingestion.prepare(p,{stage:2,text:'```json\\n'+JSON.stringify(e)+'\\n```',promptRecord:pr});if(!prepared.validation.valid)throw new Error(`Exact JSON fence was rejected: ${prepared.validation.issues.map(x=>x.code).join(', ')}`);negativeCount++;}\n"+smart_js+"\nnegative('prose wrapped JSON',(e)=>'Here is the JSON:\\n```json\\n'+JSON.stringify(e)+'\\n```','NON_JSON_WRAPPER');"
+if old_test not in s: raise SystemExit('markdown wrapper test anchor not found')
+s=s.replace(old_test,replacement,1)
 marker="negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');"
-replacement="negativeAt('missing stageData provenance',1,(e)=>{e.evidence.forEach(x=>x.supports=[]);},'MISSING_STAGE_DATA_PROVENANCE');\n"+marker
+replacement2="negativeAt('missing stageData provenance',1,(e)=>{e.evidence.forEach(x=>x.supports=[]);},'MISSING_STAGE_DATA_PROVENANCE');\n"+marker
 if marker not in s: raise SystemExit('missing evidence test anchor not found')
-s=s.replace(marker,replacement,1)
+s=s.replace(marker,replacement2,1)
 p.write_text(s)
 
 # Prompt semantic regression checks.
 p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
-s += """\n\n// response-transport-and-stage01-package-boundary-v1\n{\n const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='Turn the supplied ZIP packet into a patent application.';p.job.SUPPLIED_MATERIALS_INVENTORY='packet.zip';const r=prompts.buildPromptRecord(1,p);\n for(const token of ['closed-loop-response-contract/2.3','evidenceContract','supports','/stageData/FIELD','exactly one fenced code block labeled json','Treat an uploaded ZIP or package as one top-level supplied input at Stage 01','do not enumerate its member files or evidence tree here'])if(!r.prompt.includes(token))throw new Error('Response transport/evidence/Stage 01 package boundary missing: '+token);\n if(r.prompt.includes('Complete JSON only — no Markdown wrapper'))throw new Error('Obsolete brittle transport instruction remains.');\n}\n"""
+s += """
+
+// response-transport-and-stage01-package-boundary-v1
+{
+ const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='Turn the supplied ZIP packet into a patent application.';p.job.SUPPLIED_MATERIALS_INVENTORY='packet.zip';const r=prompts.buildPromptRecord(1,p);
+ for(const token of ['closed-loop-response-contract/2.3','evidenceContract','supports','/stageData/FIELD','exactly one fenced code block labeled json','Treat an uploaded ZIP or package as one top-level supplied input at Stage 01','do not enumerate its member files or evidence tree here'])if(!r.prompt.includes(token))throw new Error('Response transport/evidence/Stage 01 package boundary missing: '+token);
+ if(r.prompt.includes('Complete JSON only — no Markdown wrapper'))throw new Error('Obsolete brittle transport instruction remains.');
+}
+"""
 p.write_text(s)
