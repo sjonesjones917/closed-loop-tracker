@@ -1,0 +1,42 @@
+name: Prove real Stage 01 agent prompt
+on:
+  push:
+    branches: [fix/restore-real-stage01-prompt-ux-20260827]
+permissions:
+  contents: write
+jobs:
+  prove:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - name: Apply minimal repair
+        run: python3 .repair-stage01-real-prompt.py
+      - name: Remove one-time scaffolding
+        run: rm .repair-stage01-real-prompt.py .github/workflows/stage01-real-prompt-proof.yml
+      - name: Syntax
+        run: |
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+      - name: Full deterministic proof
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium proof
+        run: node verify-browser.mjs
+      - name: Commit proven source
+        run: |
+          git config user.name 'sjonesjones917'
+          git config user.email 'sjones.jones917@gmail.com'
+          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs
+          git commit -m 'Restore real Stage 01 conversational agent prompt'
+          git push origin HEAD:fix/restore-real-stage01-prompt-ux-20260827
