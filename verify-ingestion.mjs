@@ -121,6 +121,13 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
+{
+  const p=project('JOB-FRAMED-HANDOFF'),promptRecord=savePrompt(p,2),envelope=validEnvelope(p,2,promptRecord);
+  const framed='Stage 02 source inventory is ready for application review.\nFINAL APP RESPONSE\n```json\n'+JSON.stringify(envelope,null,2)+'\n```';
+  const prepared=ingestion.prepare(p,{stage:2,text:framed,promptRecord});
+  if(!prepared.validation.valid)throw new Error('Exact FINAL APP RESPONSE framing was rejected: '+JSON.stringify(prepared.validation.issues));
+  if(prepared.project.projectData.rawResponses.at(-1)?.completeRawResponse!==framed)throw new Error('Framed handoff raw response was not preserved exactly.');
+}
 negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');

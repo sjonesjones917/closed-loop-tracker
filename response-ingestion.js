@@ -49,11 +49,50 @@ function validateValue(definition,value,path,issues,{required=false,maxTextField
 function currentScope(project,promptRecord){return clone(promptRecord?.scope||{});}
 function currentPromptEngineVersion(){return globalThis.closedLoopPromptEngine?.version||null;}
 
+function extractMachinePayload(trimmed){
+  if(trimmed.startsWith('{'))return {payload:trimmed,framing:null};
+  const marker='FINAL APP RESPONSE';
+  const first=trimmed.indexOf(marker);
+  if(first<0){
+    if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('A Markdown-wrapped response requires the exact FINAL APP RESPONSE marker and one json code fence.'),{code:'NON_JSON_WRAPPER'});
+    return {payload:trimmed,framing:null};
+  }
+  if(trimmed.indexOf(marker,first+marker.length)>=0)throw Object.assign(new Error('FINAL APP RESPONSE may appear exactly once.'),{code:'INVALID_RESPONSE_WRAPPER'});
+  const humanText=trimmed.slice(0,first).trim();
+  const framed=trimmed.slice(first+marker.length).trim();
+  if(humanText.includes('```'))throw Object.assign(new Error('The human-readable status before FINAL APP RESPONSE may not contain a code fence.'),{code:'INVALID_RESPONSE_WRAPPER'});
+  const match=framed.match(/^```json\s*\n([\s\S]*?)\n```\s*$/i);
+  if(!match)throw Object.assign(new Error('FINAL APP RESPONSE must be followed by exactly one json code fence and no trailing text.'),{code:'INVALID_RESPONSE_WRAPPER'});
+  const payload=match[1].trim();
+  if(!payload)throw Object.assign(new Error('FINAL APP RESPONSE JSON block is empty.'),{code:'EMPTY_RESPONSE'});
+  return {payload,framing:'FINAL_APP_RESPONSE'};
+}
 function strictParse(text,{limits=schema.DEFAULT_RESOURCE_LIMITS}={}){
-  const raw=String(text??'');const trimmed=raw.trim();if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});if(trimmed.startsWith('```')||trimmed.endsWith('```'))throw Object.assign(new Error('The response must be one JSON object without a Markdown code fence.'),{code:'NON_JSON_WRAPPER'});
+  const raw=String(text??'');
+  const trimmed=raw.trim();
+  if(!trimmed)throw Object.assign(new Error('Returned output is empty.'),{code:'EMPTY_RESPONSE'});
+  if(byteLength(raw)>limits.maxRawResponseBytes)throw Object.assign(new Error('Returned output exceeds the stage byte limit.'),{code:'OVERSIZED_RESPONSE'});
+  const extracted=extractMachinePayload(trimmed);
+  const payload=extracted.payload;
   const parseCandidate=(candidate)=>{try{scanJsonAmbiguity(candidate,limits.maxJsonDepth);}catch(error){if(error.code)throw error;}return JSON.parse(candidate);};
-  let envelope,normalization=null,firstError=null;try{envelope=parseCandidate(trimmed);}catch(error){if(error.code)throw error;firstError=error;const repaired=normalizeSmartJsonDelimiters(trimmed);if(repaired.changed){try{envelope=parseCandidate(repaired.text);normalization='SMART_JSON_DELIMITERS';}catch(repairError){if(repairError.code)throw repairError;firstError=repairError;}}if(!envelope){const likelyTruncated=!trimmed.endsWith('}')||((trimmed.match(/{/g)||[]).length!==(trimmed.match(/}/g)||[]).length);throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError||error});}}
-  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});if(normalization)Object.defineProperty(envelope,'__parseNormalization',{value:normalization,enumerable:false});return envelope;
+  let envelope,normalization=null,firstError=null;
+  try{envelope=parseCandidate(payload);}catch(error){
+    if(error.code)throw error;
+    firstError=error;
+    const repaired=normalizeSmartJsonDelimiters(payload);
+    if(repaired.changed){
+      try{envelope=parseCandidate(repaired.text);normalization='SMART_JSON_DELIMITERS';}
+      catch(repairError){if(repairError.code)throw repairError;firstError=repairError;}
+    }
+    if(!envelope){
+      const likelyTruncated=!payload.endsWith('}')||((payload.match(/{/g)||[]).length!==(payload.match(/}/g)||[]).length);
+      throw Object.assign(new Error(`Response JSON could not be parsed: ${firstError?.message||error.message}`),{code:likelyTruncated?'TRUNCATED_RESPONSE':'MALFORMED_JSON',cause:firstError||error});
+    }
+  }
+  if(!object(envelope))throw Object.assign(new Error('The response root must be one JSON object.'),{code:'INVALID_ROOT'});
+  if(normalization)Object.defineProperty(envelope,'__parseNormalization',{value:normalization,enumerable:false});
+  if(extracted.framing)Object.defineProperty(envelope,'__responseFraming',{value:extracted.framing,enumerable:false});
+  return envelope;
 }
 
 function disposition(project,type,{stage,rawResponseId,promptId,validationId,proposalId=null,receiptId=null,details={}}){const dispositionId=workflow.allocateInfrastructureId(project,'DISPOSITION','responseDispositions');const history=workflow.addHistory(project,type,{stage,rawResponseId,promptId,validationId,proposalId,...clone(details)});const record={dispositionId,type,jobId:project.job.JOB_ID,stage:Number(stage),rawResponseId,promptId,validationId,proposalId,receiptId,eventSequence:history.eventSequence,deviceTimestamp:history.deviceTimestamp,createdAt:history.deviceTimestamp,...clone(details)};project.projectData.responseDispositions.push(record);return record;}
