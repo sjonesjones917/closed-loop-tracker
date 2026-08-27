@@ -21,6 +21,15 @@ jobs:
           node .github/apply-stage2-provenance-contract-fix.mjs
           sed -i 's#closed-loop-response-contract/2.3#closed-loop-response-contract/2.4#g' verify-prompt-semantics.mjs
           sed -i 's#Stage 02 owns independent external-source discovery, inspection, authority classification, currency, supersession, applicability, and external-source conflicts.#Stage 02 owns independent external-source discovery and assessment.#' prompt-engine.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs')
+          s=p.read_text()
+          old="const required2=[/complete source and supplied-material inventory/i,/Stage 02 owns inventory and inspection/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];"
+          new="const required2=[/Stage 02 is not a supplied-project-material inventory stage/i,/Missing project-material bytes do not by themselves block Stage 02/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];"
+          if s.count(old)!=1: raise SystemExit(f'expected one Stage 02 boundary assertion, found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import {createHash} from 'node:crypto';
