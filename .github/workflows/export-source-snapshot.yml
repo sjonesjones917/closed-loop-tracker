@@ -1,0 +1,19 @@
+name: Temporary source snapshot export
+on:
+  push:
+    branches: [closed-loop-reliability-evidence-routing]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact branch source
+        run: tar --exclude=.git -czf /tmp/closed-loop-source.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-source-${{ github.sha }}
+          path: /tmp/closed-loop-source.tgz
+          if-no-files-found: error
