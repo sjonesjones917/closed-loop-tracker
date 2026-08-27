@@ -121,7 +121,7 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
-negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
+negative('multiple json fences',(e)=>'```json\n'+JSON.stringify(e)+'\n```\n```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
 negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
@@ -416,6 +416,17 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   e.records={regressions:[{tempKey:'regression-definition',fields,relationships:{},evidenceRefs:['evidence-1']}]};
 },'FIELD_OWNERSHIP_VIOLATION');
 
+
+
+// Mobile ChatGPT transport: one fenced json payload may be surrounded by human-facing prose.
+{
+  const p=project('JOB-FENCED-JSON-TRANSPORT'),stage=1,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  const wrapped='I have enough information for this stage. Copy the handoff below into the app.\n\n```json\n'+JSON.stringify(e)+'\n```\n\nThe app can now parse and review it.';
+  const prepared=ingestion.prepare(p,{stage,text:wrapped,promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Single fenced ChatGPT json handoff was rejected: '+JSON.stringify(prepared.validation.issues));
+  if(!prepared.validation.issues.some(i=>i.code==='JSON_TRANSPORT_NORMALIZED'))throw new Error('Fenced json transport normalization was not disclosed.');
+  if(prepared.rawRecord.completeRawResponse!==wrapped)throw new Error('Fenced transport changed the preserved raw response.');
+}
 
 // demonstrated-smart-quote-and-stageData-provenance-regression-v1
 {
