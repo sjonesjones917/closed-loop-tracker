@@ -98,7 +98,19 @@ if(typeof document!=='undefined'){
     const prompt=document.getElementById('generated-prompt');
     promptBottomJump().hidden=!prompt?.classList.contains('expanded');
   }
-  document.addEventListener('click',()=>queueMicrotask(syncPromptBottomJump));
+  document.addEventListener('click',event=>{
+    const toggle=event.target?.closest?.('#toggle-prompt');
+    const prompt=document.getElementById('generated-prompt');
+    const wasExpanded=Boolean(toggle&&prompt?.classList.contains('expanded'));
+    queueMicrotask(syncPromptBottomJump);
+    if(wasExpanded){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        const currentPrompt=document.getElementById('generated-prompt');
+        if(currentPrompt?.classList.contains('expanded'))return;
+        currentPrompt?.parentElement?.querySelector('.prompt-toolbar')?.scrollIntoView({block:'end'});
+      }));
+    }
+  });
   document.addEventListener('change',()=>queueMicrotask(syncPromptBottomJump));
 }
 })();
