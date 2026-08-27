@@ -1,0 +1,84 @@
+name: Apply closed-loop reliability patch
+
+on:
+  push:
+    branches: [closed-loop-evidence-routing]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-closed-loop-reliability
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: closed-loop-evidence-routing
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify and apply the exact patch bundle
+        run: python3 .closed-loop-reliability-apply.py
+
+      - name: Build retained project and check syntax
+        run: |
+          node build-test-project.mjs
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+
+      - name: Run deterministic, ingestion, prompt, and lifecycle proofs
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+
+      - name: Run local Chromium operator and responsive proofs
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-reliability-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+      - name: Remove one-time patch machinery and verify repository boundaries
+        run: |
+          rm -rf .closed-loop-patch-parts
+          rm -f .closed-loop-reliability-apply.py
+          rm -f .github/workflows/apply-closed-loop-reliability.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -z "$(find . -maxdepth 1 -type f -name '.closed-loop-*' -print -quit)"
+          git diff --check
+
+      - name: Commit the verified minimal production patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && { echo 'No patch changes were created'; exit 1; }
+          git commit -m 'Make verification evidence operationally decisive'
+          git push origin HEAD:closed-loop-evidence-routing
