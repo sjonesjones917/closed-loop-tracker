@@ -11,10 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Package exact branch working tree
-        run: tar --exclude=.git --exclude=repo-snapshot.tgz -czf repo-snapshot.tgz .
+        run: tar --exclude=.git -C "$GITHUB_WORKSPACE" -czf "$RUNNER_TEMP/repo-snapshot.tgz" .
       - uses: actions/upload-artifact@v4
         with:
           name: openai-branch-snapshot-${{ github.sha }}
-          path: repo-snapshot.tgz
+          path: ${{ runner.temp }}/repo-snapshot.tgz
           if-no-files-found: error
           retention-days: 1
