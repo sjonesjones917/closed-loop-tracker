@@ -141,10 +141,11 @@ if(typeof document!=='undefined'){
     const prompt=document.getElementById('generated-prompt');
     const review=document.getElementById('proposal-heading');
     const reviewRect=review?.getBoundingClientRect();
-    const longReview=review?.dataset.longReview==='true';
+    const reviewDetails=review?.querySelector(':scope>details.record-card');
+    const longReview=Boolean(review?.dataset.longReview==='true'&&reviewDetails?.open&&review?.scrollHeight>innerHeight);
     const reviewActive=Boolean(longReview&&reviewRect&&reviewRect.bottom>0&&reviewRect.top<innerHeight);
     const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
-    const promptActive=Boolean(prompt?.classList.contains('expanded')&&!reviewActive&&!reviewPast);
+    const promptActive=Boolean(prompt?.classList.contains('expanded')&&prompt?.scrollHeight>innerHeight&&!reviewActive&&!reviewPast);
     promptBottomJump().hidden=!promptActive;
     promptTopJump.hidden=!promptActive;
     reviewTopJump.hidden=!reviewActive;
@@ -152,6 +153,7 @@ if(typeof document!=='undefined'){
   }
   document.addEventListener('click',()=>queueMicrotask(syncMatchedScrollJumps));
   document.addEventListener('change',()=>queueMicrotask(syncMatchedScrollJumps));
+  document.addEventListener('toggle',()=>queueMicrotask(syncMatchedScrollJumps),true);
   document.addEventListener('closed-loop-rendered',()=>queueMicrotask(syncMatchedScrollJumps));
   addEventListener('scroll',syncMatchedScrollJumps,{passive:true});
   addEventListener('resize',syncMatchedScrollJumps,{passive:true});
