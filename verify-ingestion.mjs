@@ -452,3 +452,9 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
   if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
 }
+
+
+// reliability-v2: external responses remain unable to override application-derived proof authorities.
+{
+ const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['evaluateContextIndependence','evaluateEvidenceSufficiency','detectCurrentContradictions'])if(!source.includes(token))throw new Error('Missing deterministic reliability authority: '+token);const ingestionSource=fs.readFileSync('response-ingestion.js','utf8');if(/INDEPENDENCE_PROVEN_BY_APPLICATION|EVIDENCE_SUFFICIENT/.test(ingestionSource))throw new Error('Ingestion introduced agent-writable derived reliability authority.');
+}

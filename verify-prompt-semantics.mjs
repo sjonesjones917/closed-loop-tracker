@@ -396,3 +396,14 @@ import fsStageBoundary from 'node:fs';
  for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','Do not turn it into a Stage 02 archive/file inventory'])if(!r.prompt.includes(token))throw new Error('Stage 01 exact-output/locality contract missing: '+token);
  const expectedEvidence=['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes'];if(JSON.stringify(d.envelope.evidenceKeys)!==JSON.stringify(expectedEvidence))throw new Error('Prompt evidence schema does not match ingestion evidence keys.');
 }
+
+
+// reliability-v2: verification context isolation and false-positive test design.
+{
+ const p=baseProject();const s6=prompts.buildPromptRecord(6,p).prompt;for(const token of ['falsely appear compliant','boundary conditions','partial-success cases','stale-state cases','malformed-input cases','wrong-artifact cases','capability-substitution cases'])if(!s6.includes(token))throw new Error('Stage 06 false-positive analysis missing: '+token);
+}
+{
+ const p=baseProject();p.job.CURRENT_ITERATION='ITER-I';p.job.CURRENT_REQUIREMENTS_VERSION='REQ-I';p.job.CURRENT_TEST_SUITE_VERSION='TEST-I';const scope={...prompts.scopeFor(12,p,{iterationId:'ITER-I',candidateId:'CAND-I',runId:'RUN-2',contextId:'CTX-2'}),requirementsVersion:'REQ-I',testSuiteVersion:'TEST-I'};p.projectData.runs.push({id:'RUN-1',stage:11,active:true,scope:{...scope,runId:'RUN-1',contextId:'CTX-1'},fields:{RUN_ID:'RUN-1',ITERATION_ID:'ITER-I',CANDIDATE_ID:'CAND-I',CONTEXT_ID:'CTX-1',COMPLETE_OUTPUT:'RUN-1-SECRET-OUTPUT'}},{id:'RUN-2',stage:11,active:true,scope:{...scope,runId:'RUN-2',contextId:'CTX-2'},fields:{RUN_ID:'RUN-2',ITERATION_ID:'ITER-I',CANDIDATE_ID:'CAND-I',CONTEXT_ID:'CTX-2',COMPLETE_OUTPUT:'RUN-2-SECRET-OUTPUT'}});p.projectData.verification.push({id:'VER-A',stage:12,active:true,scope:{...scope,runId:'RUN-1',contextId:'CTX-1'},fields:{VERIFICATION_ID:'VER-A',REQ_ID:'REQ-X',RUN_ID:'RUN-1',TEST_ID:'TEST-X',DETERMINATION:'SATISFIED',EXACT_EVIDENCE:'VERIFIER-A-SAYS-SATISFIED'}});p.projectData.comparisons.push({id:'CMP-A',stage:13,active:true,scope:{...scope},fields:{COMPARISON_ID:'CMP-A',EVIDENCE:'STAGE-13-SECRET'}});p.projectData.rootCauses.push({id:'RCA-A',stage:14,active:true,scope:{...scope},fields:{RCA_ID:'RCA-A',ROOT_CAUSE:'RCA-SECRET'}});
+ let text='';try{text=prompts.buildPromptRecord(12,p,{operation:'COMPLETE',scope}).prompt;}catch{}for(const secret of ['RUN-1-SECRET-OUTPUT','VERIFIER-A-SAYS-SATISFIED','STAGE-13-SECRET','RCA-SECRET'])if(text.includes(secret))throw new Error('Stage 12 prompt leaked prohibited context: '+secret);
+}
+console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
