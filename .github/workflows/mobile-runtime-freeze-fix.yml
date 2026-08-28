@@ -10,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+        with: {node-version: '22'}
       - name: Apply responsible-layer mobile performance fix
         shell: bash
         run: |
@@ -25,21 +23,11 @@ jobs:
           hash_path=Path('hash.js')
           hash_source=hash_path.read_text()
           marker="\nif(typeof document!=='undefined'){"
-          if marker not in hash_source:
-              raise SystemExit('Expected UI block was not found in hash.js')
-          start=hash_source.index(marker)
-          end=hash_source.rindex('\n})();')
+          if marker not in hash_source: raise SystemExit('Expected UI block was not found in hash.js')
+          start=hash_source.index(marker); end=hash_source.rindex('\n})();')
           ui_block=hash_source[start+1:end]
           hash_path.write_text(hash_source[:start]+"\n})();\n")
 
-          old_visible="""  function visibleLongSection(){
-            const candidates=[...document.querySelectorAll('details.record-card[open]')]
-              .filter(section=>!section.closest('#proposal-heading'))
-              .map(section=>({section,rect:section.getBoundingClientRect(),depth:sectionDepth(section)}))
-              .filter(({rect})=>scrollJumpBounds(rect).active)
-              .sort((a,b)=>b.depth-a.depth||Math.abs(a.rect.top)-Math.abs(b.rect.top));
-            return candidates[0]?.section||null;
-          }"""
           new_visible="""  function visibleLongSection(){
             const x=Math.max(1,Math.min(innerWidth-1,innerWidth/2)),ys=[Math.max(1,innerHeight*.25),Math.max(1,innerHeight*.5),Math.max(1,innerHeight*.75)];
             const seen=new Set(),candidates=[];
@@ -53,40 +41,26 @@ jobs:
             candidates.sort((a,b)=>b.depth-a.depth||Math.abs(a.rect.top)-Math.abs(b.rect.top));
             return candidates[0]?.section||null;
           }"""
-          if old_visible not in ui_block:
-              raise SystemExit('Expected whole-document long-section scan not found')
-          ui_block=ui_block.replace(old_visible,new_visible)
-          old_review="    const longReview=Boolean(review&&[...review.querySelectorAll('details.record-card[open]')].some(details=>details.getBoundingClientRect().height>innerHeight));"
-          new_review="    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);"
-          if old_review not in ui_block:
-              raise SystemExit('Expected review scan not found')
-          ui_block=ui_block.replace(old_review,new_review)
-          old_listeners="""  document.addEventListener('click',()=>queueMicrotask(syncMatchedScrollJumps));
-            document.addEventListener('change',()=>queueMicrotask(syncMatchedScrollJumps));
-            document.addEventListener('toggle',()=>queueMicrotask(syncMatchedScrollJumps),true);
-            document.addEventListener('closed-loop-rendered',()=>queueMicrotask(syncMatchedScrollJumps));
-            addEventListener('scroll',syncMatchedScrollJumps,{passive:true});
-            addEventListener('resize',syncMatchedScrollJumps,{passive:true});
-            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>queueMicrotask(syncMatchedScrollJumps),{once:true});
-            else queueMicrotask(syncMatchedScrollJumps);"""
+          ui_block,count=re.subn(r"  function visibleLongSection\(\)\{[\s\S]*?\n  \}\n  const sectionTopJump=",new_visible+"\n  const sectionTopJump=",ui_block,count=1)
+          if count!=1: raise SystemExit(f'Expected one visibleLongSection block, replaced {count}')
+          ui_block,count=re.subn(r"    const longReview=Boolean\([^\n]+\);","    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);",ui_block,count=1)
+          if count!=1: raise SystemExit(f'Expected one longReview calculation, replaced {count}')
           new_listeners="""  let syncFrame=0;
-            function scheduleMatchedScrollJumps(){if(syncFrame)return;syncFrame=requestAnimationFrame(()=>{syncFrame=0;syncMatchedScrollJumps();});}
-            document.addEventListener('click',scheduleMatchedScrollJumps);
-            document.addEventListener('change',scheduleMatchedScrollJumps);
-            document.addEventListener('toggle',scheduleMatchedScrollJumps,true);
-            document.addEventListener('closed-loop-rendered',scheduleMatchedScrollJumps);
-            addEventListener('scroll',scheduleMatchedScrollJumps,{passive:true});
-            addEventListener('resize',scheduleMatchedScrollJumps,{passive:true});
-            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scheduleMatchedScrollJumps,{once:true});
-            else scheduleMatchedScrollJumps();"""
-          if old_listeners not in ui_block:
-              raise SystemExit('Expected synchronous scroll listeners not found')
-          ui_block=ui_block.replace(old_listeners,new_listeners)
+          function scheduleMatchedScrollJumps(){if(syncFrame)return;syncFrame=requestAnimationFrame(()=>{syncFrame=0;syncMatchedScrollJumps();});}
+          document.addEventListener('click',scheduleMatchedScrollJumps);
+          document.addEventListener('change',scheduleMatchedScrollJumps);
+          document.addEventListener('toggle',scheduleMatchedScrollJumps,true);
+          document.addEventListener('closed-loop-rendered',scheduleMatchedScrollJumps);
+          addEventListener('scroll',scheduleMatchedScrollJumps,{passive:true});
+          addEventListener('resize',scheduleMatchedScrollJumps,{passive:true});
+          if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scheduleMatchedScrollJumps,{once:true});
+          else scheduleMatchedScrollJumps();"""
+          pattern=r"  document\.addEventListener\('click',\(\)=>queueMicrotask\(syncMatchedScrollJumps\)\);[\s\S]*?  else queueMicrotask\(syncMatchedScrollJumps\);"
+          ui_block,count=re.subn(pattern,new_listeners,ui_block,count=1)
+          if count!=1: raise SystemExit(f'Expected one synchronous listener block, replaced {count}')
 
-          app_path=Path('app-core.js')
-          app=app_path.read_text()
-          function_start=app.index('function provenanceMarkup(n){')
-          function_end=app.index('\nfunction workflow(){',function_start)
+          app_path=Path('app-core.js'); app=app_path.read_text()
+          function_start=app.index('function provenanceMarkup(n){'); function_end=app.index('\nfunction workflow(){',function_start)
           provenance=r'''function provenanceAnchor(kind,id){return `provenance-${kind}-${String(id||'UNKNOWN').replace(/[^A-Za-z0-9_-]+/g,'-')}`;}
           function provenanceMarkup(n){
             const manifests=safe(current.projectData.extractionManifests).filter(m=>Number(m.stage)===n),rawById=new Map(safe(current.projectData.rawResponses).map(x=>[String(x.rawResponseId||''),x])),promptById=new Map(safe(current.projectData.generatedPrompts).map(x=>[String(x.instructionId||x.promptId||''),x])),evidenceById=new Map(engine.records(current,'evidenceRecords').map(x=>[String(engine.recordId(x,'evidenceRecords')||''),x])),usedRaw=new Set(),usedPrompts=new Set(),usedEvidence=new Set();
@@ -102,8 +76,7 @@ jobs:
           app=app[:app_end]+"\n// Long-section navigation belongs to the UI layer. It is frame-coalesced and samples only viewport-intersecting sections to avoid synchronous whole-document layout scans on mobile.\n"+ui_block+app[app_end:]
           app_path.write_text(app)
 
-          regression=Path('verify-browser-extra.mjs')
-          regression_source=regression.read_text()
+          regression=Path('verify-browser-extra.mjs'); rs=regression.read_text()
           test_block="""
 
           // Mobile responsiveness regression: hashing must remain computation-only, and provenance must not duplicate large raw/prompt payloads per accepted field.
@@ -114,22 +87,16 @@ jobs:
            if(appSource.includes(\"raw?details('Preserved raw response',raw)\"))throw new Error('Provenance regressed to duplicating the full raw response inside every field trace.');
           }
           """
-          if 'Mobile responsiveness regression:' not in regression_source:
-              regression.write_text(regression_source+test_block)
+          if 'Mobile responsiveness regression:' not in rs: regression.write_text(rs+test_block)
 
           runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           def git_blob_sha(path):
-              b=Path(path).read_bytes()
-              return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+              b=Path(path).read_bytes(); return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
           manifest=''.join(f'{name}:{git_blob_sha(name)}\n' for name in runtime_files)
           token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
-          index=Path('index.html')
-          source=index.read_text()
-          source,count=re.subn(r'runtime-[0-9a-f]{16}',token,source)
-          if count!=8:
-              raise SystemExit(f'Expected 8 runtime cache tokens, replaced {count}')
-          index.write_text(source)
-          print(token)
+          index=Path('index.html'); source=index.read_text(); source,count=re.subn(r'runtime-[0-9a-f]{16}',token,source)
+          if count!=8: raise SystemExit(f'Expected 8 runtime cache tokens, replaced {count}')
+          index.write_text(source); print(token)
           PY
           node --check hash.js
           node --check app-core.js
