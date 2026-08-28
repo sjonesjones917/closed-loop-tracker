@@ -6,6 +6,10 @@ old="function observedValue(result){for(const key of ['OBSERVED_RESULT','ACTUAL_
 new="function structurallyPresent(value){if(value===null||value===undefined)return false;if(typeof value==='string')return value.trim().length>0;if(Array.isArray(value))return value.length>0;if(typeof value==='object')return Object.keys(value).length>0;return true;}\nfunction observedValue(result){for(const key of ['OBSERVED_RESULT','ACTUAL_RESULT','OBSERVED_MEANING','OBSERVATIONS','RESULT','VALIDATOR_RESULTS','MEANING_VERIFICATION_RESULTS','PROCESS_EVIDENCE','PRODUCT_EVIDENCE','FINDINGS']){const value=recordValue(result,key);if(structurallyPresent(value))return value;}return null;}"
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise RuntimeError('observedValue structural-presence anchor missing')
+old_check="if(adjudicationEmpty(observed))reasons.push('Observed value/result is not structurally present.');"
+new_check="if(!structurallyPresent(observed))reasons.push('Observed value/result is not structurally present.');"
+if old_check in s:s=s.replace(old_check,new_check,1)
+elif new_check not in s:raise RuntimeError('evidence-contract structural-presence anchor missing')
 p.write_text(s)
 
 # Permanently prove that a factual no-defect observation is structurally present
