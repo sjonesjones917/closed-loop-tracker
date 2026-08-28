@@ -13,12 +13,20 @@ if(!app.includes(oldPreview))throw new Error('prompt preview deep-clone target n
 app=app.replace(oldPreview,newPreview);
 fs.writeFileSync(appPath,app);
 
-const verifyPath='verify-browser-extra.mjs';
+const browserVerifyPath='verify-browser-extra.mjs';
+let browserVerify=fs.readFileSync(browserVerifyPath,'utf8');
+const browserAnchor="const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';\n";
+const browserGuard=`const appCoreSource=fs.readFileSync('app-core.js','utf8');\nif(appCoreSource.includes('const preview=clone(current);'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');\nif(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');\n`;
+if(!browserVerify.includes(browserAnchor))throw new Error('browser-extra guard anchor not found');
+if(!browserVerify.includes('Workflow prompt preview must not deep-clone'))browserVerify=browserVerify.replace(browserAnchor,browserAnchor+browserGuard);
+fs.writeFileSync(browserVerifyPath,browserVerify);
+
+const verifyPath='verify.mjs';
 let verify=fs.readFileSync(verifyPath,'utf8');
-const anchor="const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';\n";
-const guard=`const appCoreSource=fs.readFileSync('app-core.js','utf8');\nif(appCoreSource.includes('const preview=clone(current);'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');\nif(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');\n`;
-if(!verify.includes(anchor))throw new Error('browser-extra guard anchor not found');
-if(!verify.includes('Workflow prompt preview must not deep-clone'))verify=verify.replace(anchor,anchor+guard);
+const oldArchitectureCheck=`  const app=fs.readFileSync('app-core.js','utf8');if(!app.includes('ensureState(core.migrateState(p))'))throw new Error('Projects with stages can bypass deterministic migration.');if(!app.includes("[core.SCHEMA,'human-project/30'].includes(raw.schema)"))throw new Error('Declared human-project/30 migration cannot be imported through the UI.');`;
+const newArchitectureCheck=`  const app=fs.readFileSync('app-core.js','utf8');if(!app.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects do not have an explicit migration-safe startup fast path.');if(!app.includes('core.migrateState(p)'))throw new Error('Legacy or structurally stale projects can bypass deterministic migration.');if(!app.includes("[core.SCHEMA,'human-project/30'].includes(raw.schema)"))throw new Error('Declared human-project/30 migration cannot be imported through the UI.');`;
+if(!verify.includes(oldArchitectureCheck))throw new Error('verify.mjs migration assertion target not found');
+verify=verify.replace(oldArchitectureCheck,newArchitectureCheck);
 fs.writeFileSync(verifyPath,verify);
 
 const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
