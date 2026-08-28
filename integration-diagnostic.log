@@ -1,0 +1,8 @@
+Patch generator syntax repaired.
+/home/runner/work/closed-loop-tracker/closed-loop-tracker/apply-reliability-patch.mjs:300
+complete=appendOnce(complete,'deterministicReliabilityRouting:true',String.raw`
+
+SyntaxError: missing ) after argument list
+    at checkSyntax (node:internal/main/check_syntax:74:5)
+
+Node.js v22.23.2
