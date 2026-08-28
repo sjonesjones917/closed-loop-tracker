@@ -8,4 +8,4 @@ assert(app.includes('Reopened ${blockerId}: ${reason}'),'Reopen must append a ne
 assert(store.includes("openTransaction([PROJECTS,ARTIFACTS,META],'readwrite')")&&store.includes('during-project-delete')&&store.includes('String(artifact.jobId)===jobId')&&store.includes("meta.get('projectUi')")&&store.includes('delete nextProjectUi[jobId]'),'Project deletion must remain one transaction over project/meta, lifecycle metadata, and owned artifact Blob rows.');
 assert(html.includes('project-action-menu')&&html.includes('Project actions'),'Routine header actions must remain compact.');
 assert(!html.includes('Force Complete Stage')&&!html.includes('Override Release Gate')&&!html.includes('Mark Test Passed'),'Unsafe override controls must not exist.');
-console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,unsafeOverrides:0},null,2));
+console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,unsafeOverrides:0}));
