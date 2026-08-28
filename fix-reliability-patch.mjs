@@ -70,10 +70,10 @@ if(!source.includes(routingHeading))throw new Error('Expected new execution-rout
 source=source.replace(routingHeading,"<h2 class=\"section-title\">Verification execution</h2>");
 const routingIntro="Execution routing is calculated once by the workflow engine from the accepted TEST records, current capability evidence, and verified artifact custody. The screen does not reinterpret execution mode.";
 if(!source.includes(routingIntro))throw new Error('Expected new execution-routing intro was not found.');
-source=source.replace(routingIntro,"Who performs the current tests is calculated once by the workflow engine from the accepted TEST records, current capability evidence, and verified artifact custody. The screen does not reinterpret execution mode. No registered application-native executor exists unless the declared required capability exactly matches the registered executor list; an unsupported APPLICATION_DETERMINISTIC route is shown as an Invalid application executor claim and remains blocked.");
+source=source.replace(routingIntro,"Who performs the current tests is calculated once by the workflow engine from the accepted TEST records, current capability evidence, and verified artifact custody. The screen does not reinterpret execution mode. No registered application-native executor exists unless the declared required capability exactly matches the registered executor list; an unsupported APPLICATION_DETERMINISTIC route is shown as an Invalid application executor claim and remains blocked. Tests that require exact artifact bytes that are missing or unverified remain blocked.");
 const handoffIntro="Transfer only the items below. Browser-local storage does not automatically give an external agent or tool access to these bytes.";
 if(!source.includes(handoffIntro))throw new Error('Expected artifact-handoff intro was not found.');
-source=source.replace(handoffIntro,"Transfer only the items below. Remember: a filename, hash claim, or code block is not file possession. Browser-local storage does not automatically give an external agent or tool access to these bytes.");
+source=source.replace(handoffIntro,"Transfer only the items below. Remember: a filename, hash claim, or code block is not file possession. Browser storage alone does not give an external executor access to those bytes; the external context must actually receive each required file.");
 
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired while preserving Stage 12 continuation accounting separately from gate evidence validity.');
+console.log('Patch generator repaired while preserving exact artifact-byte and external-access operator guidance.');
