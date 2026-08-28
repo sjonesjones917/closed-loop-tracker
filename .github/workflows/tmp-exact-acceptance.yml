@@ -27,6 +27,11 @@ jobs:
           new="if(mode==='EXTERNAL_AGENT_TOOL'&&!byteTest){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');"
           if old not in s: raise SystemExit('external-tool evidence rule target missing')
           open(p,'w',encoding='utf-8').write(s.replace(old,new,1))
+          p='verify-complete.mjs';s=open(p,encoding='utf-8').read()
+          old="const humanResult=record('representationInspections',25,{DETERMINATION:'SATISFIED',EVIDENCE:'EVIDENCE-H'},'INS-H');p.projectData.evidenceRecords.push"
+          new="const humanResult=record('representationInspections',25,{DETERMINATION:'SATISFIED',EVIDENCE:'EVIDENCE-H'},'INS-H');humanResult.evidenceRefs=['EVIDENCE-H'];p.projectData.evidenceRecords.push"
+          if old not in s: raise SystemExit('human evidence fixture target missing')
+          open(p,'w',encoding='utf-8').write(s.replace(old,new,1))
           PY
           node - <<'NODE'
           const fs=require('fs'),{createHash}=require('crypto');
