@@ -1,14 +1,12 @@
-Patch generator syntax and embedded regression-test encoding repaired.
+Patch generator repaired with existing execution-action authority preserved.
 Reliability patch applied.
-workflow-engine.js:426
-      const incomplete=mandatoryTests.filter(test=>!TEST_EXECUTION_ACTIONS[upper(recordValue(test,'EXECUTION_MODE'))]||!String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim()||!String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim());
-                                                   ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9
+const assert=(value,message)=>{if(!value)throw new Error(message);};
+                                               ^
 
-ReferenceError: TEST_EXECUTION_ACTIONS is not defined
-    at workflow-engine.js:426:52
-    at Array.filter (<anonymous>)
-    at Object.gate (workflow-engine.js:426:39)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:32:18
+Error: Verified current artifact bytes did not satisfy TEST custody.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9:48)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:61:114
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
