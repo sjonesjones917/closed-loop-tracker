@@ -93,7 +93,10 @@ assert(applicableCurrentRegressionSuccess===1,'Applicable current regression-suc
 
 const evidenceChainProofs=[
   engineSource.includes('function constructEvidenceChains(project)'),
-  engineSource.includes("evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient"),
+  engineSource.includes('effective=effectiveDetermination(collection,result,test,project)'),
+  engineSource.includes('contract=evaluateEvidenceContract(test,result,null,project)'),
+  engineSource.includes("if(effective!=='SATISFIED')missing.push('NON_SATISFIED_EFFECTIVE_RESULT:'+tid)"),
+  engineSource.includes("if(!contract.sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid)"),
   fullCycleSource.includes('engine.constructEvidenceChains(p)'),
   fullCycleSource.includes("evidenceChains:engine.gate(29,reloaded).complete"),
   completeTestSource.includes('Missing evidence-chain links remain missing; the application does not invent them.'),
