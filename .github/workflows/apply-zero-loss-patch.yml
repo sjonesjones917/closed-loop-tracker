@@ -38,6 +38,32 @@ jobs:
           gzip --decompress --stdout /tmp/zero-loss.patch.gz > /tmp/zero-loss.patch
           git apply --check /tmp/zero-loss.patch
           git apply /tmp/zero-loss.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, re
+
+          app=Path('app-core.js')
+          source=app.read_text()
+          old='<h2 class="section-title">Completed stage summary</h2><p class="section-intro">The application renders this bounded canonical summary first so a large preserved audit history cannot freeze stage navigation. No record, prompt, raw response, evidence, or provenance link has been removed.</p>'
+          new='<h2 class="section-title">Completed stage summary</h2><div class="notice success"><strong>Stage ${String(n).padStart(2,\'0\')} is preserved completed history.</strong> The canonical stage record remains fully inspectable through Open full Stage ${String(n).padStart(2,\'0\')} audit details.</div><p class="section-intro">The application renders this bounded canonical summary first so a large preserved audit history cannot freeze stage navigation. No record, prompt, raw response, evidence, or provenance link has been removed.</p>'
+          if old not in source:
+              raise SystemExit('Historical-stage inspectability insertion target was not found.')
+          app.write_text(source.replace(old,new,1))
+
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def git_blob_sha(path):
+              data=Path(path).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          manifest=''.join(f'{name}:{git_blob_sha(name)}\n' for name in runtime_files)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          index=Path('index.html')
+          html=index.read_text()
+          html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
+          if count!=8:
+              raise SystemExit(f'Expected 8 runtime cache tokens, replaced {count}.')
+          index.write_text(html)
+          print(token)
+          PY
           rm -rf .zero-loss-patch
           rm -f .zero-loss.patch.gz.b64
           rm -f .github/workflows/zero-loss-source-export.yml
