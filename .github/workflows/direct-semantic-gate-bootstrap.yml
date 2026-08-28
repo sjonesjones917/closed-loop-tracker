@@ -1,5 +1,5 @@
 name: Direct semantic-gate integration proof
-# proof revision: 8
+# proof revision: 9
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: direct-semantic-gate-integration-v8
+  group: direct-semantic-gate-integration-v9
   cancel-in-progress: false
 
 jobs:
