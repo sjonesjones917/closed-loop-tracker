@@ -38,7 +38,22 @@ jobs:
       - name: Ingestion suite
         run: node verify-ingestion.mjs
       - name: Full 30-stage cycle suite
-        run: node verify-full-cycle.mjs
+        id: fullcycle
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          node verify-full-cycle.mjs 2>&1 | tee full-cycle.log
+      - name: Upload full-cycle diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-cycle-diagnostic-final
+          path: full-cycle.log
+          retention-days: 1
+      - name: Require full-cycle success
+        if: steps.fullcycle.outcome != 'success'
+        run: exit 1
       - name: Prompt semantic isolation suite
         run: node verify-prompt-semantics.mjs
       - name: Commit repair and remove one-time machinery
