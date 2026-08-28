@@ -1,0 +1,26 @@
+name: Lifecycle UI functional diagnostic
+on:
+  push:
+    branches: [reliability/lifecycle-ui-functional-repair-20260828]
+    paths: ['.lifecycle-ui-diagnostic.mjs', '.github/workflows/lifecycle-ui-diagnostic.yml']
+permissions: {contents: read}
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability/lifecycle-ui-functional-repair-20260828}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Inject user-visible lifecycle interactions
+        run: node .lifecycle-ui-diagnostic.mjs
+      - name: Syntax
+        run: node --check verify-browser-extra.mjs
+      - name: Chromium lifecycle functional proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/lifecycle-ui-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser-extra.mjs
