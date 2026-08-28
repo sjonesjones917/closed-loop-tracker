@@ -24,9 +24,11 @@ old_art="{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,S
 new_art="{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'a'.repeat(64),STORAGE_REFERENCE:'indexeddb:ART-V2',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}"
 if old_art not in s: raise RuntimeError('independence fixture artifact anchor missing')
 s=s.replace(old_art,new_art,1)
-old_ctx="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;const run=engine.records(p,'freshContexts'"
-# The generated test uses runs in the following segment; patch only the context assignment prefix.
 prefix="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;const run=engine.records(p,'runs')"
 replacement_prefix="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.fields.CONTAMINATION_STATUS='NONE';ctx.CONTAMINATION_STATUS='NONE';ctx.fields.AUTHORIZED_PROJECT_INPUTS=[];ctx.AUTHORIZED_PROJECT_INPUTS=[];const run=engine.records(p,'runs')"
 if prefix not in s: raise RuntimeError('independence context fixture anchor missing')
-s=s.replace(prefix,replacement_prefix,1);p.write_text(s)
+s=s.replace(prefix,replacement_prefix,1)
+contradiction_anchor="const scope={requirementsVersion:'R1',testSuiteVersion:'T1'};const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C')"
+contradiction_replacement="const scope={requirementsVersion:'R1',testSuiteVersion:'T1'};const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C')"
+if contradiction_anchor not in s: raise RuntimeError('contradiction fixture link anchor missing')
+s=s.replace(contradiction_anchor,contradiction_replacement,1);p.write_text(s)
