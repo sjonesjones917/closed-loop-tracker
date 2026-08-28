@@ -1,0 +1,20 @@
+name: Reliability acceptance runner
+on:
+  push:
+    branches:
+      - reliability-evidence-hardening
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-evidence-hardening
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply patch, verify, and commit
+        run: bash .harden-runner.sh
