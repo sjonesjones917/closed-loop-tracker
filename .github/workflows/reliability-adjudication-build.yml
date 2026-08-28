@@ -7,18 +7,62 @@ permissions: {contents: write}
 concurrency: {group: 'reliability-adjudication-${{ github.ref }}', cancel-in-progress: false}
 
 jobs:
-  inspect:
-    if: ${{ !contains(github.event.head_commit.message, '[adjudication-built]') }}
+  apply-and-prove:
+    if: ${{ contains(github.event.head_commit.message, '[apply-adjudication]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - name: Snapshot exact implementation inputs
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Reconstruct and apply exact adjudication patch
         run: |
-          mkdir -p /tmp/adjudication-snapshot
-          cp workflow-engine.js workflow-schema.js response-ingestion.js prompt-engine.js project-store.js app-core.js workbook.js test-fixtures.mjs verify-complete.mjs verify-ingestion.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-browser.mjs verify-browser-extra.mjs /tmp/adjudication-snapshot/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: adjudication-source-${{ github.sha }}
-          path: /tmp/adjudication-snapshot
-          if-no-files-found: error
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          echo 'ea95f16b98b3b51e9436f983ca59046556d17cdddc47b9cad5a861882d61089c  /tmp/adjudication.patch' | sha256sum -c -
+          patch -p0 < /tmp/adjudication.patch
+      - name: Syntax checks
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check verify-adjudication.mjs
+      - name: Run deterministic and semantic proofs
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-adjudication.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Run local Chromium proofs unchanged
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-adjudication-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit proven application changes
+        env: {GH_TOKEN: '${{ github.token }}'}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-adjudication.mjs
+          git diff --cached --check
+          git commit -m '[adjudication-built] Make semantic determinations application-owned'
+          git push origin HEAD:${GITHUB_REF_NAME}
