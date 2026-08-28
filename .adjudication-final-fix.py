@@ -65,6 +65,26 @@ new_required="if(requiresAttachment&&!evidence.some(item=>{const id=String(recor
 if old_required in s:s=s.replace(old_required,new_required,1)
 elif new_required not in s:raise RuntimeError('required attachment evidence anchor missing')
 
+# Preflight is not a generic test-result record. FINDINGS is narrative evidence,
+# not a Boolean defect flag, and optional affirmative fields cannot be invented.
+# Material negative fields are controlling only when a structured value actually
+# establishes an adverse state. Narrative may supplement, never self-certify.
+old_observed="for(const key of ['OBSERVED_RESULT','ACTUAL_RESULT','OBSERVED_MEANING','OBSERVATIONS','RESULT','VALIDATOR_RESULTS','MEANING_VERIFICATION_RESULTS','PROCESS_EVIDENCE','PRODUCT_EVIDENCE'])"
+new_observed="for(const key of ['OBSERVED_RESULT','ACTUAL_RESULT','OBSERVED_MEANING','OBSERVATIONS','RESULT','VALIDATOR_RESULTS','MEANING_VERIFICATION_RESULTS','PROCESS_EVIDENCE','PRODUCT_EVIDENCE','FINDINGS'])"
+if old_observed in s:s=s.replace(old_observed,new_observed,1)
+elif new_observed not in s:raise RuntimeError('observed-value adapter anchor missing')
+
+old_preflight="if(collection==='preflightRecords'){for(const key of ['MULTIPLE_INTERPRETATIONS','UNDEFINED_OBJECTS','UNSUPPLIED_DEPENDENCIES','INTERNAL_CONFLICTS','UNAVAILABLE_CAPABILITIES','FINDINGS'])if(semanticAdverse(recordValue(record,key)))reasons.push(key+' contains an unresolved preflight finding.');for(const key of ['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED','TRACEABILITY'])if(!truth(recordValue(record,key)))reasons.push(key+' is not affirmatively established.');if(!evidence.sufficient)reasons.push(...evidence.reasons);determination=reasons.length?'UNDETERMINED':'SATISFIED';}"
+new_preflight="if(collection==='preflightRecords'){const adverseField=(value)=>{if(value===null||value===undefined||semanticEmpty(value))return false;if(typeof value==='boolean')return value;if(typeof value==='number')return value>0;if(Array.isArray(value))return value.some(v=>!semanticEmpty(v));if(typeof value==='object')return Object.values(value).some(adverseField);const out=controlledOutcome(value);return out==='VIOLATED'||['OPEN','UNRESOLVED','PRESENT','FOUND','YES','TRUE','UNAVAILABLE','MISSING','CONFLICT'].includes(upper(value));};for(const key of ['MULTIPLE_INTERPRETATIONS','UNDEFINED_OBJECTS','UNSUPPLIED_DEPENDENCIES','INTERNAL_CONFLICTS','UNAVAILABLE_CAPABILITIES'])if(adverseField(recordValue(record,key)))reasons.push(key+' contains an unresolved preflight finding.');for(const key of ['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED','TRACEABILITY']){const value=recordValue(record,key);if(!semanticEmpty(value)&&controlledOutcome(value)!=='SATISFIED'&&!truth(value))reasons.push(key+' is explicitly not established.');}if(!evidence.sufficient)reasons.push(...evidence.reasons);determination=reasons.length?'UNDETERMINED':'SATISFIED';}"
+if old_preflight in s:s=s.replace(old_preflight,new_preflight,1)
+elif new_preflight not in s:raise RuntimeError('preflight adjudication anchor missing')
+
+# Stage 9 itself must consume only the application-derived determination.
+old_gate="case 9:\n      requireAccepted();requireCount('preflightRecords',1);\n      if(collection('preflightRecords').some(record=>['VIOLATED','UNDETERMINED','BLOCKED','REJECTED'].includes(upper(recordValue(record,'DETERMINATION')))))reasons.push('Instruction preflight contains an unresolved material finding.');\n      break;"
+new_gate="case 9:\n      requireAccepted();requireCount('preflightRecords',1);\n      for(const record of collection('preflightRecords')){const evaluation=evaluateResultConsistency('preflightRecords',record,null,project);if(evaluation.determination!=='SATISFIED')reasons.push(...(evaluation.reasons.length?evaluation.reasons:['Instruction preflight is not application-established as satisfied.']));}\n      break;"
+if old_gate in s:s=s.replace(old_gate,new_gate,1)
+elif new_gate not in s:raise RuntimeError('Stage 9 application-owned gate anchor missing')
+
 # Preserve every existing contradiction rule by renaming the existing detector
 # as a base function and wrapping it. Claimed conclusions never control release;
 # they are only additional contradiction signals when two canonical records make
