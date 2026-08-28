@@ -90,3 +90,7 @@ try{await main();}finally{await cleanup();}
 {
  const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Exact handoff','Continue talking to the agent','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'])if(!source.includes(token))throw new Error('Missing operator reliability UI: '+token);
 }
+
+{
+ const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Observed reliability — this project only','Materially independent accepted operations','Observed silent failures','Approximate 95% upper bound','not a guarantee'])if(!source.includes(token))throw new Error('Missing project-local reliability presentation: '+token);
+}

@@ -273,3 +273,9 @@ console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOper
  const p=project('JOB-CONTRADICTION-V2');p.job.CURRENT_REQUIREMENTS_VERSION='R1';p.job.CURRENT_TEST_SUITE_VERSION='T1';const scope=engine.currentScope(p);const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C'),m=record('meaningResults',23,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'VIOLATED'},'MEAN-C');d.scope={...scope};m.scope={...scope};p.projectData.deterministicResults.push(d);p.projectData.meaningResults.push(m);assert(engine.detectCurrentContradictions(p).some(x=>x.type==='DETERMINISTIC_MEANING_CONFLICT'),'Cross-method contradiction was not detected.');
 }
 console.log(JSON.stringify({reliabilityV2Execution:true,reliabilityV2Independence:true,reliabilityV2Evidence:true,reliabilityV2Contradictions:true},null,2));
+
+
+// reliability-v2-final: result-consuming gates reject epistemically insufficient evidence at the earliest responsible stage.
+{
+ const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['Meaning review \'','Adversarial result \'','Representation inspection \'','Stage 26 audit \'','Current process/product evidence contains unresolved contradictions'])assert(source.includes(token),'Missing local evidence/contradiction gate: '+token);
+}
