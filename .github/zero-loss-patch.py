@@ -1,0 +1,118 @@
+from pathlib import Path
+import re
+
+p=Path('workflow-engine.js')
+s=p.read_text()
+
+pattern=r"function evaluateEvidenceContract\(test,result,canonicalEvidence,project\)\{.*?\n\}\nfunction claimedDetermination"
+replacement=r'''function evaluateEvidenceContract(test,result,canonicalEvidence,project){
+  const explicitEvidence=Array.isArray(canonicalEvidence)?canonicalEvidence:null,ids=explicitEvidence?explicitEvidence.map(item=>recordId(item,'evidenceRecords')).filter(Boolean):evidenceReferences(result),evidence=explicitEvidence||ids.map(id=>records(project,'evidenceRecords').find(x=>recordId(x,'evidenceRecords')===id)).filter(Boolean),reasons=[],requiredEvidenceClasses=[],mode=upper(recordValue(test,'EXECUTION_MODE')||''),type=upper(recordValue(test,'TEST_TYPE')||''),artifactRequirements=String(recordValue(test,'ARTIFACT_REQUIREMENTS')||''),artifactRequired=Boolean(test&&artifactRequirements&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(artifactRequirements))),testText=[type,artifactRequirements,recordValue(test,'INPUTS'),recordValue(test,'TOOLS'),recordValue(test,'PROCEDURE'),recordValue(test,'EXPECTED_RESULT'),recordValue(test,'FAILURE_CONDITION'),recordValue(test,'EVIDENCE_TO_PRESERVE')].join(' '),byteTest=artifactRequired||/\b(?:SHA-?256|HASH|BYTE(?:S|[- ]IDENTITY)?|CRYPTOGRAPHIC IDENTITY)\b/i.test(testText);
+  if(mode==='UNAVAILABLE'){requiredEvidenceClasses.push('CAPABLE_EXECUTION');reasons.push('UNAVAILABLE execution cannot establish satisfaction.');}
+  if(!evidence.length){requiredEvidenceClasses.push('CANONICAL_EVIDENCE');reasons.push('No canonical evidence record is linked to the result; narrative alone is non-controlling.');}
+  const attached=[];
+  for(const item of evidence){const authority=upper(recordValue(item,'AUTHORITY_TYPE')),attachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim();if(adjudicationEmpty(recordValue(item,'KIND')))reasons.push('Canonical evidence kind is missing.');if(!authority||authority==='UNKNOWN')reasons.push('Canonical evidence authority type is missing or unknown.');if(adjudicationEmpty(recordValue(item,'CONTENT'))&&adjudicationEmpty(recordValue(item,'DESCRIPTION'))&&adjudicationEmpty(recordValue(item,'LOCATION')))reasons.push('Canonical evidence contains no preserved observation payload.');if(attachmentId&&attachmentId!=='UNKNOWN')attached.push(attachmentId);}
+  const verifiedArtifacts=records(project,'artifacts').filter(a=>attached.includes(recordId(a,'artifacts'))&&upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED'&&/^[a-f0-9]{64}$/i.test(String(recordValue(a,'SHA256')||''))&&Number.isFinite(Number(recordValue(a,'BYTE_SIZE')))),productSha=String(recordValue(result,'PRODUCT_SHA256')||''),matchingProductArtifact=productSha&&recordsForCurrentScope(project,'artifacts').some(a=>upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED'&&String(recordValue(a,'SHA256')||'')===productSha&&/^[a-f0-9]{64}$/i.test(String(recordValue(a,'SHA256')||'')));
+  for(const id of attached){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===id);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED'||!/^[a-f0-9]{64}$/i.test(String(recordValue(a,'SHA256')||'')))reasons.push('Referenced evidence attachment bytes are not application-verified.');}
+  if(artifactRequired&&!attached.length){requiredEvidenceClasses.push('APPLICATION_VERIFIED_BYTES');reasons.push('The controlling test requires an attachment-backed evidence record.');}
+  if(byteTest){requiredEvidenceClasses.push('APPLICATION_VERIFIED_BYTES');if(!verifiedArtifacts.length&&!matchingProductArtifact)reasons.push('Byte-identity evidence requires application-verified artifact bytes and SHA-256; prose or a claimed hash is insufficient.');}
+  if(mode==='HUMAN_INSPECTION'){requiredEvidenceClasses.push('HUMAN_OBSERVATION');const human=evidence.some(e=>/HUMAN/.test(upper(recordValue(e,'AUTHORITY_TYPE')||recordValue(e,'KIND'))));if(!human)reasons.push('Human inspection requires evidence attributable to an actual human observation.');}
+  if(mode==='EXTERNAL_SYSTEM'){requiredEvidenceClasses.push('EXTERNAL_SYSTEM_OUTPUT');const capability=String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),system=evidence.some(e=>/SYSTEM|LAB|MACHINE|EXTERNAL/.test(upper(recordValue(e,'AUTHORITY_TYPE')||recordValue(e,'KIND')))||(capability&&String(recordValue(e,'CONTENT')||'').toUpperCase().includes(capability.toUpperCase())));if(!system)reasons.push('External-system verification requires evidence attributable to the declared external capability.');}
+  if(Number(result?.stage)===23||result&&Object.prototype.hasOwnProperty.call(recordFields(result),'OBSERVED_MEANING')){requiredEvidenceClasses.push('MEANING_COMPARISON');for(const key of ['PRODUCT_LOCATION','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON'])if(adjudicationEmpty(recordValue(result,key)))reasons.push('Meaning evidence is missing '+key+'.');}
+  if(mode==='EXTERNAL_AGENT_TOOL'){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');if(!String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim())reasons.push('External tool execution lacks a declared capability identity.');if(adjudicationEmpty(recordValue(result,'OBSERVED_RESULT'))&&adjudicationEmpty(recordValue(result,'ACTUAL_RESULT')))reasons.push('External tool execution lacks an actual observed result.');}
+  const executionId=resultExecutionIdentity(project,result),contextId=resultContextIdentity(project,result);
+  if(test&&mode!=='APPLICATION_DETERMINISTIC'&&!executionId)reasons.push('Execution identity is not established.');
+  if(test&&['INDEPENDENT_AGENT_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM'].includes(mode)&&!contextId)reasons.push('Execution/reviewer context identity is not established.');
+  return {sufficient:reasons.length===0,reasons:[...new Set(reasons)],evidenceIds:evidence.map(e=>recordId(e,'evidenceRecords')).filter(Boolean),presentEvidenceIds:evidence.map(e=>recordId(e,'evidenceRecords')).filter(Boolean),verifiedArtifactIds:verifiedArtifacts.map(a=>recordId(a,'artifacts')),requiredEvidenceClasses:[...new Set(requiredEvidenceClasses)],executionId,contextId};
+}
+function claimedDetermination'''
+s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+if n!=1: raise SystemExit(f'evaluateEvidenceContract replacement count={n}')
+s=s2
+
+old="const runId=String(recordValue(record,'RUN_ID')||record.relationships?.RUN_ID||''),iterationId=String(record.scope?.iterationId||runIterationId(record)||''),ind=evaluateContextIndependence(project,{role:'VERIFICATION',iterationId,runId,verifierContextId:String(recordValue(record,'VERIFIER_CONTEXT_ID')||'')});if(!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(ind.determination))reasons.push('Verification independence is neither application-established nor externally supported.');"
+new="const trust=releaseVerificationTrust(project,record);if(trust.determination!=='APPLICATION_ESTABLISHED')reasons.push(...(trust.reasons.length?trust.reasons:['Verification independence is not application-established.']));"
+if s.count(old)!=1: raise SystemExit('verification independence target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+
+pattern=r"function evaluateEvidenceSufficiency\(project,\{requirement=null,test=null,result=null\}=\{\}\)\{.*?\n\}\nfunction evaluateContextIndependence"
+replacement=r'''function evaluateEvidenceSufficiency(project,{requirement=null,test=null,result=null}={}){
+  const evaluation=evaluateEvidenceContract(test,result,null,project);
+  return {sufficient:evaluation.sufficient,reasons:evaluation.reasons,requiredEvidenceClasses:evaluation.requiredEvidenceClasses,presentEvidenceIds:evaluation.presentEvidenceIds,verifiedArtifactIds:evaluation.verifiedArtifactIds};
+}
+function evaluateContextIndependence'''
+s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+if n!=1: raise SystemExit(f'evaluateEvidenceSufficiency replacement count={n}')
+s=s2
+
+old=".map(v=>upper(recordValue(v,'DETERMINATION')))"
+if s.count(old)!=2: raise SystemExit('raw stability determination target count='+str(s.count(old)))
+s=s.replace(old,".map(v=>effectiveDetermination('verification',v,testForResult(project,v),project))")
+
+marker="function testExecutionPlan(project){"
+if s.count(marker)!=1: raise SystemExit('testExecutionPlan marker count='+str(s.count(marker)))
+helper=r'''function capabilityAvailability(project,mode,requiredCapability){
+  const capability=String(requiredCapability||'').trim(),normalize=value=>upper(value).replace(/[^A-Z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!capability)return {available:false,evidence:[]};
+  if(mode==='APPLICATION_DETERMINISTIC')return {available:Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,capability),evidence:Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,capability)?['REGISTERED_APPLICATION_EXECUTOR:'+capability]:[]};
+  if(mode==='UNAVAILABLE')return {available:false,evidence:[]};
+  if(mode==='HUMAN_INSPECTION')return {available:true,evidence:['HUMAN_INSPECTION_ROUTE']};
+  if(mode==='INDEPENDENT_AGENT_REVIEW')return {available:true,evidence:['INDEPENDENT_REVIEW_ROUTE']};
+  const required=normalize(capability),sources=[{id:'JOB_AVAILABLE_TOOLS',value:project?.job?.AVAILABLE_TOOLS},...recordsForCurrentScope(project,'freshContexts').map(c=>({id:recordId(c,'freshContexts')||'FRESH_CONTEXT',value:recordValue(c,'TOOL_AVAILABILITY')}))],evidence=[];
+  for(const source of sources){const text=normalize(source.value);if(!text||['NONE','UNKNOWN','UNAVAILABLE','NOT APPLICABLE','UNASSIGNED','PENDING'].includes(text))continue;if(new RegExp('(?:NO|NOT|WITHOUT|UNAVAILABLE)\\s+'+required.replace(/\s+/g,'\\s+'),'i').test(text))continue;if(text.includes(required))evidence.push(source.id+':'+String(source.value));}
+  return {available:evidence.length>0,evidence};
+}
+'''
+s=s.replace(marker,helper+marker,1)
+old="applicationExecutorSupported=mode!=='APPLICATION_DETERMINISTIC'||Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability),validMode=Object.prototype.hasOwnProperty.call(TEST_EXECUTION_ACTIONS,mode),capabilityReady=Boolean(requiredCapability)&&mode!=='UNAVAILABLE'&&(mode!=='APPLICATION_DETERMINISTIC'||applicationExecutorSupported),executableNow=validMode&&capabilityReady&&artifactReady"
+new="applicationExecutorSupported=mode!=='APPLICATION_DETERMINISTIC'||Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability),validMode=Object.prototype.hasOwnProperty.call(TEST_EXECUTION_ACTIONS,mode),capability=capabilityAvailability(project,mode,requiredCapability),capabilityReady=capability.available,executableNow=validMode&&capabilityReady&&artifactReady"
+if s.count(old)!=1: raise SystemExit('capabilityReady target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+old="mode==='APPLICATION_DETERMINISTIC'&&!applicationExecutorSupported?'No application-native executor is registered for '+requiredCapability+'.':!artifactReady?'Required exact artifact bytes are missing or no longer verified.':null"
+new="mode==='APPLICATION_DETERMINISTIC'&&!applicationExecutorSupported?'No application-native executor is registered for '+requiredCapability+'.':!capabilityReady?'Required capability is not affirmatively available in current canonical state.':!artifactReady?'Required exact artifact bytes are missing or no longer verified.':null"
+if s.count(old)!=1: raise SystemExit('blocking reason target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+old="artifactReady,applicationExecutorSupported,operatorAction"
+new="artifactReady,applicationExecutorSupported,capabilityEvidence:capability.evidence,operatorAction"
+if s.count(old)!=1: raise SystemExit('capability evidence return target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+
+old="12:['other verifiers’ determinations','Stage 13 comparison findings','root-cause analysis','correction proposals']"
+new="12:['generator self-evaluation','other verifiers’ determinations','Stage 13 comparison findings','root-cause analysis','correction proposals']"
+if s.count(old)!=1: raise SystemExit('stage12 withhold target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+old="24:['generator reasoning or self-evaluation','prior reviewer conclusions that tell the adversarial reviewer what to find']"
+new="24:['generator reasoning or self-evaluation','prior meaning-review verdict unless explicitly authorized','prior reviewer conclusions that tell the adversarial reviewer what to find']"
+if s.count(old)!=1: raise SystemExit('stage24 withhold target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+
+old="if(!testResults.length)missing.push('TEST_RESULT:'+tid);else for(const result of testResults)if(!evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid);"
+new="if(!testResults.length)missing.push('TEST_RESULT:'+tid);else for(const result of testResults){const collection=recordsForCurrentScope(project,'verification').includes(result)?'verification':recordsForCurrentScope(project,'deterministicResults').includes(result)?'deterministicResults':recordsForCurrentScope(project,'meaningResults').includes(result)?'meaningResults':'adversarialResults',evaluation=evaluateResultConsistency(collection,result,test,project);if(evaluation.determination!=='SATISFIED')missing.push('NON_SATISFIED_EFFECTIVE_RESULT:'+tid);if(!evaluation.evidence?.sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid);}"
+if s.count(old)!=1: raise SystemExit('evidence-chain epistemic target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+
+old="function evidenceChainExplanation(project,chain){const req=String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||''),tests=safe(recordValue(chain,'TEST_ID')),results=safe(recordValue(chain,'TEST_RESULT_ID')),evidence=safe(recordValue(chain,'EVIDENCE_ID')),identities=safe(recordValue(chain,'ARTIFACT_HASH_IDENTITY')),support=[];for(const t of tests)support.push(t+' applies to '+req);for(const r of results)support.push(r+' is a current test result for '+req);for(const e of evidence)support.push(e+' supports a current result');for(const id of identities){const record=records(project,'artifactIdentities').find(x=>recordId(x,'artifactIdentities')===id);if(record)support.push(id+' proves audited/delivery identity: '+String(recordValue(record,'PRE_DELIVERY_SHA256')||'UNKNOWN'));}return {proposition:'Delivered artifact satisfies '+req,support,unresolved:safe(recordValue(chain,'MISSING_LINKS'))};}"
+new="function evidenceChainExplanation(project,chain){const req=String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||''),tests=safe(recordValue(chain,'TEST_ID')),results=safe(recordValue(chain,'TEST_RESULT_ID')),evidence=safe(recordValue(chain,'EVIDENCE_ID')),identities=safe(recordValue(chain,'ARTIFACT_HASH_IDENTITY')),support=[];for(const t of tests)support.push(t+' applies to '+req);for(const id of results){let located=null,collection='';for(const name of ['verification','deterministicResults','meaningResults','adversarialResults']){const row=recordsForCurrentScope(project,name).find(r=>recordId(r,name)===String(id));if(row){located=row;collection=name;break;}}if(located){const evaluation=evaluateResultConsistency(collection,located,testForResult(project,located),project);support.push('Effective determination for '+id+' is '+evaluation.determination);if(evaluation.evidence?.sufficient)support.push('Evidence contract for '+id+' is structurally satisfied');}else support.push(id+' is a current test result for '+req);}for(const e of evidence)support.push(e+' is canonical evidence linked to a current result');for(const id of identities){const record=records(project,'artifactIdentities').find(x=>recordId(x,'artifactIdentities')===id);if(record)support.push(id+' proves audited/delivery identity: '+String(recordValue(record,'PRE_DELIVERY_SHA256')||'UNKNOWN'));}return {proposition:'Delivered artifact satisfies '+req,support,unresolved:safe(recordValue(chain,'MISSING_LINKS'))};}"
+if s.count(old)!=1: raise SystemExit('evidenceChainExplanation target count='+str(s.count(old)))
+s=s.replace(old,new,1)
+
+p.write_text(s)
+
+p=Path('verify-semantic-invariant.mjs')
+t=p.read_text()
+anchor="const trust=engine.releaseVerificationTrust(p,nakedVerification);assert(trust.determination!=='APPLICATION_ESTABLISHED','Self-asserted verifier identity became release-grade evidence');"
+addition=anchor+"\nconst nakedEffective=engine.evaluateResultConsistency('verification',nakedVerification,test,p);assert(nakedEffective.determination!=='SATISFIED','Externally supported/self-asserted verifier identity became an effective satisfied result');"
+if t.count(anchor)!=1: raise SystemExit('semantic independence anchor count='+str(t.count(anchor)))
+t=t.replace(anchor,addition,1)
+source_anchor="assert(!source.includes(\"['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT')))\"),'Legacy regression success shortcut remains');"
+source_add=source_anchor+"assert(!source.includes(\".map(v=>upper(recordValue(v,'DETERMINATION')))\"),'Stability diagnostics still trust submitted determinations');assert(source.includes('capabilityAvailability(project,mode,requiredCapability)'),'Execution routing does not require affirmative capability evidence');"
+if t.count(source_anchor)!=1: raise SystemExit('semantic static anchor count='+str(t.count(source_anchor)))
+t=t.replace(source_anchor,source_add,1)
+p.write_text(t)
+
+p=Path('verify-definition-of-done.mjs')
+d=p.read_text()
+anchor="for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);"
+addition=anchor+"\nassert((engineSource.match(/function evaluateEvidenceContract\\(/g)||[]).length===1,'Evidence-contract authority is duplicated.');assert(/function evaluateEvidenceSufficiency[\\s\\S]*?evaluateEvidenceContract\\(test,result,null,project\\)/.test(engineSource),'Evidence-sufficiency compatibility path does not delegate to the central evidence contract.');assert(!engineSource.includes(\".map(v=>upper(recordValue(v,'DETERMINATION')))\"),'Stability still consumes agent-submitted determinations.');assert(engineSource.includes(\"generator self-evaluation','other verifiers’ determinations\"),'Stage 12 handoff isolation is incomplete.');assert(engineSource.includes(\"prior meaning-review verdict unless explicitly authorized\"),'Stage 24 handoff isolation is incomplete.');"
+if d.count(anchor)!=1: raise SystemExit('DOD anchor count='+str(d.count(anchor)))
+d=d.replace(anchor,addition,1)
+p.write_text(d)
