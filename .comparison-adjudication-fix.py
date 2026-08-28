@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 def brace_end(text, start):
     depth=0; quote=None; esc=False; line=False; block=False; i=start
@@ -35,6 +36,12 @@ p=Path('workflow-engine.js'); s=p.read_text()
 comparison="function comparisonFacts(project,reqId,iterationId){const rows=(iterationId?recordsForIteration(project,'verification',iterationId):recordsForCurrentScope(project,'verification')).filter(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===reqId),determinations=rows.map(r=>evaluateResultConsistency('verification',r,testForResult(project,r),project)),ds=determinations.map(x=>x.determination);return {rows,determinations,runDeterminations:rows.map((r,i)=>({runId:String(recordValue(r,'RUN_ID')||r.relationships?.RUN_ID||''),testId:String(recordValue(r,'TEST_ID')||r.relationships?.TEST_ID||''),determination:ds[i]})),allSatisfied:rows.length>0&&ds.every(d=>d==='SATISFIED'),anyViolation:ds.includes('VIOLATED'),anyUndetermined:ds.some(d=>d!=='SATISFIED'&&d!=='VIOLATED')};}"
 s=replace_function(s,'comparisonFacts',comparison)
 
+# effectiveDetermination() is deliberately a string-returning convenience API.
+# Confirmation must consume that string directly, while helpers that need reasons
+# consume evaluateResultConsistency()/effectiveRegressionDetermination() objects.
+confirmation="function confirmationDetermination(project,record){const reasons=[],iterationId=String(recordValue(record,'CONFIRMATION_ITERATION_ID')||record?.relationships?.CONFIRMATION_ITERATION_ID||record?.scope?.iterationId||'').trim(),iteration=records(project,'iterations').find(r=>recordId(r,'iterations')===iterationId);if(!iteration){reasons.push('Confirmation iteration identity is missing.');return {determination:'UNDETERMINED',reasons};}const ev=evaluateIteration(project,iterationId,'UNCHANGED_CONFIRMATION');if(!ev.complete)reasons.push(...ev.reasons);const matrix=verificationMatrix(project,iterationId);if(matrix.expected.length===0||matrix.missing.length||matrix.duplicates.length||matrix.invalid.length)reasons.push('Confirmation verification matrix is incomplete or invalid.');const bad=matrix.verification.map(r=>effectiveDetermination('verification',r,testForResult(project,r),project)).filter(d=>d!=='SATISFIED');if(bad.length)reasons.push('Confirmation contains a non-satisfied effective verification result.');const regs=records(project,'regressions').filter(r=>upper(recordValue(r,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');for(const reg of regs){const id=recordId(reg,'regressions'),exec=currentRegressionExecutions(project,iterationId).filter(x=>String(recordValue(x,'REG_ID')||x.relationships?.REG_ID||'')===id&&upper(recordValue(x,'PHASE'))!=='PRE_CORRECTION');if(exec.length!==1||effectiveRegressionDetermination(project,exec[0]).determination!=='SATISFIED')reasons.push('Active regression '+id+' is not successfully evidenced in confirmation.');}const defects=confirmedDefects(project).filter(d=>String(d.scope?.iterationId||'')===iterationId);if(defects.length)reasons.push('Confirmation iteration has new confirmed defects.');for(const req of mandatoryRequirements(project,scopeForIteration(project,iterationId))){const f=comparisonFacts(project,requirementId(req),iterationId);if(!f.allSatisfied)reasons.push('Confirmation comparison is not all-satisfied for '+requirementId(req)+'.');}return {determination:reasons.length?'UNDETERMINED':'SATISFIED',reasons};}"
+s=replace_function(s,'confirmationDetermination',confirmation)
+
 old="return !expectedSet.has(key)||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(evaluation.determination)||!evaluation.evidence?.sufficient||evaluation.reasons.some(reason=>reason.includes('independence is not application-established'));"
 new="return !expectedSet.has(key)||evaluation.determination!=='SATISFIED'||!evaluation.evidence?.sufficient||evaluation.reasons.some(reason=>reason.includes('independence is not application-established'));"
 if old in s:s=s.replace(old,new,1)
@@ -55,5 +62,13 @@ old16="if(stage===16){for(const defect of confirmedDefects(project)){const id=re
 new16="if(stage===16){for(const defect of confirmedDefects(project)){const id=recordId(defect,'defects'),changes=records(project,'changes').filter(c=>String(recordValue(c,'TRIGGERING_DEFECT_IDS')||'').includes(id)&&scopeMatches(c,defect.scope||{},requiredVersionScopeKeys('changes')));if(changes.length!==1)add(['Exactly one scope-matched responsible-layer changeset trace is required for '+id+'.']);else{const v=validateChangeTrace(changes[0],project);if(!v.valid)add(v.reasons.map(x=>id+': '+x));}}}"
 if old16 in s:s=s.replace(old16,new16,1)
 elif new16 not in s:raise RuntimeError('Stage 16 trace gate anchor missing')
+
+# Central API contract lint: effectiveDetermination returns a string. Reject any
+# direct member dereference on its call result. Object-returning evaluator and
+# regression helper usages remain valid.
+if re.search(r"effectiveDetermination\([^;\n]{0,600}?\)\.determination",s):
+    raise RuntimeError('effectiveDetermination string result is dereferenced as an object')
+if ".map(r=>effectiveDetermination('verification',r,testForResult(project,r),project)).filter(x=>x.determination" in s:
+    raise RuntimeError('effectiveDetermination string result is dereferenced after map')
 
 p.write_text(s)
