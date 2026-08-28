@@ -16,9 +16,15 @@ jobs:
       - name: Apply exact coordinated patch and restore the single-workflow tree
         shell: bash
         run: |
-          base64 -d .zero-loss.patch.gz.b64 | gzip -d > /tmp/zero-loss.patch
+          test "$(find .zero-loss-patch -maxdepth 1 -type f -name 'chunk-*' | wc -l)" -eq 8
+          cat .zero-loss-patch/chunk-* > /tmp/zero-loss.patch.gz.b64
+          test "$(wc -c < /tmp/zero-loss.patch.gz.b64)" -eq 23224
+          echo '9e8b42152089c9563266573a8dc2172cf315ce804864cb9ea08a6341df05ab1b  /tmp/zero-loss.patch.gz.b64' | sha256sum -c -
+          base64 --decode /tmp/zero-loss.patch.gz.b64 > /tmp/zero-loss.patch.gz
+          gzip --decompress --stdout /tmp/zero-loss.patch.gz > /tmp/zero-loss.patch
           git apply --check /tmp/zero-loss.patch
           git apply /tmp/zero-loss.patch
+          rm -rf .zero-loss-patch
           rm -f .zero-loss.patch.gz.b64
           rm -f .github/workflows/zero-loss-source-export.yml
           rm -f .github/workflows/apply-zero-loss-patch.yml
