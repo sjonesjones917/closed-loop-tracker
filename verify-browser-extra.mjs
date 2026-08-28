@@ -36,6 +36,10 @@ async function main(){
   const lifecycleUi=await evalValue(cdp,`(()=>{const management=document.querySelector('#project-management'),danger=document.querySelector('#project-danger-zone');return {management:Boolean(management),managementOpen:Boolean(management?.open),danger:Boolean(danger),dangerOpen:Boolean(danger?.open),deleteVisible:Boolean(document.querySelector('#delete-project')?.offsetParent),headerMenu:Boolean(document.querySelector('.project-action-menu')),text:management?.textContent||''};})()`);
   assert(lifecycleUi.management&&!lifecycleUi.managementOpen,'Project lifecycle controls must be present but collapsed by default.');
   assert(lifecycleUi.headerMenu,'Compact Project actions menu is missing.');
+  await click(cdp,'.project-action-menu>summary');
+  const actionMenu=await evalValue(cdp,`(()=>{const menu=document.querySelector('.project-action-menu'),popover=document.querySelector('.project-action-popover');if(!menu||!popover)return null;const r=popover.getBoundingClientRect(),s=getComputedStyle(popover);return {open:menu.open,visible:s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0,left:r.left,right:r.right,viewport:innerWidth};})()`);
+  assert(actionMenu?.open&&actionMenu.visible,'Project actions control did not reveal its menu.');
+  assert(actionMenu.left>=0&&actionMenu.right<=actionMenu.viewport+1,'Project actions menu is clipped or outside the mobile viewport.');
   if(lifecycleUi.danger)assert(!lifecycleUi.dangerOpen&&!lifecycleUi.deleteVisible,'Permanent deletion must remain concealed until the operator deliberately opens the danger zone.');
   assert(lifecycleUi.text.includes('Start from copy')&&lifecycleUi.text.includes('Create backup now')&&lifecycleUi.text.includes('Verify stored files now'),'Project lifecycle options are incomplete.');
 
