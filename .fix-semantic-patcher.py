@@ -4,4 +4,9 @@ s=p.read_text()
 start=s.index('def replace_function(')
 end=s.index("\np=Path('workflow-engine.js')", start)
 replacement='''def replace_function(text, name, replacement):\n    marker=f"function {name}("\n    start=text.find(marker)\n    if start<0: raise RuntimeError(f'missing function {name}')\n    paren=text.find('(',start)\n    depth=0; quote=None; esc=False; close=None\n    for i in range(paren,len(text)):\n        ch=text[i]\n        if quote:\n            if esc: esc=False\n            elif ch=='\\\\': esc=True\n            elif ch==quote: quote=None\n            continue\n        if ch in "'\\\"`": quote=ch\n        elif ch=='(': depth+=1\n        elif ch==')':\n            depth-=1\n            if depth==0:\n                close=i\n                break\n    if close is None: raise RuntimeError(f'unclosed parameters for {name}')\n    brace=text.find('{',close)\n    if brace<0: raise RuntimeError(f'missing body for {name}')\n    depth=0; quote=None; esc=False; i=brace\n    while i<len(text):\n        ch=text[i]\n        if quote:\n            if esc: esc=False\n            elif ch=='\\\\': esc=True\n            elif ch==quote: quote=None\n        else:\n            if ch in "'\\\"`": quote=ch\n            elif ch=='{': depth+=1\n            elif ch=='}':\n                depth-=1\n                if depth==0:\n                    return text[:start]+replacement+text[i+1:]\n        i+=1\n    raise RuntimeError(f'unclosed function {name}')\n'''
-p.write_text(s[:start]+replacement+s[end:])
+s=s[:start]+replacement+s[end:]
+block_start=s.index('# Replace evidence function while preserving a single evidenceReferences declaration.')
+block_end=s.index("\nverification=r'''", block_start)
+fixed="""# Replace evidence helpers using the function-aware parser. Default destructuring in parameters is not a function body.\ns=replace_function(s,'evaluateEvidenceSufficiency','')\ns=replace_function(s,'evidenceReferences','')\nanchor=s.find('function evidenceChainExplanation')\nif anchor<0: raise RuntimeError('evidenceChainExplanation anchor missing')\ns=s[:anchor]+semantic+'\\n'+s[anchor:]\n"""
+s=s[:block_start]+fixed+s[block_end:]
+p.write_text(s)
