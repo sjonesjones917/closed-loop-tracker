@@ -7,13 +7,40 @@ def extract_function(text: str, name: str) -> str:
     starts = [(text.find(pattern), pattern) for pattern in patterns if text.find(pattern) >= 0]
     if not starts:
         return f'FUNCTION {name}: NOT FOUND\n'
-    start, pattern = min(starts)
-    brace = text.find('{', start)
+    start, _ = min(starts)
+    paren = text.find('(', start)
     depth = 0
     quote = None
     escape = False
-    template_depth = 0
-    for index in range(brace, len(text)):
+    body = -1
+    for index in range(paren, len(text)):
+        ch = text[index]
+        if escape:
+            escape = False
+            continue
+        if ch == '\\':
+            escape = True
+            continue
+        if quote:
+            if ch == quote:
+                quote = None
+            continue
+        if ch in "'\"`":
+            quote = ch
+            continue
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if depth == 0:
+                body = text.find('{', index)
+                break
+    if body < 0:
+        return f'FUNCTION {name}: BODY NOT FOUND\n'
+    depth = 0
+    quote = None
+    escape = False
+    for index in range(body, len(text)):
         ch = text[index]
         if escape:
             escape = False
@@ -39,11 +66,10 @@ def extract_function(text: str, name: str) -> str:
 engine = Path('workflow-engine.js').read_text()
 prompt = Path('prompt-engine.js').read_text()
 app = Path('app-core.js').read_text()
-schema = Path('workflow-schema.js').read_text()
-pages = Path('.github/workflows/pages.yml').read_text()
+response = Path('response-ingestion.js').read_text()
 
 for name in [
-    'testExecutionPlan', 'artifactHandoff', 'evaluateContextIndependence',
+    'testExecutionPlan', 'executionHandoff', 'evaluateContextIndependence',
     'evaluateEvidenceContract', 'evaluateEvidenceSufficiency',
     'evaluateResultConsistency', 'effectiveDetermination', 'validateTraceIntegrity',
     'comparisonFacts', 'detectCurrentContradictions', 'releaseMetrics',
@@ -55,22 +81,10 @@ for name in [
 print('\n===== RAW FAVORABLE-VERDICT TRUST HITS =====')
 for number, line in enumerate(engine.splitlines(), 1):
     if re.search(r"recordValue\([^\n]+(?:'DETERMINATION'|'RESULT'|'PROCESS_DETERMINATION'|'PRODUCT_DETERMINATION')", line) and 'effectiveDetermination' not in line and 'claim' not in line.lower():
-        print(f'{number}: {line[:1200]}')
+        print(f'{number}: {line[:2400]}')
 
-print('\n===== PROMPT ENGINE KEY HITS =====')
-for number, line in enumerate(prompt.splitlines(), 1):
-    if re.search(r'Stage 0?6|Stage 0?7|Stage 11|Stage 12|Stage 23|Stage 24|FILES YOU|MUST NOT RECEIVE|MUST RETURN|false|boundary|malformed|stale', line, re.I):
-        print(f'{number}: {line[:1600]}')
-
-print('\n===== APP CORE KEY HITS =====')
-for number, line in enumerate(app.splitlines(), 1):
-    if re.search(r'effective|determination|contradiction|stability|canonical state changed|next required action|conversation|final JSON|handoff|withhold|expect', line, re.I):
-        print(f'{number}: {line[:1600]}')
-
-print('\n===== SCHEMA CONTROLLED FIELD TYPES =====')
-for number, line in enumerate(schema.splitlines(), 1):
-    if re.search(r'EXECUTION_OUTCOME|PREFLIGHT_OBSERVATION|OBSERVATION_OUTCOME|CONFIRMATION', line):
-        print(f'{number}: {line[:1600]}')
-
-print('\n===== PAGES WORKFLOW =====')
-print(pages)
+print('\n===== INDEPENDENCE / CAPABILITY FIELDS =====')
+for source_name, source in [('ENGINE', engine), ('PROMPT', prompt), ('APP', app), ('INGESTION', response)]:
+    for number, line in enumerate(source.splitlines(), 1):
+        if re.search(r'CAPABIL|CONTEXT_ID|INDEPENDEN|EXECUTION_RECEIPT|PRODUCTION_CONTEXT|REVIEWER_CONTEXT|VERIFIER_CONTEXT', line, re.I):
+            print(f'{source_name}:{number}: {line[:2400]}')
