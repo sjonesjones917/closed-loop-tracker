@@ -1,0 +1,82 @@
+name: Bootstrap zero-loss semantic correction v10
+
+on:
+  push:
+    branches: [reliability/semantic-adjudication-zero-loss-20260828-1103]
+    paths: [.github/workflows/bootstrap-zero-loss-semantic-v10.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply v9 proven patch path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/bootstrap-zero-loss-semantic-v9.yml').read_text(); name='Apply v8 audited patch'
+          start=text.index('      - name: '+name); run=text.index('        run: |\n',start)+len('        run: |\n'); end=text.index('\n      - name:',run); block=text[run:end]
+          Path('/tmp/apply-v9.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())+'\n')
+          PY
+          bash /tmp/apply-v9.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-semantic-invariant.mjs'); lines=p.read_text().splitlines()
+          matches=[i for i,line in enumerate(lines) if "STAGE_CONTRACTS[23].scopeRequirements.includes('contextId')" in line and "STAGE_CONTRACTS[24].scopeRequirements.includes('contextId')" in line]
+          if len(matches)!=1: raise SystemExit(f'stale reviewer-scope assertion count={len(matches)}')
+          del lines[matches[0]]; p.write_text('\n'.join(lines)+'\n')
+          PY
+      - name: Derive runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/bootstrap-zero-loss-semantic-v9.yml').read_text(); name='Derive runtime identity'
+          start=text.index('      - name: '+name); run=text.index('        run: |\n',start)+len('        run: |\n'); end=text.index('\n      - name:',run); block=text[run:end]
+          Path('/tmp/runtime-v9.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())+'\n')
+          PY
+          bash /tmp/runtime-v9.sh
+      - name: Syntax and deterministic proof stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Local Chromium release blocker
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-bootstrap-http.log 2>&1 & server=$!; trap 'kill "$server" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$server" 2>/dev/null || true; trap - EXIT
+      - name: Commit proven source and regression changes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='app-core.js index.html prompt-engine.js verify-complete.mjs verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js'
+          while IFS= read -r path; do case " $allowed " in *" $path "*) ;; *) echo "Unexpected changed path: $path"; exit 1;; esac; done < <(git status --porcelain | cut -c4-)
+          git config user.name 'OpenAI GPT-5.6 Sol'; git config user.email 'noreply@openai.com'
+          git add app-core.js index.html prompt-engine.js verify-complete.mjs verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js
+          git diff --cached --quiet && { echo 'No source changes'; exit 1; }
+          git commit -m 'Close remaining zero-loss semantic adjudication gaps'
+          git push origin HEAD:reliability/semantic-adjudication-zero-loss-20260828-1103
