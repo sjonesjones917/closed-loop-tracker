@@ -1,0 +1,19 @@
+name: Audit remaining zero-loss trust paths
+
+on:
+  push:
+    branches:
+      - reliability/zero-loss-semantic-adjudication-clean
+    paths:
+      - .github/workflows/zero-loss-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect remaining semantic and operator trust paths
+        run: python3 .zero-loss-audit.py
