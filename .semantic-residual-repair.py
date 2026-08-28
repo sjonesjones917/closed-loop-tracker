@@ -77,7 +77,12 @@ for name in ['test-fixtures.mjs','verify-ingestion.mjs','verify-complete.mjs','v
     t=re.sub(r"ACTUAL_RESULT:('(?:ACCEPTED|SATISFIED|PASSED)'|\"(?:ACCEPTED|SATISFIED|PASSED)\")(?!,EXECUTION_OUTCOME)",lambda m:f"ACTUAL_RESULT:{m.group(1)},EXECUTION_OUTCOME:'ACCEPTED_INVALID'",t)
     fp.write_text(t)
 
-# Refresh the exact shared runtime cache identity after runtime edits.
+# Refresh the exact shared runtime cache identity using the same canonical
+# Git-blob manifest algorithm enforced by verify-hash.mjs.
 runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-digest=hashlib.sha256(b''.join(Path(f).read_bytes() for f in runtime)).hexdigest()[:16]
-ih=Path('index.html');h=ih.read_text();h=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js)\?v=[^"]+("\s*></script>)',lambda m:m.group(1)+f'?v={digest}'+m.group(2),h);ih.write_text(h)
+def git_blob_sha(path):
+    data=Path(path).read_bytes()
+    return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+manifest=''.join(f'{name}:{git_blob_sha(name)}\n' for name in runtime).encode()
+runtime_identity='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]
+ih=Path('index.html');h=ih.read_text();h=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js)\?v=[^"]+("\s*></script>)',lambda m:m.group(1)+f'?v={runtime_identity}'+m.group(2),h);ih.write_text(h)
