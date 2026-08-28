@@ -16,6 +16,10 @@ s=must(s,"const jobId=String(projectsOrJobId||'').trim(),expected=options?.expec
 s=must(s,"    const projectUiRow=await request(meta.get('projectUi'));if(projectUiRow?.value&&typeof projectUiRow.value==='object'&&!Array.isArray(projectUiRow.value)&&Object.prototype.hasOwnProperty.call(projectUiRow.value,jobId)){const nextProjectUi=clone(projectUiRow.value);delete nextProjectUi[jobId];meta.put({key:'projectUi',value:nextProjectUi,updatedAt:now()});}\n    const lastCommitted=", "    const projectUiRow=await request(meta.get('projectUi'));if(projectUiRow?.value&&typeof projectUiRow.value==='object'&&!Array.isArray(projectUiRow.value)&&Object.prototype.hasOwnProperty.call(projectUiRow.value,jobId)){const nextProjectUi=clone(projectUiRow.value);delete nextProjectUi[jobId];meta.put({key:'projectUi',value:nextProjectUi,updatedAt:now()});}\n    if(suppressRetainedProject)meta.put({key:'retainedProjectSuppressed',value:{jobId,at:now()},updatedAt:now()});\n    const lastCommitted=",'transactional retained suppression');
 write('project-store.js',s);
 
+s=read('index.html');
+s=must(s,".record-card .record-body{padding:9px;border-top:1px solid #e4e7e4}",".record-card .record-body{padding:9px;border-top:1px solid #e4e7e4}#project-danger-zone:not([open])>.record-body{display:none!important}",'collapsed danger concealment');
+write('index.html',s);
+
 s=read('verify-browser-extra.mjs');
 if(!s.includes("extra:project-lifecycle-functional"))throw new Error('Functional lifecycle browser proof was not injected before finalization.');
 const endMarker="  assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);";
