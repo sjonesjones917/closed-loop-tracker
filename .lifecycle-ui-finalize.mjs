@@ -8,8 +8,7 @@ s=must(s,"projectStore.removeProject(jobId,{expectedProjectRevision:Number(delet
 s=must(s,"try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});","if(!(await projectStore.metaGet('retainedProjectSuppressed')))try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});",'retained loader suppression');
 const danger=/  const danger=current\.isRetainedTestProject\?(`[^`]*`):(`[^`]*`);/;
 const dm=s.match(danger);if(!dm)throw new Error('Missing retained danger-zone conditional');s=s.replace(danger,`  const danger=${dm[2]};`);
-const archive=/\$\{current\.isRetainedTestProject\?'':(`?<button id=\\"archive-project\\"[^`]*`?)\}/;
-const am=s.match(archive);if(!am)throw new Error('Missing retained archive-button conditional');s=s.replace(archive,am[1]);
+s=must(s,"${current.isRetainedTestProject?'':`<button id=\"archive-project\" type=\"button\">Archive project</button>`}","<button id=\"archive-project\" type=\"button\">Archive project</button>",'retained archive-button conditional');
 write('app-core.js',s);
 
 s=read('project-store.js');
@@ -18,10 +17,7 @@ s=must(s,"    const projectUiRow=await request(meta.get('projectUi'));if(project
 write('project-store.js',s);
 
 s=read('verify-browser-extra.mjs');
-const marker="  console.log('extra:closed-connection-prompt-save');";
-if(!s.includes("extra:project-lifecycle-functional")){
- const block=read('.lifecycle-ui-diagnostic.mjs').match(/const block=`([\s\S]*?)`;\ns=s\.replace/);if(!block)throw new Error('Cannot recover lifecycle functional proof block');const decoded=block[1].replace(/\\n/g,'\n').replace(/\\`/g,'`').replace(/\\\\\"/g,'\\\"');s=s.replace(marker,decoded+marker);
-}
+if(!s.includes("extra:project-lifecycle-functional"))throw new Error('Functional lifecycle browser proof was not injected before finalization.');
 const endMarker="  assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);";
 if(!s.includes(endMarker))throw new Error('Missing browser final assertion marker');
 const retained=`  console.log('extra:retained-project-delete-suppression');\n  await click(cdp,'[data-view=\\"Project\\"]');\n  const retainedOption=await evalValue(cdp,\`(()=>{const p=document.querySelector('#project-picker');const o=Array.from(p?.options||[]).find(x=>x.textContent.includes('JOB-20260823144121'));return o?.value??null;})()\`);assert(retainedOption!==null,'Retained reference project was unavailable in a clean CI profile.');\n  await evalValue(cdp,\`(()=>{const p=document.querySelector('#project-picker');p.value=\${JSON.stringify(retainedOption)};p.dispatchEvent(new Event('change',{bubbles:true}));return true;})()\`);await waitExpr(cdp,\`document.querySelector('#current-project-summary')?.textContent?.startsWith('JOB-20260823144121')\`);\n  await click(cdp,'[data-view=\\"Project\\"]');await evalValue(cdp,\`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()\`);await fill(cdp,'#delete-project-confirmation','JOB-20260823144121');await waitExpr(cdp,\`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled\`);await click(cdp,'#delete-project');await waitExpr(cdp,\`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))\`,12000);\n  await evalValue(cdp,\`location.reload();true\`);await sleep(500);await waitExpr(cdp,\`globalThis.closedLoopAppReady===true\`,20000);assert(!(await evalValue(cdp,\`closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))\`)),'Deleted retained project was re-injected after reload.');assert(await evalValue(cdp,\`closedLoopProjectStore.metaGet('retainedProjectSuppressed').then(x=>x?.jobId==='JOB-20260823144121')\`),'Retained-project suppression was not committed transactionally.');\n\n`;
