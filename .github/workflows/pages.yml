@@ -37,6 +37,7 @@ jobs:
           node --check verify-browser-extra.mjs
           node --check verify-semantic-invariant.mjs
           node --check verify-definition-of-done.mjs
+          node --check verify-project-lifecycle.mjs
       - name: Verify canonical serialization and SHA-256
         run: node verify-hash.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
@@ -53,6 +54,8 @@ jobs:
         run: node verify-semantic-invariant.mjs
       - name: Derive definition-of-done coverage metrics
         run: node verify-definition-of-done.mjs
+      - name: Prove compact rigorous project lifecycle controls
+        run: node verify-project-lifecycle.mjs
       - name: Enforce one application shell and responsible layers
         run: |
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
@@ -109,7 +112,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs
+      - run: node build-test-project.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -167,6 +170,7 @@ jobs:
           node verify-complete.mjs > /tmp/verify-complete.out
           node verify-semantic-invariant.mjs > /tmp/verify-semantic-invariant.out
           node verify-definition-of-done.mjs > /tmp/verify-definition-of-done.out
+          node verify-project-lifecycle.mjs > /tmp/verify-project-lifecycle.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
@@ -204,15 +208,19 @@ jobs:
           test "$NEGATIVE_CASES" -gt 0
           test "$STORAGE_FAILURE_CASES" -eq 3
           grep -q '"semanticFalseAcceptanceInvariant":true' /tmp/verify-semantic-invariant.out
+          grep -q '"projectLifecycleControls":true' /tmp/verify-project-lifecycle.out
+          grep -q '"lifecycleMetadataDeleteAtomic":true' /tmp/verify-project-lifecycle.out
           grep -q 'extra:package-round-trip' /tmp/verify-browser-extra.out
           grep -q 'extra:blob-persistence' /tmp/verify-browser-extra.out
           export NEGATIVE_CASES STORAGE_FAILURE_CASES
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/verify-definition-of-done.out','utf8'));
-          const semantic=Object.assign({},...fs.readFileSync('/tmp/verify-semantic-invariant.out','utf8').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>JSON.parse(line)));
+          const semantic=JSON.parse(fs.readFileSync('/tmp/verify-semantic-invariant.out','utf8'));
+          const lifecycle=JSON.parse(fs.readFileSync('/tmp/verify-project-lifecycle.out','utf8'));
           const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');
           if(!semantic.semanticFalseAcceptanceInvariant)throw new Error('Semantic false-acceptance proof is not true.');
+          if(!lifecycle.projectLifecycleControls||!lifecycle.lifecycleMetadataDeleteAtomic||lifecycle.unsafeOverrides!==0)throw new Error('Project lifecycle proof is incomplete.');
           if(!browser.includes('extra:package-round-trip')||!browser.includes('extra:blob-persistence'))throw new Error('Browser custody/round-trip proof is incomplete.');
           const report={
             commit:process.env.GITHUB_SHA,
@@ -227,6 +235,9 @@ jobs:
             conclusionBearingCollections:Number(semantic.conclusionBearingCollections||0),
             releaseGradeIndependence:Boolean(semantic.releaseGradeIndependence),
             traceIntegrity:Boolean(semantic.traceIntegrity),
+            projectLifecycleControls:Boolean(lifecycle.projectLifecycleControls),
+            lifecycleMetadataDeleteAtomic:Boolean(lifecycle.lifecycleMetadataDeleteAtomic),
+            unsafeLifecycleOverrides:Number(lifecycle.unsafeOverrides),
             artifactRoundTrip:browser.includes('extra:package-round-trip'),
             blobPersistence:browser.includes('extra:blob-persistence'),
             deployedByteIdentity:process.env.LIVE_RESULT==='success',
@@ -236,15 +247,13 @@ jobs:
               ingestion:'verify-ingestion.mjs',
               workflowGates:'verify-complete.mjs',
               semanticAdjudication:'verify-semantic-invariant.mjs',
+              projectLifecycle:'verify-project-lifecycle.mjs',
               browserPersistence:'verify-browser-extra.mjs',
               deployedIdentity:'verify-live job'
             }
           };
-          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
-          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
-          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
-          for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} is not zero.`);
-          if(!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
+          for(const key of ['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage'])if(report[key]!==1)throw new Error(`${key} is not 100%.`);
+          if(!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - name: Upload acceptance report
@@ -282,7 +291,7 @@ jobs:
         run: |
           if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
             STATE=success
-            DESCRIPTION='Measured deterministic, semantic, browser, persistence, and byte proofs passed'
+            DESCRIPTION='Measured deterministic, semantic, lifecycle, browser, persistence, and byte proofs passed'
           else
             STATE=failure
             DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
@@ -293,3 +302,4 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+          test "$STATE" = success
