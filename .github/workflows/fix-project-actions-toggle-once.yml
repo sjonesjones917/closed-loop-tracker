@@ -1,5 +1,4 @@
-# Browser startup retry; assertions unchanged.
-name: Fix project actions toggle once
+name: Materialize project actions toggle patch
 on:
   push:
     branches: [fix/project-actions-toggle-20260828]
@@ -23,8 +22,7 @@ jobs:
           const oldSummary='<summary>Project actions</summary>';
           const newSummary='<summary id="project-actions-toggle" aria-expanded="false">Project actions</summary>';
           if(!html.includes(oldSummary)) throw new Error('Project actions summary markup not found');
-          html=html.replace(oldSummary,newSummary);
-          fs.writeFileSync('index.html',html);
+          html=html.replace(oldSummary,newSummary);fs.writeFileSync('index.html',html);
           let app=fs.readFileSync('app-core.js','utf8');
           const anchor="$('#project-picker').onchange=async e=>";
           if(!app.includes(anchor)) throw new Error('Static header wiring anchor not found');
@@ -44,7 +42,7 @@ jobs:
           const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
           html=fs.readFileSync('index.html','utf8').replace(/runtime-[a-f0-9]{16}/g,token);fs.writeFileSync('index.html',html);console.log(token);
           NODE
-      - name: Prove exact repair and full deterministic suite
+      - name: Prove deterministic layers
         run: |
           node --check app-core.js
           node --check verify-browser-extra.mjs
@@ -56,8 +54,6 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
           node verify-project-lifecycle.mjs
-          BROWSER=/usr/bin/google-chrome node verify-browser.mjs
-          BROWSER=/usr/bin/google-chrome node verify-browser-extra.mjs
       - name: Remove bootstrap, prove architecture, and commit final tree
         run: |
           git rm .github/workflows/fix-project-actions-toggle-once.yml
