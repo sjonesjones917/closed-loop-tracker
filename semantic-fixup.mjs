@@ -25,6 +25,9 @@ function detectCurrentContradictions(project){
   return out;
 }
 `);
+const oldStage7="const outcome=upper(recordValue(mutation,'EXECUTION_OUTCOME')||recordValue(mutation,'ACTUAL_RESULT'));if(!['REJECTED_INVALID','ACCEPTED_INVALID','UNDETERMINED','NOT_RUN'].includes(outcome))add([recordId(mutation,'failureTests')+': controlled EXECUTION_OUTCOME is required (REJECTED_INVALID/ACCEPTED_INVALID/UNDETERMINED/NOT_RUN).']);";
+const newStage7="const explicitOutcome=upper(recordValue(mutation,'EXECUTION_OUTCOME')),legacyActual=upper(recordValue(mutation,'ACTUAL_RESULT')),expected=upper(recordValue(mutation,'EXPECTED_REJECTION')),legacyOutcome=!explicitOutcome&&expected.includes('REJECT')&&['REJECTED','REJECT','DENIED','BLOCKED'].includes(legacyActual)?'REJECTED_INVALID':!explicitOutcome&&expected.includes('REJECT')&&['ACCEPTED','PASS','PASSED','SUCCESS','SUCCEEDED'].includes(legacyActual)?'ACCEPTED_INVALID':'',outcome=explicitOutcome||legacyOutcome;if(!['REJECTED_INVALID','ACCEPTED_INVALID','UNDETERMINED','NOT_RUN'].includes(outcome))add([recordId(mutation,'failureTests')+': controlled EXECUTION_OUTCOME is required (REJECTED_INVALID/ACCEPTED_INVALID/UNDETERMINED/NOT_RUN); only the finite legacy rejection/acceptance vocabulary is migrated.']);";
+if(!s.includes(oldStage7))throw new Error('Stage 7 adjudication wrapper was not found.');s=s.replace(oldStage7,newStage7);
 if(s===before)throw new Error('Expected adjudication fixups were not found.');
 fs.writeFileSync('workflow-engine.js',s);
 const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
