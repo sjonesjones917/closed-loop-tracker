@@ -1,12 +1,12 @@
-Patch generator repaired with additive execution-plan compatibility aliases and exported reliability helpers.
+Patch generator repaired with compatibility aliases, exported reliability helpers, and preserved Stage 12 matrix diagnostics.
 Reliability patch applied.
 file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9
 const assert=(value,message)=>{if(!value)throw new Error(message);};
                                                ^
 
-Error: Stage 12 verification matrix gate is bypassable.
+Error: Stage 11 incorrectly depends on Stage 12 verification data: Exactly ten separately preserved completed run outputs are required; found 0.; RUN-STAGE11-0 lacks a current accepted raw response.; RUN-STAGE11-1 lacks a current accepted raw response.; RUN-STAGE11-2 lacks a current accepted raw response.; RUN-STAGE11-3 lacks a current accepted raw response.; RUN-STAGE11-4 lacks a current accepted raw response.; RUN-STAGE11-5 lacks a current accepted raw response.; RUN-STAGE11-6 lacks a current accepted raw response.; RUN-STAGE11-7 lacks a current accepted raw response.; RUN-STAGE11-8 lacks a current accepted raw response.; RUN-STAGE11-9 lacks a current accepted raw response.
     at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9:48)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:106:3
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:125:35
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
