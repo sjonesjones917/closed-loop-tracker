@@ -42,9 +42,10 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
-          node verify-definition-of-done.mjs
-      - name: Remove bootstrap
+      - name: Remove bootstrap before final architecture proof
         run: rm .lifecycle-finalize.mjs .github/workflows/finalize-lifecycle-once.yml
+      - name: Final definition-of-done proof
+        run: node verify-definition-of-done.mjs
       - name: Commit final tree
         run: |
           git config user.name 'github-actions[bot]'
