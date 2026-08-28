@@ -16,6 +16,7 @@ jobs:
           node semantic-fixup.mjs
           node verification-trust-fixup.mjs
           node regression-adjudication-fixup.mjs
+          node trace-adjudication-fixup.mjs
       - name: Syntax and retained architecture
         run: |
           node --check workflow-engine.js
