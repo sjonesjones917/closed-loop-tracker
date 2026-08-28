@@ -13,26 +13,51 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax and architecture baseline
+      - id: baseline
+        name: Syntax and architecture baseline
+        continue-on-error: true
         run: |
           set -euo pipefail
           node build-test-project.mjs
           for file in *.js *.mjs; do node --check "$file"; done
           node verify-hash.mjs
           node verify.mjs
-      - name: Semantic adjudication invariant suite
+      - id: adjudication
+        name: Semantic adjudication invariant suite
+        continue-on-error: true
         run: timeout 120s node verify-adjudication.mjs
-      - name: Ingestion and canonical invariants
+      - id: ingestion
+        name: Ingestion and canonical invariants
+        continue-on-error: true
         run: |
           timeout 180s node verify-ingestion.mjs
           timeout 180s node verify-complete.mjs
-      - name: Prompt isolation and semantics
+      - id: prompts
+        name: Prompt isolation and semantics
+        continue-on-error: true
         run: timeout 180s node verify-prompt-semantics.mjs
-      - name: Continuous 30-stage lifecycle
+      - id: lifecycle
+        name: Continuous 30-stage lifecycle
+        continue-on-error: true
         run: timeout 240s node verify-full-cycle.mjs
+      - name: Publish diagnostic result
+        if: always()
+        env:
+          BASELINE: ${{ steps.baseline.outcome }}
+          ADJUDICATION: ${{ steps.adjudication.outcome }}
+          INGESTION: ${{ steps.ingestion.outcome }}
+          PROMPTS: ${{ steps.prompts.outcome }}
+          LIFECYCLE: ${{ steps.lifecycle.outcome }}
+        run: |
+          printf 'baseline=%s\nadjudication=%s\ningestion=%s\nprompts=%s\nlifecycle=%s\n' "$BASELINE" "$ADJUDICATION" "$INGESTION" "$PROMPTS" "$LIFECYCLE"
+          test "$BASELINE" = success
+          test "$ADJUDICATION" = success
+          test "$INGESTION" = success
+          test "$PROMPTS" = success
+          test "$LIFECYCLE" = success
