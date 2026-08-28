@@ -1,4 +1,4 @@
-name: Final Stage 23 compatibility repair
+name: Consolidated reliability compatibility repair
 on:
   push:
     branches:
@@ -16,10 +16,50 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply Stage 23 semantic-evidence compatibility repair
+      - name: Apply compatibility repairs
         run: |
           set -euo pipefail
-          node fix-stage23-evidence.mjs
+          node <<'NODE'
+          const fs=require('fs');
+          const path='workflow-engine.js';
+          let s=fs.readFileSync(path,'utf8');
+          const replace=(from,to,label)=>{
+            if(s.includes(to)) return;
+            if(!s.includes(from)) throw new Error(`Expected source for ${label} not found.`);
+            s=s.replace(from,to);
+          };
+          replace(
+            "const presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));\n  return {iterationId:String(iterationId||''),requirements,tests,runs,expected,expectedCount:expected.length,actual:valid,actualCount:valid.length,missing,duplicates,invalid,valid,satisfied,violated,undetermined,selfValidated,coverage:expected.length?valid.length/expected.length:0,complete:expected.length>0&&!missing.length&&!duplicates.length&&!invalid.length&&valid.length===expected.length};",
+            "const counts=new Map([...grouped.entries()].map(([key,items])=>[key,items.length])),presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));\n  return {iterationId:String(iterationId||''),requirements,tests,runs,expected,expectedCount:expected.length,counts,actual:valid,actualCount:valid.length,missing,duplicates,invalid,valid,satisfied,violated,undetermined,selfValidated,coverage:expected.length?valid.length/expected.length:0,complete:expected.length>0&&!missing.length&&!duplicates.length&&!invalid.length&&valid.length===expected.length};",
+            'verificationMatrix counts contract'
+          );
+          replace(
+            "if(testType==='MEANING'||Number(result?.stage)===23){requiredEvidenceClasses.push('MEANING_COMPARISON');",
+            "if(Number(result?.stage)===23||String(recordValue(result,'MEANING_REVIEW_ID')||'').trim()){requiredEvidenceClasses.push('MEANING_COMPARISON');",
+            'Stage 23 meaning evidence predicate'
+          );
+          replace(
+            "const requiredOperations=normalizedPurpose==='CONFIRMATION'?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'],stage=normalizedPurpose==='CONFIRMATION'?19:17,currentOperations=new Set(acceptedChanges(project,stage).filter(change=>String(change.scope?.iterationId||'')===id).map(change=>change.operation||'COMPLETE')),missingOperations=requiredOperations.filter(operation=>!currentOperations.has(operation));",
+            "const requiredOperations=normalizedPurpose==='CONFIRMATION'?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:['EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'],stage=normalizedPurpose==='CONFIRMATION'?19:17,currentOperations=new Set(acceptedChanges(project,stage).filter(change=>String(change.scope?.iterationId||'')===id).map(change=>change.operation||'COMPLETE')),missingOperations=requiredOperations.filter(operation=>!currentOperations.has(operation));",
+            'Stage 17 application-owned freeze proof'
+          );
+          replace(
+            "if(matches.length!==1)reasons.push(`${testId} requires exactly one current independent meaning result.`);",
+            "if(matches.length!==1)reasons.push(`Meaning review for test ${testId} requires exactly one current independent result.`);",
+            'Stage 23 diagnostic'
+          );
+          replace(
+            "case 24:{const tests=(recordsForCurrentScope(project,'tests').length?recordsForCurrentScope(project,'tests'):records(project,'tests')).filter(item=>upper(recordValue(item,'TEST_TYPE'))==='ADVERSARIAL'),results=records(project,'adversarialResults');for(const test of tests){const testId=recordId(test,'tests'),matches=results.filter(item=>String(recordValue(item,'TEST_ID')||item.relationships?.TEST_ID||'')===testId);if(matches.length!==1)reasons.push(`${testId} requires exactly one current adversarial result.`);else{const result=matches[0],requirement=records(project,'requirements').find(item=>requirementId(item)===testRequirementId(test));if(upper(recordValue(result,'DETERMINATION'))!=='SATISFIED')reasons.push(`${testId} adversarial determination is not SATISFIED.`);if(!evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient)reasons.push(`${testId} lacks evidence sufficient for the adversarial proposition.`);}}break;}",
+            "case 24:{const tests=(recordsForCurrentScope(project,'tests').length?recordsForCurrentScope(project,'tests'):records(project,'tests')).filter(item=>upper(recordValue(item,'TEST_TYPE'))==='ADVERSARIAL'),results=records(project,'adversarialResults');for(const test of tests){const testId=recordId(test,'tests'),matches=results.filter(item=>String(recordValue(item,'TEST_ID')||item.relationships?.TEST_ID||'')===testId);if(matches.length!==1)reasons.push(`${testId} requires exactly one current adversarial result.`);else{const result=matches[0],requirement=records(project,'requirements').find(item=>requirementId(item)===testRequirementId(test));if(upper(recordValue(result,'DETERMINATION'))!=='SATISFIED')reasons.push(`${testId} adversarial determination is not SATISFIED.`);if(!evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient)reasons.push(`${testId} lacks evidence sufficient for the adversarial proposition.`);}}const activeRegressions=records(project,'regressions').filter(item=>upper(recordValue(item,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');for(const regression of activeRegressions){const regId=recordId(regression,'regressions'),matches=results.filter(item=>String(recordValue(item,'REG_ID')||item.relationships?.REG_ID||'')===regId);if(matches.length!==1)reasons.push(`Active permanent regression ${regId} requires exactly one current adversarial challenge.`);else if(upper(recordValue(matches[0],'DETERMINATION'))!=='SATISFIED')reasons.push(`Active permanent regression ${regId} adversarial challenge is not SATISFIED.`);}break;}",
+            'Stage 24 active regression challenges'
+          );
+          replace(
+            "recordValue(result,'PRE_CORRECTION_EVIDENCE'),recordValue(result,'POST_CORRECTION_EVIDENCE')].filter",
+            "recordValue(result,'PRE_CORRECTION_EVIDENCE'),recordValue(result,'POST_CORRECTION_EVIDENCE'),recordValue(result,'PRODUCT_LOCATION'),recordValue(result,'EXTERNAL_SOURCE_EVIDENCE'),recordValue(result,'REQUIRED_MEANING'),recordValue(result,'OBSERVED_MEANING'),recordValue(result,'EVIDENCE_BASED_COMPARISON')].filter",
+            'Stage 23 schema-native direct evidence'
+          );
+          fs.writeFileSync(path,s);
+          NODE
           node <<'NODE'
           const fs=require('fs'),{createHash}=require('crypto');
           const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
@@ -33,10 +73,14 @@ jobs:
           NODE
           node --check workflow-engine.js
           node verify-hash.mjs
-          node verify-complete.mjs
-          node verify-ingestion.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+      - name: Complete deterministic suite
+        run: node verify-complete.mjs
+      - name: Ingestion suite
+        run: node verify-ingestion.mjs
+      - name: Full 30-stage cycle suite
+        run: node verify-full-cycle.mjs
+      - name: Prompt semantic isolation suite
+        run: node verify-prompt-semantics.mjs
       - name: Commit repair and remove one-time machinery
         run: |
           set -euo pipefail
@@ -44,5 +88,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m "fix: align Stage 23 evidence sufficiency with schema"
+          git commit -m "fix: preserve reliability compatibility contracts"
           git push origin HEAD:reliability/execution-evidence-independence-v2
