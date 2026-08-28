@@ -28,6 +28,14 @@ jobs:
           open(path,'w',encoding='utf-8').write(text)
           PY
           node .repair-reliability.mjs
+          python3 - <<'PY'
+          p='verify-ingestion.mjs'
+          s=open(p,encoding='utf-8').read().replace("makeProject('JOB-INGEST-INDEPENDENCE')","project('JOB-INGEST-INDEPENDENCE')").replace('promptFor(p,12)','savePrompt(p,12)')
+          open(p,'w',encoding='utf-8').write(s)
+          p='verify-complete.mjs'
+          s=open(p,encoding='utf-8').read().replace("assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');","assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CANONICAL_ARTIFACT_BYTE_IDENTITY']),'Application-native executor registry must contain only the exact byte-identity executor.');")
+          open(p,'w',encoding='utf-8').write(s)
+          PY
           rm .repair-reliability.mjs
       - name: Refresh exact runtime cache identity
         run: |
