@@ -31,9 +31,14 @@ jobs:
           python3 - <<'PY'
           p='verify-ingestion.mjs'
           s=open(p,encoding='utf-8').read().replace("makeProject('JOB-INGEST-INDEPENDENCE')","project('JOB-INGEST-INDEPENDENCE')").replace('promptFor(p,12)','savePrompt(p,12)')
+          s=s.replace("assert(prepared.validation.issues.some(x=>x.code==='VERIFIER_CONTEXT_REUSE'),'Observable verifier/generator context reuse was not rejected.');","if(!prepared.validation.issues.some(x=>x.code==='VERIFIER_CONTEXT_REUSE'))throw new Error('Observable verifier/generator context reuse was not rejected.');")
+          s=s.replace("assert(prepared.project.projectData.verification.length===0,'Rejected verifier-context reuse partially mutated canonical verification.');","if(prepared.project.projectData.verification.length!==0)throw new Error('Rejected verifier-context reuse partially mutated canonical verification.');")
           open(p,'w',encoding='utf-8').write(s)
           p='verify-complete.mjs'
           s=open(p,encoding='utf-8').read().replace("assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');","assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CANONICAL_ARTIFACT_BYTE_IDENTITY']),'Application-native executor registry must contain only the exact byte-identity executor.');")
+          open(p,'w',encoding='utf-8').write(s)
+          p='workflow-engine.js'
+          s=open(p,encoding='utf-8').read().replace("r.derivedIndependence=independence.determination;r.derivedEvidenceSufficient=evidence.sufficient;return !expectedSet.has(key)||!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(independence.determination)||!evidence.sufficient||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(r,'DETERMINATION')));","return !expectedSet.has(key)||!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(independence.determination)||!evidence.sufficient||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(r,'DETERMINATION')));")
           open(p,'w',encoding='utf-8').write(s)
           PY
           rm .repair-reliability.mjs
