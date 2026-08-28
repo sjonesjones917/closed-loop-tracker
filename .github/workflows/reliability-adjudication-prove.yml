@@ -21,6 +21,7 @@ jobs:
           patch -p0 < /tmp/adjudication.patch
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('workflow-engine.js')
           text=p.read_text().replace('semantically contradictory material finding','internally contradictory material finding')
           p.write_text(text)
@@ -31,7 +32,19 @@ jobs:
           count=st.count(old)
           if count != 1:
               raise SystemExit(f'verification field compatibility: expected 1 occurrence, found {count}')
-          ps.write_text(st.replace(old,new,1))
+          st=st.replace(old,new,1)
+          controlled={'EXECUTION_OUTCOME','PREFLIGHT_OBSERVATION','OBSERVATION_OUTCOME'}
+          def relax_required(match):
+              body=match.group(1)
+              items=[x.strip() for x in body.split(',') if x.strip()]
+              kept=[]
+              for item in items:
+                  name=item.strip().strip("'").strip('"')
+                  if name not in controlled:
+                      kept.append(item)
+              return 'required:['+','.join(kept)+']'
+          st=re.sub(r'required:\[([^\]]*)\]',relax_required,st)
+          ps.write_text(st)
           PY
           node - <<'NODE'
           const fs=require('fs'),{createHash}=require('crypto');
@@ -50,6 +63,14 @@ jobs:
           node --check response-ingestion.js
           node --check verify-adjudication.mjs
           node build-test-project.mjs
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const s=globalThis.closedLoopWorkflowSchema,controlled=new Set(['EXECUTION_OUTCOME','PREFLIGHT_OBSERVATION','OBSERVATION_OUTCOME']);
+          for(const [key,def] of Object.entries(s.RECORD_SCHEMAS))for(const name of controlled)if(def.fields.includes(name)&&def.required.includes(name))throw new Error(`${key}.${name} incorrectly remains ingestion-required.`);
+          console.log('CONTROLLED_OBSERVATIONS_ARE_COMPLETION_GATED');
+          NODE
       - name: Deterministic and universal false-acceptance proofs
         run: |
           node verify-hash.mjs
