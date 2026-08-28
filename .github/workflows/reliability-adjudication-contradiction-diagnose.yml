@@ -1,0 +1,16 @@
+name: Reliability adjudication contradiction diagnosis
+on:
+  push:
+    branches: [reliability/semantic-adjudication-20260827]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[contradiction-diagnose]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch and print contradiction logic
+        run: |
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          patch -p0 < /tmp/adjudication.patch
+          grep -n -A 90 -B 3 'function detectCurrentContradictions' workflow-engine.js
