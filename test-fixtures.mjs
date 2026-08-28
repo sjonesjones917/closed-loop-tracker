@@ -21,10 +21,30 @@ export function scalarFor(def,name,overrides={}){
   if(upper.includes('ACTUAL_RESULT'))return 'SATISFIED';
   return `fixture-${String(name).toLowerCase()}`;
 }
+function controlledOutcome(value){
+  const token=String(value??'').trim().toUpperCase().replace(/[\s-]+/g,'_');
+  if(['SATISFIED','PASS','PASSED','SUCCESS','SUCCEEDED','MATCH','MATCHED','COMPLETE','COMPLETED','CLEAN'].includes(token))return 'SATISFIED';
+  if(['VIOLATED','FAIL','FAILED','FAILURE','MISMATCH','MISMATCHED'].includes(token))return 'VIOLATED';
+  if(['UNDETERMINED','UNKNOWN','BLOCKED','NOT_RUN','UNAVAILABLE','PENDING'].includes(token))return token==='NOT_RUN'?'NOT_RUN':'UNDETERMINED';
+  return null;
+}
 export function recordProposal(schema,collection,{tempKey,targetId,relationships={},overrides={},evidenceRef='evidence-1'}={}){
   const def=schema.RECORD_SCHEMAS[collection],fields={};
   for(const name of def.required){const fd=def.fieldDefinitions[name];if(fd?.producer===schema.PRODUCER.AGENT)fields[name]=scalarFor(fd,name,overrides);}
   for(const [name,value] of Object.entries(overrides))if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=value;
+  const put=(name,value)=>{if(value&&def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT&&!Object.hasOwn(fields,name))fields[name]=value;};
+  if(collection==='failureTests'){
+    const raw=String(overrides.EXECUTION_OUTCOME??overrides.ACTUAL_RESULT??'').trim().toUpperCase().replace(/[\s-]+/g,'_');
+    put('EXECUTION_OUTCOME',raw==='REJECTED_INVALID'||raw==='REJECTED'||raw==='REJECT'?'REJECTED_INVALID':raw==='ACCEPTED_INVALID'||raw==='ACCEPTED'?'ACCEPTED_INVALID':raw==='NOT_RUN'?'NOT_RUN':'UNDETERMINED');
+  }
+  if(collection==='preflightRecords'){
+    const claim=controlledOutcome(overrides.PREFLIGHT_OBSERVATION??overrides.DETERMINATION);
+    put('PREFLIGHT_OBSERVATION',claim==='SATISFIED'?'CLEAR':claim==='VIOLATED'?'DEFECT_PRESENT':'UNDETERMINED');
+  }
+  if(['verification','deterministicResults','meaningResults','adversarialResults','representationInspections'].includes(collection)){
+    const observed=collection==='verification'?overrides.OBSERVED_RESULT:collection==='deterministicResults'?overrides.ACTUAL_RESULT:collection==='meaningResults'?overrides.EVIDENCE_BASED_COMPARISON:null;
+    put('OBSERVATION_OUTCOME',controlledOutcome(overrides.OBSERVATION_OUTCOME??observed??overrides.DETERMINATION)||'UNDETERMINED');
+  }
   return {tempKey:targetId?undefined:(tempKey||`${collection}-1`),targetId:targetId||undefined,fields,relationships,evidenceRefs:evidenceRef?[evidenceRef]:[]};
 }
 export function evidence(label='fixture'){return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`${label} evidence`,location:'verify-full-cycle.mjs',content:`controlled ${label} evidence`};}
