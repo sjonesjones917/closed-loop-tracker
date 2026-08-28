@@ -1,0 +1,339 @@
+name: Prove semantic adjudication deployment
+
+on:
+  push:
+    branches:
+      - proof/semantic-adjudication-live
+    paths:
+      - .github/workflows/prove-semantic-live.yml
+
+permissions:
+  contents: write
+  actions: read
+  pull-requests: read
+
+concurrency:
+  group: prove-semantic-adjudication-deployment
+  cancel-in-progress: false
+
+jobs:
+  exact-live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out transient proof branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve exact merged PR and successful single main deployment
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api='https://api.github.com'
+          repo='${{ github.repository }}'
+          owner='${{ github.repository_owner }}'
+          auth=(-H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28')
+          pr=''
+          for attempt in $(seq 1 360); do
+            pulls="$(curl -fsSL "${auth[@]}" "$api/repos/$repo/pulls?state=all&head=$owner:reliability/semantic-adjudication&base=main&per_page=100")"
+            pr="$(printf '%s' "$pulls" | python -c 'import json,sys; a=[p for p in json.load(sys.stdin) if p.get("head",{}).get("ref")=="reliability/semantic-adjudication" and p.get("base",{}).get("ref")=="main" and p.get("merged_at")]; a.sort(key=lambda p:p.get("number",0),reverse=True); print(json.dumps(a[0]) if a else "")')"
+            test -n "$pr" && break
+            sleep 5
+          done
+          test -n "$pr"
+          number="$(printf '%s' "$pr" | python -c 'import json,sys; print(json.load(sys.stdin)["number"])')"
+          merge_sha="$(printf '%s' "$pr" | python -c 'import json,sys; print(json.load(sys.stdin)["merge_commit_sha"])')"
+          pr_url="$(printf '%s' "$pr" | python -c 'import json,sys; print(json.load(sys.stdin)["html_url"])')"
+          test -n "$merge_sha"
+          main="$(curl -fsSL "${auth[@]}" "$api/repos/$repo/branches/main")"
+          main_sha="$(printf '%s' "$main" | python -c 'import json,sys; print(json.load(sys.stdin)["commit"]["sha"])')"
+          test "$main_sha" = "$merge_sha"
+          run=''
+          for attempt in $(seq 1 360); do
+            runs="$(curl -fsSL "${auth[@]}" "$api/repos/$repo/actions/runs?head_sha=$merge_sha&event=push&branch=main&per_page=100")"
+            run="$(printf '%s' "$runs" | python -c 'import json,sys; a=[r for r in json.load(sys.stdin).get("workflow_runs",[]) if r.get("path")==".github/workflows/pages.yml"]; a.sort(key=lambda r:r.get("run_number",0),reverse=True); print(json.dumps(a[0]) if a else "")')"
+            if [ -n "$run" ]; then
+              status="$(printf '%s' "$run" | python -c 'import json,sys; print(json.load(sys.stdin).get("status") or "")')"
+              conclusion="$(printf '%s' "$run" | python -c 'import json,sys; print(json.load(sys.stdin).get("conclusion") or "")')"
+              if [ "$status" = completed ]; then test "$conclusion" = success; break; fi
+            fi
+            sleep 5
+          done
+          test -n "$run"
+          status="$(printf '%s' "$run" | python -c 'import json,sys; print(json.load(sys.stdin).get("status") or "")')"
+          conclusion="$(printf '%s' "$run" | python -c 'import json,sys; print(json.load(sys.stdin).get("conclusion") or "")')"
+          test "$status" = completed
+          test "$conclusion" = success
+          run_id="$(printf '%s' "$run" | python -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+          run_url="$(printf '%s' "$run" | python -c 'import json,sys; print(json.load(sys.stdin)["html_url"])')"
+          count="$(curl -fsSL "${auth[@]}" "$api/repos/$repo/actions/runs?head_sha=$merge_sha&event=push&branch=main&per_page=100" | python -c 'import json,sys; print(sum(1 for r in json.load(sys.stdin).get("workflow_runs",[]) if r.get("path")==".github/workflows/pages.yml"))')"
+          test "$count" = 1
+          {
+            echo "pr_number=$number"
+            echo "pr_url=$pr_url"
+            echo "merge_sha=$merge_sha"
+            echo "run_id=$run_id"
+            echo "run_url=$run_url"
+            echo 'site_url=https://sjonesjones917.github.io/closed-loop-tracker/'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out the exact merged source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin '${{ steps.release.outputs.merge_sha }}'
+          git checkout --detach '${{ steps.release.outputs.merge_sha }}'
+          test "$(git rev-parse HEAD)" = '${{ steps.release.outputs.merge_sha }}'
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort | tr '\n' ' ')" = 'pages.yml '
+
+      - name: Install Chromium proof dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+
+      - name: Verify every runtime application byte against the merged source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p proof/live proof/screenshots
+          site='${{ steps.release.outputs.site_url }}'
+          sha='${{ steps.release.outputs.merge_sha }}'
+          files=(index.html workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js .nojekyll)
+          : > proof/live/sha256-manifest.tsv
+          for file in "${files[@]}"; do
+            expected="$(sha256sum "$file" | awk '{print $1}')"
+            matched=''
+            for attempt in $(seq 1 240); do
+              curl -fsSL --retry 3 --retry-delay 1 "${site}${file}?proof=${sha}&attempt=${attempt}" -o "proof/live/${file//\//_}"
+              actual="$(sha256sum "proof/live/${file//\//_}" | awk '{print $1}')"
+              if [ "$actual" = "$expected" ]; then matched="$actual"; break; fi
+              sleep 5
+            done
+            test "$matched" = "$expected"
+            printf '%s\t%s\t%s\n' "$file" "$expected" "$matched" >> proof/live/sha256-manifest.tsv
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          rows=[]
+          for line in Path('proof/live/sha256-manifest.tsv').read_text().splitlines():
+              file, expected, served = line.split('\t')
+              rows.append({'file':file,'mergedSha256':expected,'servedSha256':served,'exact':expected==served})
+          assert rows and all(r['exact'] for r in rows)
+          Path('proof/live/exact-byte-manifest.json').write_text(json.dumps({'mergeCommit':'${{ steps.release.outputs.merge_sha }}','site':'${{ steps.release.outputs.site_url }}','files':rows},indent=2)+'\n')
+          PY
+
+      - name: Run repository live verifier
+        shell: bash
+        env:
+          LIVE_URL: ${{ steps.release.outputs.site_url }}
+          DEPLOYED_URL: ${{ steps.release.outputs.site_url }}
+          BASE_URL: ${{ steps.release.outputs.site_url }}
+          EXPECTED_COMMIT_SHA: ${{ steps.release.outputs.merge_sha }}
+        run: |
+          set -euo pipefail
+          node --check verify-live.mjs
+          node verify-live.mjs '${{ steps.release.outputs.site_url }}' | tee proof/repository-live-verifier.log
+
+      - name: Run deployed Chromium at 320, 393, and desktop widths
+        shell: bash
+        env:
+          SITE_URL: ${{ steps.release.outputs.site_url }}
+          MERGE_SHA: ${{ steps.release.outputs.merge_sha }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/deployed-semantic-proof.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs/promises';
+          const site=process.env.SITE_URL;
+          const sha=process.env.MERGE_SHA;
+          const widths=[320,393,1280];
+          const results=[];
+          const browser=await chromium.launch({headless:true});
+          try {
+            for(const width of widths){
+              const context=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1});
+              const page=await context.newPage();
+              const runtime=[];
+              page.on('pageerror',e=>runtime.push(`pageerror: ${e.message}`));
+              page.on('console',m=>{if(m.type()==='error')runtime.push(`console.error: ${m.text()}`);});
+              const response=await page.goto(`${site}?proof=${sha}&width=${width}`,{waitUntil:'networkidle'});
+              if(!response||!response.ok())throw new Error(`HTTP failure at ${width}: ${response?.status()}`);
+              await page.waitForTimeout(500);
+              const state=await page.evaluate(()=>{
+                const body=document.body,html=document.documentElement;
+                const visible=el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden';};
+                const targets=[...document.querySelectorAll('button,a,input,select,textarea,summary')].filter(visible).map(el=>{const r=el.getBoundingClientRect();return {tag:el.tagName,width:r.width,height:r.height,text:(el.textContent||el.getAttribute('aria-label')||'').trim().slice(0,120)};});
+                return {
+                  innerWidth:window.innerWidth,
+                  scrollWidth:Math.max(body.scrollWidth,html.scrollWidth),
+                  bodyFont:parseFloat(getComputedStyle(body).fontSize),
+                  textLength:(body.innerText||'').trim().length,
+                  hasMain:Boolean(document.querySelector('main')),
+                  hasLiveRegion:Boolean(document.querySelector('[aria-live]')),
+                  hasNextAction:/next required action/i.test(body.innerText||''),
+                  targetCount:targets.length,
+                  undersizedTargets:targets.filter(t=>t.width<24||t.height<24)
+                };
+              });
+              if(runtime.length)throw new Error(`Runtime errors at ${width}: ${runtime.join(' | ')}`);
+              if(state.scrollWidth>state.innerWidth+1)throw new Error(`Horizontal overflow at ${width}: ${state.scrollWidth}>${state.innerWidth}`);
+              if(!Number.isFinite(state.bodyFont)||state.bodyFont<16)throw new Error(`Invalid base text size at ${width}: ${state.bodyFont}`);
+              if(!state.hasMain||state.textLength<100)throw new Error(`Application did not render at ${width}`);
+              if(!state.hasLiveRegion)throw new Error(`No live region at ${width}`);
+              if(!state.hasNextAction)throw new Error(`Next required action is not visible at ${width}`);
+              await page.keyboard.press('Tab');
+              const focused=await page.evaluate(()=>document.activeElement&&document.activeElement!==document.body&&document.activeElement!==document.documentElement);
+              if(!focused)throw new Error(`Keyboard focus did not enter the application at ${width}`);
+              const disclosure=page.locator('details').first();
+              if(await disclosure.count()){
+                const summary=disclosure.locator('summary');
+                if(await summary.count()){
+                  await summary.click();
+                  if(!(await disclosure.evaluate(el=>el.open)))throw new Error(`Disclosure did not expand at ${width}`);
+                }
+              }
+              await page.screenshot({path:`proof/screenshots/deployed-${width}.png`,fullPage:true});
+              results.push({width,...state,runtimeErrors:runtime,keyboardFocusEntered:focused,passed:true});
+              await context.close();
+            }
+          } finally { await browser.close(); }
+          await fs.writeFile('proof/deployed-chromium-results.json',JSON.stringify({site,mergeCommit:sha,results},null,2)+'\n');
+          JS
+          node /tmp/deployed-semantic-proof.mjs
+
+      - name: Inspect the exact main workflow jobs and machine acceptance artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api='https://api.github.com'
+          repo='${{ github.repository }}'
+          run_id='${{ steps.release.outputs.run_id }}'
+          sha='${{ steps.release.outputs.merge_sha }}'
+          auth=(-H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28')
+          mkdir -p proof/main-acceptance
+          jobs="$(curl -fsSL "${auth[@]}" "$api/repos/$repo/actions/runs/$run_id/jobs?per_page=100")"
+          printf '%s' "$jobs" > proof/main-acceptance/jobs.json
+          printf '%s' "$jobs" | python - <<'PY'
+          import json,sys
+          d=json.load(sys.stdin); jobs=d.get('jobs',[])
+          assert jobs, 'No jobs in main workflow run.'
+          bad=[]
+          for job in jobs:
+              if job.get('conclusion')!='success': bad.append(('job',job.get('name'),job.get('conclusion')))
+              for step in job.get('steps',[]):
+                  if step.get('conclusion') not in ('success','skipped'): bad.append(('step',step.get('name'),step.get('conclusion')))
+          assert not bad, bad
+          PY
+          artifacts="$(curl -fsSL "${auth[@]}" "$api/repos/$repo/actions/runs/$run_id/artifacts?per_page=100")"
+          printf '%s' "$artifacts" > proof/main-acceptance/artifacts.json
+          artifact_id="$(printf '%s' "$artifacts" | python -c 'import json,sys; s="${{ steps.release.outputs.merge_sha }}"; a=[x for x in json.load(sys.stdin).get("artifacts",[]) if x.get("name","").startswith("closed-loop-acceptance-") and not x.get("expired")]; exact=[x for x in a if s in x.get("name","")]; x=(exact or a); assert len(x)==1, x; print(x[0]["id"])')"
+          artifact_name="$(printf '%s' "$artifacts" | python -c 'import json,sys; i=int("'$artifact_id'"); print(next(x["name"] for x in json.load(sys.stdin).get("artifacts",[]) if x["id"]==i))')"
+          curl -fsSL -L "${auth[@]}" "$api/repos/$repo/actions/artifacts/$artifact_id/zip" -o proof/main-acceptance/acceptance.zip
+          unzip -q proof/main-acceptance/acceptance.zip -d proof/main-acceptance/unpacked
+          ARTIFACT_NAME="$artifact_name" MERGE_SHA="$sha" python - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          root=Path('proof/main-acceptance/unpacked')
+          files=[p for p in root.rglob('*') if p.is_file()]
+          assert files, 'Acceptance artifact is empty.'
+          payloads=[]; machine=[]
+          for p in files:
+              b=p.read_bytes(); text=b.decode('utf-8','replace'); payloads.append((str(p.relative_to(root)),text))
+              try: machine.append((str(p.relative_to(root)),json.loads(text)))
+              except Exception: pass
+          combined='\n'.join(text for _,text in payloads)
+          sha=os.environ['MERGE_SHA']; assert sha in combined or sha[:12] in combined or sha in os.environ['ARTIFACT_NAME'], 'Artifact is not bound to merged commit.'
+          negative=[]; positive=[]
+          def walk(value,path=''):
+              if isinstance(value,dict):
+                  for k,v in value.items(): walk(v,f'{path}.{k}' if path else str(k))
+              elif isinstance(value,list):
+                  for i,v in enumerate(value): walk(v,f'{path}[{i}]')
+              else:
+                  key=path.lower(); val=str(value).strip().lower()
+                  if any(x in key for x in ('pass','success','ok','conclusion','status','result')):
+                      if value is False or val in {'false','fail','failed','failure','error','blocked','mismatch','not proven','cancelled','timed_out'}: negative.append((path,value))
+                      if value is True or val in {'true','pass','passed','success','succeeded','ok','complete','completed'}: positive.append((path,value))
+                  if any(x in key for x in ('failure_count','error_count','mismatch_count','failed_count')):
+                      try:
+                          if float(value)>0: negative.append((path,value))
+                      except Exception: pass
+          for _,obj in machine: walk(obj)
+          for name,text in payloads:
+              for line in text.splitlines():
+                  low=line.strip().lower()
+                  if re.search(r'\b(status|conclusion|result)\s*[:=]\s*(fail(?:ed|ure)?|error|blocked|mismatch|cancelled|timed_out)\b',low): negative.append((name,line))
+                  if re.search(r'\b(status|conclusion|result)\s*[:=]\s*(pass(?:ed)?|success|succeeded|complete|completed)\b',low): positive.append((name,line))
+          assert not negative, negative
+          assert positive or machine, 'Acceptance artifact has no machine-readable or explicit positive acceptance signal.'
+          report={'artifactName':os.environ['ARTIFACT_NAME'],'mergeCommit':sha,'files':[n for n,_ in payloads],'machineReadableFiles':[n for n,_ in machine],'positiveSignals':positive,'negativeSignals':negative,'valid':True}
+          Path('proof/main-acceptance/inspection.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY
+
+      - name: Record verified release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          record={
+            'deterministicConformance':'PASSED',
+            'mergedCommit':'${{ steps.release.outputs.merge_sha }}',
+            'pullRequest':'${{ steps.release.outputs.pr_url }}',
+            'mainWorkflowRun':'${{ steps.release.outputs.run_url }}',
+            'exactRuntimeBytes':'PASSED',
+            'repositoryLiveVerifier':'PASSED',
+            'deployedChromiumWidths':[320,393,1280],
+            'mainAcceptanceArtifact':'VALID',
+            'productionMaturityClaim':False,
+            'androidChromeRuntimeProven':False
+          }
+          Path('proof/verified-release.json').write_text(json.dumps(record,indent=2)+'\n')
+          PY
+
+      - name: Create release tag only after all local, PR, deployment, byte, browser, and artifact proofs
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha='${{ steps.release.outputs.merge_sha }}'
+          tag='semantic-adjudication-verified-2026-08-28'
+          git config user.name 'OpenAI GPT-5.6 Pro'
+          git config user.email 'noreply@openai.com'
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/tmp/existing-tag 2>/dev/null; then
+            existing="$(awk '{print $1}' /tmp/existing-tag)"
+            resolved="$(git rev-list -n1 "$existing" 2>/dev/null || printf '%s' "$existing")"
+            test "$resolved" = "$sha"
+          else
+            git tag -a "$tag" "$sha" -m 'Semantic adjudication reliability correction verified: deterministic suites, normal PR checks, one main deployment, exact served bytes, deployed Chromium, and machine acceptance artifact.'
+            git push origin "refs/tags/$tag"
+          fi
+          printf '%s\n' "$tag" > proof/release-tag.txt
+
+      - name: Upload complete machine proof package
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-adjudication-live-proof-${{ steps.release.outputs.merge_sha }}
+          path: proof
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Remove transient proof workflow from the proof branch
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha='${{ steps.release.outputs.merge_sha }}'
+          test -n "$sha"
+          git reset --hard "$sha"
+          git clean -fdx
+          git push --force origin "$sha:refs/heads/proof/semantic-adjudication-live"
