@@ -19,11 +19,13 @@ jobs:
           python3 .semantic-adjudication-patch.py
       - name: Prove semantic invariant
         run: |
-          node --check workflow-engine.js
-          node --check workflow-schema.js
-          node --check verify-semantic-adjudication.mjs
-          node build-test-project.mjs
-          node verify-semantic-adjudication.mjs
+          set -o pipefail
+          : > /tmp/semantic.log
+          node --check workflow-engine.js 2>&1 | tee -a /tmp/semantic.log
+          node --check workflow-schema.js 2>&1 | tee -a /tmp/semantic.log
+          node --check verify-semantic-adjudication.mjs 2>&1 | tee -a /tmp/semantic.log
+          node build-test-project.mjs 2>&1 | tee -a /tmp/semantic.log
+          node verify-semantic-adjudication.mjs 2>&1 | tee -a /tmp/semantic.log
       - name: Run deterministic acceptance stack
         run: |
           set -o pipefail
@@ -34,15 +36,15 @@ jobs:
           node verify-complete.mjs 2>&1 | tee -a /tmp/deterministic.log
           node verify-full-cycle.mjs 2>&1 | tee -a /tmp/deterministic.log
           node verify-prompt-semantics.mjs 2>&1 | tee -a /tmp/deterministic.log
-      - name: Persist deterministic failure diagnostic
+      - name: Persist proof failure diagnostic
         if: failure()
         run: |
-          cp /tmp/deterministic.log semantic-proof-failure.log || true
+          cat /tmp/semantic.log /tmp/deterministic.log 2>/dev/null > semantic-proof-failure.log || true
           git checkout -- .semantic-adjudication-patch.py .fix-semantic-patcher.py .github/workflows/semantic-adjudication-final.yml .github/workflows/semantic-adjudication-patch.yml || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add semantic-proof-failure.log
-          git commit -m 'chore: semantic deterministic diagnostic [semantic-diagnostic]' || true
+          git commit -m 'chore: semantic proof diagnostic [semantic-diagnostic]' || true
           git push origin HEAD:semantic-adjudication-final-20260827 || true
       - name: Chromium acceptance
         run: |
