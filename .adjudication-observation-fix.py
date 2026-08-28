@@ -12,19 +12,22 @@ if old_check in s:s=s.replace(old_check,new_check,1)
 elif new_check not in s:raise RuntimeError('evidence-contract structural-presence anchor missing')
 p.write_text(s)
 
-# Permanently prove that a factual no-defect observation is structurally present
-# but still requires canonical evidence, while an adverse representation cannot
-# become satisfied through a favorable submitted conclusion.
 vf=Path('verify-semantic-adjudication.mjs');v=vf.read_text()
 anchor="// Controlled Stage 7 outcome is application-evaluated, not prose-parsed.\n"
 block="""// Structural presence is distinct from adverse-value meaning. "No defects" is a real observation,
-// not a missing observation, but it never substitutes for canonical evidence.
+// not a missing observation. Stage 25 satisfaction still requires canonical evidence and
+// application-owned exact artifact byte facts; submitted favorable prose alone cannot control it.
 {
-  const p=clone(base),eid=addEvidence(p),ok=withEvidence(canonical('representationInspections',25,{DETERMINATION:'SATISFIED',OBSERVATIONS:'No defects',EVIDENCE:'supplemental'}),eid);
+  const p=clone(base),eid=addEvidence(p),sha='a'.repeat(64),scope={...engine.currentScope(p),productId:'PRODUCT-REP'};
+  p.job.CURRENT_PRODUCT_ID='PRODUCT-REP';
+  p.projectData.artifacts.push({id:'ARTIFACT-REP',stage:25,active:true,scope,fields:{ARTIFACT_ID:'ARTIFACT-REP',FILENAME:'representation.pdf',TYPE:'application/pdf',VERSION:'v1',BYTE_SIZE:7,SHA256:sha,ROLE:'DELIVERABLE',STORAGE_REFERENCE:'indexeddb:ARTIFACT-REP',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  const ok=withEvidence(canonical('representationInspections',25,{ARTIFACT_ID:'ARTIFACT-REP',BYTE_SIZE:7,SHA256:sha,RENDERING_OPENING_EVIDENCE:'opened exact artifact',OBSERVATIONS:'No defects',DETERMINATION:'SATISFIED',EVIDENCE:'supplemental'}),eid);ok.scope=scope;ok.relationships={ARTIFACT_ID:'ARTIFACT-REP'};
   assert(engine.evaluateEvidenceContract(null,ok,null,p).sufficient===true,'No-defect representation observation was treated as structurally absent');
-  assert(engine.effectiveDetermination('representationInspections',ok,null,p)==='SATISFIED','Structurally present no-defect observation with canonical evidence did not adjudicate SATISFIED');
-  const bare=canonical('representationInspections',25,{DETERMINATION:'SATISFIED',OBSERVATIONS:'No defects',EVIDENCE:'supplemental'});
+  assert(engine.effectiveDetermination('representationInspections',ok,null,p)==='SATISFIED','Exact representation facts plus canonical evidence did not adjudicate SATISFIED');
+  const bare=canonical('representationInspections',25,{ARTIFACT_ID:'ARTIFACT-REP',BYTE_SIZE:7,SHA256:sha,RENDERING_OPENING_EVIDENCE:'opened exact artifact',OBSERVATIONS:'No defects',DETERMINATION:'SATISFIED',EVIDENCE:'supplemental'});bare.scope=scope;bare.relationships={ARTIFACT_ID:'ARTIFACT-REP'};
   assert(engine.effectiveDetermination('representationInspections',bare,null,p)!=='SATISFIED','No-defect narrative bypassed canonical evidence');
+  const adverse=withEvidence(canonical('representationInspections',25,{ARTIFACT_ID:'ARTIFACT-REP',DEFECT_ID:'DEFECT-REP',BYTE_SIZE:7,SHA256:sha,RENDERING_OPENING_EVIDENCE:'opened exact artifact',OBSERVATIONS:'material rendering defect observed',DETERMINATION:'SATISFIED',EVIDENCE:'supplemental'}),eid);adverse.scope=scope;adverse.relationships={ARTIFACT_ID:'ARTIFACT-REP',DEFECT_ID:'DEFECT-REP'};
+  assert(engine.effectiveDetermination('representationInspections',adverse,null,p)==='VIOLATED','Linked representation defect did not override a favorable submitted conclusion');
 }
 
 """
