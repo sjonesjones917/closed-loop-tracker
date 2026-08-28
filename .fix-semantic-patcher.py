@@ -17,6 +17,19 @@ old_cross="effectiveDetermination(project,'deterministicResults',d,controllingTe
 new_cross="(effectiveDetermination(project,'deterministicResults',d,controllingTest(project,d))==='SATISFIED'||formalOutcome(claimedDetermination('deterministicResults',d))==='SATISFIED')"
 if old_cross not in s: raise RuntimeError('cross-method contradiction anchor missing')
 s=s.replace(old_cross,new_cross,1)
+# Stage 13 application fields are canonical derivations, not agent comparison assertions.
+comparison_tail="function comparisonFacts(project,requirementIdValue,iterationId){\n"
+if comparison_tail not in s: raise RuntimeError('comparisonFacts anchor missing')
+# Inject derivation helper after semantic block insertion later by appending to semantic raw string before its terminator.
+semantic_end="  return {RUN_DETERMINATIONS:runDeterminations,ALL_TEN_SATISFIED:runs.length===10&&values.every(v=>v==='SATISFIED'),ANY_VIOLATION:values.includes('VIOLATED'),ANY_UNDETERMINED:values.includes('UNDETERMINED')};\\n}'''"
+if semantic_end not in s: raise RuntimeError('comparisonFacts semantic terminator missing')
+derive_code="""  return {RUN_DETERMINATIONS:runDeterminations,ALL_TEN_SATISFIED:runs.length===10&&values.every(v=>v==='SATISFIED'),ANY_VIOLATION:values.includes('VIOLATED'),ANY_UNDETERMINED:values.includes('UNDETERMINED')};\n}\nfunction deriveComparisonRecords(project){for(const record of records(project,'comparisons')){const reqId=String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||''),iterationId=String(record.scope?.iterationId||recordValue(latestIteration(project,[10,17,19]),'ITERATION_ID')||'');if(!reqId||!iterationId)continue;const facts=comparisonFacts(project,reqId,iterationId),updates={RUN_DETERMINATIONS:facts.RUN_DETERMINATIONS,ALL_TEN_SATISFIED:facts.ALL_TEN_SATISFIED,ANY_VIOLATION:facts.ANY_VIOLATION,ANY_UNDETERMINED:facts.ANY_UNDETERMINED};record.fields=record.fields&&typeof record.fields==='object'?record.fields:{};for(const [key,value] of Object.entries(updates)){record.fields[key]=value;record[key]=value;}refreshRecordHashes(record,'comparisons');}return project;}'''"""
+s=s.replace(semantic_end,derive_code,1)
+# Recalculation deterministically refreshes comparison facts before any Stage 13+ gate reads them.
+recalc_anchor="function recalculate(project){\\n  ensureShape(project);"
+recalc_replacement="function recalculate(project){\\n  ensureShape(project);deriveComparisonRecords(project);"
+if recalc_anchor not in s: raise RuntimeError('recalculate patch anchor missing')
+s=s.replace(recalc_anchor,recalc_replacement,1)
 old="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; digest=hashlib.sha256(b''.join(Path(f).read_bytes() for f in runtime)).hexdigest()[:16]"
 new="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; blob=lambda f: hashlib.sha1((f'blob {len(Path(f).read_bytes())}\\0').encode()+Path(f).read_bytes()).hexdigest(); manifest=''.join(f'{f}:{blob(f)}\\n' for f in runtime); digest='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]"
 if old not in s: raise RuntimeError('runtime cache-token patch anchor missing')
