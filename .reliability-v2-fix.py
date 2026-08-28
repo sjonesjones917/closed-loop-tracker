@@ -23,4 +23,10 @@ s=s.replace(old,new,1)
 old_art="{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'a'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}"
 new_art="{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'a'.repeat(64),STORAGE_REFERENCE:'indexeddb:ART-V2',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}"
 if old_art not in s: raise RuntimeError('independence fixture artifact anchor missing')
-s=s.replace(old_art,new_art,1);p.write_text(s)
+s=s.replace(old_art,new_art,1)
+old_ctx="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;const run=engine.records(p,'freshContexts'"
+# The generated test uses runs in the following segment; patch only the context assignment prefix.
+prefix="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;const run=engine.records(p,'runs')"
+replacement_prefix="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.fields.CONTAMINATION_STATUS='NONE';ctx.CONTAMINATION_STATUS='NONE';ctx.fields.AUTHORIZED_PROJECT_INPUTS=[];ctx.AUTHORIZED_PROJECT_INPUTS=[];const run=engine.records(p,'runs')"
+if prefix not in s: raise RuntimeError('independence context fixture anchor missing')
+s=s.replace(prefix,replacement_prefix,1);p.write_text(s)
