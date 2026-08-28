@@ -1,0 +1,34 @@
+name: Remove final coordination probe
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/remove-coordination-probe.yml']
+permissions:
+  contents: write
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Preserve only the tested runtime patch and normal Pages workflow
+        shell: bash
+        run: |
+          grep -q 'compactHistoricalNavigationStage' app-core.js
+          grep -q 'historicalBackStarted' verify-browser.mjs
+          node --check app-core.js
+          node --check verify-browser.mjs
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f _probe_should_not_exist.txt ZERO_LOSS_COORDINATED_STATUS.md
+          git rm -f --ignore-unmatch \
+            .github/workflows/remove-coordination-probe.yml \
+            .github/workflows/zero-loss-clean-final.yml \
+            .github/workflows/finalize-zero-loss-coordinated.yml \
+            .github/workflows/apply-zero-loss-mobile-bounded.yml \
+            .github/workflows/zero-loss-source-export.yml \
+            .github/workflows/PR_DO_NOT_MERGE_SENTINEL.yml
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Remove all temporary coordination files'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
