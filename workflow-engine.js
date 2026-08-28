@@ -298,7 +298,7 @@ function gate(stage,project){
     case 8:{requireAccepted();requireCount('instructions',1);const reqs=mandatoryRequirements(project);const traced=new Set(recordsForCurrentScope(project,'instructionTraces').map(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')));const missing=reqs.filter(r=>!traced.has(requirementId(r))).map(requirementId);if(missing.length)reasons.push('Instruction traces are missing for: '+missing.join(', ')+'.');break;}
     case 9:
       requireAccepted();requireCount('preflightRecords',1);
-      if(collection('preflightRecords').some(record=>effectiveDetermination('preflightRecords',record,null,project)!==EFFECTIVE_SATISFIED))reasons.push('Instruction preflight contains an unresolved or semantically contradictory material finding.');
+      if(collection('preflightRecords').some(record=>effectiveDetermination('preflightRecords',record,null,project)!==EFFECTIVE_SATISFIED))reasons.push('Instruction preflight contains an unresolved or internally contradictory material finding.');
       break;
     case 10:requireAccepted();requireCount('iterations',1);requireCount('candidateFreezes',1);break;
     case 11:{requireAccepted();const iteration=latestIteration(project,[10,11]);const ev=evaluateIteration(project,recordId(iteration,'iterations'),'INITIAL');if(!ev.complete)reasons.push(...ev.reasons);break;}
