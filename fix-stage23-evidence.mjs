@@ -61,5 +61,15 @@ replace(
   "return {determination,productId,baselineId:String(project.job.CURRENT_BASELINE_ID||''),satisfied:affirmativeRequirements.length,violated:violatedRequirements.length,undetermined:unknownRequirements.length,mandatoryRequirementCount:requirements.length,mandatoryRequirementCounts:requirements.length,affirmativeEvidenceCount:affirmativeRequirements.length,affirmativeEvidenceCounts:affirmativeRequirements.length,violatedCount:violatedRequirements.length,violatedCounts:violatedRequirements.length,undeterminedCount:unknownRequirements.length,undeterminedCounts:unknownRequirements.length,validatorCount:tests.length,validatorCounts:tests.length,",
   'release metric compatibility aliases'
 );
+replace(
+  "const authorityId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||'').trim();if(!authorityId)missing.push('AUTHORITY');if(!instruction||!traces.length)missing.push('INSTRUCTION_TRACE');",
+  "const authorityId=String(recordValue(requirement,'SOURCE_ID')||requirement.relationships?.SOURCE_ID||recordValue(requirement,'USER_INPUT_RELATIONSHIP')||'').trim(),tracedInstructionIds=[...new Set(traces.map(item=>String(recordValue(item,'INSTRUCTION_ID')||item.relationships?.INSTRUCTION_ID||'')).filter(Boolean))],tracedInstructionId=tracedInstructionIds.length===1?tracedInstructionIds[0]:'',tracedInstruction=records(project,'instructions').find(item=>recordId(item,'instructions')===tracedInstructionId);if(!authorityId)missing.push('AUTHORITY');if(!tracedInstruction)missing.push('INSTRUCTION_TRACE');if(tracedInstructionIds.length>1)missing.push('AMBIGUOUS_INSTRUCTION_TRACE');",
+  'Stage 29 requirement-trace instruction resolution'
+);
+replace(
+  "INSTRUCTION_ID:instruction?recordId(instruction,'instructions'):'',EXECUTION_ID:product?String(recordValue(product,'EXECUTION_ID')||''):'',",
+  "INSTRUCTION_ID:tracedInstruction?recordId(tracedInstruction,'instructions'):'',EXECUTION_ID:product?String(recordValue(product,'EXECUTION_ID')||''):'',",
+  'Stage 29 exact traced instruction identity'
+);
 fs.writeFileSync(path,source);
 console.log('Applied consolidated reliability compatibility repairs.');
