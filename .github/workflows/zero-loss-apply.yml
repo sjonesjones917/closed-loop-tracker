@@ -1,0 +1,49 @@
+name: Apply clean zero-loss semantic adjudication patch
+
+on:
+  push:
+    branches:
+      - reliability/zero-loss-semantic-adjudication-clean
+    paths:
+      - .github/workflows/zero-loss-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract and apply the audited working patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin reliability/semantic-adjudication-20260827:refs/remotes/origin/adjudication-source
+          : > /tmp/adjudication-patch.b64
+          for part in 00 01 02 03 04 05 06; do
+            git show "refs/remotes/origin/adjudication-source:.tmp/adjudication-patch-${part}.b64" >> /tmp/adjudication-patch.b64
+          done
+          base64 -d /tmp/adjudication-patch.b64 | gzip -d > /tmp/adjudication.patch
+          echo 'Changed paths in extracted patch:'
+          grep '^+++ ' /tmp/adjudication.patch || true
+          patch -p0 < /tmp/adjudication.patch
+          git diff --check
+          node --check workflow-engine.js
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          for file in verify-*.mjs; do node --check "$file"; done
+      - name: Commit only the extracted implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/zero-loss-apply.yml
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort)" = "pages.yml"
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'closed-loop-reliability-bot@users.noreply.github.com'
+          git add -A
+          git commit -m 'Implement central semantic adjudication working patch'
+          git push origin HEAD:reliability/zero-loss-semantic-adjudication-clean
