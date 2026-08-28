@@ -216,8 +216,9 @@ jobs:
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/verify-definition-of-done.out','utf8'));
-          const semantic=JSON.parse(fs.readFileSync('/tmp/verify-semantic-invariant.out','utf8'));
-          const lifecycle=JSON.parse(fs.readFileSync('/tmp/verify-project-lifecycle.out','utf8'));
+          const jsonLines=path=>fs.readFileSync(path,'utf8').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>JSON.parse(line));
+          const semantic=Object.assign({},...jsonLines('/tmp/verify-semantic-invariant.out'));
+          const lifecycle=Object.assign({},...jsonLines('/tmp/verify-project-lifecycle.out'));
           const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');
           if(!semantic.semanticFalseAcceptanceInvariant)throw new Error('Semantic false-acceptance proof is not true.');
           if(!lifecycle.projectLifecycleControls||!lifecycle.lifecycleMetadataDeleteAtomic||lifecycle.unsafeOverrides!==0)throw new Error('Project lifecycle proof is incomplete.');
@@ -252,7 +253,10 @@ jobs:
               deployedIdentity:'verify-live job'
             }
           };
-          for(const key of ['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage'])if(report[key]!==1)throw new Error(`${key} is not 100%.`);
+          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
+          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
+          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
+          for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} must be zero.`);
           if(!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
@@ -296,6 +300,7 @@ jobs:
             STATE=failure
             DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
           fi
+          test "$(printf '%s' "$DESCRIPTION" | wc -c)" -le 140
           curl --fail-with-body --silent --show-error \
             --request POST \
             --header "Authorization: Bearer $GH_TOKEN" \
