@@ -38,7 +38,9 @@ jobs:
             idx=text.find(pat)
             if idx<0:
               print('MISSING_HELPER',name); continue
-            brace=text.find('{',idx)
+            sig_end=text.find('){',idx)
+            if sig_end<0: raise SystemExit(f'body delimiter not found for {name}')
+            brace=sig_end+1
             inject=f"globalThis.__adjudicationPerf['{name}']=(globalThis.__adjudicationPerf['{name}']||0)+1;"
             text=text[:brace+1]+inject+text[brace+1:]
           p.write_text(prefix+text)
