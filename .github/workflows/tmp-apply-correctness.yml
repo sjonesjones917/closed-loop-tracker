@@ -5,6 +5,7 @@ on:
     paths: ['.apply-payload/READY']
 permissions:
   contents: write
+  actions: read
 jobs:
   apply-and-verify:
     runs-on: ubuntu-latest
@@ -13,10 +14,15 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply exact prepared files
+      - name: Reconstruct exact audited candidate then apply final minimal delta
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          cat .apply-payload/part* | base64 -d > /tmp/correctness-first.tar.gz
-          tar -xzf /tmp/correctness-first.tar.gz
+          gh api /repos/${GITHUB_REPOSITORY}/actions/artifacts/9669108465/zip > /tmp/inspection.zip
+          unzip -q /tmp/inspection.zip -d /tmp/inspection
+          tar -xzf /tmp/inspection/reliability-payload.tar.gz -C .
+          cat .apply-payload/part* | base64 -d | gzip -d > /tmp/candidate-to-final.patch
+          patch -p1 < /tmp/candidate-to-final.patch
       - name: Run exact application acceptance before commit
         run: |
           node build-test-project.mjs
@@ -46,7 +52,7 @@ jobs:
           trap - EXIT
       - name: Remove one-time repair infrastructure and commit verified files
         run: |
-          rm -rf .apply-payload .github/workflows/tmp-apply-correctness.yml
+          rm -rf .apply-payload .github/workflows/tmp-apply-correctness.yml .github/workflows/apply-reliability-improvements.yml
           git config user.name 'closed-loop-verifier'
           git config user.email 'closed-loop-verifier@users.noreply.github.com'
           git add -A
