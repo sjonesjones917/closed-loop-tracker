@@ -1,5 +1,5 @@
 name: Direct semantic-gate integration proof
-# proof revision: 5
+# proof revision: 6
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: direct-semantic-gate-integration
+  group: direct-semantic-gate-integration-v6
   cancel-in-progress: false
 
 jobs:
@@ -45,13 +45,6 @@ jobs:
           ! grep -q 'gate=function adjudicationGate' workflow-engine.js
           grep -q 'REVIEWER_CONTEXT_ID' workflow-schema.js
 
-      - name: Install Chromium test dependency
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium
-
       - name: Prove syntax, architecture, semantic adjudication, ingestion, workflow, prompts, and full cycle
         shell: bash
         run: |
@@ -69,14 +62,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-direct-proof-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
 
       - name: Publish only the proven source tree
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf node_modules package.json package-lock.json
           git config user.name 'OpenAI GPT-5.6 Sol'
           git config user.email 'noreply@openai.com'
           git add -A
