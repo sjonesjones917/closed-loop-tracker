@@ -31,6 +31,13 @@ jobs:
           if 'OBSERVATION_OUTCOME' not in body:
               trimmed=body.rstrip(); body=trimmed+('' if trimmed.endswith(',') else ',')+"'OBSERVATION_OUTCOME'"+body[len(body.rstrip()):]; s=s[:a]+body+s[b:]
           p.write_text(s)
+
+          # Existing generic ingestion fixture must honor declared enums for newly controlled fields.
+          vf=Path('verify-ingestion.mjs'); v=vf.read_text()
+          old="for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}"
+          new="for(const name of def.required){const fieldDef=def.fieldDefinitions[name];if(fieldDef?.producer===schema.PRODUCER.AGENT)fields[name]=fieldDef.enumValues?.length?valueForDefinition(fieldDef):safeValue(name);}"
+          if old not in v: raise SystemExit('verify-ingestion generic fixture source not found')
+          vf.write_text(v.replace(old,new))
           PY
           node - <<'NODE'
           const fs=require('fs'),{createHash}=require('crypto');
@@ -47,6 +54,7 @@ jobs:
           node --check workflow-schema.js
           node --check workflow-engine.js
           node --check response-ingestion.js
+          node --check verify-ingestion.mjs
           node --check verify-adjudication.mjs
       - name: Run existing deterministic proofs plus universal adjudication invariant
         run: |
@@ -69,10 +77,10 @@ jobs:
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true; trap - EXIT
-      - name: Commit only proven production changes
+      - name: Commit only proven changes
         run: |
           git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-adjudication.mjs index.html
+          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-ingestion.mjs verify-adjudication.mjs index.html
           git diff --cached --check
           git commit -m '[adjudication-built] Make application determinations authoritative'
           git push origin HEAD:${GITHUB_REF_NAME}
