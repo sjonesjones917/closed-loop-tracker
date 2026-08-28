@@ -1,0 +1,88 @@
+name: Bootstrap zero-loss semantic correction v13
+
+on:
+  push:
+    branches: [reliability/semantic-adjudication-zero-loss-20260828-1103]
+    paths: [.github/workflows/bootstrap-zero-loss-semantic-v13.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply v12 proven patch path and canonical Stage 12 verifier contexts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/bootstrap-zero-loss-semantic-v12.yml').read_text(); name='Apply v10 proven patch path and bind schema in semantic test'
+          start=text.index('      - name: '+name); run=text.index('        run: |\n',start)+len('        run: |\n'); end=text.index('\n      - name:',run); block=text[run:end]
+          Path('/tmp/apply-v12.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())+'\n')
+          PY
+          bash /tmp/apply-v12.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs'); text=p.read_text()
+          old="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:`VERIFY-${runId}-${currentTestId}`,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
+          new="function verifyBatch(stage,operation,slots){const rows=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE'),externalContextIdentifier=`VERIFY-${stage}-${runId}-${currentTestId}`;engine.registerFreshContext(p,{stage,externalContextIdentifier,operatorLabel:'FULL_CYCLE'});const verifierContext=engine.records(p,'freshContexts',{stage}).find(r=>engine.recordValue(r,'EXTERNAL_CONTEXT_IDENTIFIER')===externalContextIdentifier),verifierContextId=engine.recordId(verifierContext,'freshContexts');assert(verifierContextId,`Verifier context was not canonically registered for ${runId} ${currentTestId}.`);rows.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:verifierContextId,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:rows}});}"
+          if text.count(old)!=1: raise SystemExit(f'Stage 12 verifyBatch fixture count={text.count(old)}')
+          p.write_text(text.replace(old,new,1))
+          PY
+      - name: Derive exact runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; manifest=''
+          for file in runtime:
+              b=Path(file).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{file}:{blob}\n'
+          identity='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]; p=Path('index.html'); text=p.read_text()
+          for file in runtime:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(file)}\?v=)[^"]+("\s*></script>)'; text,n=re.subn(pattern,rf'\g<1>{identity}\g<2>',text,count=1)
+              if n!=1: raise SystemExit(f'Expected one token for {file}, found {n}')
+          p.write_text(text); print(identity)
+          PY
+      - name: Syntax and deterministic proof stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Local Chromium release blocker
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-bootstrap-http.log 2>&1 & server=$!; trap 'kill "$server" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$server" 2>/dev/null || true; trap - EXIT
+      - name: Commit proven source and regression changes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='app-core.js index.html prompt-engine.js verify-complete.mjs verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js'
+          while IFS= read -r path; do case " $allowed " in *" $path "*) ;; *) echo "Unexpected changed path: $path"; exit 1;; esac; done < <(git status --porcelain | cut -c4-)
+          git config user.name 'OpenAI GPT-5.6 Sol'; git config user.email 'noreply@openai.com'
+          git add app-core.js index.html prompt-engine.js verify-complete.mjs verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js
+          git diff --cached --quiet && { echo 'No source changes'; exit 1; }
+          git commit -m 'Close remaining zero-loss semantic adjudication gaps'
+          git push origin HEAD:reliability/semantic-adjudication-zero-loss-20260828-1103
