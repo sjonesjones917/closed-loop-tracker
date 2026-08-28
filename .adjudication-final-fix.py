@@ -21,7 +21,12 @@ def function_span(text,name):
         i+=1
     if close is None: raise RuntimeError(f'{name} parameters unclosed')
     brace=text.find('{',close+1)
-    depth=0; quote=None; esc=False; line=False; block=False; end=None; i=brace
+    end=balanced_brace_end(text,brace)
+    return start,end
+
+def balanced_brace_end(text,brace):
+    if brace<0: raise RuntimeError('opening brace missing')
+    depth=0; quote=None; esc=False; line=False; block=False; i=brace
     while i<len(text):
         ch=text[i]; nxt=text[i+1] if i+1<len(text) else ''
         if line:
@@ -39,23 +44,17 @@ def function_span(text,name):
             elif ch=='{': depth+=1
             elif ch=='}':
                 depth-=1
-                if depth==0: end=i; break
+                if depth==0:return i
         i+=1
-    if end is None: raise RuntimeError(f'{name} body unclosed')
-    return start,end
+    raise RuntimeError('body unclosed')
 
 p=Path('workflow-engine.js'); s=p.read_text()
 
-# Gate evaluation uses an adjudicated clone. Preserve factual observation
-# polarity for PRE_CORRECTION regressions while the derived determination
-# remains authoritative for success/failure decisions.
 old="else if(collection==='regressionExecutions')recordFields(r).RESULT=d;"
 new="else if(collection==='regressionExecutions'){const phase=upper(recordValue(r,'PHASE'));recordFields(r).RESULT=phase==='PRE_CORRECTION'?(d==='SATISFIED'?'VIOLATED':d==='VIOLATED'?'SATISFIED':'UNDETERMINED'):d;}"
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise RuntimeError('adjudicatedClone regression compatibility anchor missing')
 
-# Canonical evidence uses UNKNOWN as an application sentinel when no attachment
-# exists. Only a real attachment identity can trigger byte-verification rules.
 old_attach="const attachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim();if(attachmentId){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===attachmentId);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')reasons.push('Referenced evidence attachment bytes are not application-verified.');}"
 new_attach="const rawAttachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim(),attachmentId=['','UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED'].includes(upper(rawAttachmentId))?'':rawAttachmentId;if(attachmentId){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===attachmentId);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')reasons.push('Referenced evidence attachment bytes are not application-verified.');}"
 if old_attach in s:s=s.replace(old_attach,new_attach,1)
@@ -65,31 +64,26 @@ new_required="if(requiresAttachment&&!evidence.some(item=>{const id=String(recor
 if old_required in s:s=s.replace(old_required,new_required,1)
 elif new_required not in s:raise RuntimeError('required attachment evidence anchor missing')
 
-# Preflight is not a generic test-result record. FINDINGS is narrative evidence,
-# not a Boolean defect flag, and optional affirmative fields cannot be invented.
-# Material negative fields are controlling only when a structured value actually
-# establishes an adverse state. Narrative may supplement, never self-certify.
 old_observed="for(const key of ['OBSERVED_RESULT','ACTUAL_RESULT','OBSERVED_MEANING','OBSERVATIONS','RESULT','VALIDATOR_RESULTS','MEANING_VERIFICATION_RESULTS','PROCESS_EVIDENCE','PRODUCT_EVIDENCE'])"
 new_observed="for(const key of ['OBSERVED_RESULT','ACTUAL_RESULT','OBSERVED_MEANING','OBSERVATIONS','RESULT','VALIDATOR_RESULTS','MEANING_VERIFICATION_RESULTS','PROCESS_EVIDENCE','PRODUCT_EVIDENCE','FINDINGS'])"
 if old_observed in s:s=s.replace(old_observed,new_observed,1)
 elif new_observed not in s:raise RuntimeError('observed-value adapter anchor missing')
 
-old_preflight="if(collection==='preflightRecords'){for(const key of ['MULTIPLE_INTERPRETATIONS','UNDEFINED_OBJECTS','UNSUPPLIED_DEPENDENCIES','INTERNAL_CONFLICTS','UNAVAILABLE_CAPABILITIES','FINDINGS'])if(semanticAdverse(recordValue(record,key)))reasons.push(key+' contains an unresolved preflight finding.');for(const key of ['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED','TRACEABILITY'])if(!truth(recordValue(record,key)))reasons.push(key+' is not affirmatively established.');if(!evidence.sufficient)reasons.push(...evidence.reasons);determination=reasons.length?'UNDETERMINED':'SATISFIED';}"
-new_preflight="if(collection==='preflightRecords'){const adverseField=(value)=>{if(value===null||value===undefined||semanticEmpty(value))return false;if(typeof value==='boolean')return value;if(typeof value==='number')return value>0;if(Array.isArray(value))return value.some(v=>!semanticEmpty(v));if(typeof value==='object')return Object.values(value).some(adverseField);const out=controlledOutcome(value);return out==='VIOLATED'||['OPEN','UNRESOLVED','PRESENT','FOUND','YES','TRUE','UNAVAILABLE','MISSING','CONFLICT'].includes(upper(value));};for(const key of ['MULTIPLE_INTERPRETATIONS','UNDEFINED_OBJECTS','UNSUPPLIED_DEPENDENCIES','INTERNAL_CONFLICTS','UNAVAILABLE_CAPABILITIES'])if(adverseField(recordValue(record,key)))reasons.push(key+' contains an unresolved preflight finding.');for(const key of ['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED','TRACEABILITY']){const value=recordValue(record,key);if(!semanticEmpty(value)&&controlledOutcome(value)!=='SATISFIED'&&!truth(value))reasons.push(key+' is explicitly not established.');}if(!evidence.sufficient)reasons.push(...evidence.reasons);determination=reasons.length?'UNDETERMINED':'SATISFIED';}"
-if old_preflight in s:s=s.replace(old_preflight,new_preflight,1)
-elif new_preflight not in s:raise RuntimeError('preflight adjudication anchor missing')
+# Replace the whole preflight adapter by syntax boundary rather than depending on
+# helper names that the coordinated rename pass may change.
+marker="if(collection==='preflightRecords'){"
+start=s.find(marker)
+if start<0:raise RuntimeError('preflight adapter marker missing')
+brace=s.find('{',start)
+end=balanced_brace_end(s,brace)
+new_preflight="if(collection==='preflightRecords'){const adverseField=(value)=>{if(value===null||value===undefined||adjudicationEmpty(value))return false;if(typeof value==='boolean')return value;if(typeof value==='number')return value>0;if(Array.isArray(value))return value.some(v=>!adjudicationEmpty(v));if(typeof value==='object')return Object.values(value).some(adverseField);const out=controlledOutcome(value);return out==='VIOLATED'||['OPEN','UNRESOLVED','PRESENT','FOUND','YES','TRUE','UNAVAILABLE','MISSING','CONFLICT'].includes(upper(value));};for(const key of ['MULTIPLE_INTERPRETATIONS','UNDEFINED_OBJECTS','UNSUPPLIED_DEPENDENCIES','INTERNAL_CONFLICTS','UNAVAILABLE_CAPABILITIES'])if(adverseField(recordValue(record,key)))reasons.push(key+' contains an unresolved preflight finding.');for(const key of ['OBJECTIVELY_VERIFIABLE','RESPONSIBLE_OPERATION_ASSIGNED','ORDER_CLEAR','FAILURE_BEHAVIOR_DEFINED','TRACEABILITY']){const value=recordValue(record,key);if(!adjudicationEmpty(value)&&controlledOutcome(value)!=='SATISFIED'&&!truth(value))reasons.push(key+' is explicitly not established.');}if(!evidence.sufficient)reasons.push(...evidence.reasons);determination=reasons.length?'UNDETERMINED':'SATISFIED';}"
+s=s[:start]+new_preflight+s[end+1:]
 
-# Stage 9 itself must consume only the application-derived determination.
 old_gate="case 9:\n      requireAccepted();requireCount('preflightRecords',1);\n      if(collection('preflightRecords').some(record=>['VIOLATED','UNDETERMINED','BLOCKED','REJECTED'].includes(upper(recordValue(record,'DETERMINATION')))))reasons.push('Instruction preflight contains an unresolved material finding.');\n      break;"
 new_gate="case 9:\n      requireAccepted();requireCount('preflightRecords',1);\n      for(const record of collection('preflightRecords')){const evaluation=evaluateResultConsistency('preflightRecords',record,null,project);if(evaluation.determination!=='SATISFIED')reasons.push(...(evaluation.reasons.length?evaluation.reasons:['Instruction preflight is not application-established as satisfied.']));}\n      break;"
 if old_gate in s:s=s.replace(old_gate,new_gate,1)
 elif new_gate not in s:raise RuntimeError('Stage 9 application-owned gate anchor missing')
 
-# Preserve every existing contradiction rule by renaming the existing detector
-# as a base function and wrapping it. Claimed conclusions never control release;
-# they are only additional contradiction signals when two canonical records make
-# mutually exclusive assertions and structural evidence prevents either from
-# becoming an authoritative effective determination.
 wrapper_marker='function detectCurrentContradictionsBase('
 if wrapper_marker not in s:
     start,end=function_span(s,'detectCurrentContradictions')
