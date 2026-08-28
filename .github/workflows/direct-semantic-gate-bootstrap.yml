@@ -1,5 +1,5 @@
 name: Direct semantic-gate integration proof
-# proof revision: 4
+# proof revision: 5
 
 on:
   push:
@@ -32,7 +32,8 @@ jobs:
           python3 .fix-direct-semantic-anchor.py
           python3 .direct-semantic-gate-fix.py
           python3 .repair-direct-semantic-helper.py
-          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .repair-direct-semantic-helper.py .github/workflows/direct-semantic-gate-bootstrap.yml
+          python3 .refresh-runtime-and-status.py
+          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .repair-direct-semantic-helper.py .refresh-runtime-and-status.py .github/workflows/direct-semantic-gate-bootstrap.yml
           test ! -e .github/workflows/export-source.yml
           test ! -e .export-source/READY
           grep -q 'function evaluateEvidenceContract' workflow-engine.js
