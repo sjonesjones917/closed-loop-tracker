@@ -1,0 +1,50 @@
+name: Exact reliability acceptance runner
+on:
+  push:
+    branches:
+      - reliability-exact-acceptance-20260827
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-exact-acceptance-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact reliability delta and verify
+        run: |
+          node .tmp-exact-acceptance.mjs
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=f=>{const b=fs.readFileSync(f);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(f=>`${f}:${blob(f)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*><\/script>)/g,`$1${token}$2`);
+          fs.writeFileSync('index.html',html);
+          console.log(token);
+          NODE
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check response-ingestion.js
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          rm .tmp-exact-acceptance.mjs
+          rm .github/workflows/tmp-exact-acceptance.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add workflow-engine.js app-core.js index.html verify-complete.mjs verify-prompt-semantics.mjs verify-ingestion.mjs verify-full-cycle.mjs verify-browser-extra.mjs .tmp-exact-acceptance.mjs .github/workflows/tmp-exact-acceptance.yml
+          git commit -m "Complete exact reliability acceptance coverage"
+          git push origin HEAD:reliability-exact-acceptance-20260827
