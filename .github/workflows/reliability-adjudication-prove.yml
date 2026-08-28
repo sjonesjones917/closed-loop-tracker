@@ -30,6 +30,18 @@ jobs:
           if count != 1:
               raise SystemExit(f'evidence-authority compatibility: expected 1 occurrence, found {count}')
           text=text.replace(old,new,1)
+          old="const groups=new Map();for(const r of recordsForCurrentScope(project,'verification')){const key=verificationKey(r),d=effectiveDetermination('verification',r,collectionTest(project,r),project);if(!groups.has(key))groups.set(key,new Set());groups.get(key).add(d);}for(const [key,ds] of groups)if(ds.size>1)push('VERIFICATION_DETERMINATION_CONFLICT',key,[...ds]);"
+          new="const groups=new Map(),claimGroups=new Map(),claimOf=r=>upper(recordValue(r,'DETERMINATION')||recordValue(r,'RESULT')||''),claimConflict=ds=>[...ds].some(x=>['SATISFIED','PASSED','SUCCESS','ACCEPTED'].includes(x))&&[...ds].some(x=>['VIOLATED','FAILED','FAIL','REJECTED'].includes(x));for(const r of recordsForCurrentScope(project,'verification')){const key=verificationKey(r),d=effectiveDetermination('verification',r,collectionTest(project,r),project),claim=claimOf(r);if(!groups.has(key))groups.set(key,new Set());groups.get(key).add(d);if(!claimGroups.has(key))claimGroups.set(key,new Set());if(claim)claimGroups.get(key).add(claim);}for(const [key,ds] of groups){const claims=claimGroups.get(key)||new Set();if(ds.size>1||claimConflict(claims))push('VERIFICATION_DETERMINATION_CONFLICT',key,{effective:[...ds],claimed:[...claims]});}"
+          count=text.count(old)
+          if count != 1:
+              raise SystemExit(f'verification contradiction compatibility: expected 1 occurrence, found {count}')
+          text=text.replace(old,new,1)
+          old="for(const m of meaning){const req=resultRequirementId(project,m),md=effectiveDetermination('meaningResults',m,collectionTest(project,m),project);if(md===EFFECTIVE_VIOLATED&&det.some(d=>resultRequirementId(project,d)===req&&effectiveDetermination('deterministicResults',d,collectionTest(project,d),project)===EFFECTIVE_SATISFIED))push('DETERMINISTIC_MEANING_CONFLICT',req,['DETERMINISTIC SATISFIED','MEANING VIOLATED']);if(md===EFFECTIVE_SATISFIED&&adv.some(a=>resultRequirementId(project,a)===req&&effectiveDetermination('adversarialResults',a,collectionTest(project,a),project)===EFFECTIVE_VIOLATED))push('MEANING_ADVERSARIAL_CONFLICT',req,['MEANING SATISFIED','ADVERSARIAL VIOLATION']);}"
+          new="for(const m of meaning){const req=resultRequirementId(project,m),md=effectiveDetermination('meaningResults',m,collectionTest(project,m),project),mc=claimOf(m),detConflict=det.some(d=>resultRequirementId(project,d)===req&&((effectiveDetermination('deterministicResults',d,collectionTest(project,d),project)===EFFECTIVE_SATISFIED&&md===EFFECTIVE_VIOLATED)||(['SATISFIED','PASSED','SUCCESS'].includes(claimOf(d))&&['VIOLATED','FAILED','FAIL','REJECTED'].includes(mc)))),advConflict=adv.some(a=>resultRequirementId(project,a)===req&&((md===EFFECTIVE_SATISFIED&&effectiveDetermination('adversarialResults',a,collectionTest(project,a),project)===EFFECTIVE_VIOLATED)||(['SATISFIED','PASSED','SUCCESS'].includes(mc)&&['VIOLATED','FAILED','FAIL','REJECTED'].includes(claimOf(a)))));if(detConflict)push('DETERMINISTIC_MEANING_CONFLICT',req,['Current deterministic and meaning conclusions conflict; claimed conclusions remain non-authoritative.']);if(advConflict)push('MEANING_ADVERSARIAL_CONFLICT',req,['Current meaning and adversarial conclusions conflict; claimed conclusions remain non-authoritative.']);}"
+          count=text.count(old)
+          if count != 1:
+              raise SystemExit(f'cross-method contradiction compatibility: expected 1 occurrence, found {count}')
+          text=text.replace(old,new,1)
           p.write_text(text)
           ps=Path('workflow-schema.js')
           st=ps.read_text()
