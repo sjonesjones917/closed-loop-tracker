@@ -20,13 +20,20 @@ jobs:
           cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
           echo 'ea95f16b98b3b51e9436f983ca59046556d17cdddc47b9cad5a861882d61089c  /tmp/adjudication.patch' | sha256sum -c -
           patch -p0 < /tmp/adjudication.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          text=p.read_text()
+          text=text.replace('semantically contradictory material finding','internally contradictory material finding')
+          p.write_text(text)
+          PY
       - name: Syntax checks
         run: |
           node --check workflow-schema.js
           node --check workflow-engine.js
           node --check response-ingestion.js
           node --check verify-adjudication.mjs
-      - name: Run deterministic and semantic proofs
+      - name: Run deterministic and adjudication proofs
         run: |
           node build-test-project.mjs
           node verify-hash.mjs
@@ -64,5 +71,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add workflow-schema.js workflow-engine.js response-ingestion.js verify-adjudication.mjs
           git diff --cached --check
-          git commit -m '[adjudication-built] Make semantic determinations application-owned'
+          git commit -m '[adjudication-built] Make application determinations authoritative'
           git push origin HEAD:${GITHUB_REF_NAME}
