@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Restore matrix, evidence, iteration, and review diagnostics
+      - name: Restore matrix, evidence, iteration, and review contracts
         run: |
           set -euo pipefail
           node <<'NODE'
@@ -39,6 +39,10 @@ jobs:
           const reviewReasonTo="if(matches.length!==1)reasons.push(`Meaning review for test ${testId} requires exactly one current independent result.`);";
           if(!s.includes(reviewReasonFrom))throw new Error('Expected Stage 23 missing-result diagnostic not found.');
           s=s.replace(reviewReasonFrom,reviewReasonTo);
+          const stage24From="case 24:{const tests=(recordsForCurrentScope(project,'tests').length?recordsForCurrentScope(project,'tests'):records(project,'tests')).filter(item=>upper(recordValue(item,'TEST_TYPE'))==='ADVERSARIAL'),results=records(project,'adversarialResults');for(const test of tests){const testId=recordId(test,'tests'),matches=results.filter(item=>String(recordValue(item,'TEST_ID')||item.relationships?.TEST_ID||'')===testId);if(matches.length!==1)reasons.push(`${testId} requires exactly one current adversarial result.`);else{const result=matches[0],requirement=records(project,'requirements').find(item=>requirementId(item)===testRequirementId(test));if(upper(recordValue(result,'DETERMINATION'))!=='SATISFIED')reasons.push(`${testId} adversarial determination is not SATISFIED.`);if(!evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient)reasons.push(`${testId} lacks evidence sufficient for the adversarial proposition.`);}}break;}";
+          const stage24To="case 24:{const tests=(recordsForCurrentScope(project,'tests').length?recordsForCurrentScope(project,'tests'):records(project,'tests')).filter(item=>upper(recordValue(item,'TEST_TYPE'))==='ADVERSARIAL'),results=records(project,'adversarialResults');for(const test of tests){const testId=recordId(test,'tests'),matches=results.filter(item=>String(recordValue(item,'TEST_ID')||item.relationships?.TEST_ID||'')===testId);if(matches.length!==1)reasons.push(`${testId} requires exactly one current adversarial result.`);else{const result=matches[0],requirement=records(project,'requirements').find(item=>requirementId(item)===testRequirementId(test));if(upper(recordValue(result,'DETERMINATION'))!=='SATISFIED')reasons.push(`${testId} adversarial determination is not SATISFIED.`);if(!evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient)reasons.push(`${testId} lacks evidence sufficient for the adversarial proposition.`);}}const activeRegressions=records(project,'regressions').filter(item=>upper(recordValue(item,'ACTIVE_RETIRED_STATE')||'ACTIVE')!=='RETIRED');for(const regression of activeRegressions){const regId=recordId(regression,'regressions'),matches=results.filter(item=>String(recordValue(item,'REG_ID')||item.relationships?.REG_ID||'')===regId);if(matches.length!==1)reasons.push(`Active permanent regression ${regId} requires exactly one current adversarial challenge.`);else if(upper(recordValue(matches[0],'DETERMINATION'))!=='SATISFIED')reasons.push(`Active permanent regression ${regId} adversarial challenge is not SATISFIED.`);}break;}";
+          if(!s.includes(stage24From))throw new Error('Expected Stage 24 adversarial-only gate not found.');
+          s=s.replace(stage24From,stage24To);
           fs.writeFileSync(path,s);
           NODE
           node <<'NODE'
