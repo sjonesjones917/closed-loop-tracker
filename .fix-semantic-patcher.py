@@ -9,4 +9,8 @@ block_start=s.index('# Replace evidence function while preserving a single evide
 block_end=s.index("\nverification=r'''", block_start)
 fixed="""# Replace evidence helpers using the function-aware parser. Default destructuring in parameters is not a function body.\ns=replace_function(s,'evaluateEvidenceSufficiency','')\ns=replace_function(s,'evidenceReferences','')\nanchor=s.find('function evidenceChainExplanation')\nif anchor<0: raise RuntimeError('evidenceChainExplanation anchor missing')\ns=s[:anchor]+semantic+'\\n'+s[anchor:]\n"""
 s=s[:block_start]+fixed+s[block_end:]
+old="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; digest=hashlib.sha256(b''.join(Path(f).read_bytes() for f in runtime)).hexdigest()[:16]"
+new="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; blob=lambda f: hashlib.sha1((f'blob {len(Path(f).read_bytes())}\\0').encode()+Path(f).read_bytes()).hexdigest(); manifest=''.join(f'{f}:{blob(f)}\\n' for f in runtime); digest='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]"
+if old not in s: raise RuntimeError('runtime cache-token patch anchor missing')
+s=s.replace(old,new,1)
 p.write_text(s)
