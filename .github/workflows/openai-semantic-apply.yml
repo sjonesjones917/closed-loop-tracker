@@ -14,6 +14,31 @@ jobs:
           fetch-depth: 1
       - name: Apply coordinated semantic adjudication patch
         run: |
+          cat > .github/workflows/openai-semantic-snapshot.yml <<'EOF'
+          name: OpenAI semantic branch snapshot
+          on:
+            push:
+              branches: [openai/semantic-adjudication]
+            workflow_dispatch:
+          permissions:
+            contents: read
+          jobs:
+            snapshot:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - name: Package exact branch working tree
+                  run: |
+                    mkdir -p /tmp/openai-snapshot
+                    tar --exclude=.git -czf /tmp/openai-snapshot/repo-snapshot.tgz .
+                    cp /tmp/openai-snapshot/repo-snapshot.tgz ./repo-snapshot.tgz
+                - uses: actions/upload-artifact@v4
+                  with:
+                    name: openai-semantic-snapshot-${{ github.sha }}
+                    path: repo-snapshot.tgz
+                    if-no-files-found: error
+                    retention-days: 1
+          EOF
           cat .semantic-patch/part-* | base64 -d | gzip -d > /tmp/semantic.patch
           patch -p1 < /tmp/semantic.patch
           rm -rf .semantic-patch .github/workflows/openai-semantic-apply.yml
