@@ -21,16 +21,33 @@ jobs:
           sed -i "/stage19 evidence gate/d" .tmp-exact-acceptance.mjs
           node .tmp-exact-acceptance.mjs
           python3 - <<'PY'
-          p='workflow-engine.js'
-          s=open(p,encoding='utf-8').read()
+          p='workflow-engine.js';s=open(p,encoding='utf-8').read()
           old="if(mode==='EXTERNAL_AGENT_TOOL'){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');"
           new="if(mode==='EXTERNAL_AGENT_TOOL'&&!byteTest){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');"
           if old not in s: raise SystemExit('external-tool evidence rule target missing')
-          open(p,'w',encoding='utf-8').write(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          old="const ids=evidenceReferences(result),evidence=ids.map(id=>records(project,'evidenceRecords').find(x=>recordId(x,'evidenceRecords')===id)).filter(Boolean),narrative=['EXACT_EVIDENCE','EVIDENCE','PROCESS_EVIDENCE','PRODUCT_EVIDENCE','CONTROLLING_EVIDENCE'].map(k=>String(recordValue(result,k)||'').trim()).find(Boolean)||''"
+          new="const ids=evidenceReferences(result),evidence=ids.map(id=>records(project,'evidenceRecords').find(x=>recordId(x,'evidenceRecords')===id)).filter(Boolean),narrative=['EXACT_EVIDENCE','EVIDENCE','PROCESS_EVIDENCE','PRODUCT_EVIDENCE','CONTROLLING_EVIDENCE','EXTERNAL_SOURCE_EVIDENCE','EVIDENCE_BASED_COMPARISON'].map(k=>String(recordValue(result,k)||'').trim()).find(Boolean)||''"
+          if old not in s: raise SystemExit('evidence narrative target missing')
+          s=s.replace(old,new,1)
+          old="reviewerContextId=String(project.stages?.[stage]?.derivedData?.[key]||'').trim(),base=evaluateContextIndependence(project,{role:stage===23?'MEANING_REVIEW':'ADVERSARIAL_REVIEW',reviewerContextId,productionContextId});if(base.determination==='VIOLATED')return base;const externallySupported=truth(project.stages?.[stage]?.agentData?.[claimKey]);if(base.determination==='UNKNOWN'&&externallySupported)return"
+          new="reviewerIdentity=String(project.stages?.[stage]?.derivedData?.[key]||'').trim(),reviewerContext=records(project,'freshContexts').find(r=>recordId(r,'freshContexts')===reviewerIdentity&&isActiveRecord(r)),reviewerContextId=reviewerContext?reviewerIdentity:'',base=reviewerContextId?evaluateContextIndependence(project,{role:stage===23?'MEANING_REVIEW':'ADVERSARIAL_REVIEW',reviewerContextId,productionContextId}):{determination:'UNKNOWN',reasons:['The external reviewer context is not application-observable.'],evidence:[]};if(base.determination==='VIOLATED')return base;const externallySupported=truth(project.stages?.[stage]?.agentData?.[claimKey]);if(base.determination==='UNKNOWN'&&externallySupported)return"
+          if old not in s: raise SystemExit('reviewer context namespace target missing')
+          s=s.replace(old,new,1)
+          open(p,'w',encoding='utf-8').write(s)
           p='verify-complete.mjs';s=open(p,encoding='utf-8').read()
           old="const humanResult=record('representationInspections',25,{DETERMINATION:'SATISFIED',EVIDENCE:'EVIDENCE-H'},'INS-H');p.projectData.evidenceRecords.push"
           new="const humanResult=record('representationInspections',25,{DETERMINATION:'SATISFIED',EVIDENCE:'EVIDENCE-H'},'INS-H');humanResult.evidenceRefs=['EVIDENCE-H'];p.projectData.evidenceRecords.push"
           if old not in s: raise SystemExit('human evidence fixture target missing')
+          open(p,'w',encoding='utf-8').write(s.replace(old,new,1))
+          p='verify-full-cycle.mjs';s=open(p,encoding='utf-8').read()
+          old="data(23,{records:{meaningResults:"
+          new="data(23,{stageData:{EVALUATOR_INDEPENDENT_FROM_GENERATOR:'TRUE'},records:{meaningResults:"
+          if old not in s: raise SystemExit('stage23 fixture target missing')
+          s=s.replace(old,new,1)
+          old="data(24,{records:{adversarialResults:"
+          new="data(24,{stageData:{REVIEWER_INDEPENDENT:'TRUE'},records:{adversarialResults:"
+          if old not in s: raise SystemExit('stage24 fixture target missing')
           open(p,'w',encoding='utf-8').write(s.replace(old,new,1))
           PY
           node - <<'NODE'
@@ -55,9 +72,7 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
-          rm -f .tmp-trigger
-          rm .tmp-exact-acceptance.mjs
-          rm .github/workflows/tmp-exact-acceptance.yml
+          rm -f .tmp-trigger .tmp-exact-acceptance.mjs .github/workflows/tmp-exact-acceptance.yml
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add -A
