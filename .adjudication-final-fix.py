@@ -54,6 +54,17 @@ new="else if(collection==='regressionExecutions'){const phase=upper(recordValue(
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise RuntimeError('adjudicatedClone regression compatibility anchor missing')
 
+# Canonical evidence uses UNKNOWN as an application sentinel when no attachment
+# exists. Only a real attachment identity can trigger byte-verification rules.
+old_attach="const attachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim();if(attachmentId){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===attachmentId);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')reasons.push('Referenced evidence attachment bytes are not application-verified.');}"
+new_attach="const rawAttachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim(),attachmentId=['','UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED'].includes(upper(rawAttachmentId))?'':rawAttachmentId;if(attachmentId){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===attachmentId);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')reasons.push('Referenced evidence attachment bytes are not application-verified.');}"
+if old_attach in s:s=s.replace(old_attach,new_attach,1)
+elif new_attach not in s:raise RuntimeError('evidence attachment validation anchor missing')
+old_required="if(requiresAttachment&&!evidence.some(item=>String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim()))reasons.push('The controlling test requires an attachment-backed evidence record.');"
+new_required="if(requiresAttachment&&!evidence.some(item=>{const id=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim();return !['','UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED'].includes(upper(id));}))reasons.push('The controlling test requires an attachment-backed evidence record.');"
+if old_required in s:s=s.replace(old_required,new_required,1)
+elif new_required not in s:raise RuntimeError('required attachment evidence anchor missing')
+
 # Preserve every existing contradiction rule by renaming the existing detector
 # as a base function and wrapping it. Claimed conclusions never control release;
 # they are only additional contradiction signals when two canonical records make
