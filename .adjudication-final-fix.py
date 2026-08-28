@@ -46,30 +46,36 @@ def function_span(text,name):
 
 p=Path('workflow-engine.js'); s=p.read_text()
 
-# Gate evaluation uses an adjudicated clone. Preserve the factual observation
-# polarity of PRE_CORRECTION regressions while keeping the application-derived
-# effective determination authoritative.
+# Gate evaluation uses an adjudicated clone. Preserve factual observation
+# polarity for PRE_CORRECTION regressions while the derived determination
+# remains authoritative for success/failure decisions.
 old="else if(collection==='regressionExecutions')recordFields(r).RESULT=d;"
 new="else if(collection==='regressionExecutions'){const phase=upper(recordValue(r,'PHASE'));recordFields(r).RESULT=phase==='PRE_CORRECTION'?(d==='SATISFIED'?'VIOLATED':d==='VIOLATED'?'SATISFIED':'UNDETERMINED'):d;}"
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise RuntimeError('adjudicatedClone regression compatibility anchor missing')
 
-# Keep all existing contradiction rules. Add claimed cross-method conflicts as
-# release-material signals even when structural evidence makes both effective
-# determinations UNDETERMINED. Claims do not control release; they only expose
-# the unresolved contradiction that the application must adjudicate.
-start,end=function_span(s,'detectCurrentContradictions')
-fn=s[start:end+1]
-if 'claimedByKey=' not in fn:
-    needle='return contradictions;'
-    if needle not in fn: raise RuntimeError('contradiction return anchor missing')
-    addition="""const claimedByKey=(collection)=>{const map=new Map();for(const r of recordsForCurrentScope(project,collection)){const key=[resultRequirementId(project,r),String(recordValue(r,'TEST_ID')||r.relationships?.TEST_ID||'')].join('|'),claim=claimedDetermination(collection,r);if(!map.has(key))map.set(key,[]);map.get(key).push({record:r,claim});}return map;};
+# Preserve every existing contradiction rule by renaming the existing detector
+# as a base function and wrapping it. Claimed conclusions never control release;
+# they are only additional contradiction signals when two canonical records make
+# mutually exclusive assertions and structural evidence prevents either from
+# becoming an authoritative effective determination.
+wrapper_marker='function detectCurrentContradictionsBase('
+if wrapper_marker not in s:
+    start,end=function_span(s,'detectCurrentContradictions')
+    base=s[start:end+1].replace('function detectCurrentContradictions(','function detectCurrentContradictionsBase(',1)
+    wrapper="""
+function detectCurrentContradictions(project){
+  const contradictions=detectCurrentContradictionsBase(project);
+  const claimedByKey=(collection)=>{const map=new Map();for(const r of recordsForCurrentScope(project,collection)){const key=[resultRequirementId(project,r),String(recordValue(r,'TEST_ID')||r.relationships?.TEST_ID||'')].join('|'),claim=claimedDetermination(collection,r);if(!map.has(key))map.set(key,[]);map.get(key).push({record:r,claim});}return map;};
   const detClaims=claimedByKey('deterministicResults'),meaningClaims=claimedByKey('meaningResults'),advClaims=claimedByKey('adversarialResults');
   const opposed=(a,b)=>(a==='SATISFIED'&&['VIOLATED','REJECTED','FAILED','FAIL'].includes(b))||(b==='SATISFIED'&&['VIOLATED','REJECTED','FAILED','FAIL'].includes(a));
   for(const [key,ds] of detClaims)for(const d of ds)for(const m of meaningClaims.get(key)||[])if(opposed(d.claim,m.claim)&&!contradictions.some(x=>x.type==='DETERMINISTIC_MEANING_CONFLICT'&&x.key===key))contradictions.push({type:'DETERMINISTIC_MEANING_CONFLICT',severity:'RELEASE_MATERIAL',key,recordIds:[recordId(d.record,'deterministicResults'),recordId(m.record,'meaningResults')],reason:'Deterministic and meaning records assert mutually exclusive conclusions; application adjudication must resolve the conflict.'});
   for(const [key,ms] of meaningClaims)for(const m of ms)for(const a of advClaims.get(key)||[])if(opposed(m.claim,a.claim)&&!contradictions.some(x=>x.type==='MEANING_ADVERSARIAL_CONFLICT'&&x.key===key))contradictions.push({type:'MEANING_ADVERSARIAL_CONFLICT',severity:'RELEASE_MATERIAL',key,recordIds:[recordId(m.record,'meaningResults'),recordId(a.record,'adversarialResults')],reason:'Meaning and adversarial records assert mutually exclusive conclusions; application adjudication must resolve the conflict.'});
-  return contradictions;"""
-    fn=fn.replace(needle,addition,1)
-    s=s[:start]+fn+s[end+1:]
+  return contradictions;
+}
+"""
+    s=s[:start]+base+wrapper+s[end+1:]
+elif 'function detectCurrentContradictions(project)' not in s:
+    raise RuntimeError('contradiction base exists without wrapper')
 
 p.write_text(s)
