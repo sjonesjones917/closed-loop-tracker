@@ -37,9 +37,11 @@ jobs:
           rm -f reliability-failures.txt
           for cmd in \
             "node build-test-project.mjs" \
+            "node verify-hash.mjs" \
             "node verify.mjs" \
             "node verify-ingestion.mjs" \
             "node verify-complete.mjs" \
+            "node verify-full-cycle.mjs" \
             "node verify-prompt-semantics.mjs"; do
             echo "===== $cmd =====" | tee -a reliability-diagnostics.log
             bash -lc "$cmd" >> reliability-diagnostics.log 2>&1
@@ -68,6 +70,9 @@ jobs:
           : > reliability-browser.log
           rm -f reliability-browser-failures.txt
           if [ -z "$BROWSER" ]; then echo "NO_BROWSER" | tee -a reliability-browser.log; echo NO_BROWSER > reliability-browser-failures.txt; exit 1; fi
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           for cmd in "node verify-browser.mjs" "node verify-browser-extra.mjs"; do
             echo "===== $cmd =====" | tee -a reliability-browser.log
             bash -lc "export BROWSER='$BROWSER'; $cmd" >> reliability-browser.log 2>&1
@@ -75,6 +80,8 @@ jobs:
             echo "EXIT=$code" | tee -a reliability-browser.log
             if [ $code -ne 0 ]; then echo "$cmd" >> reliability-browser-failures.txt; fi
           done
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
           test ! -s reliability-browser-failures.txt
       - uses: actions/upload-artifact@v4
         if: always()
@@ -83,6 +90,7 @@ jobs:
           path: |
             reliability-browser.log
             reliability-browser-failures.txt
+            /tmp/closed-loop-http.log
           if-no-files-found: ignore
       - name: Stop on Chromium failure
         if: steps.browser.outcome == 'failure'
