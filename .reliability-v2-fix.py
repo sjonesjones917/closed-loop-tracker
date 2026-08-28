@@ -29,6 +29,6 @@ replacement_prefix="ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXT
 if prefix not in s: raise RuntimeError('independence context fixture anchor missing')
 s=s.replace(prefix,replacement_prefix,1)
 contradiction_anchor="const scope={requirementsVersion:'R1',testSuiteVersion:'T1'};const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C')"
-contradiction_replacement="const scope={requirementsVersion:'R1',testSuiteVersion:'T1'};const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C')"
+contradiction_replacement="const scope=engine.currentScope(p);const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C')"
 if contradiction_anchor not in s: raise RuntimeError('contradiction fixture link anchor missing')
 s=s.replace(contradiction_anchor,contradiction_replacement,1);p.write_text(s)
