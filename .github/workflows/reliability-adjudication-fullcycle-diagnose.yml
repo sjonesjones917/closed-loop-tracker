@@ -1,0 +1,46 @@
+name: Reliability adjudication full-cycle timing diagnosis
+on:
+  push:
+    branches: [reliability/semantic-adjudication-20260827]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[fullcycle-diagnose]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact current proof transformations
+        run: |
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          patch -p0 < /tmp/adjudication.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('workflow-engine.js'); text=p.read_text().replace('semantically contradictory material finding','internally contradictory material finding')
+          old="const authority=String(recordValue(e,'AUTHORITY_TYPE')||'').trim();if((!authority||upper(authority)==='UNKNOWN')&&!result.rawResponseId&&!result.sourceProposalId)reasons.push(`${recordId(e,'evidenceRecords')}: evidence authority is not structurally attributable.`);"
+          new="const authority=String(recordValue(e,'AUTHORITY_TYPE')||'').trim(),attachmentId=String(recordValue(e,'ATTACHMENT_ID')||e.relationships?.ATTACHMENT_ID||'').trim(),applicationVerifiedAttachment=Boolean(attachmentId&&records(project,'artifacts').some(a=>recordId(a,'artifacts')===attachmentId&&upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED'&&/^[a-f0-9]{64}$/i.test(String(recordValue(a,'SHA256')||''))&&Number.isInteger(Number(recordValue(a,'BYTE_SIZE')))&&Number(recordValue(a,'BYTE_SIZE'))>=0));if((!authority||upper(authority)==='UNKNOWN')&&!result.rawResponseId&&!result.sourceProposalId&&!applicationVerifiedAttachment)reasons.push(`${recordId(e,'evidenceRecords')}: evidence authority is not structurally attributable.`);"
+          if text.count(old)!=1: raise SystemExit('evidence transform mismatch')
+          text=text.replace(old,new,1)
+          old="const groups=new Map();for(const r of recordsForCurrentScope(project,'verification')){const key=verificationKey(r),d=effectiveDetermination('verification',r,collectionTest(project,r),project);if(!groups.has(key))groups.set(key,new Set());groups.get(key).add(d);}for(const [key,ds] of groups)if(ds.size>1)push('VERIFICATION_DETERMINATION_CONFLICT',key,[...ds]);"
+          new="const groups=new Map(),claimGroups=new Map(),claimOf=r=>upper(recordValue(r,'DETERMINATION')||recordValue(r,'RESULT')||''),claimConflict=ds=>[...ds].some(x=>['SATISFIED','PASSED','SUCCESS','ACCEPTED'].includes(x))&&[...ds].some(x=>['VIOLATED','FAILED','FAIL','REJECTED'].includes(x));for(const r of recordsForCurrentScope(project,'verification')){const key=verificationKey(r),d=effectiveDetermination('verification',r,collectionTest(project,r),project),claim=claimOf(r);if(!groups.has(key))groups.set(key,new Set());groups.get(key).add(d);if(!claimGroups.has(key))claimGroups.set(key,new Set());if(claim)claimGroups.get(key).add(claim);}for(const [key,ds] of groups){const claims=claimGroups.get(key)||new Set();if(ds.size>1||claimConflict(claims))push('VERIFICATION_DETERMINATION_CONFLICT',key,{effective:[...ds],claimed:[...claims]});}"
+          if text.count(old)!=1: raise SystemExit('verification contradiction transform mismatch')
+          text=text.replace(old,new,1)
+          old="for(const m of meaning){const req=resultRequirementId(project,m),md=effectiveDetermination('meaningResults',m,collectionTest(project,m),project);if(md===EFFECTIVE_VIOLATED&&det.some(d=>resultRequirementId(project,d)===req&&effectiveDetermination('deterministicResults',d,collectionTest(project,d),project)===EFFECTIVE_SATISFIED))push('DETERMINISTIC_MEANING_CONFLICT',req,['DETERMINISTIC SATISFIED','MEANING VIOLATED']);if(md===EFFECTIVE_SATISFIED&&adv.some(a=>resultRequirementId(project,a)===req&&effectiveDetermination('adversarialResults',a,collectionTest(project,a),project)===EFFECTIVE_VIOLATED))push('MEANING_ADVERSARIAL_CONFLICT',req,['MEANING SATISFIED','ADVERSARIAL VIOLATION']);}"
+          new="for(const m of meaning){const req=resultRequirementId(project,m),md=effectiveDetermination('meaningResults',m,collectionTest(project,m),project),mc=claimOf(m),detConflict=det.some(d=>resultRequirementId(project,d)===req&&((effectiveDetermination('deterministicResults',d,collectionTest(project,d),project)===EFFECTIVE_SATISFIED&&md===EFFECTIVE_VIOLATED)||(['SATISFIED','PASSED','SUCCESS'].includes(claimOf(d))&&['VIOLATED','FAILED','FAIL','REJECTED'].includes(mc)))),advConflict=adv.some(a=>resultRequirementId(project,a)===req&&((md===EFFECTIVE_SATISFIED&&effectiveDetermination('adversarialResults',a,collectionTest(project,a),project)===EFFECTIVE_VIOLATED)||(['SATISFIED','PASSED','SUCCESS'].includes(mc)&&['VIOLATED','FAILED','FAIL','REJECTED'].includes(claimOf(a)))));if(detConflict)push('DETERMINISTIC_MEANING_CONFLICT',req,['Current deterministic and meaning conclusions conflict; claimed conclusions remain non-authoritative.']);if(advConflict)push('MEANING_ADVERSARIAL_CONFLICT',req,['Current meaning and adversarial conclusions conflict; claimed conclusions remain non-authoritative.']);}"
+          if text.count(old)!=1: raise SystemExit('cross-method transform mismatch')
+          p.write_text(text.replace(old,new,1))
+          ps=Path('workflow-schema.js'); st=ps.read_text(); old="'OBSERVED_RESULT','EXACT_EVIDENCE','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'"; new="'OBSERVED_RESULT','OBSERVATION_OUTCOME','EXACT_EVIDENCE','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'"
+          if st.count(old)!=1: raise SystemExit('verification field transform mismatch')
+          st=st.replace(old,new,1); controlled={'EXECUTION_OUTCOME','PREFLIGHT_OBSERVATION','OBSERVATION_OUTCOME'}
+          def relax(m):
+            xs=[x.strip() for x in m.group(1).split(',') if x.strip()]; return 'required:['+','.join(x for x in xs if x.strip().strip("'").strip('"') not in controlled)+']'
+          ps.write_text(re.sub(r'required:\[([^\]]*)\]',relax,st))
+          vf=Path('verify-full-cycle.mjs'); ft=vf.read_text(); old="function complete(stage){engine.recalculate(p);"; new="function complete(stage){console.log('FULLCYCLE_STAGE',stage,'BEGIN');engine.recalculate(p);"
+          if ft.count(old)!=1: raise SystemExit('full-cycle instrumentation target mismatch')
+          vf.write_text(ft.replace(old,new,1))
+          PY
+      - name: Run bounded full cycle
+        run: |
+          timeout 45s node verify-full-cycle.mjs
