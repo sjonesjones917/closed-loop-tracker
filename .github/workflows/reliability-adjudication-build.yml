@@ -43,6 +43,17 @@ jobs:
               s=s[:abs_a]+body+s[abs_b:]
           p.write_text(s)
           PY
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          for(const file of files){const re=new RegExp(`(<script\\s+defer\\s+src="${file.replace('.','\\.')}\\?v=)[^"]+("\\s*><\\/script>)`);if(!re.test(html))throw new Error(`Runtime script tag not found for ${file}`);html=html.replace(re,`$1${token}$2`);}
+          fs.writeFileSync('index.html',html);
+          console.log(token);
+          NODE
       - name: Syntax checks
         run: |
           node --check workflow-schema.js
@@ -85,7 +96,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-adjudication.mjs
+          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-adjudication.mjs index.html
           git diff --cached --check
           git commit -m '[adjudication-built] Make application determinations authoritative'
           git push origin HEAD:${GITHUB_REF_NAME}
