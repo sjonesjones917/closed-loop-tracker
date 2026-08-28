@@ -289,7 +289,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
   for(const source of safe(envelope.evidence)){
     const id=workflow.allocateId(project,'evidenceRecords');
     tempToCanonical[source.temporaryKey]={collection:'evidenceRecords',id};
-    const fields={EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'UNKNOWN',SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'};
+    const fields={EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'EXTERNAL_AGENT_RESPONSE',SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'};
     evidence.push({id,stage:Number(envelope.stage),createdAt:now(),active:true,scope:clone(promptRecord.scope||{}),fields,...fields,sourceProposalId:proposalId,rawResponseId:rawRecord.rawResponseId,temporaryKey:source.temporaryKey,sourceReference:clone(source.sourceRef||null),attachmentReference:clone(source.attachmentRef||null)});
   }
   for(const [collection,list] of Object.entries(envelope.records||{}))for(const proposed of safe(list)){const id=proposed.targetId?String(proposed.targetId):workflow.allocateId(project,collection);if(proposed.tempKey)tempToCanonical[proposed.tempKey]={collection,id};}
