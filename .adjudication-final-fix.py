@@ -114,3 +114,5 @@ new_verify="function verifyBatch(stage,operation,slots){const records=[];for(con
 if old_verify in v:v=v.replace(old_verify,new_verify,1)
 elif new_verify not in v:raise RuntimeError('full-cycle verifier-context fixture anchor missing')
 vf.write_text(v)
+
+# CI trigger only: runtime transformations above are unchanged.
