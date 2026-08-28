@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Restore matrix, evidence, and iteration compatibility
+      - name: Restore matrix, evidence, iteration, and review diagnostics
         run: |
           set -euo pipefail
           node <<'NODE'
@@ -35,6 +35,10 @@ jobs:
           const operationTo="const requiredOperations=normalizedPurpose==='CONFIRMATION'?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:['EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'],stage=normalizedPurpose==='CONFIRMATION'?19:17,currentOperations=new Set(acceptedChanges(project,stage).filter(change=>String(change.scope?.iterationId||'')===id).map(change=>change.operation||'COMPLETE')),missingOperations=requiredOperations.filter(operation=>!currentOperations.has(operation));";
           if(!s.includes(operationFrom))throw new Error('Expected Stage 17 operation gate with response-bound FREEZE not found.');
           s=s.replace(operationFrom,operationTo);
+          const reviewReasonFrom="if(matches.length!==1)reasons.push(`${testId} requires exactly one current independent meaning result.`);";
+          const reviewReasonTo="if(matches.length!==1)reasons.push(`Meaning review for test ${testId} requires exactly one current independent result.`);";
+          if(!s.includes(reviewReasonFrom))throw new Error('Expected Stage 23 missing-result diagnostic not found.');
+          s=s.replace(reviewReasonFrom,reviewReasonTo);
           fs.writeFileSync(path,s);
           NODE
           node <<'NODE'
@@ -60,5 +64,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m "fix: preserve matrix, evidence, and iteration contracts"
+          git commit -m "fix: preserve matrix, evidence, iteration, and review contracts"
           git push origin HEAD:reliability/execution-evidence-independence-v2
