@@ -42,6 +42,7 @@ function safeValue(name){
   if(/SUPERSESSION_STATUS/.test(name))return 'NOT SUPERSEDED';
   if(/CONTROLLING_STATE/.test(name))return 'CONTROLLING WHERE APPLICABLE';
   if(/AUTHORITY_LEVEL|AUTHORITY_ROLE/.test(name))return 'PRIMARY TECHNICAL AUTHORITY';
+  if(/EXECUTION_OUTCOME/.test(name))return 'REJECTED_INVALID';
   if(/STATUS|STATE|DETERMINATION|RESULT/.test(name))return 'SATISFIED';
   if(/PASS_NUMBER/.test(name))return 1;
   return `verified-${name.toLowerCase()}`;

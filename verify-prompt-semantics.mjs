@@ -409,3 +409,18 @@ import fsStageBoundary from 'node:fs';
  let text='';try{text=prompts.buildPromptRecord(12,p,{operation:'COMPLETE',scope}).prompt;}catch{}for(const secret of ['RUN-1-SECRET-OUTPUT','VERIFIER-A-SAYS-SATISFIED','STAGE-13-SECRET','RCA-SECRET'])if(text.includes(secret))throw new Error('Stage 12 prompt leaked prohibited context: '+secret);
 }
 console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
+
+
+// application-result-adjudication-v1: prompts preserve observations while making application verdict authority explicit.
+{
+ const p=baseProject();
+ for(const stage of [7,9,12,19,22,23,24,25,26]){
+   const operation=schema.STAGE_CONTRACTS[stage].operations[0];
+   let options={operation};
+   if(stage===12){p.job.CURRENT_ITERATION='ITER-ADJ';p.job.CURRENT_REQUIREMENTS_VERSION='REQ-ADJ';p.job.CURRENT_TEST_SUITE_VERSION='TEST-ADJ';options={operation,scope:{iterationId:'ITER-ADJ',candidateId:'CAND-ADJ',runId:'RUN-ADJ',contextId:'CTX-ADJ'}};}
+   const text=prompts.buildPromptRecord(stage,p,options).prompt;
+   for(const token of ['APPLICATION RESULT ADJUDICATION — OBSERVATIONS ARE NOT THE VERDICT','application computes the effective determination','Bare narrative may supplement evidence but cannot by itself establish SATISFIED'])if(!text.includes(token))throw new Error(`Stage ${stage} result-adjudication rule missing: ${token}`);
+ }
+ const s7=prompts.buildPromptRecord(7,p).prompt;if(!s7.includes('REJECTED_INVALID')||!s7.includes('ACCEPTED_INVALID'))throw new Error('Stage 07 controlled mutation execution outcome contract is missing.');
+ const s23=prompts.buildPromptRecord(23,p).prompt;if(!s23.includes('MATCH, MISMATCH, or UNDETERMINED'))throw new Error('Stage 23 controlled meaning-comparison outcome contract is missing.');
+}
