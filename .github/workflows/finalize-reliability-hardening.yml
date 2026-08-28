@@ -1,18 +1,24 @@
 name: Finalize reliability hardening
 on:
   push:
-    branches: [reliability/execution-evidence-independence-v2]
-permissions: {contents: write}
-concurrency: {group: reliability-finalize, cancel-in-progress: false}
+    branches:
+      - reliability/execution-evidence-independence-v2
+permissions:
+  contents: write
+concurrency:
+  group: reliability-finalize
+  cancel-in-progress: false
 jobs:
   finalize:
-    if: ${{ !contains(github.event.head_commit.message, 'feat: finalize deterministic reliability hardening') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {ref: reliability/execution-evidence-independence-v2, fetch-depth: 0}
+        with:
+          ref: reliability/execution-evidence-independence-v2
+          fetch-depth: 0
       - uses: actions/setup-node@v4
-        with: {node-version: '22'}
+        with:
+          node-version: '22'
       - name: Apply final read-only rendering correction
         run: |
           set -euo pipefail
@@ -27,6 +33,6 @@ jobs:
           rm finalize-reliability-hardening.mjs .github/workflows/finalize-reliability-hardening.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js verify-prompt-semantics.mjs finalize-reliability-hardening.mjs .github/workflows/finalize-reliability-hardening.yml
+          git add -A
           git commit -m "feat: finalize deterministic reliability hardening"
           git push origin HEAD:reliability/execution-evidence-independence-v2
