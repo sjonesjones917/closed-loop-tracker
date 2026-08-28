@@ -26,7 +26,7 @@ jobs:
           if idx<0: raise SystemExit('runner body not found')
           body=textwrap.dedent(src[idx+len(marker0):])
           old_ui="new='Verification execution: Who performs the current tests is determined by the application from the canonical execution plan. The application also derives the required capability, exact file handoff, and proof. Do not substitute a different executor or infer transfer from browser custody; a filename, hash claim, or code block is not file possession.'"
-          new_ui="new='Verification execution: Who performs the current tests is determined by the application from the canonical execution plan. The application also derives the required capability, exact file handoff, and proof. When a test needs file evidence, attach the exact artifact bytes that are missing or unverified. Browser storage alone does not give an external executor access to those bytes. Do not substitute a different executor; a filename, hash claim, or code block is not file possession.'"
+          new_ui="new='Verification execution: Who performs the current tests is determined by the application from the canonical execution plan. The application also derives the required capability, exact file handoff, and proof. When a test needs file evidence, attach the exact artifact bytes that are missing or unverified; browser storage alone does not give an external executor access to those bytes. Do not substitute a different executor; a filename, hash claim, or code block is not file possession.'"
           if old_ui not in body: raise SystemExit('execution guidance replacement target missing')
           body=body.replace(old_ui,new_ui,1)
           marker='node verify-prompt-semantics.mjs'
