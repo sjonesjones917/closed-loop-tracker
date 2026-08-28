@@ -4,7 +4,7 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/19';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/20';
 if(!core||!schema||!hash||!workflow)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
 function humanInputBlock(job){
@@ -203,7 +203,7 @@ ${contextFor(stage,state,operation,scope)}
 ${[6,12].includes(stage)?`APPLICATION-NATIVE TEST CAPABILITIES
 ${workflow.applicationTestCapabilities().length?workflow.applicationTestCapabilities().join('\n'):'NONE'}
 
-`:''}${(()=>{const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),handoff=workflow.executionHandoff(state,{stage,testIds:ids});if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';const lines=['EXECUTION / ARTIFACT HANDOFF — APPLICATION DERIVED'];if(handoff.send.length){lines.push('FILES YOU MUST RECEIVE');for(const x of handoff.send)lines.push('- '+x.artifactId+' — '+x.filename+' — SHA-256 '+x.sha256);}if(handoff.withhold.length){lines.push('FILES / CONTEXT YOU MUST NOT RECEIVE');for(const x of handoff.withhold)lines.push('- '+x.artifactIdOrCategory+' — '+x.reason);}if(handoff.expectBack.length){lines.push('FILES / EVIDENCE YOU MUST RETURN');for(const x of handoff.expectBack)lines.push('- '+(x.filenameOrPattern||x.kind)+(x.required?' — REQUIRED':''));}lines.push('Browser-local custody does not mean these bytes were transferred automatically. The executing environment must actually receive every required file.');return lines.join('\n')+'\n\n';})()}STAGE-SPECIFIC TASK
+`:''}${(()=>{const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),runIds=plan?.triples?.map(x=>x.runId),handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds});if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';const lines=['EXECUTION / ARTIFACT HANDOFF — APPLICATION DERIVED'];if(handoff.send.length){lines.push('FILES YOU MUST RECEIVE');for(const x of handoff.send)lines.push('- '+x.artifactId+' — '+x.filename+' — SHA-256 '+x.sha256);}if(handoff.withhold.length){lines.push('FILES / CONTEXT YOU MUST NOT RECEIVE');for(const x of handoff.withhold)lines.push('- '+x.artifactIdOrCategory+' — '+x.reason);}if(handoff.expectBack.length){lines.push('FILES / EVIDENCE YOU MUST RETURN');for(const x of handoff.expectBack)lines.push('- '+(x.filenameOrPattern||x.kind)+(x.required?' — REQUIRED':''));}lines.push('Browser-local custody does not mean these bytes were transferred automatically. The executing environment must actually receive every required file.');return lines.join('\n')+'\n\n';})()}STAGE-SPECIFIC TASK
 ${procedures[stage]}
 
 PERMITTED AGENT-OWNED STAGE DATA
