@@ -47,7 +47,7 @@ def body_end(text,start):
             elif ch==quote: quote=None
         else:
             if ch=='/' and nxt=='/': line=True; i+=1
-            elif ch=='*' and nxt=='/': block=True; i+=1
+            elif ch=='/' and nxt=='*': block=True; i+=1
             elif ch in "'\"`": quote=ch
             elif ch=='{': depth+=1
             elif ch=='}':
@@ -67,8 +67,6 @@ def replace_function(name,replacement):
     end=body_end(s,brace)
     s=s[:start]+replacement+s[end+1:]
 
-# Stage 18 is an iteration-local proposition. Later product/release evidence
-# cannot retroactively invalidate an already completed convergence calculation.
 anchor="function convergenceMetrics(project){"
 if 'function convergenceContradictionCount(' not in s:
     pos=s.find(anchor)
@@ -85,9 +83,6 @@ if 'function convergenceContradictionCount(' not in s:
     s=s[:pos]+helper+s[pos:]
 replace_once("contradictions=detectCurrentContradictions(project).filter(x=>x.severity==='RELEASE_MATERIAL').length","contradictions=convergenceContradictionCount(project,iterationId)",'Stage 18 contradiction reduction')
 
-# Exact candidate-byte identity is a pure application fact and is testable
-# independently from the separate authority to freeze a baseline. The canonical
-# mutation still requires an application-established unchanged confirmation.
 if 'function validateBaselineCandidateArtifacts(' not in s:
     marker='function freezeBaseline(project,'
     pos=s.find(marker)
@@ -121,8 +116,6 @@ freeze="""function freezeBaseline(project,{artifactIds=[],operatorLabel='HUMAN_O
 }"""
 replace_function('freezeBaseline',freeze)
 
-# Derivation rendering must not recompute whole-project coverage, convergence,
-# and release for stages that do not consume those values.
 derive="""function deriveStageData(project,stage){
   ensureShape(project);const derived={};const ids=collection=>recordsForCurrentScope(project,collection).filter(r=>Number(r.stage)===Number(stage)).map(r=>recordId(r,collection));
   switch(stage){
@@ -141,9 +134,6 @@ derive="""function deriveStageData(project,stage){
 }"""
 replace_function('deriveStageData',derive)
 
-# Routine recalculation only needs the first incomplete stage. Every later
-# stage is deterministically NOT STARTED until its predecessor completes, so
-# evaluating release/evidence gates there is both premature and expensive.
 old="""  let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
     const result=gate(stage,project);
@@ -160,7 +150,7 @@ old="""  let previousComplete=true;
     previousComplete=state.status==='COMPLETE';
   }
 """
-new="""  let previousComplete=true,firstIncompleteStage=null;
+new="""  let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
     const state=project.stages[stage];
     if(!previousComplete){
@@ -170,19 +160,14 @@ new="""  let previousComplete=true,firstIncompleteStage=null;
     const result=gate(stage,project);state.gate=result;
     if(result.blocked)state.status='BLOCKED';else if(result.complete)state.status='COMPLETE';else if(hasStageActivity(project,stage))state.status='IN PROGRESS';else state.status='READY';
     state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';state.derivedData=deriveStageData(project,stage);
-    previousComplete=state.status==='COMPLETE';if(!previousComplete)firstIncompleteStage=stage;
+    previousComplete=state.status==='COMPLETE';
   }
 """
 replace_once(old,new,'recalculate downstream short-circuit')
 
-# Stage 29 chain completeness uses the same structural evidence contract that
-# controls result adjudication. Bare narrative is supplementary only.
 old="else for(const result of testResults)if(!evaluateEvidenceSufficiency(project,{requirement,test,result}).sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid);"
 new="else for(const result of testResults)if(!evaluateEvidenceContract(test,result,null,project).sufficient)missing.push('INSUFFICIENT_EVIDENCE:'+tid);"
 replace_once(old,new,'evidence-chain structural sufficiency')
-
-# The pure identity validator is exported so deterministic regression tests can
-# prove exact candidate-byte selection without bypassing Stage 19 authorization.
 replace_once('beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution','beginUnchangedConfirmationIteration,validateBaselineCandidateArtifacts,freezeBaseline,reserveProductExecution','baseline validator export')
 
 p.write_text(s)
