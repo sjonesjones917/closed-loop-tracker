@@ -113,7 +113,7 @@ async function transactIndexed(projectsOrJobId,jobIdOrExpected,mutatorOrOptions)
 function transact(projectsOrJobId,jobIdOrExpected,mutatorOrOptions,storage){if(Array.isArray(projectsOrJobId)&&storage){const next=clone(projectsOrJobId),id=String(jobIdOrExpected||''),i=next.findIndex(x=>projectIdentity(x)===id);if(i<0)throw new Error(`Project ${id} is not available for transaction.`);const before=clone(next[i]),result=runSynchronousMutator(mutatorOrOptions,next[i],before);writeAllLegacy(next,storage);return {projects:next,project:next[i],result};}return transactIndexed(projectsOrJobId,jobIdOrExpected,mutatorOrOptions);}
 
 async function removeProjectIndexed(projectsOrJobId,options={}){
-  const jobId=String(projectsOrJobId||'').trim(),expected=options?.expectedProjectRevision,replacementSelectedProjectId=String(options?.replacementSelectedProjectId||'').trim();
+  const jobId=String(projectsOrJobId||'').trim(),expected=options?.expectedProjectRevision,replacementSelectedProjectId=String(options?.replacementSelectedProjectId||'').trim(),suppressRetainedProject=Boolean(options?.suppressRetainedProject);
   if(!jobId)throw storageError('JOB_ID is required for project deletion.','PROJECT_DELETE_JOB_ID_REQUIRED');
   if(replacementSelectedProjectId===jobId)throw storageError('The deleted project cannot also be the replacement selected project.','INVALID_PROJECT_DELETE_REPLACEMENT');
   const tx=await openTransaction([PROJECTS,ARTIFACTS,META],'readwrite'),projects=tx.objectStore(PROJECTS),artifacts=tx.objectStore(ARTIFACTS),meta=tx.objectStore(META);
@@ -124,6 +124,7 @@ async function removeProjectIndexed(projectsOrJobId,options={}){
     const artifactRows=await request(artifacts.getAll());projects.delete(jobId);for(const artifact of artifactRows)if(String(artifact.jobId)===jobId)artifacts.delete(artifact.artifactId);
     const selected=await request(meta.get('selectedProject'));if(String(selected?.value||'')===jobId){if(replacementSelectedProjectId)meta.put({key:'selectedProject',value:replacementSelectedProjectId,updatedAt:now()});else meta.delete('selectedProject');}
     const projectUiRow=await request(meta.get('projectUi'));if(projectUiRow?.value&&typeof projectUiRow.value==='object'&&!Array.isArray(projectUiRow.value)&&Object.prototype.hasOwnProperty.call(projectUiRow.value,jobId)){const nextProjectUi=clone(projectUiRow.value);delete nextProjectUi[jobId];meta.put({key:'projectUi',value:nextProjectUi,updatedAt:now()});}
+    if(suppressRetainedProject)meta.put({key:'retainedProjectSuppressed',value:{jobId,at:now()},updatedAt:now()});
     const lastCommitted=await request(meta.get('lastCommittedRevision'));if(String(lastCommitted?.value?.jobId||'')===jobId)meta.delete('lastCommittedRevision');for(const key of ['lastVerifiedExport:'+jobId,'lastArtifactVerification:'+jobId])meta.delete(key);
     fault('during-project-delete');await complete(tx);try{new BroadcastChannel('closed-loop-reliability').postMessage({type:'PROJECT_DELETED',jobId,replacementSelectedProjectId:replacementSelectedProjectId||null});}catch{}return true;
   }catch(error){try{tx.abort();}catch{}throw error;}
