@@ -49,6 +49,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html verify-browser-extra.mjs .github/workflows/fix-project-actions-once.yml
+          git add -A
           git commit -m 'Fix Project actions menu on mobile'
           git push origin HEAD:reliability/project-actions-mobile-fix-20260828
