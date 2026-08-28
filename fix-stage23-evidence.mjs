@@ -46,5 +46,10 @@ replace(
   "case 25:{const product=(recordsForCurrentScope(project,'products').length?recordsForCurrentScope(project,'products'):records(project,'products')).at(-1),artifactIds=safe(recordValue(product,'GENERATED_ARTIFACT_INVENTORY')).map(String),artifacts=artifactIds.map(id=>records(project,'artifacts').find(item=>recordId(item,'artifacts')===id)).filter(Boolean),inspections=records(project,'representationInspections');if(!artifactIds.length)reasons.push('Current product has no generated delivery artifacts to inspect.');for(const artifact of artifacts){const id=recordId(artifact,'artifacts'),matches=inspections.filter(item=>String(recordValue(item,'ARTIFACT_ID')||item.relationships?.ARTIFACT_ID||'')===id);if(matches.length!==1)reasons.push(`${id} requires exactly one current representation inspection.`);else if(upper(recordValue(matches[0],'DETERMINATION'))!=='SATISFIED'||!evaluateEvidenceSufficiency(project,{result:matches[0]}).sufficient)reasons.push(`${id} representation inspection is not evidence-sufficient and SATISFIED.`);}break;}",
   'Stage 25 current delivery-artifact selector'
 );
+replace(
+  "function recordReleaseDetermination(project){ensureShape(project);const metrics=releaseMetrics(project);const releaseEvidenceSha256=hash.sha256Value({metrics,inputReferences:metrics.inputReferences});",
+  "function recordReleaseDetermination(project){ensureShape(project);const metrics=releaseMetrics(project);const releaseEvidenceSha256=hash.sha256Value(metrics);",
+  'canonical release evidence hashing without undefined optional members'
+);
 fs.writeFileSync(path,source);
 console.log('Applied consolidated reliability compatibility repairs.');
