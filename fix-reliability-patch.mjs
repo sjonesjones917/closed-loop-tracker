@@ -45,5 +45,10 @@ const newExportPatch="engine=engine.replace('releaseMetrics,applicationTestCapab
 if(!source.includes(oldExportPatch))throw new Error('Expected ineffective engine export patch was not found.');
 source=source.replace(oldExportPatch,newExportPatch);
 
+const oldStage12Reason="if(!matrix.expected.length)reasons.push('No current mandatory verification triples exist.');";
+const newStage12Reason="if(!matrix.expected.length)reasons.push('REQ × RUN × TEST coverage cannot be evaluated because no current mandatory verification triples exist.');";
+if(!source.includes(oldStage12Reason))throw new Error('Expected Stage 12 empty-matrix diagnostic was not found.');
+source=source.replace(oldStage12Reason,newStage12Reason);
+
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired with additive execution-plan compatibility aliases and exported reliability helpers.');
+console.log('Patch generator repaired with compatibility aliases, exported reliability helpers, and preserved Stage 12 matrix diagnostics.');
