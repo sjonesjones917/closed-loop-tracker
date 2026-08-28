@@ -47,7 +47,7 @@ def body_end(text,start):
             elif ch==quote: quote=None
         else:
             if ch=='/' and nxt=='/': line=True; i+=1
-            elif ch=='/' and nxt=='*': block=True; i+=1
+            elif ch=='*' and nxt=='/': block=True; i+=1
             elif ch in "'\"`": quote=ch
             elif ch=='{': depth+=1
             elif ch=='}':
@@ -122,9 +122,7 @@ freeze="""function freezeBaseline(project,{artifactIds=[],operatorLabel='HUMAN_O
 replace_function('freezeBaseline',freeze)
 
 # Derivation rendering must not recompute whole-project coverage, convergence,
-# and release for stages that do not consume those values. This is a pure
-# performance correction: each calculation is still performed by its owning
-# stage and uses the same deterministic functions and values.
+# and release for stages that do not consume those values.
 derive="""function deriveStageData(project,stage){
   ensureShape(project);const derived={};const ids=collection=>recordsForCurrentScope(project,collection).filter(r=>Number(r.stage)===Number(stage)).map(r=>recordId(r,collection));
   switch(stage){
@@ -142,6 +140,40 @@ derive="""function deriveStageData(project,stage){
   derived.STAGE_DECISION=project.stages[stage].status==='COMPLETE'?'READY TO PROCEED':project.stages[stage].status==='BLOCKED'?'BLOCKED':'NOT READY - CORRECTION REQUIRED';derived.DECISION_EVIDENCE=project.stages[stage].gate?.reasons?.length?project.stages[stage].gate.reasons.join('; '):'Canonical current-scope records and deterministic calculations satisfy the stage gate.';return derived;
 }"""
 replace_function('deriveStageData',derive)
+
+# Routine recalculation only needs the first incomplete stage. Every later
+# stage is deterministically NOT STARTED until its predecessor completes, so
+# evaluating release/evidence gates there is both premature and expensive.
+old="""  let previousComplete=true;
+  for(let stage=1;stage<=30;stage++){
+    const result=gate(stage,project);
+    const state=project.stages[stage];
+    state.gate=result;
+    if(!previousComplete){state.status='NOT STARTED';}
+    else if(result.blocked){state.status='BLOCKED';}
+    else if(result.complete){state.status='COMPLETE';}
+    else if(hasStageActivity(project,stage)){state.status='IN PROGRESS';}
+    else state.status='READY';
+    state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
+    state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
+    state.derivedData=deriveStageData(project,stage);
+    previousComplete=state.status==='COMPLETE';
+  }
+"""
+new="""  let previousComplete=true,firstIncompleteStage=null;
+  for(let stage=1;stage<=30;stage++){
+    const state=project.stages[stage];
+    if(!previousComplete){
+      const prior=stage-1,reason=`Stage ${String(prior).padStart(2,'0')} is not complete.`;
+      state.gate={complete:false,blocked:false,reasons:[reason]};state.status='NOT STARTED';state.decision='';state.decisionEvidence=reason;state.derivedData={STAGE_DECISION:'NOT READY - CORRECTION REQUIRED',DECISION_EVIDENCE:reason};continue;
+    }
+    const result=gate(stage,project);state.gate=result;
+    if(result.blocked)state.status='BLOCKED';else if(result.complete)state.status='COMPLETE';else if(hasStageActivity(project,stage))state.status='IN PROGRESS';else state.status='READY';
+    state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';state.derivedData=deriveStageData(project,stage);
+    previousComplete=state.status==='COMPLETE';if(!previousComplete)firstIncompleteStage=stage;
+  }
+"""
+replace_once(old,new,'recalculate downstream short-circuit')
 
 # Stage 29 chain completeness uses the same structural evidence contract that
 # controls result adjudication. Bare narrative is supplementary only.
