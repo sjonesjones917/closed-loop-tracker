@@ -1,0 +1,50 @@
+name: Apply reliability v2 patch
+on:
+  push:
+    branches: [reliability-execution-evidence-v2-20260827]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-execution-evidence-v2-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply deterministic production patch
+        run: python3 .reliability-v2-patch.py
+      - name: Syntax checks
+        run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser-extra.mjs
+      - name: Run canonical verification stack
+        run: |
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Run browser suites
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only verified production and regression changes
+        run: |
+          rm -f .reliability-v2-patch.py .github/workflows/apply-reliability-v2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: make verification evidence operationally decisive"
+          git push origin HEAD:reliability-execution-evidence-v2-20260827
