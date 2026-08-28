@@ -13,6 +13,10 @@ old_artifacts="const artifacts=recordsForCurrentScope(project,'artifacts')"
 new_artifacts="const artifacts=records(project,'artifacts').filter(isActiveRecord)"
 if old_artifacts not in s: raise RuntimeError('evidence artifact selector anchor missing')
 s=s.replace(old_artifacts,new_artifacts,1)
+old_cross="effectiveDetermination(project,'deterministicResults',d,controllingTest(project,d))==='SATISFIED'"
+new_cross="(effectiveDetermination(project,'deterministicResults',d,controllingTest(project,d))==='SATISFIED'||formalOutcome(claimedDetermination('deterministicResults',d))==='SATISFIED')"
+if old_cross not in s: raise RuntimeError('cross-method contradiction anchor missing')
+s=s.replace(old_cross,new_cross,1)
 old="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; digest=hashlib.sha256(b''.join(Path(f).read_bytes() for f in runtime)).hexdigest()[:16]"
 new="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; blob=lambda f: hashlib.sha1((f'blob {len(Path(f).read_bytes())}\\0').encode()+Path(f).read_bytes()).hexdigest(); manifest=''.join(f'{f}:{blob(f)}\\n' for f in runtime); digest='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]"
 if old not in s: raise RuntimeError('runtime cache-token patch anchor missing')
