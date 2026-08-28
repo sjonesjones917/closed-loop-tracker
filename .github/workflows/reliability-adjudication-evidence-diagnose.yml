@@ -1,0 +1,17 @@
+name: Reliability adjudication evidence diagnosis
+on:
+  push:
+    branches: [reliability/semantic-adjudication-20260827]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[evidence-diagnose]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch and print evidence adjudicator
+        run: |
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          patch -p0 < /tmp/adjudication.patch
+          grep -n -A 8 -B 2 'function evaluateEvidenceContract' workflow-engine.js
+          grep -n -A 8 -B 2 'function evaluateEvidenceSufficiency' workflow-engine.js
