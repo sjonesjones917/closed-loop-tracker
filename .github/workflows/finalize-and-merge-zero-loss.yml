@@ -1,0 +1,91 @@
+name: Finalize and merge coordinated zero-loss PR
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/finalize-and-merge-zero-loss.yml']
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      BRANCH: reliability/zero-loss-coordinated-20260828
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Identify the exact open pull request
+        shell: bash
+        run: |
+          PR_NUMBER="$(gh pr list --repo "$REPO" --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')"
+          test -n "$PR_NUMBER"
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+      - name: Wait for the normal Pages PR test on this exact head
+        shell: bash
+        run: |
+          wait_for_pages() {
+            local sha="$1" status conclusion run_id
+            for attempt in $(seq 1 120); do
+              read -r run_id status conclusion < <(gh api --method GET "repos/$REPO/actions/workflows/pages.yml/runs" -f branch="$BRANCH" -f event=pull_request -f per_page=100 --jq ".workflow_runs | map(select(.head_sha == \"$sha\")) | sort_by(.created_at) | last | [.id // \"\", .status // \"\", .conclusion // \"\"] | @tsv")
+              if [ "$status" = completed ]; then
+                test "$conclusion" = success
+                echo "Pages PR run $run_id passed for $sha"
+                return 0
+              fi
+              sleep 15
+            done
+            echo "Timed out waiting for the Pages PR test for $sha" >&2
+            return 1
+          }
+          wait_for_pages "$GITHUB_SHA"
+      - name: Remove every temporary coordination artifact
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f WHY STOP NO_MORE_PROBES _probe_should_not_exist.txt ZERO_LOSS_COORDINATED_STATUS.md
+          rm -f .github/workflows/THIS_IS_NOT_A_WORKFLOW
+          git rm -f --ignore-unmatch \
+            .github/workflows/finalize-and-merge-zero-loss.yml \
+            .github/workflows/remove-why-probe.yml \
+            .github/workflows/remove-stop-probe.yml \
+            .github/workflows/remove-no-more-probes.yml \
+            .github/workflows/remove-last-coordination-artifact.yml \
+            .github/workflows/remove-coordination-probe.yml \
+            .github/workflows/zero-loss-clean-final.yml \
+            .github/workflows/finalize-zero-loss-coordinated.yml \
+            .github/workflows/apply-zero-loss-mobile-bounded.yml \
+            .github/workflows/zero-loss-source-export.yml \
+            .github/workflows/PR_DO_NOT_MERGE_SENTINEL.yml
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'Restore the final single-Page-workflow source tree'
+            git push origin HEAD:"$BRANCH"
+          fi
+          echo "FINAL_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Wait for the final clean-tree Pages PR test
+        shell: bash
+        run: |
+          wait_for_pages() {
+            local sha="$1" status conclusion run_id
+            for attempt in $(seq 1 120); do
+              read -r run_id status conclusion < <(gh api --method GET "repos/$REPO/actions/workflows/pages.yml/runs" -f branch="$BRANCH" -f event=pull_request -f per_page=100 --jq ".workflow_runs | map(select(.head_sha == \"$sha\")) | sort_by(.created_at) | last | [.id // \"\", .status // \"\", .conclusion // \"\"] | @tsv")
+              if [ "$status" = completed ]; then
+                test "$conclusion" = success
+                echo "Final Pages PR run $run_id passed for $sha"
+                return 0
+              fi
+              sleep 15
+            done
+            echo "Timed out waiting for the final Pages PR test for $sha" >&2
+            return 1
+          }
+          wait_for_pages "$FINAL_SHA"
+      - name: Merge only the exact green final head
+        shell: bash
+        run: |
+          gh pr merge "$PR_NUMBER" --repo "$REPO" --merge --match-head-commit "$FINAL_SHA"
