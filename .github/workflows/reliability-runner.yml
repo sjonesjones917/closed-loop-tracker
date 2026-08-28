@@ -17,4 +17,6 @@ jobs:
         with:
           node-version: '22'
       - name: Apply patch, verify, and commit
-        run: bash .harden-runner.sh
+        run: |
+          sed -i 's/semanticMeaningRecord/meaningReviewRecord/g' .harden-runner.sh
+          bash .harden-runner.sh
