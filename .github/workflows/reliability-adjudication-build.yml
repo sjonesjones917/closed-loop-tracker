@@ -13,24 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - name: Print adjudication targets
+      - name: Snapshot exact implementation inputs
         run: |
-          echo '=== workflow-engine targets ==='
-          grep -nE 'function (evaluateEvidenceSufficiency|verificationMatrix|releaseMetrics|detectCurrentContradictions|defectResolvedByRegression|coverageMetrics|evaluateIteration|gate)|case 7:|case 9:|case 12:|case 13:|case 14:|case 16:|case 19:|case 21:|case 22:|case 23:|case 24:|case 25:|case 26:' workflow-engine.js || true
-          echo '=== schema targets ==='
-          grep -nE 'failureTests|confirmationRecords|regressionExecutions|deterministicResults|meaningResults|adversarialResults|representationInspections|processAudits|productAudits|preflightRecords' workflow-schema.js | head -80
-          echo '=== engine relevant excerpts ==='
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('workflow-engine.js').read_text().splitlines()
-          needles=['defectResolvedByRegression','evaluateEvidenceSufficiency','verificationMatrix','releaseMetrics','detectCurrentContradictions','case 7:','case 9:','case 12:','case 13:','case 14:','case 16:','case 19:','case 21:','case 22:','case 23:','case 24:','case 25:','case 26:']
-          seen=set()
-          for n in needles:
-              for i,line in enumerate(p):
-                  if n in line and i not in seen:
-                      seen.add(i)
-                      lo=max(0,i-8); hi=min(len(p),i+35)
-                      print(f'--- {n} @ {i+1} ---')
-                      for j in range(lo,hi): print(f'{j+1}: {p[j]}')
-                      break
-          PY
+          mkdir -p /tmp/adjudication-snapshot
+          cp workflow-engine.js workflow-schema.js response-ingestion.js prompt-engine.js project-store.js app-core.js workbook.js test-fixtures.mjs verify-complete.mjs verify-ingestion.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-browser.mjs verify-browser-extra.mjs /tmp/adjudication-snapshot/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adjudication-source-${{ github.sha }}
+          path: /tmp/adjudication-snapshot
+          if-no-files-found: error
