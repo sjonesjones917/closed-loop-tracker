@@ -18,3 +18,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Inspect remaining semantic and operator trust paths
         run: python3 .zero-loss-audit.py
+      - name: Export exact branch source for deterministic patching
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-loss-source-${{ github.sha }}
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
+          if-no-files-found: error
