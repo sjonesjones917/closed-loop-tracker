@@ -6,6 +6,7 @@ on:
       - reliability/zero-loss-semantic-adjudication-clean
     paths:
       - .github/workflows/zero-loss-audit.yml
+      - .zero-loss-audit.py
 
 permissions:
   contents: read
