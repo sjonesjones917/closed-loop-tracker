@@ -1,0 +1,19 @@
+name: Reliability adjudication Stage 7 diagnosis
+on:
+  push:
+    branches: [reliability/semantic-adjudication-20260827]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[stage7-diagnose]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch and print Stage 7 contract/gate references
+        run: |
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          patch -p0 < /tmp/adjudication.patch
+          echo '--- schema EXECUTION_OUTCOME references ---'
+          grep -n -C 5 'EXECUTION_OUTCOME' workflow-schema.js || true
+          echo '--- engine EXECUTION_OUTCOME references ---'
+          grep -n -C 8 'EXECUTION_OUTCOME' workflow-engine.js || true
