@@ -13,23 +13,144 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Merge the audited current main head
+      - name: Merge and resolve the audited current main head
         shell: bash
         run: |
           set -euxo pipefail
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
-          MAIN_SHA='45db5b42ea0d65407c6452dc5aabbf7d39e375bc'
+          MAIN_SHA='dd1233ea10313f4092b44770f7deb8661b8e2e63'
           git fetch origin "$MAIN_SHA"
-          if ! git merge --no-commit --no-ff "$MAIN_SHA"; then
-            echo 'UNMERGED_FILES_BEGIN'
-            git diff --name-only --diff-filter=U
-            echo 'UNMERGED_FILES_END'
-            exit 1
+          set +e
+          git merge --no-commit --no-ff "$MAIN_SHA"
+          MERGE_EXIT=$?
+          set -e
+          if [ "$MERGE_EXIT" -ne 0 ]; then
+            mapfile -t UNMERGED < <(git diff --name-only --diff-filter=U)
+            printf 'Unmerged files: %s\n' "${UNMERGED[*]}"
+            test "${#UNMERGED[@]}" -eq 3
+            printf '%s\n' "${UNMERGED[@]}" | sort > /tmp/unmerged.actual
+            printf '%s\n' index.html verify-semantic-invariant.mjs workflow-engine.js | sort > /tmp/unmerged.expected
+            diff -u /tmp/unmerged.expected /tmp/unmerged.actual
+            git checkout --ours index.html
+            git checkout --theirs workflow-engine.js verify-semantic-invariant.mjs
+            git add index.html workflow-engine.js verify-semantic-invariant.mjs
           fi
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,re
+
+          engine=Path('workflow-engine.js')
+          source=engine.read_text()
+          old_gate="""gate=function adjudicationGate(stage,project){
+            const adjudicated=adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];"""
+          new_gate="""gate=function adjudicationGate(stage,project,preparedAdjudicatedProject=null){
+            const adjudicated=preparedAdjudicatedProject||adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];"""
+          if old_gate not in source:
+              raise SystemExit('Current-main adjudication gate target was not found.')
+          source=source.replace(old_gate,new_gate,1)
+          start=source.index('function recalculate(project){')
+          end=source.index('\n\nfunction invalidateDownstream',start)
+          combined=r'''function recalculate(project){
+            ensureShape(project);
+            // Construct the application-owned effective-result projection once for the
+            // complete reduction. Later gates observe the same canonical stage updates
+            // that repeated per-stage projections previously observed.
+            const adjudicated=adjudicatedClone(project);
+            let previousComplete=true;
+            for(let stage=1;stage<=30;stage++){
+              const state=project.stages[stage];
+              if(!previousComplete){
+                const prerequisite=`Stage ${String(stage-1).padStart(2,'0')} is not complete.`;
+                state.status='NOT STARTED';
+                state.gate={complete:false,blocked:false,reasons:[prerequisite]};
+                state.decision='';
+                state.decisionEvidence=prerequisite;
+                state.derivedData={STAGE_DECISION:'NOT READY - CORRECTION REQUIRED',DECISION_EVIDENCE:prerequisite};
+                Object.assign(adjudicated.stages[stage],{status:state.status,gate:clone(state.gate),decision:state.decision,decisionEvidence:state.decisionEvidence,derivedData:clone(state.derivedData)});
+                continue;
+              }
+              const wasComplete=state.status==='COMPLETE',result=gate(stage,project,adjudicated);
+              state.gate=result;
+              if(result.blocked)state.status='BLOCKED';
+              else if(result.complete)state.status='COMPLETE';
+              else if(hasStageActivity(project,stage))state.status='IN PROGRESS';
+              else state.status='READY';
+              state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
+              state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
+              if(!wasComplete||state.status!=='COMPLETE'||!state.derivedData||!Object.keys(state.derivedData).length)state.derivedData=deriveStageData(project,stage);
+              Object.assign(adjudicated.stages[stage],{status:state.status,gate:clone(state.gate),decision:state.decision,decisionEvidence:state.decisionEvidence,derivedData:clone(state.derivedData)});
+              previousComplete=state.status==='COMPLETE';
+            }
+            const completed=Object.values(project.stages).filter(state=>state.status==='COMPLETE').length;
+            const currentStage=completed===30?30:Math.max(1,Object.values(project.stages).find(state=>state.status!=='COMPLETE')?.number||30);
+            const current=project.stages[currentStage];
+            project.activeStage=Math.max(1,Math.min(30,Number(project.activeStage||currentStage)));
+            project.job.CURRENT_STAGE=`STAGE ${String(currentStage).padStart(2,'0')}`;
+            project.job.CURRENT_STATE=completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';
+            const blockers=openBlockers(project);
+            project.job.CURRENT_BLOCKERS=blockers.length?blockers.map(record=>recordId(record,'blockers')).join(', '):'NONE';
+            project.job.NEXT_REQUIRED_ACTION=completed===30?'Preserve the completed workflow and exact release evidence.':operationalNextAction(project,currentStage);
+            project.job.LATEST_EVIDENCE_REFERENCE=safe(project.projectData.acceptedChanges).at(-1)?.changeId||project.job.LATEST_EVIDENCE_REFERENCE||'NONE';
+            project.job.JOB_RECORD_STATUS=project.stages[1].status==='COMPLETE'?'READY':'NOT READY';
+            project.job.STATUS_EVIDENCE=project.stages[1].gate?.reasons?.join('; ')||'Stage 01 canonical evidence is complete.';
+            return project;
+          }'''
+          source=source[:start]+combined+source[end:]
+          engine.write_text(source)
+
+          semantic=Path('verify-semantic-invariant.mjs')
+          semantic_source=semantic.read_text()
+          final_report="console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceChains:true,effectiveStability:true}));"
+          if final_report not in semantic_source:
+              raise SystemExit('Canonical semantic proof report target was not found.')
+          extra=r'''
+
+          // Reusing one application-owned effective-result projection must be exactly
+          // equivalent to current-main's repeated per-stage adjudication semantics.
+          function referenceCurrentRecalculate(project){
+            engine.ensureShape(project);
+            let previousComplete=true;
+            for(let stage=1;stage<=30;stage++){
+              const state=project.stages[stage];
+              if(!previousComplete){
+                const prerequisite=`Stage ${String(stage-1).padStart(2,'0')} is not complete.`;
+                state.status='NOT STARTED';state.gate={complete:false,blocked:false,reasons:[prerequisite]};state.decision='';state.decisionEvidence=prerequisite;state.derivedData={STAGE_DECISION:'NOT READY - CORRECTION REQUIRED',DECISION_EVIDENCE:prerequisite};
+                continue;
+              }
+              const wasComplete=state.status==='COMPLETE',result=engine.gate(stage,project);
+              state.gate=result;
+              if(result.blocked)state.status='BLOCKED';else if(result.complete)state.status='COMPLETE';else if(engine.hasStageActivity(project,stage))state.status='IN PROGRESS';else state.status='READY';
+              state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
+              state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
+              if(!wasComplete||state.status!=='COMPLETE'||!state.derivedData||!Object.keys(state.derivedData).length)state.derivedData=engine.deriveStageData(project,stage);
+              previousComplete=state.status==='COMPLETE';
+            }
+            const completed=Object.values(project.stages).filter(state=>state.status==='COMPLETE').length,currentStage=completed===30?30:Math.max(1,Object.values(project.stages).find(state=>state.status!=='COMPLETE')?.number||30),current=project.stages[currentStage];
+            project.activeStage=Math.max(1,Math.min(30,Number(project.activeStage||currentStage)));
+            project.job.CURRENT_STAGE=`STAGE ${String(currentStage).padStart(2,'0')}`;
+            project.job.CURRENT_STATE=completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';
+            const blockers=engine.openBlockers(project);
+            project.job.CURRENT_BLOCKERS=blockers.length?blockers.map(record=>engine.recordId(record,'blockers')).join(', '):'NONE';
+            project.job.NEXT_REQUIRED_ACTION=completed===30?'Preserve the completed workflow and exact release evidence.':engine.operationalNextAction(project,currentStage);
+            project.job.LATEST_EVIDENCE_REFERENCE=(project.projectData.acceptedChanges||[]).at(-1)?.changeId||project.job.LATEST_EVIDENCE_REFERENCE||'NONE';
+            project.job.JOB_RECORD_STATUS=project.stages[1].status==='COMPLETE'?'READY':'NOT READY';
+            project.job.STATUS_EVIDENCE=project.stages[1].gate?.reasons?.join('; ')||'Stage 01 canonical evidence is complete.';
+            return project;
+          }
+          function reductionSnapshot(project){return {stages:Object.fromEntries(Array.from({length:30},(_,index)=>{const number=index+1,state=project.stages[number],gate=state.gate||{};return [number,{status:state.status,decision:state.decision,decisionEvidence:state.decisionEvidence,gate:{complete:Boolean(gate.complete),blocked:Boolean(gate.blocked),reasons:[...(gate.reasons||[])]},derivedData:state.derivedData}];})),job:Object.fromEntries(['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','LATEST_EVIDENCE_REFERENCE','JOB_RECORD_STATUS','STATUS_EVIDENCE'].map(key=>[key,project.job[key]]))};}
+          const reductionFixture=engine.clone(p),optimized=engine.clone(reductionFixture),reference=engine.clone(reductionFixture);
+          engine.recalculate(optimized);referenceCurrentRecalculate(reference);
+          assert(hash.stableStringify(reductionSnapshot(optimized))===hash.stableStringify(reductionSnapshot(reference)),'Single-projection recalculation changed a current-main stage gate, status, derived value, or next action.');
+          const largeState=engine.clone(reductionFixture);largeState.projectData.userEntered={...(largeState.projectData.userEntered||{}),MOBILE_LARGE_STATE_SENTINEL:'x'.repeat(3_700_000)};
+          const recalculateStarted=performance.now();engine.recalculate(largeState);const largeStateRecalculateMs=performance.now()-recalculateStarted;
+          assert(largeStateRecalculateMs<5000,`Large current project recalculation exceeded the bounded non-browser regression limit: ${largeStateRecalculateMs.toFixed(1)} ms`);
+          assert(hash.stableStringify(reductionSnapshot(largeState))===hash.stableStringify(reductionSnapshot(optimized)),'Non-semantic large browser-local payload changed canonical stage reduction.');
+          assert(source.includes('const adjudicated=adjudicatedClone(project);')&&source.includes('gate(stage,project,adjudicated)'),'Recalculation no longer reuses one application-owned adjudication projection.');
+          assert(!source.includes('const metrics=coverageMetrics(project);const convergence=convergenceMetrics(project);const release=releaseMetrics(project);'),'Expensive coverage, convergence, and release reductions became unconditional again.');
+          console.log(JSON.stringify({...proof,affirmativeCapabilityAvailability:true,epistemicEvidenceChains:true,effectiveStability:true,singleProjectionEquivalent:true,largeStateRecalculateMs:Number(largeStateRecalculateMs.toFixed(1))}));'''
+          semantic.write_text(semantic_source.replace(final_report,extra,1))
+
           runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           def git_blob_sha(path):
               data=Path(path).read_bytes()
@@ -41,6 +162,8 @@ jobs:
           index.write_text(html)
           print(token)
           PY
+          git add index.html workflow-engine.js verify-semantic-invariant.mjs
+          test -z "$(git diff --name-only --diff-filter=U)"
           git diff --check
       - name: Full deterministic and Chromium acceptance
         shell: bash
