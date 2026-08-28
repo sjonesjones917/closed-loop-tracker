@@ -1,0 +1,88 @@
+name: Apply lifecycle disclosure-state correction
+on:
+  push:
+    branches: [reliability/project-lifecycle-controls-20260828]
+    paths: ['.github/workflows/lifecycle-ui-state-fix.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: reliability/project-lifecycle-controls-20260828
+      - name: Preserve project lifecycle disclosure state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="let core,schema,engine,ingestion,projectStore,projects=[],current,projectStorageSnapshot=null;"
+          new="let core,schema,engine,ingestion,projectStore,projects=[],current,projectStorageSnapshot=null,projectManagementOpen=false,projectStorageOpen=false;"
+          assert old in s
+          s=s.replace(old,new,1)
+          old='<details class="record-card" id="project-management"><summary>Project actions<span>Manage</span></summary>'
+          new='<details class="record-card" id="project-management"${projectManagementOpen?\' open\':\'\'}><summary>Project actions<span>Manage</span></summary>'
+          assert old in s
+          s=s.replace(old,new,1)
+          old='<details class="record-card"><summary>Backup, import & storage<span>Safety</span></summary>'
+          new='<details class="record-card" id="project-storage-management"${projectStorageOpen?\' open\':\'\'}><summary>Backup, import & storage<span>Safety</span></summary>'
+          assert old in s
+          s=s.replace(old,new,1)
+          old="}else if(verify)announce('stored files verified');render();return projectStorageSnapshot;"
+          new="}else if(verify)announce('stored files verified');projectManagementOpen=true;projectStorageOpen=true;render();return projectStorageSnapshot;"
+          assert old in s
+          s=s.replace(old,new,1)
+          marker="function wire(){document.querySelectorAll('[data-view]')"
+          replacement="function wire(){if($('#project-management'))$('#project-management').ontoggle=e=>{projectManagementOpen=e.currentTarget.open;};if($('#project-storage-management'))$('#project-storage-management').ontoggle=e=>{projectStorageOpen=e.currentTarget.open;};document.querySelectorAll('[data-view]')"
+          assert marker in s
+          s=s.replace(marker,replacement,1)
+          p.write_text(s)
+          PY
+      - name: Refresh exact runtime cache identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const id=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/runtime-[0-9a-f]{16}/g,id);
+          fs.writeFileSync('index.html',html);
+          console.log(id);
+          NODE
+      - name: Remove temporary workflow and prove source invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/lifecycle-ui-state-fix.yml
+          test "$(find .github/workflows -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          node --check app-core.js
+          node --check project-store.js
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-semantic-invariant.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-definition-of-done.mjs
+      - name: Commit corrected final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Keep lifecycle verification results visible'
+          git push origin HEAD:reliability/project-lifecycle-controls-20260828
