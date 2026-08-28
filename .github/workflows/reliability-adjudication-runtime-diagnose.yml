@@ -18,6 +18,8 @@ jobs:
           patch -p0 < /tmp/adjudication.patch
           python3 - <<'PY'
           from pathlib import Path
+          pe=Path('workflow-engine.js')
+          pe.write_text(pe.read_text().replace('semantically contradictory material finding','internally contradictory material finding'))
           p=Path('workflow-schema.js'); t=p.read_text()
           old="if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name)))throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);"
           new="if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name))){console.error('OWNERSHIP_RUNTIME_MISMATCH',JSON.stringify({title,fields,ownership,union,fieldCount:fields.length,unionCount:union.length,missingFromFields:union.filter(name=>!fields.includes(name)),unownedFields:fields.filter(name=>!union.includes(name))},null,2));throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);}"
