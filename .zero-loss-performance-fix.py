@@ -26,5 +26,39 @@ replacement="""function executionStability(project,iterationId){
 }
 """
 s=s[:start]+replacement+s[end:]
+
+# Recalculation has a strict serial prerequisite: once the first non-complete stage is reached,
+# downstream stages cannot be actionable. Do not perform expensive downstream release/adjudication
+# reductions, and do not recompute immutable derived summaries for already-complete upstream stages.
+rstart=s.index('function recalculate(project){')
+completed=s.index('  const completed=Object.values(project.stages)',rstart)
+newprefix="""function recalculate(project){
+  ensureShape(project);
+  let previousComplete=true;
+  for(let stage=1;stage<=30;stage++){
+    const state=project.stages[stage];
+    if(!previousComplete){
+      const prerequisite=`Stage ${String(stage-1).padStart(2,'0')} is not complete.`;
+      state.status='NOT STARTED';
+      state.gate={complete:false,blocked:false,reasons:[prerequisite]};
+      state.decision='';
+      state.decisionEvidence=prerequisite;
+      state.derivedData={STAGE_DECISION:'NOT READY - CORRECTION REQUIRED',DECISION_EVIDENCE:prerequisite};
+      continue;
+    }
+    const wasComplete=state.status==='COMPLETE',result=gate(stage,project);
+    state.gate=result;
+    if(result.blocked){state.status='BLOCKED';}
+    else if(result.complete){state.status='COMPLETE';}
+    else if(hasStageActivity(project,stage)){state.status='IN PROGRESS';}
+    else state.status='READY';
+    state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
+    state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
+    if(!wasComplete||state.status!=='COMPLETE'||!state.derivedData||!Object.keys(state.derivedData).length)state.derivedData=deriveStageData(project,stage);
+    previousComplete=state.status==='COMPLETE';
+  }
+"""
+s=s[:rstart]+newprefix+s[completed:]
+
 p.write_text(s)
 print('zero-loss-performance-fix applied')
