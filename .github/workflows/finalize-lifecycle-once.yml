@@ -15,7 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply responsible-layer corrections
-        run: node .lifecycle-finalize.mjs
+        run: |
+          node .lifecycle-finalize.mjs
+          node .lifecycle-corrections-2.mjs
       - name: Refresh exact runtime identity
         run: |
           node - <<'NODE'
@@ -43,7 +45,8 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
       - name: Remove bootstrap before final architecture proof
-        run: rm .lifecycle-finalize.mjs .github/workflows/finalize-lifecycle-once.yml
+        run: |
+          git rm -f .lifecycle-finalize.mjs .lifecycle-corrections-2.mjs .github/workflows/finalize-lifecycle-once.yml
       - name: Final definition-of-done proof
         run: node verify-definition-of-done.mjs
       - name: Commit final tree
