@@ -1,71 +1,10 @@
-name: Adjudication residual proof
+name: Adjudication residual proof (disabled)
 on:
-  push:
-    branches: [semantic-adjudication-20260827]
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  prove:
-    if: ${{ !contains(github.event.head_commit.message, '[adjudication-proven]') }}
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Apply guarded residual repair
-        run: python3 .semantic-residual-repair.py
-      - name: Syntax and universal false-acceptance invariant
-        run: |
-          node --check workflow-engine.js
-          node --check workflow-schema.js
-          node --check verify-semantic-adjudication.mjs
-          node build-test-project.mjs
-          node verify-semantic-adjudication.mjs
-      - name: Existing deterministic acceptance stack unchanged
-        run: |
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
-          node verify-live.mjs
-      - name: Existing Chromium acceptance unchanged
-        run: |
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/adjudication-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-      - name: Install invariant in permanent CI and remove one-time machinery
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('.github/workflows/pages.yml')
-          s=p.read_text()
-          if 'node --check verify-semantic-adjudication.mjs' not in s:
-              anchor='          node --check verify-browser-extra.mjs\n'
-              if anchor not in s: raise SystemExit('pages syntax anchor missing')
-              s=s.replace(anchor,anchor+'          node --check verify-semantic-adjudication.mjs\n',1)
-          if '          node verify-semantic-adjudication.mjs\n' not in s:
-              anchor='          node verify-ingestion.mjs\n          node verify-complete.mjs\n'
-              if anchor not in s: raise SystemExit('pages test anchor missing')
-              s=s.replace(anchor,anchor+'          node verify-semantic-adjudication.mjs\n',1)
-          p.write_text(s)
-          for f in ['.semantic-residual-repair.py','.semantic-adjudication-patch.py','.fix-semantic-patcher.py','semantic-proof-failure.log','.github/workflows/semantic-adjudication-patch.yml','.github/workflows/apply-semantic-patch.yml','.github/workflows/semantic-residual-proof.yml']:
-              Path(f).unlink(missing_ok=True)
-          PY
-          test -f verify-semantic-adjudication.mjs
-          test ! -f .semantic-residual-repair.py
-          test ! -f .semantic-adjudication-patch.py
-          test ! -f .fix-semantic-patcher.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'fix: application-owned adjudication closure [adjudication-proven]'
-          git push origin HEAD:semantic-adjudication-20260827
+      - run: echo 'Disabled; coordinated proof workflow is authoritative.'
