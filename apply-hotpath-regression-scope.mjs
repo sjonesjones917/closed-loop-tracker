@@ -1,0 +1,7 @@
+import fs from 'node:fs';
+const path='verify-browser-extra.mjs';
+let source=fs.readFileSync(path,'utf8');
+const old=`const appCoreSource=fs.readFileSync('app-core.js','utf8');\nif(appCoreSource.includes('const preview=clone(current);'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');\nif(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');\n`;
+const replacement=`const appCoreSource=fs.readFileSync('app-core.js','utf8');\nconst promptStart=appCoreSource.indexOf('function currentStagePrompt'),promptEnd=appCoreSource.indexOf('function operationMarkup',promptStart),currentStagePromptSource=promptStart>=0&&promptEnd>promptStart?appCoreSource.slice(promptStart,promptEnd):'';\nif(!currentStagePromptSource||currentStagePromptSource.includes('clone(current)'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');\nif(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');\n`;
+if(!source.includes(old))throw new Error('Hot-path regression guard target not found');
+fs.writeFileSync(path,source.replace(old,replacement));
