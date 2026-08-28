@@ -1,0 +1,30 @@
+name: Apply semantic adjudication repair payload
+on:
+  push:
+    branches: [reliability-semantic-adjudication]
+    paths: ['.repair-semantic/READY']
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'Ready semantic adjudication patch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-semantic-adjudication
+          fetch-depth: 0
+      - name: Apply exact locally verified patch
+        run: |
+          set -euo pipefail
+          cat .repair-semantic/chunk-* > /tmp/semantic.patch.b64
+          base64 -d /tmp/semantic.patch.b64 > /tmp/semantic.patch
+          git apply --check /tmp/semantic.patch
+          git apply /tmp/semantic.patch
+          rm -rf .repair-semantic
+          rm -f .github/workflows/repair-semantic.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Enforce application-owned semantic adjudication'
+          git push origin HEAD:reliability-semantic-adjudication
