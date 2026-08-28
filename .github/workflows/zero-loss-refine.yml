@@ -27,7 +27,8 @@ jobs:
           python3 .zero-loss-testfix.py
           python3 .zero-loss-testguard.py
           python3 .zero-loss-chainfix.py
-          rm -f .zero-loss-refine.py .zero-loss-testfix.py .zero-loss-testguard.py .zero-loss-chainfix.py .github/workflows/zero-loss-refine.yml .github/workflows/zero-loss-test.yml
+          python3 .zero-loss-cachefix.py
+          rm -f .zero-loss-refine.py .zero-loss-testfix.py .zero-loss-testguard.py .zero-loss-chainfix.py .zero-loss-cachefix.py .github/workflows/zero-loss-refine.yml .github/workflows/zero-loss-test.yml
           node build-test-project.mjs
           for file in *.js *.mjs; do node --check "$file"; done
           node verify-hash.mjs
