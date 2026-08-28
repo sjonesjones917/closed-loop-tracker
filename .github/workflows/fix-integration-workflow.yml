@@ -19,42 +19,15 @@ jobs:
           from pathlib import Path
           path=Path('.github/workflows/integrate-main-zero-loss.yml')
           source=path.read_text()
-          old="""          git add index.html workflow-engine.js verify-semantic-invariant.mjs
-          test -z \"$(git diff --name-only --diff-filter=U)\"
-          git diff --check
-      - name: Full deterministic and Chromium acceptance"""
-          new="""          git add index.html workflow-engine.js verify-semantic-invariant.mjs
-          test -z \"$(git diff --name-only --diff-filter=U)\"
-          git rm .github/workflows/integrate-main-zero-loss.yml
-          test \"$(find .github/workflows -maxdepth 1 -type f | wc -l)\" -eq 1
-          test -f .github/workflows/pages.yml
-          git diff --check
-      - name: Full deterministic and Chromium acceptance"""
-          if source.count(old)!=1:
-              raise SystemExit(f'Expected one pre-test insertion target; found {source.count(old)}.')
-          source=source.replace(old,new,1)
-          old_final="""      - name: Commit exact integrated tested tree
-        shell: bash
-        run: |
-          set -euxo pipefail
-          git rm .github/workflows/integrate-main-zero-loss.yml
-          test \"$(find .github/workflows -maxdepth 1 -type f | wc -l)\" -eq 1
-          test -f .github/workflows/pages.yml
-          git add -A
-          git commit -m 'Integrate current main into coordinated reliability patch'
-          git push origin HEAD:reliability/zero-loss-coordinated-20260828
-"""
-          new_final="""      - name: Commit exact integrated tested tree
-        shell: bash
-        run: |
-          set -euxo pipefail
-          git add -A
-          git commit -m 'Integrate current main into coordinated reliability patch'
-          git push origin HEAD:reliability/zero-loss-coordinated-20260828
-"""
-          if source.count(old_final)!=1:
-              raise SystemExit(f'Expected one final-step target; found {source.count(old_final)}.')
-          path.write_text(source.replace(old_final,new_final,1))
+          marker="          git add index.html workflow-engine.js verify-semantic-invariant.mjs\n          test -z \"$(git diff --name-only --diff-filter=U)\"\n          git diff --check\n      - name: Full deterministic and Chromium acceptance"
+          replacement="          git add index.html workflow-engine.js verify-semantic-invariant.mjs\n          test -z \"$(git diff --name-only --diff-filter=U)\"\n          git rm .github/workflows/integrate-main-zero-loss.yml\n          test \"$(find .github/workflows -maxdepth 1 -type f | wc -l)\" -eq 1\n          test -f .github/workflows/pages.yml\n          git diff --check\n      - name: Full deterministic and Chromium acceptance"
+          if source.count(marker)!=1:
+              raise SystemExit(f'Expected one pre-test insertion target; found {source.count(marker)}.')
+          source=source.replace(marker,replacement,1)
+          final_marker="          git rm .github/workflows/integrate-main-zero-loss.yml\n          test \"$(find .github/workflows -maxdepth 1 -type f | wc -l)\" -eq 1\n          test -f .github/workflows/pages.yml\n          git add -A"
+          if source.count(final_marker)!=1:
+              raise SystemExit(f'Expected one final-step target; found {source.count(final_marker)}.')
+          path.write_text(source.replace(final_marker,"          git add -A",1))
           PY
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
