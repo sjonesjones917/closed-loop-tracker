@@ -1,0 +1,57 @@
+name: Prove zero-loss current-main patch
+on:
+  push:
+    branches: [reliability/zero-loss-current-main-20260828]
+    paths: [.github/workflows/prove-zero-loss-current-main.yml]
+permissions: {contents: write}
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Refresh exact runtime identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, subprocess, re
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''.join(f'{f}:{subprocess.check_output(["git","hash-object",f],text=True).strip()}\n' for f in files)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          p=Path('index.html'); s=p.read_text(); s,n=re.subn(r'runtime-[0-9a-f]{16}',token,s)
+          if n != 8: raise SystemExit(f'expected 8 runtime tokens, replaced {n}')
+          p.write_text(s)
+          print(token)
+          PY
+      - name: Deterministic proof sequence
+        run: |
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node --check verify-semantic-invariant.mjs
+          timeout 60s node verify-hash.mjs
+          timeout 60s node verify.mjs
+          timeout 60s node verify-semantic-invariant.mjs
+          timeout 90s node verify-ingestion.mjs
+          timeout 90s node verify-complete.mjs
+          timeout 90s node verify-prompt-semantics.mjs
+          timeout 180s node verify-full-cycle.mjs
+      - name: Local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout 180s node verify-browser.mjs
+          timeout 180s node verify-browser-extra.mjs
+      - name: Commit only proven runtime identity
+        run: |
+          rm -f .github/workflows/prove-zero-loss-current-main.yml
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          git add index.html .github/workflows/prove-zero-loss-current-main.yml
+          git commit -m 'Finalize proven zero-loss runtime identity'
+          git push origin HEAD:reliability/zero-loss-current-main-20260828
