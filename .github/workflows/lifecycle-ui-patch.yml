@@ -59,11 +59,12 @@ jobs:
           node verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Publish proven lifecycle patch and remove temporary patch files
+      - name: Publish exact proven application bytes
         run: |
+          git checkout HEAD -- .github/workflows/pages.yml .github/workflows/lifecycle-ui-patch.yml
           rm apply-lifecycle-patch.py apply-lifecycle-hardening.py
           git config user.name 'OpenAI GPT-5.6 Sol'
           git config user.email 'noreply@openai.com'
-          git add -A
+          git add app-core.js project-store.js index.html verify-browser-extra.mjs verify-project-lifecycle.mjs apply-lifecycle-patch.py apply-lifecycle-hardening.py
           git commit -m 'Add compact rigorous project lifecycle controls'
           git push origin HEAD:reliability/zero-loss-current-main-20260828
