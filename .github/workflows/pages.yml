@@ -252,7 +252,7 @@ jobs:
         run: |
           if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
             STATE=success
-            DESCRIPTION='Source, semantic false-acceptance invariant, continuous 30-stage lifecycle, prompt semantics, persistence, browser workflow, and deployed-byte verification passed'
+            DESCRIPTION='Deterministic, semantic, browser, persistence, and deployed-byte verification passed'
           else
             STATE=failure
             DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
