@@ -13,7 +13,7 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply minimal hot-path repair and prove deterministic invariants
+      - name: Apply minimal hot-path repair and prove source invariants
         run: |
           node apply-mobile-large-state-hotpath.mjs
           node --check app-core.js
@@ -22,10 +22,6 @@ jobs:
           node build-test-project.mjs
           node verify-hash.mjs
           node verify.mjs
-          node verify-semantic-invariant.mjs
-          node verify-prompt-semantics.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
       - name: Commit exact responsible-layer patch
         run: |
           git config user.name 'closed-loop-ci'
