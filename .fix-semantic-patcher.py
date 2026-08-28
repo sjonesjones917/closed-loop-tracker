@@ -11,8 +11,6 @@ replacement = r'''def replace_function(text, name, replacement):
     if start < 0:
         raise RuntimeError(f'missing function {name}')
 
-    # Find the real end of the parameter list. Braces used by destructured
-    # parameters/default objects are deliberately irrelevant here.
     paren = text.find('(', start + len(f"function {name}"))
     if paren < 0:
         raise RuntimeError(f'missing parameters for {name}')
@@ -44,7 +42,6 @@ replacement = r'''def replace_function(text, name, replacement):
     if close is None:
         raise RuntimeError(f'unclosed parameters for {name}')
 
-    # The function body begins only after the matching parameter ')'.
     brace = text.find('{', close + 1)
     if brace < 0:
         raise RuntimeError(f'missing body for {name}')
@@ -90,8 +87,6 @@ replacement = r'''def replace_function(text, name, replacement):
         i += 1
     raise RuntimeError(f'unclosed function {name}')
 
-# Refuse to mutate production source unless the locator proves the exact
-# destructured/default-parameter case that previously corrupted the output.
 _probe = "function probe(project,{test=null,result=null}={}){return {ok:true};}\nconst tail=1;"
 _probe_expected = "function probe(){return 1;}\nconst tail=1;"
 if replace_function(_probe, 'probe', 'function probe(){return 1;}') != _probe_expected:
@@ -103,4 +98,15 @@ s = s.replace(
     "if(result&&Number(result.stage)===23||recordValue(result,'OBSERVED_MEANING'))",
     "if(result&&(Number(result.stage)===23||recordValue(result,'OBSERVED_MEANING')))"
 )
+
+# The branch may already contain the regression-authority correction from the
+# coordinated semantic work. Preserve fail-closed behavior: transform the
+# historical form, accept either known corrected form, and reject every other
+# source state.
+old_block = '''old="return executions.length===1&&['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(executions[0],'RESULT')));"\nif old not in s: raise RuntimeError('regression resolution expression missing')\ns=s.replace(old,"return executions.length===1&&regressionExecutionDetermination(project,executions[0]).determination==='SATISFIED';",1)'''
+new_block = '''old="return executions.length===1&&['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(executions[0],'RESULT')));"\npatched_a="return executions.length===1&&regressionExecutionDetermination(project,executions[0]).determination==='SATISFIED';"\npatched_b="return executions.length===1&&effectiveRegressionDetermination(project,executions[0]).determination==='SATISFIED';"\nif old in s:\n    s=s.replace(old,patched_a,1)\nelif patched_a in s or patched_b in s:\n    pass\nelse:\n    raise RuntimeError('regression resolution expression is neither historical nor a known application-derived form')'''
+if old_block not in s:
+    raise RuntimeError('semantic patch regression-rewrite guard not found')
+s = s.replace(old_block, new_block, 1)
+
 patch_path.write_text(s)
