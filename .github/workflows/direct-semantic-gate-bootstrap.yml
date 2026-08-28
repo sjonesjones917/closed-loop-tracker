@@ -30,13 +30,15 @@ jobs:
           set -euo pipefail
           python3 .fix-direct-semantic-anchor.py
           python3 .direct-semantic-gate-fix.py
-          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .github/workflows/direct-semantic-gate-bootstrap.yml
+          python3 .repair-direct-semantic-helper.py
+          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .repair-direct-semantic-helper.py .github/workflows/direct-semantic-gate-bootstrap.yml
           test ! -e .github/workflows/export-source.yml
           test ! -e .export-source/READY
           grep -q 'function evaluateEvidenceContract' workflow-engine.js
           grep -q 'function evaluateResultConsistency' workflow-engine.js
           grep -q 'function effectiveDetermination' workflow-engine.js
           grep -q 'function validateTraceIntegrity' workflow-engine.js
+          grep -q 'function addSemanticGateReasons' workflow-engine.js
           ! grep -q 'applicationadjudicationGate' workflow-engine.js
           ! grep -q 'gate=function adjudicationGate' workflow-engine.js
           grep -q 'REVIEWER_CONTEXT_ID' workflow-schema.js
