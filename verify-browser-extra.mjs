@@ -31,6 +31,14 @@ async function main(){
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
 
+  console.log('extra:project-lifecycle-ui');
+  await click(cdp,'[data-view="Project"]');
+  const lifecycleUi=await evalValue(cdp,`(()=>{const management=document.querySelector('#project-management'),danger=document.querySelector('#project-danger-zone');return {management:Boolean(management),managementOpen:Boolean(management?.open),danger:Boolean(danger),dangerOpen:Boolean(danger?.open),deleteVisible:Boolean(document.querySelector('#delete-project')?.offsetParent),headerMenu:Boolean(document.querySelector('.project-action-menu')),text:management?.textContent||''};})()`);
+  assert(lifecycleUi.management&&!lifecycleUi.managementOpen,'Project lifecycle controls must be present but collapsed by default.');
+  assert(lifecycleUi.headerMenu,'Compact Project actions menu is missing.');
+  if(lifecycleUi.danger)assert(!lifecycleUi.dangerOpen&&!lifecycleUi.deleteVisible,'Permanent deletion must remain concealed until the operator deliberately opens the danger zone.');
+  assert(lifecycleUi.text.includes('Start from copy')&&lifecycleUi.text.includes('Create backup now')&&lifecycleUi.text.includes('Verify stored files now'),'Project lifecycle options are incomplete.');
+
   console.log('extra:closed-connection-prompt-save');
   await openStage(cdp,2);await evalValue(cdp,`(async()=>{const db=await closedLoopProjectStore.openDatabase();db.close();return true;})()`);await click(cdp,'#save-prompt');let retained=await activeProject(cdp);const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');
   await evalValue(cdp,`(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copiedPrompt=text;}}});return true})()`);await click(cdp,'#copy-prompt');assert(await evalValue(cdp,`window.__copiedPrompt`)===pr.prompt,'Copy Instruction did not copy the exact saved prompt.');
