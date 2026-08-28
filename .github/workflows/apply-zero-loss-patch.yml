@@ -1,0 +1,60 @@
+name: Apply coordinated zero-loss reliability patch
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/apply-zero-loss-patch.yml']
+permissions:
+  contents: write
+jobs:
+  apply-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact coordinated patch and restore the single-workflow tree
+        shell: bash
+        run: |
+          base64 -d .zero-loss.patch.gz.b64 | gzip -d > /tmp/zero-loss.patch
+          git apply --check /tmp/zero-loss.patch
+          git apply /tmp/zero-loss.patch
+          rm -f .zero-loss.patch.gz.b64
+          rm -f .github/workflows/zero-loss-source-export.yml
+          rm -f .github/workflows/apply-zero-loss-patch.yml
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+      - name: Syntax and deterministic source gates
+        shell: bash
+        run: |
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium acceptance including exact large-state Back path
+        shell: bash
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit exact tested tree
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'Bound large-state recalculation and historical navigation'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
