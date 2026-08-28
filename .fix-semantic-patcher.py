@@ -22,7 +22,7 @@ new="runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js',
 if old not in s: raise RuntimeError('runtime cache-token patch anchor missing')
 s=s.replace(old,new,1)
 anchor="# Refresh one shared runtime cache token from exact runtime bytes."
-fixture="""# Keep the generic ingestion fixture valid under the new Stage 7 controlled enum.\nvip=Path('verify-ingestion.mjs'); vt=vip.read_text(); safe_anchor='function safeValue(name){\\n';\nif safe_anchor not in vt: raise RuntimeError('verify-ingestion safeValue anchor missing')\nvt=vt.replace(safe_anchor,safe_anchor+\"  if(/EXECUTION_OUTCOME/.test(name))return 'REJECTED_INVALID';\\n\",1); vip.write_text(vt)\n\n"""
+fixture="""# Keep synthetic fixtures structurally explicit under the new semantic contract.\nvip=Path('verify-ingestion.mjs'); vt=vip.read_text(); safe_anchor='function safeValue(name){\\n';\nif safe_anchor not in vt: raise RuntimeError('verify-ingestion safeValue anchor missing')\nvt=vt.replace(safe_anchor,safe_anchor+\"  if(/EXECUTION_OUTCOME/.test(name))return 'REJECTED_INVALID';\\n\",1); vip.write_text(vt)\nvfp=Path('verify-full-cycle.mjs'); vf=vfp.read_text(); old_find=\"FINDINGS:'No material ambiguity'\";\nif old_find not in vf: raise RuntimeError('preflight fixture anchor missing')\nvf=vf.replace(old_find,\"FINDINGS:'NONE'\",1); vfp.write_text(vf)\n\n"""
 if anchor not in s: raise RuntimeError('runtime refresh anchor missing')
 s=s.replace(anchor,fixture+anchor,1)
 p.write_text(s)
