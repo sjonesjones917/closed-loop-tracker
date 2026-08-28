@@ -17,7 +17,10 @@ jobs:
         with:
           node-version: '22'
       - name: Apply minimal lifecycle UI patch
-        run: python3 apply-lifecycle-patch.py
+        run: |
+          python3 apply-lifecycle-patch.py
+          python3 apply-lifecycle-hardening.py
+          rm .github/workflows/lifecycle-ui-patch.yml
       - name: Refresh exact runtime identity
         run: |
           python3 - <<'PY'
@@ -34,6 +37,7 @@ jobs:
       - name: Deterministic proofs
         run: |
           node --check app-core.js
+          node --check project-store.js
           node --check verify-project-lifecycle.mjs
           node verify-hash.mjs
           node verify.mjs
@@ -57,9 +61,9 @@ jobs:
           trap - EXIT
       - name: Publish proven lifecycle patch and remove temporary patch files
         run: |
+          rm apply-lifecycle-patch.py apply-lifecycle-hardening.py
           git config user.name 'OpenAI GPT-5.6 Sol'
           git config user.email 'noreply@openai.com'
-          git rm .github/workflows/lifecycle-ui-patch.yml apply-lifecycle-patch.py
-          git add app-core.js index.html verify-browser-extra.mjs verify-project-lifecycle.mjs .github/workflows/pages.yml
+          git add -A
           git commit -m 'Add compact rigorous project lifecycle controls'
           git push origin HEAD:reliability/zero-loss-current-main-20260828
