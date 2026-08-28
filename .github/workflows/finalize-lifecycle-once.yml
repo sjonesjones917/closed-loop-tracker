@@ -1,0 +1,43 @@
+name: Finalize lifecycle controls once
+on:
+  push:
+    branches: [reliability/project-lifecycle-controls-20260828]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/project-lifecycle-controls-20260828
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply responsible-layer corrections
+        run: node .lifecycle-finalize.mjs
+      - name: Syntax and deterministic proofs
+        run: |
+          node --check app-core.js
+          node --check project-store.js
+          node --check response-ingestion.js
+          node --check workflow-engine.js
+          node --check verify-browser.mjs
+          node --check verify-complete.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+      - name: Remove bootstrap
+        run: rm .lifecycle-finalize.mjs .github/workflows/finalize-lifecycle-once.yml
+      - name: Commit final tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Finalize rigorous lifecycle control semantics'
+          git push origin HEAD:reliability/project-lifecycle-controls-20260828
