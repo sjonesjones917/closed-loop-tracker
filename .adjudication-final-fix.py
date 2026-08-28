@@ -55,6 +55,11 @@ new="else if(collection==='regressionExecutions'){const phase=upper(recordValue(
 if old in s:s=s.replace(old,new,1)
 elif new not in s:raise RuntimeError('adjudicatedClone regression compatibility anchor missing')
 
+old_context="function resultContextIdentity(project,result){const direct=String(recordValue(result,'CONTEXT_ID')||recordValue(result,'VERIFIER_CONTEXT_ID')||recordValue(result,'PRODUCTION_CONTEXT_ID')||result?.relationships?.CONTEXT_ID||'').trim();if(direct)return direct;const runId=String(recordValue(result,'RUN_ID')||result?.relationships?.RUN_ID||'').trim();if(!runId)return '';const run=records(project,'runs').find(r=>recordId(r,'runs')===runId);return String(recordValue(run,'CONTEXT_ID')||run?.relationships?.CONTEXT_ID||'').trim();}"
+new_context="function resultContextIdentity(project,result){const direct=String(recordValue(result,'CONTEXT_ID')||recordValue(result,'VERIFIER_CONTEXT_ID')||recordValue(result,'PRODUCTION_CONTEXT_ID')||result?.relationships?.CONTEXT_ID||'').trim();if(direct)return direct;const runId=String(recordValue(result,'RUN_ID')||result?.relationships?.RUN_ID||'').trim();if(runId){const run=records(project,'runs').find(r=>recordId(r,'runs')===runId),runContext=String(recordValue(run,'CONTEXT_ID')||run?.relationships?.CONTEXT_ID||'').trim();if(runContext)return runContext;}const stage=Number(result?.stage||0),stageContexts=records(project,'freshContexts').filter(c=>Number(c.stage)===stage&&isActiveRecord(c)&&String(recordValue(c,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim()&&upper(recordValue(c,'USABILITY_DETERMINATION')||'USABLE')!=='UNUSABLE');return stageContexts.length===1?recordId(stageContexts[0],'freshContexts'):'';}"
+if old_context in s:s=s.replace(old_context,new_context,1)
+elif new_context not in s:raise RuntimeError('external result context derivation anchor missing')
+
 old_attach="const attachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim();if(attachmentId){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===attachmentId);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')reasons.push('Referenced evidence attachment bytes are not application-verified.');}"
 new_attach="const rawAttachmentId=String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim(),attachmentId=['','UNKNOWN','NONE','NOT APPLICABLE','PENDING','UNASSIGNED'].includes(upper(rawAttachmentId))?'':rawAttachmentId;if(attachmentId){const a=records(project,'artifacts').find(x=>recordId(x,'artifacts')===attachmentId);if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')reasons.push('Referenced evidence attachment bytes are not application-verified.');}"
 if old_attach in s:s=s.replace(old_attach,new_attach,1)
@@ -103,16 +108,16 @@ elif 'function detectCurrentContradictions(project)' not in s:
 
 p.write_text(s)
 
-# The legacy full-cycle fixture previously asserted arbitrary verifier-context
-# strings. Under the mandatory-release contract that is intentionally invalid.
-# Keep the same lifecycle assertions, but establish every verifier context via
-# the application-owned context registry before the verification observation is
-# submitted. This changes test setup only; production never trusts the string.
 vf=Path('verify-full-cycle.mjs'); v=vf.read_text()
 old_verify="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:`VERIFY-${runId}-${currentTestId}`,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
 new_verify="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE'),verifierContext=engine.registerFreshContext(p,{stage,externalContextIdentifier:`VERIFY-${stage}-${runId}-${currentTestId}`,operatorLabel:'FULL_CYCLE'}),verifierContextId=engine.recordId(verifierContext,'freshContexts');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:verifierContextId,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
 if old_verify in v:v=v.replace(old_verify,new_verify,1)
 elif new_verify not in v:raise RuntimeError('full-cycle verifier-context fixture anchor missing')
-vf.write_text(v)
 
-# CI trigger only: runtime transformations above are unchanged.
+for stage,label in [(22,'DETERMINISTIC-TOOL'),(23,'MEANING-REVIEW'),(24,'ADVERSARIAL-REVIEW')]:
+    anchor=f"data({stage},{{records:"
+    registration=f"engine.registerFreshContext(p,{{stage:{stage},externalContextIdentifier:'{label}-CONTEXT-1',operatorLabel:'FULL_CYCLE'}});"
+    if registration not in v:
+        if anchor not in v:raise RuntimeError(f'Stage {stage} result fixture anchor missing')
+        v=v.replace(anchor,registration+anchor,1)
+vf.write_text(v)
