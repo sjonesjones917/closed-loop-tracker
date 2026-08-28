@@ -8,8 +8,26 @@ def one(old,new,label):
     if n!=1: raise SystemExit(f'{label}: expected one match, found {n}')
     s=s.replace(old,new,1)
 
-one('''    "agent": [\n      "PRODUCT_LOCATION",''','''    "agent": [\n      "REVIEWER_CONTEXT_ID",\n      "PRODUCT_LOCATION",''','meaning ownership')
-one('''    "agent": [\n      "ATTACK",''','''    "agent": [\n      "REVIEWER_CONTEXT_ID",\n      "ATTACK",''','adversarial ownership')
+one('''  "meaningResults": {
+    "human": [],
+    "humanDecision": [],
+    "agent": [
+      "PRODUCT_LOCATION",''','''  "meaningResults": {
+    "human": [],
+    "humanDecision": [],
+    "agent": [
+      "REVIEWER_CONTEXT_ID",
+      "PRODUCT_LOCATION",''','meaning ownership')
+one('''  "adversarialResults": {
+    "human": [],
+    "humanDecision": [],
+    "agent": [
+      "ATTACK",''','''  "adversarialResults": {
+    "human": [],
+    "humanDecision": [],
+    "agent": [
+      "REVIEWER_CONTEXT_ID",
+      "ATTACK",''','adversarial ownership')
 one("required:['TEST_ID','PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION'],relationships:{REQ_ID:'requirements',TEST_ID:'tests',PRODUCT_ID:'products',DEFECT_ID:'defects'}",
     "required:['TEST_ID','REVIEWER_CONTEXT_ID','PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION'],relationships:{REQ_ID:'requirements',TEST_ID:'tests',PRODUCT_ID:'products',REVIEWER_CONTEXT_ID:'freshContexts',DEFECT_ID:'defects'}",
     'meaning required relationship')
