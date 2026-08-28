@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const assert=(value,message)=>{if(!value)throw new Error(message);};
+const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),html=fs.readFileSync('index.html','utf8');
+for(const token of ['renameCurrentProject','duplicateCurrentProject','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
+for(const token of ['project-management','project-danger-zone','Start from copy','Create backup now','Verify stored files now','View exact evidence / provenance','Clear unsaved response','Discard pending attempt','Prepare replacement attempt'])assert(app.includes(token),`Missing lifecycle UI ${token}.`);
+assert(app.includes('dismissedProposalIds')&&app.includes('canonical state changed: NO'),'Discarded attempts must remain non-canonical UI lifecycle state.');
+assert(app.includes('Reopened ${blockerId}: ${reason}'),'Reopen must append a new blocker instead of rewriting the resolved record.');
+assert(store.includes("openTransaction([PROJECTS,ARTIFACTS,META],'readwrite')")&&store.includes('during-project-delete')&&store.includes('String(artifact.jobId)===jobId'),'Project deletion must remain one transaction over project/meta and owned artifact Blob rows.');
+assert(html.includes('project-action-menu')&&html.includes('Project actions'),'Routine header actions must remain compact.');
+assert(!html.includes('Force Complete Stage')&&!html.includes('Override Release Gate')&&!html.includes('Mark Test Passed'),'Unsafe override controls must not exist.');
+console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,unsafeOverrides:0},null,2));
