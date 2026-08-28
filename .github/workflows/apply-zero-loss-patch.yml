@@ -16,8 +16,22 @@ jobs:
       - name: Apply exact coordinated patch and restore the single-workflow tree
         shell: bash
         run: |
-          test "$(find .zero-loss-patch -maxdepth 1 -type f -name 'chunk-*' | wc -l)" -eq 8
-          cat .zero-loss-patch/chunk-* > /tmp/zero-loss.patch.gz.b64
+          set -euxo pipefail
+          test "$(wc -c < .zero-loss-patch/chunk-03a)" -eq 1500
+          test "$(wc -c < .zero-loss-patch/chunk-03b)" -eq 1500
+          echo 'be8ba2a4f215eb07887d6a653d4bd1d4da173df7b1b8e0bf6bf2385bc2296bf5  .zero-loss-patch/chunk-03a' | sha256sum -c -
+          echo 'df738af1b77df133b23334903b0b0f7b417545d75071fd5d463351e6204eeed1  .zero-loss-patch/chunk-03b' | sha256sum -c -
+          cat \
+            .zero-loss-patch/chunk-00 \
+            .zero-loss-patch/chunk-01 \
+            .zero-loss-patch/chunk-02 \
+            .zero-loss-patch/chunk-03a \
+            .zero-loss-patch/chunk-03b \
+            .zero-loss-patch/chunk-04 \
+            .zero-loss-patch/chunk-05 \
+            .zero-loss-patch/chunk-06 \
+            .zero-loss-patch/chunk-07 \
+            > /tmp/zero-loss.patch.gz.b64
           test "$(wc -c < /tmp/zero-loss.patch.gz.b64)" -eq 23224
           echo '9e8b42152089c9563266573a8dc2172cf315ce804864cb9ea08a6341df05ab1b  /tmp/zero-loss.patch.gz.b64' | sha256sum -c -
           base64 --decode /tmp/zero-loss.patch.gz.b64 > /tmp/zero-loss.patch.gz
@@ -34,6 +48,7 @@ jobs:
       - name: Syntax and deterministic source gates
         shell: bash
         run: |
+          set -euxo pipefail
           node build-test-project.mjs
           for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs; do node --check "$file"; done
           node verify-hash.mjs
@@ -47,6 +62,7 @@ jobs:
       - name: Chromium acceptance including exact large-state Back path
         shell: bash
         run: |
+          set -euxo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
@@ -59,6 +75,7 @@ jobs:
       - name: Commit exact tested tree
         shell: bash
         run: |
+          set -euxo pipefail
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
           git add -A
