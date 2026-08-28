@@ -1,0 +1,47 @@
+name: Apply mobile runtime freeze correction
+on:
+  push:
+    branches: [fix/mobile-runtime-freeze-20260828]
+    paths: ['.github/workflows/mobile-runtime-freeze-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Preserve compact provenance acceptance semantics
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,hashlib
+          p=Path('app-core.js'); s=p.read_text()
+          old='<p class="section-intro">Canonical field → extraction manifest → exact response pointer → preserved raw response → controlling prompt → canonical evidence.</p>'
+          new='<p class="section-intro">Canonical field → extraction manifest → exact response pointer → preserved raw response → controlling prompt → canonical evidence.</p><p class="compact-provenance-targets">Preserved raw response: ${esc(rawId||\'NONE\')} · Controlling prompt: ${esc(promptId||\'NONE\')} · Canonical evidence: ${esc(evidenceIds.length?evidenceIds.join(\', \'):\'NONE\')}</p>'
+          if s.count(old)!=1: raise SystemExit(f'Expected one provenance trace intro, found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+              b=Path(path).read_bytes(); return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          manifest=''.join(f'{f}:{blob(f)}\n' for f in files)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          i=Path('index.html'); h=i.read_text(); h,n=re.subn(r'runtime-[0-9a-f]{16}',token,h)
+          if n!=8: raise SystemExit(f'Expected 8 runtime tokens, got {n}')
+          i.write_text(h); print(token)
+          PY
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-semantic-invariant.mjs
+      - name: Commit correction and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/mobile-runtime-freeze-fix.yml
+          git add app-core.js index.html
+          git commit -m 'Preserve compact provenance browser contract'
+          git push origin HEAD:fix/mobile-runtime-freeze-20260828
