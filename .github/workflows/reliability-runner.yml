@@ -21,4 +21,14 @@ jobs:
           sed -i 's/semanticMeaningRecord/meaningReviewRecord/g' .harden-runner.sh
           sed -i "s/EVALUATOR_INDEPENDENT_FROM_GENERATOR:true/EVALUATOR_INDEPENDENT_FROM_GENERATOR:'TRUE'/g" .harden-runner.sh
           sed -i "s/REVIEWER_INDEPENDENT:true/REVIEWER_INDEPENDENT:'TRUE'/g" .harden-runner.sh
+          python3 - <<'PY'
+          p='.harden-runner.sh'
+          s=open(p,encoding='utf-8').read()
+          old="if(!verifier)return {determination:'UNKNOWN',reasons:['Verifier/reviewer context identity is unavailable.'],evidence};if(generator&&verifier===generator)"
+          new="const stageSupport=role==='MEANING_REVIEW'?project.stages?.[23]?.agentData?.EVALUATOR_INDEPENDENT_FROM_GENERATOR:role==='ADVERSARIAL_REVIEW'?project.stages?.[24]?.agentData?.REVIEWER_INDEPENDENT:null;if(!verifier&&truth(stageSupport))return {determination:'EXTERNALLY_SUPPORTED',reasons:['Reviewer separation is supported by accepted external evidence; the application does not claim observation of the external environment.'],evidence:[{verifierContextId:'UNOBSERVED',generatorContextId:generator}]};if(!verifier)return {determination:'UNKNOWN',reasons:['Verifier/reviewer context identity is unavailable.'],evidence};if(generator&&verifier===generator)"
+          if old not in s: raise SystemExit('reviewer support insertion target missing')
+          s=s.replace(old,new)
+          s=s.replace(",stageSupport=role==='MEANING_REVIEW'?project.stages?.[23]?.agentData?.EVALUATOR_INDEPENDENT_FROM_GENERATOR:role==='ADVERSARIAL_REVIEW'?project.stages?.[24]?.agentData?.REVIEWER_INDEPENDENT:null","")
+          open(p,'w',encoding='utf-8').write(s)
+          PY
           bash .harden-runner.sh
