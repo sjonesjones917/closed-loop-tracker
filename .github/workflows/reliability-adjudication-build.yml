@@ -3,20 +3,195 @@ on:
   push:
     branches: [reliability/semantic-adjudication-20260827]
 permissions: {contents: write}
+concurrency: {group: 'reliability-adjudication-${{ github.ref }}', cancel-in-progress: false}
 
 jobs:
-  inspect-overrides:
-    if: ${{ contains(github.event.head_commit.message, '[inspect-overrides]') }}
+  build-and-prove:
+    if: ${{ contains(github.event.head_commit.message, '[final-adjudication]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Print exact post-patch override and record blocks
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply complete coordinated adjudication patch
         run: |
           cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          echo 'ea95f16b98b3b51e9436f983ca59046556d17cdddc47b9cad5a861882d61089c  /tmp/adjudication.patch' | sha256sum -c -
           patch -p0 < /tmp/adjudication.patch
           python3 - <<'PY'
           from pathlib import Path
-          s=Path('workflow-schema.js').read_text()
-          for needle in ['const RECORD_FIELD_TYPE_OVERRIDES','regressionExecutions:recordSchema','changes:recordSchema','evidenceRecords:recordSchema']:
-            i=s.find(needle); print('\n===== '+needle+' ====='); print(s[i:i+6000] if i>=0 else 'NOT FOUND')
+          import re
+
+          def must_replace(text, old, new, label, count=1):
+              actual=text.count(old)
+              if actual != count: raise SystemExit(f'{label}: expected {count} occurrences, found {actual}')
+              return text.replace(old,new,count)
+
+          # Runtime wording must preserve the repository's UI terminology guard.
+          p=Path('workflow-engine.js'); engine=p.read_text()
+          engine=engine.replace('semantically contradictory material finding','internally contradictory material finding')
+
+          # Schema: fix the one enumerated ownership-partition omission first.
+          p=Path('workflow-schema.js'); schema=p.read_text()
+          title='Requirement-by-run verification'; ti=schema.find(title); start=schema.rfind('recordSchema({',0,ti)
+          m=re.search(r'fields\s*:\s*\[([^\]]*)\]',schema[start:ti+5000],re.S)
+          if ti<0 or start<0 or not m: raise SystemExit('verification record fields list not found')
+          a=start+m.start(1); b=start+m.end(1); body=schema[a:b]
+          if 'OBSERVATION_OUTCOME' not in body:
+              trimmed=body.rstrip(); body=trimmed+('' if trimmed.endswith(',') else ',')+"'OBSERVATION_OUTCOME'"+body[len(body.rstrip()):]
+              schema=schema[:a]+body+schema[b:]
+
+          # Canonical evidence owns structural execution/context/observation bindings.
+          old='''  "evidenceRecords": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "KIND",\n      "DESCRIPTION",\n      "AUTHORITY_TYPE",\n      "LOCATION",\n      "CONTENT"\n    ],\n    "application": [\n      "EVIDENCE_ID",\n      "SOURCE_ID",\n      "ATTACHMENT_ID",\n      "SHA256",\n      "STATUS"\n    ]\n  },'''
+          new='''  "evidenceRecords": {\n    "human": [],\n    "humanDecision": [],\n    "agent": [\n      "KIND",\n      "DESCRIPTION",\n      "AUTHORITY_TYPE",\n      "LOCATION",\n      "CONTENT"\n    ],\n    "application": [\n      "EVIDENCE_ID",\n      "SOURCE_ID",\n      "ATTACHMENT_ID",\n      "EXECUTION_IDENTITY",\n      "CONTEXT_IDENTITY",\n      "OBSERVED_VALUE",\n      "SHA256",\n      "STATUS"\n    ]\n  },'''
+          schema=must_replace(schema,old,new,'evidence ownership')
+          schema=must_replace(schema,
+            "'EVIDENCE_ID','KIND','DESCRIPTION','AUTHORITY_TYPE','SOURCE_ID','LOCATION','CONTENT','ATTACHMENT_ID','SHA256','STATUS'",
+            "'EVIDENCE_ID','KIND','DESCRIPTION','AUTHORITY_TYPE','SOURCE_ID','LOCATION','CONTENT','ATTACHMENT_ID','EXECUTION_IDENTITY','CONTEXT_IDENTITY','OBSERVED_VALUE','SHA256','STATUS'",
+            'evidence fields')
+          schema=must_replace(schema,
+            "required:['KIND','DESCRIPTION','LOCATION','CONTENT','STATUS'],relationships:{SOURCE_ID:'sources',ATTACHMENT_ID:'artifacts'}",
+            "required:['KIND','DESCRIPTION','AUTHORITY_TYPE','LOCATION','CONTENT','EXECUTION_IDENTITY','CONTEXT_IDENTITY','OBSERVED_VALUE','STATUS'],relationships:{SOURCE_ID:'sources',ATTACHMENT_ID:'artifacts'}",
+            'evidence required')
+
+          # Explicit RCA identity edge is application-derived, not agent-authored.
+          old='''    "application": [\n      "CHANGESET_ID",\n      "AUTHORIZATION"\n    ]\n  },\n  "convergenceRecords"'''
+          new='''    "application": [\n      "CHANGESET_ID",\n      "RCA_IDS",\n      "AUTHORIZATION"\n    ]\n  },\n  "convergenceRecords"'''
+          schema=must_replace(schema,old,new,'changes ownership')
+          schema=must_replace(schema,
+            "'CHANGESET_ID','TRIGGERING_DEFECT_IDS','ROOT_CAUSE_ANALYSIS','RESPONSIBLE_LAYER','OLD_ARTIFACT_VERSION','EXACT_MODIFICATION','NEW_ARTIFACT_VERSION',",
+            "'CHANGESET_ID','RCA_IDS','TRIGGERING_DEFECT_IDS','ROOT_CAUSE_ANALYSIS','RESPONSIBLE_LAYER','OLD_ARTIFACT_VERSION','EXACT_MODIFICATION','NEW_ARTIFACT_VERSION',",
+            'changes fields')
+
+          # Add only explicit field-type overrides; no implicit/fallback schema typing.
+          anchor="  'TEST':Object.freeze({\n"
+          additions="""  'EVIDENCE':Object.freeze({\n    EXECUTION_IDENTITY:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    CONTEXT_IDENTITY:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    OBSERVED_VALUE:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})\n  }),\n  'REG-EXEC':Object.freeze({RESULT:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['PASS_CONDITION_OBSERVED','FAILURE_CONDITION_OBSERVED','UNDETERMINED','NOT_RUN']),nullable:false,normalizerKey:null,closedProperties:null})}),\n  'CHANGESET':Object.freeze({RCA_IDS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})}),\n"""
+          if additions.strip() not in schema:
+              schema=must_replace(schema,anchor,additions+anchor,'override insertion')
+          Path('workflow-schema.js').write_text(schema)
+
+          # Central result evaluator: regression RESULT is now controlled observation, never free-form success text.
+          old="""    case 'regressionExecutions':{\n      const phase=upper(recordValue(record,'PHASE')||''),raw=observationToken(recordValue(record,'RESULT'));\n      if(phase==='PRE_CORRECTION')determination=raw===DET.VIOLATED?DET.SATISFIED:raw===DET.SATISFIED?DET.VIOLATED:DET.UNDETERMINED;\n      else determination=raw||DET.UNDETERMINED;\n      break;\n    }"""
+          new="""    case 'regressionExecutions':{\n      const phase=upper(recordValue(record,'PHASE')||''),outcome=upper(recordValue(record,'RESULT')||'');\n      if(['UNDETERMINED','NOT_RUN',''].includes(outcome))determination=DET.UNDETERMINED;\n      else if(phase==='PRE_CORRECTION')determination=outcome==='FAILURE_CONDITION_OBSERVED'?DET.SATISFIED:outcome==='PASS_CONDITION_OBSERVED'?DET.VIOLATED:DET.UNDETERMINED;\n      else if(phase==='POST_CORRECTION')determination=outcome==='PASS_CONDITION_OBSERVED'?DET.SATISFIED:outcome==='FAILURE_CONDITION_OBSERVED'?DET.VIOLATED:DET.UNDETERMINED;\n      else determination=DET.UNDETERMINED;\n      break;\n    }"""
+          engine=must_replace(engine,old,new,'regression adjudicator')
+
+          # Evidence sufficiency is structural: typed authority + exact result identity + context receipt + observed value.
+          old="""  const evidenceWithAuthority=evidenceRecords.filter(item=>{\n    const authority=String(recordValue(item,'AUTHORITY_TYPE')||'').trim();\n    return !!authority||!!item.rawResponseId||!!item.sourceProposalId;\n  });\n  if(!evidenceWithAuthority.length)reasons.push('Canonical evidence has no typed authority or ingestion receipt.');"""
+          new="""  const evidenceWithAuthority=evidenceRecords.filter(item=>{\n    const authority=upper(recordValue(item,'AUTHORITY_TYPE')||'');\n    return !!authority&&!['UNKNOWN','UNDETERMINED','NONE','N/A','NA'].includes(authority);\n  });\n  if(!evidenceWithAuthority.length)reasons.push('Canonical evidence has no typed authority.');\n  const expectedExecutionIdentity=String(recordId(result)||result?.id||'').trim();\n  const identityMatched=evidenceRecords.some(item=>expectedExecutionIdentity&&String(recordValue(item,'EXECUTION_IDENTITY')||'').trim()===expectedExecutionIdentity);\n  if(!identityMatched)reasons.push('Canonical evidence is not bound to the exact result/execution identity.');\n  const contextEstablished=evidenceRecords.some(item=>{const value=upper(recordValue(item,'CONTEXT_IDENTITY')||'');return !!value&&!['UNKNOWN','UNDETERMINED','AMBIGUOUS_MULTIPLE_RECORDS','NONE'].includes(value);});\n  if(!contextEstablished)reasons.push('Canonical evidence has no application-established context identity.');\n  const controlledObserved=upper(recordValue(result,'OBSERVATION_OUTCOME')||recordValue(result,'EXECUTION_OUTCOME')||recordValue(result,'PREFLIGHT_OBSERVATION')||'');\n  if(controlledObserved&&!evidenceRecords.some(item=>upper(recordValue(item,'OBSERVED_VALUE')||'')===controlledObserved))reasons.push('Canonical evidence observed value does not match the controlled observation.');"""
+          engine=must_replace(engine,old,new,'evidence authority/identity')
+
+          # Trace validation requires the explicit application-derived RCA identities and version change.
+          old="""    const defectIds=splitIds(recordValue(record,'TRIGGERING_DEFECT_IDS'));\n    const rcas=defectIds.map(id=>records(project,'rootCauses').find(item=>String(recordValue(item,'DEFECT_ID')||'')===id)).filter(Boolean);\n    if(!defectIds.length)reasons.push('Changeset has no triggering defect identity.');\n    if(rcas.length!==defectIds.length)reasons.push('Changeset does not trace every triggering defect to a root-cause record.');"""
+          new="""    const defectIds=splitIds(recordValue(record,'TRIGGERING_DEFECT_IDS'));\n    const rcaIds=safe(recordValue(record,'RCA_IDS')).map(String).filter(Boolean);\n    const rcas=rcaIds.map(id=>records(project,'rootCauses').find(item=>recordId(item,'rootCauses')===id)).filter(Boolean);\n    if(!defectIds.length)reasons.push('Changeset has no triggering defect identity.');\n    if(rcaIds.length!==defectIds.length||rcas.length!==rcaIds.length)reasons.push('Changeset does not carry a one-to-one canonical RCA identity for every triggering defect.');\n    for(let index=0;index<Math.min(defectIds.length,rcas.length);index++)if(String(recordValue(rcas[index],'DEFECT_ID')||'')!==defectIds[index])reasons.push(`Changeset RCA ${rcaIds[index]} does not belong to triggering defect ${defectIds[index]}.`);"""
+          engine=must_replace(engine,old,new,'change trace identity')
+          marker="""    for(const key of ['OLD_ARTIFACT_VERSION','NEW_ARTIFACT_VERSION','EXACT_MODIFICATION'"""
+          if marker not in engine: raise SystemExit('change trace required-fields marker not found')
+          insertion="""    const oldVersion=String(recordValue(record,'OLD_ARTIFACT_VERSION')||'').trim(),newVersion=String(recordValue(record,'NEW_ARTIFACT_VERSION')||'').trim();\n    if(oldVersion&&newVersion&&oldVersion===newVersion)reasons.push('Changeset old and new artifact versions are identical.');\n"""
+          engine=engine.replace(marker,insertion+marker,1)
+          Path('workflow-engine.js').write_text(engine)
+
+          # Ingestion derives and hashes evidence bindings and RCA identities from canonical records.
+          p=Path('response-ingestion.js'); ing=p.read_text()
+          ing=must_replace(ing,
+            "EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'UNKNOWN',SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'",
+            "EVIDENCE_ID:id,KIND:source.kind,DESCRIPTION:source.description,AUTHORITY_TYPE:source.authorityType||'UNKNOWN',SOURCE_ID:'UNKNOWN',LOCATION:source.location,CONTENT:source.content,ATTACHMENT_ID:'UNKNOWN',EXECUTION_IDENTITY:'UNKNOWN',CONTEXT_IDENTITY:'UNKNOWN',OBSERVED_VALUE:'UNKNOWN',SHA256:'UNKNOWN',STATUS:'PRESERVED'",
+            'evidence initial fields')
+          hook="""  for(const evidenceRecord of evidence){\n    const source=evidenceRecord.sourceReference;"""
+          derived="""  const evidenceLinks=new Map(evidence.map(item=>[item.id,[]]));\n  for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){\n    for(const evidenceId of safe(record.evidenceRefs))if(evidenceLinks.has(evidenceId))evidenceLinks.get(evidenceId).push({collection,record});\n    if(collection==='changes'){\n      const defectIds=String(workflow.recordValue(record,'TRIGGERING_DEFECT_IDS')||'').split(/[,\\n;|]+/).map(value=>value.trim()).filter(Boolean);\n      const rcaIds=defectIds.map(defectId=>workflow.records(project,'rootCauses',{active:true}).find(item=>String(workflow.recordValue(item,'DEFECT_ID')||'')===defectId)).filter(Boolean).map(item=>workflow.recordId(item,'rootCauses'));\n      record.fields.RCA_IDS=record.RCA_IDS=rcaIds;\n    }\n  }\n  for(const evidenceRecord of evidence){\n    const links=evidenceLinks.get(evidenceRecord.id)||[],linked=links.length===1?links[0].record:null;\n    const executionIdentity=linked?String(linked.id||''):(links.length>1?'AMBIGUOUS_MULTIPLE_RECORDS':`PROPOSAL:${proposalId}`);\n    const contextIdentity=linked?String(linked.scope?.contextId||linked.scope?.runId||promptRecord.scope?.contextId||rawRecord.rawResponseId||`PROPOSAL:${proposalId}`):String(promptRecord.scope?.contextId||rawRecord.rawResponseId||`PROPOSAL:${proposalId}`);\n    const observedValue=linked?String(workflow.recordValue(linked,'OBSERVATION_OUTCOME')||workflow.recordValue(linked,'EXECUTION_OUTCOME')||workflow.recordValue(linked,'PREFLIGHT_OBSERVATION')||workflow.recordValue(linked,'ACTUAL_RESULT')||workflow.recordValue(linked,'OBSERVED_MEANING')||workflow.recordValue(linked,'RESULT')||'NO_CONTROLLED_OBSERVATION'):'NO_CONTROLLED_OBSERVATION';\n    evidenceRecord.fields.EXECUTION_IDENTITY=evidenceRecord.EXECUTION_IDENTITY=executionIdentity;\n    evidenceRecord.fields.CONTEXT_IDENTITY=evidenceRecord.CONTEXT_IDENTITY=contextIdentity;\n    evidenceRecord.fields.OBSERVED_VALUE=evidenceRecord.OBSERVED_VALUE=observedValue;\n    const source=evidenceRecord.sourceReference;"""
+          ing=must_replace(ing,hook,derived,'evidence binding hook')
+          Path('response-ingestion.js').write_text(ing)
+
+          # Fixtures must express actual typed evidence and controlled regression observations.
+          p=Path('test-fixtures.mjs'); text=p.read_text()
+          text=must_replace(text,
+            "return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`${label} evidence`,location:'verify-full-cycle.mjs',content:`controlled ${label} evidence`};",
+            "return {temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:`${label} evidence`,authorityType:'EXTERNAL_AGENT_TOOL',location:'verify-full-cycle.mjs',content:`controlled ${label} evidence`};",
+            'fixture authority')
+          Path('test-fixtures.mjs').write_text(text)
+
+          p=Path('verify-ingestion.mjs'); text=p.read_text()
+          old="for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}"
+          new="for(const name of def.required){const fieldDef=def.fieldDefinitions[name];if(fieldDef?.producer===schema.PRODUCER.AGENT)fields[name]=fieldDef.enumValues?.length?valueForDefinition(fieldDef):safeValue(name);}"
+          if old in text:text=text.replace(old,new,1)
+          Path('verify-ingestion.mjs').write_text(text)
+
+          p=Path('verify-complete.mjs'); text=p.read_text()
+          text=text.replace("ACTUAL_RESULT:'same',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'","ACTUAL_RESULT:'same',OBSERVATION_OUTCOME:'SATISFIED',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'",1)
+          text=text.replace("KIND:'TOOL_OUTPUT',DESCRIPTION:'hash',LOCATION:'tool',CONTENT:'sha256 output',ATTACHMENT_ID:'ART-E',STATUS:'PRESERVED'","KIND:'TOOL_OUTPUT',DESCRIPTION:'hash',AUTHORITY_TYPE:'EXTERNAL_AGENT_TOOL',LOCATION:'tool',CONTENT:'sha256 output',ATTACHMENT_ID:'ART-E',EXECUTION_IDENTITY:'RESULT-E',CONTEXT_IDENTITY:'CTX-E',OBSERVED_VALUE:'SATISFIED',STATUS:'PRESERVED'",1)
+          Path('verify-complete.mjs').write_text(text)
+
+          # Full-cycle regression records use controlled condition observations.
+          p=Path('verify-full-cycle.mjs'); text=p.read_text()
+          text=text.replace("RESULT:phase==='PRE_CORRECTION'?'FAILED':'PASSED'","RESULT:phase==='PRE_CORRECTION'?'FAILURE_CONDITION_OBSERVED':'PASS_CONDITION_OBSERVED'")
+          Path('verify-full-cycle.mjs').write_text(text)
+
+          # Universal invariant's regression contradiction uses the controlled failure observation.
+          p=Path('verify-adjudication.mjs'); text=p.read_text()
+          text=text.replace("PHASE:'POST_CORRECTION',RESULT:'FAILED'","PHASE:'POST_CORRECTION',RESULT:'FAILURE_CONDITION_OBSERVED'")
+          Path('verify-adjudication.mjs').write_text(text)
           PY
+
+          # Refresh runtime bundle identity exactly as verify-hash.mjs defines it.
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          for(const file of files){const re=new RegExp(`(<script\\s+defer\\s+src="${file.replace('.','\\.')}\\?v=)[^"]+("\\s*><\\/script>)`);if(!re.test(html))throw new Error(`Runtime script tag not found for ${file}`);html=html.replace(re,`$1${token}$2`);}
+          fs.writeFileSync('index.html',html);console.log(token);
+          NODE
+
+      - name: Syntax and ownership construction
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check test-fixtures.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-adjudication.mjs
+          node build-test-project.mjs
+
+      - name: Existing deterministic suite plus false-acceptance invariant
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-adjudication.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+
+      - name: Unchanged Chromium proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-adjudication-http.log 2>&1 &
+          SERVER_PID=$!; trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier(){ script="$1"; for attempt in 1 2 3; do log="/tmp/${script}.${attempt}.log"; if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi; cat "$log"; if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi; test "$attempt" -lt 3 || return 1; done; }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true; trap - EXIT
+
+      - name: Wire invariant into production CI and commit proven patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml'); s=p.read_text()
+          if 'node --check verify-adjudication.mjs' not in s:
+              s=s.replace('          node --check verify-complete.mjs\n','          node --check verify-complete.mjs\n          node --check verify-adjudication.mjs\n',1)
+          if 'node verify-adjudication.mjs' not in s:
+              s=s.replace('          node verify-complete.mjs\n','          node verify-complete.mjs\n          node verify-adjudication.mjs\n',1)
+              s=s.replace('node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs','node verify-ingestion.mjs && node verify-complete.mjs && node verify-adjudication.mjs && node verify-full-cycle.mjs',1)
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workflow-schema.js workflow-engine.js response-ingestion.js test-fixtures.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-adjudication.mjs index.html .github/workflows/pages.yml
+          git diff --cached --check
+          git commit -m '[adjudication-built] Make application determinations authoritative'
+          git push origin HEAD:${GITHUB_REF_NAME}
