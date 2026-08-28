@@ -20,6 +20,7 @@ jobs:
           node result-adapter-fixup.mjs
           node release-trust-fixup.mjs
           node regression-consumer-fixup.mjs
+          node stage16-trace-fixup.mjs
       - name: Syntax and retained architecture
         run: |
           node --check workflow-engine.js
