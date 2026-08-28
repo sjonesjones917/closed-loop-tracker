@@ -26,18 +26,25 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-prompt-semantics.mjs
           node --check verify-browser-extra.mjs
-      - name: Run canonical verification stack
-        run: |
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-prompt-semantics.mjs
-      - name: Run browser suites
+      - name: Build retained project
+        run: node build-test-project.mjs
+      - name: Verify canonical architecture
+        run: node verify.mjs
+      - name: Verify ingestion
+        run: node verify-ingestion.mjs
+      - name: Verify workflow gates
+        run: node verify-complete.mjs
+      - name: Verify prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Browser workflow
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           node verify-browser.mjs
+      - name: Browser responsive/adversarial
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
           node verify-browser-extra.mjs
       - name: Commit only verified production and regression changes
         run: |
