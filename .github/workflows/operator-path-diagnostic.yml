@@ -1,0 +1,21 @@
+name: Operator path diagnostic
+on:
+  pull_request:
+    branches: [main]
+permissions: {contents: read}
+jobs:
+  lifecycle-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node --check verify-browser-lifecycle.mjs
+      - name: Exercise lifecycle controls as an operator
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-lifecycle-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser-lifecycle.mjs
