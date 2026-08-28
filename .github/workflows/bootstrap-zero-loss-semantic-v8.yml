@@ -1,0 +1,114 @@
+name: Bootstrap zero-loss semantic correction v8
+
+on:
+  push:
+    branches: [reliability/semantic-adjudication-zero-loss-20260828-1103]
+    paths: [.github/workflows/bootstrap-zero-loss-semantic-v8.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply audited semantic patch and compatibility corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/bootstrap-zero-loss-semantic-v2.yml').read_text()
+          start="          python3 - <<'PY'\n"; end="          PY\n\n      - name: Syntax and deterministic proof stack"
+          if start not in text or end not in text: raise SystemExit('Cannot locate v2 patch program')
+          body=text.split(start,1)[1].split(end,1)[0]
+          Path('/tmp/zero-loss-patch.py').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in body.splitlines())+'\n')
+          PY
+          python3 /tmp/zero-loss-patch.py
+          python3 - <<'PY'
+          from pathlib import Path
+          def once(text,old,new,label):
+              if text.count(old)!=1: raise SystemExit(f'{label}: expected one match, found {text.count(old)}')
+              return text.replace(old,new,1)
+
+          p=Path('workflow-schema.js'); text=p.read_text()
+          text=once(text,"if(s===11)keys.push('runId','contextId');if(s===23||s===24)keys.push('contextId');if(s>=20)keys.push('baselineId');","if(s===11)keys.push('runId','contextId');if(s>=20)keys.push('baselineId');",'reviewer prompt-scope compatibility')
+          p.write_text(text)
+
+          p=Path('verify-semantic-invariant.mjs'); text=p.read_text()
+          obsolete="assert(schema.STAGE_CONTRACTS[23].scopeRequirements.includes('contextId')&&schema.STAGE_CONTRACTS[24].scopeRequirements.includes('contextId'),'Stage 23/24 reviewer context is not required by the canonical prompt scope.');"
+          if text.count(obsolete)>1: raise SystemExit('duplicate reviewer scope assertion')
+          p.write_text(text.replace(obsolete,'',1))
+
+          p=Path('workflow-engine.js'); text=p.read_text()
+          old="ensureShape(project);const confirmation=recordsForCurrentScope(project,'confirmationRecords').filter(r=>effectiveDetermination('confirmationRecords',r,null,project)==='SATISFIED').at(-1);if(!confirmation)throw new Error('A current successful unchanged confirmation is required before baseline freeze.');const currentIteration="
+          text=once(text,old,"ensureShape(project);const currentIteration=",'defer confirmation authorization')
+          old="if(requested.length&&hash.sha256Value([...requested].sort())!==hash.sha256Value([...candidateArtifactIds].sort()))throw new Error('Baseline authorization must use the exact artifact set from the unchanged-confirmed frozen candidate.');const artifacts="
+          new="if(requested.length&&hash.sha256Value([...requested].sort())!==hash.sha256Value([...candidateArtifactIds].sort()))throw new Error('Baseline authorization must use the exact artifact set from the unchanged-confirmed frozen candidate.');const confirmation=recordsForCurrentScope(project,'confirmationRecords').filter(r=>effectiveDetermination('confirmationRecords',r,null,project)==='SATISFIED').at(-1);if(!confirmation)throw new Error('A current successful application-derived unchanged confirmation is required before baseline freeze.');const artifacts="
+          text=once(text,old,new,'Stage 20 effective confirmation authorization')
+          p.write_text(text)
+
+          p=Path('verify-complete.mjs'); text=p.read_text()
+          old="  const baseline=engine.freezeBaseline(p,{operatorLabel:'VERIFY'});assert(JSON.stringify(engine.recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'))===JSON.stringify(['ARTIFACT-CONFIRMED']),'Stage 20 did not derive baseline artifacts from the unchanged-confirmed candidate manifest.');assert(engine.recordValue(baseline,'APPROVED_VERSIONS').candidateId==='CANDIDATE-CONFIRMED'&&engine.recordValue(baseline,'APPROVED_VERSIONS').iterationId==='ITERATION-CONFIRM','Stage 20 baseline lost the exact unchanged-confirmation candidate/iteration identity.');"
+          new="  let blockedWithoutDerivedConfirmation=false;try{engine.freezeBaseline(p,{operatorLabel:'VERIFY'});}catch(error){blockedWithoutDerivedConfirmation=/application-derived unchanged confirmation/i.test(String(error.message));}assert(blockedWithoutDerivedConfirmation,'Stage 20 authorized a baseline from a merely claimed unchanged-confirmation verdict.');"
+          text=once(text,old,new,'Stage 20 synthetic fixture')
+          old=" const p=project('JOB-RELIABILITY-V2');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';const scope=engine.currentScope(p);"
+          new=" const p=project('JOB-RELIABILITY-V2');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';p.job.AVAILABLE_TOOLS='CAP-EXTERNAL_AGENT_TOOL; CAP-EXTERNAL_SYSTEM';const scope=engine.currentScope(p);"
+          text=once(text,old,new,'affirmative capability routing fixture')
+          p.write_text(text)
+          PY
+      - name: Derive exact runtime bundle cache identity from patched bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; manifest=''
+          for file in runtime:
+              b=Path(file).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{file}:{blob}\n'
+          identity='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]; p=Path('index.html'); text=p.read_text()
+          for file in runtime:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(file)}\?v=)[^"]+("\s*></script>)'; text,n=re.subn(pattern,rf'\g<1>{identity}\g<2>',text,count=1)
+              if n!=1: raise SystemExit(f'Expected one token for {file}, found {n}')
+          p.write_text(text); print(identity)
+          PY
+      - name: Syntax and deterministic proof stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Local Chromium release blocker
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-bootstrap-http.log 2>&1 & server=$!; trap 'kill "$server" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$server" 2>/dev/null || true; trap - EXIT
+      - name: Commit proven source and regression changes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='app-core.js index.html prompt-engine.js verify-complete.mjs verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js'
+          while IFS= read -r path; do case " $allowed " in *" $path "*) ;; *) echo "Unexpected changed path: $path"; exit 1;; esac; done < <(git status --porcelain | cut -c4-)
+          git config user.name 'OpenAI GPT-5.6 Sol'; git config user.email 'noreply@openai.com'
+          git add app-core.js index.html prompt-engine.js verify-complete.mjs verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js
+          git diff --cached --quiet && { echo 'No source changes'; exit 1; }
+          git commit -m 'Close remaining zero-loss semantic adjudication gaps'
+          git push origin HEAD:reliability/semantic-adjudication-zero-loss-20260828-1103
