@@ -1,0 +1,12 @@
+{
+  "stagesCompleted": 30,
+  "clarificationCycles": 1,
+  "confirmedDefects": 1,
+  "correctedIterationRuns": 10,
+  "unchangedConfirmationRuns": 10,
+  "verificationTripleCoverage": 1,
+  "release": "ACCEPTED",
+  "artifactIdentity": true,
+  "evidenceChains": true,
+  "reloadIntegrity": true
+}
