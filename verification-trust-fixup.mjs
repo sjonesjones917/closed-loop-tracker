@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+const path='workflow-engine.js';
+let s=fs.readFileSync(path,'utf8');
+const old="if(ind.determination!=='APPLICATION_ESTABLISHED')reasons.push('Mandatory verification independence is not application-established.');";
+const next="if(!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(ind.determination))reasons.push('Verification independence is neither application-established nor externally supported.');";
+if(!s.includes(old))throw new Error('verification independence adjudication marker not found');
+s=s.replace(old,next);
+fs.writeFileSync(path,s);
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+let html=fs.readFileSync('index.html','utf8');
+for(const file of runtimeFiles)html=html.replace(new RegExp(`${file.replace('.','\\.')}\\?v=[^\"]+`,'g'),`${file}?v=${token}`);
+fs.writeFileSync('index.html',html);
+console.log(`workflow/release trust separation applied; ${token}`);
