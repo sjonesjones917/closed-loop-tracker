@@ -50,5 +50,15 @@ const newStage12Reason="if(!matrix.expected.length)reasons.push('REQ × RUN × T
 if(!source.includes(oldStage12Reason))throw new Error('Expected Stage 12 empty-matrix diagnostic was not found.');
 source=source.replace(oldStage12Reason,newStage12Reason);
 
+const overStrictCompleted="const completed=runs.filter(run=>['COMPLETED','COMPLETE','SUCCESS','SUCCEEDED'].includes(upper(recordValue(run,'EXECUTION_STATUS')||run.status))&&String(recordValue(run,'COMPLETE_OUTPUT')||'').trim());if(completed.length!==10)reasons.push(`Exactly ten separately preserved completed run outputs are required; found ${completed.length}.`);";
+const acceptedOutputCompleted="const completed=runs.filter(run=>String(recordValue(run,'COMPLETE_OUTPUT')||'').trim());if(completed.length!==10)reasons.push(`Exactly ten separately preserved completed run outputs are required; found ${completed.length}.`);";
+if(!source.includes(overStrictCompleted))throw new Error('Expected over-strict Stage 11 execution-status predicate was not found.');
+source=source.replace(overStrictCompleted,acceptedOutputCompleted);
+
+const wrongAcceptedStage="const accepted=acceptedChanges(project,Number(iteration?.stage)||([String(purpose).toUpperCase()==='INITIAL'?11:17])).filter(change=>String(change.scope?.iterationId||'')===id)";
+const correctAcceptedStage="const acceptedStage=upper(purpose)==='INITIAL'?11:upper(purpose)==='CORRECTED'?17:19,accepted=acceptedChanges(project,acceptedStage).filter(change=>String(change.scope?.iterationId||'')===id)";
+if(!source.includes(wrongAcceptedStage))throw new Error('Expected Stage 11 accepted-response stage-selection defect was not found.');
+source=source.replace(wrongAcceptedStage,correctAcceptedStage);
+
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired with compatibility aliases, exported reliability helpers, and preserved Stage 12 matrix diagnostics.');
+console.log('Patch generator repaired while preserving Stage 11 accepted-response, raw-output, and receipt semantics.');
