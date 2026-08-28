@@ -1,0 +1,65 @@
+name: Repair coordinated integration gate ordering
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/fix-integration-workflow.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Move temporary workflow removal before definition-of-done proof
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.github/workflows/integrate-main-zero-loss.yml')
+          source=path.read_text()
+          old="""          git add index.html workflow-engine.js verify-semantic-invariant.mjs
+          test -z \"$(git diff --name-only --diff-filter=U)\"
+          git diff --check
+      - name: Full deterministic and Chromium acceptance"""
+          new="""          git add index.html workflow-engine.js verify-semantic-invariant.mjs
+          test -z \"$(git diff --name-only --diff-filter=U)\"
+          git rm .github/workflows/integrate-main-zero-loss.yml
+          test \"$(find .github/workflows -maxdepth 1 -type f | wc -l)\" -eq 1
+          test -f .github/workflows/pages.yml
+          git diff --check
+      - name: Full deterministic and Chromium acceptance"""
+          if source.count(old)!=1:
+              raise SystemExit(f'Expected one pre-test insertion target; found {source.count(old)}.')
+          source=source.replace(old,new,1)
+          old_final="""      - name: Commit exact integrated tested tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git rm .github/workflows/integrate-main-zero-loss.yml
+          test \"$(find .github/workflows -maxdepth 1 -type f | wc -l)\" -eq 1
+          test -f .github/workflows/pages.yml
+          git add -A
+          git commit -m 'Integrate current main into coordinated reliability patch'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
+"""
+          new_final="""      - name: Commit exact integrated tested tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git add -A
+          git commit -m 'Integrate current main into coordinated reliability patch'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
+"""
+          if source.count(old_final)!=1:
+              raise SystemExit(f'Expected one final-step target; found {source.count(old_final)}.')
+          path.write_text(source.replace(old_final,new_final,1))
+          PY
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/fix-integration-workflow.yml
+          git add .github/workflows/integrate-main-zero-loss.yml
+          git diff --cached --check
+          git commit -m 'Run definition-of-done against final single-workflow tree'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
