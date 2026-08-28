@@ -1,0 +1,25 @@
+name: Remove stop probe
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/remove-stop-probe.yml']
+permissions:
+  contents: write
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Remove probe and workflow
+        run: |
+          grep -q 'compactHistoricalNavigationStage' app-core.js
+          grep -q 'historicalBackStarted' verify-browser.mjs
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f STOP
+          git rm -f --ignore-unmatch .github/workflows/remove-stop-probe.yml
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Remove stop probe before pull request'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
