@@ -43,9 +43,11 @@ jobs:
           if old not in s: raise SystemExit('capability gate target missing')
           s=s.replace(old,new);open(p,'w',encoding='utf-8').write(s)
 
-          p='app-core.js';s=open(p,encoding='utf-8').read();needle='<h2>Verification execution</h2>'
-          if needle not in s: raise SystemExit('execution guidance heading missing')
-          s=s.replace(needle,needle+'<p class="small">Who performs the current tests is determined by the application from the canonical execution plan. Attach the exact bytes when required; a filename, hash claim, or code block is not file possession.</p>',1);open(p,'w',encoding='utf-8').write(s)
+          p='app-core.js';s=open(p,encoding='utf-8').read()
+          old='The application derives the executor, capability, exact file handoff, and proof required from the accepted tests. Do not substitute a different executor or infer file transfer from browser custody.'
+          new='Verification execution: Who performs the current tests is determined by the application from the canonical execution plan. The application also derives the required capability, exact file handoff, and proof. Do not substitute a different executor or infer transfer from browser custody; a filename, hash claim, or code block is not file possession.'
+          if old not in s: raise SystemExit('execution guidance intro missing')
+          s=s.replace(old,new,1);open(p,'w',encoding='utf-8').write(s)
 
           p='verify-complete.mjs';s=open(p,encoding='utf-8').read().replace("assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');","assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CANONICAL_ARTIFACT_BYTE_IDENTITY']),'Application-native executor registry must contain only the exact byte-identity executor.');")
           old="p.projectData.tests[0].evidenceRefs=['EVID-HARDEN'];plan=engine.testExecutionPlan(p);assert(plan.items[0].operatorAction==='SEND_TO_TOOL_AGENT'&&plan.items[0].executableNow&&plan.items[0].requiredArtifactNames[0]==='fixture.step','Verified artifact did not restore exact external-tool route.');"
