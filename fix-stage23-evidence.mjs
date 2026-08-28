@@ -51,5 +51,10 @@ replace(
   "function recordReleaseDetermination(project){ensureShape(project);const metrics=releaseMetrics(project);const releaseEvidenceSha256=hash.sha256Value(metrics);",
   'canonical release evidence hashing without undefined optional members'
 );
+replace(
+  "const fields={RELEASE_ID:id,PRODUCT_ID:metrics.productId||'UNKNOWN',BASELINE_ID:metrics.baselineId||'UNKNOWN',DETERMINATION:metrics.determination,MANDATORY_REQUIREMENT_COUNTS:metrics.mandatoryRequirementCount,AFFIRMATIVE_EVIDENCE_COUNTS:metrics.satisfied,VIOLATED_COUNTS:metrics.violated,UNDETERMINED_COUNTS:metrics.undetermined,VALIDATOR_COUNTS:metrics.validatorCount,FAILED_VALIDATORS:metrics.failedValidatorIds,UNKNOWN_VALIDATORS:metrics.unknownValidatorIds,CRITICAL_DEFECTS:metrics.criticalDefects,MAJOR_DEFECTS:metrics.majorDefects,BLOCKING_REQUIREMENTS:metrics.blockingRequirements,VIOLATIONS:metrics.violatedRequirements,BLOCKERS:metrics.blockerIds,CONTROLLING_EVIDENCE:releaseEvidenceSha256};",
+  "const fields={RELEASE_ID:id,PRODUCT_ID:metrics.productId||project.job.CURRENT_PRODUCT_ID||'UNKNOWN',BASELINE_ID:metrics.baselineId||project.job.CURRENT_BASELINE_ID||'UNKNOWN',DETERMINATION:metrics.determination,MANDATORY_REQUIREMENT_COUNTS:metrics.mandatoryRequirementCounts,AFFIRMATIVE_EVIDENCE_COUNTS:metrics.affirmativeEvidenceCounts,VIOLATED_COUNTS:metrics.violatedCounts,UNDETERMINED_COUNTS:metrics.undeterminedCounts,VALIDATOR_COUNTS:metrics.validatorCounts,FAILED_VALIDATORS:metrics.failedValidators,NOT_RUN_VALIDATORS:metrics.notRunValidators,UNKNOWN_VALIDATORS:metrics.unknownValidators,CRITICAL_DEFECTS:metrics.criticalDefects,MAJOR_DEFECTS:metrics.majorDefects,BLOCKING_REQUIREMENTS:metrics.blockingRequirements,VIOLATIONS:metrics.violations,FAILED_TESTS:metrics.failedTests,UNRESOLVED_DEFECTS:metrics.unresolvedDefects,BLOCKERS:metrics.blockers,CONTROLLING_DECISION_RULE:metrics.controllingDecisionRule,CONTROLLING_EVIDENCE:releaseEvidenceSha256};",
+  'release record fields aligned to current releaseMetrics'
+);
 fs.writeFileSync(path,source);
 console.log('Applied consolidated reliability compatibility repairs.');
