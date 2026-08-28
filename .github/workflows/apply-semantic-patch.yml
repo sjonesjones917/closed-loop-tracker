@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   patch:
-    if: github.event.head_commit.message != 'Apply semantic adjudication patch'
+    if: github.event.head_commit.message != 'Fix semantic adjudication aggregation'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,16 +15,23 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node semantic-adjudication-patch.mjs
+      - run: node semantic-fixup.mjs
       - run: |
           node --check workflow-engine.js
           node --check verify-semantic-invariant.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
-      - name: Commit coordinated source patch
+      - name: Commit coordinated source fixup
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js verify-semantic-invariant.mjs
+          git add workflow-engine.js
           git diff --cached --quiet && exit 0
-          git commit -m 'Apply semantic adjudication patch'
+          git commit -m 'Fix semantic adjudication aggregation'
           git push origin HEAD:semantic-adjudication-20260827
