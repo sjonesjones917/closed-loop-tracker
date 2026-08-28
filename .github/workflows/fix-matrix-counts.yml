@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Restore matrix counts and stage-correct evidence semantics
+      - name: Restore matrix, evidence, and iteration compatibility
         run: |
           set -euo pipefail
           node <<'NODE'
@@ -31,6 +31,10 @@ jobs:
           const meaningTo="if(Number(result?.stage)===23||String(recordValue(result,'MEANING_REVIEW_ID')||'').trim()){requiredEvidenceClasses.push('MEANING_COMPARISON');";
           if(!s.includes(meaningFrom))throw new Error('Expected over-broad meaning evidence predicate not found.');
           s=s.replace(meaningFrom,meaningTo);
+          const operationFrom="const requiredOperations=normalizedPurpose==='CONFIRMATION'?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'],stage=normalizedPurpose==='CONFIRMATION'?19:17,currentOperations=new Set(acceptedChanges(project,stage).filter(change=>String(change.scope?.iterationId||'')===id).map(change=>change.operation||'COMPLETE')),missingOperations=requiredOperations.filter(operation=>!currentOperations.has(operation));";
+          const operationTo="const requiredOperations=normalizedPurpose==='CONFIRMATION'?['EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:['EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'],stage=normalizedPurpose==='CONFIRMATION'?19:17,currentOperations=new Set(acceptedChanges(project,stage).filter(change=>String(change.scope?.iterationId||'')===id).map(change=>change.operation||'COMPLETE')),missingOperations=requiredOperations.filter(operation=>!currentOperations.has(operation));";
+          if(!s.includes(operationFrom))throw new Error('Expected Stage 17 operation gate with response-bound FREEZE not found.');
+          s=s.replace(operationFrom,operationTo);
           fs.writeFileSync(path,s);
           NODE
           node <<'NODE'
@@ -49,12 +53,12 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
-      - name: Commit repair and remove one-time workflow
+      - name: Commit repair and remove one-time machinery
         run: |
           set -euo pipefail
-          rm .github/workflows/fix-matrix-counts.yml
+          rm .github/workflows/fix-matrix-counts.yml .repair-trigger
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m "fix: preserve matrix and stage evidence contracts"
+          git commit -m "fix: preserve matrix, evidence, and iteration contracts"
           git push origin HEAD:reliability/execution-evidence-independence-v2
