@@ -1,0 +1,50 @@
+name: Fix zero-loss bootstrap harness
+
+on:
+  push:
+    branches: [reliability/semantic-adjudication-zero-loss-20260828-1103]
+    paths: [.github/workflows/fix-bootstrap-zero-loss.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Correct proof harness only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.github/workflows/bootstrap-zero-loss-semantic.yml')
+          text=path.read_text()
+          replacements=[
+            ("if(!adjudicationEmpty(value)&&controlledOutcome(value)!=='SATISFIED')", "if(value!==undefined&&value!==null&&String(value).trim()!==''&&controlledOutcome(value)!=='SATISFIED')"),
+            ("if(required&&!tool&&!upper(evidenceNames).includes(upper(required)))", "if(required&&!upper(tool).includes(upper(required))&&!upper(evidenceNames).includes(upper(required)))"),
+            ("supports=(e,state)=>e.determination===state||e.claimedDetermination===state;", "supports=(e,state)=>e.determination===state;"),
+          ]
+          for old,new in replacements:
+            count=text.count(old)
+            if count!=1: raise SystemExit(f'expected one harness occurrence of {old!r}, found {count}')
+            text=text.replace(old,new,1)
+          old="          text=must_replace(text,\"TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN'\",\"TOOL_AVAILABILITY:project.job.AVAILABLE_TOOLS||'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN'\",'new context tool availability')"
+          new="          old=\"TOOL_AVAILABILITY:'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN'\"; count=text.count(old);\n          if count!=2: raise SystemExit(f'new context tool availability: expected two matches, found {count}')\n          text=text.replace(old,\"TOOL_AVAILABILITY:project.job.AVAILABLE_TOOLS||'UNKNOWN',CONTAMINATION_STATUS:'UNKNOWN'\")"
+          if text.count(old)!=1: raise SystemExit('tool-availability harness line not found exactly once')
+          text=text.replace(old,new,1)
+          old="          while read -r status path; do\n            case \" $allowed \" in *\" $path \"*) ;; *) echo \"Unexpected changed path: $path\"; exit 1;; esac\n          done < <(git status --porcelain | sed -E 's/^.. //')"
+          new="          while IFS= read -r path; do\n            case \" $allowed \" in *\" $path \"*) ;; *) echo \"Unexpected changed path: $path\"; exit 1;; esac\n          done < <(git status --porcelain | cut -c4-)"
+          if text.count(old)!=1: raise SystemExit('changed-path guard block not found exactly once')
+          text=text.replace(old,new,1)
+          path.write_text(text)
+          PY
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          rm .github/workflows/fix-bootstrap-zero-loss.yml
+          git add .github/workflows/bootstrap-zero-loss-semantic.yml .github/workflows/fix-bootstrap-zero-loss.yml
+          git commit -m 'Fix zero-loss semantic proof harness'
+          git push origin HEAD:reliability/semantic-adjudication-zero-loss-20260828-1103
