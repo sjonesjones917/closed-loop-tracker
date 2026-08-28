@@ -1,0 +1,38 @@
+name: Run numbered reliability tests
+on:
+  push:
+    branches: [reliability/correctness-hardening-final-20260827]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/correctness-hardening-final-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extract, run, and commit checks 1-48
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          p='.github/workflows/tmp-expand-numbered-tests.yml'
+          s=open(p,encoding='utf-8').read()
+          start=s.index("cat >> verify-complete.mjs <<'EOF'\n")+len("cat >> verify-complete.mjs <<'EOF'\n")
+          end=s.index('\nEOF\n',start)
+          with open('verify-complete.mjs','a',encoding='utf-8') as out: out.write(s[start:end]+'\n')
+          PY
+          node --check verify-complete.mjs
+          node verify-complete.mjs
+          rm -f .github/workflows/tmp-expand-numbered-tests.yml .github/workflows/tmp-run-numbered-tests.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-complete.mjs
+          git add -u .github/workflows/tmp-expand-numbered-tests.yml .github/workflows/tmp-run-numbered-tests.yml
+          git diff --cached --check
+          git commit -m "Add numbered deterministic reliability regressions"
+          git push origin HEAD:reliability/correctness-hardening-final-20260827
