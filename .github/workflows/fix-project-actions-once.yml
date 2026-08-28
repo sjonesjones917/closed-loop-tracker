@@ -1,0 +1,52 @@
+name: Fix Project actions menu once
+on:
+  push:
+    branches: [reliability/project-actions-mobile-fix-20260828]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/project-actions-mobile-fix-20260828
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal UI fix and regression
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          let html=fs.readFileSync('index.html','utf8');
+          const oldMobile='.header-actions{display:flex;flex-wrap:nowrap;overflow-x:auto;padding-bottom:1px;scrollbar-width:none}';
+          const newMobile='.header-actions{display:flex;flex-wrap:nowrap;overflow:visible;padding-bottom:1px}';
+          if(!html.includes(oldMobile)) throw new Error('Expected mobile header-actions rule not found');
+          html=html.replace(oldMobile,newMobile);
+          fs.writeFileSync('index.html',html);
+
+          let test=fs.readFileSync('verify-browser-extra.mjs','utf8');
+          const marker="assert(lifecycleUi.headerMenu,'Compact Project actions menu is missing.');";
+          const addition=`${marker}\n  await click(cdp,'.project-action-menu>summary');\n  const actionMenu=await evalValue(cdp,\`(()=>{const menu=document.querySelector('.project-action-menu'),popover=document.querySelector('.project-action-popover');if(!menu||!popover)return null;const r=popover.getBoundingClientRect(),s=getComputedStyle(popover);return {open:menu.open,visible:s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0,left:r.left,right:r.right,viewport:innerWidth};})()\`);\n  assert(actionMenu?.open&&actionMenu.visible,'Project actions control did not reveal its menu.');\n  assert(actionMenu.left>=0&&actionMenu.right<=actionMenu.viewport+1,'Project actions menu is clipped or outside the mobile viewport.');`;
+          if(!test.includes(marker)) throw new Error('Lifecycle menu assertion marker not found');
+          test=test.replace(marker,addition);
+          fs.writeFileSync('verify-browser-extra.mjs',test);
+          NODE
+      - name: Run required proof
+        run: |
+          node --check verify-browser-extra.mjs
+          node verify-project-lifecycle.mjs
+          node verify-definition-of-done.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER=$!
+          trap 'kill $SERVER || true' EXIT
+          sleep 1
+          node verify-browser-extra.mjs
+      - name: Remove bootstrap and commit exact fix
+        run: |
+          git rm .github/workflows/fix-project-actions-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html verify-browser-extra.mjs
+          git commit -m 'Fix Project actions menu on mobile'
+          git push origin HEAD:reliability/project-actions-mobile-fix-20260828
