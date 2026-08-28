@@ -5,12 +5,12 @@ on:
 permissions: {contents: write}
 
 jobs:
-  diagnose-evidence:
-    if: ${{ contains(github.event.head_commit.message, '[diagnose-evidence]') }}
+  diagnose-core:
+    if: ${{ contains(github.event.head_commit.message, '[diagnose-core]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply coordinated patch and expose exact evidence adjudication source
+      - name: Apply staged patch and print remaining central surfaces
         run: |
           cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
           echo 'ea95f16b98b3b51e9436f983ca59046556d17cdddc47b9cad5a861882d61089c  /tmp/adjudication.patch' | sha256sum -c -
@@ -22,7 +22,7 @@ jobs:
           if 'OBSERVATION_OUTCOME' not in body: s=s[:a]+body.rstrip()+(',' if not body.rstrip().endswith(',') else '')+"'OBSERVATION_OUTCOME'"+body[len(body.rstrip()):]+s[b:]
           p.write_text(s)
           PY
-          grep -n -A180 -B20 'function evaluateEvidenceContract' workflow-engine.js || true
-          grep -n -A80 -B10 'function evaluateEvidenceSufficiency' workflow-engine.js || true
-          grep -n -A120 -B15 'function canonicalEvidence' workflow-engine.js || true
-          grep -n -E 'EXECUTION_ID|CONTEXT_ID|AUTHORITY|evidenceRefs|evidenceRecords' workflow-engine.js | head -160
+          for needle in 'function validateTraceIntegrity' 'function releaseMetrics' "case 'regressionExecutions'" 'function defectResolvedByRegression' 'function coverageMetrics' 'case 15:' 'case 16:' 'case 30:'; do echo "===== $needle ====="; grep -n -A170 -B20 "$needle" workflow-engine.js | head -230 || true; done
+          echo '===== regression schema ====='; grep -n -A8 -B4 'regressionExecutions:recordSchema' workflow-schema.js || true
+          echo '===== root/change schema ====='; grep -n -A18 -B3 'rootCauses:recordSchema' workflow-schema.js || true; grep -n -A18 -B3 'changes:recordSchema' workflow-schema.js || true
+          echo '===== invariant suite ====='; cat verify-adjudication.mjs
