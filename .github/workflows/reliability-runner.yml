@@ -19,4 +19,6 @@ jobs:
       - name: Apply patch, verify, and commit
         run: |
           sed -i 's/semanticMeaningRecord/meaningReviewRecord/g' .harden-runner.sh
+          sed -i "s/EVALUATOR_INDEPENDENT_FROM_GENERATOR:true/EVALUATOR_INDEPENDENT_FROM_GENERATOR:'TRUE'/g" .harden-runner.sh
+          sed -i "s/REVIEWER_INDEPENDENT:true/REVIEWER_INDEPENDENT:'TRUE'/g" .harden-runner.sh
           bash .harden-runner.sh
