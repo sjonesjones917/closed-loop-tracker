@@ -1,0 +1,102 @@
+name: Bootstrap zero-loss semantic correction v3
+
+on:
+  push:
+    branches: [reliability/semantic-adjudication-zero-loss-20260828-1103]
+    paths: [.github/workflows/bootstrap-zero-loss-semantic-v3.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Reuse audited patch program from v2 harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/bootstrap-zero-loss-semantic-v2.yml').read_text()
+          start="          python3 - <<'PY'\n"
+          end="          PY\n\n      - name: Syntax and deterministic proof stack"
+          if start not in text or end not in text:
+              raise SystemExit('Cannot locate v2 patch program boundaries')
+          body=text.split(start,1)[1].split(end,1)[0]
+          lines=[]
+          for line in body.splitlines():
+              if line.startswith('          '): line=line[10:]
+              lines.append(line)
+          Path('/tmp/zero-loss-patch.py').write_text('\n'.join(lines)+'\n')
+          PY
+          python3 /tmp/zero-loss-patch.py
+      - name: Derive exact runtime bundle cache identity from patched bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
+          for file in runtime:
+              b=Path(file).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+              manifest+=f'{file}:{blob}\n'
+          identity='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          path=Path('index.html'); text=path.read_text(); changed=0
+          for file in runtime:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(file)}\?v=)[^"]+("\s*></script>)'
+              text,n=re.subn(pattern,rf'\g<1>{identity}\g<2>',text,count=1)
+              if n!=1: raise SystemExit(f'Expected exactly one runtime script token for {file}; found {n}')
+              changed+=n
+          path.write_text(text)
+          print(identity,changed)
+          PY
+      - name: Syntax and deterministic proof stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Local Chromium release blocker
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-bootstrap-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$server" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit proven source and regression changes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed='app-core.js index.html prompt-engine.js verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js'
+          while IFS= read -r path; do
+            case " $allowed " in *" $path "*) ;; *) echo "Unexpected changed path: $path"; exit 1;; esac
+          done < <(git status --porcelain | cut -c4-)
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          git add app-core.js index.html prompt-engine.js verify-full-cycle.mjs verify-semantic-invariant.mjs workflow-engine.js workflow-schema.js
+          git diff --cached --quiet && { echo 'No source changes'; exit 1; }
+          git commit -m 'Close remaining zero-loss semantic adjudication gaps'
+          git push origin HEAD:reliability/semantic-adjudication-zero-loss-20260828-1103
