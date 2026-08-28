@@ -35,4 +35,4 @@ async function main(){
     console.log(JSON.stringify({lifecycleOperatorPath:true,rename:true,duplicate:true,archiveRestore:true,backup:true,verifyStoredFiles:true,delete:true}));
   } finally {cdp.close();}
 }
-main().finally(()=>{proc.kill('SIGTERM');fs.rmSync(profile,{recursive:true,force:true});});
+main().catch(error=>{console.error(error?.stack||error);process.exitCode=1;}).finally(()=>{proc.kill('SIGTERM');});
