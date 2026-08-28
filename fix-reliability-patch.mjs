@@ -40,5 +40,10 @@ const compatibleItem="artifactRequirements:artifact.artifactRequirements,evidenc
 if(!source.includes(enrichedItemNeedle))throw new Error('Expected enriched execution-plan item shape was not found.');
 source=source.replace(enrichedItemNeedle,compatibleItem);
 
+const oldExportPatch="engine=engine.replace('testExecutionPlan,applicationTestCapabilities,operationalMetrics,','testExecutionPlan,executionHandoff,applicationTestCapabilities,evaluateContextIndependence,evaluateEvidenceSufficiency,detectCurrentContradictions,executionStability,regressionLifecycle,deriveNextRequiredAction,explainEvidenceChain,operationalMetrics,');";
+const newExportPatch="engine=engine.replace('releaseMetrics,applicationTestCapabilities,testExecutionPlan,operationalMetrics,','releaseMetrics,applicationTestCapabilities,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,detectCurrentContradictions,executionStability,regressionLifecycle,deriveNextRequiredAction,explainEvidenceChain,operationalMetrics,');";
+if(!source.includes(oldExportPatch))throw new Error('Expected ineffective engine export patch was not found.');
+source=source.replace(oldExportPatch,newExportPatch);
+
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired with additive execution-plan compatibility aliases.');
+console.log('Patch generator repaired with additive execution-plan compatibility aliases and exported reliability helpers.');
