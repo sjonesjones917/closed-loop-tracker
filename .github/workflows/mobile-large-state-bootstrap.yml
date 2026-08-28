@@ -1,0 +1,35 @@
+name: Temporary mobile large-state hot-path bootstrap
+on:
+  push:
+    branches: [reliability/mobile-large-state-hotpath-20260828]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal hot-path repair and prove deterministic invariants
+        run: |
+          node apply-mobile-large-state-hotpath.mjs
+          node --check app-core.js
+          node --check verify-browser-extra.mjs
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Commit exact responsible-layer patch
+        run: |
+          git config user.name 'closed-loop-ci'
+          git config user.email 'closed-loop-ci@users.noreply.github.com'
+          git add app-core.js verify-browser-extra.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Remove remaining large-state mobile clone stalls'
+          git push origin HEAD:reliability/mobile-large-state-hotpath-20260828
