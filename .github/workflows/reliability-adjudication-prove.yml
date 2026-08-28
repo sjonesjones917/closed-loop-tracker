@@ -1,3 +1,4 @@
+# Temporary branch-only proof harness; remove before merge.
 name: Reliability adjudication exact proof
 on:
   push:
