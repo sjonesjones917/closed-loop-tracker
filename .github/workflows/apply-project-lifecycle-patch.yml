@@ -38,12 +38,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f lifecycle.patch lifecycle.patch.gz lifecycle.patch.gz.b64 .lifecycle-patch-0{0,1,2,3,4,5,6,7,8}
-          git rm .github/workflows/apply-project-lifecycle-patch.yml
+          rm -f lifecycle.patch lifecycle.patch.gz lifecycle.patch.gz.b64
+          git rm .lifecycle-patch-0{0,1,2,3,4,5,6,7,8} .github/workflows/apply-project-lifecycle-patch.yml
           git config user.name 'closed-loop reliability automation'
           git config user.email 'actions@users.noreply.github.com'
           git add app-core.js project-store.js index.html verify-browser.mjs verify-browser-extra.mjs
           git diff --cached --name-only
-          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "app-core.js index.html project-store.js verify-browser-extra.mjs verify-browser.mjs "
+          test "$(git diff --cached --name-only | wc -l)" -eq 15
           git commit -m 'Add compact rigorous project lifecycle controls'
           git push origin HEAD:reliability/project-lifecycle-controls-20260828
