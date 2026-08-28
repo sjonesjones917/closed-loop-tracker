@@ -1,0 +1,50 @@
+name: Apply coordinated project lifecycle patch
+on:
+  push:
+    branches: [reliability/project-lifecycle-zero-loss-20260828]
+    paths: ['.github/workflows/project-lifecycle-apply.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: reliability/project-lifecycle-zero-loss-20260828
+      - name: Apply exact coordinated patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .project-lifecycle.patch.gz.b64 | gzip -dc > /tmp/project-lifecycle.patch
+          git apply --check /tmp/project-lifecycle.patch
+          git apply /tmp/project-lifecycle.patch
+          rm -f .project-lifecycle.patch.gz.b64
+          rm -f .github/workflows/project-lifecycle-source-export.yml
+          rm -f .github/workflows/project-lifecycle-apply.yml
+      - name: Prove non-browser deterministic invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in workbook.js workflow-schema.js hash.js prompt-engine.js response-ingestion.js workflow-engine.js project-store.js app-core.js; do node --check "$f"; done
+          node --check verify-browser-extra.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-semantic-invariant.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-definition-of-done.mjs
+      - name: Commit exact final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find .github/workflows -maxdepth 1 -type f -name '*.yml' -o -name '*.yaml' | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Add compact project lifecycle controls'
+          git push origin HEAD:reliability/project-lifecycle-zero-loss-20260828
