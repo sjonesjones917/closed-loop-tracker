@@ -3,7 +3,7 @@ on:
   push:
     branches: [semantic-adjudication-20260827]
     paths:
-      - '.semantic-direct-integration.patch.gz.b64'
+      - '.semantic-patch-*'
       - '.github/workflows/apply-direct-semantic.yml'
 permissions:
   contents: write
@@ -16,10 +16,14 @@ jobs:
           fetch-depth: 0
       - name: Apply reviewed direct-integration patch
         run: |
-          base64 -d .semantic-direct-integration.patch.gz.b64 | gzip -d > /tmp/direct.patch
+          set -euo pipefail
+          cat .semantic-patch-00 .semantic-patch-01 .semantic-patch-02 .semantic-patch-03 .semantic-patch-04 > /tmp/payload.b64
+          echo 'f9d7b6a287bb5fd12ca05a78b48c93c5be619e495cbd3c647db2cd99d590eb43  /tmp/payload.b64' | sha256sum -c -
+          base64 -d /tmp/payload.b64 | gzip -d > /tmp/direct.patch
+          echo '80b7755ec249646cf4059a11d39dba2054bdcb58db631d1d2bfbb645b2393ce3  /tmp/direct.patch' | sha256sum -c -
           git apply --check /tmp/direct.patch
           git apply /tmp/direct.patch
-          rm -f .semantic-direct-integration.patch.gz.b64 .github/workflows/apply-direct-semantic.yml
+          rm -f .semantic-direct-integration.patch.gz.b64 .semantic-patch-00 .semantic-patch-01 .semantic-patch-02 .semantic-patch-03 .semantic-patch-04 .github/workflows/apply-direct-semantic.yml
       - name: Syntax and deterministic suites
         run: |
           set -euo pipefail
