@@ -32,21 +32,23 @@ jobs:
           test=test.replace(marker,addition);
           fs.writeFileSync('verify-browser-extra.mjs',test);
           NODE
-      - name: Run required proof
+      - name: Prove lifecycle and browser behavior
         run: |
           node --check verify-browser-extra.mjs
           node verify-project-lifecycle.mjs
-          node verify-definition-of-done.mjs
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER=$!
           trap 'kill $SERVER || true' EXIT
           sleep 1
           node verify-browser-extra.mjs
-      - name: Remove bootstrap and commit exact fix
+      - name: Remove temporary bootstrap
+        run: git rm .github/workflows/fix-project-actions-once.yml
+      - name: Prove final architecture
+        run: node verify-definition-of-done.mjs
+      - name: Commit exact fix
         run: |
-          git rm .github/workflows/fix-project-actions-once.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html verify-browser-extra.mjs
+          git add index.html verify-browser-extra.mjs .github/workflows/fix-project-actions-once.yml
           git commit -m 'Fix Project actions menu on mobile'
           git push origin HEAD:reliability/project-actions-mobile-fix-20260828
