@@ -1,0 +1,40 @@
+name: Bootstrap zero-loss semantic correction v14 diagnostic
+
+on:
+  push:
+    branches: [reliability/semantic-adjudication-zero-loss-20260828-1103]
+    paths: [.github/workflows/bootstrap-zero-loss-semantic-v14-diagnostic.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply v13 patch and add Stage 12 diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/bootstrap-zero-loss-semantic-v13.yml').read_text(); name='Apply v12 proven patch path and canonical Stage 12 verifier contexts'
+          start=text.index('      - name: '+name); run=text.index('        run: |\n',start)+len('        run: |\n'); end=text.index('\n      - name:',run); block=text[run:end]
+          Path('/tmp/apply-v13.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())+'\n')
+          PY
+          bash /tmp/apply-v13.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs'); text=p.read_text()
+          old="verifyBatch(12,'COMPLETE',initialSlots);complete(12);"
+          new="verifyBatch(12,'COMPLETE',initialSlots);{const sample=engine.recordsForCurrentScope(p,'verification').at(0),test=engine.recordsForCurrentScope(p,'tests').find(t=>engine.recordId(t,'tests')===String(engine.recordValue(sample,'TEST_ID')||sample.relationships?.TEST_ID||'')),runId=String(engine.recordValue(sample,'RUN_ID')||sample.relationships?.RUN_ID||''),verifierContextId=String(engine.recordValue(sample,'VERIFIER_CONTEXT_ID')||'');console.log('STAGE12_DIAGNOSTIC',JSON.stringify({sampleId:engine.recordId(sample,'verification'),testId:engine.recordId(test,'tests'),evidenceRefs:sample.evidenceRefs,verifierContextId,independence:engine.evaluateContextIndependence(p,{role:'VERIFICATION',iterationId:sample.scope?.iterationId,runId,verifierContextId}),evidence:engine.evaluateEvidenceContract(test,sample,null,p),effective:engine.effectiveDetermination('verification',sample,test,p)},null,2));}complete(12);"
+          if text.count(old)!=1: raise SystemExit(f'diagnostic insertion count={text.count(old)}')
+          p.write_text(text.replace(old,new,1))
+          PY
+      - name: Run full-cycle diagnostic
+        shell: bash
+        run: node verify-full-cycle.mjs
