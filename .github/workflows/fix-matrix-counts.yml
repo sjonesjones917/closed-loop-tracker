@@ -1,4 +1,4 @@
-name: Repair verification matrix count compatibility
+name: Repair verification matrix compatibility
 on:
   push:
     branches:
@@ -16,17 +16,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Restore existing verificationMatrix counts contract
+      - name: Restore matrix counts and stage-correct evidence semantics
         run: |
           set -euo pipefail
           node <<'NODE'
           const fs=require('fs');
           const path='workflow-engine.js';
           let s=fs.readFileSync(path,'utf8');
-          const from="const presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));\n  return {iterationId:String(iterationId||''),requirements,tests,runs,expected,expectedCount:expected.length,actual:valid,actualCount:valid.length,missing,duplicates,invalid,valid,satisfied,violated,undetermined,selfValidated,coverage:expected.length?valid.length/expected.length:0,complete:expected.length>0&&!missing.length&&!duplicates.length&&!invalid.length&&valid.length===expected.length};";
-          const to="const counts=new Map([...grouped.entries()].map(([key,items])=>[key,items.length])),presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));\n  return {iterationId:String(iterationId||''),requirements,tests,runs,expected,expectedCount:expected.length,counts,actual:valid,actualCount:valid.length,missing,duplicates,invalid,valid,satisfied,violated,undetermined,selfValidated,coverage:expected.length?valid.length/expected.length:0,complete:expected.length>0&&!missing.length&&!duplicates.length&&!invalid.length&&valid.length===expected.length};";
-          if(!s.includes(from))throw new Error('Expected hardened verificationMatrix return shape not found.');
-          s=s.replace(from,to);
+          const countFrom="const presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));\n  return {iterationId:String(iterationId||''),requirements,tests,runs,expected,expectedCount:expected.length,actual:valid,actualCount:valid.length,missing,duplicates,invalid,valid,satisfied,violated,undetermined,selfValidated,coverage:expected.length?valid.length/expected.length:0,complete:expected.length>0&&!missing.length&&!duplicates.length&&!invalid.length&&valid.length===expected.length};";
+          const countTo="const counts=new Map([...grouped.entries()].map(([key,items])=>[key,items.length])),presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));\n  return {iterationId:String(iterationId||''),requirements,tests,runs,expected,expectedCount:expected.length,counts,actual:valid,actualCount:valid.length,missing,duplicates,invalid,valid,satisfied,violated,undetermined,selfValidated,coverage:expected.length?valid.length/expected.length:0,complete:expected.length>0&&!missing.length&&!duplicates.length&&!invalid.length&&valid.length===expected.length};";
+          if(!s.includes(countFrom))throw new Error('Expected hardened verificationMatrix return shape not found.');
+          s=s.replace(countFrom,countTo);
+          const meaningFrom="if(testType==='MEANING'||Number(result?.stage)===23){requiredEvidenceClasses.push('MEANING_COMPARISON');";
+          const meaningTo="if(Number(result?.stage)===23||String(recordValue(result,'MEANING_REVIEW_ID')||'').trim()){requiredEvidenceClasses.push('MEANING_COMPARISON');";
+          if(!s.includes(meaningFrom))throw new Error('Expected over-broad meaning evidence predicate not found.');
+          s=s.replace(meaningFrom,meaningTo);
           fs.writeFileSync(path,s);
           NODE
           node <<'NODE'
@@ -52,5 +56,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m "fix: preserve verification matrix count contract"
+          git commit -m "fix: preserve matrix and stage evidence contracts"
           git push origin HEAD:reliability/execution-evidence-independence-v2
