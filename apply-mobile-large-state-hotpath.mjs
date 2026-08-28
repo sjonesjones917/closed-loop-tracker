@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 
 const appPath='app-core.js';
 let app=fs.readFileSync(appPath,'utf8');
@@ -20,4 +21,13 @@ if(!verify.includes(anchor))throw new Error('browser-extra guard anchor not foun
 if(!verify.includes('Workflow prompt preview must not deep-clone'))verify=verify.replace(anchor,anchor+guard);
 fs.writeFileSync(verifyPath,verify);
 
-console.log('Applied mobile large-state hot-path repair and permanent regression guards.');
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const runtimeBuildIdentity=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
+const htmlPath='index.html';
+let html=fs.readFileSync(htmlPath,'utf8');
+html=html.replace(/(workbook\.js|hash\.js|workflow-schema\.js|workflow-engine\.js|prompt-engine\.js|response-ingestion\.js|project-store\.js|app-core\.js)\?v=runtime-[a-f0-9]+/g,`$1?v=${runtimeBuildIdentity}`);
+fs.writeFileSync(htmlPath,html);
+
+console.log(`Applied mobile large-state hot-path repair and permanent regression guards with ${runtimeBuildIdentity}.`);
