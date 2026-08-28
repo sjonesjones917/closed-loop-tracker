@@ -24,6 +24,14 @@ jobs:
           p=Path('workflow-engine.js')
           text=p.read_text().replace('semantically contradictory material finding','internally contradictory material finding')
           p.write_text(text)
+          ps=Path('workflow-schema.js')
+          st=ps.read_text()
+          old="'OBSERVED_RESULT','EXACT_EVIDENCE','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'"
+          new="'OBSERVED_RESULT','OBSERVATION_OUTCOME','EXACT_EVIDENCE','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'"
+          count=st.count(old)
+          if count != 1:
+              raise SystemExit(f'verification field compatibility: expected 1 occurrence, found {count}')
+          ps.write_text(st.replace(old,new,1))
           PY
           node - <<'NODE'
           const fs=require('fs'),{createHash}=require('crypto');
