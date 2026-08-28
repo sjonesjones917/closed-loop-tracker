@@ -2,7 +2,7 @@ name: Finalize lifecycle zero-loss correction
 on:
   push:
     branches: [reliability/lifecycle-final-zero-loss-20260828]
-    paths: ['.lifecycle-correction.mjs', '.github/workflows/lifecycle-finalize.yml']
+    paths: ['.lifecycle-correction.mjs', '.lifecycle-materializer-fix.mjs', '.github/workflows/lifecycle-finalize.yml']
 permissions: {contents: write}
 jobs:
   finalize:
@@ -12,8 +12,10 @@ jobs:
         with: {ref: reliability/lifecycle-final-zero-loss-20260828, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply only the responsible-layer lifecycle correction
-        run: node .lifecycle-correction.mjs
+      - name: Constrain and apply only the responsible-layer lifecycle correction
+        run: |
+          node .lifecycle-materializer-fix.mjs
+          node .lifecycle-correction.mjs
       - name: Remove temporary workflow before architecture proof
         run: rm -f .github/workflows/lifecycle-finalize.yml
       - name: Refresh exact runtime identity
@@ -56,7 +58,7 @@ jobs:
           trap - EXIT
       - name: Publish only the proven final tree
         run: |
-          rm -f .lifecycle-correction.mjs .github/workflows/lifecycle-finalize.yml
+          rm -f .lifecycle-correction.mjs .lifecycle-materializer-fix.mjs .github/workflows/lifecycle-finalize.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
