@@ -10,15 +10,26 @@ Committed retained project requires no source materialization.
   "obsoleteRuntimeWrappers": false
 }
 {"semanticAdjudication":true,"contradictoryFavorableVerdictsRejected":10,"bareNarrativeRejected":true,"stage7ControlledOutcome":true,"nativeExecutorRegistryStillEmpty":true}
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-hash.mjs:6
-const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
-                                     ^
+{"sha256Vectors":true,"canonicalOrdering":true,"ambiguousValuesRejected":17,"runtimeBuildIdentity":"runtime-d7baf0302eacbddf"}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:60
+const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
+                                                                                                                           ^
 
-Error: workbook.js cache token c057b032f27b34d0 does not match runtime bundle identity runtime-d7baf0302eacbddf.
-    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-hash.mjs:6:38)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-hash.mjs:29:2
-    at Array.forEach (<anonymous>)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-hash.mjs:25:15
+Error: verify-ingestion.mjs failed:
+
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:92
+  if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
+                                      ^
+
+Error: Stage 7 valid response rejected: [{"code":"INVALID_ENUM_VALUE","path":"/records/failureTests/0/fields/EXECUTION_OUTCOME","message":"Value must be one of REJECTED_INVALID, ACCEPTED_INVALID, UNDETERMINED, NOT_RUN.","severity":"ERROR"}]
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:92:39
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:60:124
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
