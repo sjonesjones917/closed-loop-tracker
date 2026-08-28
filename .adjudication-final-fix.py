@@ -69,8 +69,6 @@ new_observed="for(const key of ['OBSERVED_RESULT','ACTUAL_RESULT','OBSERVED_MEAN
 if old_observed in s:s=s.replace(old_observed,new_observed,1)
 elif new_observed not in s:raise RuntimeError('observed-value adapter anchor missing')
 
-# Replace the whole preflight adapter by syntax boundary rather than depending on
-# helper names that the coordinated rename pass may change.
 marker="if(collection==='preflightRecords'){"
 start=s.find(marker)
 if start<0:raise RuntimeError('preflight adapter marker missing')
@@ -104,3 +102,15 @@ elif 'function detectCurrentContradictions(project)' not in s:
     raise RuntimeError('contradiction base exists without wrapper')
 
 p.write_text(s)
+
+# The legacy full-cycle fixture previously asserted arbitrary verifier-context
+# strings. Under the mandatory-release contract that is intentionally invalid.
+# Keep the same lifecycle assertions, but establish every verifier context via
+# the application-owned context registry before the verification observation is
+# submitted. This changes test setup only; production never trusts the string.
+vf=Path('verify-full-cycle.mjs'); v=vf.read_text()
+old_verify="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:`VERIFY-${runId}-${currentTestId}`,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
+new_verify="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE'),verifierContext=engine.registerFreshContext(p,{stage,externalContextIdentifier:`VERIFY-${stage}-${runId}-${currentTestId}`,operatorLabel:'FULL_CYCLE'}),verifierContextId=engine.recordId(verifierContext,'freshContexts');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:verifierContextId,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
+if old_verify in v:v=v.replace(old_verify,new_verify,1)
+elif new_verify not in v:raise RuntimeError('full-cycle verifier-context fixture anchor missing')
+vf.write_text(v)
