@@ -59,6 +59,7 @@ assert(workflowSource.includes('Verify exact deployed source identity'),'Exact d
 
 const engineSource=fs.readFileSync('workflow-engine.js','utf8');
 for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);
+assert((engineSource.match(/function evaluateEvidenceContract\(/g)||[]).length===1,'Evidence-contract authority is duplicated.');assert(/function evaluateEvidenceSufficiency[\s\S]*?evaluateEvidenceContract\(test,result,null,project\)/.test(engineSource),'Evidence-sufficiency compatibility path does not delegate to the central evidence contract.');assert(!engineSource.includes(".map(v=>upper(recordValue(v,'DETERMINATION')))"),'Stability still consumes agent-submitted determinations.');assert(engineSource.includes("generator self-evaluation','other verifiers’ determinations"),'Stage 12 handoff isolation is incomplete.');assert(engineSource.includes("prior meaning-review verdict unless explicitly authorized"),'Stage 24 handoff isolation is incomplete.');
 
 console.log(JSON.stringify({
   fieldOwnershipCoverage,
