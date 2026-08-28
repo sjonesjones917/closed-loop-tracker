@@ -1,0 +1,21 @@
+name: Export project lifecycle source
+on:
+  push:
+    branches: [reliability/project-lifecycle-zero-loss-20260828]
+    paths: ['.github/workflows/project-lifecycle-source-export.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Package exact branch source
+        run: tar --exclude=.git -czf /tmp/closed-loop-project-lifecycle-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-project-lifecycle-source
+          path: /tmp/closed-loop-project-lifecycle-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
