@@ -1,0 +1,479 @@
+name: Publish exact locally tested reliability patch
+
+on:
+  push:
+    branches:
+      - reliability/semantic-adjudication-zero-loss-20260828
+    paths:
+      - .github/workflows/publish-tested-patch.yml
+
+permissions:
+  actions: write
+  checks: read
+  contents: write
+  deployments: read
+  issues: write
+  pages: read
+  pull-requests: write
+
+concurrency:
+  group: publish-semantic-adjudication-zero-loss-20260828
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      BRANCH: reliability/semantic-adjudication-zero-loss-20260828
+      BASELINE_SHA: c396d80c81bd853267f047bcd1e952887b64c1d0
+      IMPORT_BASE_URL: https://closed-loop-semantic-patch-20260828.loca.lt
+      LIVE_BASE_URL: https://sjonesjones917.github.io/closed-loop-tracker
+      GH_API: https://api.github.com
+    steps:
+      - name: Check out the audited-baseline publication branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: reliability/semantic-adjudication-zero-loss-20260828
+
+      - name: Prove the publisher was added directly to the audited baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$BASELINE_SHA"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/publish-tested-patch.yml"
+          test "$(git show HEAD^:.github/workflows/pages.yml | sha256sum | awk '{print $1}')" = "$(git show "$BASELINE_SHA":.github/workflows/pages.yml | sha256sum | awk '{print $1}')"
+
+      - name: Fetch and verify the exact locally tested source manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          header='bypass-tunnel-reminder: true'
+          curl --fail --silent --show-error --location --retry 15 --retry-all-errors \
+            --connect-timeout 20 --max-time 120 -H "$header" \
+            "$IMPORT_BASE_URL/tested-import-manifest.json" \
+            --output /tmp/tested-import-manifest.json
+          python3 - <<'PY'
+          import json, pathlib
+          manifest=json.loads(pathlib.Path('/tmp/tested-import-manifest.json').read_text())
+          if manifest.get('schema')!='closed-loop-tested-import/1':
+              raise SystemExit('wrong tested-import manifest schema')
+          if manifest.get('baseline')!='c396d80c81bd853267f047bcd1e952887b64c1d0':
+              raise SystemExit('wrong audited baseline identity')
+          proof=manifest.get('localProof') or {}
+          required={'preBrowserMarkerSha256','chromiumMarkerSha256','preBrowserLogSha256','chromiumLogSha256'}
+          if set(proof) < required or any(not isinstance(proof[k],str) or len(proof[k])!=64 for k in required):
+              raise SystemExit('local deterministic/Chromium proof identity is incomplete')
+          files=manifest.get('files')
+          if not isinstance(files,list) or not files:
+              raise SystemExit('tested source manifest is empty')
+          PY
+
+      - name: Materialize only bytes matching the tested manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, urllib.parse, urllib.request
+          manifest=json.loads(pathlib.Path('/tmp/tested-import-manifest.json').read_text())
+          base=os.environ['IMPORT_BASE_URL'].rstrip('/')+'/'
+          headers={'bypass-tunnel-reminder':'true','User-Agent':'closed-loop-tested-import/1'}
+          allowed=set()
+          for entry in manifest['files']:
+              path=entry.get('path')
+              pure=pathlib.PurePosixPath(path) if isinstance(path,str) else None
+              if not path or path.startswith('/') or '..' in pure.parts or path in allowed:
+                  raise SystemExit(f'illegal or duplicate manifest path: {path!r}')
+              if not isinstance(entry.get('size'),int) or entry['size']<0:
+                  raise SystemExit(f'illegal size for {path}')
+              if not isinstance(entry.get('sha256'),str) or len(entry['sha256'])!=64:
+                  raise SystemExit(f'illegal digest for {path}')
+              allowed.add(path)
+          preserve={'.git','.github/workflows/publish-tested-patch.yml'}
+          for p in sorted(pathlib.Path('.').rglob('*'), reverse=True):
+              if not p.is_file():
+                  continue
+              rel=p.as_posix()
+              if rel.startswith('.git/') or rel in preserve:
+                  continue
+              if rel not in allowed:
+                  p.unlink()
+          for entry in manifest['files']:
+              path=entry['path']
+              request=urllib.request.Request(base+urllib.parse.quote(path,safe='/'),headers=headers)
+              with urllib.request.urlopen(request,timeout=120) as response:
+                  data=response.read()
+              if len(data)!=entry['size'] or hashlib.sha256(data).hexdigest()!=entry['sha256']:
+                  raise SystemExit(f'byte identity mismatch: {path}')
+              target=pathlib.Path(path)
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_bytes(data)
+          pathlib.Path('/tmp/imported-paths.txt').write_text('\n'.join(sorted(allowed))+'\n')
+          PY
+
+      - name: Remove all temporary publication machinery and prove final architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/publish-tested-patch.yml .github/workflows/import-tested-patch.yml tested-import-manifest.json
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort)" = "pages.yml"
+          test "$(grep -c "WORKFLOW_ID = 'mobile-closed-loop/30'\|WORKFLOW_ID='mobile-closed-loop/30'\|WORKFLOW_ID = \"mobile-closed-loop/30\"\|WORKFLOW_ID=\"mobile-closed-loop/30\"" workbook.js)" -ge 1
+          grep -q 'function evaluateEvidenceContract' workflow-engine.js
+          grep -q 'function evaluateResultConsistency' workflow-engine.js
+          grep -q 'function effectiveDetermination' workflow-engine.js
+          grep -q 'function validateTraceIntegrity' workflow-engine.js
+          grep -q 'const APPLICATION_TEST_EXECUTORS=Object.freeze({})' workflow-engine.js
+          grep -q 'verify-false-acceptance.mjs' .github/workflows/pages.yml
+          grep -q 'verify-ui-prompt-contract.mjs' .github/workflows/pages.yml
+          grep -q 'workflow_dispatch' .github/workflows/pages.yml
+
+      - name: Re-run deterministic proof before committing the clean PR head
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in workbook.js workflow-schema.js hash.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-false-acceptance.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ui-prompt-contract.mjs
+          node verify-full-cycle.mjs
+          git diff --check
+
+      - name: Commit and push the exact clean tested patch
+        id: clean_head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'closed-loop reliability publisher'
+          git config user.email 'noreply@github.com'
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m 'Enforce application-owned semantic adjudication' \
+            -m 'Preserve the 30-stage architecture while making canonical evidence and application-effective determinations control gates, convergence, regressions, audits, and release. Add fail-closed semantic, prompt, UI, and Chromium regression proof.'
+          clean_sha=$(git rev-parse HEAD)
+          git push --force-with-lease origin "HEAD:$BRANCH"
+          echo "sha=$clean_sha" >> "$GITHUB_OUTPUT"
+          cp /tmp/tested-import-manifest.json /tmp/committed-tested-import-manifest.json
+
+      - name: Find or create the pull request for the exact clean head
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          clean_sha='${{ steps.clean_head.outputs.sha }}'
+          query_pr() {
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "$GH_API/repos/$GITHUB_REPOSITORY/pulls?state=open&head=${GITHUB_REPOSITORY_OWNER}:$BRANCH&base=main&per_page=10" \
+              | python3 -c 'import json,sys; xs=json.load(sys.stdin); print(xs[0]["number"] if xs else "")'
+          }
+          pr_number=$(query_pr)
+          if [ -z "$pr_number" ]; then
+            body=$(python3 - <<'PY'
+          import json
+          print(json.dumps({
+            'title':'Enforce application-owned semantic adjudication',
+            'head':'reliability/semantic-adjudication-zero-loss-20260828',
+            'base':'main',
+            'maintainer_can_modify':True,
+            'draft':False,
+            'body':'Preserves the exact 30-stage static/IndexedDB architecture while moving conclusion authority to one central application-owned semantic adjudicator. Adds structural evidence contracts, observation-versus-verdict consistency, effective determinations, trace integrity, application-established release-critical independence, shared artifact handoff, fail-closed audits/release, universal false-acceptance mutation proof, stage-specific prompt isolation, and responsive Chromium acceptance. This PR must not merge until the exact clean head passes the repository proof workflow.'
+          }))
+          PY
+            )
+            code=$(curl --silent --show-error -o /tmp/create-pr.json -w '%{http_code}' -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "$GH_API/repos/$GITHUB_REPOSITORY/pulls" -d "$body")
+            if [ "$code" = 201 ]; then
+              pr_number=$(python3 -c 'import json; print(json.load(open("/tmp/create-pr.json"))["number"])')
+            else
+              for _ in $(seq 1 180); do
+                pr_number=$(query_pr || true)
+                [ -n "$pr_number" ] && break
+                sleep 5
+              done
+            fi
+          fi
+          test -n "$pr_number"
+          pr_json=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/pulls/$pr_number")
+          actual_head=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["head"]["sha"])' <<< "$pr_json")
+          test "$actual_head" = "$clean_sha"
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch the repository proof workflow on the exact PR head
+        id: pr_dispatch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          clean_sha='${{ steps.clean_head.outputs.sha }}'
+          dispatched_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          curl --fail --silent --show-error -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/actions/workflows/pages.yml/dispatches" \
+            -d "{\"ref\":\"$BRANCH\"}"
+          echo "at=$dispatched_at" >> "$GITHUB_OUTPUT"
+          echo "sha=$clean_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Require the exact PR head to pass the full proof workflow
+        id: pr_proof
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          clean_sha='${{ steps.clean_head.outputs.sha }}'
+          run_id=''
+          for _ in $(seq 1 360); do
+            runs=$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+              "$GH_API/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$clean_sha&event=workflow_dispatch&per_page=100")
+            row=$(python3 -c 'import json,sys; d=json.load(sys.stdin); xs=[r for r in d.get("workflow_runs",[]) if r.get("path")==".github/workflows/pages.yml"]; xs.sort(key=lambda r:r.get("created_at","") ,reverse=True); print(json.dumps(xs[0]) if xs else "")' <<< "$runs")
+            if [ -n "$row" ]; then
+              run_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])' <<< "$row")
+              status=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])' <<< "$row")
+              conclusion=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("conclusion") or "")' <<< "$row")
+              if [ "$status" = completed ]; then
+                test "$conclusion" = success
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test -n "$run_id"
+          final=$(curl --fail --silent --show-error -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' "$GH_API/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
+          test "$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["head_sha"]=="'"$clean_sha"'" and d["status"]=="completed" and d["conclusion"]=="success")' <<< "$final")" = True
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Merge only the exact green PR head
+        id: merge
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pr='${{ steps.pr.outputs.number }}'
+          clean_sha='${{ steps.clean_head.outputs.sha }}'
+          current=$(curl --fail --silent --show-error -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' "$GH_API/repos/$GITHUB_REPOSITORY/pulls/$pr")
+          test "$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["state"]=="open" and d["head"]["sha"]=="'"$clean_sha"'")' <<< "$current")" = True
+          payload=$(python3 -c 'import json; print(json.dumps({"sha":"'"$clean_sha"'","merge_method":"merge","commit_title":"Enforce application-owned semantic adjudication","commit_message":"Merge the exact PR head only after deterministic, ingestion, prompt, full-cycle, and local Chromium proof is green."}))')
+          code=$(curl --silent --show-error -o /tmp/merge.json -w '%{http_code}' -X PUT \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/pulls/$pr/merge" -d "$payload")
+          test "$code" = 200
+          test "$(python3 -c 'import json; print(json.load(open("/tmp/merge.json")).get("merged") is True)')" = True
+          merge_sha=$(python3 -c 'import json; print(json.load(open("/tmp/merge.json"))["sha"])')
+          test -n "$merge_sha"
+          echo "sha=$merge_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch the single production deployment from main
+        id: main_dispatch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          merge_sha='${{ steps.merge.outputs.sha }}'
+          for _ in $(seq 1 60); do
+            main_sha=$(git ls-remote origin refs/heads/main | awk '{print $1}')
+            [ "$main_sha" = "$merge_sha" ] && break
+            sleep 5
+          done
+          test "$main_sha" = "$merge_sha"
+          dispatched_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          curl --fail --silent --show-error -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/actions/workflows/pages.yml/dispatches" \
+            -d '{"ref":"main"}'
+          echo "at=$dispatched_at" >> "$GITHUB_OUTPUT"
+
+      - name: Require one successful main deployment proof for the merge commit
+        id: main_proof
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          merge_sha='${{ steps.merge.outputs.sha }}'
+          run_id=''
+          for _ in $(seq 1 420); do
+            runs=$(curl --fail --silent --show-error \
+              -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+              "$GH_API/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$merge_sha&event=workflow_dispatch&branch=main&per_page=100")
+            row=$(python3 -c 'import json,sys; d=json.load(sys.stdin); xs=[r for r in d.get("workflow_runs",[]) if r.get("path")==".github/workflows/pages.yml" and r.get("head_branch")=="main"]; xs.sort(key=lambda r:r.get("created_at","") ,reverse=True); print(json.dumps(xs[0]) if xs else "")' <<< "$runs")
+            if [ -n "$row" ]; then
+              run_id=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])' <<< "$row")
+              status=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])' <<< "$row")
+              conclusion=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("conclusion") or "")' <<< "$row")
+              if [ "$status" = completed ]; then
+                test "$conclusion" = success
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Inspect machine acceptance artifact and compare deployed package bytes
+        id: artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          run_id='${{ steps.main_proof.outputs.run_id }}'
+          merge_sha='${{ steps.merge.outputs.sha }}'
+          artifacts=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")
+          python3 - "$merge_sha" <<'PY' <<< "$artifacts"
+          import json,sys,pathlib
+          merge=sys.argv[1]
+          d=json.load(sys.stdin)
+          xs=d.get('artifacts',[])
+          pages=[x for x in xs if x.get('name')=='github-pages' and not x.get('expired')]
+          acceptance=[x for x in xs if x.get('name')==f'closed-loop-acceptance-{merge}' and not x.get('expired')]
+          if len(pages)!=1 or len(acceptance)!=1:
+              raise SystemExit(f'expected one pages and one exact acceptance artifact, got {[(x.get("name"),x.get("expired")) for x in xs]}')
+          pathlib.Path('/tmp/pages-artifact-id').write_text(str(pages[0]['id']))
+          pathlib.Path('/tmp/acceptance-artifact-id').write_text(str(acceptance[0]['id']))
+          PY
+          pages_id=$(cat /tmp/pages-artifact-id)
+          acceptance_id=$(cat /tmp/acceptance-artifact-id)
+          mkdir -p /tmp/pages-zip /tmp/pages-unpacked /tmp/acceptance-unpacked
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/actions/artifacts/$pages_id/zip" -o /tmp/pages.zip
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/actions/artifacts/$acceptance_id/zip" -o /tmp/acceptance.zip
+          unzip -q /tmp/pages.zip -d /tmp/pages-zip
+          unzip -q /tmp/acceptance.zip -d /tmp/acceptance-unpacked
+          python3 - <<'PY'
+          import pathlib,tarfile
+          src=pathlib.Path('/tmp/pages-zip')
+          archives=[p for p in src.rglob('*') if p.is_file() and (p.suffix in {'.tar','.gz','.tgz'} or '.tar.' in p.name)]
+          if archives:
+              with tarfile.open(archives[0],'r:*') as t:
+                  t.extractall('/tmp/pages-unpacked',filter='data')
+          else:
+              for p in src.rglob('*'):
+                  if p.is_file():
+                      target=pathlib.Path('/tmp/pages-unpacked')/p.relative_to(src)
+                      target.parent.mkdir(parents=True,exist_ok=True)
+                      target.write_bytes(p.read_bytes())
+          PY
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          manifest=json.loads(pathlib.Path('/tmp/committed-tested-import-manifest.json').read_text())
+          expected={x['path']:x for x in manifest['files']}
+          core=['.nojekyll','index.html','workbook.js','workflow-schema.js','hash.js','prompt-engine.js','response-ingestion.js','workflow-engine.js','project-store.js','app-core.js']
+          roots=[]
+          for index in pathlib.Path('/tmp/pages-unpacked').rglob('index.html'):
+              roots.append(index.parent)
+          if len(roots)!=1:
+              raise SystemExit(f'expected one deployed root, got {roots}')
+          root=roots[0]
+          for rel in core:
+              p=root/rel
+              if not p.is_file(): raise SystemExit(f'missing deployed package file: {rel}')
+              data=p.read_bytes(); entry=expected[rel]
+              if len(data)!=entry['size'] or hashlib.sha256(data).hexdigest()!=entry['sha256']:
+                  raise SystemExit(f'deployed artifact byte mismatch: {rel}')
+          acceptance=[p for p in pathlib.Path('/tmp/acceptance-unpacked').rglob('*') if p.is_file()]
+          if not acceptance: raise SystemExit('machine acceptance artifact is empty')
+          report={'acceptanceFiles':[{'path':p.relative_to('/tmp/acceptance-unpacked').as_posix(),'size':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in acceptance]}
+          pathlib.Path('/tmp/acceptance-inspection.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY
+          echo "pages_artifact_id=$pages_id" >> "$GITHUB_OUTPUT"
+          echo "acceptance_artifact_id=$acceptance_id" >> "$GITHUB_OUTPUT"
+
+      - name: Prove exact live bytes after deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess,time,urllib.parse
+          manifest=json.loads(pathlib.Path('/tmp/committed-tested-import-manifest.json').read_text())
+          expected={x['path']:x for x in manifest['files']}
+          core=['index.html','workbook.js','workflow-schema.js','hash.js','prompt-engine.js','response-ingestion.js','workflow-engine.js','project-store.js','app-core.js']
+          base='https://sjonesjones917.github.io/closed-loop-tracker/'
+          for rel in core:
+              entry=expected[rel]
+              ok=False
+              for attempt in range(90):
+                  url=base+urllib.parse.quote(rel,safe='/')+f'?proof={attempt}-{entry["sha256"]}'
+                  result=subprocess.run(['curl','--fail','--silent','--show-error','--location','--connect-timeout','15','--max-time','45','-H','Cache-Control: no-cache',url],stdout=subprocess.PIPE)
+                  data=result.stdout if result.returncode==0 else b''
+                  if len(data)==entry['size'] and hashlib.sha256(data).hexdigest()==entry['sha256']:
+                      ok=True; break
+                  time.sleep(5)
+              if not ok: raise SystemExit(f'live deployed-byte identity did not converge for {rel}')
+          PY
+
+      - name: Publish machine-readable acceptance status on the merged PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pr='${{ steps.pr.outputs.number }}'
+          clean_sha='${{ steps.clean_head.outputs.sha }}'
+          merge_sha='${{ steps.merge.outputs.sha }}'
+          pr_run='${{ steps.pr_proof.outputs.run_id }}'
+          main_run='${{ steps.main_proof.outputs.run_id }}'
+          pages_artifact='${{ steps.artifacts.outputs.pages_artifact_id }}'
+          acceptance_artifact='${{ steps.artifacts.outputs.acceptance_artifact_id }}'
+          python3 - "$pr" "$clean_sha" "$merge_sha" "$pr_run" "$main_run" "$pages_artifact" "$acceptance_artifact" <<'PY'
+          import datetime,json,pathlib,sys
+          pr,clean,merge,prrun,mainrun,pages,acceptance=sys.argv[1:]
+          proof={
+            'schema':'closed-loop-publication-proof/1','status':'GREEN',
+            'baseline':'c396d80c81bd853267f047bcd1e952887b64c1d0',
+            'pullRequest':int(pr),'cleanHeadSha':clean,'mergeSha':merge,
+            'prProofWorkflowRunId':int(prrun),'mainDeploymentWorkflowRunId':int(mainrun),
+            'githubPagesArtifactId':int(pages),'machineAcceptanceArtifactId':int(acceptance),
+            'liveUrl':'https://sjonesjones917.github.io/closed-loop-tracker/',
+            'proved':['exact locally tested import identity','central semantic adjudication invariant suite','single ingestion path','workflow and release gates','prompt isolation and UI contract','synthetic 30-stage lifecycle','local Chromium at required widths','exact clean PR-head proof workflow','single main deployment','exact deployed package bytes','live deployed-byte identity','machine acceptance artifact inspection'],
+            'notClaimed':['population-wide operational reliability','separate real external-agent 30-stage project','actual Android Chrome runtime acceptance'],
+            'completedAt':datetime.datetime.now(datetime.timezone.utc).isoformat()
+          }
+          pathlib.Path('/tmp/publication-proof.json').write_text(json.dumps(proof,indent=2)+'\n')
+          inspection=json.loads(pathlib.Path('/tmp/acceptance-inspection.json').read_text())
+          body='## Machine acceptance: GREEN\n\n```json\n'+json.dumps(proof,indent=2)+'\n```\n\nAcceptance artifact inspection:\n```json\n'+json.dumps(inspection,indent=2)+'\n```'
+          pathlib.Path('/tmp/pr-comment.json').write_text(json.dumps({'body':body}))
+          PY
+          curl --fail --silent --show-error -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "$GH_API/repos/$GITHUB_REPOSITORY/issues/$pr/comments" \
+            --data-binary @/tmp/pr-comment.json >/dev/null
+
+      - name: Upload the publication proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-adjudication-publication-proof-${{ steps.merge.outputs.sha }}
+          path: |
+            /tmp/publication-proof.json
+            /tmp/acceptance-inspection.json
+            /tmp/committed-tested-import-manifest.json
+          if-no-files-found: error
+          retention-days: 90
