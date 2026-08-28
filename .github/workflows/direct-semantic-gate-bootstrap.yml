@@ -1,5 +1,5 @@
 name: Direct semantic-gate integration proof
-# proof revision: 6
+# proof revision: 7
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: direct-semantic-gate-integration-v6
+  group: direct-semantic-gate-integration-v7
   cancel-in-progress: false
 
 jobs:
@@ -32,8 +32,9 @@ jobs:
           python3 .fix-direct-semantic-anchor.py
           python3 .direct-semantic-gate-fix.py
           python3 .repair-direct-semantic-helper.py
+          python3 .fix-reviewer-context-contract.py
           python3 .refresh-runtime-and-status.py
-          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .repair-direct-semantic-helper.py .refresh-runtime-and-status.py .github/workflows/direct-semantic-gate-bootstrap.yml
+          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .repair-direct-semantic-helper.py .fix-reviewer-context-contract.py .refresh-runtime-and-status.py .github/workflows/direct-semantic-gate-bootstrap.yml
           test ! -e .github/workflows/export-source.yml
           test ! -e .export-source/READY
           grep -q 'function evaluateEvidenceContract' workflow-engine.js
@@ -43,7 +44,7 @@ jobs:
           grep -q 'function addSemanticGateReasons' workflow-engine.js
           ! grep -q 'applicationadjudicationGate' workflow-engine.js
           ! grep -q 'gate=function adjudicationGate' workflow-engine.js
-          grep -q 'REVIEWER_CONTEXT_ID' workflow-schema.js
+          test "$(grep -o 'REVIEWER_CONTEXT_ID' workflow-schema.js | wc -l)" -ge 6
 
       - name: Prove syntax, architecture, semantic adjudication, ingestion, workflow, prompts, and full cycle
         shell: bash
