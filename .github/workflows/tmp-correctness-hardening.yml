@@ -23,14 +23,12 @@ jobs:
           python3 - <<'PY'
           p='.tmp-repair.mjs'
           s=open(p,encoding='utf-8').read()
-          # The generator script contains template literals that must remain literal during patch execution.
           import re
           s=re.sub(r'(?<!\\)\$\{', r'\\${', s)
           open(p,'w',encoding='utf-8').write(s)
           PY
           node .tmp-repair.mjs
           python3 - <<'PY'
-          # Preserve specialized Stage 23/24 evidence contracts and require positive capability evidence for external execution.
           p='workflow-engine.js'
           s=open(p,encoding='utf-8').read()
           s=s.replace("r.derivedIndependence=independence.determination;r.derivedEvidenceSufficient=evidence.sufficient;return !expectedSet.has(key)||!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(independence.determination)||!evidence.sufficient||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(r,'DETERMINATION')));","return !expectedSet.has(key)||!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(independence.determination)||!evidence.sufficient||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(r,'DETERMINATION')));")
@@ -41,7 +39,6 @@ jobs:
           new="if(!verifier&&((role==='MEANING_REVIEW'&&truth(project.stages?.[23]?.agentData?.EVALUATOR_INDEPENDENT_FROM_GENERATOR))||(role==='ADVERSARIAL_REVIEW'&&truth(project.stages?.[24]?.agentData?.REVIEWER_INDEPENDENT))))return {determination:'EXTERNALLY_SUPPORTED',reasons:['Reviewer separation is supported by accepted external evidence; the application does not claim observation of the external environment.'],evidence:[{verifierContextId:'UNOBSERVED',generatorContextId:generator}]};if(!verifier)return {determination:'UNKNOWN',reasons:['Verifier/reviewer context identity is unavailable.'],evidence};if(generator&&verifier===generator)"
           if old not in s: raise SystemExit('independence target missing')
           s=s.replace(old,new)
-          # External-agent/system execution is ready only when a current context positively advertises the required capability.
           old="capabilityExplicitlyUnavailable=contextCapability.some(value=>requiredCapability&&value.toUpperCase().includes(requiredCapability.toUpperCase())&&unavailableCapabilityText(value)),executorClass=EXECUTOR_CLASSES[mode]||'UNAVAILABLE';"
           new="capabilityExplicitlyUnavailable=contextCapability.some(value=>requiredCapability&&value.toUpperCase().includes(requiredCapability.toUpperCase())&&unavailableCapabilityText(value)),capabilityPositivelyAvailable=contextCapability.some(value=>requiredCapability&&value.toUpperCase().includes(requiredCapability.toUpperCase())&&!unavailableCapabilityText(value)),executorClass=EXECUTOR_CLASSES[mode]||'UNAVAILABLE';"
           if old not in s: raise SystemExit('capability target missing')
@@ -54,6 +51,10 @@ jobs:
 
           p='verify-complete.mjs'
           s=open(p,encoding='utf-8').read().replace("assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');","assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CANONICAL_ARTIFACT_BYTE_IDENTITY']),'Application-native executor registry must contain only the exact byte-identity executor.');")
+          old="p.projectData.tests[0].evidenceRefs=['EVID-HARDEN'];plan=engine.testExecutionPlan(p);assert(plan.items[0].operatorAction==='SEND_TO_TOOL_AGENT'&&plan.items[0].executableNow&&plan.items[0].requiredArtifactNames[0]==='fixture.step','Verified artifact did not restore exact external-tool route.');"
+          new="p.projectData.tests[0].evidenceRefs=['EVID-HARDEN'];plan=engine.testExecutionPlan(p);assert(plan.items[0].operatorAction==='BLOCKED'&&!plan.items[0].executableNow&&String(plan.items[0].blockingReason).includes('positively establishes capability'),'Verified bytes incorrectly bypassed missing capability evidence.');const ctx=record('freshContexts',11,{EXTERNAL_CONTEXT_IDENTIFIER:'tool-hardening-context',ROLE:'TOOL_EXECUTOR',AUTHORIZED_PROJECT_INPUTS:'fixture.step',TOOL_AVAILABILITY:'CAD_IMPORT available',CONTAMINATION_STATUS:'NONE',EVIDENCE:'capability present',USABILITY_DETERMINATION:'USABLE'},'CONTEXT-CAP-HARDEN');ctx.scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001'};p.projectData.freshContexts.push(ctx);plan=engine.testExecutionPlan(p);assert(plan.items[0].operatorAction==='SEND_TO_TOOL_AGENT'&&plan.items[0].executableNow&&plan.items[0].requiredArtifactNames[0]==='fixture.step','Verified artifact plus positively established capability did not restore exact external-tool route.');"
+          if old not in s: raise SystemExit('routing regression target missing')
+          s=s.replace(old,new)
           open(p,'w',encoding='utf-8').write(s)
 
           p='verify-ingestion.mjs'
