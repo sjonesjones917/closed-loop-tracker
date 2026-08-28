@@ -34,6 +34,14 @@ jobs:
           new="reviewerIdentity=String(project.stages?.[stage]?.derivedData?.[key]||'').trim(),reviewerContext=records(project,'freshContexts').find(r=>recordId(r,'freshContexts')===reviewerIdentity&&isActiveRecord(r)),reviewerContextId=reviewerContext?reviewerIdentity:'',base=reviewerContextId?evaluateContextIndependence(project,{role:stage===23?'MEANING_REVIEW':'ADVERSARIAL_REVIEW',reviewerContextId,productionContextId}):{determination:'UNKNOWN',reasons:['The external reviewer context is not application-observable.'],evidence:[]};if(base.determination==='VIOLATED')return base;const externallySupported=truth(project.stages?.[stage]?.agentData?.[claimKey]);if(base.determination==='UNKNOWN'&&externallySupported)return"
           if old not in s: raise SystemExit('reviewer context namespace target missing')
           s=s.replace(old,new,1)
+          old="if(test&&!evaluateEvidenceSufficiency(project,{test,result}).sufficient)reasons.push('Meaning review '+recordId(result,'meaningResults')+' has evidence insufficient for the proposition.');"
+          new="if(test){const proof=evaluateEvidenceSufficiency(project,{test,result});if(!proof.sufficient)reasons.push('Meaning review '+recordId(result,'meaningResults')+' has evidence insufficient for the proposition: '+proof.reasons.join('; ')+'.');}"
+          if old not in s: raise SystemExit('stage23 reason target missing')
+          s=s.replace(old,new,1)
+          old="if(!evaluateEvidenceSufficiency(project,{test,result}).sufficient)reasons.push('Adversarial result '+recordId(result,'adversarialResults')+' has insufficient evidence.');"
+          new="{const proof=evaluateEvidenceSufficiency(project,{test,result});if(!proof.sufficient)reasons.push('Adversarial result '+recordId(result,'adversarialResults')+' has insufficient evidence: '+proof.reasons.join('; ')+'.');}"
+          if old not in s: raise SystemExit('stage24 reason target missing')
+          s=s.replace(old,new,1)
           open(p,'w',encoding='utf-8').write(s)
           p='verify-complete.mjs';s=open(p,encoding='utf-8').read()
           old="const humanResult=record('representationInspections',25,{DETERMINATION:'SATISFIED',EVIDENCE:'EVIDENCE-H'},'INS-H');p.projectData.evidenceRecords.push"
