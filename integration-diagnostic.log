@@ -1,11 +1,13 @@
-Patch generator repaired while preserving existing verified artifact custody semantics.
+Patch generator repaired with additive execution-plan compatibility aliases.
 Reliability patch applied.
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:61
-  p.projectData.artifacts[0].fields.AVAILABILITY='BYTES_PERSISTED_AND_VERIFIED';plan=engine.testExecutionPlan(p);assert(!plan.missingArtifactTestIds.includes('TEST-ART-1')&&plan.items[0].artifactIds.includes('ARTIFACT-ART-1'),'Verified current artifact bytes did not satisfy TEST custody.');
-                                                                                                                                                                                                       ^
+prompt-engine.js:284
+ const opContract=schema.operationContract(stage,operation);const scope=assertRequiredPromptScope(stage,operation,scopeFor(stage,state,options.scope||{})),feedback=recoveryFeedback(state,stage,operation,scope),batchPlan=verificationBatchPlan(stage,state,operation,scope),contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,isolationPolicy:isolationPolicy(stage,operation),executionHandoff:workflow.executionHandoff(state,{stage,operation,scope}),readCollections:Object.fromEntries((opContract?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]).map(collection=>[collection,contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>({id:recordId(record,collection),scope:record.scope||{},contentSha256:record.contentSha256||record.sha256||hash.sha256Value(record.fields||record)}))])),answeredHumanClarifications:(state?.projectData?.humanInputAnswers||[]).filter(x=>Number(x.stage)===stage&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope))).map(x=>({requestId:x.requestId,answerId:x.answerId,inputVersion:x.inputVersion||state?.job?.CURRENT_INPUT_VERSION||null})),operatorCorrectionRequests:feedback.corrections,acceptedResultRefinements:feedback.acceptedRefinements,latestValidationFailure:feedback.validationFailures};
+                                                                                                                                                                                                                                                                                                                                                                                                                                 ^
 
-TypeError: Cannot read properties of undefined (reading 'includes')
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:61:200
+TypeError: workflow.executionHandoff is not a function
+    at Object.buildPromptRecord (prompt-engine.js:284:418)
+    at prompt (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:14:46)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:66:45
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
