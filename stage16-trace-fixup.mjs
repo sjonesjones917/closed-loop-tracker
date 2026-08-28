@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+let s=fs.readFileSync('workflow-engine.js','utf8');
+const old="if(stage===16){for(const defect of confirmedDefects(project)){const id=recordId(defect,'defects'),changes=recordsForCurrentScope(project,'changes').filter(c=>String(recordValue(c,'TRIGGERING_DEFECT_IDS')||'').includes(id));if(changes.length!==1)add(['Exactly one responsible-layer changeset trace is required for '+id+'.']);else{const v=validateChangeTrace(changes[0],project);if(!v.valid)add(v.reasons.map(x=>id+': '+x));}}}";
+const replacement="if(stage===16){for(const defect of confirmedDefects(project)){const id=recordId(defect,'defects'),changes=records(project,'changes',{stage:16}).filter(c=>{const raw=recordValue(c,'TRIGGERING_DEFECT_IDS'),ids=Array.isArray(raw)?raw.map(String):String(raw||'').split(/[;,\\s]+/).filter(Boolean);return ids.includes(id);});if(changes.length!==1)add(['Exactly one responsible-layer changeset trace is required for '+id+'.']);else{const v=validateChangeTrace(changes[0],project);if(!v.valid)add(v.reasons.map(x=>id+': '+x));}}}";
+if(!s.includes(old))throw new Error('Stage 16 adjudication wrapper not found');
+s=s.replace(old,replacement);
+fs.writeFileSync('workflow-engine.js',s);
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+let html=fs.readFileSync('index.html','utf8');
+for(const file of runtimeFiles)html=html.replace(new RegExp(`${file.replace('.','\\.')}\\?v=[^\"]+`,'g'),`${file}?v=${token}`);
+fs.writeFileSync('index.html',html);
+console.log(`stage16 trace scope fix applied; ${token}`);
