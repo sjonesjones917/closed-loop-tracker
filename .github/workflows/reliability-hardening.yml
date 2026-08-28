@@ -19,7 +19,18 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply minimal reliability hardening
-        run: node .repair-reliability.mjs
+        run: |
+          python3 - <<'PY'
+          import re
+          path='.repair-reliability.mjs'
+          text=open(path,encoding='utf-8').read()
+          # The repair driver stores production JavaScript inside template literals.
+          # Escape any interpolation marker that was not already escaped so the
+          # intended ${...} reaches the production file instead of executing here.
+          text=re.sub(r'(?<!\\)\$\{', r'\\${', text)
+          open(path,'w',encoding='utf-8').write(text)
+          PY
+          node .repair-reliability.mjs
       - name: Syntax checks
         run: |
           node --check app-core.js
