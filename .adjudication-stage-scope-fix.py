@@ -10,6 +10,29 @@ def replace_once(old,new,label):
     elif new not in s:
         raise RuntimeError(label+' anchor missing')
 
+def scan_matching_paren(text,start):
+    depth=0; quote=None; esc=False; line=False; block=False; i=start
+    while i<len(text):
+        ch=text[i]; nxt=text[i+1] if i+1<len(text) else ''
+        if line:
+            if ch=='\n': line=False
+        elif block:
+            if ch=='*' and nxt=='/': block=False; i+=1
+        elif quote:
+            if esc: esc=False
+            elif ch=='\\': esc=True
+            elif ch==quote: quote=None
+        else:
+            if ch=='/' and nxt=='/': line=True; i+=1
+            elif ch=='/' and nxt=='*': block=True; i+=1
+            elif ch in "'\"`": quote=ch
+            elif ch=='(': depth+=1
+            elif ch==')':
+                depth-=1
+                if depth==0:return i
+        i+=1
+    raise RuntimeError('unterminated parameter list')
+
 def body_end(text,start):
     depth=0; quote=None; esc=False; line=False; block=False; i=start
     while i<len(text):
@@ -37,7 +60,11 @@ def replace_function(name,replacement):
     global s
     start=s.find('function '+name+'(')
     if start<0: raise RuntimeError(name+' missing')
-    brace=s.find('{',start); end=body_end(s,brace)
+    open_paren=s.find('(',start)
+    close_paren=scan_matching_paren(s,open_paren)
+    brace=s.find('{',close_paren+1)
+    if brace<0: raise RuntimeError(name+' body missing')
+    end=body_end(s,brace)
     s=s[:start]+replacement+s[end+1:]
 
 # Stage 18 is an iteration-local proposition. Later product/release evidence
