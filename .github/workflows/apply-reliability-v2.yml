@@ -59,19 +59,37 @@ jobs:
       - name: Stop on non-browser diagnostic failure
         if: steps.diagnostics.outcome == 'failure'
         run: exit 1
-      - name: Browser workflow
+      - name: Run Chromium diagnostics
+        id: browser
+        continue-on-error: true
         run: |
+          set +e
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node verify-browser.mjs
-      - name: Browser responsive/adversarial
-        run: |
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          node verify-browser-extra.mjs
+          : > reliability-browser.log
+          rm -f reliability-browser-failures.txt
+          if [ -z "$BROWSER" ]; then echo "NO_BROWSER" | tee -a reliability-browser.log; echo NO_BROWSER > reliability-browser-failures.txt; exit 1; fi
+          for cmd in "node verify-browser.mjs" "node verify-browser-extra.mjs"; do
+            echo "===== $cmd =====" | tee -a reliability-browser.log
+            bash -lc "export BROWSER='$BROWSER'; $cmd" >> reliability-browser.log 2>&1
+            code=$?
+            echo "EXIT=$code" | tee -a reliability-browser.log
+            if [ $code -ne 0 ]; then echo "$cmd" >> reliability-browser-failures.txt; fi
+          done
+          test ! -s reliability-browser-failures.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability-v2-browser-diagnostics
+          path: |
+            reliability-browser.log
+            reliability-browser-failures.txt
+          if-no-files-found: ignore
+      - name: Stop on Chromium failure
+        if: steps.browser.outcome == 'failure'
+        run: exit 1
       - name: Commit only verified production and regression changes
         run: |
-          rm -f .reliability-v2-patch.py .reliability-v2-fix.py .github/workflows/apply-reliability-v2.yml reliability-diagnostics.log reliability-failures.txt
+          rm -f .reliability-v2-patch.py .reliability-v2-fix.py .github/workflows/apply-reliability-v2.yml reliability-diagnostics.log reliability-failures.txt reliability-browser.log reliability-browser-failures.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
