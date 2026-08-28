@@ -60,5 +60,15 @@ const correctAcceptedStage="const acceptedStage=upper(purpose)==='INITIAL'?11:up
 if(!source.includes(wrongAcceptedStage))throw new Error('Expected Stage 11 accepted-response stage-selection defect was not found.');
 source=source.replace(wrongAcceptedStage,correctAcceptedStage);
 
+const routingHeading="<h2 class=\"section-title\">Who performs verification</h2>";
+if(!source.includes(routingHeading))throw new Error('Expected new execution-routing heading was not found.');
+source=source.replace(routingHeading,"<h2 class=\"section-title\">Verification execution</h2>");
+const routingIntro="Execution routing is calculated once by the workflow engine from the accepted TEST records, current capability evidence, and verified artifact custody. The screen does not reinterpret execution mode.";
+if(!source.includes(routingIntro))throw new Error('Expected new execution-routing intro was not found.');
+source=source.replace(routingIntro,"Who performs the current tests is calculated once by the workflow engine from the accepted TEST records, current capability evidence, and verified artifact custody. The screen does not reinterpret execution mode.");
+const handoffIntro="Transfer only the items below. Browser-local storage does not automatically give an external agent or tool access to these bytes.";
+if(!source.includes(handoffIntro))throw new Error('Expected artifact-handoff intro was not found.');
+source=source.replace(handoffIntro,"Transfer only the items below. Remember: a filename, hash claim, or code block is not file possession. Browser-local storage does not automatically give an external agent or tool access to these bytes.");
+
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired while preserving Stage 11 accepted-response, raw-output, and receipt semantics.');
+console.log('Patch generator repaired while preserving existing operator execution guidance and new deterministic routing UX.');
