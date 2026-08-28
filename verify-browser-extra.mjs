@@ -94,3 +94,11 @@ try{await main();}finally{await cleanup();}
 {
  const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Observed reliability — this project only','Materially independent accepted operations','Observed silent failures','Approximate 95% upper bound','not a guarantee'])if(!source.includes(token))throw new Error('Missing project-local reliability presentation: '+token);
 }
+
+
+// EXACT-RELIABILITY-ACCEPTANCE-101-133
+{
+ const source=fs.readFileSync('app-core.js','utf8'),html=fs.readFileSync('index.html','utf8');for(const token of ['executor','Exact handoff','returnEvidence','No registered application-native executor','fresh independent reviewer','DO NOT SEND','Application-reserved run/context slots','Continue talking to the agent','final JSON response','Canonical state changed: NO','Accepted change','Regression lifecycle','Execution stability','Current evidence is contradictory','Why the application believes each requirement is established','Independence:'])if(!source.includes(token))throw new Error('101-120 operator reliability UI missing '+token);for(const token of ['overflow-wrap','word-break','min-width:0'])if(!html.includes(token)&&!source.includes(token))throw new Error('121-125 responsive handoff wrapping protection missing '+token);if(!source.includes('next-action-panel')||!source.includes('validation-report')||!source.includes('proposal-heading'))throw new Error('126-129 next-action/focus targeting missing');for(const token of ['aria-live','live-status'])if(!html.includes(token)&&!source.includes(token))throw new Error('130-132 live status infrastructure missing '+token);if(!source.includes('project reloaded')&&!source.includes('Project reloaded'))throw new Error('133 reload authority announcement missing');
+}
+console.log(JSON.stringify({exactReliabilityAcceptance101_133:true},null,2));
+

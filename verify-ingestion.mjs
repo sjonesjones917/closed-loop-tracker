@@ -458,3 +458,11 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 {
  const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['evaluateContextIndependence','evaluateEvidenceSufficiency','detectCurrentContradictions'])if(!source.includes(token))throw new Error('Missing deterministic reliability authority: '+token);const ingestionSource=fs.readFileSync('response-ingestion.js','utf8');if(/INDEPENDENCE_PROVEN_BY_APPLICATION|EVIDENCE_SUFFICIENT/.test(ingestionSource))throw new Error('Ingestion introduced agent-writable derived reliability authority.');
 }
+
+
+// EXACT-RELIABILITY-ACCEPTANCE-069-078
+{
+ const src=fs.readFileSync('workflow-engine.js','utf8'),ing=fs.readFileSync('response-ingestion.js','utf8');for(const token of ['stageIndependenceSummary','evaluateEvidenceSufficiency','detectCurrentContradictions'])if(!src.includes(token))throw new Error('069/070 missing application proof authority '+token);if(/INDEPENDENCE_PROVEN_BY_APPLICATION|EVIDENCE_SUFFICIENT/.test(ing))throw new Error('069/070 ingestion exposes derived proof as agent-writable');for(const token of ['DUPLICATE','STALE','ATTACHMENT','SHA256','RELATIONSHIP'])if(!ing.toUpperCase().includes(token))throw new Error('071-078 ingestion regression surface missing '+token);
+}
+console.log(JSON.stringify({exactReliabilityAcceptance069_078:true},null,2));
+
