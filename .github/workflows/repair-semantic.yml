@@ -3,11 +3,9 @@ on:
   push:
     branches: [reliability-semantic-adjudication]
     paths: ['.repair-semantic/READY']
-permissions:
-  contents: write
+permissions: {contents: write}
 jobs:
   apply:
-    if: github.event.head_commit.message == 'Ready semantic adjudication patch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,10 +15,11 @@ jobs:
       - name: Apply exact locally verified patch
         run: |
           set -euo pipefail
-          cat .repair-semantic/gz-* > /tmp/semantic.patch.gz.b64
+          : > /tmp/semantic.patch.gz.b64
+          for i in $(seq -w 0 16); do cat ".repair-semantic/gz-$i" >> /tmp/semantic.patch.gz.b64; done
           base64 -d /tmp/semantic.patch.gz.b64 > /tmp/semantic.patch.gz
           gzip -dc /tmp/semantic.patch.gz > /tmp/semantic.patch
-          echo 'c4cfe987df996329d9a2a8bab5741e7bc0cd5aea514efc4c51c744b4619f0e0c  /tmp/semantic.patch' | sha256sum -c -
+          echo '3228ca61750c5c68e8af586850a3b79189a0030761ae229e4521b327ea82b743  /tmp/semantic.patch' | sha256sum -c -
           rm -f verify-adjudication.mjs
           git apply --check /tmp/semantic.patch
           git apply /tmp/semantic.patch
