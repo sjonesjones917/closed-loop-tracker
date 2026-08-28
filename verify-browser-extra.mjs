@@ -107,3 +107,13 @@ try{await main();}finally{await cleanup();}
  for(const token of ['Long-section navigation belongs to the UI layer','scheduleMatchedScrollJumps','elementFromPoint','Large raw responses and prompts are rendered once per source record','Provenance source records'])if(!appSource.includes(token))throw new Error('Missing mobile responsiveness regression protection: '+token);
  if(appSource.includes("raw?details('Preserved raw response',raw)"))throw new Error('Provenance regressed to duplicating the full raw response inside every field trace.');
 }
+
+// Project lifecycle controls remain compact, reversible where appropriate, and do not create identity shortcuts.
+{
+ const appSource=fs.readFileSync('app-core.js','utf8'),storeSource=fs.readFileSync('project-store.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8'),html=fs.readFileSync('index.html','utf8');
+ for(const token of ['Project actions','Create complete backup','Create new project from copy','Archive project','Verify stored files now','Discard from current view','Start a new agent attempt','View exact evidence / provenance'])if(!appSource.includes(token))throw new Error('Missing compact project lifecycle control: '+token);
+ for(const token of ['verifyProjectArtifacts','PROJECT_DELETE_REPLACEMENT_MISSING','lastArtifactVerification'])if(!storeSource.includes(token))throw new Error('Missing project-storage lifecycle invariant: '+token);
+ for(const token of ['engine.createHumanBlocker','engine.registerGeneratedPrompt','engine.invalidateAcceptedResponse'])if(!appSource.includes(token))throw new Error('Project lifecycle control bypasses existing workflow authority: '+token);
+ if(!html.includes('header-project-menu')||!html.includes('Project actions'))throw new Error('Project lifecycle actions are not collapsed behind the compact header menu.');
+ const renameStart=appSource.indexOf('async function renameCurrentProject'),renameEnd=appSource.indexOf('async function duplicateCurrentProject',renameStart),renameSource=appSource.slice(renameStart,renameEnd);if(renameSource.includes('.job.JOB_ID='))throw new Error('Rename implementation must not rewrite JOB_ID.');
+}

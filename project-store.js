@@ -124,6 +124,7 @@ async function removeProjectIndexed(projectsOrJobId,options={}){
     const artifactRows=await request(artifacts.getAll());projects.delete(jobId);for(const artifact of artifactRows)if(String(artifact.jobId)===jobId)artifacts.delete(artifact.artifactId);
     const selected=await request(meta.get('selectedProject'));if(String(selected?.value||'')===jobId){if(replacementSelectedProjectId)meta.put({key:'selectedProject',value:replacementSelectedProjectId,updatedAt:now()});else meta.delete('selectedProject');}
     const lastCommitted=await request(meta.get('lastCommittedRevision'));if(String(lastCommitted?.value?.jobId||'')===jobId)meta.delete('lastCommittedRevision');
+    for(const key of ['lastVerifiedExport','lastVerifiedImport','lastArtifactVerification']){const row=await request(meta.get(key));if(String(row?.value?.jobId||'')===jobId)meta.delete(key);}
     fault('during-project-delete');await complete(tx);try{new BroadcastChannel('closed-loop-reliability').postMessage({type:'PROJECT_DELETED',jobId,replacementSelectedProjectId:replacementSelectedProjectId||null});}catch{}return true;
   }catch(error){try{tx.abort();}catch{}throw error;}
 }
@@ -139,6 +140,11 @@ async function putArtifact({artifactId,jobId,blob,filename,mediaType,lineage={}}
 async function getArtifact(artifactId){const tx=await openTransaction(ARTIFACTS,'readonly'),row=await request(tx.objectStore(ARTIFACTS).get(String(artifactId)));await complete(tx);return row||null;}
 async function deleteArtifact(artifactId,jobId){const id=String(artifactId),owner=String(jobId||''),tx=await openTransaction(ARTIFACTS,'readwrite'),store=tx.objectStore(ARTIFACTS);try{const row=await request(store.get(id));if(!row){await complete(tx);return false;}if(owner&&String(row.jobId)!==owner)throw storageError(`Artifact ${id} belongs to another project and was not deleted.`,'CROSS_PROJECT_ARTIFACT_DELETE');store.delete(id);await complete(tx);return true;}catch(error){try{tx.abort();}catch{}throw error;}}
 async function listArtifacts(jobId){const tx=await openTransaction(ARTIFACTS,'readonly'),rows=await request(tx.objectStore(ARTIFACTS).getAll());await complete(tx);return rows.filter(r=>r.jobId===String(jobId));}
+async function verifyProjectArtifacts(jobId){
+  const id=String(jobId||'').trim();if(!id)throw storageError('JOB_ID is required for artifact verification.','ARTIFACT_VERIFY_JOB_ID_REQUIRED');const rows=await listArtifacts(id),results=[];let byteSize=0;
+  for(const row of rows){const bytes=new Uint8Array(await row.blob.arrayBuffer()),actualSize=bytes.byteLength,actualSha256=await hash.sha256Bytes(bytes),verified=actualSize===Number(row.byteSize)&&actualSha256===String(row.sha256);byteSize+=actualSize;results.push({artifactId:String(row.artifactId),filename:String(row.filename||row.artifactId),storedByteSize:Number(row.byteSize),actualByteSize:actualSize,storedSha256:String(row.sha256||''),actualSha256,verified});}
+  const mismatches=results.filter(item=>!item.verified),report={jobId:id,artifactCount:results.length,byteSize,verifiedCount:results.length-mismatches.length,mismatchCount:mismatches.length,verified:mismatches.length===0,artifacts:results,at:now()};await metaPut('lastArtifactVerification',{jobId:id,artifactCount:report.artifactCount,byteSize:report.byteSize,mismatchCount:report.mismatchCount,verified:report.verified,at:report.at});return report;
+}
 
 const bytesToBase64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s);};
 const base64ToBytes=text=>{const s=atob(text),out=new Uint8Array(s.length);for(let i=0;i<s.length;i++)out[i]=s.charCodeAt(i);return out;};
@@ -177,5 +183,5 @@ function archiveMigrationPayload(project,archive){if(!project||typeof project!==
 function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(const key of LEGACY_KEYS)try{storage.removeItem(key);}catch{}}
 
 const ready=(async()=>{if(globalThis.indexedDB)await migrateLegacy();return true;})();
-globalThis.closedLoopProjectStore=Object.freeze({archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,exportPackage,importPackage,storageHealth,metaGet,metaPut,clearLegacy});
+globalThis.closedLoopProjectStore=Object.freeze({archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,exportPackage,importPackage,storageHealth,metaGet,metaPut,clearLegacy});
 })();
