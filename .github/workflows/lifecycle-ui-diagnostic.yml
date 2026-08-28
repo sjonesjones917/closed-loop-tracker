@@ -2,7 +2,7 @@ name: Finalize lifecycle UI functional repair
 on:
   push:
     branches: [reliability/lifecycle-ui-functional-repair-20260828]
-    paths: ['.lifecycle-ui-finalize.mjs', '.github/workflows/lifecycle-ui-diagnostic.yml']
+    paths: ['.lifecycle-ui-finalize.mjs', '.lifecycle-ui-diagnostic.mjs', '.github/workflows/lifecycle-ui-diagnostic.yml']
 permissions: {contents: write}
 jobs:
   finalize:
@@ -12,6 +12,8 @@ jobs:
         with: {ref: reliability/lifecycle-ui-functional-repair-20260828, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
+      - name: Inject permanent user-visible lifecycle interaction regressions
+        run: node .lifecycle-ui-diagnostic.mjs
       - name: Apply minimal retained-project lifecycle repair
         run: node .lifecycle-ui-finalize.mjs
       - name: Remove temporary construction files before architecture proof
