@@ -1,0 +1,60 @@
+name: Materialize final lifecycle tree
+on:
+  push:
+    branches: [reliability/project-lifecycle-controls-20260828]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/project-lifecycle-controls-20260828
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply final minimal lifecycle semantics
+        run: node .lifecycle-finalize.mjs
+      - name: Refresh exact runtime identity
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          fs.writeFileSync('index.html',fs.readFileSync('index.html','utf8').replace(/runtime-[a-f0-9]{16}/g,token));
+          console.log(token);
+          NODE
+      - name: Prove deterministic layers
+        run: |
+          node --check app-core.js
+          node --check project-store.js
+          node --check response-ingestion.js
+          node --check workflow-engine.js
+          node --check verify-browser.mjs
+          node --check verify-complete.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+      - name: Remove every temporary bootstrap before architecture proof
+        run: |
+          rm -f .lifecycle-finalize.mjs .lifecycle-corrections-2.mjs
+          find .github/workflows -maxdepth 1 -type f ! -name pages.yml -print -delete
+          git add -A
+          echo 'Remaining workflows:'
+          find .github/workflows -maxdepth 1 -type f -print
+      - name: Prove final definition of done
+        run: node verify-definition-of-done.mjs
+      - name: Commit exact final tree
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Add rigorous low-stimulus project lifecycle controls'
+          git push origin HEAD:reliability/project-lifecycle-controls-20260828
