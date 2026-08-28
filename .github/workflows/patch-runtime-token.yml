@@ -1,0 +1,38 @@
+name: Patch runtime token on branch
+on:
+  push:
+    branches:
+      - fix/provenance-collapse-scroll-20260828
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/provenance-collapse-scroll-20260828
+          fetch-depth: 0
+      - name: Update exact runtime bundle cache token
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = 'runtime-97cb465607d5c32f'
+          new = 'runtime-d02791538aee64ff'
+          if old in s:
+              s = s.replace(old, new)
+          elif new not in s:
+              raise SystemExit('Expected runtime token was not found')
+          p.write_text(s)
+          PY
+          if git diff --quiet -- index.html; then
+            echo "Runtime token already current; nothing to commit."
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Update runtime cache identity"
+          git push origin HEAD:fix/provenance-collapse-scroll-20260828
