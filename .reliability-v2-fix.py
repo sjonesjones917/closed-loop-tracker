@@ -1,6 +1,6 @@
 from pathlib import Path
 
-# Integration repair for the generated patch; kept separate so the guarded runner can prove it before committing production files.
+# Integration repair for the generated patch. The guarded runner applies this after the main transform and before every acceptance test.
 p=Path('workflow-engine.js'); s=p.read_text()
 old="return {total:items.length,counts,incompleteTestIds,unavailableTestIds,unsupportedApplicationTestIds,missingArtifactTestIds,items,handoff:executionHandoff(project,{stage:Number(project.activeStage||0)})};"
 new="return {total:items.length,counts,incompleteTestIds,unavailableTestIds,unsupportedApplicationTestIds,missingArtifactTestIds,items};"
