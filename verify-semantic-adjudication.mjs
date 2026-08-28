@@ -62,7 +62,8 @@ for(const [collection,stage,fields,extra={}] of cases){
   const effective=engine.effectiveDetermination(collection,r,null,p);
   const stageGate=engine.gate(stageFor[collection],p);
   const release=engine.releaseMetrics(p);
-  assert(effective!=='SATISFIED'||stageGate.complete===false||release.determination!=='ACCEPTED',`${collection}: contradictory favorable record escaped all fail-closed barriers`);
+  assert(effective!=='SATISFIED',`${collection}: contradictory favorable record was accepted by the central adjudicator`);
+  assert(stageGate.complete===false||release.determination!=='ACCEPTED',`${collection}: contradictory favorable record escaped stage and release defenses`);
   assert(release.determination!=='ACCEPTED',`${collection}: contradictory favorable record allowed release ACCEPTED`);
   rejected++;
 }
