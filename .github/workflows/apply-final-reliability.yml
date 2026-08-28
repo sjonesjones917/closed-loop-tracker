@@ -1,0 +1,46 @@
+name: Apply final reliability patch
+on:
+  push:
+    branches: [reliability-execution-evidence-v2-20260827]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-execution-evidence-v2-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python3 .final-reliability-patch.py
+      - name: Full deterministic suite
+        run: |
+          node --check workflow-engine.js
+          node --check app-core.js
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Chromium suites
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit verified final patch
+        run: |
+          rm -f .final-reliability-patch.py .github/workflows/apply-final-reliability.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: enforce evidence quality at local gates"
+          git push origin HEAD:reliability-execution-evidence-v2-20260827
