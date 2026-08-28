@@ -1,0 +1,38 @@
+name: Diagnose clean zero-loss semantic adjudication
+
+on:
+  push:
+    branches:
+      - reliability/zero-loss-semantic-adjudication-clean
+    paths:
+      - .github/workflows/zero-loss-test.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and architecture baseline
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+      - name: Semantic adjudication invariant suite
+        run: timeout 120s node verify-adjudication.mjs
+      - name: Ingestion and canonical invariants
+        run: |
+          timeout 180s node verify-ingestion.mjs
+          timeout 180s node verify-complete.mjs
+      - name: Prompt isolation and semantics
+        run: timeout 180s node verify-prompt-semantics.mjs
+      - name: Continuous 30-stage lifecycle
+        run: timeout 240s node verify-full-cycle.mjs
