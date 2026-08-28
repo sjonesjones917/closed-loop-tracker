@@ -17,6 +17,7 @@ jobs:
           node-version: '22'
       - name: Apply responsible-layer semantic corrections
         run: |
+          python3 .github/zero-loss-adjust.py
           python3 .github/zero-loss-patch.py
           python3 .github/zero-loss-fixture.py
       - name: Refresh exact runtime bundle identity
@@ -33,7 +34,7 @@ jobs:
           console.log(token);
           NODE
       - name: Remove temporary patch machinery
-        run: rm .github/zero-loss-patch.py .github/zero-loss-fixture.py .github/workflows/zero-loss-patch.yml
+        run: rm .github/zero-loss-adjust.py .github/zero-loss-patch.py .github/zero-loss-fixture.py .github/workflows/zero-loss-patch.yml
       - name: Run deterministic and semantic gates
         run: |
           node --check workflow-engine.js
