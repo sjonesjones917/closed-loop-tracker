@@ -1,3 +1,4 @@
+// Permanent regression proof for compact, fail-closed project lifecycle controls.
 import fs from 'node:fs';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),html=fs.readFileSync('index.html','utf8');
