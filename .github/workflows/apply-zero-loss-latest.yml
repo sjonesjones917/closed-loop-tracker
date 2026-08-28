@@ -4,7 +4,7 @@ on:
     branches: [reliability/semantic-adjudication-zero-loss-latest]
     paths: [.github/workflows/apply-zero-loss-latest.yml]
 permissions: {contents: write}
-concurrency: {group: zero-loss-latest-apply, cancel-in-progress: false}
+concurrency: {group: zero-loss-latest-apply-v2, cancel-in-progress: false}
 
 jobs:
   apply-test-commit:
@@ -55,6 +55,8 @@ jobs:
         run: timeout 90s node verify-complete.mjs
       - name: Prompt semantics proof
         run: timeout 90s node verify-prompt-semantics.mjs
+      - name: Materialize exact final repository candidate
+        run: rm -f .github/workflows/apply-zero-loss-latest.yml
       - name: Definition-of-done proof
         run: timeout 90s node verify-definition-of-done.mjs
       - name: Full-cycle proof
@@ -70,7 +72,6 @@ jobs:
           timeout 180s node verify-browser-extra.mjs
       - name: Commit only proven final delta
         run: |
-          rm -f .github/workflows/apply-zero-loss-latest.yml
           git config user.name 'OpenAI GPT-5.6 Sol'
           git config user.email 'noreply@openai.com'
           git add -A
