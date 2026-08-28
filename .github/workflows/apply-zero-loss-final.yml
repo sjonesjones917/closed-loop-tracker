@@ -4,7 +4,7 @@ on:
     branches: [reliability/semantic-adjudication-zero-loss]
     paths: [.github/workflows/apply-zero-loss-final.yml]
 permissions: {contents: write}
-concurrency: {group: zero-loss-final-apply, cancel-in-progress: false}
+concurrency: {group: zero-loss-final-apply-v3, cancel-in-progress: false}
 
 jobs:
   apply-test-commit:
@@ -19,18 +19,25 @@ jobs:
         run: |
           python3 .zero-loss-final-fix.py
           python3 .zero-loss-runtime-token.py
-      - name: Syntax and semantic proof sequence
+      - name: Syntax
         run: |
           node --check workflow-engine.js
           node --check verify-complete.mjs
           node --check verify-semantic-invariant.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-semantic-invariant.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-prompt-semantics.mjs
-          node verify-full-cycle.mjs
+      - name: Hash proof
+        run: timeout 60s node verify-hash.mjs
+      - name: Architecture proof
+        run: timeout 60s node verify.mjs
+      - name: Semantic false-acceptance proof
+        run: timeout 60s node verify-semantic-invariant.mjs
+      - name: Ingestion proof
+        run: timeout 90s node verify-ingestion.mjs
+      - name: Gate and routing proof
+        run: timeout 90s node verify-complete.mjs
+      - name: Prompt semantics proof
+        run: timeout 90s node verify-prompt-semantics.mjs
+      - name: Full-cycle proof
+        run: timeout 120s node verify-full-cycle.mjs
       - name: Local Chromium acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -38,8 +45,8 @@ jobs:
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
-          node verify-browser-extra.mjs
+          timeout 120s node verify-browser.mjs
+          timeout 120s node verify-browser-extra.mjs
       - name: Commit only proven application and test changes
         run: |
           rm -f .zero-loss-final-fix.py .zero-loss-runtime-token.py .github/workflows/apply-zero-loss-final.yml .github/workflows/bootstrap-semantic.yml
