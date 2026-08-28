@@ -17,8 +17,10 @@ jobs:
       - name: Apply exact locally verified patch
         run: |
           set -euo pipefail
-          cat .repair-semantic/chunk-* > /tmp/semantic.patch.b64
-          base64 -d /tmp/semantic.patch.b64 > /tmp/semantic.patch
+          cat .repair-semantic/gz-* > /tmp/semantic.patch.gz.b64
+          base64 -d /tmp/semantic.patch.gz.b64 > /tmp/semantic.patch.gz
+          gzip -dc /tmp/semantic.patch.gz > /tmp/semantic.patch
+          echo 'c4cfe987df996329d9a2a8bab5741e7bc0cd5aea514efc4c51c744b4619f0e0c  /tmp/semantic.patch' | sha256sum -c -
           git apply --check /tmp/semantic.patch
           git apply /tmp/semantic.patch
           rm -rf .repair-semantic
