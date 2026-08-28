@@ -43,9 +43,7 @@ jobs:
           if old not in s: raise SystemExit('capability gate target missing')
           s=s.replace(old,new);open(p,'w',encoding='utf-8').write(s)
 
-          p='app-core.js';s=open(p,encoding='utf-8').read()
-          old='The application derives the executor, capability, exact file handoff, and proof required from the accepted tests. Do not substitute a different executor or infer file transfer from browser custody.'
-          new='Verification execution: Who performs the current tests is determined by the application from the canonical execution plan. The application also derives the required capability, exact file handoff, and proof. Do not substitute a different executor or infer transfer from browser custody; a filename, hash claim, or code block is not file possession.'
+          p='app-core.js';s=open(p,encoding='utf-8').read();old='The application derives the executor, capability, exact file handoff, and proof required from the accepted tests. Do not substitute a different executor or infer file transfer from browser custody.';new='Verification execution: Who performs the current tests is determined by the application from the canonical execution plan. The application also derives the required capability, exact file handoff, and proof. Do not substitute a different executor or infer transfer from browser custody; a filename, hash claim, or code block is not file possession.'
           if old not in s: raise SystemExit('execution guidance intro missing')
           s=s.replace(old,new,1);open(p,'w',encoding='utf-8').write(s)
 
@@ -55,6 +53,7 @@ jobs:
           if old not in s: raise SystemExit('routing regression target missing')
           s=s.replace(old,new);open(p,'w',encoding='utf-8').write(s)
 
+          p='verify-prompt-semantics.mjs';s=open(p,encoding='utf-8').read();s=s.replace("if(engine.applicationTestCapabilities().length!==0)throw new Error('A native test capability was registered without a proven application executor test in this patch.');","if(JSON.stringify(engine.applicationTestCapabilities())!==JSON.stringify(['CANONICAL_ARTIFACT_BYTE_IDENTITY']))throw new Error('Application-native executor registry is not the exact proven byte-identity capability.');");open(p,'w',encoding='utf-8').write(s)
           p='verify-ingestion.mjs';s=open(p,encoding='utf-8').read().replace("makeProject('JOB-INGEST-INDEPENDENCE')","project('JOB-INGEST-INDEPENDENCE')").replace('promptFor(p,12)','savePrompt(p,12)').replace("assert(prepared.validation.issues.some(x=>x.code==='VERIFIER_CONTEXT_REUSE'),'Observable verifier/generator context reuse was not rejected.');","if(!prepared.validation.issues.some(x=>x.code==='VERIFIER_CONTEXT_REUSE'))throw new Error('Observable verifier/generator context reuse was not rejected.');").replace("assert(prepared.project.projectData.verification.length===0,'Rejected verifier-context reuse partially mutated canonical verification.');","if(prepared.project.projectData.verification.length!==0)throw new Error('Rejected verifier-context reuse partially mutated canonical verification.');");open(p,'w',encoding='utf-8').write(s)
           p='verify-full-cycle.mjs';s=open(p,encoding='utf-8').read().replace("data(23,{records:{meaningResults:","data(23,{stageData:{EVALUATOR_INDEPENDENT_FROM_GENERATOR:'TRUE'},records:{meaningResults:").replace("data(24,{records:{adversarialResults:","data(24,{stageData:{REVIEWER_INDEPENDENT:'TRUE'},records:{adversarialResults:");open(p,'w',encoding='utf-8').write(s)
           PY
