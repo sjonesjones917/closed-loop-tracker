@@ -11,25 +11,95 @@ Committed retained project requires no source materialization.
 }
 {"semanticAdjudication":true,"contradictoryFavorableVerdictsRejected":10,"bareNarrativeRejected":true,"stage7ControlledOutcome":true,"nativeExecutorRegistryStillEmpty":true}
 {"sha256Vectors":true,"canonicalOrdering":true,"ambiguousValuesRejected":17,"runtimeBuildIdentity":"runtime-d7baf0302eacbddf"}
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:60
-const ingestionRun=spawnSync(process.execPath,['verify-ingestion.mjs'],{encoding:'utf8'});if(ingestionRun.status!==0)throw new Error(`verify-ingestion.mjs failed:\n${ingestionRun.stdout}\n${ingestionRun.stderr}`);
-                                                                                                                           ^
+{
+  "application": "single",
+  "stages": 30,
+  "ownershipLedger": true,
+  "responseSchema": "closed-loop-stage-response/2",
+  "allStagePromptsVerified": 30,
+  "externalSourceNonCircularity": true,
+  "retainedProject": "JOB-20260823144121",
+  "retainedStage1": "COMPLETE",
+  "retainedCurrentStage": 2,
+  "retainedDownstreamFabricated": false,
+  "legacyProjectPreservation": true,
+  "unknownFieldRoundTrip": true,
+  "transactionRollback": true,
+  "ingestionCycle": "30/30",
+  "negativeIngestion": true
+}
+{
+  "stagesExercised": 30,
+  "responseSchema": "closed-loop-stage-response/2",
+  "negativeCases": 70,
+  "clarificationLoop": true,
+  "atomicPrecommit": true,
+  "extractionManifest": true,
+  "canonicalIdsApplicationAssigned": true,
+  "scopeIdentityMatrix": true,
+  "verifiedAttachmentBinding": true
+}
+{
+  "pr3Dispositions": true,
+  "preconditions": true,
+  "promptEnginePreconditions": true,
+  "idempotentAcceptance": true,
+  "canonicalEnvelopeIdempotency": true,
+  "typedHumanAnswers": true,
+  "clarificationPromptInvalidation": true,
+  "exactManifestPointers": true,
+  "acceptanceAfterRejectionBlocked": true,
+  "staleProjectRevisionBlocked": true,
+  "totalNegativeCases": 74
+}
+{
+  "operationStageDataIsolation": true,
+  "reservedTargetPolicy": true,
+  "completedReservedTargetBlocked": true,
+  "targetScopeIsolation": true,
+  "totalNegativeCases": 79
+}
+{
+  "persistedPromptAuthority": true,
+  "readableClarificationTargets": true,
+  "humanInputResponseExclusivity": true,
+  "choiceContractValidation": true,
+  "humanAnswerEdgeValidation": true,
+  "totalNegativeCases": 86
+}
+{
+  "finalRequirementRegression": true,
+  "formalStates": true,
+  "noStage31": true,
+  "invalidRelationshipRejected": true,
+  "humanQuestionGate": true,
+  "stage8PrerequisiteGate": true,
+  "tenRunGate": true,
+  "verificationMatrixGate": true,
+  "convergenceStrict": true,
+  "unchangedConfirmationGate": true,
+  "downstreamInvalidation": true,
+  "preReleaseIdentityBlocked": true,
+  "identityMismatchBlocked": true,
+  "evidenceChainNoFabrication": true,
+  "acceptedStateStorageRollback": true
+}
+{
+  "scopedAcceptedResultRefinement": true
+}
+{
+  "stage5RequirementVersionIsolation": true,
+  "iterationOperationIsolation": true,
+  "currentRegressionClosure": true,
+  "stage28CurrentBatch": true
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9
+const assert=(value,message)=>{if(!value)throw new Error(message);};
+                                               ^
 
-Error: verify-ingestion.mjs failed:
-
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:92
-  if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
-                                      ^
-
-Error: Stage 7 valid response rejected: [{"code":"INVALID_ENUM_VALUE","path":"/records/failureTests/0/fields/EXECUTION_OUTCOME","message":"Value must be one of REJECTED_INVALID, ACCEPTED_INVALID, UNDETERMINED, NOT_RUN.","severity":"ERROR"}]
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:92:39
-    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
-
-Node.js v22.23.2
-
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:60:124
+Error: Verified byte-backed evidence was not sufficient.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9:48)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:270:939
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
