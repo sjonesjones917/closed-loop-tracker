@@ -39,6 +39,7 @@ jobs:
           open(p,'w',encoding='utf-8').write(s)
           p='workflow-engine.js'
           s=open(p,encoding='utf-8').read().replace("r.derivedIndependence=independence.determination;r.derivedEvidenceSufficient=evidence.sufficient;return !expectedSet.has(key)||!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(independence.determination)||!evidence.sufficient||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(r,'DETERMINATION')));","return !expectedSet.has(key)||!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(independence.determination)||!evidence.sufficient||!['SATISFIED','VIOLATED','UNDETERMINED'].includes(upper(recordValue(r,'DETERMINATION')));")
+          s=s.replace("if(type==='MEANING'||result&&Object.prototype.hasOwnProperty.call(recordFields(result),'OBSERVED_MEANING'))","if(result&&(Number(result.stage)===23||Object.prototype.hasOwnProperty.call(recordFields(result),'OBSERVED_MEANING')))")
           open(p,'w',encoding='utf-8').write(s)
           PY
           rm .repair-reliability.mjs
