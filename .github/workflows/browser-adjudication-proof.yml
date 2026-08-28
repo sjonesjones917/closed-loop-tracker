@@ -21,24 +21,21 @@ jobs:
           node release-trust-fixup.mjs
           node regression-consumer-fixup.mjs
           node build-test-project.mjs
-      - name: Exercise existing Chromium suite unchanged
+      - name: Diagnose Stage 02 browser parse boundary without changing canonical verifier
         run: |
+          cp verify-browser.mjs verify-browser-diagnostic.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser-diagnostic.mjs')
+          s=p.read_text()
+          old="await positionNode(cdp,'#proposal-heading','top');"
+          new="""const diagnosticProject=await activeProject(cdp);console.log(JSON.stringify({proposalHeading:Boolean(await evalValue(cdp,`Boolean(document.querySelector('#proposal-heading'))`)),validationReport:await evalValue(cdp,`document.querySelector('#validation-report')?.innerText||''`),liveStatus:await evalValue(cdp,`document.querySelector('#app-live-status')?.textContent||''`),latestValidation:diagnosticProject.projectData.responseValidations?.at(-1)||null,latestProposal:diagnosticProject.projectData.responseProposals?.at(-1)||null,latestRejected:diagnosticProject.projectData.rejectedResponses?.at(-1)||null},null,2));throw new Error('DIAGNOSTIC_STOP_AFTER_STAGE_02_PARSE');"""
+          if old not in s: raise SystemExit('diagnostic anchor missing')
+          p.write_text(s.replace(old,new,1))
+          PY
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/adjudication-browser-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            for attempt in 1 2 3; do
-              log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
-              cat "$log"
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
-              test "$attempt" -lt 3 || return 1
-            done
-          }
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
+          node verify-browser-diagnostic.mjs
