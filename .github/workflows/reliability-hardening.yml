@@ -1,0 +1,92 @@
+name: One-time reliability hardening
+on:
+  push:
+    branches: [reliability-evidence-hardening]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: reliability-hardening-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  harden-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-evidence-hardening
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal reliability hardening
+        run: node .repair-reliability.mjs
+      - name: Syntax checks
+        run: |
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node --check test-fixtures.mjs
+          node --check verify-hash.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-live.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Run source and deterministic acceptance
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Enforce responsible architecture after patch
+        run: |
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f authority-guard.js
+          test ! -f integrity-guard.js
+          test ! -f storage-reliability.js
+          test ! -f prompt-display.js
+          test ! -f experience.js
+          test ! -f usability.js
+          test ! -f app.js
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          node - <<'NODE'
+          const fs=require('fs'),html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(m=>m[1]);
+          if(src.length!==8)throw new Error(`Expected 8 runtime scripts; found ${src.length}`);
+          const tokens=new Set();expected.forEach((file,i)=>{if(src[i]?.split('?')[0]!==file)throw new Error(`Wrong runtime order at ${file}`);tokens.add(new URLSearchParams(src[i].split('?')[1]||'').get('v'));});if(tokens.size!==1||tokens.has(null))throw new Error('Runtime token mismatch');
+          NODE
+      - name: Run local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only verified production and regression changes
+        run: |
+          rm .repair-reliability.mjs
+          rm .github/workflows/reliability-hardening.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-complete.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify-full-cycle.mjs verify-browser.mjs verify-browser-extra.mjs
+          git add -u .repair-reliability.mjs .github/workflows/reliability-hardening.yml
+          git diff --cached --check
+          git commit -m "Harden execution evidence and operator guidance"
+          git push origin HEAD:reliability-evidence-hardening
