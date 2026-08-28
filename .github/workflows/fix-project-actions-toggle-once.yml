@@ -1,3 +1,4 @@
+# Browser startup retry; assertions unchanged.
 name: Fix project actions toggle once
 on:
   push:
