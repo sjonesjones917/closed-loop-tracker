@@ -57,6 +57,10 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
+      - name: Enforce final single-workflow architecture
+        shell: bash
+        run: |
+          git rm .github/workflows/mobile-open-back-freeze-fix.yml
           node verify-definition-of-done.mjs
       - name: Focused Chromium acceptance
         shell: bash
@@ -68,12 +72,11 @@ jobs:
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser.mjs
           node verify-browser-extra.mjs
-      - name: Commit correction and remove temporary workflow
+      - name: Commit correction
         shell: bash
         run: |
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git rm .github/workflows/mobile-open-back-freeze-fix.yml
-          git add app-core.js verify-browser.mjs index.html TEST_PROJECT.json
+          git add -A
           git commit -m 'Bound mobile startup and completed-stage navigation'
           git push origin HEAD:fix/mobile-open-back-freeze-20260828
