@@ -184,6 +184,8 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     }
   }
 
+  if(object(envelope.records))for(const [collection,list] of Object.entries(envelope.records))if(collection==='verification'&&Array.isArray(list))list.forEach((record,index)=>{const path=`/records/verification/${index}`,runId=String(record?.relationships?.RUN_ID?.recordId||record?.fields?.RUN_ID||envelope.scope?.runId||''),run=workflow.records(project,'runs',{active:true}).find(item=>workflow.recordId(item,'runs')===runId),generatorContext=String(workflow.recordValue(run,'CONTEXT_ID')||run?.relationships?.CONTEXT_ID||''),verifierContext=String(record?.fields?.VERIFIER_CONTEXT_ID||'');if(generatorContext&&verifierContext&&generatorContext===verifierContext)issues.push(issue('VERIFIER_CONTEXT_REUSE',`${path}/fields/VERIFIER_CONTEXT_ID`,'Verifier context is the generating context and cannot be accepted as independent verification.'));});
+
   const suppliedFiles=safe(files),attachmentIndex=new Map();
   if(Array.isArray(envelope.attachments))envelope.attachments.forEach((attachment,index)=>{
     const path=`/attachments/${index}`;
@@ -392,5 +394,5 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
   workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed,generatedPromptIds});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds};
 }
 
-globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/4',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,prepareCaptured,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
+globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/5',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,prepareCaptured,prepare,commit,reject,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
 })();

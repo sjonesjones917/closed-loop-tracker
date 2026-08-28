@@ -76,6 +76,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,textar
 
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .app-help{max-width:1180px;margin:8px auto 0;padding:0 10px}.app-help details{border:1px solid var(--line);border-radius:10px;background:#fff}.app-help summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 10px;font-weight:800;font-size:12px}.app-help summary::-webkit-details-marker{display:none}.app-help summary b{display:grid;place-items:center;width:24px;height:24px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}.app-help .help-body{padding:0 10px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.app-help ol{margin:8px 0 0;padding-left:20px}.app-help li+li{margin-top:5px}.app-help strong{color:var(--ink)}
+.execution-guidance .handoff-block{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fbfcfb}.handoff-block h3{margin:0 0 6px;font-size:12px;letter-spacing:.02em}.handoff-block ul,.belief-support{margin:0;padding-left:20px}.handoff-block li,.belief-support li{overflow-wrap:anywhere;word-break:break-word;margin:5px 0}.handoff-block li span{color:var(--muted);font-size:12px}.interaction-mode{margin-bottom:10px}.contradiction-warning{scroll-margin-top:120px}.danger-text{color:#8a211c}.execution-guidance .record-value{overflow-wrap:anywhere;word-break:break-word}@media(max-width:393px){.handoff-block{min-width:0}.handoff-block ul{padding-left:18px}.execution-guidance .record-row{min-width:0}.execution-guidance .record-value{min-width:0}}
 </style>
 </head>
 <body>
@@ -87,13 +88,13 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,textar
 <div class="app-help"><details><summary><b>?</b> How to use this stage</summary><div class="help-body"><ol><li><strong>Copy or send the current instruction to ChatGPT.</strong> Keep using the same chat for that stage.</li><li id="stage-artifact-help" hidden></li><li><strong>Answer the agent normally.</strong> If it needs information only you can provide, it should ask short plain-language questions in ChatGPT and wait for your answer. Keep talking there until it says the stage is ready for the final JSON. Do not paste the conversation into this app.</li><li><strong>Wait for the final JSON.</strong> When the agent has enough information, it should return one JSON object with no extra prose.</li><li><strong>Paste only that final JSON into the response box</strong>, then tap <em>Parse / validate response</em>. Review the proposed change before accepting it.</li></ol><p>If research or requirements reveal a new human-only decision later, the agent may ask you then. That is expected; it must not guess. After <em>Parse / validate response</em> rejects a final JSON response, the app preserves the failure and automatically prepares an updated correction instruction preview above. Save and copy that updated instruction before asking the agent for a replacement; simply pasting text does not regenerate anything. After you replace a rejected response, the status changes to <strong>Replacement not evaluated</strong> until you tap <em>Parse / validate response</em> again.</p></div></details></div>
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
-<script defer src="workbook.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="hash.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="workflow-schema.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="workflow-engine.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="prompt-engine.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="response-ingestion.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="project-store.js?v=runtime-77bc343d667df7b4"></script>
-<script defer src="app-core.js?v=runtime-77bc343d667df7b4"></script>
+<script defer src="workbook.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="hash.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="workflow-schema.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="workflow-engine.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="prompt-engine.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="response-ingestion.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="project-store.js?v=runtime-b6c8b02241064692"></script>
+<script defer src="app-core.js?v=runtime-b6c8b02241064692"></script>
 </body>
 </html>
