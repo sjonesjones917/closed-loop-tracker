@@ -2,7 +2,7 @@ name: Finalize lifecycle zero-loss correction
 on:
   push:
     branches: [reliability/lifecycle-final-zero-loss-20260828]
-    paths: ['.lifecycle-correction.mjs']
+    paths: ['.lifecycle-correction.mjs', '.github/workflows/lifecycle-finalize.yml']
 permissions: {contents: write}
 jobs:
   finalize:
