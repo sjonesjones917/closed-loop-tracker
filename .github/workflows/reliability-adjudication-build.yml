@@ -22,24 +22,19 @@ jobs:
           patch -p0 < /tmp/adjudication.patch
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('workflow-engine.js')
-          text=p.read_text().replace('semantically contradictory material finding','internally contradictory material finding')
-          p.write_text(text)
-          PY
-      - name: Enumerate every ownership partition mismatch
-        run: |
-          cp workflow-schema.js /tmp/workflow-schema.real.js
-          python3 - <<'PY'
-          from pathlib import Path
+          import re
+          e=Path('workflow-engine.js')
+          e.write_text(e.read_text().replace('semantically contradictory material finding','internally contradictory material finding'))
           p=Path('workflow-schema.js')
           s=p.read_text()
-          old="if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name)))throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);"
-          new="if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name))){const missingFromFields=union.filter(name=>!fields.includes(name));const missingFromOwnership=fields.filter(name=>!union.includes(name));const duplicates=union.filter((name,index)=>union.indexOf(name)!==index);console.error('OWNERSHIP_MISMATCH '+title+' missingFromFields='+JSON.stringify(missingFromFields)+' missingFromOwnership='+JSON.stringify(missingFromOwnership)+' duplicates='+JSON.stringify([...new Set(duplicates)]));}"
-          if old not in s: raise SystemExit('ownership guard source not found')
-          p.write_text(s.replace(old,new))
+          m=re.search(r'(verificationResults\s*:\s*recordSchema\(\{.*?fields\s*:\s*\[)(.*?)(\])',s,re.S)
+          if not m: raise SystemExit('verificationResults field list not found')
+          body=m.group(2)
+          if 'OBSERVATION_OUTCOME' not in body:
+              body=body.rstrip()+",'OBSERVATION_OUTCOME'"
+              s=s[:m.start(2)]+body+s[m.end(2):]
+          p.write_text(s)
           PY
-          node build-test-project.mjs || true
-          mv /tmp/workflow-schema.real.js workflow-schema.js
       - name: Syntax checks
         run: |
           node --check workflow-schema.js
