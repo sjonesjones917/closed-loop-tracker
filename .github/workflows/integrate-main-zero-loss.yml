@@ -1,0 +1,77 @@
+name: Integrate current main into coordinated zero-loss patch
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/integrate-main-zero-loss.yml']
+permissions:
+  contents: write
+jobs:
+  integrate-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Merge the audited current main head
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          MAIN_SHA='45db5b42ea0d65407c6452dc5aabbf7d39e375bc'
+          git fetch origin "$MAIN_SHA"
+          if ! git merge --no-commit --no-ff "$MAIN_SHA"; then
+            echo 'UNMERGED_FILES_BEGIN'
+            git diff --name-only --diff-filter=U
+            echo 'UNMERGED_FILES_END'
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def git_blob_sha(path):
+              data=Path(path).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          manifest=''.join(f'{name}:{git_blob_sha(name)}\n' for name in runtime_files)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          index=Path('index.html');html=index.read_text();html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
+          if count!=8:raise SystemExit(f'Expected 8 runtime cache tokens, replaced {count}.')
+          index.write_text(html)
+          print(token)
+          PY
+          git diff --check
+      - name: Full deterministic and Chromium acceptance
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-full-cycle.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit exact integrated tested tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git rm .github/workflows/integrate-main-zero-loss.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git add -A
+          git commit -m 'Integrate current main into coordinated reliability patch'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
