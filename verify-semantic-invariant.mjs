@@ -44,6 +44,13 @@ const metrics=engine.releaseMetrics(p);assert(metrics.determination!=='ACCEPTED'
 
 // Static lifetime guard: the release reducer must consume release-grade trust and the central adjudicator, not submitted favorable strings.
 const source=fs.readFileSync('workflow-engine.js','utf8');assert(source.includes('releaseVerificationTrustFailures'),'releaseMetrics is not wired to release-grade verification trust');assert(source.includes('evaluateResultConsistency'),'Central result adjudication is missing');assert(source.includes('effectiveDetermination'),'Effective determination reducer is missing');assert(!source.includes("['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT')))"),'Legacy regression success shortcut remains');
+// Gate adjudication must not serialize the entire project on every recalculation stage.
+const adjudicationHotPath=source.slice(source.indexOf('function adjudicatedClone(project){'),source.indexOf('\nfunction validateTraceIntegrity',source.indexOf('function adjudicatedClone(project){')));
+assert(adjudicationHotPath&&!adjudicationHotPath.includes('clone(project)'),'Gate adjudication still deep-clones the entire project');
+assert(adjudicationHotPath.includes('projectData:{...(project?.projectData||{})}'),'Gate adjudication does not use a shallow project-data view');
+assert(adjudicationHotPath.includes('map(record=>clone(record))'),'Gate adjudication does not isolate only conclusion-bearing records before rewriting effective determinations');
+for(const unrelated of ['rawResponses','generatedPrompts','history','responseProposals'])assert(!adjudicationHotPath.includes('copy.projectData['+JSON.stringify(unrelated)+']'),'Gate adjudication clones unrelated large provenance collection '+unrelated);
+
 const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true};
 
 // Capability names are not capability availability. External tool/system execution requires affirmative canonical availability.
