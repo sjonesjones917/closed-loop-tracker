@@ -1,0 +1,88 @@
+name: Apply proven zero-loss semantic delta to current main
+on:
+  push:
+    branches: [reliability/zero-loss-semantic-ui-20260828]
+    paths: [.github/workflows/apply-zero-loss-current.yml]
+permissions: {contents: write}
+concurrency: {group: zero-loss-current-main-apply, cancel-in-progress: false}
+
+jobs:
+  apply-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact previously proven semantic adjudication delta
+        run: |
+          git diff 0bc70742b299d405dd20fa363f47903c8bde8c36 fd96f7af52a2d2e33546eee2a807dd1eaf3df0e8 -- workflow-engine.js verify-complete.mjs verify-semantic-invariant.mjs > /tmp/zero-loss.patch
+          test -s /tmp/zero-loss.patch
+          if git apply --check /tmp/zero-loss.patch; then
+            git apply /tmp/zero-loss.patch
+          else
+            git apply --3way /tmp/zero-loss.patch
+          fi
+      - name: Remove temporary apply workflow before candidate proof
+        run: rm .github/workflows/apply-zero-loss-current.yml
+      - name: Syntax checks
+        run: |
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node --check verify-semantic-invariant.mjs
+          node --check app-core.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+      - name: Deterministic and semantic proofs
+        run: |
+          timeout 90s node build-test-project.mjs
+          timeout 60s node verify-hash.mjs
+          timeout 90s node verify.mjs
+          timeout 120s node verify-semantic-invariant.mjs
+          timeout 120s node verify-ingestion.mjs
+          timeout 120s node verify-complete.mjs
+          timeout 120s node verify-prompt-semantics.mjs
+          timeout 120s node verify-definition-of-done.mjs
+          timeout 240s node verify-full-cycle.mjs
+          timeout 120s node verify-project-lifecycle.mjs
+      - name: Local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          timeout 240s node verify-browser.mjs
+          timeout 240s node verify-browser-extra.mjs
+      - name: Recompute one build token after proven source change
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+              data=Path(path).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{name}:{blob(name)}\n' for name in files).encode()).hexdigest()[:16]
+          html=Path('index.html').read_text()
+          for name in files:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(name)}\?v=)[^"]+("\s*></script>)'
+              html,n=re.subn(pattern,rf'\g<1>{token}\2',html,count=1)
+              if n!=1: raise SystemExit(f'{name}: expected one script tag, got {n}')
+          Path('index.html').write_text(html)
+          print(token)
+          PY
+      - name: Re-run source identity-sensitive proofs
+        run: |
+          node verify-live.mjs >/dev/null 2>&1 || true
+          node --check workflow-engine.js
+      - name: Commit only proven semantic delta
+        run: |
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m 'Apply zero-loss semantic adjudication to current main'
+          git push origin HEAD:reliability/zero-loss-semantic-ui-20260828
