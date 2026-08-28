@@ -1,39 +1,10 @@
-name: Apply semantic adjudication patch
+name: Apply semantic adjudication patch (disabled)
 on:
-  push:
-    branches: [semantic-adjudication-20260827]
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  patch:
-    if: github.event.head_commit.message != 'Complete application-owned adjudication layer'
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: semantic-adjudication-20260827
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - run: node semantic-fixup.mjs
-      - run: |
-          node --check workflow-engine.js
-          node --check workflow-schema.js
-          node --check response-ingestion.js
-          node --check verify-semantic-invariant.mjs
-          node build-test-project.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-      - name: Commit coordinated source fixup
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js workflow-schema.js response-ingestion.js index.html
-          git diff --cached --quiet && exit 0
-          git commit -m 'Complete application-owned adjudication layer'
-          git push origin HEAD:semantic-adjudication-20260827
+      - run: echo 'Temporary competing fixup workflow disabled; adjudication residual proof is authoritative.'
