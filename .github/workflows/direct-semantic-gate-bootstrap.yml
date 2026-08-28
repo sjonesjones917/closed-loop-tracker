@@ -28,8 +28,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 .fix-direct-semantic-anchor.py
           python3 .direct-semantic-gate-fix.py
-          rm -f .direct-semantic-gate-fix.py .github/workflows/direct-semantic-gate-bootstrap.yml
+          rm -f .fix-direct-semantic-anchor.py .direct-semantic-gate-fix.py .github/workflows/direct-semantic-gate-bootstrap.yml
           test ! -e .github/workflows/export-source.yml
           test ! -e .export-source/READY
           grep -q 'function evaluateEvidenceContract' workflow-engine.js
