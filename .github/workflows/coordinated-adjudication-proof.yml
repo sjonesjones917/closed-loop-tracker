@@ -30,13 +30,16 @@ jobs:
           node verify-hash.mjs
       - name: Universal false-acceptance invariant
         run: node verify-semantic-invariant.mjs
-      - name: Existing source acceptance stack unchanged
-        run: |
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
+      - name: Retained verification suite
+        run: node verify.mjs
+      - name: Retained ingestion suite
+        run: node verify-ingestion.mjs
+      - name: Retained completion suite
+        run: node verify-complete.mjs
+      - name: Retained full lifecycle
+        run: node verify-full-cycle.mjs
+      - name: Retained prompt semantics
+        run: node verify-prompt-semantics.mjs
       - name: Existing Chromium acceptance unchanged
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
