@@ -1,7 +1,7 @@
 name: Apply deterministic reliability patch
 on:
   push:
-    branches: [reliability/execution-evidence-independence]
+    branches: [reliability/execution-evidence-independence-v2]
 permissions:
   contents: write
 jobs:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: reliability/execution-evidence-independence
+          ref: reliability/execution-evidence-independence-v2
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -19,7 +19,8 @@ jobs:
       - name: Apply and verify source patch
         run: |
           set +e
-          {
+          (
+            set -euo pipefail
             node fix-reliability-patch.mjs
             node --check apply-reliability-patch.mjs
             node apply-reliability-patch.mjs
@@ -30,7 +31,7 @@ jobs:
             node --check verify-prompt-semantics.mjs
             node verify-complete.mjs
             node verify-prompt-semantics.mjs
-          } > integration-diagnostic.log 2>&1
+          ) > integration-diagnostic.log 2>&1
           status=$?
           cat integration-diagnostic.log
           if [ "$status" -ne 0 ]; then
@@ -39,7 +40,7 @@ jobs:
             git config user.email 41898282+github-actions[bot]@users.noreply.github.com
             git add integration-diagnostic.log
             git commit -m "chore: preserve reliability integration diagnostic"
-            git push origin HEAD:reliability/execution-evidence-independence
+            git push origin HEAD:reliability/execution-evidence-independence-v2
             exit "$status"
           fi
       - name: Commit integrated source and remove one-time patch machinery
@@ -49,4 +50,4 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
           git commit -m "feat: derive execution evidence and independence reliability"
-          git push origin HEAD:reliability/execution-evidence-independence
+          git push origin HEAD:reliability/execution-evidence-independence-v2
