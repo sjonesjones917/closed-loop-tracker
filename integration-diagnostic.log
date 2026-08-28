@@ -1,4 +1,4 @@
-Patch generator repaired while preserving Stage 12 continuation accounting separately from gate evidence validity.
+Patch generator repaired while preserving exact artifact-byte and external-access operator guidance.
 Reliability patch applied.
 {
   "finalRequirementRegression": true,
