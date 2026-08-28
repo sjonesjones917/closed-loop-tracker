@@ -1,8 +1,16 @@
-Patch generator syntax repaired.
-/home/runner/work/closed-loop-tracker/closed-loop-tracker/apply-reliability-patch.mjs:300
-complete=appendOnce(complete,'deterministicReliabilityRouting:true',String.raw`
+Patch generator syntax and embedded regression-test encoding repaired.
+Reliability patch applied.
+workflow-engine.js:426
+      const incomplete=mandatoryTests.filter(test=>!TEST_EXECUTION_ACTIONS[upper(recordValue(test,'EXECUTION_MODE'))]||!String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim()||!String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim());
+                                                   ^
 
-SyntaxError: missing ) after argument list
-    at checkSyntax (node:internal/main/check_syntax:74:5)
+ReferenceError: TEST_EXECUTION_ACTIONS is not defined
+    at workflow-engine.js:426:52
+    at Array.filter (<anonymous>)
+    at Object.gate (workflow-engine.js:426:39)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:32:18
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
 
 Node.js v22.23.2
