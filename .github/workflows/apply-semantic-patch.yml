@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   patch:
-    if: github.event.head_commit.message != 'Fix semantic adjudication aggregation'
+    if: github.event.head_commit.message != 'Fix adjudication aggregation and runtime identity'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js
+          git add workflow-engine.js index.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Fix semantic adjudication aggregation'
+          git commit -m 'Fix adjudication aggregation and runtime identity'
           git push origin HEAD:semantic-adjudication-20260827
