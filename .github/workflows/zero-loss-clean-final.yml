@@ -1,0 +1,68 @@
+name: Final coordinated zero-loss cleanup gate
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/zero-loss-clean-final.yml']
+permissions:
+  contents: write
+jobs:
+  prove-and-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert the coordinated responsible-layer correction is present
+        shell: bash
+        run: |
+          grep -q 'compactHistoricalNavigationStage' app-core.js
+          grep -q 'historicalNavigationSummary' app-core.js
+          grep -q 'Canonical state changed: NO' app-core.js
+          grep -q 'historicalBackStarted' verify-browser.mjs
+          grep -q 'Reported iPhone path:' verify-browser-extra.mjs
+          node --check app-core.js
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Run the complete deterministic proof order
+        shell: bash
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-full-cycle.mjs
+      - name: Run complete local Chromium acceptance
+        shell: bash
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove every temporary coordination file and restore one Pages workflow
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm -f ZERO_LOSS_COORDINATED_STATUS.md
+          git rm -f --ignore-unmatch \
+            .github/workflows/zero-loss-clean-final.yml \
+            .github/workflows/finalize-zero-loss-coordinated.yml \
+            .github/workflows/apply-zero-loss-mobile-bounded.yml \
+            .github/workflows/zero-loss-source-export.yml \
+            .github/workflows/PR_DO_NOT_MERGE_SENTINEL.yml
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Finalize bounded mobile navigation proof and remove coordination files'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
