@@ -1,0 +1,52 @@
+name: Apply direct semantic integration
+on:
+  push:
+    branches: [semantic-adjudication-20260827]
+    paths:
+      - '.semantic-direct-integration.patch.gz.b64'
+      - '.github/workflows/apply-direct-semantic.yml'
+permissions:
+  contents: write
+jobs:
+  apply-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply reviewed direct-integration patch
+        run: |
+          base64 -d .semantic-direct-integration.patch.gz.b64 | gzip -d > /tmp/direct.patch
+          git apply --check /tmp/direct.patch
+          git apply /tmp/direct.patch
+          rm -f .semantic-direct-integration.patch.gz.b64 .github/workflows/apply-direct-semantic.yml
+      - name: Syntax and deterministic suites
+        run: |
+          set -euo pipefail
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-full-cycle.mjs
+      - name: Chromium acceptance
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
+          export PAGE_URL='http://127.0.0.1:4173/'
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only the proven patch
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Integrate semantic adjudication directly into stage gates'
+          git push origin HEAD:semantic-adjudication-20260827
