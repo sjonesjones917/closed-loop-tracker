@@ -12,7 +12,8 @@ assert(store.includes("lastVerifiedExport:'+jobId")&&app.includes('projectStorag
 for(const token of ['currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage','favorableAgentVerdictsOverridingContradictoryObservations','externallySupportedUnestablishedIndependenceTreatedAsProven'])assert(pages.includes(token),`Acceptance reduction lost required invariant ${token}.`);
 assert(app.includes('Reopened ${blockerId}: ${reason}'),'Reopen must append a new blocker instead of rewriting the resolved record.');
 assert(store.includes("openTransaction([PROJECTS,ARTIFACTS,META],'readwrite')")&&store.includes('during-project-delete')&&store.includes('String(artifact.jobId)===jobId')&&store.includes("meta.get('projectUi')")&&store.includes('delete nextProjectUi[jobId]'),'Project deletion must remain one transaction over project/meta, lifecycle metadata, and owned artifact Blob rows.');
-assert(html.includes('project-action-menu')&&html.includes('Project actions'),'Routine header actions must remain compact.');
+assert(html.includes('project-action-menu')&&html.includes('id=\"project-actions-toggle\"')&&html.includes('aria-expanded=\"false\"')&&html.includes('Project actions'),'Routine header actions must remain compact and explicitly operable.');
+assert(app.includes("projectActionsToggle.onclick=event=>")&&app.includes("setProjectActionsOpen"),'Project actions opener must have application-owned toggle behavior.');
 assert(html.includes('.header-actions{display:flex;flex-wrap:nowrap;overflow:visible;')&&!html.includes('.header-actions{display:flex;flex-wrap:nowrap;overflow-x:auto;'),'Mobile Project actions must not be clipped by the header action-strip overflow container.');
 assert(!html.includes('Force Complete Stage')&&!html.includes('Override Release Gate')&&!html.includes('Mark Test Passed'),'Unsafe override controls must not exist.');
 
