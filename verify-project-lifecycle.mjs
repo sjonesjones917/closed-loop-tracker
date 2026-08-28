@@ -1,11 +1,14 @@
 import fs from 'node:fs';
 const assert=(value,message)=>{if(!value)throw new Error(message);};
-const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),html=fs.readFileSync('index.html','utf8');
+const app=fs.readFileSync('app-core.js','utf8'),store=fs.readFileSync('project-store.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8'),engine=fs.readFileSync('workflow-engine.js','utf8'),html=fs.readFileSync('index.html','utf8');
 for(const token of ['renameCurrentProject','duplicateCurrentProject','archiveCurrentProject','restoreArchivedProject','downloadProjectPackage','verifyStoredFilesNow','discardCurrentAttempt','prepareReplacementAttempt','reopenHumanBlocker'])assert(app.includes(token),`Missing lifecycle action ${token}.`);
 for(const token of ['project-management','project-danger-zone','Start from copy','Create backup now','Verify stored files now','View exact evidence / provenance','Clear unsaved response','Discard pending attempt','Prepare replacement attempt'])assert(app.includes(token),`Missing lifecycle UI ${token}.`);
-assert(app.includes('dismissedProposalIds')&&app.includes('canonical state changed: NO'),'Discarded attempts must remain non-canonical UI lifecycle state.');
+assert(!app.includes('dismissedProposalIds')&&ingestion.includes('function abandon(project,proposalId')&&ingestion.includes("'ABANDONED_RESPONSE'")&&app.includes('Audit state changed: YES'),'Discarded attempts must be durably abandoned without accepting proposed canonical work.');
+assert(store.includes('verifyProjectArtifacts')&&store.includes('MISSING_STORED_BLOB')&&store.includes('CANONICAL_BLOB_IDENTITY_MISMATCH'),'Stored-file verification must reconcile canonical artifact expectations to actual Blob custody.');
+assert(engine.includes('reconcileArtifactCustodyVerification')&&engine.includes("applicationBlockerKind='ARTIFACT_CUSTODY'"),'Artifact custody failures must be application-owned and release-blocking.');
+assert(app.includes('lastCompleteBackup'),'Backup status must be project-specific in the management UI.');
 assert(app.includes('Reopened ${blockerId}: ${reason}'),'Reopen must append a new blocker instead of rewriting the resolved record.');
 assert(store.includes("openTransaction([PROJECTS,ARTIFACTS,META],'readwrite')")&&store.includes('during-project-delete')&&store.includes('String(artifact.jobId)===jobId')&&store.includes("meta.get('projectUi')")&&store.includes('delete nextProjectUi[jobId]'),'Project deletion must remain one transaction over project/meta, lifecycle metadata, and owned artifact Blob rows.');
 assert(html.includes('project-action-menu')&&html.includes('Project actions'),'Routine header actions must remain compact.');
 assert(!html.includes('Force Complete Stage')&&!html.includes('Override Release Gate')&&!html.includes('Mark Test Passed'),'Unsafe override controls must not exist.');
-console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,unsafeOverrides:0}));
+console.log(JSON.stringify({projectLifecycleControls:true,compactHeader:true,dangerHiddenByDefault:true,transactionalDeleteRetained:true,lifecycleMetadataDeleteAtomic:true,durableAttemptAbandonment:true,canonicalArtifactCustodyVerification:true,applicationCustodyBlocking:true,projectSpecificBackupState:true,unsafeOverrides:0}));
