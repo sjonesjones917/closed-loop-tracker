@@ -16,7 +16,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply deterministic production patch
-        run: python3 .reliability-v2-patch.py
+        run: |
+          python3 .reliability-v2-patch.py
+          python3 .reliability-v2-fix.py
       - name: Syntax checks
         run: |
           node --check workflow-engine.js
@@ -32,6 +34,7 @@ jobs:
         run: |
           set +e
           : > reliability-diagnostics.log
+          rm -f reliability-failures.txt
           for cmd in \
             "node build-test-project.mjs" \
             "node verify.mjs" \
@@ -68,7 +71,7 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit only verified production and regression changes
         run: |
-          rm -f .reliability-v2-patch.py .github/workflows/apply-reliability-v2.yml reliability-diagnostics.log reliability-failures.txt
+          rm -f .reliability-v2-patch.py .reliability-v2-fix.py .github/workflows/apply-reliability-v2.yml reliability-diagnostics.log reliability-failures.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
