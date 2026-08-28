@@ -1,0 +1,21 @@
+name: Export zero-loss audit source
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/zero-loss-source-export.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Package exact branch source
+        run: tar --exclude=.git -czf closed-loop-zero-loss-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-zero-loss-source
+          path: closed-loop-zero-loss-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
