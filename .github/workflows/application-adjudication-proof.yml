@@ -17,6 +17,7 @@ jobs:
         run: |
           python3 .semantic-residual-repair.py
           python3 .adjudication-final-fix.py
+          python3 .comparison-adjudication-fix.py
       - name: Refresh canonical runtime identity after final repair
         run: |
           node - <<'NODE'
@@ -67,7 +68,7 @@ jobs:
               if anchor not in s: raise SystemExit('pages test anchor missing')
               s=s.replace(anchor,anchor+'          node verify-semantic-adjudication.mjs\n',1)
           p.write_text(s)
-          for f in ['.semantic-residual-repair.py','.adjudication-final-fix.py','.semantic-adjudication-patch.py','.fix-semantic-patcher.py','semantic-proof-failure.log','regression-adjudication-fixup.mjs','.github/workflows/semantic-adjudication-patch.yml','.github/workflows/apply-semantic-patch.yml','.github/workflows/semantic-residual-proof.yml','.github/workflows/application-adjudication-proof.yml']:
+          for f in ['.semantic-residual-repair.py','.adjudication-final-fix.py','.comparison-adjudication-fix.py','.semantic-adjudication-patch.py','.fix-semantic-patcher.py','semantic-proof-failure.log','regression-adjudication-fixup.mjs','.github/workflows/semantic-adjudication-patch.yml','.github/workflows/apply-semantic-patch.yml','.github/workflows/semantic-residual-proof.yml','.github/workflows/application-adjudication-proof.yml']:
               Path(f).unlink(missing_ok=True)
           PY
           git config user.name 'github-actions[bot]'
