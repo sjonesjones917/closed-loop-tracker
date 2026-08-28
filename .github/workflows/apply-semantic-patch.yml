@@ -20,11 +20,11 @@ jobs:
           node --check workflow-engine.js
           node --check verify-semantic-invariant.mjs
           node verify-semantic-invariant.mjs
-      - name: Commit coordinated patch
+      - name: Commit coordinated source patch
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js verify-semantic-invariant.mjs .github/workflows/pages.yml
+          git add workflow-engine.js verify-semantic-invariant.mjs
           git diff --cached --quiet && exit 0
           git commit -m 'Apply semantic adjudication patch'
           git push origin HEAD:semantic-adjudication-20260827
