@@ -210,7 +210,7 @@ jobs:
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/verify-definition-of-done.out','utf8'));
-          const semantic=JSON.parse(fs.readFileSync('/tmp/verify-semantic-invariant.out','utf8'));
+          const semantic=Object.assign({},...fs.readFileSync('/tmp/verify-semantic-invariant.out','utf8').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>JSON.parse(line)));
           const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');
           if(!semantic.semanticFalseAcceptanceInvariant)throw new Error('Semantic false-acceptance proof is not true.');
           if(!browser.includes('extra:package-round-trip')||!browser.includes('extra:blob-persistence'))throw new Error('Browser custody/round-trip proof is incomplete.');
