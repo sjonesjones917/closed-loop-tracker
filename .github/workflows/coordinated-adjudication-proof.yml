@@ -28,6 +28,8 @@ jobs:
           node --check verify-semantic-invariant.mjs
           node build-test-project.mjs
           node verify-hash.mjs
+      - name: Universal false-acceptance invariant
+        run: node verify-semantic-invariant.mjs
       - name: Existing source acceptance stack unchanged
         run: |
           node verify.mjs
@@ -35,5 +37,3 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
-      - name: Universal false-acceptance invariant
-        run: node verify-semantic-invariant.mjs
