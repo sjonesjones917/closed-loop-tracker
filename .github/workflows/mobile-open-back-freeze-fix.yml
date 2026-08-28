@@ -13,78 +13,40 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply minimal startup and historical-stage rendering correction
+      - name: Apply bounded mobile rendering correction
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import re, hashlib
-
-          p=Path('app-core.js')
-          s=p.read_text()
-
-          # 1. Persisted current-schema projects have already passed project-store hash/integrity checks.
-          # Do not execute the full 30-stage derivation merely to open the UI.
-          old="function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();"
-          new="function ensureState(p,{recalculate=true}={}){p=p&&typeof p==='object'?p:core.createBlankState();"
-          if old not in s: raise SystemExit('ensureState signature target missing')
-          s=s.replace(old,new,1)
-          old="engine.ensureShape(p);engine.recalculate(p);return p;}"
-          new="engine.ensureShape(p);if(recalculate)engine.recalculate(p);return p;}"
-          if old not in s: raise SystemExit('ensureState recalculate target missing')
-          s=s.replace(old,new,1)
-          old="function normalize(p){try{if(p?.stages)return ensureState(core.migrateState(p));return importSeed(p);"
-          new="function normalize(p){try{if(p?.stages)return ensureState(core.migrateState(p),{recalculate:p?.schema!==core.SCHEMA});return importSeed(p);"
-          if old not in s: raise SystemExit('normalize target missing')
-          s=s.replace(old,new,1)
-
-          # 2. Completed historical stages render a canonical lightweight summary on navigation.
-          # Full audit material is still available explicitly, but Back no longer synchronously serializes it all.
-          old="const operationSelection={},runSelection={};"
-          new="const operationSelection={},runSelection={};let expandedHistoricalStage=0;"
-          if old not in s: raise SystemExit('selection state target missing')
-          s=s.replace(old,new,1)
+          p=Path('app-core.js'); s=p.read_text()
+          pairs=[
+            ("function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();","function ensureState(p,{recalculate=true}={}){p=p&&typeof p==='object'?p:core.createBlankState();"),
+            ("engine.ensureShape(p);engine.recalculate(p);return p;}","engine.ensureShape(p);if(recalculate)engine.recalculate(p);return p;}"),
+            ("function normalize(p){try{if(p?.stages)return ensureState(core.migrateState(p));return importSeed(p);","function normalize(p){try{if(p?.stages)return ensureState(core.migrateState(p),{recalculate:p?.schema!==core.SCHEMA});return importSeed(p);"),
+            ("const operationSelection={},runSelection={};","const operationSelection={},runSelection={};let expandedHistoricalStage=0;"),
+            ("document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{current.activeStage=Number(b.dataset.stage);current.activeView='Workflow';render();});","document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{expandedHistoricalStage=0;current.activeStage=Number(b.dataset.stage);current.activeView='Workflow';render();});"),
+            ("if($('#stage-picker'))$('#stage-picker').onchange=e=>{current.activeStage=Number(e.target.value);render();};","if($('#stage-picker'))$('#stage-picker').onchange=e=>{expandedHistoricalStage=0;current.activeStage=Number(e.target.value);render();};if($('#open-full-historical-stage'))$('#open-full-historical-stage').onclick=()=>{expandedHistoricalStage=current.activeStage;render();};")
+          ]
+          for old,new in pairs:
+              if old not in s: raise SystemExit('patch target missing: '+old[:80])
+              s=s.replace(old,new,1)
           marker="function workflow(){const n=current.activeStage,d=core.STAGES[n-1],s=current.stages[n],lock="
           if marker not in s: raise SystemExit('workflow target missing')
-          helper=r'''function canonicalCurrentStageNumber(){return Math.max(1,Math.min(30,Number(String(current?.job?.CURRENT_STAGE||'').match(/\d+/)?.[0]||1)));}
-function historicalStageSummary(n,d,s){
-  if(s.status!=='COMPLETE'||n>=canonicalCurrentStageNumber()||expandedHistoricalStage===n)return '';
-  const acceptedCount=engine.acceptedChanges(current,n).length,manifestCount=safe(current.projectData.extractionManifests).filter(x=>Number(x.stage)===n).length;
-  return `<div class="panel"><div class="stage-nav"><button data-stage="${Math.max(1,n-1)}" aria-label="Previous stage">‹</button><select id="stage-picker">${core.STAGES.map(x=>`<option value="${x.number}"${x.number===n?' selected':''}>${String(x.number).padStart(2,'0')} — ${esc(x.title)}</option>`).join('')}</select><button data-stage="${Math.min(30,n+1)}" aria-label="Next stage">›</button></div></div><div class="hero stage-hero"><div class="hero-top"><div><h2>Stage ${String(n).padStart(2,'0')} — ${esc(d.title)}</h2><p>${esc(d.result)}</p></div><span class="status ${statusClass(s.status)}">${esc(s.status)}</span></div></div><div class="panel" id="historical-stage-summary"><h2 class="section-title">Completed stage summary</h2><p class="section-intro">This stage is complete. Navigation is showing the canonical summary first so historical payload size cannot block the interface.</p><div class="facts"><div class="fact"><strong>${acceptedCount}</strong><span>Accepted changes</span></div><div class="fact"><strong>${manifestCount}</strong><span>Extraction manifests</span></div></div><div class="notice success">Canonical stage state: COMPLETE. Full prompts, raw responses, accepted records, provenance, and controls remain preserved and can be opened below.</div><div class="button-row"><button id="open-full-historical-stage">Open full Stage ${String(n).padStart(2,'0')} audit details</button></div></div>`;
-}
-'''
+          helper="function canonicalCurrentStageNumber(){return Math.max(1,Math.min(30,Number(String(current?.job?.CURRENT_STAGE||'').match(/\\d+/)?.[0]||1)));}\nfunction historicalStageSummary(n,d,s){if(s.status!=='COMPLETE'||n>=canonicalCurrentStageNumber()||expandedHistoricalStage===n)return '';const acceptedCount=engine.acceptedChanges(current,n).length,manifestCount=safe(current.projectData.extractionManifests).filter(x=>Number(x.stage)===n).length;return `<div class=\"panel\"><div class=\"stage-nav\"><button data-stage=\"${Math.max(1,n-1)}\" aria-label=\"Previous stage\">‹</button><select id=\"stage-picker\">${core.STAGES.map(x=>`<option value=\"${x.number}\"${x.number===n?' selected':''}>${String(x.number).padStart(2,'0')} — ${esc(x.title)}</option>`).join('')}</select><button data-stage=\"${Math.min(30,n+1)}\" aria-label=\"Next stage\">›</button></div></div><div class=\"hero stage-hero\"><div class=\"hero-top\"><div><h2>Stage ${String(n).padStart(2,'0')} — ${esc(d.title)}</h2><p>${esc(d.result)}</p></div><span class=\"status ${statusClass(s.status)}\">${esc(s.status)}</span></div></div><div class=\"panel\" id=\"historical-stage-summary\"><h2 class=\"section-title\">Completed stage summary</h2><p class=\"section-intro\">This stage is complete. Historical payload is not expanded during navigation.</p><div class=\"facts\"><div class=\"fact\"><strong>${acceptedCount}</strong><span>Accepted changes</span></div><div class=\"fact\"><strong>${manifestCount}</strong><span>Extraction manifests</span></div></div><div class=\"notice success\">Canonical stage state: COMPLETE. Full prompts, raw responses, accepted records, provenance, and controls remain preserved.</div><div class=\"button-row\"><button id=\"open-full-historical-stage\">Open full Stage ${String(n).padStart(2,'0')} audit details</button></div></div>`;}\n"
           s=s.replace(marker,helper+"function workflow(){const n=current.activeStage,d=core.STAGES[n-1],s=current.stages[n],historical=historicalStageSummary(n,d,s);if(historical)return historical;const lock=",1)
-
-          old="document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{current.activeStage=Number(b.dataset.stage);current.activeView='Workflow';render();});"
-          new="document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{expandedHistoricalStage=0;current.activeStage=Number(b.dataset.stage);current.activeView='Workflow';render();});"
-          if old not in s: raise SystemExit('data-stage handler target missing')
-          s=s.replace(old,new,1)
-          old="if($('#stage-picker'))$('#stage-picker').onchange=e=>{current.activeStage=Number(e.target.value);render();};"
-          new="if($('#stage-picker'))$('#stage-picker').onchange=e=>{expandedHistoricalStage=0;current.activeStage=Number(e.target.value);render();};if($('#open-full-historical-stage'))$('#open-full-historical-stage').onclick=()=>{expandedHistoricalStage=current.activeStage;render();};"
-          if old not in s: raise SystemExit('stage-picker target missing')
-          s=s.replace(old,new,1)
           p.write_text(s)
-
-          # Permanent browser regression on the exact user path: Stage 03 -> Back -> completed Stage 02 must paint quickly.
-          b=Path('verify-browser.mjs')
-          bs=b.read_text()
-          anchor="assert(text.includes(retained.projectData.sources[0].SOURCE_ID||retained.projectData.sources[0].id),'Stage 03 prompt does not reference accepted source identity.');"
-          addition="""assert(text.includes(retained.projectData.sources[0].SOURCE_ID||retained.projectData.sources[0].id),'Stage 03 prompt does not reference accepted source identity.');const historicalBackStarted=Date.now();await click(cdp,'button[aria-label=\\"Previous stage\\"]');await waitExpr(cdp,`Boolean(document.querySelector('#historical-stage-summary'))`,2000);assert(Date.now()-historicalBackStarted<2000,'Completed-stage Back navigation did not paint the lightweight historical summary within 2 seconds.');"""
-          if anchor not in bs: raise SystemExit('browser back-navigation insertion point missing')
-          bs=bs.replace(anchor,addition,1)
-          b.write_text(bs)
-
-          # Refresh deterministic runtime cache identity after app-core.js changes.
-          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          def git_blob_sha(path):
-              data=Path(path).read_bytes()
-              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
-          manifest=''.join(f'{name}:{git_blob_sha(name)}\n' for name in runtime_files)
-          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          b=Path('verify-browser.mjs'); bs=b.read_text(); anchor="assert(text.includes(retained.projectData.sources[0].SOURCE_ID||retained.projectData.sources[0].id),'Stage 03 prompt does not reference accepted source identity.');"
+          addition=anchor+"const historicalBackStarted=Date.now();await click(cdp,'button[aria-label=\\\"Previous stage\\\"]');await waitExpr(cdp,`Boolean(document.querySelector('#historical-stage-summary'))`,2000);assert(Date.now()-historicalBackStarted<2000,'Completed-stage Back navigation did not paint within 2 seconds.');"
+          if anchor not in bs: raise SystemExit('browser insertion point missing')
+          b.write_text(bs.replace(anchor,addition,1))
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blobsha(path):
+              data=Path(path).read_bytes(); return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          manifest=''.join(f'{name}:{blobsha(name)}\n' for name in runtime); token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
           index=Path('index.html'); html=index.read_text(); html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
-          if count!=8: raise SystemExit(f'Expected 8 runtime cache tokens, replaced {count}')
-          index.write_text(html)
-          print(token)
+          if count!=8: raise SystemExit(f'Expected 8 runtime tokens, replaced {count}')
+          index.write_text(html); print(token)
           PY
           node --check app-core.js
           node --check verify-browser.mjs
@@ -92,7 +54,7 @@ function historicalStageSummary(n,d,s){
           node verify.mjs
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
-      - name: Run focused Chromium acceptance
+      - name: Focused Chromium acceptance
         shell: bash
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -101,14 +63,12 @@ function historicalStageSummary(n,d,s){
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser.mjs
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-      - name: Commit tested correction and remove temporary workflow
+      - name: Commit correction and remove temporary workflow
         shell: bash
         run: |
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
           git rm .github/workflows/mobile-open-back-freeze-fix.yml
           git add app-core.js verify-browser.mjs index.html
-          git commit -m 'Make mobile startup and historical navigation bounded'
+          git commit -m 'Bound mobile startup and historical stage navigation'
           git push origin HEAD:fix/mobile-open-back-freeze-20260828
