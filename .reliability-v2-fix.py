@@ -8,7 +8,7 @@ if old not in s: raise RuntimeError('testExecutionPlan recursion anchor missing'
 s=s.replace(old,new,1); p.write_text(s)
 
 p=Path('app-core.js'); s=p.read_text()
-s=s.replace('<h2 class=\"section-title\">What happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually.</p>', '<h2 class=\"section-title\">Verification execution — what happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually. A filename, hash claim, or code block is not file possession.</p>',1)
+s=s.replace('<h2 class=\"section-title\">What happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually.</p>', '<h2 class=\"section-title\">Verification execution — what happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually. A filename, hash claim, or code block is not file possession. Tests requiring exact artifact bytes that are missing or unverified remain blocked; browser storage alone does not give an external executor access to those bytes.</p>',1)
 s=s.replace("details('Exact execution routes',actionRows,true)","details('Who performs the current tests',actionRows,true)",1)
 anchor="${blocked.length?`<div class=\"notice warn\"><strong>Execution is blocked.</strong><br>${blocked.map(x=>`${esc(x.testId)}: ${esc(x.blockingReason||'Execution cannot proceed.')}`).join('<br>')}</div>`:''}"
 replacement="${plan.unsupportedApplicationTestIds.length?`<div class=\"notice danger\"><strong>Invalid application executor claim.</strong><br>No registered application-native executor exists for ${esc(plan.unsupportedApplicationTestIds.join(', '))}. Request a corrected Stage 6 test definition; do not substitute or fabricate native execution.</div>`:''}${blocked.length?`<div class=\"notice warn\"><strong>Execution is blocked.</strong><br>${blocked.map(x=>`${esc(x.testId)}: ${esc(x.blockingReason||'Execution cannot proceed.')}`).join('<br>')}</div>`:''}"
@@ -19,4 +19,8 @@ p=Path('verify-complete.mjs'); s=p.read_text()
 old="const scope={requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001'};"
 new="const scope=engine.currentScope(p);"
 if old not in s: raise RuntimeError('reliability routing fixture scope anchor missing')
-s=s.replace(old,new,1);p.write_text(s)
+s=s.replace(old,new,1)
+old_art="{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'a'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}"
+new_art="{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'a'.repeat(64),STORAGE_REFERENCE:'indexeddb:ART-V2',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}"
+if old_art not in s: raise RuntimeError('independence fixture artifact anchor missing')
+s=s.replace(old_art,new_art,1);p.write_text(s)
