@@ -24,5 +24,11 @@ function encodeRawTemplate(callMarker,endAnchor){
 encodeRawTemplate("complete=appendOnce(complete,'deterministicReliabilityRouting:true'","\n`);\nwrite('verify-complete.mjs',complete);");
 encodeRawTemplate("semantics=appendOnce(semantics,'contextLeakageRegression:true'","\n`);\nwrite('verify-prompt-semantics.mjs',semantics);");
 
+const executionBlockNeedle="`const APPLICATION_TEST_EXECUTORS=Object.freeze({});\\n\\n${sourceOf(applicationTestCapabilities";
+const executionActions="const TEST_EXECUTION_ACTIONS=Object.freeze({APPLICATION_DETERMINISTIC:'No operator execution is required only when the exact REQUIRED_CAPABILITY names a registered application-native test executor.',EXTERNAL_AGENT_TOOL:'Use a capable external agent/tool environment.',INDEPENDENT_AGENT_REVIEW:'Use a fresh independent reviewer context.',HUMAN_INSPECTION:'Perform the irreducible human inspection.',EXTERNAL_SYSTEM:'Use the declared external system and preserve its evidence.',UNAVAILABLE:'The required capability is unavailable and remains blocking.'});";
+const executionBlockReplacement="`const APPLICATION_TEST_EXECUTORS=Object.freeze({});\\n"+executionActions+"\\n\\n${sourceOf(applicationTestCapabilities";
+if(!source.includes(executionBlockNeedle))throw new Error('Expected execution-plan replacement template was not found.');
+source=source.replace(executionBlockNeedle,executionBlockReplacement);
+
 fs.writeFileSync(path,source);
-console.log('Patch generator syntax and embedded regression-test encoding repaired.');
+console.log('Patch generator repaired with existing execution-action authority preserved.');
