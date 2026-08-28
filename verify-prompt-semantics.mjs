@@ -410,3 +410,10 @@ import fsStageBoundary from 'node:fs';
   const stage6=prompts.buildPromptRecord(6,p);for(const required of ['how a defective product could falsely appear compliant','boundary conditions','partial-success cases','stale-state cases','malformed-input cases','incorrect-authority cases','wrong-artifact cases','capability-substitution cases'])if(!stage6.prompt.includes(required))throw new Error(`Stage 06 false-positive analysis omitted ${required}.`);
 }
 console.log(JSON.stringify({contextLeakageRegression:true,deterministicArtifactHandoff:true,falsePositiveTestDesign:true},null,2));
+
+// Stage 29 explanation rendering is read-only: canonical evidence-chain construction remains engine-owned.
+{
+  const ui=fs.readFileSync('app-core.js','utf8');
+  if(/function evidenceExplanationMarkup\([^)]*\)\{[^}]*constructEvidenceChains\(/s.test(ui))throw new Error('Stage 29 rendering performs canonical evidence-chain construction.');
+  console.log(JSON.stringify({stage29RenderingReadOnly:true},null,2));
+}
