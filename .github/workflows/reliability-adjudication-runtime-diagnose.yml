@@ -1,0 +1,27 @@
+name: Reliability adjudication runtime schema diagnosis
+on:
+  push:
+    branches: [reliability/semantic-adjudication-20260827]
+permissions: {contents: read}
+
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[runtime-diagnose]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact patch and instrument constructor
+        run: |
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          patch -p0 < /tmp/adjudication.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js'); t=p.read_text()
+          old="if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name)))throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);"
+          new="if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name))){console.error('OWNERSHIP_RUNTIME_MISMATCH',JSON.stringify({title,fields,ownership,union,fieldCount:fields.length,unionCount:union.length,missingFromFields:union.filter(name=>!fields.includes(name)),unownedFields:fields.filter(name=>!union.includes(name))},null,2));throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);}"
+          if old not in t: raise SystemExit('constructor guard not found')
+          p.write_text(t.replace(old,new,1))
+          PY
+          node build-test-project.mjs
