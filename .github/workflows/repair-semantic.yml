@@ -21,6 +21,7 @@ jobs:
           base64 -d /tmp/semantic.patch.gz.b64 > /tmp/semantic.patch.gz
           gzip -dc /tmp/semantic.patch.gz > /tmp/semantic.patch
           echo 'c4cfe987df996329d9a2a8bab5741e7bc0cd5aea514efc4c51c744b4619f0e0c  /tmp/semantic.patch' | sha256sum -c -
+          rm -f verify-adjudication.mjs
           git apply --check /tmp/semantic.patch
           git apply /tmp/semantic.patch
           rm -rf .repair-semantic
