@@ -2,103 +2,29 @@ name: Reliability adjudication branch tool
 on:
   push:
     branches: [reliability/semantic-adjudication-20260827]
-  workflow_dispatch:
 permissions: {contents: write}
 concurrency: {group: 'reliability-adjudication-${{ github.ref }}', cancel-in-progress: false}
 
 jobs:
-  apply-and-prove:
-    if: ${{ contains(github.event.head_commit.message, '[apply-adjudication]') }}
+  inspect-outcome-metadata:
+    if: ${{ contains(github.event.head_commit.message, '[inspect-outcome]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Reconstruct and apply exact adjudication patch
+      - name: Apply staged patch and print exact controlled-outcome representation
         run: |
           cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
           echo 'ea95f16b98b3b51e9436f983ca59046556d17cdddc47b9cad5a861882d61089c  /tmp/adjudication.patch' | sha256sum -c -
           patch -p0 < /tmp/adjudication.patch
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          e=Path('workflow-engine.js')
-          e.write_text(e.read_text().replace('semantically contradictory material finding','internally contradictory material finding'))
-          p=Path('workflow-schema.js')
-          s=p.read_text()
-          title='Requirement-by-run verification'
-          ti=s.find(title)
-          if ti < 0: raise SystemExit('verification record title not found')
-          start=s.rfind('recordSchema({',0,ti)
-          if start < 0: raise SystemExit('verification record start not found')
-          m=re.search(r'fields\s*:\s*\[([^\]]*)\]',s[start:ti+5000],re.S)
-          if not m: raise SystemExit('verification record fields list not found')
-          abs_a=start+m.start(1); abs_b=start+m.end(1)
-          body=s[abs_a:abs_b]
-          if 'OBSERVATION_OUTCOME' not in body:
-              trimmed=body.rstrip(); sep='' if not trimmed else ('' if trimmed.endswith(',') else ',')
-              body=trimmed+sep+"'OBSERVATION_OUTCOME'"+body[len(body.rstrip()):]
-              s=s[:abs_a]+body+s[abs_b:]
-          vocab='["REJECTED_INVALID","ACCEPTED_INVALID","UNDETERMINED","NOT_RUN"]'
-          pattern=re.compile(r'(["\']EXECUTION_OUTCOME["\']\s*:\s*\{[^{}]*?["\']enumValues["\']\s*:\s*)\[\]')
-          s,count=pattern.subn(lambda m:m.group(1)+vocab,s)
-          if count < 1: raise SystemExit('EXECUTION_OUTCOME explicit type metadata not found')
-          p.write_text(s)
+          s=Path('workflow-schema.js').read_text()
+          for needle in ['EXECUTION_OUTCOME','OBSERVATION_OUTCOME']:
+              print('===',needle,'===')
+              start=0
+              while True:
+                  i=s.find(needle,start)
+                  if i<0: break
+                  print(s[max(0,i-500):min(len(s),i+900)])
+                  start=i+len(needle)
           PY
-          node - <<'NODE'
-          const fs=require('fs'),{createHash}=require('crypto');
-          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
-          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
-          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
-          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
-          let html=fs.readFileSync('index.html','utf8');
-          for(const file of files){const re=new RegExp(`(<script\\s+defer\\s+src="${file.replace('.','\\.')}\\?v=)[^"]+("\\s*><\\/script>)`);if(!re.test(html))throw new Error(`Runtime script tag not found for ${file}`);html=html.replace(re,`$1${token}$2`);}
-          fs.writeFileSync('index.html',html); console.log(token);
-          NODE
-      - name: Syntax checks
-        run: |
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check response-ingestion.js
-          node --check verify-adjudication.mjs
-      - name: Run deterministic and adjudication proofs
-        run: |
-          node build-test-project.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-adjudication.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
-      - name: Run local Chromium proofs unchanged
-        run: |
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-adjudication-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser_verifier() {
-            script="$1"
-            for attempt in 1 2 3; do
-              log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
-              cat "$log"
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
-              test "$attempt" -lt 3 || return 1
-            done
-          }
-          run_browser_verifier verify-browser.mjs
-          run_browser_verifier verify-browser-extra.mjs
-          kill "$SERVER_PID" 2>/dev/null || true
-          trap - EXIT
-      - name: Commit proven application changes
-        env: {GH_TOKEN: '${{ github.token }}'}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workflow-schema.js workflow-engine.js response-ingestion.js verify-adjudication.mjs index.html
-          git diff --cached --check
-          git commit -m '[adjudication-built] Make application determinations authoritative'
-          git push origin HEAD:${GITHUB_REF_NAME}
