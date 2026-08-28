@@ -1,22 +1,74 @@
-name: Lifecycle operator diagnostic
+name: Apply and prove duplicate-project fix
 on:
   push:
     branches: [reliability/zero-loss-semantic-ui-20260828]
-    paths: [verify-browser-lifecycle.mjs, .github/workflows/lifecycle-diagnostic.yml]
-permissions: {contents: read}
+    paths: [.github/workflows/lifecycle-diagnostic.yml]
+permissions: {contents: write}
 jobs:
-  browser:
+  repair:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node --check verify-browser-lifecycle.mjs
-      - run: |
+      - name: Apply minimal responsible-layer fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="for(const [key] of jobFields)if(key!=='JOB_TITLE')p.job[key]=clone(source.job[key]);"
+          new="for(const [key] of jobFields)if(key!=='JOB_TITLE'&&source.job[key]!==undefined)p.job[key]=clone(source.job[key]);"
+          if s.count(old)!=1: raise SystemExit(f'expected one duplicate-project copy loop, got {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Remove temporary workflow
+        run: rm .github/workflows/lifecycle-diagnostic.yml
+      - name: Recompute unified runtime token
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+              data=Path(path).read_bytes();return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{name}:{blob(name)}\n' for name in files).encode()).hexdigest()[:16]
+          html=Path('index.html').read_text()
+          for name in files:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(name)}\?v=)[^"]+("\s*></script>)'
+              html,n=re.subn(pattern,rf'\g<1>{token}\2',html,count=1)
+              if n!=1: raise SystemExit(f'{name}: expected one script tag, got {n}')
+          Path('index.html').write_text(html)
+          print(token)
+          PY
+      - name: Syntax and lifecycle source proof
+        run: |
+          node --check app-core.js
+          node --check verify-browser-lifecycle.mjs
+          node verify-project-lifecycle.mjs
+      - name: Real lifecycle operator Chromium proof
+        run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/lifecycle-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser-lifecycle.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Core deterministic regressions
+        run: |
+          node verify-semantic-invariant.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-definition-of-done.mjs
+      - name: Commit only proven fix
+        run: |
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m 'Fix project copy with absent optional input'
+          git push origin HEAD:reliability/zero-loss-semantic-ui-20260828
