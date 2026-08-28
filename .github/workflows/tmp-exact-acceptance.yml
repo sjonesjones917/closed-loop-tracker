@@ -23,7 +23,7 @@ jobs:
           python3 - <<'PY'
           p='workflow-engine.js';s=open(p,encoding='utf-8').read()
           old="if(mode==='EXTERNAL_AGENT_TOOL'){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');"
-          new="if(mode==='EXTERNAL_AGENT_TOOL'&&!byteTest){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');"
+          new="const specializedReview=Number(result?.stage)===23||Number(result?.stage)===24||Object.prototype.hasOwnProperty.call(recordFields(result),'OBSERVED_MEANING')||Object.prototype.hasOwnProperty.call(recordFields(result),'ATTACK');if(mode==='EXTERNAL_AGENT_TOOL'&&!byteTest&&!specializedReview){requiredEvidenceClasses.push('CAPABILITY_EXECUTION');"
           if old not in s: raise SystemExit('external-tool evidence rule target missing')
           s=s.replace(old,new,1)
           old="const ids=evidenceReferences(result),evidence=ids.map(id=>records(project,'evidenceRecords').find(x=>recordId(x,'evidenceRecords')===id)).filter(Boolean),narrative=['EXACT_EVIDENCE','EVIDENCE','PROCESS_EVIDENCE','PRODUCT_EVIDENCE','CONTROLLING_EVIDENCE'].map(k=>String(recordValue(result,k)||'').trim()).find(Boolean)||''"
