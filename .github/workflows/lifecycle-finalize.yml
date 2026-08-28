@@ -14,6 +14,8 @@ jobs:
         with: {node-version: '22'}
       - name: Apply only the responsible-layer lifecycle correction
         run: node .lifecycle-correction.mjs
+      - name: Remove temporary workflow before architecture proof
+        run: rm -f .github/workflows/lifecycle-finalize.yml
       - name: Refresh exact runtime identity
         run: |
           node - <<'NODE'
