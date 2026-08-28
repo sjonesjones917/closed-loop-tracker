@@ -1,0 +1,45 @@
+import {spawn} from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
+const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
+if(!browser)throw new Error('Chrome/Chromium was not found');
+const port=9900+Math.floor(Math.random()*80),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-lifecycle-'));
+const proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const assert=(v,m)=>{if(!v)throw new Error(m);};
+async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
+async function poll(fn,timeout=15000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
+class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.ready=new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});ws.onmessage=e=>{const m=JSON.parse(e.data);if(!m.id)return;const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);};}async send(method,params={}){await this.ready;const id=++this.id,p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return p;}close(){this.ws.close();}}
+async function evalValue(cdp,expression){const r=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'Evaluation failed');return r.result?.value;}
+async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
+async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(180);}
+async function fill(cdp,selector,value){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);assert(ok,`Missing input ${selector}`);}
+async function current(cdp){return evalValue(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];const all=await closedLoopProjectStore.readAll();const p=all.find(x=>x.job?.JOB_ID===id);return {id,project:p,count:all.length};})()`);}
+async function openProject(cdp){await click(cdp,'[data-view="Project"]');await waitExpr(cdp,`Boolean(document.querySelector('#project-management'))`);await evalValue(cdp,`document.querySelector('#project-management').open=true`);}
+
+async function main(){
+  await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?lifecycle=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');
+  try{
+    await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
+    console.log('lifecycle:new-project');await click(cdp,'#new-project');await waitExpr(cdp,`document.body.innerText.includes('Save User Job Input')`);let base=await current(cdp);assert(base.id&&base.project&&!base.project.isRetainedTestProject,'New project did not become the current operable project.');
+
+    console.log('lifecycle:rename');await openProject(cdp);await fill(cdp,'#project-display-name','Lifecycle operator proof');await click(cdp,'#rename-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent.includes('Lifecycle operator proof')`);
+
+    console.log('lifecycle:duplicate');await openProject(cdp);const beforeCopy=await current(cdp);await click(cdp,'#duplicate-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]!==${JSON.stringify(beforeCopy.id)}`);let copy=await current(cdp);assert(copy.id!==beforeCopy.id,'Start from copy reused the source JOB_ID.');assert(copy.count===beforeCopy.count+1,'Start from copy did not create exactly one new project.');assert(copy.project.job.CURRENT_STAGE==='STAGE 01','Copied project did not reset to Stage 01.');assert((copy.project.projectData?.generatedPrompts||[]).length===0&&(copy.project.projectData?.verification||[]).length===0,'Copied project carried operational history forward.');const copyId=copy.id;
+
+    console.log('lifecycle:archive-restore');await openProject(cdp);await click(cdp,'#archive-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]!==${JSON.stringify(copyId)}`);await openProject(cdp);await waitExpr(cdp,`Boolean(document.querySelector('[data-restore-project=${JSON.stringify(copyId)}]'))`);await click(cdp,`[data-restore-project=${JSON.stringify(copyId)}]`);await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]===${JSON.stringify(copyId)}`);
+
+    console.log('lifecycle:backup');await openProject(cdp);await evalValue(cdp,`(()=>{window.__backupBlob=null;window.__backupName='';URL.createObjectURL=b=>{window.__backupBlob=b;return 'blob:lifecycle-proof';};URL.revokeObjectURL=()=>{};HTMLAnchorElement.prototype.click=function(){window.__backupName=this.download;};return true})()`);await click(cdp,'#backup-project');await waitExpr(cdp,`Boolean(window.__backupBlob)`);const backup=await evalValue(cdp,`({size:window.__backupBlob?.size||0,name:window.__backupName})`);assert(backup.size>0&&backup.name.includes('.backup.closed-loop.json.gz'),'Create backup now did not produce a complete backup package.');
+
+    console.log('lifecycle:verify-files');await openProject(cdp);await click(cdp,'#verify-stored-files');await waitExpr(cdp,`document.body.innerText.includes('Integrity status')`);const blockers=await evalValue(cdp,`(async()=>{const x=await closedLoopProjectStore.readAll(),p=x.find(p=>p.job?.JOB_ID===${JSON.stringify(copyId)});return (p.projectData?.blockers||[]).filter(b=>b.source==='APPLICATION'&&b.applicationBlockerKind==='ARTIFACT_CUSTODY'&&String(b.fields?.STATUS||b.STATUS).toUpperCase()==='OPEN').length;})()`);assert(blockers===0,'Verifying a project with no mismatched stored artifacts created a false custody blocker.');
+
+    console.log('lifecycle:delete');await openProject(cdp);await evalValue(cdp,`document.querySelector('#project-danger-zone').open=true`);await fill(cdp,'#delete-project-confirmation',copyId);await waitExpr(cdp,`document.querySelector('#delete-project')?.disabled===false`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID===${JSON.stringify(copyId)}))`,12000);const afterDelete=await current(cdp);assert(afterDelete.id!==copyId,'Deleted project remained current.');
+
+    console.log(JSON.stringify({lifecycleOperatorPath:true,rename:true,duplicate:true,archiveRestore:true,backup:true,verifyStoredFiles:true,delete:true}));
+  } finally {cdp.close();}
+}
+main().finally(()=>{proc.kill('SIGTERM');fs.rmSync(profile,{recursive:true,force:true});});
