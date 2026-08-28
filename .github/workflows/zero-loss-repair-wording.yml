@@ -1,0 +1,39 @@
+name: Repair operator-facing adjudication wording
+
+on:
+  push:
+    branches:
+      - reliability/zero-loss-semantic-adjudication-clean
+    paths:
+      - .github/workflows/zero-loss-repair-wording.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply the minimal wording correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('workflow-engine.js')
+          text = path.read_text()
+          old = 'semantically contradictory material finding'
+          new = 'internally contradictory material finding'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one wording target, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          node --check workflow-engine.js
+          node build-test-project.mjs
+      - name: Commit the correction
+        run: |
+          rm .github/workflows/zero-loss-repair-wording.yml
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'closed-loop-reliability-bot@users.noreply.github.com'
+          git add -A
+          git commit -m 'Keep adjudication terminology out of operator UI'
+          git push origin HEAD:reliability/zero-loss-semantic-adjudication-clean
