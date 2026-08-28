@@ -4,7 +4,7 @@ on:
     branches: [reliability/semantic-adjudication-zero-loss]
     paths: [.github/workflows/apply-zero-loss-final.yml]
 permissions: {contents: write}
-concurrency: {group: zero-loss-final-apply-v3, cancel-in-progress: false}
+concurrency: {group: zero-loss-final-apply-v4, cancel-in-progress: false}
 
 jobs:
   apply-test-commit:
@@ -36,8 +36,18 @@ jobs:
         run: timeout 90s node verify-complete.mjs
       - name: Prompt semantics proof
         run: timeout 90s node verify-prompt-semantics.mjs
+      - name: Instrument full-cycle checkpoints
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          for n in range(1,31):
+              s=s.replace(f'complete({n});',f"complete({n});console.log('FULLCYCLE_STAGE_{n}_COMPLETE');")
+          Path('verify-full-cycle-instrumented.mjs').write_text(s)
+          PY
       - name: Full-cycle proof
-        run: timeout 120s node verify-full-cycle.mjs
+        run: timeout 120s node verify-full-cycle-instrumented.mjs
       - name: Local Chromium acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -49,7 +59,7 @@ jobs:
           timeout 120s node verify-browser-extra.mjs
       - name: Commit only proven application and test changes
         run: |
-          rm -f .zero-loss-final-fix.py .zero-loss-runtime-token.py .github/workflows/apply-zero-loss-final.yml .github/workflows/bootstrap-semantic.yml
+          rm -f verify-full-cycle-instrumented.mjs .zero-loss-final-fix.py .zero-loss-runtime-token.py .github/workflows/apply-zero-loss-final.yml .github/workflows/bootstrap-semantic.yml
           git config user.name 'OpenAI GPT-5.6 Sol'
           git config user.email 'noreply@openai.com'
           git add workflow-engine.js verify-complete.mjs verify-semantic-invariant.mjs index.html .github/workflows/bootstrap-semantic.yml .zero-loss-final-fix.py .zero-loss-runtime-token.py .github/workflows/apply-zero-loss-final.yml
