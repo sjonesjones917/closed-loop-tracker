@@ -426,8 +426,8 @@ function gate(stage,project){
 }
 
 const applicationadjudicationGate=gate;
-gate=function adjudicationGate(stage,project){
-  const adjudicated=adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];
+gate=function adjudicationGate(stage,project,preparedAdjudicatedProject=null){
+  const adjudicated=preparedAdjudicatedProject||adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];
   const add=x=>{for(const r of safe(x))if(r&&!reasons.includes(r))reasons.push(r);};
   if(stage===7){for(const mutation of recordsForCurrentScope(project,'failureTests')){const explicitOutcome=upper(recordValue(mutation,'EXECUTION_OUTCOME')),legacyActual=upper(recordValue(mutation,'ACTUAL_RESULT')),expected=upper(recordValue(mutation,'EXPECTED_REJECTION')),legacyOutcome=!explicitOutcome&&expected.includes('REJECT')&&['REJECTED','REJECT','DENIED','BLOCKED'].includes(legacyActual)?'REJECTED_INVALID':!explicitOutcome&&expected.includes('REJECT')&&['ACCEPTED','PASS','PASSED','SUCCESS','SUCCEEDED'].includes(legacyActual)?'ACCEPTED_INVALID':'',outcome=explicitOutcome||legacyOutcome;if(!['REJECTED_INVALID','ACCEPTED_INVALID','UNDETERMINED','NOT_RUN'].includes(outcome))add([recordId(mutation,'failureTests')+': controlled EXECUTION_OUTCOME is required (REJECTED_INVALID/ACCEPTED_INVALID/UNDETERMINED/NOT_RUN); only the finite legacy rejection/acceptance vocabulary is migrated.']);if(outcome==='ACCEPTED_INVALID'&&!String(recordValue(mutation,'VALIDATOR_DEFECT_ID')||mutation.relationships?.VALIDATOR_DEFECT_ID||'').trim())add(['A known-invalid fixture was accepted without a linked validator defect.']);if(['UNDETERMINED','NOT_RUN'].includes(outcome))add([recordId(mutation,'failureTests')+': failure test is not conclusively executed.']);}}
   if(stage===9)for(const r of recordsForCurrentScope(project,'preflightRecords')){const e=evaluateResultConsistency('preflightRecords',r,null,project);if(e.determination!=='SATISFIED')add(e.reasons.length?e.reasons:['Preflight is not application-derived SATISFIED.']);}
@@ -442,23 +442,89 @@ gate=function adjudicationGate(stage,project){
   if(stage>=27&&releaseMetrics(project).determination==='ACCEPTED'&&detectCurrentContradictions(project).length)add(['Release cannot be ACCEPTED while a adjudication contradiction exists.']);
   return {...base,complete:reasons.length===0,reasons,blocked:base.blocked||reasons.some(r=>/UNDETERMINED|BLOCKED|missing|unavailable|not established|not conclusively/i.test(r))};
 };
-function deriveStageData(project,stage){ensureShape(project);const derived={};const ids=collection=>recordsForCurrentScope(project,collection).filter(r=>Number(r.stage)===Number(stage)).map(r=>recordId(r,collection));const metrics=coverageMetrics(project);const convergence=convergenceMetrics(project);const release=releaseMetrics(project);switch(stage){case 1:Object.assign(derived,{JOB_ID:project.job.JOB_ID,DATE_OPENED:project.job.DATE_OPENED,INPUT_SET_VERSION:project.job.CURRENT_INPUT_VERSION,INPUT_SET_HASH_OR_MANIFEST:project.job.INPUT_SET_HASH_OR_MANIFEST||'UNKNOWN',JOB_RECORD_STATUS:project.stages[1].status==='COMPLETE'?'READY':'NOT READY'});break;case 2:Object.assign(derived,{SOURCE_SET_VERSION:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',SOURCE_RECORDS:ids('sources'),SOURCE_CONFLICT_RECORDS:ids('sourceConflicts')});break;case 4:Object.assign(derived,{REQUIREMENTS_VERSION:project.job.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE',TOTAL_REQUIREMENTS:recordsForCurrentScope(project,'requirements').length,MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount});break;case 6:Object.assign(derived,{TEST_SUITE_VERSION:project.job.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE',TOTAL_ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST:metrics.requirementsWithTests,MANDATORY_TEST_COVERAGE:metrics.requirementCoverage});break;case 11:case 17:case 19:{const it=latestIteration(project,[stage]);const ev=evaluateIteration(project,recordId(it,'iterations'),stage===19?'UNCHANGED_CONFIRMATION':stage===17?'CORRECTED':'INITIAL');Object.assign(derived,{ITERATION_ID:ev.iterationId,RUN_COUNT:ev.runs.length,FRESH_CONTEXT_COUNT:ev.contextCount,ITERATION_COMPLETE:ev.complete,ITERATION_REASONS:ev.reasons});break;}case 12:Object.assign(derived,{ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,RUNS:metrics.iterationRunCount,EXPECTED_MANDATORY_RECORDS:metrics.expectedVerificationCount,ACTUAL_MANDATORY_RECORDS:metrics.actualVerificationTripleCount,MISSING_RECORDS:metrics.missingVerificationTriples.length,VERIFICATION_COVERAGE:metrics.verificationCoverage});break;case 18:Object.assign(derived,{MANDATORY_REQUIREMENT_COVERAGE:convergence.requirementCoverage,MANDATORY_VERIFICATION_COVERAGE:convergence.verificationCoverage,REGRESSION_TEST_SUCCESS:convergence.regressionSuccess,CRITICAL_DEFECTS:convergence.criticalDefects,MAJOR_DEFECTS:convergence.majorDefects,MANDATORY_UNRESOLVED_UNKNOWNS:convergence.mandatoryUnresolvedUnknowns,KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS:convergence.contradictions,KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES:convergence.ambiguities,UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE:convergence.unexplainedVariance,ALL_CONDITIONS_SIMULTANEOUSLY_TRUE:convergence.converged});break;case 27:Object.assign(derived,{TOTAL_MANDATORY_REQUIREMENTS:release.mandatoryRequirementCount,MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE:release.satisfied,MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED:release.violated,MANDATORY_REQUIREMENTS_NOT_ESTABLISHED:release.undetermined,UNRESOLVED_CRITICAL_DEFECTS:release.criticalDefects,UNRESOLVED_MAJOR_DEFECTS:release.majorDefects,SELECTED_RELEASE_STATE:release.determination});break;case 28:Object.assign(derived,DERIVATIONS['stage28.artifactIdentity'](project).value);break;case 29:Object.assign(derived,DERIVATIONS['stage29.evidenceChains'](project).value);break;}derived.STAGE_DECISION=project.stages[stage].status==='COMPLETE'?'READY TO PROCEED':project.stages[stage].status==='BLOCKED'?'BLOCKED':'NOT READY - CORRECTION REQUIRED';derived.DECISION_EVIDENCE=project.stages[stage].gate?.reasons?.length?project.stages[stage].gate.reasons.join('; '):'Canonical current-scope records and deterministic calculations satisfy the stage gate.';return derived;}
+function deriveStageData(project,stage){
+  ensureShape(project);
+  const derived={};
+  const ids=collection=>recordsForCurrentScope(project,collection).filter(r=>Number(r.stage)===Number(stage)).map(r=>recordId(r,collection));
+  switch(stage){
+    case 1:
+      Object.assign(derived,{JOB_ID:project.job.JOB_ID,DATE_OPENED:project.job.DATE_OPENED,INPUT_SET_VERSION:project.job.CURRENT_INPUT_VERSION,INPUT_SET_HASH_OR_MANIFEST:project.job.INPUT_SET_HASH_OR_MANIFEST||'UNKNOWN',JOB_RECORD_STATUS:project.stages[1].status==='COMPLETE'?'READY':'NOT READY'});
+      break;
+    case 2:
+      Object.assign(derived,{SOURCE_SET_VERSION:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',SOURCE_RECORDS:ids('sources'),SOURCE_CONFLICT_RECORDS:ids('sourceConflicts')});
+      break;
+    case 4:{
+      const metrics=coverageMetrics(project);
+      Object.assign(derived,{REQUIREMENTS_VERSION:project.job.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE',TOTAL_REQUIREMENTS:recordsForCurrentScope(project,'requirements').length,MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount});
+      break;
+    }
+    case 6:{
+      const metrics=coverageMetrics(project);
+      Object.assign(derived,{TEST_SUITE_VERSION:project.job.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE',TOTAL_ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST:metrics.requirementsWithTests,MANDATORY_TEST_COVERAGE:metrics.requirementCoverage});
+      break;
+    }
+    case 11:
+    case 17:
+    case 19:{
+      const it=latestIteration(project,[stage]),ev=evaluateIteration(project,recordId(it,'iterations'),stage===19?'UNCHANGED_CONFIRMATION':stage===17?'CORRECTED':'INITIAL');
+      Object.assign(derived,{ITERATION_ID:ev.iterationId,RUN_COUNT:ev.runs.length,FRESH_CONTEXT_COUNT:ev.contextCount,ITERATION_COMPLETE:ev.complete,ITERATION_REASONS:ev.reasons});
+      break;
+    }
+    case 12:{
+      const metrics=coverageMetrics(project);
+      Object.assign(derived,{ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,RUNS:metrics.iterationRunCount,EXPECTED_MANDATORY_RECORDS:metrics.expectedVerificationCount,ACTUAL_MANDATORY_RECORDS:metrics.actualVerificationTripleCount,MISSING_RECORDS:metrics.missingVerificationTriples.length,VERIFICATION_COVERAGE:metrics.verificationCoverage});
+      break;
+    }
+    case 18:{
+      const convergence=convergenceMetrics(project);
+      Object.assign(derived,{MANDATORY_REQUIREMENT_COVERAGE:convergence.requirementCoverage,MANDATORY_VERIFICATION_COVERAGE:convergence.verificationCoverage,REGRESSION_TEST_SUCCESS:convergence.regressionSuccess,CRITICAL_DEFECTS:convergence.criticalDefects,MAJOR_DEFECTS:convergence.majorDefects,MANDATORY_UNRESOLVED_UNKNOWNS:convergence.mandatoryUnresolvedUnknowns,KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS:convergence.contradictions,KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES:convergence.ambiguities,UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE:convergence.unexplainedVariance,ALL_CONDITIONS_SIMULTANEOUSLY_TRUE:convergence.converged});
+      break;
+    }
+    case 27:{
+      const release=releaseMetrics(project);
+      Object.assign(derived,{TOTAL_MANDATORY_REQUIREMENTS:release.mandatoryRequirementCount,MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE:release.satisfied,MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED:release.violated,MANDATORY_REQUIREMENTS_NOT_ESTABLISHED:release.undetermined,UNRESOLVED_CRITICAL_DEFECTS:release.criticalDefects,UNRESOLVED_MAJOR_DEFECTS:release.majorDefects,SELECTED_RELEASE_STATE:release.determination});
+      break;
+    }
+    case 28:
+      Object.assign(derived,DERIVATIONS['stage28.artifactIdentity'](project).value);
+      break;
+    case 29:
+      Object.assign(derived,DERIVATIONS['stage29.evidenceChains'](project).value);
+      break;
+  }
+  derived.STAGE_DECISION=project.stages[stage].status==='COMPLETE'?'READY TO PROCEED':project.stages[stage].status==='BLOCKED'?'BLOCKED':'NOT READY - CORRECTION REQUIRED';
+  derived.DECISION_EVIDENCE=project.stages[stage].gate?.reasons?.length?project.stages[stage].gate.reasons.join('; '):'Canonical current-scope records and deterministic calculations satisfy the stage gate.';
+  return derived;
+}
 
 function recalculate(project){
   ensureShape(project);
+  // One application-owned effective-result projection is sufficient for the complete
+  // 30-stage reduction. Rebuilding the same deep project projection once per stage
+  // made large browser-local projects perform thirty redundant full-state clones.
+  const adjudicated=adjudicatedClone(project);
   let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
-    const result=gate(stage,project);
+    const result=gate(stage,project,adjudicated);
     const state=project.stages[stage];
     state.gate=result;
-    if(!previousComplete){state.status='NOT STARTED';}
-    else if(result.blocked){state.status='BLOCKED';}
-    else if(result.complete){state.status='COMPLETE';}
-    else if(hasStageActivity(project,stage)){state.status='IN PROGRESS';}
+    if(!previousComplete)state.status='NOT STARTED';
+    else if(result.blocked)state.status='BLOCKED';
+    else if(result.complete)state.status='COMPLETE';
+    else if(hasStageActivity(project,stage))state.status='IN PROGRESS';
     else state.status='READY';
     state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
     state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
     state.derivedData=deriveStageData(project,stage);
+    // Later stages must see the freshly derived predecessor state while continuing
+    // to consume the same application-owned effective determinations.
+    Object.assign(adjudicated.stages[stage],{
+      status:state.status,
+      gate:clone(state.gate),
+      decision:state.decision,
+      decisionEvidence:state.decisionEvidence,
+      derivedData:clone(state.derivedData)
+    });
     previousComplete=state.status==='COMPLETE';
   }
   const completed=Object.values(project.stages).filter(state=>state.status==='COMPLETE').length;
@@ -467,7 +533,8 @@ function recalculate(project){
   project.activeStage=Math.max(1,Math.min(30,Number(project.activeStage||currentStage)));
   project.job.CURRENT_STAGE=`STAGE ${String(currentStage).padStart(2,'0')}`;
   project.job.CURRENT_STATE=completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';
-  project.job.CURRENT_BLOCKERS=openBlockers(project).length?openBlockers(project).map(record=>recordId(record,'blockers')).join(', '):'NONE';
+  const blockers=openBlockers(project);
+  project.job.CURRENT_BLOCKERS=blockers.length?blockers.map(record=>recordId(record,'blockers')).join(', '):'NONE';
   project.job.NEXT_REQUIRED_ACTION=completed===30?'Preserve the completed workflow and exact release evidence.':operationalNextAction(project,currentStage);
   project.job.LATEST_EVIDENCE_REFERENCE=safe(project.projectData.acceptedChanges).at(-1)?.changeId||project.job.LATEST_EVIDENCE_REFERENCE||'NONE';
   project.job.JOB_RECORD_STATUS=project.stages[1].status==='COMPLETE'?'READY':'NOT READY';

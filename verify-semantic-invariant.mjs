@@ -44,4 +44,52 @@ const metrics=engine.releaseMetrics(p);assert(metrics.determination!=='ACCEPTED'
 
 // Static lifetime guard: the release reducer must consume release-grade trust and the central adjudicator, not submitted favorable strings.
 const source=fs.readFileSync('workflow-engine.js','utf8');assert(source.includes('releaseVerificationTrustFailures'),'releaseMetrics is not wired to release-grade verification trust');assert(source.includes('evaluateResultConsistency'),'Central result adjudication is missing');assert(source.includes('effectiveDetermination'),'Effective determination reducer is missing');assert(!source.includes("['SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(latest,'RESULT')))"),'Legacy regression success shortcut remains');
-console.log(JSON.stringify({semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true}));
+
+
+// The complete 30-stage reduction must preserve the exact legacy per-stage semantics
+// while constructing the application-owned effective-result projection only once.
+function referenceRecalculate(project){
+  engine.ensureShape(project);
+  let previousComplete=true;
+  for(let stage=1;stage<=30;stage++){
+    const result=engine.gate(stage,project),state=project.stages[stage];
+    state.gate=result;
+    if(!previousComplete)state.status='NOT STARTED';
+    else if(result.blocked)state.status='BLOCKED';
+    else if(result.complete)state.status='COMPLETE';
+    else if(engine.hasStageActivity(project,stage))state.status='IN PROGRESS';
+    else state.status='READY';
+    state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
+    state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
+    state.derivedData=engine.deriveStageData(project,stage);
+    previousComplete=state.status==='COMPLETE';
+  }
+  const completed=Object.values(project.stages).filter(state=>state.status==='COMPLETE').length,currentStage=completed===30?30:Math.max(1,Object.values(project.stages).find(state=>state.status!=='COMPLETE')?.number||30),current=project.stages[currentStage];
+  project.activeStage=Math.max(1,Math.min(30,Number(project.activeStage||currentStage)));
+  project.job.CURRENT_STAGE=`STAGE ${String(currentStage).padStart(2,'0')}`;
+  project.job.CURRENT_STATE=completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';
+  const blockers=engine.openBlockers(project);
+  project.job.CURRENT_BLOCKERS=blockers.length?blockers.map(record=>engine.recordId(record,'blockers')).join(', '):'NONE';
+  project.job.NEXT_REQUIRED_ACTION=completed===30?'Preserve the completed workflow and exact release evidence.':engine.operationalNextAction(project,currentStage);
+  project.job.LATEST_EVIDENCE_REFERENCE=(project.projectData.acceptedChanges||[]).at(-1)?.changeId||project.job.LATEST_EVIDENCE_REFERENCE||'NONE';
+  project.job.JOB_RECORD_STATUS=project.stages[1].status==='COMPLETE'?'READY':'NOT READY';
+  project.job.STATUS_EVIDENCE=project.stages[1].gate?.reasons?.join('; ')||'Stage 01 canonical evidence is complete.';
+  return project;
+}
+function reductionSnapshot(project){
+  return {
+    stages:Object.fromEntries(Array.from({length:30},(_,index)=>{const number=index+1,state=project.stages[number],gate=state.gate||{};return [number,{status:state.status,decision:state.decision,decisionEvidence:state.decisionEvidence,gate:{complete:Boolean(gate.complete),blocked:Boolean(gate.blocked),reasons:[...(gate.reasons||[])]},derivedData:state.derivedData}];})),
+    job:Object.fromEntries(['CURRENT_STAGE','CURRENT_STATE','CURRENT_BLOCKERS','NEXT_REQUIRED_ACTION','LATEST_EVIDENCE_REFERENCE','JOB_RECORD_STATUS','STATUS_EVIDENCE'].map(key=>[key,project.job[key]]))
+  };
+}
+const reductionFixture=engine.clone(p),optimized=engine.clone(reductionFixture),reference=engine.clone(reductionFixture);
+engine.recalculate(optimized);referenceRecalculate(reference);
+assert(hash.stableStringify(reductionSnapshot(optimized))===hash.stableStringify(reductionSnapshot(reference)),'Single-projection recalculation changed a stage gate, stage status, derived value, or next action.');
+const largeState=engine.clone(reductionFixture);largeState.projectData.userEntered={...(largeState.projectData.userEntered||{}),MOBILE_LARGE_STATE_SENTINEL:'x'.repeat(3_700_000)};
+const recalculateStarted=performance.now();engine.recalculate(largeState);const largeStateRecalculateMs=performance.now()-recalculateStarted;
+assert(largeStateRecalculateMs<5000,`Large current project recalculation exceeded the bounded non-browser regression limit: ${largeStateRecalculateMs.toFixed(1)} ms`);
+assert(hash.stableStringify(reductionSnapshot(largeState))===hash.stableStringify(reductionSnapshot(optimized)),'Non-semantic large browser-local payload changed canonical stage reduction.');
+assert(source.includes('const adjudicated=adjudicatedClone(project);')&&source.includes('gate(stage,project,adjudicated)'),'Recalculation no longer reuses one application-owned adjudication projection.');
+assert(!source.includes('const metrics=coverageMetrics(project);const convergence=convergenceMetrics(project);const release=releaseMetrics(project);'),'Expensive coverage, convergence, and release reductions became unconditional again.');
+
+console.log(JSON.stringify({semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,singleProjectionEquivalent:true,largeStateRecalculateMs:Number(largeStateRecalculateMs.toFixed(1))}));
