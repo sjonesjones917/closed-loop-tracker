@@ -35,5 +35,10 @@ const canonicalCustody="verified=artifacts.filter(item=>upper(recordValue(item,'
 if(!source.includes(overStrictCustody))throw new Error('Expected over-strict execution-routing custody predicate was not found.');
 source=source.replace(overStrictCustody,canonicalCustody);
 
+const enrichedItemNeedle="requiredArtifactIds:artifact.artifactIds,requiredArtifactNames";
+const compatibleItem="artifactRequirements:artifact.artifactRequirements,evidenceIds:artifact.evidenceIds,artifactIds:artifact.artifactIds,requiredArtifactIds:artifact.artifactIds,requiredArtifactNames";
+if(!source.includes(enrichedItemNeedle))throw new Error('Expected enriched execution-plan item shape was not found.');
+source=source.replace(enrichedItemNeedle,compatibleItem);
+
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired while preserving existing verified artifact custody semantics.');
+console.log('Patch generator repaired with additive execution-plan compatibility aliases.');
