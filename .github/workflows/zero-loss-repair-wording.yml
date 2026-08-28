@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply the minimal wording correction
+      - name: Apply and verify the minimal wording correction
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -27,11 +27,11 @@ jobs:
               raise SystemExit(f'Expected exactly one wording target, found {text.count(old)}')
           path.write_text(text.replace(old, new, 1))
           PY
+          rm .github/workflows/zero-loss-repair-wording.yml
           node --check workflow-engine.js
           node build-test-project.mjs
       - name: Commit the correction
         run: |
-          rm .github/workflows/zero-loss-repair-wording.yml
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'closed-loop-reliability-bot@users.noreply.github.com'
           git add -A
