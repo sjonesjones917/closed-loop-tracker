@@ -12,10 +12,10 @@ jobs:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
       - name: Package exact branch source
-        run: tar --exclude=.git -czf closed-loop-zero-loss-source.tar.gz .
+        run: tar --exclude=.git -czf /tmp/closed-loop-zero-loss-source.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
           name: closed-loop-zero-loss-source
-          path: closed-loop-zero-loss-source.tar.gz
+          path: /tmp/closed-loop-zero-loss-source.tar.gz
           if-no-files-found: error
           retention-days: 1
