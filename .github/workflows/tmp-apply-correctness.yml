@@ -1,0 +1,55 @@
+name: Temporary correctness-first patch application
+on:
+  push:
+    branches: [correctness-first-reliability-20260827]
+    paths: ['.apply-payload/READY']
+permissions:
+  contents: write
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact prepared files
+        run: |
+          cat .apply-payload/part* | base64 -d > /tmp/correctness-first.tar.gz
+          tar -xzf /tmp/correctness-first.tar.gz
+      - name: Run exact application acceptance before commit
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove one-time repair infrastructure and commit verified files
+        run: |
+          rm -rf .apply-payload .github/workflows/tmp-apply-correctness.yml
+          git config user.name 'closed-loop-verifier'
+          git config user.email 'closed-loop-verifier@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make verification evidence operational and correctness-first'
+          git push origin HEAD:correctness-first-reliability-20260827
