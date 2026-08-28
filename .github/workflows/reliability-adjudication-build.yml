@@ -37,10 +37,13 @@ jobs:
           abs_a=start+m.start(1); abs_b=start+m.end(1)
           body=s[abs_a:abs_b]
           if 'OBSERVATION_OUTCOME' not in body:
-              trimmed=body.rstrip()
-              sep='' if not trimmed else ('' if trimmed.endswith(',') else ',')
+              trimmed=body.rstrip(); sep='' if not trimmed else ('' if trimmed.endswith(',') else ',')
               body=trimmed+sep+"'OBSERVATION_OUTCOME'"+body[len(body.rstrip()):]
               s=s[:abs_a]+body+s[abs_b:]
+          vocab='["REJECTED_INVALID","ACCEPTED_INVALID","UNDETERMINED","NOT_RUN"]'
+          pattern=re.compile(r'(["\']EXECUTION_OUTCOME["\']\s*:\s*\{[^{}]*?["\']enumValues["\']\s*:\s*)\[\]')
+          s,count=pattern.subn(lambda m:m.group(1)+vocab,s)
+          if count < 1: raise SystemExit('EXECUTION_OUTCOME explicit type metadata not found')
           p.write_text(s)
           PY
           node - <<'NODE'
@@ -51,8 +54,7 @@ jobs:
           const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
           let html=fs.readFileSync('index.html','utf8');
           for(const file of files){const re=new RegExp(`(<script\\s+defer\\s+src="${file.replace('.','\\.')}\\?v=)[^"]+("\\s*><\\/script>)`);if(!re.test(html))throw new Error(`Runtime script tag not found for ${file}`);html=html.replace(re,`$1${token}$2`);}
-          fs.writeFileSync('index.html',html);
-          console.log(token);
+          fs.writeFileSync('index.html',html); console.log(token);
           NODE
       - name: Syntax checks
         run: |
