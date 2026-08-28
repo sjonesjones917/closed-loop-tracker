@@ -1,0 +1,35 @@
+name: Final disposable hardening wrapper
+on:
+  push:
+    branches: [reliability/correctness-hardening-final-20260827]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/correctness-hardening-final-20260827
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute proven runner with behavioral prompt assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re,textwrap
+          src=open('.github/workflows/tmp-correctness-hardening.yml',encoding='utf-8').read()
+          m=re.search(r'\n        run: \|\n(?P<body>(?:          .*\n?)*)',src)
+          if not m: raise SystemExit('runner body not found')
+          body=textwrap.dedent(m.group('body'))
+          marker='node verify-prompt-semantics.mjs'
+          patch="""python3 - <<'PYPROMPT'\np='verify-prompt-semantics.mjs'\ns=open(p,encoding='utf-8').read()\nold=\"if(!ui.includes('Invalid application executor claim')||!ui.includes('No registered application-native executor exists'))throw new Error('Operator UI does not fail unsupported application-native test claims closed.');\"\nnew=\"const unsupported=core.createBlankState('JOB-UNSUPPORTED-NATIVE');Object.assign(unsupported.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Test unsupported native execution.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});engine.ensureShape(unsupported);unsupported.projectData.requirements.push({recordId:'REQ-UNSUPPORTED',fields:{REQ_ID:'REQ-UNSUPPORTED',OBLIGATION:'Unsupported native test stays blocked.',REQUIREMENT_TYPE:'USER',MANDATORY_OPTIONAL_STATUS:'MANDATORY',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'Observed',INTENDED_VERIFICATION_METHOD:'Native',EXPECTED_EVIDENCE:'Evidence',FAILURE_CONDITION:'Not blocked',SEVERITY:'MAJOR',STATUS:'ACTIVE'},scope:{inputVersion:'INPUT-v001',requirementsVersion:'REQUIREMENTS-v001'},status:'ACTIVE'});unsupported.projectData.tests.push({recordId:'TEST-UNSUPPORTED',fields:{TEST_ID:'TEST-UNSUPPORTED',REQ_ID:'REQ-UNSUPPORTED',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'NOT_REGISTERED',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'Canonical state',TOOLS:'Application',PROCEDURE:'Attempt unsupported native execution.',EXPECTED_RESULT:'Blocked',FAILURE_CONDITION:'Execution proceeds',EVIDENCE_TO_PRESERVE:'Plan',STATUS:'READY'},relationships:{REQ_ID:'REQ-UNSUPPORTED'},scope:{inputVersion:'INPUT-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001'},status:'ACTIVE'});engine.recalculate(unsupported);const unsupportedPlan=engine.testExecutionPlan(unsupported).items.find(x=>x.testId==='TEST-UNSUPPORTED');if(!unsupportedPlan||unsupportedPlan.operatorAction!=='BLOCKED'||unsupportedPlan.executableNow||!String(unsupportedPlan.blockingReason||'').includes('No registered application-native executor'))throw new Error('Unsupported application-native execution does not fail closed with a precise plan reason.');\"\nif old not in s: raise SystemExit('old source-token assertion missing')\nopen(p,'w',encoding='utf-8').write(s.replace(old,new))\nPYPROMPT\n"""
+          if marker not in body: raise SystemExit('prompt test marker missing')
+          body=body.replace(marker,patch+marker,1)
+          body=body.replace("rm -f .github/workflows/tmp-correctness-hardening.yml","rm -f .github/workflows/tmp-correctness-hardening.yml .github/workflows/tmp-finalize-hardening.yml",1)
+          open('/tmp/final-hardening.sh','w',encoding='utf-8').write(body)
+          PY
+          bash /tmp/final-hardening.sh
