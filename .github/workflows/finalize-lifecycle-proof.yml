@@ -1,0 +1,116 @@
+name: Finalize lifecycle proof on latest main
+on:
+  push:
+    branches: [reliability/zero-loss-semantic-ui-20260828]
+    paths: [.github/workflows/finalize-lifecycle-proof.yml]
+permissions: {contents: write}
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Sync current main while preserving minimal lifecycle repair
+        run: |
+          set +e
+          git merge --no-edit origin/main
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            test "$conflicts" = "index.html"
+            git checkout --theirs index.html
+            git add index.html
+            git commit --no-edit
+          fi
+      - name: Wire real lifecycle proof into the one Pages workflow
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml');s=p.read_text()
+          old='''          node --check verify-browser-extra.mjs\n          node --check verify-semantic-invariant.mjs'''
+          new='''          node --check verify-browser-extra.mjs\n          node --check verify-browser-lifecycle.mjs\n          node --check verify-semantic-invariant.mjs'''
+          if s.count(old)!=1: raise SystemExit('syntax insertion anchor mismatch')
+          s=s.replace(old,new,1)
+          old='''          run_browser_verifier verify-browser.mjs\n          run_browser_verifier verify-browser-extra.mjs\n          kill "$SERVER_PID"'''
+          new='''          run_browser_verifier verify-browser.mjs\n          run_browser_verifier verify-browser-extra.mjs\n          run_browser_verifier verify-browser-lifecycle.mjs\n          kill "$SERVER_PID"'''
+          if s.count(old)!=1: raise SystemExit('local Chromium insertion anchor mismatch')
+          s=s.replace(old,new,1)
+          old='''          run_browser_verifier verify-browser.mjs\n          run_browser_verifier verify-browser-extra.mjs\n\n  publish-status:'''
+          new='''          run_browser_verifier verify-browser.mjs\n          run_browser_verifier verify-browser-extra.mjs\n          run_browser_verifier verify-browser-lifecycle.mjs\n\n  publish-status:'''
+          if s.count(old)!=1: raise SystemExit('live Chromium insertion anchor mismatch')
+          s=s.replace(old,new,1)
+          old='''          test "$success" = true\n          kill "$SERVER_PID" 2>/dev/null || true'''
+          new='''          test "$success" = true\n          node verify-browser-lifecycle.mjs > /tmp/verify-browser-lifecycle.out\n          grep -q '"lifecycleOperatorPath":true' /tmp/verify-browser-lifecycle.out\n          kill "$SERVER_PID" 2>/dev/null || true'''
+          if s.count(old)!=1: raise SystemExit('publish lifecycle execution anchor mismatch')
+          s=s.replace(old,new,1)
+          old="""          const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');"""
+          new="""          const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');\n          const lifecycleBrowser=fs.readFileSync('/tmp/verify-browser-lifecycle.out','utf8');"""
+          if s.count(old)!=1: raise SystemExit('report read anchor mismatch')
+          s=s.replace(old,new,1)
+          old='''            blobPersistence:browser.includes('extra:blob-persistence'),\n            deployedByteIdentity:process.env.LIVE_RESULT==='success','''
+          new='''            blobPersistence:browser.includes('extra:blob-persistence'),\n            lifecycleOperatorPath:lifecycleBrowser.includes('"lifecycleOperatorPath":true'),\n            deployedByteIdentity:process.env.LIVE_RESULT==='success','''
+          if s.count(old)!=1: raise SystemExit('report field anchor mismatch')
+          s=s.replace(old,new,1)
+          old="""              browserPersistence:'verify-browser-extra.mjs',\n              deployedIdentity:'verify-live job'"""
+          new="""              browserPersistence:'verify-browser-extra.mjs',\n              lifecycleOperatorPath:'verify-browser-lifecycle.mjs',\n              deployedIdentity:'verify-live job'"""
+          if s.count(old)!=1: raise SystemExit('proofSources anchor mismatch')
+          s=s.replace(old,new,1)
+          old="""          if(!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');"""
+          new="""          if(!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence||!report.lifecycleOperatorPath)throw new Error('Acceptance report proof reduction is incomplete.');"""
+          if s.count(old)!=1: raise SystemExit('report reduction anchor mismatch')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Remove temporary workflow and recompute runtime token
+        run: |
+          rm .github/workflows/finalize-lifecycle-proof.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+              data=Path(path).read_bytes();return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          token='runtime-'+hashlib.sha256(''.join(f'{name}:{blob(name)}\n' for name in files).encode()).hexdigest()[:16]
+          html=Path('index.html').read_text()
+          for name in files:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(name)}\?v=)[^"]+("\s*></script>)'
+              html,n=re.subn(pattern,rf'\g<1>{token}\2',html,count=1)
+              if n!=1: raise SystemExit(f'{name}: expected one script tag, got {n}')
+          Path('index.html').write_text(html)
+          print(token)
+          PY
+      - name: Full deterministic proof stack
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-semantic-invariant.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node --check verify-browser-lifecycle.mjs
+      - name: Combined real Chromium proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/final-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-browser-lifecycle.mjs
+      - name: Commit proven latest-main candidate
+        run: |
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          git add -A
+          test -n "$(git status --porcelain)"
+          git commit -m 'Enforce real project lifecycle browser acceptance'
+          git push origin HEAD:reliability/zero-loss-semantic-ui-20260828
