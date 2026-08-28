@@ -10,7 +10,11 @@ s=s.replace(old,new,1)
 old_ctx="if(ctx&&!['NONE','FALSE','CLEAN','NOT CONTAMINATED',''].includes(upper(recordValue(ctx,'CONTAMINATION_STATUS'))))reasons.push(cid+' context contamination is affirmative.');"
 new_ctx="if(ctx&&['TRUE','YES','CONTAMINATED','DETECTED','POSITIVE'].includes(upper(recordValue(ctx,'CONTAMINATION_STATUS'))))reasons.push(cid+' context contamination is affirmative.');"
 if old_ctx not in s: raise RuntimeError('context contamination epistemic anchor missing')
-s=s.replace(old_ctx,new_ctx,1);p.write_text(s)
+s=s.replace(old_ctx,new_ctx,1)
+old_meaning="if(type==='MEANING'||result&&Object.prototype.hasOwnProperty.call(recordFields(result),'OBSERVED_MEANING')){"
+new_meaning="if(Number(result?.stage)===23||result&&Object.prototype.hasOwnProperty.call(recordFields(result),'OBSERVED_MEANING')){"
+if old_meaning not in s: raise RuntimeError('meaning evidence scope anchor missing')
+s=s.replace(old_meaning,new_meaning,1);p.write_text(s)
 
 p=Path('app-core.js'); s=p.read_text()
 s=s.replace('<h2 class=\"section-title\">What happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually.</p>', '<h2 class=\"section-title\">Verification execution — what happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually. A filename, hash claim, or code block is not file possession. Tests requiring exact artifact bytes that are missing or unverified remain blocked; browser storage alone does not give an external executor access to those bytes.</p>',1)
