@@ -39,7 +39,7 @@ export function recordProposal(schema,collection,{tempKey,targetId,relationships
   }
   if(collection==='preflightRecords'){
     const claim=controlledOutcome(overrides.PREFLIGHT_OBSERVATION??overrides.DETERMINATION);
-    put('PREFLIGHT_OBSERVATION',claim==='SATISFIED'?'CLEAR':claim==='VIOLATED'?'DEFECT_PRESENT':'UNDETERMINED');
+    put('PREFLIGHT_OBSERVATION',claim==='SATISFIED'?'NO_MATERIAL_DEFECT':claim==='VIOLATED'?'MATERIAL_DEFECT':'UNDETERMINED');
   }
   if(['verification','deterministicResults','meaningResults','adversarialResults','representationInspections'].includes(collection)){
     const observed=collection==='verification'?overrides.OBSERVED_RESULT:collection==='deterministicResults'?overrides.ACTUAL_RESULT:collection==='meaningResults'?overrides.EVIDENCE_BASED_COMPARISON:null;
