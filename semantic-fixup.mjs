@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 let s=fs.readFileSync('workflow-engine.js','utf8');
 const before=s;
 s=s.replace('ds=determinations.map(x=>x.determination)','ds=determinations');
@@ -6,4 +7,11 @@ s=s.replace(".filter(x=>x.determination!=='SATISFIED')",".filter(x=>x!=='SATISFI
 s=s.replace(/semantic/gi,'adjudication');
 if(s===before)throw new Error('Expected adjudication fixups were not found.');
 fs.writeFileSync('workflow-engine.js',s);
-console.log('adjudication fixups applied');
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+let html=fs.readFileSync('index.html','utf8');
+for(const file of runtimeFiles)html=html.replace(new RegExp(`${file.replace('.','\\.')}\\?v=[^\"]+`,'g'),`${file}?v=${token}`);
+fs.writeFileSync('index.html',html);
+console.log(`adjudication fixups applied; ${token}`);
