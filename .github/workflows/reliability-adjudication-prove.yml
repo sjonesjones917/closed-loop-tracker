@@ -24,6 +24,12 @@ jobs:
           import re
           p=Path('workflow-engine.js')
           text=p.read_text().replace('semantically contradictory material finding','internally contradictory material finding')
+          old="const authority=String(recordValue(e,'AUTHORITY_TYPE')||'').trim();if((!authority||upper(authority)==='UNKNOWN')&&!result.rawResponseId&&!result.sourceProposalId)reasons.push(`${recordId(e,'evidenceRecords')}: evidence authority is not structurally attributable.`);"
+          new="const authority=String(recordValue(e,'AUTHORITY_TYPE')||'').trim(),attachmentId=String(recordValue(e,'ATTACHMENT_ID')||e.relationships?.ATTACHMENT_ID||'').trim(),applicationVerifiedAttachment=Boolean(attachmentId&&records(project,'artifacts').some(a=>recordId(a,'artifacts')===attachmentId&&upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED'&&/^[a-f0-9]{64}$/i.test(String(recordValue(a,'SHA256')||''))&&Number.isInteger(Number(recordValue(a,'BYTE_SIZE')))&&Number(recordValue(a,'BYTE_SIZE'))>=0));if((!authority||upper(authority)==='UNKNOWN')&&!result.rawResponseId&&!result.sourceProposalId&&!applicationVerifiedAttachment)reasons.push(`${recordId(e,'evidenceRecords')}: evidence authority is not structurally attributable.`);"
+          count=text.count(old)
+          if count != 1:
+              raise SystemExit(f'evidence-authority compatibility: expected 1 occurrence, found {count}')
+          text=text.replace(old,new,1)
           p.write_text(text)
           ps=Path('workflow-schema.js')
           st=ps.read_text()
