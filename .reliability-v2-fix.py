@@ -1,11 +1,16 @@
 from pathlib import Path
+import hashlib,re
 
 # Integration repair for the generated patch. The guarded runner applies this after the main transform and before every acceptance test.
 p=Path('workflow-engine.js'); s=p.read_text()
 old="return {total:items.length,counts,incompleteTestIds,unavailableTestIds,unsupportedApplicationTestIds,missingArtifactTestIds,items,handoff:executionHandoff(project,{stage:Number(project.activeStage||0)})};"
 new="return {total:items.length,counts,incompleteTestIds,unavailableTestIds,unsupportedApplicationTestIds,missingArtifactTestIds,items};"
 if old not in s: raise RuntimeError('testExecutionPlan recursion anchor missing')
-s=s.replace(old,new,1); p.write_text(s)
+s=s.replace(old,new,1)
+old_ctx="if(ctx&&!['NONE','FALSE','CLEAN','NOT CONTAMINATED',''].includes(upper(recordValue(ctx,'CONTAMINATION_STATUS'))))reasons.push(cid+' context contamination is affirmative.');"
+new_ctx="if(ctx&&['TRUE','YES','CONTAMINATED','DETECTED','POSITIVE'].includes(upper(recordValue(ctx,'CONTAMINATION_STATUS'))))reasons.push(cid+' context contamination is affirmative.');"
+if old_ctx not in s: raise RuntimeError('context contamination epistemic anchor missing')
+s=s.replace(old_ctx,new_ctx,1);p.write_text(s)
 
 p=Path('app-core.js'); s=p.read_text()
 s=s.replace('<h2 class=\"section-title\">What happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually.</p>', '<h2 class=\"section-title\">Verification execution — what happens next</h2><p class=\"section-intro\">The application derives executor, capability, exact file custody, and required return evidence from the accepted test definitions. You do not need to interpret execution modes manually. A filename, hash claim, or code block is not file possession. Tests requiring exact artifact bytes that are missing or unverified remain blocked; browser storage alone does not give an external executor access to those bytes.</p>',1)
@@ -32,3 +37,11 @@ contradiction_anchor="const scope={requirementsVersion:'R1',testSuiteVersion:'T1
 contradiction_replacement="const scope=engine.currentScope(p);const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C')"
 if contradiction_anchor not in s: raise RuntimeError('contradiction fixture link anchor missing')
 s=s.replace(contradiction_anchor,contradiction_replacement,1);p.write_text(s)
+
+# Update the one shared runtime cache token from the exact post-patch runtime bytes.
+runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+def git_blob_sha(path):
+    data=Path(path).read_bytes();return hashlib.sha1((f'blob {len(data)}\0').encode()+data).hexdigest()
+manifest=''.join(f'{f}:{git_blob_sha(f)}\n' for f in runtime_files)
+token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+p=Path('index.html'); html=p.read_text();html=re.sub(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]+',lambda m:m.group(1)+token,html);p.write_text(html)
