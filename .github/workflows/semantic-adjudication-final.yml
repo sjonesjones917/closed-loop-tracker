@@ -1,0 +1,66 @@
+name: Semantic adjudication final proof
+on:
+  push:
+    branches: [semantic-adjudication-final-20260827]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[semantic-final]') && !contains(github.event.head_commit.message, '[semantic-diagnostic]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply coordinated patch
+        run: |
+          python3 .fix-semantic-patcher.py
+          python3 .semantic-adjudication-patch.py
+      - name: Prove semantic invariant
+        run: |
+          node --check workflow-engine.js
+          node --check workflow-schema.js
+          node --check verify-semantic-adjudication.mjs
+          node build-test-project.mjs
+          node verify-semantic-adjudication.mjs
+      - name: Run deterministic acceptance stack
+        run: |
+          set -o pipefail
+          : > /tmp/deterministic.log
+          node verify-hash.mjs 2>&1 | tee -a /tmp/deterministic.log
+          node verify.mjs 2>&1 | tee -a /tmp/deterministic.log
+          node verify-ingestion.mjs 2>&1 | tee -a /tmp/deterministic.log
+          node verify-complete.mjs 2>&1 | tee -a /tmp/deterministic.log
+          node verify-full-cycle.mjs 2>&1 | tee -a /tmp/deterministic.log
+          node verify-prompt-semantics.mjs 2>&1 | tee -a /tmp/deterministic.log
+      - name: Persist deterministic failure diagnostic
+        if: failure()
+        run: |
+          cp /tmp/deterministic.log semantic-proof-failure.log || true
+          git checkout -- .semantic-adjudication-patch.py .fix-semantic-patcher.py .github/workflows/semantic-adjudication-final.yml .github/workflows/semantic-adjudication-patch.yml || true
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add semantic-proof-failure.log
+          git commit -m 'chore: semantic deterministic diagnostic [semantic-diagnostic]' || true
+          git push origin HEAD:semantic-adjudication-final-20260827 || true
+      - name: Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/semantic-final-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit exact proven clean tree
+        run: |
+          rm -f .fix-semantic-patcher.py .semantic-adjudication-patch.py semantic-proof-failure.log
+          rm -f .github/workflows/semantic-adjudication-final.yml .github/workflows/semantic-adjudication-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: application-owned semantic adjudication [semantic-final]'
+          git push origin HEAD:semantic-adjudication-final-20260827
