@@ -151,7 +151,16 @@ function updateStageHelp(){
   row.innerHTML=text?`<strong>Include required artifact(s) when needed.</strong> ${esc(text)}`:'';
 }
 
-function provenanceMarkup(n){const manifests=safe(current.projectData.extractionManifests).filter(m=>Number(m.stage)===n),cards=manifests.flatMap(m=>safe(m.entries||m.changes).map(e=>{const rawId=m.rawResponseId||m.RAW_RESPONSE_ID,promptId=m.promptId||m.PROMPT_ID,raw=safe(current.projectData.rawResponses).find(x=>x.rawResponseId===rawId),prompt=safe(current.projectData.generatedPrompts).find(x=>(x.instructionId||x.promptId)===promptId),evidence=safe(e.evidenceIds).map(id=>engine.records(current,'evidenceRecords').find(x=>engine.recordId(x,'evidenceRecords')===id)).filter(Boolean),name=`${e.canonicalCollection||e.canonicalRecordType||''}/${e.canonicalRecordId||''}/${e.canonicalField||e.canonicalRelationship||''}`;return `<details class="record-card provenance-trace"><summary>${esc(name)}<span>Trace</span></summary><div class="record-body"><p class="section-intro">Canonical field → extraction manifest → exact response pointer → preserved raw response → controlling prompt → canonical evidence.</p>${details('Extraction manifest and response pointer',{manifestId:m.manifestId,responsePointer:e.jsonPointer||e.JSON_POINTER_IN_RESPONSE||'',rawResponseId:rawId||'NONE',promptId:promptId||'NONE',evidenceIds:e.evidenceIds||[]},true)}${raw?details('Preserved raw response',raw):'<div class="notice warn">Preserved raw response is unavailable for this trace.</div>'}${prompt?details('Controlling prompt',prompt):'<div class="notice warn">Controlling prompt is unavailable for this trace.</div>'}${evidence.length?details('Canonical evidence',evidence):'<div class="notice warn">No canonical evidence record is linked to this value.</div>'}</div></details>`;}));return cards.length?`<div class="panel"><h2 class="section-title">Provenance navigation</h2><p class="section-intro">Open only the value you need to audit; every hop needed to explain where it came from is available in the same trace.</p>${cards.join('')}</div>`:'';}
+function provenanceAnchor(kind,id){return `provenance-${kind}-${String(id||'UNKNOWN').replace(/[^A-Za-z0-9_-]+/g,'-')}`;}
+function provenanceMarkup(n){
+  const manifests=safe(current.projectData.extractionManifests).filter(m=>Number(m.stage)===n),rawById=new Map(safe(current.projectData.rawResponses).map(x=>[String(x.rawResponseId||''),x])),promptById=new Map(safe(current.projectData.generatedPrompts).map(x=>[String(x.instructionId||x.promptId||''),x])),evidenceById=new Map(engine.records(current,'evidenceRecords').map(x=>[String(engine.recordId(x,'evidenceRecords')||''),x])),usedRaw=new Set(),usedPrompts=new Set(),usedEvidence=new Set();
+  const cards=manifests.flatMap(m=>safe(m.entries||m.changes).map(e=>{const rawId=String(m.rawResponseId||m.RAW_RESPONSE_ID||''),promptId=String(m.promptId||m.PROMPT_ID||''),evidenceIds=safe(e.evidenceIds).map(String),name=`${e.canonicalCollection||e.canonicalRecordType||''}/${e.canonicalRecordId||''}/${e.canonicalField||e.canonicalRelationship||''}`;if(rawId)usedRaw.add(rawId);if(promptId)usedPrompts.add(promptId);evidenceIds.forEach(id=>usedEvidence.add(id));const links=[rawId&&rawById.has(rawId)?`<a href="#${esc(provenanceAnchor('raw',rawId))}">Preserved raw response</a>`:'',promptId&&promptById.has(promptId)?`<a href="#${esc(provenanceAnchor('prompt',promptId))}">Controlling prompt</a>`:'',...evidenceIds.filter(id=>evidenceById.has(id)).map(id=>`<a href="#${esc(provenanceAnchor('evidence',id))}">Evidence ${esc(id)}</a>`)].filter(Boolean).join(' · ');return `<details class="record-card provenance-trace"><summary>${esc(name)}<span>Trace</span></summary><div class="record-body"><p class="section-intro">Canonical field → extraction manifest → exact response pointer → preserved raw response → controlling prompt → canonical evidence.</p><p class="compact-provenance-targets">Preserved raw response: ${esc(rawId||'NONE')} · Controlling prompt: ${esc(promptId||'NONE')} · Canonical evidence: ${esc(evidenceIds.length?evidenceIds.join(', '):'NONE')}</p>${details('Extraction manifest and response pointer',{manifestId:m.manifestId,responsePointer:e.jsonPointer||e.JSON_POINTER_IN_RESPONSE||'',rawResponseId:rawId||'NONE',promptId:promptId||'NONE',evidenceIds},true)}${links?`<div class="notice provenance-links">${links}</div>`:'<div class="notice warn">One or more provenance targets are unavailable for this trace.</div>'}</div></details>`;}));
+  if(!cards.length)return '';
+  const rawLookups=[...usedRaw].map(id=>rawById.get(id)).filter(Boolean).map(raw=>`<div id="${esc(provenanceAnchor('raw',raw.rawResponseId))}">${details(`Preserved raw response — ${raw.rawResponseId}`,raw)}</div>`).join('');
+  const promptLookups=[...usedPrompts].map(id=>promptById.get(id)).filter(Boolean).map(prompt=>{const id=prompt.instructionId||prompt.promptId;return `<div id="${esc(provenanceAnchor('prompt',id))}">${details(`Controlling prompt — ${id}`,prompt)}</div>`;}).join('');
+  const evidenceLookups=[...usedEvidence].map(id=>evidenceById.get(id)).filter(Boolean).map(record=>{const id=engine.recordId(record,'evidenceRecords');return `<div id="${esc(provenanceAnchor('evidence',id))}">${details(`Canonical evidence — ${id}`,record)}</div>`;}).join('');
+  return `<div class="panel"><h2 class="section-title">Provenance navigation</h2><p class="section-intro">Each accepted field points to shared provenance targets. Large raw responses and prompts are rendered once per source record instead of being duplicated inside every field trace.</p>${cards.join('')}<details class="record-card provenance-targets"><summary>Provenance source records<span>${usedRaw.size+usedPrompts.size+usedEvidence.size}</span></summary><div class="record-body">${rawLookups}${promptLookups}${evidenceLookups}</div></details></div>`;
+}
 function workflow(){const n=current.activeStage,d=core.STAGES[n-1],s=current.stages[n],lock=stageLocked(n),locked=Boolean(lock)&&s.status!=='COMPLETE',savedPrompt=currentPromptRecord(n),prompt=savedPrompt?.prompt||currentStagePrompt(n),responseLocked=locked||s.status==='COMPLETE',latestValidation=safe(current.projectData.responseValidations).filter(x=>Number(x.stage)===n).at(-1),retryPreview=!savedPrompt&&latestValidation&&!latestValidation.valid,promptIntro=savedPrompt?'This exact saved instruction is the controlling request. Its identity and strict response contract are embedded below.':retryPreview?'Updated correction instruction preview. The latest validation failure is included automatically. Save or copy this updated instruction before sending it to the agent; only the committed instruction identity is controlling.':'This is an unsaved preview. Save or copy it before sending it to an agent; only the committed instruction identity is controlling.';return `<div class="panel"><div class="stage-nav"><button data-stage="${Math.max(1,n-1)}" aria-label="Previous stage">‹</button><select id="stage-picker">${core.STAGES.map(x=>`<option value="${x.number}"${x.number===n?' selected':''}>${String(x.number).padStart(2,'0')} — ${esc(x.title)}</option>`).join('')}</select><button data-stage="${Math.min(30,n+1)}" aria-label="Next stage">›</button></div></div><div class="hero stage-hero"><div class="hero-top"><div><h2>Stage ${String(n).padStart(2,'0')} — ${esc(d.title)}</h2><p>${esc(d.result)}</p></div><span class="status ${statusClass(s.status)}">${esc(s.status)}</span></div><div class="stage-action-strip"><span>${esc(current.job.CURRENT_STATE)}</span><span>${esc(current.job.NEXT_REQUIRED_ACTION)}</span></div></div>${locked?`<div class="notice warn">${esc(lock)}</div>`:''}${n===1?'<div class="notice"><strong>Talk with the agent before final JSON.</strong> Answer needed questions in ChatGPT and stay there until the agent has enough information and returns the final JSON. Return to this app for that final JSON; use the app clarification controls only when an unresolved fallback question is explicitly shown here.</div>':''}${n===2?'<div class="notice"><strong>Independent external sources only.</strong> Prefer primary/official controlling authority where it exists; otherwise use the most authoritative, reputable, direct evidence appropriate to the domain. Existing target and repository artifacts may be implementation evidence for an audit/repair job, but they cannot become independent source authority merely by existing.</div>':''}${humanStageMarkup(n,locked)}${clarificationMarkup(n,locked)}${operationMarkup(n,locked)}${runBatchMarkup(n)}${testExecutionGuidanceMarkup(n)}${stabilityMarkup(n)}${regressionLifecycleMarkup(n)}${contradictionMarkup()}${evidenceExplanationMarkup(n)}${interactionModeMarkup(n)}<div class="panel" id="prompt-heading" tabindex="-1"><h2 class="section-title">Generated instruction</h2><p class="section-intro">${promptIntro}</p><pre class="prompt expandable-prompt" id="generated-prompt" tabindex="0">${esc(prompt)}</pre><div class="prompt-toolbar"><span class="prompt-meta">${prompt.length.toLocaleString()} characters · exact controlling copy block</span><div class="button-row"><button id="toggle-prompt" aria-expanded="false">Expand preview</button><button id="save-prompt"${locked?' disabled':''}>Save instruction</button><button class="primary" id="copy-prompt"${locked?' disabled':''}>Save and copy instruction</button></div></div></div>${pendingProposal()?'':validationMarkup(n)}<div class="panel"><h2 class="section-title">Returned agent response</h2><p class="section-intro">Paste only the final strict JSON from ChatGPT after the conversation is complete. If ChatGPT is still asking you questions, answer them there instead of pasting that conversation here. Parse / validate preserves the raw response first, then validates it without changing canonical project records. If the final response declares returned files, attach those exact files in Authorized files for this stage before parsing.</p><textarea class="code-text stage-output" id="stage-output"${responseLocked?' disabled':''}>${esc(s.responseDraft||'')}</textarea><div class="stage-output-hint"><span>Complete JSON only — no Markdown wrapper.</span><span>${s.responseDraft?`${s.responseDraft.length.toLocaleString()} characters pasted`:'No response pasted yet'}</span></div><div class="button-row"><button class="primary" id="parse-output"${responseLocked?' disabled':''}>Parse / validate response</button></div></div>${proposalMarkup(n)}${stageConfirmationMarkup(n,locked)}${acceptedStageMarkup(n)}${artifactControlMarkup(n,locked)}${provenanceMarkup(n)}${controls(d,locked)}`;}
 function records(){const d=current.projectData,groups=[['Original user-entered data',d.userEntered],['Stage records',d.stageRecords],['Generated instructions',d.generatedPrompts],['Raw agent responses',d.rawResponses],['Parsed proposals',d.responseProposals],['Validation reports',d.responseValidations],['Accepted canonical changes',d.acceptedChanges],['Rejected responses',d.rejectedResponses],['Extraction manifests',d.extractionManifests],['Human input requests',d.humanInputRequests],['Human input answers',d.humanInputAnswers],['Stage confirmations',d.stageConfirmations],['Generated outputs',d.generatedOutputs],['Output receipts',d.outputReceipts],['External sources',d.sources],['Source conflicts',d.sourceConflicts],['Research',d.research],['Candidate requirements',d.candidateRequirements],['Requirements',d.requirements],['Tests',d.tests],['Failure tests',d.failureTests],['Production instructions',d.instructions],['Instruction reviews',d.preflightRecords],['Fresh contexts',d.freshContexts],['Candidate freezes',d.candidateFreezes],['Iterations',d.iterations],['Run records',d.runs],['Verification records',d.verification],['Cross-run comparisons',d.comparisons],['Defects',d.defects],['Root causes',d.rootCauses],['Regressions',d.regressions],['Changes and invalidations',d.changes],['Blockers',d.blockers],['Convergence',d.convergenceRecords],['Confirmation',d.confirmationRecords],['Baselines',d.baselines],['Products',d.products],['Deterministic verification',d.deterministicResults],['Independent meaning review',d.meaningResults],['Adversarial review',d.adversarialResults],['Representation inspections',d.representationInspections],['Process audits',d.processAudits],['Product audits',d.productAudits],['Release gate reviews',d.releaseGateReviews],['Release records',d.releaseRecords],['Artifact identity records',d.artifactIdentities],['Evidence investigations',d.evidenceInvestigations],['Evidence chains',d.evidenceChains],['Permanent registry',d.permanentRegistry],['New-job reset records',d.newJobResets],['History',d.history],['Migration archives',d.migrationArchives],['Recovered original projects',d.recoveredProjects]];return `<div class="panel"><h2 class="section-title">Complete project record</h2><p class="section-intro">All actual User Job Input, prompts, raw responses, accepted canonical records, evidence, decisions, release records, and retained failures remain inspectable.</p><div class="record-stack">${groups.filter(([,v])=>v&&(!(Array.isArray(v))||v.length)&&(!(typeof v==='object'&&!Array.isArray(v))||Object.keys(v).length)).map(([n,v])=>details(n,v)).join('')}</div></div>`;}
 function files(){const all=[...safe(current.projectData.artifacts),...Object.values(current.stages).flatMap(s=>safe(s.authorizedFiles))];return `<div class="panel"><h2 class="section-title">Files and artifacts</h2><p class="section-intro">Hashes are calculated only from actual bytes available to the browser. Metadata-only or external references remain identified as such.</p>${all.length?details('Recorded file identities',all,true):'<div class="empty-state">No file bytes or artifact metadata have been recorded.</div>'}</div>`;}
@@ -224,4 +233,140 @@ async function addNew(){const p=ensureState(core.createBlankState(createUniqueJo
 async function load(){core=globalThis.closedLoopCore;schema=globalThis.closedLoopWorkflowSchema;engine=globalThis.closedLoopWorkflowEngine;ingestion=globalThis.closedLoopResponseIngestion;projectStore=globalThis.closedLoopProjectStore;if(!core||!schema||!engine||!ingestion||!projectStore)throw new Error('Closed-loop runtime modules did not load.');await projectStore.ready;const savedSelectedProjectId=await projectStore.metaGet('selectedProject');projects=(await projectStore.readAll()).filter(Boolean).map(normalize);let needsPersist=false;try{const res=await fetch(`TEST_PROJECT.json?retained=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);let test=importSeed(await res.json()),i=projects.findIndex(p=>p.isRetainedTestProject||p.job.JOB_ID===test.job.JOB_ID);if(i>=0){const stored=projects[i];projects.splice(i,1);if(stored.retainedSpecRevision&&stored.retainedSpecRevision===test.retainedSpecRevision)test=stored;else needsPersist=true;}else needsPersist=true;projects.unshift(test);}catch(error){console.error('Bundled retained project could not load',error);}if(!projects.length){projects=[ensureState(core.createBlankState(createUniqueJobId()))];needsPersist=true;}current=projects.find(p=>p.job?.JOB_ID===savedSelectedProjectId)||projects[0];if(needsPersist){const selectedId=current.job.JOB_ID;projects=await projectStore.writeAll(projects);current=projects.find(p=>p.job?.JOB_ID===selectedId)||projects[0];await projectStore.metaPut('selectedProject',current.job.JOB_ID);}const health=await projectStore.storageHealth();globalThis.closedLoopStorageHealth=health;const node=$('#storage-status');if(node)node.textContent=`Storage: ${health.persistent?'persistent':'not persistent'} · ${health.usage??'unknown'} / ${health.quota??'unknown'} bytes · revision ${health.lastCommittedRevision?.revision??current.revision??0}`;render();}
 $('#project-picker').onchange=async e=>{current=projects[Number(e.target.value)];await projectStore.metaPut('selectedProject',current.job.JOB_ID);render();};$('#new-project').onclick=addNew;$('#export-project').onclick=async()=>{try{const blob=await projectStore.exportPackage(current.job.JOB_ID),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${current.job.JOB_ID||'project'}.closed-loop.json.gz`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),0);announce('project package exported');}catch(error){alert(`Complete export failed: ${error.message||error}`);}};$('#import-project').onclick=()=>$('#import-file').click();$('#import-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const before=clone(projects);try{const imported=await projectStore.importPackage(f);projects=(await projectStore.readAll()).filter(Boolean).map(normalize);current=projects.find(x=>x.job.JOB_ID===imported.job.JOB_ID)||projects[0];announce('project package imported and reloaded');render();}catch(error){projects=before;alert(`Import rejected without changing existing projects: ${error.message||error}`);}finally{e.target.value='';}};
 globalThis.closedLoopAppReady=false;globalThis.closedLoopAppError=null;const startClosedLoopApp=()=>load().then(()=>{globalThis.closedLoopAppReady=true;}).catch(error=>{globalThis.closedLoopAppError=String(error?.stack||error);console.error(error);announce('storage failed');});if(globalThis.closedLoopCore)startClosedLoopApp();else addEventListener('closed-loop-core-ready',startClosedLoopApp,{once:true});
+// Long-section navigation belongs to the UI layer. It is frame-coalesced and samples only viewport-intersecting sections to avoid synchronous whole-document layout scans on mobile.
+if(typeof document!=='undefined'){
+  const jumpId='prompt-bottom-jump';
+  function promptBottomJump(){
+    let button=document.getElementById(jumpId);
+    if(button)return button;
+    button=document.createElement('button');
+    button.id=jumpId;
+    button.type='button';
+    button.textContent='↓';
+    button.setAttribute('aria-label','Scroll to bottom of expanded message');
+    button.title='Scroll to bottom of expanded message';
+    Object.assign(button.style,{position:'fixed',right:'max(6px, env(safe-area-inset-right))',bottom:'calc(12px + env(safe-area-inset-bottom))',zIndex:'40',width:'44px',height:'44px',minWidth:'44px',minHeight:'44px',padding:'0',border:'1px solid #164f45',borderRadius:'999px',background:'#164f45',color:'#fff',font:'800 22px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',boxShadow:'0 4px 14px rgba(21,24,23,.16)',cursor:'pointer',display:'grid',placeItems:'center',touchAction:'manipulation'});
+    button.hidden=true;
+    button.addEventListener('click',()=>{
+      const prompt=document.getElementById('generated-prompt');
+      if(!prompt?.classList.contains('expanded'))return;
+      const toolbar=prompt.parentElement?.querySelector('.prompt-toolbar');
+      toolbar?.scrollIntoView({behavior:'smooth',block:'end'});
+    });
+    document.body.append(button);
+    return button;
+  }
+  function syncPromptBottomJump(){syncMatchedScrollJumps();}
+  document.addEventListener('click',event=>{
+    const toggle=event.target?.closest?.('#toggle-prompt');
+    const prompt=document.getElementById('generated-prompt');
+    const wasExpanded=Boolean(toggle&&prompt?.classList.contains('expanded'));
+    queueMicrotask(syncPromptBottomJump);
+    if(wasExpanded){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        const currentPrompt=document.getElementById('generated-prompt');
+        if(currentPrompt?.classList.contains('expanded'))return;
+        currentPrompt?.parentElement?.querySelector('.prompt-toolbar')?.scrollIntoView({block:'end'});
+      }));
+    }
+  });
+  document.addEventListener('change',()=>queueMicrotask(syncPromptBottomJump));
+
+
+  function matchedScrollJump(id,text,ariaLabel,bottomOffset,handler){
+    let button=document.getElementById(id);
+    if(button)return button;
+    button=document.createElement('button');
+    button.id=id;
+    button.type='button';
+    button.textContent=text;
+    button.setAttribute('aria-label',ariaLabel);
+    button.title=ariaLabel;
+    button.style.cssText=promptBottomJump().style.cssText;
+    button.style.bottom=`calc(${bottomOffset}px + env(safe-area-inset-bottom))`;
+    button.hidden=true;
+    button.addEventListener('click',handler);
+    document.body.append(button);
+    return button;
+  }
+  function scrollToMatchedTarget(target,block){
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block,inline:'nearest'});
+    requestAnimationFrame(()=>target.focus?.({preventScroll:true}));
+  }
+  const promptTopJump=matchedScrollJump('prompt-top-jump','↑','Scroll to top of expanded message',62,()=>scrollToMatchedTarget(document.getElementById('prompt-heading'),'start'));
+  const reviewTopJump=matchedScrollJump('review-top-jump','↑','Scroll to top of proposal review',62,()=>scrollToMatchedTarget(document.getElementById('proposal-heading'),'start'));
+  const reviewBottomJump=matchedScrollJump('review-bottom-jump','↓','Scroll to bottom of proposal review',12,()=>scrollToMatchedTarget(document.getElementById('proposal-actions'),'end'));
+  let activeLongSection=null;
+  function sectionSummary(section){
+    const first=section?.firstElementChild;
+    return first?.tagName==='SUMMARY'?first:section?.querySelector('summary');
+  }
+  function sectionDepth(section){
+    let depth=0,node=section;
+    while(node?.parentElement){depth++;node=node.parentElement;}
+    return depth;
+  }
+  function scrollJumpBounds(rect){
+    if(!rect||rect.height<=innerHeight)return {active:false,top:false,bottom:false};
+    const visible=Math.max(0,Math.min(rect.bottom,innerHeight)-Math.max(rect.top,0));
+    const minimumVisible=Math.min(320,Math.max(180,innerHeight*.38));
+    if(visible<minimumVisible)return {active:false,top:false,bottom:false};
+    const edgeInset=Math.min(112,Math.max(72,innerHeight*.1));
+    return {active:true,top:rect.top<-edgeInset,bottom:rect.bottom>innerHeight+edgeInset};
+  }
+  function visibleLongSection(){
+  const x=Math.max(1,Math.min(innerWidth-1,innerWidth/2)),ys=[Math.max(1,innerHeight*.25),Math.max(1,innerHeight*.5),Math.max(1,innerHeight*.75)];
+  const seen=new Set(),candidates=[];
+  for(const y of ys){
+    let section=document.elementFromPoint(x,y)?.closest?.('details.record-card[open]')||null;
+    while(section){
+      if(!seen.has(section)&&!section.closest('#proposal-heading')){const rect=section.getBoundingClientRect();if(scrollJumpBounds(rect).active)candidates.push({section,rect,depth:sectionDepth(section)});seen.add(section);}
+      section=section.parentElement?.closest?.('details.record-card[open]')||null;
+    }
+  }
+  candidates.sort((a,b)=>b.depth-a.depth||Math.abs(a.rect.top)-Math.abs(b.rect.top));
+  return candidates[0]?.section||null;
+}
+  const sectionTopJump=matchedScrollJump('section-top-jump','↑','Scroll to top of long section',62,()=>scrollToMatchedTarget(sectionSummary(activeLongSection)||activeLongSection,'start'));
+  const sectionBottomJump=matchedScrollJump('section-bottom-jump','↓','Scroll to bottom of long section',12,()=>scrollToMatchedTarget(activeLongSection,'end'));
+  function syncMatchedScrollJumps(){
+    const prompt=document.getElementById('generated-prompt');
+    const promptRect=prompt?.getBoundingClientRect();
+    const promptBounds=scrollJumpBounds(promptRect);
+    const review=document.getElementById('proposal-heading');
+    const reviewRect=review?.getBoundingClientRect();
+    const reviewBounds=scrollJumpBounds(reviewRect);
+    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);
+    const reviewActive=Boolean(longReview&&reviewBounds.active);
+    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
+    const promptActive=Boolean(prompt?.classList.contains('expanded')&&promptBounds.active&&!reviewActive&&!reviewPast);
+    activeLongSection=!reviewActive&&!promptActive?visibleLongSection():null;
+    const sectionBounds=scrollJumpBounds(activeLongSection?.getBoundingClientRect());
+    const sectionActive=Boolean(activeLongSection&&sectionBounds.active);
+    promptBottomJump().hidden=!(promptActive&&promptBounds.bottom);
+    promptTopJump.hidden=!(promptActive&&promptBounds.top);
+    reviewTopJump.hidden=!(reviewActive&&reviewBounds.top);
+    reviewBottomJump.hidden=!(reviewActive&&reviewBounds.bottom);
+    sectionTopJump.hidden=!(sectionActive&&sectionBounds.top);
+    sectionBottomJump.hidden=!(sectionActive&&sectionBounds.bottom);
+    if(sectionActive){
+      const name=String(sectionSummary(activeLongSection)?.textContent||'section').replace(/\s+/g,' ').trim()||'section';
+      sectionTopJump.setAttribute('aria-label','Scroll to top of '+name);
+      sectionBottomJump.setAttribute('aria-label','Scroll to bottom of '+name);
+      sectionTopJump.title='Scroll to top of '+name;
+      sectionBottomJump.title='Scroll to bottom of '+name;
+    }
+  }
+  let syncFrame=0;
+function scheduleMatchedScrollJumps(){if(syncFrame)return;syncFrame=requestAnimationFrame(()=>{syncFrame=0;syncMatchedScrollJumps();});}
+document.addEventListener('click',scheduleMatchedScrollJumps);
+document.addEventListener('change',scheduleMatchedScrollJumps);
+document.addEventListener('toggle',scheduleMatchedScrollJumps,true);
+document.addEventListener('closed-loop-rendered',scheduleMatchedScrollJumps);
+addEventListener('scroll',scheduleMatchedScrollJumps,{passive:true});
+addEventListener('resize',scheduleMatchedScrollJumps,{passive:true});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scheduleMatchedScrollJumps,{once:true});
+else scheduleMatchedScrollJumps();
+}
 })();
