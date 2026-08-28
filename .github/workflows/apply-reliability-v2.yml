@@ -26,16 +26,36 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-prompt-semantics.mjs
           node --check verify-browser-extra.mjs
-      - name: Build retained project
-        run: node build-test-project.mjs
-      - name: Verify canonical architecture
-        run: node verify.mjs
-      - name: Verify ingestion
-        run: node verify-ingestion.mjs
-      - name: Verify workflow gates
-        run: node verify-complete.mjs
-      - name: Verify prompt semantics
-        run: node verify-prompt-semantics.mjs
+      - name: Run all non-browser diagnostics
+        id: diagnostics
+        continue-on-error: true
+        run: |
+          set +e
+          : > reliability-diagnostics.log
+          for cmd in \
+            "node build-test-project.mjs" \
+            "node verify.mjs" \
+            "node verify-ingestion.mjs" \
+            "node verify-complete.mjs" \
+            "node verify-prompt-semantics.mjs"; do
+            echo "===== $cmd =====" | tee -a reliability-diagnostics.log
+            bash -lc "$cmd" >> reliability-diagnostics.log 2>&1
+            code=$?
+            echo "EXIT=$code" | tee -a reliability-diagnostics.log
+            if [ $code -ne 0 ]; then echo "$cmd" >> reliability-failures.txt; fi
+          done
+          test ! -s reliability-failures.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability-v2-diagnostics
+          path: |
+            reliability-diagnostics.log
+            reliability-failures.txt
+          if-no-files-found: ignore
+      - name: Stop on non-browser diagnostic failure
+        if: steps.diagnostics.outcome == 'failure'
+        run: exit 1
       - name: Browser workflow
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -48,7 +68,7 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit only verified production and regression changes
         run: |
-          rm -f .reliability-v2-patch.py .github/workflows/apply-reliability-v2.yml
+          rm -f .reliability-v2-patch.py .github/workflows/apply-reliability-v2.yml reliability-diagnostics.log reliability-failures.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
