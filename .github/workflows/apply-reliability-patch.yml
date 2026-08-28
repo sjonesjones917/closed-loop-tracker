@@ -1,0 +1,39 @@
+name: Apply deterministic reliability patch
+on:
+  push:
+    branches: [reliability/execution-evidence-independence]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability/execution-evidence-independence
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply source patch
+        run: |
+          node --check apply-reliability-patch.mjs
+          node apply-reliability-patch.mjs
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+      - name: Run focused deterministic verification
+        run: |
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit integrated source and remove one-time patch machinery
+        run: |
+          rm apply-reliability-patch.mjs .github/workflows/apply-reliability-patch.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "feat: derive execution evidence and independence reliability"
+          git push origin HEAD:reliability/execution-evidence-independence
