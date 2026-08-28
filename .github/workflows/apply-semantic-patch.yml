@@ -6,7 +6,7 @@ permissions:
   contents: write
 jobs:
   patch:
-    if: github.event.head_commit.message != 'Fix adjudication aggregation and runtime identity'
+    if: github.event.head_commit.message != 'Complete application-owned adjudication layer'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +18,8 @@ jobs:
       - run: node semantic-fixup.mjs
       - run: |
           node --check workflow-engine.js
+          node --check workflow-schema.js
+          node --check response-ingestion.js
           node --check verify-semantic-invariant.mjs
           node build-test-project.mjs
           node verify-hash.mjs
@@ -31,7 +33,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js index.html
+          git add workflow-engine.js workflow-schema.js response-ingestion.js index.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Fix adjudication aggregation and runtime identity'
+          git commit -m 'Complete application-owned adjudication layer'
           git push origin HEAD:semantic-adjudication-20260827
