@@ -27,12 +27,20 @@ jobs:
           e.write_text(e.read_text().replace('semantically contradictory material finding','internally contradictory material finding'))
           p=Path('workflow-schema.js')
           s=p.read_text()
-          m=re.search(r'(verificationResults\s*:\s*recordSchema\(\{.*?fields\s*:\s*\[)(.*?)(\])',s,re.S)
-          if not m: raise SystemExit('verificationResults field list not found')
-          body=m.group(2)
+          title='Requirement-by-run verification'
+          ti=s.find(title)
+          if ti < 0: raise SystemExit('verification record title not found')
+          start=s.rfind('recordSchema({',0,ti)
+          if start < 0: raise SystemExit('verification record start not found')
+          m=re.search(r'fields\s*:\s*\[([^\]]*)\]',s[start:ti+5000],re.S)
+          if not m: raise SystemExit('verification record fields list not found')
+          abs_a=start+m.start(1); abs_b=start+m.end(1)
+          body=s[abs_a:abs_b]
           if 'OBSERVATION_OUTCOME' not in body:
-              body=body.rstrip()+",'OBSERVATION_OUTCOME'"
-              s=s[:m.start(2)]+body+s[m.end(2):]
+              trimmed=body.rstrip()
+              sep='' if not trimmed else ('' if trimmed.endswith(',') else ',')
+              body=trimmed+sep+"'OBSERVATION_OUTCOME'"+body[len(body.rstrip()):]
+              s=s[:abs_a]+body+s[abs_b:]
           p.write_text(s)
           PY
       - name: Syntax checks
