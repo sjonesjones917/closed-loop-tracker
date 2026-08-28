@@ -1,0 +1,136 @@
+name: Apply coordinated zero-loss mobile correction
+on:
+  push:
+    branches: [reliability/zero-loss-coordinated-20260828]
+    paths: ['.github/workflows/apply-zero-loss-mobile-bounded.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded historical-stage navigation in the UI layer
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, hashlib
+
+          p=Path('app-core.js')
+          s=p.read_text()
+
+          old="const operationSelection={},runSelection={};"
+          new="const operationSelection={},runSelection={};let compactHistoricalNavigationStage=0;"
+          if old not in s:
+              raise SystemExit('selection state target missing')
+          s=s.replace(old,new,1)
+
+          marker="function workflow(){const n=current.activeStage,d=core.STAGES[n-1],s=current.stages[n],lock=stageLocked(n),"
+          if marker not in s:
+              raise SystemExit('workflow marker missing')
+          helper=r'''function canonicalCurrentStageNumber(){return Math.max(1,Math.min(30,Number(String(current?.job?.CURRENT_STAGE||'').match(/\d+/)?.[0]||1)));}
+          function historicalNavigationSummary(n,d,s){
+            if(compactHistoricalNavigationStage!==n||s.status!=='COMPLETE'||n>=canonicalCurrentStageNumber())return '';
+            const acceptedCount=safe(current.projectData.acceptedChanges).filter(x=>Number(x.stage)===n).length,manifestCount=safe(current.projectData.extractionManifests).filter(x=>Number(x.stage)===n).length,currentNumber=canonicalCurrentStageNumber();
+            return `<div class="panel"><div class="stage-nav"><button data-stage="${Math.max(1,n-1)}" aria-label="Previous stage">‹</button><select id="stage-picker">${core.STAGES.map(x=>`<option value="${x.number}"${x.number===n?' selected':''}>${String(x.number).padStart(2,'0')} — ${esc(x.title)}</option>`).join('')}</select><button data-stage="${Math.min(30,n+1)}" aria-label="Next stage">›</button></div></div><div class="hero stage-hero"><div class="hero-top"><div><h2>Stage ${String(n).padStart(2,'0')} — ${esc(d.title)}</h2><p>${esc(d.result)}</p></div><span class="status ${statusClass(s.status)}">${esc(s.status)}</span></div></div><div class="panel" id="historical-stage-summary" tabindex="-1"><h2 class="section-title">Completed stage summary</h2><p class="section-intro">This completed stage is shown in a bounded summary so navigation remains responsive. No canonical project record was changed.</p><div class="facts"><div class="fact"><strong>${acceptedCount}</strong><span>Accepted changes</span></div><div class="fact"><strong>${manifestCount}</strong><span>Extraction manifests</span></div></div><div class="notice success"><strong>Canonical state changed: NO</strong><br>Current workflow stage remains Stage ${String(currentNumber).padStart(2,'0')}. The complete prompt, raw response, proposal, accepted records, provenance, and evidence remain preserved.</div><div class="button-row"><button id="open-full-historical-stage">Open full Stage ${String(n).padStart(2,'0')} audit details</button><button data-stage="${currentNumber}">Return to current Stage ${String(currentNumber).padStart(2,'0')}</button></div></div>`;
+          }
+          '''
+          s=s.replace(marker,helper+"function workflow(){const n=current.activeStage,d=core.STAGES[n-1],s=current.stages[n],historical=historicalNavigationSummary(n,d,s);if(historical)return historical;const lock=stageLocked(n),",1)
+
+          old="document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{current.activeStage=Number(b.dataset.stage);current.activeView='Workflow';render();});"
+          new="document.querySelectorAll('[data-stage]').forEach(b=>b.onclick=()=>{const prior=current.activeStage,target=Number(b.dataset.stage),isPrevious=b.getAttribute('aria-label')==='Previous stage';compactHistoricalNavigationStage=isPrevious&&target<prior&&current.stages[target]?.status==='COMPLETE'?target:0;current.activeStage=target;current.activeView='Workflow';render();if(compactHistoricalNavigationStage===target)queueMicrotask(()=>$('#historical-stage-summary')?.focus());});"
+          if old not in s:
+              raise SystemExit('data-stage handler target missing')
+          s=s.replace(old,new,1)
+
+          old="if($('#stage-picker'))$('#stage-picker').onchange=e=>{current.activeStage=Number(e.target.value);render();};"
+          new="if($('#stage-picker'))$('#stage-picker').onchange=e=>{compactHistoricalNavigationStage=0;current.activeStage=Number(e.target.value);render();};if($('#open-full-historical-stage'))$('#open-full-historical-stage').onclick=()=>{compactHistoricalNavigationStage=0;render();queueMicrotask(()=>$('#prompt-heading')?.focus());};"
+          if old not in s:
+              raise SystemExit('stage-picker handler target missing')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          b=Path('verify-browser.mjs')
+          bs=b.read_text()
+          anchor="assert(text.includes(retained.projectData.sources[0].SOURCE_ID||retained.projectData.sources[0].id),'Stage 03 prompt does not reference accepted source identity.');"
+          addition=anchor+"const historicalBackStarted=Date.now();await click(cdp,'button[aria-label=\\\"Previous stage\\\"]');await waitExpr(cdp,`Boolean(document.querySelector('#historical-stage-summary'))`,2000);assert(Date.now()-historicalBackStarted<2000,'Completed-stage Back navigation did not paint the bounded summary within 2 seconds.');text=(await snapshot(cdp)).text;assert(text.includes('Canonical state changed: NO')&&text.includes('Open full Stage 02 audit details'),'Historical-stage summary omitted canonical-change certainty or full-audit access.');"
+          if anchor not in bs:
+              raise SystemExit('browser insertion anchor missing')
+          if 'historicalBackStarted' not in bs:
+              bs=bs.replace(anchor,addition,1)
+          b.write_text(bs)
+
+          e=Path('verify-browser-extra.mjs')
+          es=e.read_text()
+          block=r'''
+
+          // Reported iPhone path: completed-stage Back navigation must take the bounded early-return path before prompt/provenance assembly.
+          {
+           const appSource=fs.readFileSync('app-core.js','utf8');
+           for(const token of ['compactHistoricalNavigationStage','historicalNavigationSummary','Canonical state changed: NO','Open full Stage','isPrevious&&target<prior'])if(!appSource.includes(token))throw new Error('Missing bounded historical-navigation protection: '+token);
+           const workflowStart=appSource.indexOf('function workflow(){');
+           const summaryUse=appSource.indexOf('historical=historicalNavigationSummary',workflowStart);
+           const gateUse=appSource.indexOf('stageLocked(n)',workflowStart);
+           if(workflowStart<0||summaryUse<workflowStart||gateUse<summaryUse)throw new Error('Historical navigation summary is not evaluated before expensive stage assembly.');
+          }
+          '''
+          if 'Reported iPhone path:' not in es:
+              es+=block
+          e.write_text(es)
+
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blobsha(path):
+              data=Path(path).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          manifest=''.join(f'{name}:{blobsha(name)}\n' for name in runtime)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          index=Path('index.html')
+          html=index.read_text()
+          html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
+          if count!=8:
+              raise SystemExit(f'Expected 8 runtime tokens, replaced {count}')
+          index.write_text(html)
+          print(token)
+          PY
+          node --check app-core.js
+          node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
+      - name: Prove all existing deterministic and semantic invariants unchanged
+        shell: bash
+        run: |
+          node build-test-project.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-full-cycle.mjs
+      - name: Prove the exact reported path and all existing Chromium acceptance
+        shell: bash
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit the tested coordinated patch and restore the single-workflow tree
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/workflows/apply-zero-loss-mobile-bounded.yml .github/workflows/zero-loss-source-export.yml
+          git add app-core.js verify-browser.mjs verify-browser-extra.mjs index.html
+          git commit -m 'Bound completed-stage mobile navigation without changing canonical state'
+          git push origin HEAD:reliability/zero-loss-coordinated-20260828
