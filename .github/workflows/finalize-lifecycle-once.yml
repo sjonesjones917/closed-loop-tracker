@@ -16,6 +16,17 @@ jobs:
         with: {node-version: '22'}
       - name: Apply responsible-layer corrections
         run: node .lifecycle-finalize.mjs
+      - name: Refresh exact runtime identity
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          fs.writeFileSync('index.html',fs.readFileSync('index.html','utf8').replace(/runtime-[a-f0-9]{16}/g,token));
+          console.log(token);
+          NODE
       - name: Syntax and deterministic proofs
         run: |
           node --check app-core.js
