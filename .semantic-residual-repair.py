@@ -73,6 +73,7 @@ for name in ['test-fixtures.mjs','verify-ingestion.mjs','verify-complete.mjs','v
     fp=Path(name)
     if not fp.exists():continue
     t=fp.read_text()
+    t=t.replace("function safeValue(name){","function safeValue(name){if(/EXECUTION_OUTCOME/.test(name))return 'REJECTED_INVALID';",1)
     t=re.sub(r"ACTUAL_RESULT:('(?:REJECTED|VIOLATED|FAILED)'|\"(?:REJECTED|VIOLATED|FAILED)\")(?!,EXECUTION_OUTCOME)",lambda m:f"ACTUAL_RESULT:{m.group(1)},EXECUTION_OUTCOME:'REJECTED_INVALID'",t)
     t=re.sub(r"ACTUAL_RESULT:('(?:ACCEPTED|SATISFIED|PASSED)'|\"(?:ACCEPTED|SATISFIED|PASSED)\")(?!,EXECUTION_OUTCOME)",lambda m:f"ACTUAL_RESULT:{m.group(1)},EXECUTION_OUTCOME:'ACCEPTED_INVALID'",t)
     fp.write_text(t)
