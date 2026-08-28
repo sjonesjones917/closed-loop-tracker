@@ -16,7 +16,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply narrow responsible-layer patch
-        run: python3 .zero-loss-final-fix.py
+        run: |
+          python3 .zero-loss-final-fix.py
+          python3 .zero-loss-runtime-token.py
       - name: Syntax and semantic proof sequence
         run: |
           node --check workflow-engine.js
@@ -40,10 +42,10 @@ jobs:
           node verify-browser-extra.mjs
       - name: Commit only proven application and test changes
         run: |
-          rm -f .zero-loss-final-fix.py .github/workflows/apply-zero-loss-final.yml .github/workflows/bootstrap-semantic.yml
+          rm -f .zero-loss-final-fix.py .zero-loss-runtime-token.py .github/workflows/apply-zero-loss-final.yml .github/workflows/bootstrap-semantic.yml
           git config user.name 'OpenAI GPT-5.6 Sol'
           git config user.email 'noreply@openai.com'
-          git add workflow-engine.js verify-complete.mjs verify-semantic-invariant.mjs .github/workflows/bootstrap-semantic.yml
+          git add workflow-engine.js verify-complete.mjs verify-semantic-invariant.mjs index.html .github/workflows/bootstrap-semantic.yml .zero-loss-final-fix.py .zero-loss-runtime-token.py .github/workflows/apply-zero-loss-final.yml
           test -n "$(git status --porcelain)"
           git commit -m 'Close remaining zero-loss semantic gaps'
           git push origin HEAD:reliability/semantic-adjudication-zero-loss
