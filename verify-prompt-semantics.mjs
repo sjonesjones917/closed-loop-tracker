@@ -97,6 +97,8 @@ if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContr
  if(!fixture.includes("EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL'"))throw new Error('Synthetic fixtures still default to a nonexistent application-native executor.');
  if(engine.applicationTestCapabilities().length!==0)throw new Error('A native test capability was registered without a proven application executor test in this patch.');
  if(!ui.includes('Invalid application executor claim')||!ui.includes('No registered application-native executor exists'))throw new Error('Operator UI does not fail unsupported application-native test claims closed.');
+ if(!ui.includes("verificationStage=n===6||n===12||[22,23,24].includes(n)")||ui.includes("[7,8,9,10,11,12,17,19,22,23,24,25,26,27,29]"))throw new Error('Verification execution guidance is not contextually limited to actual verification operations.');
+ if(!ui.includes('Preserved raw response')||!ui.includes('Controlling prompt')||!ui.includes('Canonical evidence'))throw new Error('Provenance UI does not expose the complete field-to-raw-to-prompt-to-evidence audit path.');
 }
 // Stage 01 must always create a real conversation-capable instruction, even before the objective is known.
 {
