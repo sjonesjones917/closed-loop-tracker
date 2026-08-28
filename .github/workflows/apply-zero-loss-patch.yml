@@ -50,6 +50,14 @@ jobs:
               raise SystemExit('Historical-stage inspectability insertion target was not found.')
           app.write_text(source.replace(old,new,1))
 
+          browser=Path('verify-browser-extra.mjs')
+          browser_source=browser.read_text()
+          old_fixture="scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{sources:"
+          new_fixture="scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{SOURCE_APPLICABILITY_DETERMINATION:'APPLICABLE_SOURCES_ESTABLISHED'},records:{sources:"
+          if old_fixture not in browser_source:
+              raise SystemExit('Stage 02 large-state browser fixture target was not found.')
+          browser.write_text(browser_source.replace(old_fixture,new_fixture,1))
+
           runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           def git_blob_sha(path):
               data=Path(path).read_bytes()
