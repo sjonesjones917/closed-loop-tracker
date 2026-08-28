@@ -4,7 +4,7 @@ on:
     branches: [reliability/zero-loss-semantic-ui-20260828]
     paths: [.github/workflows/apply-zero-loss-current.yml]
 permissions: {contents: write}
-concurrency: {group: zero-loss-current-main-apply, cancel-in-progress: false}
+concurrency: {group: zero-loss-current-main-apply-v2, cancel-in-progress: false}
 
 jobs:
   apply-test-commit:
@@ -15,15 +15,16 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply exact previously proven semantic adjudication delta
+      - name: Apply compatible previously proven semantic adjudication delta
         run: |
-          git diff 0bc70742b299d405dd20fa363f47903c8bde8c36 fd96f7af52a2d2e33546eee2a807dd1eaf3df0e8 -- workflow-engine.js verify-complete.mjs verify-semantic-invariant.mjs > /tmp/zero-loss.patch
+          git diff 0bc70742b299d405dd20fa363f47903c8bde8c36 fd96f7af52a2d2e33546eee2a807dd1eaf3df0e8 -- workflow-engine.js verify-complete.mjs > /tmp/zero-loss.patch
           test -s /tmp/zero-loss.patch
           if git apply --check /tmp/zero-loss.patch; then
             git apply /tmp/zero-loss.patch
           else
             git apply --3way /tmp/zero-loss.patch
           fi
+          test -z "$(git diff --name-only --diff-filter=U)"
       - name: Remove temporary apply workflow before candidate proof
         run: rm .github/workflows/apply-zero-loss-current.yml
       - name: Syntax checks
@@ -74,10 +75,8 @@ jobs:
           Path('index.html').write_text(html)
           print(token)
           PY
-      - name: Re-run source identity-sensitive proofs
-        run: |
-          node verify-live.mjs >/dev/null 2>&1 || true
-          node --check workflow-engine.js
+      - name: Re-run syntax after final source identity
+        run: node --check workflow-engine.js
       - name: Commit only proven semantic delta
         run: |
           git config user.name 'OpenAI GPT-5.6 Sol'
