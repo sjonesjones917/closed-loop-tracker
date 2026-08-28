@@ -36,13 +36,19 @@ jobs:
           node --check verify-semantic-adjudication.mjs
           node build-test-project.mjs
           node verify-semantic-adjudication.mjs
-      - name: Existing deterministic acceptance stack
+      - name: Existing hash and base verification
         run: |
           node verify-hash.mjs
           node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
+      - name: Existing ingestion verification
+        run: node verify-ingestion.mjs
+      - name: Existing complete deterministic verification
+        run: node verify-complete.mjs
+      - name: Existing full-cycle verification
+        timeout-minutes: 10
+        run: node verify-full-cycle.mjs
+      - name: Existing prompt and live verification
+        run: |
           node verify-prompt-semantics.mjs
           node verify-live.mjs
       - name: Existing Chromium acceptance
