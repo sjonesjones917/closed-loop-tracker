@@ -15,10 +15,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Extract, run, and commit checks 1-48
+      - name: Fix contamination precedence, run checks 1-48, and commit
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          p='workflow-engine.js'
+          s=open(p,encoding='utf-8').read()
+          old="for(const run of selected){const rid=recordId(run,'runs'),cid=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''),ctx=byContext.get(cid),contamination=recordValue(run,'CONTAMINATION_CHECK')||recordValue(ctx,'CONTAMINATION_STATUS'),inputs=String(recordValue(ctx,'AUTHORIZED_PROJECT_INPUTS')||'');if(!ctx)reasons.push(`Run ${rid} does not resolve to a current fresh-context record.`);if(contaminatedValue(contamination))reasons.push(`Run ${rid} has affirmative contamination.`);"
+          new="for(const run of selected){const rid=recordId(run,'runs'),cid=String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''),ctx=byContext.get(cid),runContamination=recordValue(run,'CONTAMINATION_CHECK'),contextContamination=recordValue(ctx,'CONTAMINATION_STATUS'),contamination=[runContamination,contextContamination].filter(value=>value!==undefined&&value!==null&&String(value).trim()).join(' / ')||'UNKNOWN',inputs=String(recordValue(ctx,'AUTHORIZED_PROJECT_INPUTS')||'');if(!ctx)reasons.push(`Run ${rid} does not resolve to a current fresh-context record.`);if(contaminatedValue(runContamination)||contaminatedValue(contextContamination))reasons.push(`Run ${rid} has affirmative contamination.`);"
+          if old not in s: raise SystemExit('run contamination target missing')
+          s=s.replace(old,new,1)
+          old="const allCurrent=selected.every(run=>byContext.has(String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''))),allClean=selected.every(run=>cleanValue(recordValue(run,'CONTAMINATION_CHECK')||recordValue(byContext.get(String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||'')),'CONTAMINATION_STATUS')));"
+          new="const allCurrent=selected.every(run=>byContext.has(String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||''))),allClean=selected.every(run=>{const ctx=byContext.get(String(recordValue(run,'CONTEXT_ID')||run.relationships?.CONTEXT_ID||'')),runState=recordValue(run,'CONTAMINATION_CHECK'),contextState=recordValue(ctx,'CONTAMINATION_STATUS');return (!runState||cleanValue(runState))&&(!contextState||cleanValue(contextState));});"
+          if old not in s: raise SystemExit('allClean contamination target missing')
+          s=s.replace(old,new,1)
+          open(p,'w',encoding='utf-8').write(s)
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;let html=fs.readFileSync('index.html','utf8');for(const file of runtimeFiles)html=html.replace(new RegExp(`${file.replace('.','\\.')}\\?v=runtime-[a-f0-9]+`,'g'),`${file}?v=${token}`);fs.writeFileSync('index.html',html);console.log(token);
+          NODE
           python3 - <<'PY'
           p='.github/workflows/tmp-expand-numbered-tests.yml'
           s=open(p,encoding='utf-8').read()
@@ -26,13 +42,17 @@ jobs:
           end=s.index('\nEOF\n',start)
           with open('verify-complete.mjs','a',encoding='utf-8') as out: out.write(s[start:end]+'\n')
           PY
+          node --check workflow-engine.js
           node --check verify-complete.mjs
+          node verify-hash.mjs
           node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
           rm -f .github/workflows/tmp-expand-numbered-tests.yml .github/workflows/tmp-run-numbered-tests.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verify-complete.mjs
+          git add workflow-engine.js index.html verify-complete.mjs
           git add -u .github/workflows/tmp-expand-numbered-tests.yml .github/workflows/tmp-run-numbered-tests.yml
           git diff --cached --check
-          git commit -m "Add numbered deterministic reliability regressions"
+          git commit -m "Enforce contamination and add deterministic reliability regressions"
           git push origin HEAD:reliability/correctness-hardening-final-20260827
