@@ -1,0 +1,81 @@
+name: Direct semantic-gate integration proof
+
+on:
+  push:
+    branches:
+      - reliability/direct-semantic-gates-20260828
+    paths:
+      - .github/workflows/direct-semantic-gate-bootstrap.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: direct-semantic-gate-integration
+  cancel-in-progress: false
+
+jobs:
+  apply-test-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact reliability branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply only the audited responsible-layer correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .direct-semantic-gate-fix.py
+          rm -f .direct-semantic-gate-fix.py .github/workflows/direct-semantic-gate-bootstrap.yml
+          test ! -e .github/workflows/export-source.yml
+          test ! -e .export-source/READY
+          grep -q 'function evaluateEvidenceContract' workflow-engine.js
+          grep -q 'function evaluateResultConsistency' workflow-engine.js
+          grep -q 'function effectiveDetermination' workflow-engine.js
+          grep -q 'function validateTraceIntegrity' workflow-engine.js
+          ! grep -q 'applicationadjudicationGate' workflow-engine.js
+          ! grep -q 'gate=function adjudicationGate' workflow-engine.js
+          grep -q 'REVIEWER_CONTEXT_ID' workflow-schema.js
+
+      - name: Install Chromium test dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+
+      - name: Prove syntax, architecture, semantic adjudication, ingestion, workflow, prompts, and full cycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+
+      - name: Prove local Chromium acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+      - name: Publish only the proven source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf node_modules package.json package-lock.json
+          git config user.name 'OpenAI GPT-5.6 Sol'
+          git config user.email 'noreply@openai.com'
+          git add -A
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          git commit -m 'Integrate semantic adjudication directly into gates'
+          git push origin HEAD:refs/heads/reliability/direct-semantic-gates-20260828
