@@ -60,6 +60,11 @@ const correctAcceptedStage="const acceptedStage=upper(purpose)==='INITIAL'?11:up
 if(!source.includes(wrongAcceptedStage))throw new Error('Expected Stage 11 accepted-response stage-selection defect was not found.');
 source=source.replace(wrongAcceptedStage,correctAcceptedStage);
 
+const oldMissing="const actualKeys=new Set(valid.map(verificationKey)),missing=expected.filter(key=>!actualKeys.has(key)||duplicates.includes(key));";
+const newMissing="const presentKeys=new Set([...grouped.entries()].filter(([,items])=>items.length===1).map(([key])=>key)),missing=expected.filter(key=>!presentKeys.has(key)||duplicates.includes(key));";
+if(!source.includes(oldMissing))throw new Error('Expected verification-matrix missing-set coupling was not found.');
+source=source.replace(oldMissing,newMissing);
+
 const routingHeading="<h2 class=\"section-title\">Who performs verification</h2>";
 if(!source.includes(routingHeading))throw new Error('Expected new execution-routing heading was not found.');
 source=source.replace(routingHeading,"<h2 class=\"section-title\">Verification execution</h2>");
@@ -71,4 +76,4 @@ if(!source.includes(handoffIntro))throw new Error('Expected artifact-handoff int
 source=source.replace(handoffIntro,"Transfer only the items below. Remember: a filename, hash claim, or code block is not file possession. Browser-local storage does not automatically give an external agent or tool access to these bytes.");
 
 fs.writeFileSync(path,source);
-console.log('Patch generator repaired while preserving unsupported native-executor warnings and deterministic routing UX.');
+console.log('Patch generator repaired while preserving Stage 12 continuation accounting separately from gate evidence validity.');
