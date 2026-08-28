@@ -1,0 +1,30 @@
+name: Reliability adjudication call graph diagnosis
+on:
+  push:
+    branches: [reliability/semantic-adjudication-20260827]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    if: ${{ contains(github.event.head_commit.message, '[callgraph-diagnose]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch and print semantic helper bodies
+        run: |
+          cat .tmp/adjudication-patch-*.b64 | base64 -d | gzip -d > /tmp/adjudication.patch
+          patch -p0 < /tmp/adjudication.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          t=Path('workflow-engine.js').read_text()
+          names=['effectiveDetermination','evaluateResultConsistency','evaluateEvidenceContract','detectCurrentContradictions','verificationMatrix','evaluateIteration','coverageMetrics','defectResolvedByRegression','releaseMetrics','deriveStage','evaluateStageGate','recalculate']
+          for name in names:
+              start=t.find('function '+name+'(')
+              if start<0:
+                  print('MISSING',name);continue
+              nexts=[t.find('\nfunction ',start+1),t.find('\nconst ',start+1)]
+              ends=[x for x in nexts if x>=0]
+              end=min(ends) if ends else min(len(t),start+8000)
+              body=t[start:end]
+              print('\n###',name,'###')
+              print(body[:12000])
+          PY
