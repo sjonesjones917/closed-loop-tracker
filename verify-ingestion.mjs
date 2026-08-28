@@ -31,6 +31,10 @@ function savePrompt(p,stage){
   return record;
 }
 function safeValue(name){
+  const controlled=String(name).toUpperCase();
+  if(controlled==='EXECUTION_OUTCOME')return 'REJECTED_INVALID';
+  if(controlled==='PREFLIGHT_OBSERVATION')return 'NO_MATERIAL_DEFECT';
+  if(controlled==='OBSERVATION_OUTCOME')return 'SATISFIED';
   if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';
   if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';
   if(/SOURCE_TYPE/.test(name))return 'OFFICIAL_STANDARD';
