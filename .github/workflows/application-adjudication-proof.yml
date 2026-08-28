@@ -1,0 +1,77 @@
+name: Application adjudication proof
+on:
+  push:
+    branches: [reliability/application-adjudication-proof-20260827]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: ${{ !contains(github.event.head_commit.message, '[application-adjudication-proven]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply coordinated adjudication repair
+        run: |
+          python3 .semantic-residual-repair.py
+          python3 .adjudication-final-fix.py
+      - name: Refresh canonical runtime identity after final repair
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=f=>{const b=fs.readFileSync(f);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(f=>`${f}:${blob(f)}\n`).join('');const token=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let h=fs.readFileSync('index.html','utf8');for(const f of files)h=h.replace(new RegExp(`${f.replace('.','\\.')}\\?v=[^\"]+`,'g'),`${f}?v=${token}`);fs.writeFileSync('index.html',h);console.log(token);
+          NODE
+      - name: Syntax and universal false-acceptance invariant
+        run: |
+          node --check workflow-engine.js
+          node --check workflow-schema.js
+          node --check verify-semantic-adjudication.mjs
+          node build-test-project.mjs
+          node verify-semantic-adjudication.mjs
+      - name: Existing deterministic acceptance stack
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-live.mjs
+      - name: Existing Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/adjudication-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Install invariant permanently and commit proven tree
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml');s=p.read_text()
+          if 'node --check verify-semantic-adjudication.mjs' not in s:
+              anchor='          node --check verify-browser-extra.mjs\n'
+              if anchor not in s: raise SystemExit('pages syntax anchor missing')
+              s=s.replace(anchor,anchor+'          node --check verify-semantic-adjudication.mjs\n',1)
+          if '          node verify-semantic-adjudication.mjs\n' not in s:
+              anchor='          node verify-ingestion.mjs\n          node verify-complete.mjs\n'
+              if anchor not in s: raise SystemExit('pages test anchor missing')
+              s=s.replace(anchor,anchor+'          node verify-semantic-adjudication.mjs\n',1)
+          p.write_text(s)
+          for f in ['.semantic-residual-repair.py','.adjudication-final-fix.py','.semantic-adjudication-patch.py','.fix-semantic-patcher.py','semantic-proof-failure.log','regression-adjudication-fixup.mjs','.github/workflows/semantic-adjudication-patch.yml','.github/workflows/apply-semantic-patch.yml','.github/workflows/semantic-residual-proof.yml','.github/workflows/application-adjudication-proof.yml']:
+              Path(f).unlink(missing_ok=True)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: application-owned adjudication closure [application-adjudication-proven]'
+          git push origin HEAD:reliability/application-adjudication-proof-20260827
