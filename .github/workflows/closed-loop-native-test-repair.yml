@@ -19,6 +19,7 @@ jobs:
       - name: Apply minimal subject-neutral native verification patch
         run: |
           node .repair-native-anchor.mjs
+          node .repair-native-ui-copy.mjs
           node .closed-loop-native-test-repair.mjs
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
@@ -32,7 +33,7 @@ jobs:
           fs.writeFileSync('index.html',html);
           console.log(identity);
           NODE
-          rm -f .repair-error.txt .repair-native-anchor.mjs .closed-loop-native-test-repair.mjs .github/workflows/closed-loop-native-test-repair.yml
+          rm -f .repair-error.txt .repair-native-anchor.mjs .repair-native-ui-copy.mjs .closed-loop-native-test-repair.mjs .github/workflows/closed-loop-native-test-repair.yml
       - name: Prove repaired source before committing
         run: |
           set +e
@@ -55,7 +56,7 @@ jobs:
           cat /tmp/native-proof.log
           if [ "$code" -ne 0 ]; then
             cp /tmp/native-proof.log .repair-error.txt
-            git checkout -- workflow-schema.js workflow-engine.js prompt-engine.js app-core.js index.html verify-complete.mjs verify-definition-of-done.mjs .repair-native-anchor.mjs .closed-loop-native-test-repair.mjs .github/workflows/closed-loop-native-test-repair.yml
+            git checkout -- workflow-schema.js workflow-engine.js prompt-engine.js app-core.js index.html verify-complete.mjs verify-definition-of-done.mjs .repair-native-anchor.mjs .repair-native-ui-copy.mjs .closed-loop-native-test-repair.mjs .github/workflows/closed-loop-native-test-repair.yml
             git config user.name closed-loop-ci
             git config user.email closed-loop-ci@users.noreply.github.com
             git add .repair-error.txt
