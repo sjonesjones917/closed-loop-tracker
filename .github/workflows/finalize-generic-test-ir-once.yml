@@ -1,0 +1,52 @@
+name: Finalize generic Test IR once
+on:
+  push:
+    branches: [fix/generic-test-ir-20260829]
+permissions: {contents: write}
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/generic-test-ir-20260829}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Materialize and repair prompt literal
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/materialize-generic-test-ir-once.yml').read_text()
+          start=text.index("          const fs=require('fs'),crypto=require('crypto');")
+          end=text.index("          NODE\n      - name: Prove exact repair")
+          js='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())
+          Path('/tmp/materialize.js').write_text(js)
+          PY
+          node /tmp/materialize.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text(); s=s.replace('Stage 07.\n\nFor every mandatory requirement','Stage 07. For every mandatory requirement'); p.write_text(s)
+          PY
+      - name: Prove exact repair
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-complete.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit final tree
+        run: |
+          git rm .github/workflows/materialize-generic-test-ir-once.yml .github/workflows/retry-generic-test-ir-once.yml .github/workflows/finalize-generic-test-ir-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Add subject-neutral deterministic Test IR contract'
+          git push origin HEAD:fix/generic-test-ir-20260829
