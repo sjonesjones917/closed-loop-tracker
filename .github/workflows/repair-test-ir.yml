@@ -1,0 +1,57 @@
+name: One-time generic Test IR repair
+on:
+  push:
+    branches: [reliability-test-ir-20260829]
+permissions: {contents: write}
+concurrency: {group: one-time-test-ir-repair, cancel-in-progress: false}
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: reliability-test-ir-20260829, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal Test IR integration
+        run: node .repair-test-ir.mjs
+      - name: Remove one-time repair machinery before proof
+        run: rm .repair-test-ir.mjs .github/workflows/repair-test-ir.yml
+      - name: Syntax and architecture proof
+        run: |
+          for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-runtime.js test-worker.js verify-test-runtime.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
+          test "$(find .github/workflows -maxdepth 1 -type f -name '*.yml' | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          test ! -f .repair-test-ir.mjs
+          test ! -f .github/workflows/repair-test-ir.yml
+      - name: Responsible-layer and Test IR verification
+        run: |
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Browser acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-test-ir-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only verified final-tree changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Add generic deterministic Test IR execution [verified]'
+          git push origin HEAD:reliability-test-ir-20260829
