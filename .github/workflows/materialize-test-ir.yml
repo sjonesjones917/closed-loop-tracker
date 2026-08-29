@@ -6,6 +6,7 @@ on:
       - closed-loop-test-ir-minimal
     paths:
       - materialize-test-ir-core.mjs
+      - verify-test-runtime.mjs
       - .github/workflows/materialize-test-ir.yml
 
 permissions:
