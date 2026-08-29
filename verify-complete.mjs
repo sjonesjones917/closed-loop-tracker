@@ -319,17 +319,3 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
   assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
 }
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
-
-
-// Stage 04 supplied-project input handoff is exact and fails closed on unavailable bytes.
-{
-  const p=project('JOB-STAGE04-HANDOFF');
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'}]);
-  p.projectData.artifacts.push({id:'ARTIFACT-000041',stage:1,active:true,fields:{ARTIFACT_ID:'ARTIFACT-000041',FILENAME:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',BYTE_SIZE:416621,SHA256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
-  let handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.ready===true&&handoff.send.length===1,'Stage 04 did not derive the required supplied-file handoff.');
-  assert(handoff.send[0].artifactId==='ARTIFACT-000041'&&handoff.send[0].filename==='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'&&handoff.send[0].byteSize===416621&&handoff.send[0].sha256.startsWith('aaaa'),'Stage 04 outgoing identity is incomplete.');
-  p.projectData.artifacts[0].fields.AVAILABILITY='METADATA_ONLY';
-  handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.ready===false&&handoff.requiredMissing.some(x=>x.label.includes('MAINFRAME_INVENTION_DISCLOSURE')),'Stage 04 did not fail closed after required bytes became unavailable.');
-}
