@@ -6,6 +6,7 @@ on:
       - closed-loop-test-ir-minimal
     paths:
       - materialize-test-ir-core.mjs
+      - materialize-test-ir-compat.mjs
       - verify-test-runtime.mjs
       - .github/workflows/materialize-test-ir.yml
 
@@ -24,7 +25,9 @@ jobs:
         with:
           node-version: 22
       - name: Materialize integration
-        run: node materialize-test-ir-core.mjs
+        run: |
+          node materialize-test-ir-core.mjs
+          node materialize-test-ir-compat.mjs
       - name: Syntax
         run: |
           node --check workflow-schema.js
@@ -32,6 +35,7 @@ jobs:
           node --check prompt-engine.js
           node --check test-runtime.js
           node --check test-worker.js
+          node --check verify-complete.mjs
       - name: Test IR runtime
         run: node verify-test-runtime.mjs
       - name: Test IR integration
@@ -63,7 +67,7 @@ jobs:
           git config user.name "closed-loop-materializer"
           git config user.email "actions@users.noreply.github.com"
           rm -f materialize-core-output.txt materialize-output.txt test-ir-runtime-output.txt complete-integration-output.txt
-          git add workflow-schema.js workflow-engine.js prompt-engine.js verify-test-ir-integration.mjs
+          git add workflow-schema.js workflow-engine.js prompt-engine.js verify-complete.mjs verify-test-ir-integration.mjs
           if ! git diff --cached --quiet; then
             git commit -m "Integrate subject-neutral Test IR into verification routing"
             git push origin HEAD:closed-loop-test-ir-minimal
