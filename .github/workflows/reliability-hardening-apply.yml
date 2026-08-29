@@ -1,6 +1,6 @@
 name: Apply closed-loop reliability hardening
 
-# attempt 6: current staged patch + deterministic patch ordering
+# attempt 7: current staged patch + preserved custody wording
 on:
   push:
     branches: [codex/reliability-hardening-20260829]
