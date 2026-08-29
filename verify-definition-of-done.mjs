@@ -47,7 +47,8 @@ assert(acceptedRelationshipProvenanceCoverage===1,'Accepted relationship provena
 
 assert(core.STAGE_COUNT===30&&core.STAGES.length===30&&core.WORKFLOW_ID==='mobile-closed-loop/30','30-stage workflow identity changed.');
 assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');
-assert(engine.applicationTestCapabilities().length===0,'APPLICATION_TEST_EXECUTORS is no longer empty without a proven native executor.');
+assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'The only registered project-test executor must be the proven Closed Loop Test IR runtime.');
+assert(fs.existsSync('test-runtime.js')&&fs.existsSync('test-worker.js')&&fs.existsSync('verify-test-runtime.mjs'),'Native Test IR executor proof files are missing.');
 
 const workflowSource=fs.readFileSync('.github/workflows/pages.yml','utf8');
 assert((workflowSource.match(/^name:/gm)||[]).length===1,'Pages workflow file is malformed.');
@@ -107,7 +108,7 @@ const mandatoryEvidenceChainCoverage=ratio(evidenceChainProofs.filter(Boolean).l
 assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage proof is incomplete.');
 
 const artifactIdentityProofs=[
-  engineSource.includes('if(a.length!==d.length)throw new Error(\'Audited and delivery artifact counts differ.\')'),
+  engineSource.includes("if(a.length!==d.length)throw new Error('Audited and delivery artifact counts differ.')"),
   engineSource.includes("if(!right)throw new Error('Missing delivery artifact '"),
   engineSource.includes('fields.AUDITED_FILENAME===fields.RELEASE_FILENAME'),
   completeTestSource.includes('Artifact identity depends on file-selection order.'),
