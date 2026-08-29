@@ -3,7 +3,7 @@ name: Apply closed-loop reliability hardening
 on:
   push:
     branches: [codex/reliability-hardening-20260829]
-    paths: [tools/reliability-hardening-trigger.py]
+    paths: [.github/workflows/reliability-hardening-apply.yml]
 
 permissions:
   contents: write
