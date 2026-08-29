@@ -59,12 +59,12 @@ Committed retained project requires no source materialization.
   "reliabilityV2Evidence": true,
   "reliabilityV2Contradictions": true
 }
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:99
- if(!ui.includes('Verification is blocked')||!ui.includes('application-native tests')||!ui.includes('Run automatic verification'))throw new Error('Operator UI does not distinguish runnable native verification from blocked invalid native execution.');
-                                                                                                                                        ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:131
+    if(issues.length)throw new Error(`Stage ${stage} ${operation} semantic contradiction(s): ${issues.join(', ')}`);
+                           ^
 
-Error: Operator UI does not distinguish runnable native verification from blocked invalid native execution.
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:99:137
+Error: Stage 6 COMPLETE semantic contradiction(s): UNREGISTERED_APPLICATION_EXECUTOR_NOT_BLOCKED
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:131:28
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
