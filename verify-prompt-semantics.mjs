@@ -420,3 +420,22 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
  const p=baseProject();p.stages[11].agentData={FROZEN_EXECUTION_PACKAGE:'PRIOR-STAGE-RUN-SUMMARY-SECRET'};const iterationId='ITERATION-000001',candidateId='CANDIDATE-000001';p.projectData.runs.push({id:'RUN-VERIFY-TARGET',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{RUN_ID:'RUN-VERIFY-TARGET',ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,CONTEXT_ID:'CTX-GENERATOR',COMPLETE_OUTPUT:'target output'}});p.projectData.freshContexts.push({id:'CTX-GENERATOR',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{CONTEXT_ID:'CTX-GENERATOR'}});const r=prompts.buildPromptRecord(12,p,{operation:'COMPLETE',scope:{iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-VERIFIER'}});if(r.prompt.includes('PRIOR-STAGE-RUN-SUMMARY-SECRET'))throw new Error('Stage 12 prompt leaked generic Stage 11 conclusions.');
 }
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
+
+
+// stage04-conversation-material-prompt-regression-v2
+{
+  const p=baseProject();
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  const withoutAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['SUPPLIED MATERIALS THE AGENT MUST ACTUALLY HAVE','design-input.pdf','No second upload into the application is required','already attached and readable in this external conversation','ask the human conversationally to attach or provide the original material directly in this conversation','Do not ask the human to retype or summarize its contents','Do not infer contents from a filename'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 same-conversation material prompt missing: '+token);
+  if(!withoutAppCopy.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 material handoff is not bound to prompt context identity.');
+  for(const prohibited of ['must add and application-verify these exact bytes','The application will not allow Save or Save and copy','Required input file is missing'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 prompt restored the rejected browser-upload requirement: '+prohibited);
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-OPTIONAL',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-OPTIONAL',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  const withOptionalAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['No second upload into the application is required','already attached and readable in this external conversation'])if(!withOptionalAppCopy.prompt.includes(token))throw new Error('Optional browser custody weakened the Stage 04 same-conversation instruction: '+token);
+  if(withOptionalAppCopy.prompt.includes('FILES YOU MUST RECEIVE'))throw new Error('Optional application custody became a required external handoff.');
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'revised-design-input.pdf'}]);
+  const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(revised.bodySha256===withoutAppCopy.bodySha256||revised.contextSignature===withoutAppCopy.contextSignature)throw new Error('A changed Stage 04 material reference did not change prompt identity.');
+}
+console.log(JSON.stringify({stage04ConversationMaterialPrompt:true}));
