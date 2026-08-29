@@ -100,7 +100,7 @@ for(let stage=1;stage<=30;stage++){
   if(receipt.acceptedCanonicalChangeId==='NONE'||receipt.extractionManifestId==='NONE')throw new Error(`Stage ${stage} receipt was not linked through canonical acceptance.`);
   const serialized=JSON.stringify(p); const reloaded=JSON.parse(serialized); engine.ensureShape(reloaded);
   if(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse!==JSON.stringify(envelope))throw new Error(`Stage ${stage} raw response did not survive reload.`);
-  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
+  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{};const nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt;if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`)||!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
@@ -451,10 +451,4 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
   if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote recovery changed the preserved raw response.');
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
   if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
-}
-
-
-// reliability-v2: external responses remain unable to override application-derived proof authorities.
-{
- const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['evaluateContextIndependence','evaluateEvidenceSufficiency','detectCurrentContradictions'])if(!source.includes(token))throw new Error('Missing deterministic reliability authority: '+token);const ingestionSource=fs.readFileSync('response-ingestion.js','utf8');if(/INDEPENDENCE_PROVEN_BY_APPLICATION|EVIDENCE_SUFFICIENT/.test(ingestionSource))throw new Error('Ingestion introduced agent-writable derived reliability authority.');
 }

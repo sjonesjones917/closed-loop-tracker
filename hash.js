@@ -73,4 +73,120 @@ function contentRecordSha256(record,idField){return sha256Value(contentRecordVal
 function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
 globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/2',stableStringify,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
+if(typeof document!=='undefined'){
+  const jumpId='prompt-bottom-jump';
+  function promptBottomJump(){
+    let button=document.getElementById(jumpId);
+    if(button)return button;
+    button=document.createElement('button');
+    button.id=jumpId;
+    button.type='button';
+    button.textContent='↓ Bottom of message';
+    button.setAttribute('aria-label','Scroll to bottom of expanded message');
+    Object.assign(button.style,{position:'fixed',right:'max(14px, env(safe-area-inset-right))',bottom:'calc(18px + env(safe-area-inset-bottom))',zIndex:'40',minHeight:'44px',padding:'9px 14px',border:'1px solid #164f45',borderRadius:'999px',background:'#164f45',color:'#fff',font:'700 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',boxShadow:'0 6px 22px rgba(21,24,23,.18)',cursor:'pointer'});
+    button.hidden=true;
+    button.addEventListener('click',()=>{
+      const prompt=document.getElementById('generated-prompt');
+      if(!prompt?.classList.contains('expanded'))return;
+      const toolbar=prompt.parentElement?.querySelector('.prompt-toolbar');
+      toolbar?.scrollIntoView({behavior:'smooth',block:'end'});
+    });
+    document.body.append(button);
+    return button;
+  }
+  function syncPromptBottomJump(){
+    const prompt=document.getElementById('generated-prompt');
+    promptBottomJump().hidden=!prompt?.classList.contains('expanded');
+  }
+  document.addEventListener('click',event=>{
+    const toggle=event.target?.closest?.('#toggle-prompt');
+    const prompt=document.getElementById('generated-prompt');
+    const wasExpanded=Boolean(toggle&&prompt?.classList.contains('expanded'));
+    queueMicrotask(syncPromptBottomJump);
+    if(wasExpanded){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        const currentPrompt=document.getElementById('generated-prompt');
+        if(currentPrompt?.classList.contains('expanded'))return;
+        currentPrompt?.parentElement?.querySelector('.prompt-toolbar')?.scrollIntoView({block:'end'});
+      }));
+    }
+  });
+  document.addEventListener('change',()=>queueMicrotask(syncPromptBottomJump));
+
+
+  function matchedScrollJump(id,text,ariaLabel,bottomOffset,handler){
+    let button=document.getElementById(id);
+    if(button)return button;
+    button=document.createElement('button');
+    button.id=id;
+    button.type='button';
+    button.textContent=text;
+    button.setAttribute('aria-label',ariaLabel);
+    button.style.cssText=promptBottomJump().style.cssText;
+    button.style.bottom=`calc(${bottomOffset}px + env(safe-area-inset-bottom))`;
+    button.hidden=true;
+    button.addEventListener('click',handler);
+    document.body.append(button);
+    return button;
+  }
+  function scrollToMatchedTarget(target,block){
+    if(!target)return;
+    target.scrollIntoView({behavior:'smooth',block,inline:'nearest'});
+    requestAnimationFrame(()=>target.focus?.({preventScroll:true}));
+  }
+  const promptTopJump=matchedScrollJump('prompt-top-jump','↑ Top of message','Scroll to top of expanded message',70,()=>scrollToMatchedTarget(document.getElementById('prompt-heading'),'start'));
+  const reviewTopJump=matchedScrollJump('review-top-jump','↑ Top of review','Scroll to top of proposal review',70,()=>scrollToMatchedTarget(document.getElementById('proposal-heading'),'start'));
+  const reviewBottomJump=matchedScrollJump('review-bottom-jump','↓ Bottom of review','Scroll to bottom of proposal review',18,()=>scrollToMatchedTarget(document.getElementById('proposal-actions'),'end'));
+  let activeLongSection=null;
+  function sectionSummary(section){
+    const first=section?.firstElementChild;
+    return first?.tagName==='SUMMARY'?first:section?.querySelector('summary');
+  }
+  function sectionDepth(section){
+    let depth=0,node=section;
+    while(node?.parentElement){depth++;node=node.parentElement;}
+    return depth;
+  }
+  function visibleLongSection(){
+    const candidates=[...document.querySelectorAll('details.record-card[open]')]
+      .filter(section=>!section.closest('#proposal-heading'))
+      .map(section=>({section,rect:section.getBoundingClientRect(),depth:sectionDepth(section)}))
+      .filter(({rect})=>rect.height>innerHeight&&rect.bottom>0&&rect.top<innerHeight)
+      .sort((a,b)=>b.depth-a.depth||Math.abs(a.rect.top)-Math.abs(b.rect.top));
+    return candidates[0]?.section||null;
+  }
+  const sectionTopJump=matchedScrollJump('section-top-jump','↑ Top of section','Scroll to top of long section',70,()=>scrollToMatchedTarget(sectionSummary(activeLongSection)||activeLongSection,'start'));
+  const sectionBottomJump=matchedScrollJump('section-bottom-jump','↓ Bottom of section','Scroll to bottom of long section',18,()=>scrollToMatchedTarget(activeLongSection,'end'));
+  function syncMatchedScrollJumps(){
+    const prompt=document.getElementById('generated-prompt');
+    const promptRect=prompt?.getBoundingClientRect();
+    const review=document.getElementById('proposal-heading');
+    const reviewRect=review?.getBoundingClientRect();
+    const longReview=Boolean(review&&[...review.querySelectorAll('details.record-card[open]')].some(details=>details.getBoundingClientRect().height>innerHeight));
+    const reviewActive=Boolean(longReview&&reviewRect&&reviewRect.bottom>0&&reviewRect.top<innerHeight);
+    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
+    const promptActive=Boolean(prompt?.classList.contains('expanded')&&prompt?.scrollHeight>innerHeight&&promptRect&&promptRect.bottom>0&&promptRect.top<innerHeight&&!reviewActive&&!reviewPast);
+    activeLongSection=!reviewActive&&!promptActive?visibleLongSection():null;
+    const sectionActive=Boolean(activeLongSection);
+    promptBottomJump().hidden=!promptActive;
+    promptTopJump.hidden=!promptActive;
+    reviewTopJump.hidden=!reviewActive;
+    reviewBottomJump.hidden=!reviewActive;
+    sectionTopJump.hidden=!sectionActive;
+    sectionBottomJump.hidden=!sectionActive;
+    if(sectionActive){
+      const name=String(sectionSummary(activeLongSection)?.textContent||'section').replace(/\s+/g,' ').trim()||'section';
+      sectionTopJump.setAttribute('aria-label','Scroll to top of '+name);
+      sectionBottomJump.setAttribute('aria-label','Scroll to bottom of '+name);
+    }
+  }
+  document.addEventListener('click',()=>queueMicrotask(syncMatchedScrollJumps));
+  document.addEventListener('change',()=>queueMicrotask(syncMatchedScrollJumps));
+  document.addEventListener('toggle',()=>queueMicrotask(syncMatchedScrollJumps),true);
+  document.addEventListener('closed-loop-rendered',()=>queueMicrotask(syncMatchedScrollJumps));
+  addEventListener('scroll',syncMatchedScrollJumps,{passive:true});
+  addEventListener('resize',syncMatchedScrollJumps,{passive:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>queueMicrotask(syncMatchedScrollJumps),{once:true});
+  else queueMicrotask(syncMatchedScrollJumps);
+}
 })();

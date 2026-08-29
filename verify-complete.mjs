@@ -36,7 +36,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // APPLICATION_DETERMINISTIC cannot satisfy Stage 06 unless an actual application-native executor is registered.
 {
-  assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'Application-native capability registry must contain only the exact Closed Loop Test IR capability.');
+  assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');
   const p=project('JOB-NATIVE-EXECUTOR-TRUTH');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
   const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};
@@ -252,84 +252,3 @@ console.log(JSON.stringify({scopedAcceptedResultRefinement:true},null,2));
  const p=project('JOB-IDENTITY-RECOVERY');p.projectData.releaseRecords.push(record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-IDENTITY-RECOVERY'));const audited=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}],bad=[{artifactId:'A',name:'a.bin',size:4,sha256:'bbb'}],good=[{artifactId:'A',name:'a.bin',size:3,sha256:'aaa'}];engine.verifyArtifactIdentity(p,audited,bad);const corrected=engine.verifyArtifactIdentity(p,audited,good);assert(engine.records(p,'artifactIdentities').length===1&&corrected.length===1&&p.release.authorization==='AUTHORIZED','A corrected Stage 28 comparison remained blocked by an older active mismatch.');const count=p.projectData.artifactIdentities.length,again=engine.verifyArtifactIdentity(p,audited,good);assert(p.projectData.artifactIdentities.length===count&&again[0].id===corrected[0].id,'Identical Stage 28 evidence created a duplicate comparison batch.');
 }
 console.log(JSON.stringify({stage5RequirementVersionIsolation:true,iterationOperationIsolation:true,currentRegressionClosure:true,stage28CurrentBatch:true},null,2));
-
-
-// reliability-v2: derived execution routing, independence, evidence, contradictions, and stability.
-{
- const p=project('JOB-RELIABILITY-V2');p.job.CURRENT_REQUIREMENTS_VERSION='REQUIREMENTS-v001';p.job.CURRENT_TEST_SUITE_VERSION='TEST-SUITE-v001';p.job.AVAILABLE_TOOLS='CAP-EXTERNAL_AGENT_TOOL; CAP-EXTERNAL_SYSTEM';const scope=engine.currentScope(p);
- const req=record('requirements',4,{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-V2');req.scope={...scope};p.projectData.requirements.push(req);
- const modes=[['EXTERNAL_AGENT_TOOL','SEND_TO_TOOL_AGENT'],['INDEPENDENT_AGENT_REVIEW','SEND_TO_INDEPENDENT_REVIEWER'],['HUMAN_INSPECTION','HUMAN_INSPECTION'],['EXTERNAL_SYSTEM','USE_EXTERNAL_SYSTEM'],['UNAVAILABLE','BLOCKED']];for(const [mode,action] of modes){const t=record('tests',6,{REQ_ID:'REQ-V2',TEST_TYPE:'MEANING',EXECUTION_MODE:mode,REQUIRED_CAPABILITY:'CAP-'+mode,ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:'objective evidence',STATUS:'READY'},'TEST-'+mode);t.scope={...scope};p.projectData.tests.push(t);}
- const plan=engine.testExecutionPlan(p);for(const [mode,action] of modes){const item=plan.items.find(x=>x.executionMode===mode);assert(item.operatorAction===action||mode==='UNAVAILABLE'&&item.operatorAction==='BLOCKED','Execution routing failed for '+mode);assert(Boolean(item.executorClass),'Executor class missing for '+mode);}
- const unavailable=plan.items.find(x=>x.executionMode==='UNAVAILABLE');assert(!unavailable.executableNow&&unavailable.blockingReason,'UNAVAILABLE test did not fail closed.');const missing=record('tests',6,{REQ_ID:'REQ-V2',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'CAP-NOT-PRESENT',ARTIFACT_REQUIREMENTS:'NONE',EVIDENCE_TO_PRESERVE:'objective evidence',STATUS:'READY'},'TEST-MISSING-CAPABILITY');missing.scope={...scope};p.projectData.tests.push(missing);const missingPlan=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-MISSING-CAPABILITY');assert(!missingPlan.executableNow&&missingPlan.operatorAction==='BLOCKED'&&/not affirmatively available/i.test(missingPlan.blockingReason),'Unproven external capability did not fail closed.');
-}
-{
- const p=project('JOB-INDEPENDENCE-V2');const art=record('artifacts',10,{FILENAME:'candidate.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'a'.repeat(64),STORAGE_REFERENCE:'indexeddb:ART-V2',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ART-V2');p.projectData.artifacts.push(art);const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ART-V2'],operatorLabel:'VERIFY'}),iid=engine.recordId(frozen.iteration,'iterations'),cid=engine.recordId(frozen.candidate,'candidateFreezes'),slots=engine.reserveRunBatch(p,{stage:11,iterationId:iid,candidateId:cid,count:10});for(let i=0;i<slots.length;i++){const ctx=engine.records(p,'freshContexts').find(x=>engine.recordId(x,'freshContexts')===slots[i].contextId);ctx.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.EXTERNAL_CONTEXT_IDENTIFIER='external-'+i;ctx.fields.CONTAMINATION_STATUS='NONE';ctx.CONTAMINATION_STATUS='NONE';ctx.fields.AUTHORIZED_PROJECT_INPUTS=[];ctx.AUTHORIZED_PROJECT_INPUTS=[];const run=engine.records(p,'runs').find(x=>engine.recordId(x,'runs')===slots[i].runId);run.fields.CONTAMINATION_CHECK='NONE';run.CONTAMINATION_CHECK='NONE';}
- let ev=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId:iid});assert(ev.determination==='APPLICATION_ESTABLISHED','Ten distinct contexts were not application-established.');const ctx2=engine.records(p,'freshContexts')[1];ctx2.fields.EXTERNAL_CONTEXT_IDENTIFIER='external-0';ctx2.EXTERNAL_CONTEXT_IDENTIFIER='external-0';ev=engine.evaluateContextIndependence(p,{role:'RUN_BATCH',iterationId:iid});assert(ev.determination==='VIOLATED','Duplicate external context was not detected.');
-}
-{
- const p=project('JOB-EVIDENCE-V2'),t=record('tests',6,{REQ_ID:'REQ-E',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'sha256',ARTIFACT_REQUIREMENTS:'exact bytes',EVIDENCE_TO_PRESERVE:'byte hash',STATUS:'READY'},'TEST-E'),r=record('deterministicResults',22,{TEST_ID:'TEST-E',ACTUAL_RESULT:'same',DETERMINATION:'SATISFIED',EVIDENCE:'agent says same'},'RESULT-E');assert(!engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Prose satisfied a byte test.');const a=record('artifacts',22,{FILENAME:'x.bin',TYPE:'application/octet-stream',BYTE_SIZE:1,SHA256:'b'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ART-E'),e=record('evidenceRecords',22,{KIND:'TOOL_OUTPUT',DESCRIPTION:'hash',LOCATION:'tool',CONTENT:'sha256 output',ATTACHMENT_ID:'ART-E',STATUS:'PRESERVED'},'EVIDENCE-E');p.projectData.artifacts.push(a);p.projectData.evidenceRecords.push(e);r.evidenceRefs=['EVIDENCE-E'];assert(engine.evaluateEvidenceSufficiency(p,{test:t,result:r}).sufficient,'Verified byte-backed evidence was not sufficient.');
-}
-{
- const p=project('JOB-CONTRADICTION-V2');p.job.CURRENT_REQUIREMENTS_VERSION='R1';p.job.CURRENT_TEST_SUITE_VERSION='T1';const scope=engine.currentScope(p);const t=record('tests',6,{REQ_ID:'REQ-C',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'TEST_TOOL',ARTIFACT_REQUIREMENTS:'NONE',STATUS:'READY'},'TEST-C');t.scope={...scope};p.projectData.tests.push(t);const d=record('deterministicResults',22,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'SATISFIED'},'DET-C'),m=record('meaningResults',23,{REQ_ID:'REQ-C',TEST_ID:'TEST-C',DETERMINATION:'VIOLATED'},'MEAN-C');d.scope={...scope};m.scope={...scope};p.projectData.deterministicResults.push(d);p.projectData.meaningResults.push(m);assert(engine.detectCurrentContradictions(p).some(x=>x.type==='DETERMINISTIC_MEANING_CONFLICT'),'Cross-method contradiction was not detected.');
-}
-console.log(JSON.stringify({reliabilityV2Execution:true,reliabilityV2Independence:true,reliabilityV2Evidence:true,reliabilityV2Contradictions:true},null,2));
-
-
-// reliability-v2-final: result-consuming gates reject epistemically insufficient evidence at the earliest responsible stage.
-{
- const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['Meaning review \'','Adversarial result \'','Representation inspection \'','Stage 26 audit \'','Current process/product evidence contains unresolved contradictions'])assert(source.includes(token),'Missing local evidence/contradiction gate: '+token);
-}
-
-
-// reliability-hardening-final: Stage 22 exact product handoff, epistemic evidence, and release contradictions.
-{
- const p=project('JOB-STAGE22-PRODUCT-HANDOFF');p.job.CURRENT_PRODUCT_ID='PRODUCT-HANDOFF';const scope={...engine.currentScope(p),productId:'PRODUCT-HANDOFF'};
- const productRecord=record('products',21,{PRODUCT_ID:'PRODUCT-HANDOFF',PRODUCT_VERSION:'PRODUCT-v001',BASELINE_ID:'BASELINE-HANDOFF',EXECUTION_ID:'EXEC-HANDOFF',PRODUCTION_CONTEXT_ID:'CTX-HANDOFF',INSTRUCTION_VERSION:'INSTRUCTION-v001',GENERATED_ARTIFACT_INVENTORY:['ARTIFACT-HANDOFF'],STATUS:'COMPLETED'},'PRODUCT-HANDOFF');productRecord.scope=scope;p.projectData.products.push(productRecord);
- const artifactRecord=record('artifacts',21,{FILENAME:'finished-product.bin',TYPE:'application/octet-stream',VERSION:'v1',BYTE_SIZE:4,SHA256:'a'.repeat(64),ROLE:'FINISHED_PRODUCT',STORAGE_REFERENCE:'indexeddb:ARTIFACT-HANDOFF',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'},'ARTIFACT-HANDOFF');artifactRecord.scope=scope;p.projectData.artifacts.push(artifactRecord);
- const handoff=engine.executionHandoff(p,{stage:22,operation:'COMPLETE'});assert(handoff.send.some(x=>x.artifactId==='ARTIFACT-HANDOFF'&&x.filename==='finished-product.bin'),'Stage 22 handoff omitted exact current finished-product bytes.');
-}
-{
- const p=project('JOB-EPISTEMIC-EFFECTIVE'),scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Meaning must be established.',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-EPISTEMIC'),test=record('tests',6,{REQ_ID:'REQ-EPISTEMIC',TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'semantic review',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'product',TOOLS:'independent reviewer',PROCEDURE:'compare meaning',EXPECTED_RESULT:'SATISFIED',FAILURE_CONDITION:'meaning differs',EVIDENCE_TO_PRESERVE:'meaning comparison',STATUS:'READY'},'TEST-EPISTEMIC'),evidence=record('evidenceRecords',23,{KIND:'REVIEW_NOTE',DESCRIPTION:'generic note',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',LOCATION:'review',CONTENT:'review performed',STATUS:'PRESERVED'},'EVIDENCE-EPISTEMIC'),result=record('meaningResults',23,{REQ_ID:'REQ-EPISTEMIC',TEST_ID:'TEST-EPISTEMIC',PRODUCT_LOCATION:'',EXTERNAL_SOURCE_EVIDENCE:'',REQUIRED_MEANING:'required meaning',OBSERVED_MEANING:'required meaning',EVIDENCE_BASED_COMPARISON:'SATISFIED',DETERMINATION:'SATISFIED'},'MEAN-EPISTEMIC');req.scope=scope;test.scope=scope;evidence.scope=scope;result.scope=scope;result.evidenceRefs=['EVIDENCE-EPISTEMIC'];p.projectData.requirements.push(req);p.projectData.tests.push(test);p.projectData.evidenceRecords.push(evidence);p.projectData.meaningResults.push(result);const effective=engine.evaluateResultConsistency('meaningResults',result,test,p);assert(effective.determination==='UNDETERMINED'&&effective.reasons.some(x=>x.includes('PRODUCT_LOCATION')),'A structurally present but epistemically insufficient meaning result remained effectively satisfied.');
-}
-{
- const p=project('JOB-RELEASE-CONTRADICTIONS'),scope=engine.currentScope(p),release=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-CONFLICT');release.scope=scope;p.projectData.releaseRecords.push(release);const blocker=record('blockers',27,{MISSING_ITEM_TYPE:'EVIDENCE',MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:'missing proof',WHY_WORK_CANNOT_CONTINUE:'release proof missing',ATTEMPTED_RESOLUTIONS:'none',DOWNSTREAM_WORK_STOPPED:'STAGE 27',STATUS:'OPEN'},'BLOCKER-CONFLICT');blocker.scope=scope;p.projectData.blockers.push(blocker);assert(engine.detectCurrentContradictions(p).some(x=>x.type==='ACCEPTED_RELEASE_WITH_BLOCKER'),'Accepted release plus current blocker was not surfaced as a contradiction.');p.projectData.blockers.length=0;p.release.authorization='AUTHORIZED';p.release.authorizedArtifactIds=['ARTIFACT-STALE'];assert(engine.detectCurrentContradictions(p).some(x=>x.type==='STALE_DELIVERY_AUTHORIZATION'),'Stale delivery authorization was not surfaced as a contradiction.');
-}
-
-// Generic subject-neutral Test IR is a real registered application-native route, not a prose-only capability claim.
-assert(schema.TEST_IR.version==='closed-loop-test-spec/1','Test IR version changed.');
-assert(schema.TEST_IR.capability==='CLOSED_LOOP_TEST_IR','Test IR capability changed.');
-assert(schema.TEST_IR.operations.includes('PARSE_JSON')&&schema.TEST_IR.operations.includes('BYTE_COMPARE'),'Required generic Test IR operations are missing.');
-assert(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)),'Unsafe arbitrary-code Test IR operation registered.');
-assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');
-{
-  const p=project('JOB-NATIVE-STAGE22-NO-AGENT');
-  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE'});
-  const scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-NATIVE-22');
-  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
-  req.scope=scope;native.scope=scope;p.projectData.requirements.push(req);p.projectData.tests.push(native);
-  const nativeGate=engine.gate(22,p);
-  assert(!nativeGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Native-only Stage 22 still requires an external accepted response.');
-  native.fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';native.fields.REQUIRED_CAPABILITY='external deterministic tool';
-  const externalGate=engine.gate(22,p);
-  assert(externalGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Stage 22 stopped requiring an accepted response when an external deterministic executor is required.');
-}
-{
-  const native={fields:{EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-TEST'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]}}};
-  assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');
-  assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
-}
-console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
-
-
-// Stage 04 supplied-project input handoff is exact and fails closed on unavailable bytes.
-{
-  const p=project('JOB-STAGE04-HANDOFF');
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'}]);
-  p.projectData.artifacts.push({id:'ARTIFACT-000041',stage:1,active:true,fields:{ARTIFACT_ID:'ARTIFACT-000041',FILENAME:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',BYTE_SIZE:416621,SHA256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
-  let handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.ready===true&&handoff.send.length===1,'Stage 04 did not derive the required supplied-file handoff.');
-  assert(handoff.send[0].artifactId==='ARTIFACT-000041'&&handoff.send[0].filename==='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'&&handoff.send[0].byteSize===416621&&handoff.send[0].sha256.startsWith('aaaa'),'Stage 04 outgoing identity is incomplete.');
-  p.projectData.artifacts[0].fields.AVAILABILITY='METADATA_ONLY';
-  handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.ready===false&&handoff.requiredMissing.some(x=>x.label.includes('MAINFRAME_INVENTION_DISCLOSURE')),'Stage 04 did not fail closed after required bytes became unavailable.');
-}

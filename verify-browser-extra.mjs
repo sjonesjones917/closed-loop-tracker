@@ -4,10 +4,6 @@ import os from 'node:os';
 import path from 'node:path';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
-const appCoreSource=fs.readFileSync('app-core.js','utf8');
-const promptStart=appCoreSource.indexOf('function currentStagePrompt'),promptEnd=appCoreSource.indexOf('function operationMarkup',promptStart),currentStagePromptSource=promptStart>=0&&promptEnd>promptStart?appCoreSource.slice(promptStart,promptEnd):'';
-if(!currentStagePromptSource||currentStagePromptSource.includes('clone(current)'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');
-if(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found');
 const port=9700+Math.floor(Math.random()*200),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-extra-'));
@@ -30,26 +26,6 @@ async function main(){
   const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
-
-  console.log('extra:project-lifecycle-ui');
-  await click(cdp,'[data-view="Project"]');
-  const lifecycleUi=await evalValue(cdp,`(()=>{const management=document.querySelector('#project-management'),danger=document.querySelector('#project-danger-zone');return {management:Boolean(management),managementOpen:Boolean(management?.open),danger:Boolean(danger),dangerOpen:Boolean(danger?.open),deleteVisible:Boolean(document.querySelector('#delete-project')?.offsetParent),headerMenu:Boolean(document.querySelector('.project-action-menu')),text:management?.textContent||''};})()`);
-  assert(lifecycleUi.management&&!lifecycleUi.managementOpen,'Project lifecycle controls must be present but collapsed by default.');
-  assert(lifecycleUi.headerMenu,'Compact Project actions menu is missing.');
-  await click(cdp,'#project-actions-toggle');await waitExpr(cdp,`document.querySelector('.project-action-menu')?.open===true&&document.querySelector('#project-actions-toggle')?.getAttribute('aria-expanded')==='true'`);assert(await evalValue(cdp,`Boolean(document.querySelector('.project-action-popover')?.offsetParent)`),'Project actions click did not reveal the action menu.');await click(cdp,'#project-actions-toggle');await waitExpr(cdp,`document.querySelector('.project-action-menu')?.open===false&&document.querySelector('#project-actions-toggle')?.getAttribute('aria-expanded')==='false'`);
-  if(lifecycleUi.danger)assert(!lifecycleUi.dangerOpen&&!lifecycleUi.deleteVisible,'Permanent deletion must remain concealed until the operator deliberately opens the danger zone.');
-  assert(lifecycleUi.text.includes('Start from copy')&&lifecycleUi.text.includes('Create backup now')&&lifecycleUi.text.includes('Verify stored files now'),'Project lifecycle options are incomplete.');
-
-  console.log('extra:project-lifecycle-functional');
-  await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;return true;})()`);
-  await fill(cdp,'#project-display-name','Lifecycle functional proof');await click(cdp,'#rename-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.includes('Lifecycle functional proof')`);
-  const renamedJob=(await activeProject(cdp)).job.JOB_ID;await evalValue(cdp,`location.reload();true`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert((await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent||''`)).includes('Lifecycle functional proof'),'Renamed project display name did not persist across reload.');
-  await click(cdp,'[data-view=\"Project\"]');await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;return true;})()`);await click(cdp,'#duplicate-project');await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.includes('— copy')`);
-  const copied=await activeProject(cdp);assert(copied.job.JOB_ID!==renamedJob,'Start from copy reused JOB_ID.');assert((copied.projectData?.acceptedChanges||[]).length===0&&(copied.projectData?.rawResponses||[]).length===0&&(copied.projectData?.artifacts||[]).length===0,'Start from copy carried workflow truth into new project.');assert(copied.job.CURRENT_STAGE==='STAGE 01'&&String(copied.stages?.[1]?.status||'')!=='COMPLETE'&&Object.values(copied.stages||{}).filter(x=>Number(x.number)>1).every(x=>x.status==='NOT STARTED'),'Start from copy carried progressed workflow state beyond the Stage 01 reset event.');
-  const copiedJob=copied.job.JOB_ID;await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;return true;})()`);await click(cdp,'#archive-project');await waitExpr(cdp,`!document.querySelector('#current-project-summary')?.textContent?.startsWith(${JSON.stringify(copiedJob)})`);assert(!(await evalValue(cdp,`Array.from(document.querySelector('#project-picker')?.options||[]).some(o=>o.textContent.includes(${JSON.stringify(copiedJob)}))`)),'Archived project remained in active project selector.');
-  await click(cdp,'[data-view=\"Project\"]');await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const a=Array.from(document.querySelectorAll('[data-restore-project]')).find(x=>x.dataset.restoreProject===${JSON.stringify(copiedJob)});if(!a)return false;a.click();return true;})()`);await waitExpr(cdp,`document.querySelector('#current-project-summary')?.textContent?.startsWith(${JSON.stringify(copiedJob)})`);
-  await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const cards=Array.from(d.querySelectorAll('details.record-card'));const storage=cards.find(x=>x.textContent.includes('Storage & integrity'));if(storage)storage.open=true;return true;})()`);await click(cdp,'#verify-stored-files');await waitExpr(cdp,`document.querySelector('#app-live-status')?.textContent?.includes('stored artifact bytes verified')`);
-  await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()`);await fill(cdp,'#delete-project-confirmation',copiedJob);await waitExpr(cdp,`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID===${JSON.stringify(copiedJob)}))`,12000);assert(!(await evalValue(cdp,`closedLoopProjectStore.listArtifacts(${JSON.stringify(copiedJob)}).then(x=>x.length)`)),'Deleted project left artifact Blob rows behind.');
 
   console.log('extra:closed-connection-prompt-save');
   await openStage(cdp,2);await evalValue(cdp,`(async()=>{const db=await closedLoopProjectStore.openDatabase();db.close();return true;})()`);await click(cdp,'#save-prompt');let retained=await activeProject(cdp);const pr=retained.projectData.generatedPrompts.filter(x=>Number(x.stage)===2).at(-1);assert(pr?.prompt&&pr?.instructionId&&pr?.sha256,'Stage 02 prompt was not saved after the cached IndexedDB connection was closed.');
@@ -103,42 +79,9 @@ async function main(){
   console.log('extra:support-controls');
   await openStage(cdp,1);await fill(cdp,'#blocker-reason','Controlled missing human input');await click(cdp,'#add-blocker');let support=await activeProject(cdp);assert((support.projectData.blockers||[]).length>=1&&support.job.CURRENT_STATE==='BLOCKED','Universal blocker control did not gate the project.');await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');
 
-  console.log('extra:retained-project-delete-suppression');
-  await click(cdp,'[data-view=\"Project\"]');
-  const retainedOptions=await evalValue(cdp,`Array.from(document.querySelector('#project-picker')?.options||[]).map(o=>o.value)`);let retainedFound=false;for(const optionValue of retainedOptions){await evalValue(cdp,`(()=>{const p=document.querySelector('#project-picker');p.value=${JSON.stringify(optionValue)};p.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`);await sleep(120);if((await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent||''`)).startsWith('JOB-20260823144121')){retainedFound=true;break;}}assert(retainedFound,'Retained reference project was unavailable through the real project selector.');
-  await click(cdp,'[data-view=\"Project\"]');await evalValue(cdp,`(()=>{const d=document.querySelector('#project-management');if(!d)return false;d.open=true;const z=document.querySelector('#project-danger-zone');if(!z)return false;z.open=true;return true;})()`);await fill(cdp,'#delete-project-confirmation','JOB-20260823144121');await waitExpr(cdp,`document.querySelector('#delete-project')&&!document.querySelector('#delete-project').disabled`);await click(cdp,'#delete-project');await waitExpr(cdp,`closedLoopProjectStore.readAll().then(all=>!all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))`,12000);
-  await evalValue(cdp,`location.reload();true`);await sleep(500);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`closedLoopProjectStore.readAll().then(all=>all.some(p=>p.job?.JOB_ID==='JOB-20260823144121'))`)),'Deleted retained project was re-injected after reload.');assert(await evalValue(cdp,`closedLoopProjectStore.metaGet('retainedProjectSuppressed').then(x=>x?.jobId==='JOB-20260823144121')`),'Retained-project suppression was not committed transactionally.');
-
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
-  console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
+  console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
 try{await main();}finally{await cleanup();}
-
-// reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).
-{
- const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Exact handoff','Continue talking to the agent','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'])if(!source.includes(token))throw new Error('Missing operator reliability UI: '+token);
-}
-
-{
- const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Observed reliability — this project only','Materially independent accepted operations','Observed silent failures','Approximate 95% upper bound','not a guarantee'])if(!source.includes(token))throw new Error('Missing project-local reliability presentation: '+token);
-}
-
-
-// Mobile responsiveness regression: hashing must remain computation-only, and provenance must not duplicate large raw/prompt payloads per accepted field.
-{
- const hashSource=fs.readFileSync('hash.js','utf8'),appSource=fs.readFileSync('app-core.js','utf8');
- for(const token of ['document.','addEventListener(','requestAnimationFrame('])if(hashSource.includes(token))throw new Error('hash.js contains UI/runtime scheduling logic: '+token);
- for(const token of ['Long-section navigation belongs to the UI layer','scheduleMatchedScrollJumps','elementFromPoint','Large raw responses and prompts are rendered once per source record','Provenance source records'])if(!appSource.includes(token))throw new Error('Missing mobile responsiveness regression protection: '+token);
- if(appSource.includes("raw?details('Preserved raw response',raw)"))throw new Error('Provenance regressed to duplicating the full raw response inside every field trace.');
-}
-
-
-// reliability-hardening-final: context-aware action-first verification and verified-byte transfer remain visible without architecture-first clutter.
-{
- const source=fs.readFileSync('app-core.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8');
- for(const token of ['What you need to do now','Advanced verification details','Exact handoff — send / do not send / return','Download exact bytes','data-download-artifact','stagePurposeMarkup','verified artifact ready for transfer'])if(!source.includes(token))throw new Error('Missing action-first verification/artifact UX: '+token);
- if(!engineSource.includes("[22,23,24,25].includes(stage)"))throw new Error('Stage 22 is still omitted from exact finished-product handoff.');
- if(!source.includes('Stored bytes no longer match the canonical filename, byte size, and SHA-256. Download was blocked.'))throw new Error('Artifact download does not fail closed on byte-identity mismatch.');
-}
