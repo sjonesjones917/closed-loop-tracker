@@ -31,12 +31,17 @@ verify-test-runtime: PASS
   "reliabilityV2Evidence": true,
   "reliabilityV2Contradictions": true
 }
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:299
-assert.equal(schema.TEST_IR.version,'closed-loop-test-spec/1');
-       ^
+{
+  "stage22ProductHandoff": true,
+  "epistemicEffectiveEvidence": true,
+  "releaseContradictions": true
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:81
+if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');
+                                                                                                               ^
 
-TypeError: assert.equal is not a function
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:299:8
+Error: Stage 19 still exposes application-owned freeze as an agent response operation.
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:81:112
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
