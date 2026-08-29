@@ -1,0 +1,42 @@
+name: One-time Stage 04 handoff PR trigger
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-required-input-handoff
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute embedded repair against checked-out source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('.github/workflows/stage04-handoff-repair.yml').read_text().splitlines()
+          marker="          python3 - <<'PY'"
+          start=lines.index(marker)+1
+          end=next(i for i in range(start,len(lines)) if lines[i]=='          PY')
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in lines[start:end])
+          exec(compile(script,'stage04-repair-embedded.py','exec'))
+          PY
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Remove temporary repair files and commit tested source
+        run: |
+          rm .github/workflows/stage04-handoff-repair.yml .github/workflows/stage04-handoff-pr-trigger.yml
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git commit -m 'Make Stage 04 required input handoff explicit'
+          git push origin HEAD:fix/stage04-required-input-handoff
