@@ -50,6 +50,10 @@ jobs:
           pos=t.index(marker)+len(marker)
           premise="\nvc=replace_once(vc,\"assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');\",\"assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'Application-native capability registry must contain only the exact Closed Loop Test IR capability.');\",'Update native executor acceptance premise')\n"
           t=t[:pos]+premise+t[pos:]
+          engine_marker="if 'APPLICATION_TEST_EXECUTORS' in e: raise SystemExit('workflow-engine.js still references APPLICATION_TEST_EXECUTORS after Test IR routing patch')"
+          engine_pos=t.index(engine_marker)
+          wiring="e=e.replace(\"capabilityAffirmativelyAvailable(project,requiredCapability,mode)\",\"capabilityAffirmativelyAvailable(project,requiredCapability,mode,test)\")\n"
+          t=t[:engine_pos]+wiring+t[engine_pos:]
           p.write_text(t)
           PY
 
