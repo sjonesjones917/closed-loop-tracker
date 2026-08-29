@@ -208,6 +208,9 @@ const RECORD_OWNERSHIP=Object.freeze({
       "EXECUTION_MODE",
       "REQUIRED_CAPABILITY",
       "ARTIFACT_REQUIREMENTS",
+      "EXECUTABLE_SPEC_VERSION",
+      "EXECUTABLE_SPEC",
+      "EXECUTABLE_INPUT_BINDINGS",
       "INPUTS",
       "TOOLS",
       "PROCEDURE",
@@ -580,7 +583,10 @@ const RECORD_OWNERSHIP=Object.freeze({
       "PRODUCT_ID",
       "PRODUCT_SHA256",
       "TEST_ID",
-      "DEFECT_ID"
+      "DEFECT_ID",
+      "RUNTIME_EXECUTION",
+      "TEST_SPEC_SHA256",
+      "RUNTIME_DETERMINATION"
     ]
   },
   "meaningResults": {
@@ -906,10 +912,23 @@ const STAGE_FIELDS=Object.freeze(Object.fromEntries(core.STAGES.map(stage=>[
   Object.freeze(Object.fromEntries(stage.fields.map(name=>[name,stageFieldDefinition(stage.number,name)])))
 ])));
 
+const TEST_RUNTIME_FIELD_TYPE_OVERRIDES=Object.freeze({
+  TEST:Object.freeze({
+    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:true}),
+    EXECUTABLE_SPEC:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:true}),
+    EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:true})
+  }),
+  'DETERMINISTIC-RESULT':Object.freeze({
+    RUNTIME_EXECUTION:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:true}),
+    TEST_SPEC_SHA256:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:true}),
+    RUNTIME_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED','EXECUTION_FAILED']),nullable:true})
+  })
+});
+
 function recordSchema({title,idField,prefix,stage,fields,required=[],relationships={},provenanceRequired=true,appendOnly=true,ownership,commitPolicy=COLLECTION_POLICIES.APPEND_SCOPED}){
   const relSet=new Set(Object.keys(relationships)),definitions={};
   for(const name of fields){
-    const producer=ownerFromPartition(ownership,name,title),type=RECORD_FIELD_TYPE_OVERRIDES[prefix]?.[name]||EXPLICIT_RECORD_FIELD_TYPES[prefix]?.[name];if(!type)throw new Error(`${title} field ${name} has no explicit type metadata.`);
+    const producer=ownerFromPartition(ownership,name,title),type=TEST_RUNTIME_FIELD_TYPE_OVERRIDES[prefix]?.[name]||RECORD_FIELD_TYPE_OVERRIDES[prefix]?.[name]||EXPLICIT_RECORD_FIELD_TYPES[prefix]?.[name];if(!type)throw new Error(`${title} field ${name} has no explicit type metadata.`);
     definitions[name]=field(name,producer,{requiredAtStage:stage,responsePath:producer===PRODUCER.AGENT?`/records/{collection}/*/fields/${name}`:null,valueType:type.valueType,enumValues:type.enumValues,nullable:type.nullable,normalizerKey:type.normalizerKey,closedProperties:type.closedProperties,derivationKey:producer===PRODUCER.APPLICATION?`record.${prefix}.${name}`:null,provenanceRequired:producer===PRODUCER.AGENT?provenanceRequired:false});
   }
   const union=[...ownership.human,...ownership.humanDecision,...ownership.agent,...ownership.application];
@@ -944,7 +963,7 @@ const RECORD_SCHEMAS=Object.freeze({
     'RESOLUTION_ID','DEFECT_TYPE','AFFECTED_REQ_IDS','GOVERNING_EVIDENCE','RESOLUTION','CHANGED_REQUIREMENT_REFS','RESULTING_REQUIREMENTS_VERSION','AFFECTED_DOWNSTREAM_WORK','STATUS'
   ],required:['DEFECT_TYPE','AFFECTED_REQ_IDS','GOVERNING_EVIDENCE','RESOLUTION','AFFECTED_DOWNSTREAM_WORK','STATUS']}),
   tests:recordSchema({ownership:RECORD_OWNERSHIP.tests,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Verification tests',idField:'TEST_ID',prefix:'TEST',stage:6,fields:[
-    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'
+    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'
   ],required:['TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'],relationships:{REQ_ID:'requirements'}}),
   failureTests:recordSchema({ownership:RECORD_OWNERSHIP.failureTests,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Failure and mutation tests',idField:'MUTATION_ID',prefix:'MUTATION',stage:7,fields:[
     'MUTATION_ID','REQ_ID','VIOLATION_MODE','FIXTURE','EXPECTED_REJECTION','ACTUAL_RESULT','EXECUTION_OUTCOME','VALIDATOR_DEFECT_ID','EVIDENCE'
@@ -1005,7 +1024,7 @@ const RECORD_SCHEMAS=Object.freeze({
     'PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_ID','BASELINE_MATERIALS','EXECUTION_TIMESTAMPS','INSTRUCTION_VERSION','TOOL_CONFIGURATION','DEVIATIONS','FAILURES','GENERATED_ARTIFACT_INVENTORY','STATUS'
   ],required:['PRODUCTION_CONTEXT_ID','BASELINE_MATERIALS','EXECUTION_TIMESTAMPS','TOOL_CONFIGURATION','DEVIATIONS','FAILURES','GENERATED_ARTIFACT_INVENTORY','STATUS'],relationships:{BASELINE_ID:'baselines',PRODUCTION_CONTEXT_ID:'freshContexts'}}),
   deterministicResults:recordSchema({ownership:RECORD_OWNERSHIP.deterministicResults,title:'Deterministic product verification',idField:'RESULT_ID',prefix:'DETERMINISTIC-RESULT',stage:22,fields:[
-    'RESULT_ID','PRODUCT_ID','PRODUCT_SHA256','TEST_ID','TOOL_AND_VERSION','PROCEDURE','EXPECTED_RESULT','ACTUAL_RESULT','DETERMINATION','EVIDENCE','DEFECT_ID'
+    'RESULT_ID','PRODUCT_ID','PRODUCT_SHA256','TEST_ID','TOOL_AND_VERSION','PROCEDURE','EXPECTED_RESULT','ACTUAL_RESULT','DETERMINATION','EVIDENCE','DEFECT_ID','RUNTIME_EXECUTION','TEST_SPEC_SHA256','RUNTIME_DETERMINATION'
   ],required:['TOOL_AND_VERSION','PROCEDURE','EXPECTED_RESULT','ACTUAL_RESULT','DETERMINATION','EVIDENCE'],relationships:{PRODUCT_ID:'products',TEST_ID:'tests',DEFECT_ID:'defects'}}),
   meaningResults:recordSchema({ownership:RECORD_OWNERSHIP.meaningResults,title:'Independent meaning verification',idField:'MEANING_REVIEW_ID',prefix:'MEANING-REVIEW',stage:23,fields:[
     'MEANING_REVIEW_ID','REQ_ID','TEST_ID','PRODUCT_ID','PRODUCT_LOCATION','EXTERNAL_SOURCE_EVIDENCE','REQUIRED_MEANING','OBSERVED_MEANING','EVIDENCE_BASED_COMPARISON','DETERMINATION','DEFECT_ID','UNDETERMINED_REASON'
