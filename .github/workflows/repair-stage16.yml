@@ -13,7 +13,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply minimal Stage 16 repair
-        run: python3 .repair-stage16.py
+        run: |
+          python3 .repair-stage16.py
+          python3 .repair-stage16-fix.py
       - name: Focused deterministic verification
         run: |
           node --check app-core.js
@@ -31,11 +33,11 @@ jobs:
           trap - EXIT
       - name: Remove one-time repair infrastructure and commit repaired tree
         run: |
-          rm .repair-stage16.py .github/workflows/repair-stage16.yml
+          rm .repair-stage16.py .repair-stage16-fix.py .github/workflows/repair-stage16.yml
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
           test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js workflow-engine.js verify-browser.mjs index.html .repair-stage16.py .github/workflows/repair-stage16.yml
+          git add app-core.js workflow-engine.js verify-browser.mjs index.html .repair-stage16.py .repair-stage16-fix.py .github/workflows/repair-stage16.yml
           git commit -m "Clarify Stage 16 root-cause correction"
           git push origin HEAD:repair/stage16-root-cause-ux
