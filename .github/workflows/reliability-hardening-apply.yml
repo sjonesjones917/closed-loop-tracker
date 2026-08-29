@@ -1,6 +1,6 @@
 name: Apply closed-loop reliability hardening
 
-# attempt 8: verify final tree only after temporary repair machinery is removed
+# attempt 9: final tree proves structural + epistemic evidence-chain completeness
 on:
   push:
     branches: [codex/reliability-hardening-20260829]
