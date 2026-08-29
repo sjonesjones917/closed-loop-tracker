@@ -1,0 +1,25 @@
+name: Apply Stage 16 operator clarity
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stage16-operator-clarity
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/apply-stage16-operator-clarity.mjs
+      - run: |
+          node --check app-core.js
+          node --check verify-browser.mjs
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js verify-browser.mjs
+          git commit -m "Clarify Stage 16 root-cause correction UX"
+          git push origin HEAD:stage16-operator-clarity
