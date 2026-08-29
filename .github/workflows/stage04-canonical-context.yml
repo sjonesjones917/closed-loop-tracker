@@ -24,7 +24,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply minimal forward correction
-        run: python3 .github/stage04-forward.py
+        run: |
+          python3 .github/stage04-forward.py
+          sed -i 's/stage04-canonical-23/runtime-4e4b6083ae6acfbb/g' index.html
       - name: Verify complete application
         run: |
           node --check app-core.js
