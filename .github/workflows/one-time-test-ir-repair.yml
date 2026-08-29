@@ -78,18 +78,17 @@ jobs:
           from pathlib import Path
           p=Path('verify-prompt-semantics.mjs')
           t=p.read_text()
-          old="const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};"
-          new="const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};"
-          if old not in t: raise SystemExit('Stage 19 operation write-map anchor missing')
-          t=t.replace(old,new,1)
-          old2="if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');"
-          new2="{const freeze=schema.operationContract(19,'CONFIRM_FREEZE');if(!schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||!freeze||freeze.agentWritableCollections.length!==0)throw new Error('Stage 19 CONFIRM_FREEZE must exist as an application-controlled operation with no agent-writable collection.');}"
-          if old2 not in t: raise SystemExit('Stage 19 legacy prohibition anchor missing')
-          t=t.replace(old2,new2,1)
-          old3="if(engine.applicationTestCapabilities().length!==0)throw new Error('A native test capability was registered without a proven application executor test in this patch.');"
-          new3="if(JSON.stringify(engine.applicationTestCapabilities())!==JSON.stringify(['CLOSED_LOOP_TEST_IR']))throw new Error('The application-native capability registry must contain only the proven subject-neutral Closed Loop Test IR executor.');"
-          if old3 not in t: raise SystemExit('Legacy empty native capability assertion missing')
-          t=t.replace(old3,new3,1)
+          replacements={
+            "const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};":"const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};",
+            "if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');":"{const freeze=schema.operationContract(19,'CONFIRM_FREEZE');if(!schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||!freeze||freeze.agentWritableCollections.length!==0)throw new Error('Stage 19 CONFIRM_FREEZE must exist as an application-controlled operation with no agent-writable collection.');}",
+            "if(engine.applicationTestCapabilities().length!==0)throw new Error('A native test capability was registered without a proven application executor test in this patch.');":"if(JSON.stringify(engine.applicationTestCapabilities())!==JSON.stringify(['CLOSED_LOOP_TEST_IR']))throw new Error('The application-native capability registry must contain only the proven subject-neutral Closed Loop Test IR executor.');",
+            "if(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\\nNONE')||!record.prompt.includes('do not select APPLICATION_DETERMINISTIC'))issues.push('UNREGISTERED_APPLICATION_EXECUTOR_NOT_BLOCKED');":"if(!record.prompt.includes('CLOSED LOOP TEST IR — APPLICATION-OWNED DETERMINISTIC LANGUAGE')||!record.prompt.includes('closed-loop-test-spec/1')||!record.prompt.includes('CLOSED_LOOP_TEST_IR')||!record.prompt.includes('you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC'))issues.push('APPLICATION_TEST_IR_COMPILER_CONTRACT_MISSING');",
+            "if(record.stage===12&&!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\\nNONE'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');":"if(record.stage===12&&(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES')||!record.prompt.includes('CLOSED_LOOP_TEST_IR')))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');",
+            "if(![6,12].includes(record.stage)&&record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_LEAK');":"if(![6,12,22].includes(record.stage)&&record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_LEAK');"
+          }
+          for old,new in replacements.items():
+              if old not in t: raise SystemExit(f'Semantic regression anchor missing: {old}')
+              t=t.replace(old,new,1)
           p.write_text(t)
           PY
 
