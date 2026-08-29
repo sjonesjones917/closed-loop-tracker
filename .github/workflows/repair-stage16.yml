@@ -1,0 +1,41 @@
+name: One-time Stage 16 root-cause UX repair
+on:
+  push:
+    branches: [repair/stage16-root-cause-ux]
+permissions: {contents: write}
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: repair/stage16-root-cause-ux, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply minimal Stage 16 repair
+        run: python3 .repair-stage16.py
+      - name: Focused deterministic verification
+        run: |
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check verify-browser.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-stage16-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove one-time repair infrastructure and commit repaired tree
+        run: |
+          rm .repair-stage16.py .github/workflows/repair-stage16.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js workflow-engine.js verify-browser.mjs index.html .repair-stage16.py .github/workflows/repair-stage16.yml
+          git commit -m "Clarify Stage 16 root-cause correction"
+          git push origin HEAD:repair/stage16-root-cause-ux
