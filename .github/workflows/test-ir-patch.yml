@@ -15,18 +15,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node tools/apply-test-ir-schema.mjs
+      - run: node tools/apply-test-ir-engine.mjs
       - run: |
           node --check workflow-schema.js
           node --check test-runtime.js
           node --check test-worker.js
+          node --check workflow-engine.js
       - run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-schema.js
+          git add workflow-engine.js
           if git diff --cached --quiet; then
-            echo 'No schema patch changes to commit.'
+            echo 'No engine patch changes to commit.'
           else
-            git commit -m 'Integrate Test IR schema'
+            git commit -m 'Integrate Test IR execution routing'
             git push origin HEAD:reliability-test-ir
           fi
