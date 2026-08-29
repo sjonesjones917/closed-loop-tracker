@@ -1,10 +1,10 @@
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.closed-loop-native-test-repair.mjs:7
-  if(i<0)throw new Error(`Repair anchor not found: ${label}`);
-               ^
+Committed retained project requires no source materialization.
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:11
+for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error(`One-time repair scaffolding remains: ${file}`);
+                                                                       ^
 
-Error: Repair anchor not found: stage 6 native spec gate
-    at replaceOnce (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.closed-loop-native-test-repair.mjs:7:16)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/.closed-loop-native-test-repair.mjs:137:5
+Error: One-time repair scaffolding remains: .repair-error.txt
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:11:72
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
