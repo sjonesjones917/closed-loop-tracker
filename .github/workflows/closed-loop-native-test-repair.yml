@@ -2,7 +2,12 @@ name: One-time native verification repair
 on:
   push:
     branches: [fix/subject-neutral-native-verification]
-    paths: [.github/workflows/closed-loop-native-test-repair.yml]
+    paths:
+      - .github/workflows/closed-loop-native-test-repair.yml
+      - .closed-loop-native-test-repair.mjs
+      - .repair-native-anchor.mjs
+      - .repair-native-ui-copy.mjs
+      - .repair-native-semantic-test.mjs
 permissions: {contents: write}
 concurrency: {group: one-time-native-verification-repair, cancel-in-progress: false}
 
@@ -18,7 +23,7 @@ jobs:
         with: {node-version: '22'}
       - name: Apply minimal subject-neutral native verification patch
         run: |
-          # Repair helpers mutate only this feature-branch checkout and delete themselves before proof. Retry 2.
+          # Repair helpers mutate only this feature-branch checkout and delete themselves before proof.
           node .repair-native-anchor.mjs
           node .repair-native-ui-copy.mjs
           node .repair-native-semantic-test.mjs
