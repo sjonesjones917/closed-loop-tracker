@@ -1,0 +1,35 @@
+name: One-time runtime cache identity refresh
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-required-input-handoff
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refresh the single shared runtime cache token and verify it
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='runtime-34743451a874a851'
+          new='runtime-a6691c6761a4f9cf'
+          if s.count(old)!=8:
+              raise SystemExit(f'expected 8 old runtime tokens, found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          node verify-hash.mjs
+          rm .github/workflows/stage04-cache-token-repair.yml
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html .github/workflows/stage04-cache-token-repair.yml
+          git commit -m 'Refresh runtime cache identity for Stage 04 handoff'
+          git push origin HEAD:fix/stage04-required-input-handoff
