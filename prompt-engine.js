@@ -200,7 +200,18 @@ INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attac
 AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE
 ${contextFor(stage,state,operation,scope)}
 
-${[6,12].includes(stage)?`APPLICATION-NATIVE TEST CAPABILITIES
+${stage===6?`CLOSED LOOP TEST IR — APPLICATION-OWNED DETERMINISTIC LANGUAGE
+Version: ${schema.TEST_IR.version}
+Registered capability: ${schema.TEST_IR.capability}
+Supported operations: ${schema.TEST_IR.operations.join(', ')}
+
+For every proposed test, first decide whether the proposition can be represented exactly and safely using only this grammar. If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = CUSTOM_PIPELINE, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS. The executable specification is a test definition, not proof that execution occurred. Do not invent operations, parsers, code, shell commands, JavaScript, Python, or hidden executable behavior. If the proposition cannot be faithfully reduced to this language, set EXECUTABLE_KIND = NONE and route it to the correct independent agent, human, or external system. Subject/domain meaning belongs in the requirement/test design; the runtime remains domain-blind.
+
+EXECUTABLE_SPEC shape:
+{"version":"${schema.TEST_IR.version}","steps":[{"op":"<one supported operation>","...":"operation parameters"}]}
+EXECUTABLE_INPUT_BINDINGS is an object whose keys are uppercase binding names and whose values are either an exact ARTIFACT_ID string or a closed object using only artifactId, source (CURRENT_PRODUCT or CURRENT_SCOPE), artifactRole, and filename. Never claim browser-local bytes have been transferred merely because a binding identifies them.
+
+`:''}${[6,12,22].includes(stage)?`APPLICATION-NATIVE TEST CAPABILITIES
 ${workflow.applicationTestCapabilities().length?workflow.applicationTestCapabilities().join('\n'):'NONE'}
 
 `:''}${(()=>{const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),runIds=plan?.triples?.map(x=>x.runId),handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds});if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';const lines=['EXECUTION / ARTIFACT HANDOFF — APPLICATION DERIVED'];if(handoff.send.length){lines.push('FILES YOU MUST RECEIVE');for(const x of handoff.send)lines.push('- '+x.artifactId+' — '+x.filename+' — SHA-256 '+x.sha256);}if(handoff.withhold.length){lines.push('FILES / CONTEXT YOU MUST NOT RECEIVE');for(const x of handoff.withhold)lines.push('- '+x.artifactIdOrCategory+' — '+x.reason);}if(handoff.expectBack.length){lines.push('FILES / EVIDENCE YOU MUST RETURN');for(const x of handoff.expectBack)lines.push('- '+(x.filenameOrPattern||x.kind)+(x.required?' — REQUIRED':''));}lines.push('Browser-local custody does not mean these bytes were transferred automatically. The executing environment must actually receive every required file.');return lines.join('\n')+'\n\n';})()}STAGE-SPECIFIC TASK
