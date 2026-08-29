@@ -1,0 +1,33 @@
+name: Repair runtime cache token
+
+on:
+  push:
+    branches: [fix/native-only-stage22-final]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/native-only-stage22-final
+          fetch-depth: 0
+      - name: Apply token repair
+        run: python3 .github/repair_runtime_token.py
+      - name: Prove bundle identity and focused reliability
+        run: |
+          node verify-hash.mjs
+          node verify-test-runtime.mjs
+          node verify-complete.mjs
+      - name: Remove temporary repair files, prove final tree, and commit
+        run: |
+          git rm .github/workflows/repair-runtime-token.yml .github/repair_runtime_token.py
+          node verify-definition-of-done.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Refresh runtime cache identity after Stage 22 gate repair"
+          git push origin HEAD:fix/native-only-stage22-final
