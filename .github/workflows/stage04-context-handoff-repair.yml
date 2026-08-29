@@ -28,13 +28,10 @@ jobs:
           from pathlib import Path
           path=Path('.repair-stage04-context-handoff.mjs')
           source=path.read_text()
-          old="""  const workflowNeedle = "${interactionModeMarkup(n)}${n===4?artifactControlMarkup(n,locked):''}<div class=\"panel\" id=\"prompt-heading\"";
-          const workflowReplacement = "${interactionModeMarkup(n)}${stageFourMaterialHandoffMarkup(n)}${n===4?artifactControlMarkup(n,locked):''}<div class=\"panel\" id=\"prompt-heading\"";"""
-          new="""  const workflowNeedle = "${interactionModeMarkup(n)}<div class=\"panel\" id=\"prompt-heading\"";
-          const workflowReplacement = "${interactionModeMarkup(n)}${stageFourMaterialHandoffMarkup(n)}<div class=\"panel\" id=\"prompt-heading\"";"""
-          if source.count(old)!=1:
-              raise SystemExit(f'Expected one Stage 04 UI anchor in repair script; found {source.count(old)}')
-          path.write_text(source.replace(old,new))
+          token="${n===4?artifactControlMarkup(n,locked):''}"
+          if source.count(token)!=2:
+              raise SystemExit(f'Expected two stale Stage 04 artifact-control anchor tokens in repair script; found {source.count(token)}')
+          path.write_text(source.replace(token,''))
           PY
           node .repair-stage04-context-handoff.mjs
       - name: Remove one-time repair infrastructure before verification
