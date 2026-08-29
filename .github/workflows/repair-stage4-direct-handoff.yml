@@ -1,0 +1,65 @@
+name: One-time Stage 04 direct handoff repair
+on:
+  push:
+    branches: [reliability-hardening-20260829]
+permissions:
+  contents: write
+concurrency:
+  group: repair-stage4-direct-handoff
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: ${{ hashFiles('.repair-stage4-direct-handoff.cjs') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: reliability-hardening-20260829
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the minimal Stage 04 direct-to-agent handoff repair
+        run: node .repair-stage4-direct-handoff.cjs
+      - name: Verify syntax and deterministic contracts
+        run: |
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Exercise the exact phone-first browser behavior
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-stage4-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove one-time repair machinery and commit the tested tree
+        run: |
+          rm -f .repair-stage4-direct-handoff.cjs .github/workflows/repair-stage4-direct-handoff.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+          git config user.name "closed-loop-repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Make Stage 04 direct file handoff unmistakable"
+          git push origin HEAD:reliability-hardening-20260829
