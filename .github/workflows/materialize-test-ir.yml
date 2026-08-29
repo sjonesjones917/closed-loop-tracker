@@ -5,7 +5,7 @@ on:
     branches:
       - closed-loop-test-ir-minimal
     paths:
-      - materialize-test-ir.mjs
+      - materialize-test-ir-core.mjs
       - .github/workflows/materialize-test-ir.yml
 
 permissions:
@@ -25,13 +25,13 @@ jobs:
       - name: Materialize integration
         run: |
           set +e
-          node materialize-test-ir.mjs > materialize-output.txt 2>&1
+          node materialize-test-ir-core.mjs > materialize-core-output.txt 2>&1
           code=$?
-          cat materialize-output.txt
+          cat materialize-core-output.txt
           if [ "$code" -ne 0 ]; then
             git config user.name "closed-loop-materializer"
             git config user.email "actions@users.noreply.github.com"
-            git add materialize-output.txt
+            git add materialize-core-output.txt
             git commit -m "Capture Test IR materializer diagnostic" || true
             git push origin HEAD:closed-loop-test-ir-minimal || true
             exit "$code"
@@ -61,8 +61,8 @@ jobs:
         run: |
           git config user.name "closed-loop-materializer"
           git config user.email "actions@users.noreply.github.com"
-          rm -f materialize-output.txt
-          git add workflow-schema.js workflow-engine.js prompt-engine.js test-runtime.js verify-test-runtime.mjs verify-test-ir-integration.mjs
+          rm -f materialize-core-output.txt materialize-output.txt
+          git add workflow-schema.js workflow-engine.js prompt-engine.js verify-test-ir-integration.mjs
           if ! git diff --cached --quiet; then
             git commit -m "Integrate subject-neutral Test IR into verification routing"
             git push origin HEAD:closed-loop-test-ir-minimal
