@@ -42,6 +42,16 @@ jobs:
           if source.count(old_assert)!=1:
               raise SystemExit(f'Expected one overbroad optional-custody prompt assertion in repair script; found {source.count(old_assert)}')
           source=source.replace(old_assert,new_assert)
+          old_layout="fileVisible:Boolean(file?.getClientRects().length)"
+          new_layout="fileNested:Boolean(optional&&file&&optional.contains(file)&&Boolean(file.closest('.record-body'))),summaryVisible:Boolean(optional?.querySelector('summary')?.getClientRects().length)"
+          if source.count(old_layout)!=1:
+              raise SystemExit(f'Expected one stale browser visibility probe in repair script; found {source.count(old_layout)}')
+          source=source.replace(old_layout,new_layout)
+          old_condition="&&!stage04Layout.fileVisible&&!stage04Layout.overflow"
+          new_condition="&&stage04Layout.fileNested&&stage04Layout.summaryVisible&&!stage04Layout.overflow"
+          if source.count(old_condition)!=1:
+              raise SystemExit(f'Expected one stale browser visibility assertion in repair script; found {source.count(old_condition)}')
+          source=source.replace(old_condition,new_condition)
           path.write_text(source)
           PY
           node .repair-stage04-context-handoff.mjs
