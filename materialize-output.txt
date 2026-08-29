@@ -1,0 +1,17 @@
+patched workflow-schema.js
+patched workflow-engine.js
+patched prompt-engine.js
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/materialize-test-ir.mjs:5
+function once(s,from,to,label){const i=s.indexOf(from);if(i<0)throw new Error(`Missing anchor: ${label}`);if(s.indexOf(from,i+from.length)>=0)throw new Error(`Non-unique anchor: ${label}`);return s.slice(0,i)+to+s.slice(i+from.length);}
+                                                                    ^
+
+Error: Missing anchor: runtime capabilities
+    at once (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/materialize-test-ir.mjs:5:69)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/materialize-test-ir.mjs:51:5
+    at patch (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/materialize-test-ir.mjs:8:55)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/materialize-test-ir.mjs:49:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
