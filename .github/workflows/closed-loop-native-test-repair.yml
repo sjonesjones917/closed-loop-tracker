@@ -18,6 +18,7 @@ jobs:
         with: {node-version: '22'}
       - name: Apply minimal subject-neutral native verification patch
         run: |
+          # Repair helpers mutate only this feature-branch checkout and delete themselves before proof.
           node .repair-native-anchor.mjs
           node .repair-native-ui-copy.mjs
           node .repair-native-semantic-test.mjs
