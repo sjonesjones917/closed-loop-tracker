@@ -16,7 +16,10 @@ jobs:
         run: |
           python3 .repair-stage16.py
           python3 .repair-stage16-fix.py
-      - name: Focused deterministic verification
+          rm .repair-stage16.py .repair-stage16-fix.py .github/workflows/repair-stage16.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+      - name: Focused deterministic verification of final tree
         run: |
           node --check app-core.js
           node --check workflow-engine.js
@@ -31,11 +34,8 @@ jobs:
           node verify-browser.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Remove one-time repair infrastructure and commit repaired tree
+      - name: Commit repaired final tree
         run: |
-          rm .repair-stage16.py .repair-stage16-fix.py .github/workflows/repair-stage16.yml
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add app-core.js workflow-engine.js verify-browser.mjs index.html .repair-stage16.py .repair-stage16-fix.py .github/workflows/repair-stage16.yml
