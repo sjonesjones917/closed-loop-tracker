@@ -18,40 +18,38 @@ jobs:
         with: {node-version: '22'}
       - name: Apply minimal subject-neutral native verification patch
         run: |
-          set +e
           node .repair-native-anchor.mjs
-          anchor_code=$?
-          if [ "$anchor_code" -eq 0 ]; then
-            node .closed-loop-native-test-repair.mjs > /tmp/native-repair.log 2>&1
-            code=$?
-          else
-            code=$anchor_code
-            echo "Gate-anchor correction failed." > /tmp/native-repair.log
-          fi
-          cat /tmp/native-repair.log
+          node .closed-loop-native-test-repair.mjs
+      - name: Prove repaired source before committing
+        run: |
+          set +e
+          (
+            set -e
+            node --check workflow-schema.js
+            node --check workflow-engine.js
+            node --check prompt-engine.js
+            node --check app-core.js
+            node --check verify-complete.mjs
+            node --check verify-definition-of-done.mjs
+            node build-test-project.mjs
+            node verify-hash.mjs
+            node verify.mjs
+            node verify-complete.mjs
+            node verify-prompt-semantics.mjs
+            node verify-definition-of-done.mjs
+          ) > /tmp/native-proof.log 2>&1
+          code=$?
+          cat /tmp/native-proof.log
           if [ "$code" -ne 0 ]; then
-            cp /tmp/native-repair.log .repair-error.txt
+            cp /tmp/native-proof.log .repair-error.txt
+            git checkout -- workflow-schema.js workflow-engine.js prompt-engine.js app-core.js verify-complete.mjs verify-definition-of-done.mjs
             git config user.name closed-loop-ci
             git config user.email closed-loop-ci@users.noreply.github.com
             git add .repair-error.txt
-            git commit -m "Capture native verification repair failure" || true
+            git commit -m "Capture native verification proof failure" || true
             git push origin HEAD:fix/subject-neutral-native-verification
             exit "$code"
           fi
-      - name: Prove repaired source before committing
-        run: |
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check app-core.js
-          node --check verify-complete.mjs
-          node --check verify-definition-of-done.mjs
-          node build-test-project.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-complete.mjs
-          node verify-prompt-semantics.mjs
-          node verify-definition-of-done.mjs
       - name: Commit only the finished application change
         run: |
           rm -f .repair-error.txt .repair-native-anchor.mjs .closed-loop-native-test-repair.mjs .github/workflows/closed-loop-native-test-repair.yml
