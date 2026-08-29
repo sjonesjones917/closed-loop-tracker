@@ -23,19 +23,7 @@ jobs:
         with:
           node-version: 22
       - name: Materialize integration
-        run: |
-          set +e
-          node materialize-test-ir-core.mjs > materialize-core-output.txt 2>&1
-          code=$?
-          cat materialize-core-output.txt
-          if [ "$code" -ne 0 ]; then
-            git config user.name "closed-loop-materializer"
-            git config user.email "actions@users.noreply.github.com"
-            git add materialize-core-output.txt
-            git commit -m "Capture Test IR materializer diagnostic" || true
-            git push origin HEAD:closed-loop-test-ir-minimal || true
-            exit "$code"
-          fi
+        run: node materialize-test-ir-core.mjs
       - name: Syntax
         run: |
           node --check workflow-schema.js
@@ -44,7 +32,19 @@ jobs:
           node --check test-runtime.js
           node --check test-worker.js
       - name: Test IR runtime
-        run: node verify-test-runtime.mjs
+        run: |
+          set +e
+          node verify-test-runtime.mjs > test-ir-runtime-output.txt 2>&1
+          code=$?
+          cat test-ir-runtime-output.txt
+          if [ "$code" -ne 0 ]; then
+            git config user.name "closed-loop-materializer"
+            git config user.email "actions@users.noreply.github.com"
+            git add test-ir-runtime-output.txt
+            git commit -m "Capture Test IR runtime diagnostic" || true
+            git push origin HEAD:closed-loop-test-ir-minimal || true
+            exit "$code"
+          fi
       - name: Test IR integration
         run: node verify-test-ir-integration.mjs
       - name: Existing complete verification
@@ -61,7 +61,7 @@ jobs:
         run: |
           git config user.name "closed-loop-materializer"
           git config user.email "actions@users.noreply.github.com"
-          rm -f materialize-core-output.txt materialize-output.txt
+          rm -f materialize-core-output.txt materialize-output.txt test-ir-runtime-output.txt
           git add workflow-schema.js workflow-engine.js prompt-engine.js verify-test-ir-integration.mjs
           if ! git diff --cached --quiet; then
             git commit -m "Integrate subject-neutral Test IR into verification routing"
