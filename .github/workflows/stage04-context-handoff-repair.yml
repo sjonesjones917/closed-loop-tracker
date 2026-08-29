@@ -38,7 +38,7 @@ jobs:
               raise SystemExit(f'Expected two stale Stage 04 artifact-control anchor tokens in repair script; found {source.count(anchor_token)}')
           source=source.replace(anchor_token,'')
           old_runtime_token='runtime-4f8b7c2d1a6e9f30'
-          new_runtime_token='runtime-b366a49074dc4754'
+          new_runtime_token='runtime-753fd50defa181f3'
           if source.count(old_runtime_token)!=1:
               raise SystemExit(f'Expected one provisional runtime token in repair script; found {source.count(old_runtime_token)}')
           source=source.replace(old_runtime_token,new_runtime_token)
