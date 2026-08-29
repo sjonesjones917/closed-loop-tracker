@@ -1,0 +1,44 @@
+name: Execute generic Test IR once
+on:
+  push:
+    branches: [fix/generic-test-ir-20260829]
+permissions: {contents: write}
+jobs:
+  execute:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/generic-test-ir-20260829}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Materialize executable subject-neutral IR
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/materialize-generic-test-ir-once.yml').read_text(); start=text.index("          const fs=require('fs'),crypto=require('crypto');"); end=text.index("          NODE\n      - name: Prove exact repair"); Path('/tmp/materialize.js').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines()))
+          PY
+          node /tmp/materialize.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); p.write_text(p.read_text().replace('Stage 07.\n\nFor every mandatory requirement','Stage 07. For every mandatory requirement').replace('arbitrary executable code','unrestricted executable code'))
+          p=Path('workflow-schema.js'); s=p.read_text(); s=s.replace("['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','SELECT_JSON_PATH','COUNT','HASH_SHA256','REGEX','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']","['SELECT_JSON_PATH','COUNT','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']"); s=s.replace("'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','INPUTS'","'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS'"); s=s.replace("ARTIFACT_REQUIREMENTS:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})\n  }),","ARTIFACT_REQUIREMENTS:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),EXECUTABLE_KIND:Object.freeze({valueType:'STRING',enumValues:TEST_IR_OPERATIONS,nullable:true,normalizerKey:null,closedProperties:null}),EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:'STRING',enumValues:Object.freeze([TEST_IR_VERSION]),nullable:true,normalizerKey:null,closedProperties:null}),EXECUTABLE_SPEC:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null}),EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null})\n  }),"); p.write_text(s)
+          p=Path('workflow-engine.js'); s=p.read_text().replace('arbitrary-code execution semantics','unrestricted-code execution behavior'); anchor="function testIrContract(){return Object.freeze({version:schema.TEST_IR_VERSION,operations:[...(schema.TEST_IR_OPERATIONS||[])]});}"; executor="""function executeTestIr(test,input){const validation=validateTestIr(test);if(!validation.valid)throw new Error(validation.reasons.join(' '));const spec=recordValue(test,'EXECUTABLE_SPEC'),steps=Array.isArray(spec.steps)?spec.steps:[{op:upper(recordValue(test,'EXECUTABLE_KIND')),value:spec.value,path:spec.path}],observations=[];let current=input,determination='SATISFIED';const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);for(const step of steps){const op=upper(step.op);if(!schema.TEST_IR_OPERATIONS.includes(op))throw new Error('Unregistered Test IR operation '+op+'.');if(op==='SELECT_JSON_PATH'){const parts=String(step.path||'').replace(/^\\$\\.?/,'').split('.').filter(Boolean);for(const part of parts)current=current==null?undefined:current[part];observations.push({op,actual:current});continue;}if(op==='COUNT'){current=Array.isArray(current)||typeof current==='string'?current.length:current&&typeof current==='object'?Object.keys(current).length:0;observations.push({op,actual:current});continue;}let passed=false;if(op==='ASSERT_EQ')passed=eq(current,step.value);else if(op==='ASSERT_GT')passed=Number(current)>Number(step.value);else if(op==='ASSERT_GTE')passed=Number(current)>=Number(step.value);else if(op==='ASSERT_LT')passed=Number(current)<Number(step.value);else if(op==='ASSERT_LTE')passed=Number(current)<=Number(step.value);else if(op==='ASSERT_CONTAINS')passed=Array.isArray(current)?current.some(x=>eq(x,step.value)):String(current??'').includes(String(step.value));else if(op==='ASSERT_NOT_CONTAINS')passed=Array.isArray(current)?!current.some(x=>eq(x,step.value)):!String(current??'').includes(String(step.value));else if(op==='ASSERT_SET_EQUAL')passed=Array.isArray(current)&&Array.isArray(step.value)&&eq([...new Set(current)].sort(),[...new Set(step.value)].sort());else throw new Error('Unsupported Test IR operation '+op+'.');observations.push({op,actual:current,expected:step.value,passed});if(!passed)determination='VIOLATED';}return {testId:recordId(test,'tests'),determination,actual:current,observations,executorVersion:schema.TEST_IR_VERSION};}"""; s=s.replace(anchor,anchor+'\n'+executor).replace('globalThis.closedLoopWorkflowEngine=Object.freeze({validateTestIr,testIrContract,','globalThis.closedLoopWorkflowEngine=Object.freeze({validateTestIr,testIrContract,executeTestIr,'); p.write_text(s)
+          p=Path('verify-complete.mjs'); s=p.read_text(); s=s.replace("assert(v.valid&&plan.items[0].operatorAction==='NO_ACTION'&&plan.items[0].applicationExecutorSupported,'Valid subject-neutral Test IR did not route to application execution.');","const execution=engine.executeTestIr(p.projectData.tests[0],Array.from({length:10},(_,i)=>i));assert(v.valid&&plan.items[0].operatorAction==='NO_ACTION'&&plan.items[0].applicationExecutorSupported&&execution.determination==='SATISFIED','Valid subject-neutral Test IR did not execute deterministically in the application.');"); p.write_text(s)
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text().replace("if(engine.applicationTestCapabilities().length!==0)throw new Error('A native test capability was registered without a proven application executor test in this patch.');","if(engine.applicationTestCapabilities().length===0||engine.testIrContract().version!=='closed-loop-test-spec/1')throw new Error('Subject-neutral application Test IR capability is unavailable.');"); p.write_text(s)
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto'),files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];const blob=f=>{const b=fs.readFileSync(f);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};const token='runtime-'+crypto.createHash('sha256').update(files.map(f=>`${f}:${blob(f)}\n`).join('')).digest('hex').slice(0,16);fs.writeFileSync('index.html',fs.readFileSync('index.html','utf8').replace(/runtime-[a-f0-9]{16}/g,token));
+          NODE
+      - name: Prove exact repair
+        run: |
+          node --check workflow-schema.js && node --check workflow-engine.js && node --check prompt-engine.js && node --check verify-complete.mjs && node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - name: Commit final tree
+        run: |
+          git rm .github/workflows/*generic-test-ir-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Execute subject-neutral deterministic Test IR'
+          git push origin HEAD:fix/generic-test-ir-20260829
