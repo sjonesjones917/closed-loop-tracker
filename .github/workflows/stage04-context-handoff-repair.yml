@@ -19,6 +19,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Integrate the exact current main before applying the repair
+        run: |
+          git config user.name "closed-loop-repair-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git merge --no-edit origin/main
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -42,6 +47,16 @@ jobs:
           if source.count(old_assert)!=1:
               raise SystemExit(f'Expected one overbroad optional-custody prompt assertion in repair script; found {source.count(old_assert)}')
           source=source.replace(old_assert,new_assert)
+          old_external="[4,11,12,17,19,21,23,24,25].includes(stage)"
+          new_external="[11,12,17,19,21,23,24,25].includes(stage)"
+          if source.count(old_external)!=1:
+              raise SystemExit(f'Expected one redundant Stage 04 response-handoff route in repair script; found {source.count(old_external)}')
+          source=source.replace(old_external,new_external)
+          old_expect="  assert(handoff.expectBack.some(item=>item.kind==='STRUCTURED_RESPONSE'&&item.required),'Stage 04 handoff omitted the final structured response.');"
+          new_expect="  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 material reference incorrectly became a duplicate transport contract.');"
+          if source.count(old_expect)!=1:
+              raise SystemExit(f'Expected one redundant Stage 04 response-handoff assertion in repair script; found {source.count(old_expect)}')
+          source=source.replace(old_expect,new_expect)
           old_layout="fileVisible:Boolean(file?.getClientRects().length)"
           new_layout="fileNested:Boolean(optional&&file&&optional.contains(file)&&Boolean(file.closest('.record-body'))),summaryVisible:Boolean(optional?.querySelector('summary')?.getClientRects().length)"
           if source.count(old_layout)!=1:
@@ -98,8 +113,6 @@ jobs:
           test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
       - name: Commit the verified source-only repair
         run: |
-          git config user.name "closed-loop-repair-bot"
-          git config user.email "actions@users.noreply.github.com"
           git add -A
           git status --short
           git commit -m "Repair Stage 04 external material handoff [stage04-context-handoff-applied]"
