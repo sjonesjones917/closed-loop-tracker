@@ -1,6 +1,11 @@
 name: One-time Test IR repair
 
 on:
+  push:
+    branches: [closed-loop-test-ir-minimal]
+    paths:
+      - '.repair-test-ir.py'
+      - '.github/workflows/one-time-test-ir-repair.yml'
   workflow_dispatch:
 
 permissions:
