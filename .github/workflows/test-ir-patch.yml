@@ -15,19 +15,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node tools/apply-test-ir-engine.mjs
+      - run: node tools/apply-test-ir-ui.mjs
       - run: |
           node --check workflow-schema.js
           node --check test-runtime.js
           node --check test-worker.js
           node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
       - run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js
+          git add index.html prompt-engine.js response-ingestion.js app-core.js
           if git diff --cached --quiet; then
-            echo 'No engine patch changes to commit.'
+            echo 'No UI integration changes to commit.'
           else
-            git commit -m 'Integrate Test IR execution routing'
+            git commit -m 'Integrate Test IR operator workflow'
             git push origin HEAD:reliability-test-ir
           fi
