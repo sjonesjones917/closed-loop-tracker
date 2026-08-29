@@ -13,5 +13,9 @@ const oldStage19='s=one(s,"19:Object.freeze([\'EXECUTE_RUN\',\'VERIFY\',\'COMPAR
 const newStage19='s=one(s,"STAGE_OPERATIONS[19]=Object.freeze([\'EXECUTE_RUN\',\'VERIFY\',\'COMPARE\',\'REGRESSION_VERIFY\',\'CONFIRM\']);","STAGE_OPERATIONS[19]=Object.freeze([\'CONFIRM_FREEZE\',\'EXECUTE_RUN\',\'VERIFY\',\'COMPARE\',\'REGRESSION_VERIFY\',\'CONFIRM\']);",\'Stage 19 CONFIRM_FREEZE\');';
 if(!text.includes(oldStage19))throw new Error('Expected Stage 19 repair-script target was not found.');
 text=text.replace(oldStage19,newStage19);
+const broken='},send:artifactIds.filter(id=>artifactsById.has(id)).map';
+const fixed='},send=artifactIds.filter(id=>artifactsById.has(id)).map';
+if(!text.includes(broken))throw new Error('Expected execution-plan send declaration typo was not found.');
+text=text.replace(broken,fixed);
 fs.writeFileSync(path,text);
-console.log(JSON.stringify({fixed:true,promptLine:index+1,stage19Target:true}));
+console.log(JSON.stringify({fixed:true,promptLine:index+1,stage19Target:true,executionPlanSyntax:true}));
