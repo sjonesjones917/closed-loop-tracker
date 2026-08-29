@@ -1,0 +1,83 @@
+name: Temporary native-only Stage 22 repair
+
+on:
+  push:
+    branches:
+      - closed-loop-test-ir-minimal
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: closed-loop-test-ir-minimal
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply the minimal gate repair and regression
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          engine = Path('workflow-engine.js')
+          text = engine.read_text()
+          pattern = re.compile(r"(    case 22:\{\n\s*)requireAccepted\(\);(const mandatoryIds=.*?expected=.*?\)),results=recordsForCurrentScope\(project,'deterministicResults'\)")
+          match = pattern.search(text)
+          if not match:
+              raise SystemExit('Stage 22 gate shape not found; refusing to guess.')
+          replacement = (
+              match.group(1)
+              + match.group(2)
+              + ";\n      if(expected.some(test=>upper(recordValue(test,'EXECUTION_MODE'))!=='APPLICATION_DETERMINISTIC'))requireAccepted();\n"
+              + "      const results=recordsForCurrentScope(project,'deterministicResults')"
+          )
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one Stage 22 gate replacement, got {count}.')
+          engine.write_text(text)
+
+          test_file = Path('verify-complete.mjs')
+          tests = test_file.read_text()
+          marker = "assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');\n"
+          if marker not in tests:
+              raise SystemExit('verify-complete insertion marker not found.')
+          regression = r'''{
+  const p=project('JOB-NATIVE-STAGE22-NO-AGENT');
+  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE'});
+  const scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-NATIVE-22');
+  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
+  req.scope=scope;native.scope=scope;p.projectData.requirements.push(req);p.projectData.tests.push(native);
+  const nativeGate=engine.gate(22,p);
+  assert(!nativeGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Native-only Stage 22 still requires an external accepted response.');
+  native.fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';native.fields.REQUIRED_CAPABILITY='external deterministic tool';
+  const externalGate=engine.gate(22,p);
+  assert(externalGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Stage 22 stopped requiring an accepted response when an external deterministic executor is required.');
+}
+'''
+          if 'JOB-NATIVE-STAGE22-NO-AGENT' not in tests:
+              tests = tests.replace(marker, marker + regression)
+              test_file.write_text(tests)
+          PY
+      - name: Verify repaired behavior
+        run: |
+          node --check workflow-engine.js
+          node --check verify-complete.mjs
+          node verify-complete.mjs
+          node verify-test-runtime.mjs
+          node verify-prompt-semantics.mjs
+          node verify-definition-of-done.mjs
+      - name: Remove one-time repair workflow and commit
+        run: |
+          git rm .github/workflows/repair-native-stage22.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js verify-complete.mjs
+          git commit -m "Allow native-only Stage 22 without external response"
+          git push origin HEAD:closed-loop-test-ir-minimal
