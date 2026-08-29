@@ -36,7 +36,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // APPLICATION_DETERMINISTIC cannot satisfy Stage 06 unless an actual application-native executor is registered.
 {
-  assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');
+  assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR_V1'),'The subject-neutral native Test IR executor is not registered.');
   const p=project('JOB-NATIVE-EXECUTOR-TRUTH');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
   const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};
@@ -46,6 +46,16 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
   assert(plan.unsupportedApplicationTestIds.includes('TEST-NATIVE-1'),'Execution plan did not identify unsupported application-native test execution.');
   const g=engine.gate(6,p);
   assert(g.reasons.some(reason=>reason.includes('without a registered application-native executor')),'Stage 06 accepted an APPLICATION_DETERMINISTIC test with no actual executor.');
+}
+
+
+
+// Registered subject-neutral Test IR validates and executes a real deterministic assertion.
+{
+  const p=project('JOB-NATIVE-IR-EXECUTION');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001',testSuiteVersion:'TEST-SUITE-v001'};
+  const test={id:'TEST-NATIVE-IR',stage:6,active:true,scope,fields:{TEST_ID:'TEST-NATIVE-IR',REQ_ID:'REQ-NATIVE-IR',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR_V1',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'SUBJECT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT',path:'/records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]},EXECUTABLE_INPUT_BINDINGS:{SUBJECT:{source:'SUBJECT',index:0}},INPUTS:'current subject',TOOLS:'Closed Loop Test IR',PROCEDURE:'Count records exactly.',EXPECTED_RESULT:'2 records',FAILURE_CONDITION:'record count differs',EVIDENCE_TO_PRESERVE:'application execution trace',STATUS:'READY'},relationships:{REQ_ID:'REQ-NATIVE-IR'}};
+  assert(engine.validateApplicationTestSpec(test).valid,'Valid native Test IR was rejected.');const bytes=new TextEncoder().encode('{"records":[1,2]}'),sha256=await globalThis.closedLoopHash.sha256Bytes(bytes),result=await engine.executeApplicationTest(test,{SUBJECT:[{artifactId:'SUBJECT-1',metadata:{filename:'subject.json',mediaType:'application/json',byteSize:bytes.byteLength,sha256},bytes}],TEST_INPUT:[]});assert(result.determination==='SATISFIED'&&result.assertions.length===1&&result.assertions[0].passed,'Native Test IR did not execute the expected deterministic assertion.');
+  const malformed=JSON.parse(JSON.stringify(test));malformed.fields.EXECUTABLE_SPEC.steps.push({op:'SHELL_COMMAND',value:'rm -rf /'});assert(!engine.validateApplicationTestSpec(malformed).valid,'Native Test IR accepted an arbitrary unsupported operation.');
 }
 
 // Stage 06 continuously rechecks exact required artifact custody from canonical evidence and current verified bytes.

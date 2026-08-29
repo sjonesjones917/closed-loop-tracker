@@ -57,14 +57,14 @@ function semanticIssues(record){
   if(record.stage===6){
     for(const mode of ['APPLICATION_DETERMINISTIC','EXTERNAL_AGENT_TOOL','INDEPENDENT_AGENT_REVIEW','HUMAN_INSPECTION','EXTERNAL_SYSTEM','UNAVAILABLE'])if(!record.prompt.includes(mode))issues.push(`TEST_EXECUTION_MODE_MISSING_${mode}`);
     if(!record.prompt.includes('A TEST record is a verification specification')||!record.prompt.includes('Generating an executable or input test artifact and executing that artifact are separate boundaries')||!record.prompt.includes('return the actual artifact even if the downstream runner or verification tool is unavailable')||!record.prompt.includes('a filename, claimed hash, repository path, or code block is not possession of a file'))issues.push('TEST_DEFINITION_ARTIFACT_BOUNDARY_MISSING');
-    if(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\nNONE')||!record.prompt.includes('do not select APPLICATION_DETERMINISTIC'))issues.push('UNREGISTERED_APPLICATION_EXECUTOR_NOT_BLOCKED');
+    if(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\nCLOSED_LOOP_TEST_IR_V1')||!record.prompt.includes('requires a valid application-owned executable Test IR specification')||!record.prompt.includes('Do not invent operations'))issues.push('REGISTERED_APPLICATION_EXECUTOR_CONTRACT_MISSING');
     if(!record.prompt.includes('TEST → EVIDENCE_ID → ATTACHMENT_ID')||!record.prompt.includes('attachmentRef')||!record.prompt.includes('evidenceRefs'))issues.push('TEST_ARTIFACT_CANONICAL_LINK_MISSING');
   }
   if(record.stage===7&&!record.prompt.includes('Generating an invalid fixture and executing that fixture are separate boundaries'))issues.push('FAILURE_FIXTURE_EXECUTION_BOUNDARY_MISSING');
   if(record.stage===8&&(!record.prompt.includes('Distinguish artifact creation from downstream use')||!record.prompt.includes('use an implementation-ready specification only when actual artifact generation is genuinely unavailable')))issues.push('PRODUCTION_INSTRUCTION_ARTIFACT_BOUNDARY_MISSING');
   if(record.stage===12&&(!record.prompt.includes('Respect each test’s EXECUTION_MODE')||!record.prompt.includes('do not claim the test ran')))issues.push('TEST_EXECUTION_RESPONSIBILITY_MISSING');
   if(record.stage===21&&(!record.prompt.includes('Generate the complete approved deliverable and every required actual artifact whenever this environment can reliably construct the artifact bytes')||!record.prompt.includes('Treat compilation, import/open validation, simulation, post-processing, machine execution, fabrication, deployment, filing/submission, and physical testing as separate downstream operations')||!record.prompt.includes('Use an implementation-ready or manufacturing-ready specification/patch plan only when the approved artifact itself cannot be generated reliably here')))issues.push('STAGE21_ARTIFACT_GENERATION_BOUNDARY_MISSING');
-  if(record.stage===12&&!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\nNONE'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');
+  if(record.stage===12&&!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\nCLOSED_LOOP_TEST_IR_V1'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');
   if(![6,12].includes(record.stage)&&record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_LEAK');
   if(record.stage===2){
     if(!record.prompt.includes('Stage 02 is not a supplied-project-material inventory stage'))issues.push('STAGE02_PROJECT_MATERIAL_INVENTORY_LEAK');
@@ -81,7 +81,7 @@ const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verif
 if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');
 {
  const test=schema.RECORD_SCHEMAS.tests;
- for(const field of ['EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS'])if(!test.fields.includes(field)||!test.required.includes(field)||test.fieldDefinitions[field]?.producer!==schema.PRODUCER.AGENT)throw new Error(`TEST execution contract is missing agent field ${field}.`);
+ for(const field of ['EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS'])if(!test.fields.includes(field)||!test.required.includes(field)||test.fieldDefinitions[field]?.producer!==schema.PRODUCER.AGENT)throw new Error(`TEST execution contract is missing required agent field ${field}.`); for(const field of ['EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'])if(!test.fields.includes(field)||test.fieldDefinitions[field]?.producer!==schema.PRODUCER.AGENT)throw new Error(`TEST native execution contract is missing agent field ${field}.`);
  const modes=test.fieldDefinitions.EXECUTION_MODE.enumValues;
  const expected=['APPLICATION_DETERMINISTIC','EXTERNAL_AGENT_TOOL','INDEPENDENT_AGENT_REVIEW','HUMAN_INSPECTION','EXTERNAL_SYSTEM','UNAVAILABLE'];
  if(JSON.stringify(modes)!==JSON.stringify(expected))throw new Error(`TEST execution modes changed: ${JSON.stringify(modes)}`);
@@ -95,8 +95,8 @@ if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContr
  const ingestionSource=fs.readFileSync('response-ingestion.js','utf8');if(!ingestionSource.includes('STALE_PROMPT_ENGINE_VERSION')||!ingestionSource.includes('promptEngineVersion:currentPromptEngineVersion()'))throw new Error('The ingestion commit boundary does not fail closed across prompt-engine upgrades.');
  const fixture=fs.readFileSync('test-fixtures.mjs','utf8');
  if(!fixture.includes("EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL'"))throw new Error('Synthetic fixtures still default to a nonexistent application-native executor.');
- if(engine.applicationTestCapabilities().length!==0)throw new Error('A native test capability was registered without a proven application executor test in this patch.');
- if(!ui.includes('Invalid application executor claim')||!ui.includes('No registered application-native executor exists'))throw new Error('Operator UI does not fail unsupported application-native test claims closed.');
+ const nativeCapabilities=engine.applicationTestCapabilities();if(JSON.stringify(nativeCapabilities)!==JSON.stringify(['CLOSED_LOOP_TEST_IR_V1']))throw new Error('The application-native capability registry contains an unproven or unexpected executor: '+JSON.stringify(nativeCapabilities));if(!engine.applicationTestIrContract||engine.applicationTestIrContract().version!=='closed-loop-test-spec/1')throw new Error('The registered native capability does not expose the proven Test IR contract.');
+ if(!ui.includes('Verification is blocked')||!ui.includes('run-native-tests')||!ui.includes('automatic test'))throw new Error('Operator UI does not distinguish runnable native verification from blocked invalid native execution.');
  if(!ui.includes("verificationStage=n===6||n===12||[22,23,24].includes(n)")||ui.includes("[7,8,9,10,11,12,17,19,22,23,24,25,26,27,29]"))throw new Error('Verification execution guidance is not contextually limited to actual verification operations.');
  if(!ui.includes('Preserved raw response')||!ui.includes('Controlling prompt')||!ui.includes('Canonical evidence'))throw new Error('Provenance UI does not expose the complete field-to-raw-to-prompt-to-evidence audit path.');
 }

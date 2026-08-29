@@ -47,7 +47,7 @@ assert(acceptedRelationshipProvenanceCoverage===1,'Accepted relationship provena
 
 assert(core.STAGE_COUNT===30&&core.STAGES.length===30&&core.WORKFLOW_ID==='mobile-closed-loop/30','30-stage workflow identity changed.');
 assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');
-assert(engine.applicationTestCapabilities().length===0,'APPLICATION_TEST_EXECUTORS is no longer empty without a proven native executor.');
+assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR_V1'),'The registered application-native executor is not the proven subject-neutral Test IR capability.');
 
 const workflowSource=fs.readFileSync('.github/workflows/pages.yml','utf8');
 assert((workflowSource.match(/^name:/gm)||[]).length===1,'Pages workflow file is malformed.');
@@ -63,7 +63,7 @@ const completeTestSource=fs.readFileSync('verify-complete.mjs','utf8');
 const fullCycleSource=fs.readFileSync('verify-full-cycle.mjs','utf8');
 const semanticTestSource=fs.readFileSync('verify-semantic-invariant.mjs','utf8');
 const browserExtraSource=fs.readFileSync('verify-browser-extra.mjs','utf8');
-for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);
+for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff','validateApplicationTestSpec','executeApplicationTest','commitApplicationDeterministicExecutions'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);
 
 const scopeKeys=[...new Set(Object.values(schema.SCOPE_REQUIREMENTS||{}).flat())];
 const scopeKeyProofs=scopeKeys.map(key=>ingestionTestSource.includes(`'${key}'`)||ingestionTestSource.includes(`\"${key}\"`));
