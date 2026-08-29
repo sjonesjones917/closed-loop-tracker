@@ -19,20 +19,54 @@ jobs:
         with:
           ref: closed-loop-test-ir-minimal
           fetch-depth: 0
-      - name: Apply exact minimal repair with diagnostics
+
+      - name: Align one-time patch with exact current source
         run: |
-          set +e
-          python3 .repair-test-ir.py > comprehensive-repair-output.txt 2>&1
-          code=$?
-          cat comprehensive-repair-output.txt
-          if [ "$code" -ne 0 ]; then
-            git config user.name "closed-loop-repair"
-            git config user.email "closed-loop-repair@users.noreply.github.com"
-            git add comprehensive-repair-output.txt
-            git commit -m "Capture comprehensive Test IR repair diagnostic" || true
-            git push origin HEAD:closed-loop-test-ir-minimal || true
-            exit "$code"
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.repair-test-ir.py')
+          t=p.read_text()
+
+          # Current app-core already has the action-oriented verification UI. Replace only
+          # the stale patch block with the two genuinely new actions: native execution and
+          # verification-package download.
+          start=t.index("# Primary action buttons live in existing execution guidance; technical data remains advanced.")
+          end=t.index("write('app-core.js',a)",start)
+          replacement=r'''# Preserve current action-oriented verification UX; add only native/package actions.
+          a=replace_once(a,
+          "return text?`<div class=\"notice\"><strong>This stage</strong><br>${esc(text)}</div>`:'';}",
+          "const automatic=n===22&&nativeStage22Tests().length?`<div class=\"button-row\"><button class=\"primary\" id=\"run-native-tests\" type=\"button\">Run ${nativeStage22Tests().length} automatic test${nativeStage22Tests().length===1?'':'s'}</button></div>`:'',external=engine.testExecutionPlan(current).items.some(item=>item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&item.operatorAction!=='BLOCKED')?`<div class=\"button-row\"><button id=\"download-execution-package\" type=\"button\">Download verification package</button></div>`:'';return text?`<div class=\"notice\"><strong>This stage</strong><br>${esc(text)}${automatic}${external}</div>`:(automatic+external);}",
+          'Stage purpose native/package actions')
+          a=replace_once(a,
+          "if($('#verify-stored-files'))$('#verify-stored-files').onclick=verifyStoredFilesNow;",
+          "if($('#verify-stored-files'))$('#verify-stored-files').onclick=verifyStoredFilesNow;if($('#run-native-tests'))$('#run-native-tests').onclick=runNativeStage22Tests;if($('#download-execution-package'))$('#download-execution-package').onclick=downloadExecutionPackage;",
+          'Wire automatic test and package actions')
+          '''
+          t=t[:start]+replacement+t[end:]
+
+          # Current Pages workflow has no old 'Verify complete application model' step.
+          # Insert the focused Test IR verifier immediately before the canonical hash proof.
+          ci_start=t.index("if 'node verify-test-runtime.mjs' not in y:")
+          ci_end=t.index("write('.github/workflows/pages.yml',y)",ci_start)
+          ci=r'''if 'node verify-test-runtime.mjs' not in y:
+              anchor='      - name: Verify canonical serialization and SHA-256'
+              y=replace_once(y,anchor,"      - name: Verify generic deterministic Test IR\n        run: node verify-test-runtime.mjs\n"+anchor,'CI Test IR execution step')
+          '''
+          t=t[:ci_start]+ci+t[ci_end:]
+
+          # The old suite intentionally proved the registry was empty. Preserve the real
+          # invariant instead: exactly one safe native capability is registered, while a
+          # nonexistent native capability still fails closed in the very next assertions.
+          marker="vc=read('verify-complete.mjs')"
+          pos=t.index(marker)+len(marker)
+          premise="\nvc=replace_once(vc,\"assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');\",\"assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'Application-native capability registry must contain only the exact Closed Loop Test IR capability.');\",'Update native executor acceptance premise')\n"
+          t=t[:pos]+premise+t[pos:]
+          p.write_text(t)
+          PY
+
+      - name: Apply exact minimal repair
+        run: python3 .repair-test-ir.py
+
       - name: Syntax and focused invariant checks
         run: |
           set -euo pipefail
@@ -50,9 +84,11 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-ingestion.mjs
           node verify-full-cycle.mjs
+
       - name: Remove one-time repair infrastructure
         run: |
           rm -f .repair-test-ir.py .github/workflows/one-time-test-ir-repair.yml comprehensive-repair-output.txt
+
       - name: Commit integrated repair
         run: |
           set -euo pipefail
