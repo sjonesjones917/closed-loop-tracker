@@ -133,3 +133,12 @@ try{await main();}finally{await cleanup();}
  for(const token of ['Long-section navigation belongs to the UI layer','scheduleMatchedScrollJumps','elementFromPoint','Large raw responses and prompts are rendered once per source record','Provenance source records'])if(!appSource.includes(token))throw new Error('Missing mobile responsiveness regression protection: '+token);
  if(appSource.includes("raw?details('Preserved raw response',raw)"))throw new Error('Provenance regressed to duplicating the full raw response inside every field trace.');
 }
+
+
+// reliability-hardening-final: context-aware action-first verification and verified-byte transfer remain visible without architecture-first clutter.
+{
+ const source=fs.readFileSync('app-core.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8');
+ for(const token of ['What you need to do now','Advanced verification details','Exact handoff — send / do not send / return','Download exact bytes','data-download-artifact','stagePurposeMarkup','verified artifact ready for transfer'])if(!source.includes(token))throw new Error('Missing action-first verification/artifact UX: '+token);
+ if(!engineSource.includes("[22,23,24,25].includes(stage)"))throw new Error('Stage 22 is still omitted from exact finished-product handoff.');
+ if(!source.includes('Stored bytes no longer match the canonical filename, byte size, and SHA-256. Download was blocked.'))throw new Error('Artifact download does not fail closed on byte-identity mismatch.');
+}
