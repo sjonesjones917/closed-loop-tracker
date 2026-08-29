@@ -10,7 +10,6 @@ concurrency:
 
 jobs:
   repair:
-    if: ${{ hashFiles('.repair-stage4-direct-handoff.cjs') != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
