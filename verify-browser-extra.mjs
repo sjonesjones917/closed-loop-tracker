@@ -5,6 +5,7 @@ import path from 'node:path';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const appCoreSource=fs.readFileSync('app-core.js','utf8');
+for(const token of ['Send with this instruction','Required input file is missing.','Browser-local storage does not transfer files to the external agent automatically.','outgoing-instruction-handoff','promptHandoffBlocker'])if(!appCoreSource.includes(token))throw new Error('Stage 04 outgoing artifact handoff browser surface missing '+token);
 const promptStart=appCoreSource.indexOf('function currentStagePrompt'),promptEnd=appCoreSource.indexOf('function operationMarkup',promptStart),currentStagePromptSource=promptStart>=0&&promptEnd>promptStart?appCoreSource.slice(promptStart,promptEnd):'';
 if(!currentStagePromptSource||currentStagePromptSource.includes('clone(current)'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');
 if(!appCoreSource.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects must bypass full migration cloning during startup.');

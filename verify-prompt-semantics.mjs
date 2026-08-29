@@ -420,3 +420,15 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
  const p=baseProject();p.stages[11].agentData={FROZEN_EXECUTION_PACKAGE:'PRIOR-STAGE-RUN-SUMMARY-SECRET'};const iterationId='ITERATION-000001',candidateId='CANDIDATE-000001';p.projectData.runs.push({id:'RUN-VERIFY-TARGET',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{RUN_ID:'RUN-VERIFY-TARGET',ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,CONTEXT_ID:'CTX-GENERATOR',COMPLETE_OUTPUT:'target output'}});p.projectData.freshContexts.push({id:'CTX-GENERATOR',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{CONTEXT_ID:'CTX-GENERATOR'}});const r=prompts.buildPromptRecord(12,p,{operation:'COMPLETE',scope:{iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-VERIFIER'}});if(r.prompt.includes('PRIOR-STAGE-RUN-SUMMARY-SECRET'))throw new Error('Stage 12 prompt leaked generic Stage 11 conclusions.');
 }
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
+
+
+// Stage 04 exact outgoing supplied-file handoff.
+{
+ const p=baseProject(),name='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2';p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:name}]);
+ let r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});if(!r.prompt.includes('REQUIRED INPUT FILES MISSING FROM APPLICATION CUSTODY')||!r.prompt.includes(name))throw new Error('Stage 04 prompt does not fail closed when named supplied file bytes are missing.');
+ p.projectData.artifacts.push({id:'ARTIFACT-000041',stage:1,active:true,scope:engine.currentScope(p),fields:{ARTIFACT_ID:'ARTIFACT-000041',FILENAME:name,BYTE_SIZE:416621,SHA256:'abc123stage4handoff',ROLE:'USER_SUPPLIED_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+ r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});for(const token of ['FILES YOU MUST RECEIVE','ARTIFACT-000041',name,'416621 bytes','SHA-256 abc123stage4handoff','operator must attach every file listed under FILES YOU MUST RECEIVE','do not compile a complete requirement set from a filename'])if(!r.prompt.includes(token))throw new Error('Stage 04 outgoing handoff missing '+token);
+ const h=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});if(h.send.length!==1||h.send[0].artifactId!=='ARTIFACT-000041'||h.send[0].byteSize!==416621||h.missingRequired.length)throw new Error('Stage 04 handoff is not derived from exact verified supplied artifact bytes.');
+ const ui=fs.readFileSync('app-core.js','utf8');for(const token of ['Send with this instruction','Required input file is missing.','Browser-local storage does not transfer files to the external agent automatically.','outgoing-stage-files','promptHandoffBlocker'])if(!ui.includes(token))throw new Error('Stage 04 operator handoff UI missing '+token);
+}
+console.log(JSON.stringify({stage04ExactOutgoingArtifactHandoff:true},null,2));
