@@ -1,8 +1,139 @@
-import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
-const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
-assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');assert.ok(runtime.OPS.includes('BYTE_COMPARE'));assert.ok(!runtime.OPS.some(x=>/JAVASCRIPT|PYTHON|SHELL/i.test(x)));
-const invalid=runtime.validateSpec({version:runtime.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:1,javascript:'alert(1)'}]});assert.equal(invalid.valid,false);
-const test={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}};assert.equal(runtime.supports(test),true);
-const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:'x'.repeat(64),bytes}}});assert.equal(result.determination,'SATISFIED');
-const failed=await runtime.execute({spec:{...test.EXECUTABLE_SPEC,steps:[...test.EXECUTABLE_SPEC.steps.slice(0,-1),{op:'ASSERT_EQ',value:3}]},artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:'x'.repeat(64),bytes}}});assert.equal(failed.determination,'VIOLATED');
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};
+context.globalThis=context;
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});
+const runtime=context.closedLoopTestRuntime;
+assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');
+assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
+assert.ok(runtime.OPS.includes('BYTE_COMPARE'));
+assert.ok(!runtime.OPS.some(x=>/JAVASCRIPT|PYTHON|SHELL/i.test(x)));
+
+const invalid=runtime.validateSpec({version:runtime.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:1,javascript:'alert(1)'}]});
+assert.equal(invalid.valid,false);
+
+const test={
+  EXECUTION_MODE:'APPLICATION_DETERMINISTIC',
+  REQUIRED_CAPABILITY:runtime.CAPABILITY,
+  EXECUTABLE_KIND:'CUSTOM_PIPELINE',
+  EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,
+  EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},
+  EXECUTABLE_SPEC:{
+    version:runtime.SPEC_VERSION,
+    steps:[
+      {op:'LOAD_ARTIFACT',binding:'PRODUCT'},
+      {op:'READ_BYTES'},
+      {op:'DECODE_UTF8'},
+      {op:'PARSE_JSON'},
+      {op:'SELECT_JSON_PATH',path:'$.records'},
+      {op:'COUNT'},
+      {op:'ASSERT_EQ',value:2}
+    ]
+  }
+};
+assert.equal(runtime.supports(test),true);
+
+const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));
+const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:'x'.repeat(64),bytes}}});
+assert.equal(result.determination,'SATISFIED');
+
+const failed=await runtime.execute({
+  spec:{...test.EXECUTABLE_SPEC,steps:[...test.EXECUTABLE_SPEC.steps.slice(0,-1),{op:'ASSERT_EQ',value:3}]},
+  artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:'x'.repeat(64),bytes}}
+});
+assert.equal(failed.determination,'VIOLATED');
+
+// Stage 04 consumes canonical Stage 03 research/candidate requirements and current
+// human authority. A filename in Stage 01's supplied-material inventory is not an
+// application-observed requirement to re-upload that file before Stage 04 can run.
+const appContext={
+  console,
+  TextDecoder,
+  TextEncoder,
+  Uint8Array,
+  ArrayBuffer,
+  structuredClone,
+  crypto:globalThis.crypto,
+  Event:class Event{constructor(type){this.type=type;}},
+  dispatchEvent:()=>true
+};
+appContext.globalThis=appContext;
+vm.createContext(appContext);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js']){
+  vm.runInContext(fs.readFileSync(file,'utf8'),appContext,{filename:file});
+}
+
+const core=appContext.closedLoopCore;
+const schema=appContext.closedLoopWorkflowSchema;
+const engine=appContext.closedLoopWorkflowEngine;
+const prompts=appContext.closedLoopPromptEngine;
+const project=core.createBlankState('JOB-STAGE04-CANONICAL-INPUT');
+engine.ensureShape(project);
+Object.assign(project.job,{
+  JOB_ID:'JOB-STAGE04-CANONICAL-INPUT',
+  EXACT_USER_OBJECTIVE_VERBATIM:'Compile the accepted researched obligations into atomic requirements.',
+  SUPPLIED_MATERIALS_INVENTORY:'text 30(1).txt',
+  CURRENT_INPUT_VERSION:'INPUT-v001',
+  CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',
+  CURRENT_REQUIREMENTS_VERSION:'NOT APPLICABLE',
+  CURRENT_TEST_SUITE_VERSION:'NOT APPLICABLE',
+  CURRENT_INSTRUCTION_VERSION:'NOT APPLICABLE',
+  CURRENT_STAGE:'STAGE 04',
+  CURRENT_STATE:'IN PROGRESS'
+});
+project.activeStage=4;
+
+const stage4Contract=schema.operationContract(4,'COMPLETE');
+assert.ok(stage4Contract.readCollections.includes('candidateRequirements'),'Stage 04 must read the canonical Stage 03 candidate-requirement set.');
+project.projectData.candidateRequirements.push({
+  id:'CANDIDATE-REQ-000001',
+  stage:3,
+  active:true,
+  scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},
+  fields:{
+    CANDIDATE_REQ_ID:'CANDIDATE-REQ-000001',
+    SOURCE_LOCATION:'Canonical Stage 03 research',
+    CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',
+    CLASSIFICATION:'MANDATORY',
+    APPLICABILITY:'APPLICABLE',
+    EVIDENCE:'EVIDENCE-STAGE-03'
+  },
+  relationships:{},
+  evidenceRefs:['EVIDENCE-STAGE-03']
+});
+
+const stage4Handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});
+assert.deepEqual(stage4Handoff.send,[],'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');
+assert.deepEqual(stage4Handoff.withhold,[]);
+assert.deepEqual(stage4Handoff.expectBack,[]);
+
+const stage4Prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'});
+assert.equal(stage4Prompt.contextManifest.executionHandoff.send.length,0);
+assert.ok(stage4Prompt.prompt.includes('CANONICAL-STAGE-03-OBLIGATION'),'Stage 04 prompt must carry the accepted canonical Stage 03 candidate requirement.');
+for(const prohibited of [
+  'REQUIRED INPUT FILES NOT READY',
+  'FILES YOU MUST RECEIVE',
+  'The operator must attach every file listed above',
+  'Add and verify the exact supplied project file before copying'
+]){
+  assert.ok(!stage4Prompt.prompt.includes(prohibited),`Stage 04 reintroduced a filename-derived upload gate: ${prohibited}`);
+}
+
+const nextAction=String(engine.operationalNextAction(project)||'');
+assert.ok(!/required stage 04 input file|add the exact supplied project file|missing or unverified.*stage 04/i.test(nextAction),'Stage 04 next action must not require a filename-derived re-upload.');
+
+const uiSource=fs.readFileSync('app-core.js','utf8');
+for(const prohibited of [
+  'function stagePromptBlocked(',
+  'function outgoingHandoffMarkup(',
+  'Required Stage 04 input file is missing',
+  'Attach every file shown in “Send with this instruction”'
+]){
+  assert.ok(!uiSource.includes(prohibited),`Stage 04 UI reintroduced the removed upload gate: ${prohibited}`);
+}
+
+console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true},null,2));
 console.log('verify-test-runtime: PASS');
