@@ -1,0 +1,75 @@
+name: Apply the minimal Stage 04 conversation-material repair
+
+on:
+  push:
+    branches:
+      - fix/stage04-conversation-material-handoff
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage04-conversation-material-handoff
+  cancel-in-progress: true
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the forward-only Stage 04 repair
+        run: node .repair-stage04-context-handoff.mjs
+      - name: Remove one-time repair infrastructure before verification
+        run: rm -f .repair-stage04-context-handoff.mjs .github/workflows/stage04-context-handoff-repair.yml
+      - name: Verify changed source syntax
+        run: |
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          git diff --check
+      - name: Run the complete deterministic verification suite
+        run: |
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Run local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Prove temporary repair files are gone
+        run: |
+          test ! -e .repair-stage04-context-handoff.mjs
+          test ! -e .github/workflows/stage04-context-handoff-repair.yml
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+      - name: Commit the verified source-only repair
+        run: |
+          git config user.name "closed-loop-repair-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git status --short
+          git commit -m "Repair Stage 04 external material handoff [stage04-context-handoff-applied]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
