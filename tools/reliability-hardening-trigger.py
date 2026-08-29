@@ -1,3 +1,2 @@
-# This file intentionally triggers the one-time reliability hardening workflow.
-# The workflow applies tools/patch-*.py, runs the responsible verification suite,
-# then removes this file, all patch scripts, and the temporary workflow before committing.
+# One-time reliability hardening workflow trigger, attempt 2.
+# Applies tools/patch-*.py, verifies the responsible layers, then removes all repair machinery before commit.
