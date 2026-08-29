@@ -3,7 +3,7 @@ name: Apply closed-loop reliability hardening
 on:
   push:
     branches: [codex/reliability-hardening-20260829]
-    paths: [tools/reliability-hardening-*.py]
+    paths: [tools/reliability-hardening-trigger.py]
 
 permissions:
   contents: write
@@ -22,7 +22,7 @@ jobs:
           node-version: '22'
       - name: Apply line-preserving patch
         run: |
-          for patch in tools/reliability-hardening-*.py; do
+          for patch in tools/patch-*.py; do
             python3 "$patch"
           done
       - name: Verify responsible layers and regressions
