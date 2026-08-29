@@ -97,13 +97,13 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,textar
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
 <script>(()=>{const sync=()=>{const select=document.getElementById('stage-picker');if(!select)return;let shell=select.closest('.stage-picker-shell');if(!shell){shell=document.createElement('div');shell.className='stage-picker-shell';select.before(shell);shell.append(select);const display=document.createElement('span');display.className='stage-picker-display';display.setAttribute('aria-hidden','true');shell.append(display);}const display=shell.querySelector('.stage-picker-display');if(display)display.textContent=select.selectedOptions[0]?.textContent||'';};document.addEventListener('closed-loop-rendered',sync);document.addEventListener('change',event=>{if(event.target?.id==='stage-picker')sync();});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();})();</script>
-<script defer src="workbook.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="hash.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="workflow-schema.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="workflow-engine.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="prompt-engine.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="response-ingestion.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="project-store.js?v=runtime-6f87684799cfb12d"></script>
-<script defer src="app-core.js?v=runtime-6f87684799cfb12d"></script>
+<script defer src="workbook.js?v=runtime-34743451a874a851"></script>
+<script defer src="hash.js?v=runtime-34743451a874a851"></script>
+<script defer src="workflow-schema.js?v=runtime-34743451a874a851"></script>
+<script defer src="workflow-engine.js?v=runtime-34743451a874a851"></script>
+<script defer src="prompt-engine.js?v=runtime-34743451a874a851"></script>
+<script defer src="response-ingestion.js?v=runtime-34743451a874a851"></script>
+<script defer src="project-store.js?v=runtime-34743451a874a851"></script>
+<script defer src="app-core.js?v=runtime-34743451a874a851"></script>
 </body>
 </html>
