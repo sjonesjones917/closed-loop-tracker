@@ -137,9 +137,9 @@ jobs:
             exit "$code"
           fi
 
-      - name: Remove one-time repair infrastructure
+      - name: Remove one-time repair script and diagnostics
         run: |
-          rm -f .repair-test-ir.py .github/workflows/one-time-test-ir-repair.yml comprehensive-repair-output.txt integrated-test-ir-output.txt
+          rm -f .repair-test-ir.py comprehensive-repair-output.txt integrated-test-ir-output.txt
 
       - name: Commit integrated repair
         run: |
