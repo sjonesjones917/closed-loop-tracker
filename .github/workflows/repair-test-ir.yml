@@ -17,14 +17,16 @@ jobs:
           node .fix-repair-script.mjs
           node --check .repair-test-ir.mjs
           node .repair-test-ir.mjs
+          node .fix-test-ir-fixtures.mjs
       - name: Remove one-time repair machinery before proof
-        run: rm .fix-repair-script.mjs .repair-test-ir.mjs .github/workflows/repair-test-ir.yml
+        run: rm .fix-repair-script.mjs .fix-test-ir-fixtures.mjs .repair-test-ir.mjs .github/workflows/repair-test-ir.yml
       - name: Syntax and architecture proof
         run: |
           for f in workbook.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-runtime.js test-worker.js verify-test-runtime.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-browser.mjs verify-browser-extra.mjs; do node --check "$f"; done
           test "$(find .github/workflows -maxdepth 1 -type f -name '*.yml' | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
           test ! -f .fix-repair-script.mjs
+          test ! -f .fix-test-ir-fixtures.mjs
           test ! -f .repair-test-ir.mjs
           test ! -f .github/workflows/repair-test-ir.yml
       - name: Responsible-layer and Test IR verification
