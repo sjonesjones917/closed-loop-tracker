@@ -94,6 +94,6 @@ node verify-full-cycle.mjs
 node verify-definition-of-done.mjs
 ```
 
-The Pages workflow is the single deployment workflow. Pull requests run the source/schema/ingestion/gate/full-cycle/semantic and local Chromium acceptance checks. Only `main` deploys. A successful main run then verifies exact deployed bytes and the deployed Chromium application before publishing the machine-readable acceptance artifact.
+The Pages workflow is the single deployment workflow. Pull requests run the source/schema/ingestion/gate/full-cycle/semantic and local Chromium acceptance checks. Only `main` deploys. A successful main run then verifies exact deployed bytes and the deployed Chromium application before publishing the machine-readable acceptance artifact. CI also verifies that every directly loaded runtime script uses the shared cache token derived from the exact runtime bundle identity, so a code change cannot silently ship under a stale browser cache identity.
 
 Local and deployed Chromium verification run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL. These browser tests cover the primary operator cycle, responsive layouts, actual Blob persistence, compressed package round-trip, injected storage rollback, and stale multi-tab revision rejection.
