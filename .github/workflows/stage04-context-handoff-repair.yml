@@ -28,10 +28,16 @@ jobs:
           from pathlib import Path
           path=Path('.repair-stage04-context-handoff.mjs')
           source=path.read_text()
-          token="${n===4?artifactControlMarkup(n,locked):''}"
-          if source.count(token)!=2:
-              raise SystemExit(f'Expected two stale Stage 04 artifact-control anchor tokens in repair script; found {source.count(token)}')
-          path.write_text(source.replace(token,''))
+          anchor_token="${n===4?artifactControlMarkup(n,locked):''}"
+          if source.count(anchor_token)!=2:
+              raise SystemExit(f'Expected two stale Stage 04 artifact-control anchor tokens in repair script; found {source.count(anchor_token)}')
+          source=source.replace(anchor_token,'')
+          old_runtime_token='runtime-4f8b7c2d1a6e9f30'
+          new_runtime_token='runtime-b366a49074dc4754'
+          if source.count(old_runtime_token)!=1:
+              raise SystemExit(f'Expected one provisional runtime token in repair script; found {source.count(old_runtime_token)}')
+          source=source.replace(old_runtime_token,new_runtime_token)
+          path.write_text(source)
           PY
           node .repair-stage04-context-handoff.mjs
       - name: Remove one-time repair infrastructure before verification
