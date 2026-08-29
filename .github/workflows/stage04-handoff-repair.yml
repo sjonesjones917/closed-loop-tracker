@@ -1,0 +1,155 @@
+name: One-time Stage 04 required-input handoff repair
+on:
+  push:
+    branches: [fix/stage04-required-input-handoff]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-required-input-handoff
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimal Stage 04 handoff repair
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              if old not in text:
+                  raise SystemExit(f'missing patch anchor: {label}')
+              if text.count(old) != 1:
+                  raise SystemExit(f'non-unique patch anchor: {label} ({text.count(old)})')
+              return text.replace(old, new, 1)
+
+          # workflow-engine.js: extend the existing executionHandoff authority; no new subsystem.
+          path=Path('workflow-engine.js')
+          text=path.read_text()
+          start=text.index('function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){')
+          end=text.index('function evidenceChainExplanation(project,chain){', start)
+          new_func=r'''function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){
+  const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map(),withhold=new Map(),expectBack=new Map(),artifacts=records(project,'artifacts').filter(isActiveRecord),artifactsById=new Map(artifacts.map(a=>[recordId(a,'artifacts'),a])),requiredMissing=[];
+  const addArtifact=a=>{if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')return false;const id=recordId(a,'artifacts');send.set(id,{artifactId:id,filename:String(recordValue(a,'FILENAME')||id),byteSize:Number(recordValue(a,'BYTE_SIZE')||0),sha256:String(recordValue(a,'SHA256')||'UNKNOWN'),role:String(recordValue(a,'ROLE')||'AUTHORIZED_INPUT')});return true;};
+  const addReferenced=value=>{for(const id of new Set((JSON.stringify(value||'').match(/ARTIFACT-[A-Za-z0-9-]+/g)||[])))addArtifact(artifactsById.get(id));};
+  const materialKey=value=>String(value||'').split(/[\\/]/).pop().trim().toLowerCase().replace(/\.(?:zip|pdf|docx?|xlsx?|csv|json|png|jpe?g|svg|txt|md|gz|tar|7z)$/i,'').replace(/[^a-z0-9]+/g,' ').trim();
+  if(stage===4){
+    const raw=String(project?.job?.SUPPLIED_MATERIALS_INVENTORY||'').trim(),labels=[];
+    const addLabel=(value,type='')=>{const label=String(value||'').trim(),kind=upper(type);if(!label||/^(MESSAGE|TEXT|PROMPT|USER_MESSAGE|CHAT)$/.test(kind))return;const explicitlyFile=/FILE|ARTIFACT|ATTACHMENT|ZIP|ARCHIVE|DIRECTORY|FOLDER/.test(kind),looksFile=/\.(?:zip|pdf|docx?|xlsx?|csv|json|png|jpe?g|svg|txt|md|gz|tar|7z)$/i.test(label);if(explicitlyFile||looksFile)labels.push(label);};
+    if(raw&&!/^(UNKNOWN|NONE|NOT APPLICABLE)$/i.test(raw)){
+      try{const parsed=JSON.parse(raw),entries=Array.isArray(parsed)?parsed:[parsed];for(const item of entries){if(item&&typeof item==='object')addLabel(item.exactNameOrReference||item.filename||item.fileName||item.name||item.description,item.type||item.materialType||item.kind);else addLabel(item);}}
+      catch{for(const a of artifacts){const filename=String(recordValue(a,'FILENAME')||'').trim();if(filename&&raw.toLowerCase().includes(filename.toLowerCase()))labels.push(filename);}if(!labels.length&&/\.(?:zip|pdf|docx?|xlsx?|csv|json|png|jpe?g|svg|txt|md|gz|tar|7z)/i.test(raw))for(const part of raw.split(/[\n;,]+/))addLabel(part);}
+    }
+    for(const label of [...new Set(labels)]){const key=materialKey(label),matches=artifacts.filter(a=>materialKey(recordValue(a,'FILENAME'))===key);if(matches.length===1&&addArtifact(matches[0]))continue;if(matches.length>1){const verified=matches.filter(a=>upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED');if(verified.length===1&&addArtifact(verified[0]))continue;requiredMissing.push({label,reason:'Supplied material does not resolve to exactly one application-verified canonical artifact.'});continue;}requiredMissing.push({label,reason:'Required supplied material bytes are not stored and verified by the application.'});}
+  }
+  for(const item of items){for(const a of item.handoff.send)addArtifact(artifactsById.get(a.artifactId));for(const x of item.handoff.withhold)withhold.set(x.artifactIdOrCategory,x);for(const x of item.handoff.expectBack)expectBack.set(x.kind+'|'+x.filenameOrPattern,x);}
+  const current=currentScope(project),runExecution=stage===11||(stage===17&&op==='EXECUTE_RUN')||(stage===19&&op==='EXECUTE_RUN');
+  if(runExecution){const candidate=recordsForCurrentScope(project,'candidateFreezes').find(c=>recordId(c,'candidateFreezes')===String(current.candidateId||''))||recordsForCurrentScope(project,'candidateFreezes').at(-1);addReferenced(recordValue(candidate,'COMPONENT_MANIFEST'));addReferenced(recordValue(candidate,'IMMUTABLE_LOCATIONS'));}
+  if(stage===21){const baseline=recordsForCurrentScope(project,'baselines').find(b=>recordId(b,'baselines')===String(current.baselineId||''))||recordsForCurrentScope(project,'baselines').at(-1);addReferenced(recordValue(baseline,'IMMUTABLE_ARTIFACT_RECORDS'));addReferenced(recordValue(baseline,'APPROVED_VERSIONS'));}
+  if([22,23,24,25].includes(stage))for(const a of artifacts)if(String(a.scope?.productId||'')===String(current.productId||''))addArtifact(a);
+  if(stage===12){const wanted=runIds?new Set(runIds.map(String)):null;for(const run of recordsForCurrentScope(project,'runs'))if(!wanted||wanted.has(recordId(run,'runs')))addReferenced(recordValue(run,'OUTPUT_ARTIFACT_IDENTITIES'));}
+  const stageWithhold={11:['outputs from other runs','reviewer feedback','failure explanations','proposed corrections'],12:['other verifiers’ determinations','Stage 13 comparison findings','root-cause analysis','correction proposals'],23:['Stage 21 generator correctness claims','unneeded deterministic pass conclusions','adversarial findings'],24:['generator reasoning or self-evaluation','prior reviewer conclusions that tell the adversarial reviewer what to find']};for(const label of stageWithhold[stage]||[])withhold.set(label,{artifactIdOrCategory:label,reason:'Withheld to preserve information isolation and reduce verification bias.'});
+  const externalWork=[4,11,12,17,19,21,23,24,25].includes(stage);if(externalWork)expectBack.set('STRUCTURED_RESPONSE|final strict JSON response',{kind:'STRUCTURED_RESPONSE',filenameOrPattern:'final strict JSON response',required:true});
+  return {send:[...send.values()],withhold:[...withhold.values()],expectBack:[...expectBack.values()],requiredMissing,ready:requiredMissing.length===0};
+}
+'''
+          text=text[:start]+new_func+text[end:]
+          old="if(stage===16){const correction=stage16CorrectionPlan(project);return correction.heading+'. '+correction.explanation;}const plan=testExecutionPlan(project)"
+          new="if(stage===16){const correction=stage16CorrectionPlan(project);return correction.heading+'. '+correction.explanation;}if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'});if(!handoff.ready)return 'Required Stage 04 input file is missing or unverified. Add the exact supplied project file before copying the instruction: '+handoff.requiredMissing.map(x=>x.label).join(', ')+'.';if(handoff.send.length)return 'Attach '+handoff.send.map(x=>x.artifactId+' ('+x.filename+')').join(', ')+' to the Stage 04 external conversation, then send the current instruction. Browser-local storage does not transfer the file automatically.';}const plan=testExecutionPlan(project)"
+          text=replace_once(text,old,new,'Stage 04 next action')
+          path.write_text(text)
+
+          # prompt-engine.js: same engine handoff drives prompt text and context identity.
+          path=Path('prompt-engine.js')
+          text=path.read_text()
+          text=replace_once(text,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/21';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/22';",'prompt engine version')
+          hs=text.index('${(()=>{const plan=verificationBatchPlan(stage,state,operation,scope)')
+          he=text.index('})()}STAGE-SPECIFIC TASK',hs)+len('})()}')
+          handoff_expr=r'''${(()=>{const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),runIds=plan?.triples?.map(x=>x.runId),handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds}),missing=handoff.requiredMissing||[];if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length&&!missing.length)return '';const lines=['EXECUTION / ARTIFACT HANDOFF — APPLICATION DERIVED'];if(missing.length){lines.push('REQUIRED INPUT FILES NOT READY');for(const x of missing)lines.push('- '+x.label+' — '+x.reason);lines.push('The operator must add and application-verify these exact bytes before this instruction may be executed. Do not infer file contents from a filename or metadata.');}if(handoff.send.length){lines.push('FILES YOU MUST RECEIVE');for(const x of handoff.send)lines.push('- '+x.artifactId+' — '+x.filename+' — '+x.byteSize+' bytes — SHA-256 '+x.sha256);}if(stage===4&&handoff.send.length)lines.push('The operator must attach every file listed above to this external conversation. Browser-local storage does not transfer the file automatically. If any required file is unavailable in your executing context, return BLOCKED with MISSING_ARTIFACT; do not produce a complete Stage 04 requirement set from the filename or metadata alone.');if(handoff.withhold.length){lines.push('FILES / CONTEXT YOU MUST NOT RECEIVE');for(const x of handoff.withhold)lines.push('- '+x.artifactIdOrCategory+' — '+x.reason);}if(handoff.expectBack.length){lines.push('FILES / EVIDENCE YOU MUST RETURN');for(const x of handoff.expectBack)lines.push('- '+(x.filenameOrPattern||x.kind)+(x.required?' — REQUIRED':''));}lines.push('Browser-local custody does not mean these bytes were transferred automatically. The executing environment must actually receive every required file.');return lines.join('\n')+'\n\n';})()}'''
+          text=text[:hs]+handoff_expr+text[he:]
+          old="const opContract=schema.operationContract(stage,operation);const scope=assertRequiredPromptScope(stage,operation,scopeFor(stage,state,options.scope||{})),feedback=recoveryFeedback(state,stage,operation,scope),batchPlan=verificationBatchPlan(stage,state,operation,scope),contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,readCollections:"
+          new="const opContract=schema.operationContract(stage,operation);const scope=assertRequiredPromptScope(stage,operation,scopeFor(stage,state,options.scope||{})),feedback=recoveryFeedback(state,stage,operation,scope),batchPlan=verificationBatchPlan(stage,state,operation,scope),executionHandoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(x=>x.testId),runIds:batchPlan?.triples?.map(x=>x.runId)}),contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff,readCollections:"
+          text=replace_once(text,old,new,'prompt context handoff identity')
+          path.write_text(text)
+
+          # app-core.js: show the outgoing handoff immediately before prompt actions and fail copy/save closed.
+          path=Path('app-core.js')
+          text=path.read_text()
+          text=replace_once(text,"  const later={\n    10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',","  const later={\n    4:'Attach every file shown in “Send with this instruction” to the Stage 04 external conversation before sending the instruction. Browser-local storage does not transfer those bytes automatically.',\n    10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',",'Stage 04 help entry')
+          marker='function stagePurposeMarkup(n)'
+          insert=r'''function stagePromptBlocked(n){const h=engine.executionHandoff(current,{stage:n,operation:selectedOperation(n)});return n===4&&h.ready===false;}
+function outgoingHandoffMarkup(n,locked){
+  if(n!==4)return '';
+  const handoff=engine.executionHandoff(current,{stage:n,operation:selectedOperation(n)}),missing=safe(handoff.requiredMissing),rows=handoff.send.map(x=>({required:'YES',artifactId:x.artifactId,filename:x.filename,byteSize:x.byteSize,sha256:x.sha256}));
+  if(missing.length)return `<div class="panel" id="outgoing-handoff" tabindex="-1"><h2 class="section-title">Send with this instruction</h2><div class="notice danger"><strong>Required input file is missing.</strong><br>Add and verify the exact supplied project file before copying the Stage 04 instruction: ${esc(missing.map(x=>x.label).join(', '))}. The application will not allow Save or Save and copy while these required bytes are unavailable.</div></div>`;
+  if(!rows.length)return '';
+  return `<div class="panel" id="outgoing-handoff"><h2 class="section-title">Send with this instruction</h2><div class="notice"><strong>Required</strong><br>Attach ${rows.length===1?'this exact file':'these exact files'} to the external agent conversation before sending the instruction. Browser-local storage does not transfer file bytes automatically. Do not continue until ${rows.length===1?'the file is':'all files are'} attached.</div>${details('Required outgoing files',rows,true)}<div class="button-row">${handoff.send.map(x=>`<button type="button" data-download-artifact="${esc(x.artifactId)}">Download ${esc(x.filename)}</button>`).join('')}</div></div>`;
+}
+'''
+          text=replace_once(text,marker,insert+marker,'outgoing handoff UI helper')
+          astart=text.index('function artifactControlMarkup(n,locked){')
+          aend=text.index('function runBatchMarkup(n){',astart)
+          new_artifact=r'''function artifactControlMarkup(n,locked){if(n===19)return `<div class="panel"><h2 class="section-title">Unchanged candidate control</h2><p class="section-intro">Stage 19 reuses the exact current Stage 17 frozen candidate identity and hashes. Do not select replacement files or create a new candidate.</p><div class="button-row"><button id="begin-unchanged-confirmation"${locked?' disabled':''}>Begin unchanged confirmation using Stage 17 candidate</button></div></div>`;const applicable=[10,17,20,21,25].includes(n),stageFour=n===4,files=safe(current.stages[n].authorizedFiles),productReady=n!==21||Boolean(currentStageProduct()),fileLocked=locked||!productReady,heading=stageFour?'Stage files':applicable?'Artifact control':'Authorized files for this stage',intro=stageFour?'Use this existing file control to add exact supplied project-input bytes required by the current Stage 04 handoff. The same control also receives any files explicitly returned by the agent before Parse / validate. The application hashes and verifies actual bytes; a filename or hash claim is not file possession.':'Actual selected bytes are stored in IndexedDB, hashed by the application, read back, and rehashed before becoming canonical artifact identities. If an agent response declares attachments, attach the exact returned files here before Parse / validate; a filename, hash claim, or code block is not file possession.';return `<div class="panel"><h2 class="section-title">${heading}</h2><p class="section-intro">${intro}</p>${n===21&&!productReady?'<div class="notice warn">Reserve the Stage 21 product execution before selecting finished-product files. The reserved PRODUCT_ID controls artifact scope, inventory, and lineage.</div>':''}<div class="grid-2"><div class="field"><label>Select exact files</label><input id="stage-files" type="file" multiple${fileLocked?' disabled':''}></div><div class="field"><label>Select structured package folder</label><input id="stage-directory" type="file" webkitdirectory directory multiple${fileLocked?' disabled':''}><span class="help">Use folder selection when directory structure is meaningful; canonical filenames preserve paths relative to the selected root.</span></div></div>${files.length?details('Verified artifact bytes',files,true):'<div class="empty-state">No verified stage artifact bytes.</div>'}<div class="button-row">${[10,17].includes(n)?`<button id="freeze-candidate"${locked?' disabled':''}>${n===17?'Freeze corrected candidate':'Freeze selected candidate'}</button>`:''}${n===20?`<button id="freeze-baseline"${locked?' disabled':''}>Freeze selected baseline</button>`:''}${n===21?`<button id="reserve-product-execution"${locked?' disabled':''}>Reserve product execution</button>`:''}</div></div>`;}
+'''
+          text=text[:astart]+new_artifact+text[aend:]
+          text=replace_once(text,'${interactionModeMarkup(n)}<div class="panel" id="prompt-heading" tabindex="-1">','${interactionModeMarkup(n)}${n===4?artifactControlMarkup(n,locked):\'\'}${outgoingHandoffMarkup(n,locked)}<div class="panel" id="prompt-heading" tabindex="-1">','place outgoing handoff above prompt')
+          text=replace_once(text,'<button id="save-prompt"${locked?\' disabled\':\'\'}>Save instruction</button><button class="primary" id="copy-prompt"${locked?\' disabled\':\'\'}>Save and copy instruction</button>','<button id="save-prompt"${locked||stagePromptBlocked(n)?\' disabled\':\'\'}>Save instruction</button><button class="primary" id="copy-prompt"${locked||stagePromptBlocked(n)?\' disabled\':\'\'}>Save and copy instruction</button>','block Stage 04 prompt actions')
+          text=replace_once(text,'${acceptedStageMarkup(n)}${artifactControlMarkup(n,locked)}${provenanceMarkup(n)}','${acceptedStageMarkup(n)}${n===4?\'\':artifactControlMarkup(n,locked)}${provenanceMarkup(n)}','avoid duplicate Stage 04 file control')
+          text=replace_once(text,'async function savePromptRecord(n){\n  const existing=currentPromptRecord(n);if(existing)return existing;','async function savePromptRecord(n){\n  const handoff=engine.executionHandoff(current,{stage:n,operation:selectedOperation(n)});if(n===4&&handoff.ready===false)throw new Error(`Required input file is missing. Add and verify ${safe(handoff.requiredMissing).map(x=>x.label).join(\', \')} before saving or copying the Stage 04 instruction.`);\n  const existing=currentPromptRecord(n);if(existing)return existing;','save/copy hard guard')
+          path.write_text(text)
+
+          # Permanent focused regression coverage in the existing complete and prompt-semantic suites.
+          path=Path('verify-complete.mjs')
+          text=path.read_text()
+          block=r'''
+
+// Stage 04 supplied-project input handoff is exact and fails closed on unavailable bytes.
+{
+  const p=project('JOB-STAGE04-HANDOFF');
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'}]);
+  p.projectData.artifacts.push({id:'ARTIFACT-000041',stage:1,active:true,fields:{ARTIFACT_ID:'ARTIFACT-000041',FILENAME:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',BYTE_SIZE:416621,SHA256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  let handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  assert(handoff.ready===true&&handoff.send.length===1,'Stage 04 did not derive the required supplied-file handoff.');
+  assert(handoff.send[0].artifactId==='ARTIFACT-000041'&&handoff.send[0].filename==='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'&&handoff.send[0].byteSize===416621&&handoff.send[0].sha256.startsWith('aaaa'),'Stage 04 outgoing identity is incomplete.');
+  p.projectData.artifacts[0].fields.AVAILABILITY='METADATA_ONLY';
+  handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  assert(handoff.ready===false&&handoff.requiredMissing.some(x=>x.label.includes('MAINFRAME_INVENTION_DISCLOSURE')),'Stage 04 did not fail closed after required bytes became unavailable.');
+}
+'''
+          if 'JOB-STAGE04-HANDOFF' not in text:text+=block
+          path.write_text(text)
+
+          path=Path('verify-prompt-semantics.mjs')
+          text=path.read_text()
+          block=r'''
+
+// stage04-required-input-handoff-regression-v1
+{
+ const p=baseProject();p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2'}]);p.projectData.artifacts.push({id:'ARTIFACT-000041',stage:1,active:true,fields:{ARTIFACT_ID:'ARTIFACT-000041',FILENAME:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',BYTE_SIZE:416621,SHA256:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});const ready=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});for(const token of ['FILES YOU MUST RECEIVE','ARTIFACT-000041','MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2','416621 bytes','SHA-256 bbbbb','Browser-local storage does not transfer the file automatically','do not produce a complete Stage 04 requirement set from the filename or metadata alone'])if(!ready.prompt.includes(token))throw new Error('Stage 04 required-file handoff prompt missing: '+token);if(!ready.contextManifest.executionHandoff?.send?.length)throw new Error('Stage 04 handoff is not bound into context identity.');p.projectData.artifacts[0].fields.AVAILABILITY='METADATA_ONLY';const blocked=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});if(!blocked.prompt.includes('REQUIRED INPUT FILES NOT READY')||!blocked.prompt.includes('must add and application-verify these exact bytes'))throw new Error('Stage 04 missing-byte prompt does not fail visibly closed.');if(blocked.bodySha256===ready.bodySha256)throw new Error('Stage 04 file-custody change did not change prompt identity.');
+}
+'''
+          if 'stage04-required-input-handoff-regression-v1' not in text:text+=block
+          path.write_text(text)
+          PY
+      - name: Syntax and targeted regression proofs
+        run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Remove one-time repair workflow and commit repaired source
+        shell: bash
+        run: |
+          rm .github/workflows/stage04-handoff-repair.yml
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add workflow-engine.js prompt-engine.js app-core.js verify-complete.mjs verify-prompt-semantics.mjs .github/workflows/stage04-handoff-repair.yml
+          git commit -m 'Make Stage 04 required input handoff explicit'
+          git push origin HEAD:fix/stage04-required-input-handoff
