@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Package exact branch source
-        run: tar --exclude=.git -czf repair-workspace.tgz .
+        run: tar --exclude=.git -czf "$RUNNER_TEMP/repair-workspace.tgz" .
       - uses: actions/upload-artifact@v4
         with:
           name: repair-workspace
-          path: repair-workspace.tgz
+          path: ${{ runner.temp }}/repair-workspace.tgz
           if-no-files-found: error
           retention-days: 1
