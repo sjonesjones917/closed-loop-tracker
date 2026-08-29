@@ -420,3 +420,22 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
  const p=baseProject();p.stages[11].agentData={FROZEN_EXECUTION_PACKAGE:'PRIOR-STAGE-RUN-SUMMARY-SECRET'};const iterationId='ITERATION-000001',candidateId='CANDIDATE-000001';p.projectData.runs.push({id:'RUN-VERIFY-TARGET',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{RUN_ID:'RUN-VERIFY-TARGET',ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,CONTEXT_ID:'CTX-GENERATOR',COMPLETE_OUTPUT:'target output'}});p.projectData.freshContexts.push({id:'CTX-GENERATOR',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{CONTEXT_ID:'CTX-GENERATOR'}});const r=prompts.buildPromptRecord(12,p,{operation:'COMPLETE',scope:{iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-VERIFIER'}});if(r.prompt.includes('PRIOR-STAGE-RUN-SUMMARY-SECRET'))throw new Error('Stage 12 prompt leaked generic Stage 11 conclusions.');
 }
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
+
+// stage04-canonical-context-no-upload-regression-v1
+{
+  const p=baseProject();
+  p.job.SUPPLIED_MATERIALS_INVENTORY='MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2';
+  const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'};
+  p.projectData.sources.push({id:'SOURCE-STAGE04',stage:2,active:true,scope,fields:{SOURCE_ID:'SOURCE-STAGE04'}});
+  p.projectData.research.push({id:'RESEARCH-STAGE04',stage:3,active:true,scope,fields:{RESEARCH_ID:'RESEARCH-STAGE04',SOURCE_ID:'SOURCE-STAGE04',EXACT_PORTION_EXAMINED:'STAGE04-RESEARCH-SENTINEL',FINDING_CLASSIFICATION:'OBLIGATION',SOURCE_EVIDENCE:'STAGE04-EVIDENCE-SENTINEL'},relationships:{SOURCE_ID:'SOURCE-STAGE04'}});
+  p.projectData.candidateRequirements.push({id:'CANDIDATE-STAGE04',stage:3,active:true,scope,fields:{CANDIDATE_REQ_ID:'CANDIDATE-STAGE04',SOURCE_ID:'SOURCE-STAGE04',SOURCE_LOCATION:'STAGE04-SOURCE-LOCATION',CANDIDATE_OBLIGATION:'STAGE04-CANDIDATE-SENTINEL',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'STAGE04-EVIDENCE-SENTINEL',STATUS:'ACTIVE'},relationships:{SOURCE_ID:'SOURCE-STAGE04'}});
+  const before=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['STAGE04-RESEARCH-SENTINEL','STAGE04-CANDIDATE-SENTINEL','Stage 04 compiles accepted canonical context','does not require the operator to upload a named supplied material again','Never infer substantive facts from a filename or metadata','return BLOCKED with INADEQUATE_PRIOR_OUTPUT'])if(!before.prompt.includes(token))throw new Error('Stage 04 canonical-context rule missing: '+token);
+  for(const bad of ['REQUIRED INPUT FILES NOT READY','must add and application-verify these exact bytes','Attach every file shown in','Send with this instruction'])if(before.prompt.includes(bad))throw new Error('Stage 04 retained a false file-transfer prerequisite: '+bad);
+  const stage04Handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  if(stage04Handoff.send.length||stage04Handoff.withhold.length||stage04Handoff.expectBack.length)throw new Error('Stage 04 incorrectly contains an execution handoff.');
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-METADATA',stage:4,active:true,scope,fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-METADATA',FILENAME:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',AVAILABILITY:'METADATA_ONLY'}});
+  const after=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(after.bodySha256!==before.bodySha256||after.contextSignature!==before.contextSignature)throw new Error('Irrelevant Stage 04 artifact custody changed the controlling prompt identity.');
+}
+console.log(JSON.stringify({stage04CanonicalContextNoUpload:true},null,2));

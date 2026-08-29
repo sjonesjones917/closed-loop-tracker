@@ -318,4 +318,23 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
   assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');
   assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
 }
+
+// stage04-canonical-context-no-upload-regression-v1
+{
+  const p=project('JOB-STAGE04-CANONICAL-CONTEXT');
+  Object.assign(p.job,{SUPPLIED_MATERIALS_INVENTORY:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'});
+  const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'};
+  p.projectData.sources.push({id:'SOURCE-STAGE04',stage:2,active:true,scope,fields:{SOURCE_ID:'SOURCE-STAGE04'}});
+  p.projectData.research.push({id:'RESEARCH-STAGE04',stage:3,active:true,scope,fields:{RESEARCH_ID:'RESEARCH-STAGE04',SOURCE_ID:'SOURCE-STAGE04',EXACT_PORTION_EXAMINED:'STAGE04-RESEARCH-SENTINEL',FINDING_CLASSIFICATION:'OBLIGATION',SOURCE_EVIDENCE:'STAGE04-EVIDENCE-SENTINEL'},relationships:{SOURCE_ID:'SOURCE-STAGE04'}});
+  p.projectData.candidateRequirements.push({id:'CANDIDATE-STAGE04',stage:3,active:true,scope,fields:{CANDIDATE_REQ_ID:'CANDIDATE-STAGE04',SOURCE_ID:'SOURCE-STAGE04',SOURCE_LOCATION:'STAGE04-SOURCE-LOCATION',CANDIDATE_OBLIGATION:'STAGE04-CANDIDATE-SENTINEL',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'STAGE04-EVIDENCE-SENTINEL',STATUS:'ACTIVE'},relationships:{SOURCE_ID:'SOURCE-STAGE04'}});
+  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  assert(handoff.send.length===0&&handoff.withhold.length===0&&handoff.expectBack.length===0,'Stage 04 incorrectly created an artifact-transfer prerequisite.');
+  const action=engine.operationalNextAction(p,4);
+  assert(!/required input file|attach the exact supplied|blocked:.*file|add .* file before/i.test(action),'Stage 04 next action incorrectly requires a new file upload.');
+  assert(action.includes('No new file upload is required for Stage 04.'),'Stage 04 next action does not explicitly remove the false upload requirement.');
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-METADATA',stage:4,active:true,scope,fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-METADATA',FILENAME:'MAINFRAME_INVENTION_DISCLOSURE_COUNSEL_READY_LOGIC_CLEAN 2',AVAILABILITY:'METADATA_ONLY'}});
+  const after=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  assert(after.send.length===0,'Metadata-only Stage 04 artifact incorrectly entered the outgoing handoff.');
+}
+
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
