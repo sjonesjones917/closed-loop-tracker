@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 const base=process.env.PAGE_URL;
 if(!base)throw new Error('PAGE_URL is required');
-const deployed=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];
+const deployed=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','test-runtime.js','test-worker.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];
 const sha=text=>crypto.createHash('sha256').update(text).digest('hex');
 for(const file of deployed){const r=await fetch(new URL(`${file}?live=${Date.now()}-${Math.random()}`,base),{cache:'no-store'});if(!r.ok)throw new Error(`${file} returned ${r.status}`);const remote=await r.text(),local=fs.readFileSync(file,'utf8');if(remote!==local)throw new Error(`${file} deployed bytes differ from verified source: local=${sha(local)} remote=${sha(remote)}`);}
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));

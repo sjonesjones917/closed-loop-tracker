@@ -36,7 +36,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // APPLICATION_DETERMINISTIC cannot satisfy Stage 06 unless an actual application-native executor is registered.
 {
-  assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');
+  assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'Application-native capability registry must contain only the exact Closed Loop Test IR capability.');
   const p=project('JOB-NATIVE-EXECUTOR-TRUTH');
   Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});
   const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};
@@ -293,5 +293,17 @@ console.log(JSON.stringify({reliabilityV2Execution:true,reliabilityV2Independenc
 }
 {
  const p=project('JOB-RELEASE-CONTRADICTIONS'),scope=engine.currentScope(p),release=record('releaseRecords',27,{DETERMINATION:'ACCEPTED'},'RELEASE-CONFLICT');release.scope=scope;p.projectData.releaseRecords.push(release);const blocker=record('blockers',27,{MISSING_ITEM_TYPE:'EVIDENCE',MISSING_FACT_INPUT_AUTHORITY_EVIDENCE_CAPABILITY_DECISION_RULE:'missing proof',WHY_WORK_CANNOT_CONTINUE:'release proof missing',ATTEMPTED_RESOLUTIONS:'none',DOWNSTREAM_WORK_STOPPED:'STAGE 27',STATUS:'OPEN'},'BLOCKER-CONFLICT');blocker.scope=scope;p.projectData.blockers.push(blocker);assert(engine.detectCurrentContradictions(p).some(x=>x.type==='ACCEPTED_RELEASE_WITH_BLOCKER'),'Accepted release plus current blocker was not surfaced as a contradiction.');p.projectData.blockers.length=0;p.release.authorization='AUTHORIZED';p.release.authorizedArtifactIds=['ARTIFACT-STALE'];assert(engine.detectCurrentContradictions(p).some(x=>x.type==='STALE_DELIVERY_AUTHORIZATION'),'Stale delivery authorization was not surfaced as a contradiction.');
+}
+
+// Generic subject-neutral Test IR is a real registered application-native route, not a prose-only capability claim.
+assert(schema.TEST_IR.version==='closed-loop-test-spec/1','Test IR version changed.');
+assert(schema.TEST_IR.capability==='CLOSED_LOOP_TEST_IR','Test IR capability changed.');
+assert(schema.TEST_IR.operations.includes('PARSE_JSON')&&schema.TEST_IR.operations.includes('BYTE_COMPARE'),'Required generic Test IR operations are missing.');
+assert(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)),'Unsafe arbitrary-code Test IR operation registered.');
+assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');
+{
+  const native={fields:{EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-TEST'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]}}};
+  assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');
+  assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
 }
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
