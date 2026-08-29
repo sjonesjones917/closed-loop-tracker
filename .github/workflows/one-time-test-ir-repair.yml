@@ -54,6 +54,12 @@ jobs:
           engine_pos=t.index(engine_marker)
           wiring="e=e.replace(\"capabilityAffirmativelyAvailable(project,requiredCapability,mode)\",\"capabilityAffirmativelyAvailable(project,requiredCapability,mode,test)\")\n"
           t=t[:engine_pos]+wiring+t[engine_pos:]
+          accepted_op=r'''e=replace_once(e,
+          "  return out;\n}\nfunction candidateComponentIdentity(project,candidateId)",
+          "  if(Number(stage)===19){const appIteration=records(project,'iterations').find(r=>Number(r.stage)===19&&isActiveRecord(r)&&upper(recordValue(r,'PURPOSE'))==='UNCHANGED_CONFIRMATION'&&(!scopeRule.iterationId||recordId(r,'iterations')===String(scopeRule.iterationId))&&(!scopeRule.candidateId||String(recordValue(r,'CANDIDATE_ID')||r.scope?.candidateId||'')===String(scopeRule.candidateId)));if(appIteration)out.add('CONFIRM_FREEZE');}\n  return out;\n}\nfunction candidateComponentIdentity(project,candidateId)",
+          'Application-controlled Stage 19 CONFIRM_FREEZE operation evidence')
+          '''
+          t=t[:engine_pos]+accepted_op+t[engine_pos:]
           replacements={
             "assert.equal(schema.TEST_IR.version,'closed-loop-test-spec/1');":"assert(schema.TEST_IR.version==='closed-loop-test-spec/1','Test IR version changed.');",
             "assert.equal(schema.TEST_IR.capability,'CLOSED_LOOP_TEST_IR');":"assert(schema.TEST_IR.capability==='CLOSED_LOOP_TEST_IR','Test IR capability changed.');",
@@ -72,7 +78,7 @@ jobs:
       - name: Apply exact minimal repair
         run: python3 .repair-test-ir.py
 
-      - name: Reconcile semantic regressions with controlling contract
+      - name: Reconcile semantic and full-cycle regressions with controlling contract
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -89,6 +95,14 @@ jobs:
           for old,new in replacements.items():
               if old not in t: raise SystemExit(f'Semantic regression anchor missing: {old}')
               t=t.replace(old,new,1)
+          p.write_text(t)
+
+          p=Path('verify-full-cycle.mjs')
+          t=p.read_text()
+          old="engine.freezeCandidate(p,{stage:19,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE',purpose:'UNCHANGED_CONFIRMATION'});const iter19=rid('iterations'),cand19=engine.recordValue(engine.records(p,'iterations',{stage:19}).at(-1),'CANDIDATE_ID');"
+          new="const confirmationIteration=engine.beginUnchangedConfirmationIteration(p,{candidateId:cand17,operatorLabel:'FULL_CYCLE'});const iter19=engine.recordId(confirmationIteration,'iterations'),cand19=String(engine.recordValue(confirmationIteration,'CANDIDATE_ID')||confirmationIteration.scope?.candidateId||'');"
+          if old not in t: raise SystemExit('Stage 19 full-cycle freeze anchor missing')
+          t=t.replace(old,new,1)
           p.write_text(t)
           PY
 
