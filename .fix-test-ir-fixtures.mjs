@@ -1,5 +1,12 @@
 import fs from 'node:fs';
 {
+ const path='test-fixtures.mjs';let text=fs.readFileSync(path,'utf8');
+ const needle="  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';\n";
+ const replacement="  if(String(name).toUpperCase()==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';\n  if(String(name).toUpperCase()==='EXECUTABLE_KIND')return 'NONE';\n  if(String(name).toUpperCase()==='EXECUTABLE_SPEC_VERSION')return 'NOT_APPLICABLE';\n  if(String(name).toUpperCase()==='EXECUTABLE_SPEC'||String(name).toUpperCase()==='EXECUTABLE_INPUT_BINDINGS')return {};\n";
+ if((text.match(/if\(String\(name\)\.toUpperCase\(\)==='EXECUTION_MODE'\)return 'EXTERNAL_AGENT_TOOL';/g)||[]).length!==1)throw new Error('Shared fixture execution-mode default is not unique.');
+ text=text.replace(needle,replacement);fs.writeFileSync(path,text);
+}
+{
  const path='verify-ingestion.mjs',text=fs.readFileSync(path,'utf8');
  const needle="  fields.ARTIFACT_REQUIREMENTS='fixture.js';\n";
  const replacement="  fields.ARTIFACT_REQUIREMENTS='fixture.js';\n  fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';\n  fields.REQUIRED_CAPABILITY='VERIFICATION_FIXTURE_EXECUTOR';\n  fields.EXECUTABLE_KIND='NONE';\n  fields.EXECUTABLE_SPEC_VERSION='NOT_APPLICABLE';\n  fields.EXECUTABLE_SPEC={};\n  fields.EXECUTABLE_INPUT_BINDINGS={};\n";
@@ -21,4 +28,4 @@ import fs from 'node:fs';
  text=text.slice(0,a)+replacement+text.slice(b);
  fs.writeFileSync(path,text);
 }
-console.log(JSON.stringify({fixtureCompatibility:true,testIrNegativeCases:true,nativeExecutionTruthFixture:true}));
+console.log(JSON.stringify({fixtureCompatibility:true,testIrNegativeCases:true,nativeExecutionTruthFixture:true,sharedFixtureRouting:true}));
