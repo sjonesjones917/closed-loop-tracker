@@ -106,9 +106,9 @@ project.projectData.candidateRequirements.push({
 });
 
 const stage4Handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});
-assert.deepEqual(stage4Handoff.send,[],'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');
-assert.deepEqual(stage4Handoff.withhold,[]);
-assert.deepEqual(stage4Handoff.expectBack,[]);
+assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');
+assert.equal(stage4Handoff.withhold.length,0);
+assert.equal(stage4Handoff.expectBack.length,0);
 
 const stage4Prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'});
 assert.equal(stage4Prompt.contextManifest.executionHandoff.send.length,0);
