@@ -1,0 +1,78 @@
+name: Materialize generic Test IR once
+on:
+  push:
+    branches: [fix/generic-test-ir-20260829]
+permissions: {contents: write}
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/generic-test-ir-20260829}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply subject-neutral deterministic Test IR
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const must=(s,x,n)=>{if(!s.includes(x))throw new Error('missing anchor '+n);return s};
+          let schema=fs.readFileSync('workflow-schema.js','utf8');
+          schema=must(schema,"const RESPONSE_TYPES=Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);",'schema constants').replace("const RESPONSE_TYPES=Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);",`const RESPONSE_TYPES=Object.freeze(['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);\nconst TEST_IR_VERSION='closed-loop-test-spec/1';\nconst TEST_IR_OPERATIONS=Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','SELECT_JSON_PATH','COUNT','HASH_SHA256','REGEX','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);`);
+          schema=must(schema,'"ARTIFACT_REQUIREMENTS",\n      "INPUTS",','test ownership').replace('"ARTIFACT_REQUIREMENTS",\n      "INPUTS",','"ARTIFACT_REQUIREMENTS",\n      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC",\n      "EXECUTABLE_INPUT_BINDINGS",\n      "INPUTS",');
+          schema=must(schema,"globalThis.closedLoopWorkflowSchema=Object.freeze({",'schema export').replace("globalThis.closedLoopWorkflowSchema=Object.freeze({","globalThis.closedLoopWorkflowSchema=Object.freeze({TEST_IR_VERSION,TEST_IR_OPERATIONS,");
+          fs.writeFileSync('workflow-schema.js',schema);
+
+          let engine=fs.readFileSync('workflow-engine.js','utf8');
+          engine=must(engine,'const APPLICATION_TEST_EXECUTORS=Object.freeze({});','executor registry').replace('const APPLICATION_TEST_EXECUTORS=Object.freeze({});',`const APPLICATION_TEST_EXECUTORS=Object.freeze(Object.fromEntries((schema.TEST_IR_OPERATIONS||[]).map(op=>[op,true])));\nfunction validateTestIr(test){const mode=upper(recordValue(test,'EXECUTION_MODE')),kind=upper(recordValue(test,'EXECUTABLE_KIND')),version=String(recordValue(test,'EXECUTABLE_SPEC_VERSION')||''),spec=recordValue(test,'EXECUTABLE_SPEC'),reasons=[];if(mode!=='APPLICATION_DETERMINISTIC')return {valid:true,reasons:[]};if(version!==schema.TEST_IR_VERSION)reasons.push('Executable Test IR version must be '+schema.TEST_IR_VERSION+'.');if(!kind||!schema.TEST_IR_OPERATIONS.includes(kind))reasons.push('Executable Test IR kind is not a registered subject-neutral operation.');if(!spec||typeof spec!=='object'||Array.isArray(spec))reasons.push('Executable Test IR specification must be a closed declarative object.');if(spec&&JSON.stringify(spec).match(/(?:javascript|python|shell|eval|function|command)/i))reasons.push('Executable Test IR may not contain arbitrary-code execution semantics.');return {valid:reasons.length===0,reasons};}`);
+          engine=must(engine,"const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim()));",'stage6 native').replace("const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim()));","const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!validateTestIr(test).valid);");
+          engine=engine.replace("if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);","if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without valid registered subject-neutral Test IR.`);");
+          engine=must(engine,"const capability=upper(requiredCapability);if(!capability)return false;\n  if(mode==='APPLICATION_DETERMINISTIC')return Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability);",'capability').replace("const capability=upper(requiredCapability);if(!capability)return false;\n  if(mode==='APPLICATION_DETERMINISTIC')return Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability);","const capability=upper(requiredCapability);if(mode==='APPLICATION_DETERMINISTIC')return true;if(!capability)return false;");
+          engine=must(engine,"applicationExecutorSupported=mode!=='APPLICATION_DETERMINISTIC'||Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability)",'plan support').replace("applicationExecutorSupported=mode!=='APPLICATION_DETERMINISTIC'||Object.prototype.hasOwnProperty.call(APPLICATION_TEST_EXECUTORS,requiredCapability)","applicationExecutorSupported=mode!=='APPLICATION_DETERMINISTIC'||validateTestIr(test).valid");
+          engine=engine.replace("mode==='APPLICATION_DETERMINISTIC'&&!applicationExecutorSupported?'No application-native executor is registered for '+requiredCapability+'.':","mode==='APPLICATION_DETERMINISTIC'&&!applicationExecutorSupported?'The deterministic test does not contain valid registered subject-neutral Test IR.':");
+          engine=must(engine,"function applicationTestCapabilities(){return Object.freeze(Object.keys(APPLICATION_TEST_EXECUTORS));}",'capabilities').replace("function applicationTestCapabilities(){return Object.freeze(Object.keys(APPLICATION_TEST_EXECUTORS));}","function applicationTestCapabilities(){return Object.freeze(Object.keys(APPLICATION_TEST_EXECUTORS));}\nfunction testIrContract(){return Object.freeze({version:schema.TEST_IR_VERSION,operations:[...(schema.TEST_IR_OPERATIONS||[])]});}");
+          engine=must(engine,'globalThis.closedLoopWorkflowEngine=Object.freeze({','engine export').replace('globalThis.closedLoopWorkflowEngine=Object.freeze({','globalThis.closedLoopWorkflowEngine=Object.freeze({validateTestIr,testIrContract,');
+          fs.writeFileSync('workflow-engine.js',engine);
+
+          let prompt=fs.readFileSync('prompt-engine.js','utf8');
+          const marker='For every mandatory requirement';
+          if(prompt.includes(marker)&&!prompt.includes('closed-loop-test-spec/1'))prompt=prompt.replace(marker,`Before choosing an external executor, determine whether the proposition can be represented exactly in the application-owned subject-neutral Test IR. The current Test IR is closed-loop-test-spec/1 and permits only generic byte/text/JSON/select/count/hash/regex/compare/assert primitives published by the application. If it can be represented exactly, you MUST use APPLICATION_DETERMINISTIC and return EXECUTABLE_KIND, EXECUTABLE_SPEC_VERSION, EXECUTABLE_SPEC, and EXECUTABLE_INPUT_BINDINGS. Never invent an operation and never emit JavaScript, Python, shell commands, or other arbitrary executable code. If the proposition cannot be faithfully represented, use the correct independent-agent, human, external-system, or unavailable route. For each mandatory requirement, explicitly analyze how a defective product could falsely appear compliant, including boundary, partial-success, stale-state, malformed-input, incorrect-authority, wrong-artifact, and capability-substitution cases, and route applicable failure mechanisms to Stage 07.\n\n${marker}`);
+          fs.writeFileSync('prompt-engine.js',prompt);
+
+          let verify=fs.readFileSync('verify-complete.mjs','utf8');
+          verify=verify.replace("assert(engine.applicationTestCapabilities().length===0,'Unexpected application-native executor registration.');","assert(engine.applicationTestCapabilities().length>0&&engine.testIrContract().version==='closed-loop-test-spec/1','Subject-neutral deterministic Test IR registry is unavailable.');");
+          verify=verify.replace("fields:{TEST_ID:'TEST-NATIVE-1',REQ_ID:'REQ-NATIVE-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'NONEXISTENT_NATIVE_EXECUTOR',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:","fields:{TEST_ID:'TEST-NATIVE-1',REQ_ID:'REQ-NATIVE-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'ARBITRARY_JAVASCRIPT',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_SPEC:{code:'eval(1)'},EXECUTABLE_INPUT_BINDINGS:{},INPUTS:");
+          verify=verify.replace("assert(plan.unsupportedApplicationTestIds.includes('TEST-NATIVE-1'),'Execution plan did not identify unsupported application-native test execution.');","assert(plan.unsupportedApplicationTestIds.includes('TEST-NATIVE-1'),'Execution plan did not reject invalid/unregistered Test IR.');");
+          verify=verify.replace("assert(g.reasons.some(reason=>reason.includes('without a registered application-native executor')),'Stage 06 accepted an APPLICATION_DETERMINISTIC test with no actual executor.');","assert(g.reasons.some(reason=>reason.includes('without valid registered subject-neutral Test IR')),'Stage 06 accepted invalid deterministic Test IR.');");
+          const insert=`\n// Generic subject-neutral Test IR is executable only through registered declarative primitives.\n{\n const p=project('JOB-GENERIC-TEST-IR');Object.assign(p.job,{CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});const scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'};p.projectData.requirements.push({id:'REQ-IR-1',stage:4,active:true,scope,fields:{REQ_ID:'REQ-IR-1',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'}});p.projectData.tests.push({id:'TEST-IR-1',stage:6,active:true,scope:{...scope,testSuiteVersion:'TEST-SUITE-v001'},fields:{TEST_ID:'TEST-IR-1',REQ_ID:'REQ-IR-1',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'COUNT',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_SPEC:{steps:[{op:'COUNT'},{op:'ASSERT_EQ',value:10}]},EXECUTABLE_INPUT_BINDINGS:{target:'canonical-records'},INPUTS:'canonical records',TOOLS:'application',PROCEDURE:'count then compare',EXPECTED_RESULT:'10',FAILURE_CONDITION:'count differs',EVIDENCE_TO_PRESERVE:'runtime observation',STATUS:'READY'},relationships:{REQ_ID:'REQ-IR-1'}});const v=engine.validateTestIr(p.projectData.tests[0]),plan=engine.testExecutionPlan(p);assert(v.valid&&plan.items[0].operatorAction==='NO_ACTION'&&plan.items[0].applicationExecutorSupported,'Valid subject-neutral Test IR did not route to application execution.');\n}\n`;
+          verify=verify.replace('// Invalid canonical relationship is rejected before mutation.',insert+'\n// Invalid canonical relationship is rejected before mutation.');fs.writeFileSync('verify-complete.mjs',verify);
+
+          let dod=fs.readFileSync('verify-definition-of-done.mjs','utf8');
+          dod=dod.replace("assert(engine.applicationTestCapabilities().length===0", "assert(engine.applicationTestCapabilities().length>0");fs.writeFileSync('verify-definition-of-done.mjs',dod);
+
+          // Refresh shared runtime token because schema/engine/prompt changed.
+          let html=fs.readFileSync('index.html','utf8');const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];const blob=f=>{const b=fs.readFileSync(f);return crypto.createHash('sha1').update(`blob ${b.length}\\0`).update(b).digest('hex')};const manifest=files.map(f=>`${f}:${blob(f)}\\n`).join('');const token='runtime-'+crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16);html=html.replace(/runtime-[a-f0-9]{16}/g,token);fs.writeFileSync('index.html',html);
+          NODE
+      - name: Prove exact repair
+        run: |
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-complete.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit final source tree
+        run: |
+          git rm .github/workflows/materialize-generic-test-ir-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Add subject-neutral deterministic Test IR contract'
+          git push origin HEAD:fix/generic-test-ir-20260829
