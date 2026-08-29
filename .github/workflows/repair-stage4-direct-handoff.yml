@@ -41,6 +41,16 @@ jobs:
           PY
           node --check .repair-stage4-direct-handoff.cjs
           node .repair-stage4-direct-handoff.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('index.html')
+          text=path.read_text()
+          old='.outgoing-handoff-file{overflow-wrap:anywhere;word-break:break-word}'
+          new='.notice,.outgoing-handoff-file{overflow-wrap:anywhere;word-break:break-word}'
+          if text.count(old)!=1:
+              raise SystemExit(f'Expected one Stage 04 wrapping rule, found {text.count(old)}.')
+          path.write_text(text.replace(old,new,1))
+          PY
           node <<'NODE'
           const fs=require('node:fs');
           const {createHash}=require('node:crypto');
