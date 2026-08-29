@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
-globalThis.crypto=globalThis.crypto||webcrypto;
-globalThis.Blob=globalThis.Blob||class{};
+if(!globalThis.crypto)Object.defineProperty(globalThis,'crypto',{value:webcrypto,configurable:true});
+if(!globalThis.Blob)Object.defineProperty(globalThis,'Blob',{value:class{},configurable:true});
 vm.runInThisContext(fs.readFileSync('test-runtime.js','utf8'),{filename:'test-runtime.js'});
 const rt=globalThis.closedLoopTestRuntime;
 const assert=(v,m)=>{if(!v)throw new Error(m);};
@@ -17,4 +17,7 @@ assert(!rt.validateSpec({version:rt.SPEC_VERSION,steps:[{op:'ARBITRARY_JAVASCRIP
 assert(!rt.validateSpec({version:rt.SPEC_VERSION,steps:[{op:'ASSERT_EQ',eval:'1+1'}]}).valid,'Forbidden executable field entered Test IR.');
 const hashSpec={version:rt.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:await (async()=>{const d=await crypto.subtle.digest('SHA-256',artifact.bytes);return [...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,'0')).join('');})()}]};
 result=await rt.execute({spec:hashSpec,artifacts:{PRODUCT:artifact}});assert(result.determination==='SATISFIED','Byte hash assertion did not use actual bytes.');
+const supportedTest={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:rt.SPEC_VERSION,EXECUTABLE_SPEC:spec,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'}};
+assert(rt.supports(supportedTest),'Valid Test IR was not recognized as application-native.');
+assert(!rt.supports({...supportedTest,EXECUTABLE_SPEC_VERSION:'wrong'}),'Wrong Test IR version was accepted.');
 console.log(JSON.stringify({testIr:true,specVersion:rt.SPEC_VERSION,runtimeVersion:rt.VERSION,operationCount:rt.OPS.length,arbitraryCode:false,subjectNeutral:true},null,2));
