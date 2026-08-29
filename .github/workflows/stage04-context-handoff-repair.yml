@@ -23,7 +23,20 @@ jobs:
         with:
           node-version: '22'
       - name: Apply the forward-only Stage 04 repair
-        run: node .repair-stage04-context-handoff.mjs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.repair-stage04-context-handoff.mjs')
+          source=path.read_text()
+          old="""  const workflowNeedle = "${interactionModeMarkup(n)}${n===4?artifactControlMarkup(n,locked):''}<div class=\"panel\" id=\"prompt-heading\"";
+          const workflowReplacement = "${interactionModeMarkup(n)}${stageFourMaterialHandoffMarkup(n)}${n===4?artifactControlMarkup(n,locked):''}<div class=\"panel\" id=\"prompt-heading\"";"""
+          new="""  const workflowNeedle = "${interactionModeMarkup(n)}<div class=\"panel\" id=\"prompt-heading\"";
+          const workflowReplacement = "${interactionModeMarkup(n)}${stageFourMaterialHandoffMarkup(n)}<div class=\"panel\" id=\"prompt-heading\"";"""
+          if source.count(old)!=1:
+              raise SystemExit(f'Expected one Stage 04 UI anchor in repair script; found {source.count(old)}')
+          path.write_text(source.replace(old,new))
+          PY
+          node .repair-stage04-context-handoff.mjs
       - name: Remove one-time repair infrastructure before verification
         run: rm -f .repair-stage04-context-handoff.mjs .github/workflows/stage04-context-handoff-repair.yml
       - name: Verify changed source syntax
