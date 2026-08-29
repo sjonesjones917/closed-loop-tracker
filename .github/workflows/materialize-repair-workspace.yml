@@ -1,0 +1,25 @@
+name: Materialize repair workspace
+
+on:
+  push:
+    branches:
+      - closed-loop-test-ir-minimal
+    paths:
+      - .github/workflows/materialize-repair-workspace.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact branch source
+        run: tar --exclude=.git -czf repair-workspace.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repair-workspace
+          path: repair-workspace.tgz
+          if-no-files-found: error
+          retention-days: 1
