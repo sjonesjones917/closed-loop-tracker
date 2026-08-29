@@ -36,12 +36,79 @@ verify-test-runtime: PASS
   "epistemicEffectiveEvidence": true,
   "releaseContradictions": true
 }
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:131
-    if(issues.length)throw new Error(`Stage ${stage} ${operation} semantic contradiction(s): ${issues.join(', ')}`);
-                           ^
+{
+  "promptSemanticContradictions": true,
+  "stageOperationsChecked": 41,
+  "mutationCasesRejected": 9,
+  "stage2SourceCount": true,
+  "testExecutionOrchestration": true,
+  "artifactGenerationBoundary": true,
+  "promptVersionBoundary": true,
+  "insufficiencyRecovery": true,
+  "operationIsolation": true,
+  "applicationOwnership": true,
+  "specialistDomains": [
+    "patent",
+    "software-multifile",
+    "building-aec",
+    "physical-engineering-cad-cam-cnc-additive"
+  ]
+}
+{
+  "reliabilityV2PromptIsolation": true
+}
+{
+  "stage23PriorConclusionIsolation": true,
+  "stage24PriorConclusionIsolation": true,
+  "stage12PriorSummaryIsolation": true
+}
+{
+  "stagesExercised": 30,
+  "responseSchema": "closed-loop-stage-response/2",
+  "negativeCases": 70,
+  "clarificationLoop": true,
+  "atomicPrecommit": true,
+  "extractionManifest": true,
+  "canonicalIdsApplicationAssigned": true,
+  "scopeIdentityMatrix": true,
+  "verifiedAttachmentBinding": true
+}
+{
+  "pr3Dispositions": true,
+  "preconditions": true,
+  "promptEnginePreconditions": true,
+  "idempotentAcceptance": true,
+  "canonicalEnvelopeIdempotency": true,
+  "typedHumanAnswers": true,
+  "clarificationPromptInvalidation": true,
+  "exactManifestPointers": true,
+  "acceptanceAfterRejectionBlocked": true,
+  "staleProjectRevisionBlocked": true,
+  "totalNegativeCases": 74
+}
+{
+  "operationStageDataIsolation": true,
+  "reservedTargetPolicy": true,
+  "completedReservedTargetBlocked": true,
+  "targetScopeIsolation": true,
+  "totalNegativeCases": 79
+}
+{
+  "persistedPromptAuthority": true,
+  "readableClarificationTargets": true,
+  "humanInputResponseExclusivity": true,
+  "choiceContractValidation": true,
+  "humanAnswerEdgeValidation": true,
+  "totalNegativeCases": 86
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-full-cycle.mjs:11
+const assert=(v,m)=>{if(!v)throw new Error(m)};assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_ID.valueType==='REFERENCE_ARRAY','Evidence-chain TEST_ID must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.ARTIFACT_HASH_IDENTITY.valueType==='REFERENCE_ARRAY','Evidence-chain artifact identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.TEST_RESULT_ID.valueType==='STRING_ARRAY','Evidence-chain result identities must remain plural.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.EVIDENCE_ID.valueType==='REFERENCE_ARRAY','Evidence-chain evidence identities must remain plural references.');assert(schema.RECORD_SCHEMAS.evidenceChains.fieldDefinitions.MISSING_LINKS.valueType==='STRING_ARRAY','Evidence-chain missing links must remain plural.');let p=core.createBlankState('JOB-FULL-CYCLE');Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',CURRENT_INPUT_VERSION:'INPUT-v001'});engine.ensureShape(p);engine.recalculate(p);
+                                 ^
 
-Error: Stage 6 COMPLETE semantic contradiction(s): UNREGISTERED_APPLICATION_EXECUTOR_NOT_BLOCKED
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:131:28
+Error: Stage 19 gate failed: Required stage operations are missing: CONFIRM_FREEZE. | Unchanged confirmation is not affirmatively satisfied.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-full-cycle.mjs:11:34)
+    at complete (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-full-cycle.mjs:15:264)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-full-cycle.mjs:37:1774
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
