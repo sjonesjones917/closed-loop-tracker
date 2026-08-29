@@ -6,5 +6,5 @@ old = "  if(before.contextManifest.executionHandoff.send.length||before.contextM
 new = "  const stage04Handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});\n  if(stage04Handoff.send.length||stage04Handoff.withhold.length||stage04Handoff.expectBack.length)throw new Error('Stage 04 incorrectly contains an execution handoff.');"
 if text.count(old) != 1:
     raise SystemExit('Expected one Stage 04 prompt regression assertion to correct')
-path.write_text(text.replace(old, new, 1))
+path.write_text(text.replace(old, new, 1).rstrip() + '\n')
 Path('.github/stage04-test-fix.py').unlink()
