@@ -1,0 +1,46 @@
+name: Merge proven native verification
+
+on:
+  push:
+    branches: [closed-loop-test-ir-final]
+    paths: ['.github/workflows/merge-proven-native-verification.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: closed-loop-test-ir-final
+          fetch-depth: 0
+      - name: Merge tested subject-neutral native verification delta
+        run: |
+          set -euo pipefail
+          git config user.name "closed-loop-repair"
+          git config user.email "closed-loop-repair@users.noreply.github.com"
+          git fetch origin fix/subject-neutral-native-verification-clean
+          git merge --no-ff --no-edit origin/fix/subject-neutral-native-verification-clean
+      - name: Prove merged responsible layers
+        run: |
+          set -euo pipefail
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-full-cycle.mjs
+      - name: Remove one-time workflow and publish only if green
+        run: |
+          set -euo pipefail
+          rm .github/workflows/merge-proven-native-verification.yml
+          git add -A
+          git commit -m "chore: remove one-time native verification merge workflow"
+          git push origin HEAD:closed-loop-test-ir-final
