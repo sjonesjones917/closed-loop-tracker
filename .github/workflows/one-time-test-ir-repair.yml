@@ -54,6 +54,18 @@ jobs:
           engine_pos=t.index(engine_marker)
           wiring="e=e.replace(\"capabilityAffirmativelyAvailable(project,requiredCapability,mode)\",\"capabilityAffirmativelyAvailable(project,requiredCapability,mode,test)\")\n"
           t=t[:engine_pos]+wiring+t[engine_pos:]
+          replacements={
+            "assert.equal(schema.TEST_IR.version,'closed-loop-test-spec/1');":"assert(schema.TEST_IR.version==='closed-loop-test-spec/1','Test IR version changed.');",
+            "assert.equal(schema.TEST_IR.capability,'CLOSED_LOOP_TEST_IR');":"assert(schema.TEST_IR.capability==='CLOSED_LOOP_TEST_IR','Test IR capability changed.');",
+            "assert.ok(schema.TEST_IR.operations.includes('PARSE_JSON')&&schema.TEST_IR.operations.includes('BYTE_COMPARE'));":"assert(schema.TEST_IR.operations.includes('PARSE_JSON')&&schema.TEST_IR.operations.includes('BYTE_COMPARE'),'Required generic Test IR operations are missing.');",
+            "assert.ok(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)));":"assert(!schema.TEST_IR.operations.some(op=>/JAVASCRIPT|PYTHON|SHELL/i.test(op)),'Unsafe arbitrary-code Test IR operation registered.');",
+            "assert.deepEqual(schema.STAGE_OPERATIONS[19],['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']);":"assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),'Stage 19 operation contract is incomplete.');",
+            "assert.equal(schema.validateTestIRTest(native).valid,true);":"assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');",
+            "assert.equal(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),true);":"assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');"
+          }
+          for old,new in replacements.items():
+              if old not in t: raise SystemExit(f'Test harness assertion anchor missing: {old}')
+              t=t.replace(old,new,1)
           p.write_text(t)
           PY
 
