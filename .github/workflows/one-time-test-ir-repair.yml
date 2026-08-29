@@ -72,6 +72,23 @@ jobs:
       - name: Apply exact minimal repair
         run: python3 .repair-test-ir.py
 
+      - name: Reconcile Stage 19 semantic regression with controlling contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs')
+          t=p.read_text()
+          old="const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};"
+          new="const expectedOperationWrites={17:{FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],ROOT_CAUSE:['defects','rootCauses'],REGRESSION:['regressions','regressionExecutions'],CORRECT:['changes']},19:{CONFIRM_FREEZE:[],EXECUTE_RUN:['runs'],VERIFY:['verification'],COMPARE:['comparisons'],REGRESSION_VERIFY:['regressionExecutions'],CONFIRM:['confirmationRecords']}};"
+          if old not in t: raise SystemExit('Stage 19 operation write-map anchor missing')
+          t=t.replace(old,new,1)
+          old2="if(schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||schema.operationContract(19,'CONFIRM_FREEZE'))throw new Error('Stage 19 still exposes application-owned freeze as an agent response operation.');"
+          new2="{const freeze=schema.operationContract(19,'CONFIRM_FREEZE');if(!schema.STAGE_OPERATIONS[19].includes('CONFIRM_FREEZE')||!freeze||freeze.agentWritableCollections.length!==0)throw new Error('Stage 19 CONFIRM_FREEZE must exist as an application-controlled operation with no agent-writable collection.');}"
+          if old2 not in t: raise SystemExit('Stage 19 legacy prohibition anchor missing')
+          t=t.replace(old2,new2,1)
+          p.write_text(t)
+          PY
+
       - name: Syntax and focused invariant checks
         run: |
           set +e
