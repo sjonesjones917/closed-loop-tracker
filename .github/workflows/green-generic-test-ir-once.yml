@@ -1,0 +1,39 @@
+name: Green generic Test IR once
+on:
+  push:
+    branches: [fix/generic-test-ir-20260829]
+permissions: {contents: write}
+jobs:
+  green:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/generic-test-ir-20260829}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Materialize executable IR and current proof contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('.github/workflows/execute-generic-test-ir-once.yml').read_text(); start=text.index("          python3 - <<'PY'\n          from pathlib import Path\n          text=Path('.github/workflows/materialize-generic-test-ir-once.yml')"); end=text.index("      - name: Prove exact repair"); block=text[start:end]
+          # Execute the materialization block as shell after stripping YAML indentation.
+          Path('/tmp/materialize.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines()))
+          PY
+          bash /tmp/materialize.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text(); s=s.replace("if(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\\nNONE')||!record.prompt.includes('do not select APPLICATION_DETERMINISTIC'))issues.push('UNREGISTERED_APPLICATION_EXECUTOR_NOT_BLOCKED');","if(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES')||!record.prompt.includes('COUNT')||!record.prompt.includes('closed-loop-test-spec/1'))issues.push('APPLICATION_TEST_IR_CAPABILITY_MISSING');"); s=s.replace("if(record.stage===12&&!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES\\nNONE'))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');","if(record.stage===12&&(!record.prompt.includes('APPLICATION-NATIVE TEST CAPABILITIES')||!record.prompt.includes('COUNT')))issues.push('APPLICATION_NATIVE_CAPABILITY_CONTEXT_MISSING');"); p.write_text(s)
+          PY
+      - name: Prove exact repair
+        run: |
+          node --check workflow-schema.js && node --check workflow-engine.js && node --check prompt-engine.js && node --check verify-complete.mjs && node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - name: Commit final tree
+        run: |
+          git rm .github/workflows/*generic-test-ir-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Execute subject-neutral deterministic Test IR'
+          git push origin HEAD:fix/generic-test-ir-20260829
