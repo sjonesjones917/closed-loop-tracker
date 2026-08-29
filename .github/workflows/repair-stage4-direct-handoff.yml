@@ -20,7 +20,26 @@ jobs:
         with:
           node-version: '22'
       - name: Apply the minimal Stage 04 direct-to-agent handoff repair
-        run: node .repair-stage4-direct-handoff.cjs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.repair-stage4-direct-handoff.cjs')
+          text=path.read_text()
+          replacements=[
+            (r"const nextPattern=/function operationalNextAction\(project,currentStage\)\{[\s\S]*?\n\}\n\nfunction applicationTestCapabilities/;",r"const nextPattern=/function operationalNextAction\(project,currentStage\)\{[\s\S]*?\}\n\nfunction applicationTestCapabilities/;"),
+            (r'''text=text.replace(/(<script\\s+defer\\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\\.js\\?v=)[^"]+(">)/g,'$1'+'20260829-stage4-direct-handoff'+'$2');''',r'''text=text.replace(/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+(">)/g,'$1'+'20260829-stage4-direct-handoff'+'$2');'''),
+            (r'''const tokens=[...text.matchAll(/<script\\s+defer\\s+src="[^"]+\\?v=([^"]+)"/g)].map(m=>m[1]);''',r'''const tokens=[...text.matchAll(/<script\s+defer\s+src="[^"]+\?v=([^"]+)"/g)].map(m=>m[1]);'''),
+            ("  text=replaceOnce(text,marker,block+marker,'browser Stage 04 handoff test insertion');\n  text=replaceOnce(text,'malformedImportNonDestructive:true,runtimeErrors:0','malformedImportNonDestructive:true,stage4DirectOutgoingHandoff:true,runtimeErrors:0','browser result report');","  text=replaceOnce(text,marker,block+marker,'browser Stage 04 handoff test insertion');\n  text=replaceOnce(text,'const beforeCount=afterNew.length;','const beforeCount=(await allProjects(cdp)).length;','browser current project count after Stage 04 fixture');\n  text=replaceOnce(text,'malformedImportNonDestructive:true,runtimeErrors:0','malformedImportNonDestructive:true,stage4DirectOutgoingHandoff:true,runtimeErrors:0','browser result report');")
+          ]
+          for old,new in replacements:
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'Applicator preflight expected one match, found {count}: {old[:80]}')
+              text=text.replace(old,new,1)
+          path.write_text(text)
+          PY
+          node --check .repair-stage4-direct-handoff.cjs
+          node .repair-stage4-direct-handoff.cjs
       - name: Verify syntax and deterministic contracts
         run: |
           node --check app-core.js
