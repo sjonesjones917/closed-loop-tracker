@@ -1,7 +1,5 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {webcrypto} from 'node:crypto';
-globalThis.crypto=globalThis.crypto||webcrypto;
 vm.runInThisContext(fs.readFileSync('test-runtime.js','utf8'),{filename:'test-runtime.js'});
 const rt=globalThis.closedLoopTestRuntime;
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
