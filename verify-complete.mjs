@@ -321,22 +321,19 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
 
 
-// stage04-conversation-material-handoff-regression-v2
+// stage04-stage-prompt-material-regression-v3
 {
-  const p=project('JOB-STAGE04-CONVERSATION-MATERIAL');
+  const p=project('JOB-STAGE04-PROMPT-MATERIAL');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  let handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.conversationMaterials.length===1&&handoff.conversationMaterials[0].label==='design-input.pdf','Stage 04 did not derive the external-conversation material reference.');
-  assert(handoff.conversationMaterials[0].applicationUploadRequired===false,'Stage 04 incorrectly requires duplicate upload into the application.');
-  assert(handoff.optionalApplicationCopies.length===0,'Stage 04 invented application custody for an external-conversation material.');
-  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 material reference incorrectly became a duplicate transport contract.');
-  assert(engine.operationalNextAction(p,4).includes('Do not upload it into this application'),'Stage 04 next action does not explicitly reject duplicate app upload.');
-  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-OPTIONAL',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-OPTIONAL',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'a'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
-  handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.conversationMaterials.length===1&&handoff.optionalApplicationCopies.length===1,'An already verified optional application copy was not exposed without becoming mandatory.');
-  assert(handoff.optionalApplicationCopies[0].artifactId==='ARTIFACT-STAGE04-OPTIONAL','Stage 04 optional copy identity is wrong.');
+  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  assert(handoff.conversationMaterials.length===1&&handoff.conversationMaterials[0].label==='design-input.pdf','Stage 04 did not derive the material that must accompany its instruction.');
+  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 input material incorrectly became a returned-file or canonical-artifact transport contract.');
+  const next=engine.operationalNextAction(p,4);
+  assert(next.includes('Send the Stage 04 instruction with design-input.pdf'),'Stage 04 next action does not identify the exact material to send with the prompt.');
+  assert(next.includes('The prompt does not include those materials'),'Stage 04 next action does not explain that copying the prompt does not transfer the file.');
   const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(appSource.includes('No upload to this application is required.'),'Stage 04 UI does not make the no-duplicate-upload rule explicit.');
-  assert(!appSource.includes('Required input file is missing. Add and verify'),'The reverted Stage 04 browser-upload hard block returned.');
+  assert(appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI does not use the existing interaction notice for the concise handoff instruction.');
+  assert(!appSource.includes('stage04-material-handoff')&&!appSource.includes('No upload to this application is required.')&&!appSource.includes('Optional application file custody'),'Stage 04 still contains the redundant app-upload panel or self-directed upload warnings.');
+  assert(!appSource.includes('Required input file is missing. Add and verify'),'The rejected Stage 04 browser-upload hard block returned.');
 }
-console.log(JSON.stringify({stage04ConversationMaterialHandoff:true}));
+console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
