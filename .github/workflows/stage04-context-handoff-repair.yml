@@ -37,6 +37,11 @@ jobs:
           if source.count(old_runtime_token)!=1:
               raise SystemExit(f'Expected one provisional runtime token in repair script; found {source.count(old_runtime_token)}')
           source=source.replace(old_runtime_token,new_runtime_token)
+          old_assert="  if(withOptionalAppCopy.bodySha256!==withoutAppCopy.bodySha256||withOptionalAppCopy.contextSignature!==withoutAppCopy.contextSignature)throw new Error('Optional browser custody incorrectly controls or invalidates the Stage 04 external-conversation prompt.');"
+          new_assert="  for(const token of ['No second upload into the application is required','already attached and readable in this external conversation'])if(!withOptionalAppCopy.prompt.includes(token))throw new Error('Optional browser custody weakened the Stage 04 same-conversation instruction: '+token);\n  if(withOptionalAppCopy.prompt.includes('FILES YOU MUST RECEIVE'))throw new Error('Optional application custody became a required external handoff.');"
+          if source.count(old_assert)!=1:
+              raise SystemExit(f'Expected one overbroad optional-custody prompt assertion in repair script; found {source.count(old_assert)}')
+          source=source.replace(old_assert,new_assert)
           path.write_text(source)
           PY
           node .repair-stage04-context-handoff.mjs
