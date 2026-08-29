@@ -20,6 +20,32 @@ jobs:
           ref: closed-loop-test-ir-minimal
           fetch-depth: 0
 
+      - name: Align one-time patch with current app-core
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.repair-test-ir.py')
+          t=p.read_text()
+          start=t.index("# Primary action buttons live in existing execution guidance; technical data remains advanced.")
+          end=t.index("write('app-core.js',a)",start)
+          replacement=r'''# Keep the existing action-oriented verification panel; add only the missing native/package actions to the existing stage-purpose surface.
+          a=replace_once(a,
+          "function stagePurposeMarkup(n){const text={",
+          "function stagePurposeMarkup(n){const text={",
+          'Stage purpose anchor existence')
+          a=replace_once(a,
+          "return text?`<div class=\"notice\"><strong>This stage</strong><br>${esc(text)}</div>`:'';}",
+          "const automatic=n===22&&nativeStage22Tests().length?`<div class=\"button-row\"><button class=\"primary\" id=\"run-native-tests\" type=\"button\">Run ${nativeStage22Tests().length} automatic test${nativeStage22Tests().length===1?'':'s'}</button></div>`:'',external=engine.testExecutionPlan(current).items.some(item=>item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&item.operatorAction!=='BLOCKED')?`<div class=\"button-row\"><button id=\"download-execution-package\" type=\"button\">Download verification package</button></div>`:'';return text?`<div class=\"notice\"><strong>This stage</strong><br>${esc(text)}${automatic}${external}</div>`:(automatic+external);}",
+          'Stage purpose native/package actions')
+          a=replace_once(a,
+          "if($('#verify-stored-files'))$('#verify-stored-files').onclick=verifyStoredFilesNow;",
+          "if($('#verify-stored-files'))$('#verify-stored-files').onclick=verifyStoredFilesNow;if($('#run-native-tests'))$('#run-native-tests').onclick=runNativeStage22Tests;if($('#download-execution-package'))$('#download-execution-package').onclick=downloadExecutionPackage;",
+          'Wire automatic test and package actions')
+          '''
+          t=t[:start]+replacement+t[end:]
+          p.write_text(t)
+          PY
+
       - name: Apply exact minimal repair
         run: python3 .repair-test-ir.py
 
