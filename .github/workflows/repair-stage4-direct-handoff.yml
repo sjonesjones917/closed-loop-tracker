@@ -41,6 +41,20 @@ jobs:
           PY
           node --check .repair-stage4-direct-handoff.cjs
           node .repair-stage4-direct-handoff.cjs
+          node <<'NODE'
+          const fs=require('node:fs');
+          const {createHash}=require('node:crypto');
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          const pattern=/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+(">)/g;
+          let html=fs.readFileSync('index.html','utf8'),count=0;
+          html=html.replace(pattern,(_,prefix,suffix)=>{count+=1;return prefix+identity+suffix;});
+          if(count!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime tokens; updated ${count}.`);
+          fs.writeFileSync('index.html',html);
+          console.log(identity);
+          NODE
           rm -f .repair-stage4-direct-handoff.cjs .github/workflows/repair-stage4-direct-handoff.yml
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
           test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
