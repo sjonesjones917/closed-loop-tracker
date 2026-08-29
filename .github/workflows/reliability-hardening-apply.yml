@@ -3,7 +3,7 @@ name: Apply closed-loop reliability hardening
 on:
   push:
     branches: [codex/reliability-hardening-20260829]
-    paths: [tools/reliability-hardening-apply.py]
+    paths: [tools/reliability-hardening-*.py]
 
 permissions:
   contents: write
@@ -21,7 +21,10 @@ jobs:
         with:
           node-version: '22'
       - name: Apply line-preserving patch
-        run: python3 tools/reliability-hardening-apply.py
+        run: |
+          for patch in tools/reliability-hardening-*.py; do
+            python3 "$patch"
+          done
       - name: Verify responsible layers and regressions
         run: |
           node --check workflow-engine.js
@@ -42,8 +45,7 @@ jobs:
           node verify-project-lifecycle.mjs
       - name: Remove one-time repair machinery and commit verified patch
         run: |
-          rm -f tools/reliability-hardening-apply.py .github/workflows/reliability-hardening-apply.yml
-          rmdir tools 2>/dev/null || true
+          rm -rf tools .github/workflows/reliability-hardening-apply.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
