@@ -1,0 +1,16 @@
+verify-test-runtime: PASS
+workflow-engine.js:709
+  if(mode==='APPLICATION_DETERMINISTIC')return applicationTestSupported(test);
+                                                                        ^
+
+ReferenceError: test is not defined
+    at capabilityAffirmativelyAvailable (workflow-engine.js:709:73)
+    at workflow-engine.js:718:1194
+    at Array.map (<anonymous>)
+    at Object.testExecutionPlan (workflow-engine.js:718:55)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:45:21
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
