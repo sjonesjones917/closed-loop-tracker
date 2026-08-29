@@ -146,6 +146,7 @@ jobs:
           set -euo pipefail
           git config user.name "closed-loop-repair"
           git config user.email "closed-loop-repair@users.noreply.github.com"
+          git restore .github/workflows/pages.yml
           git add -A
           git diff --cached --check
           git commit -m "feat: integrate subject-neutral deterministic Test IR"
