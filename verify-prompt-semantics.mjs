@@ -420,3 +420,13 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
  const p=baseProject();p.stages[11].agentData={FROZEN_EXECUTION_PACKAGE:'PRIOR-STAGE-RUN-SUMMARY-SECRET'};const iterationId='ITERATION-000001',candidateId='CANDIDATE-000001';p.projectData.runs.push({id:'RUN-VERIFY-TARGET',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{RUN_ID:'RUN-VERIFY-TARGET',ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,CONTEXT_ID:'CTX-GENERATOR',COMPLETE_OUTPUT:'target output'}});p.projectData.freshContexts.push({id:'CTX-GENERATOR',stage:11,active:true,scope:{...engine.currentScope(p),iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-GENERATOR'},fields:{CONTEXT_ID:'CTX-GENERATOR'}});const r=prompts.buildPromptRecord(12,p,{operation:'COMPLETE',scope:{iterationId,candidateId,runId:'RUN-VERIFY-TARGET',contextId:'CTX-VERIFIER'}});if(r.prompt.includes('PRIOR-STAGE-RUN-SUMMARY-SECRET'))throw new Error('Stage 12 prompt leaked generic Stage 11 conclusions.');
 }
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
+
+// Independent final-product review prompts carry the application-selected reviewer context identity.
+{
+  const p=baseProject();
+  const stage23=prompts.buildPromptRecord(23,p,{operation:'COMPLETE',scope:{contextId:'CONTEXT-MEANING-REVIEW'}});
+  if(stage23.scope.contextId!=='CONTEXT-MEANING-REVIEW'||!stage23.prompt.includes('CONTEXT-MEANING-REVIEW'))throw new Error('Stage 23 controlling prompt did not retain the application-selected reviewer context identity.');
+  const stage24=prompts.buildPromptRecord(24,p,{operation:'COMPLETE',scope:{contextId:'CONTEXT-ADVERSARIAL-REVIEW'}});
+  if(stage24.scope.contextId!=='CONTEXT-ADVERSARIAL-REVIEW'||!stage24.prompt.includes('CONTEXT-ADVERSARIAL-REVIEW'))throw new Error('Stage 24 controlling prompt did not retain the application-selected reviewer context identity.');
+}
+console.log(JSON.stringify({independentReviewerPromptIdentity:true,promptEngineVersion:prompts.version},null,2));
