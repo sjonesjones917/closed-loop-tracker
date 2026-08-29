@@ -1,0 +1,42 @@
+name: Browser regression diagnostic
+on:
+  push:
+    branches: [fix/subject-neutral-native-verification]
+    paths: [.github/workflows/browser-diagnostic.yml]
+permissions: {contents: write}
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/subject-neutral-native-verification
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Capture exact Chromium failure
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          set +e
+          node verify-browser.mjs >/tmp/verify-browser.log 2>&1
+          first=$?
+          node verify-browser-extra.mjs >/tmp/verify-browser-extra.log 2>&1
+          second=$?
+          {
+            echo '=== verify-browser.mjs ==='
+            cat /tmp/verify-browser.log
+            echo
+            echo '=== verify-browser-extra.mjs ==='
+            cat /tmp/verify-browser-extra.log
+            echo
+            echo "exit verify-browser=$first verify-browser-extra=$second"
+          } > .browser-error.txt
+          git config user.name closed-loop-ci
+          git config user.email closed-loop-ci@users.noreply.github.com
+          git add .browser-error.txt
+          git commit -m "Capture browser regression failure"
+          git push origin HEAD:fix/subject-neutral-native-verification
+          exit 0
