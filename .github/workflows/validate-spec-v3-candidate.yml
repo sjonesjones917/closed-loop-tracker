@@ -22,6 +22,8 @@ jobs:
           git rev-parse origin/main
           git diff --stat origin/main...HEAD
           git diff --numstat origin/main...HEAD -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html test-runtime.js test-worker.js .github/workflows/pages.yml
+      - name: Exclude one-time repair workflows from product validation
+        run: rm -f .github/workflows/apply-v3-repair.yml .github/workflows/audit-v3.yml
       - name: Syntax checks
         run: |
           for f in app-core.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-controlling-spec.mjs; do node --check "$f"; done
@@ -41,6 +43,7 @@ jobs:
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
       - name: Inspect controlling implementation paths
+        if: always()
         run: |
           node - <<'NODE'
           const fs=require('fs');
