@@ -61,6 +61,12 @@ jobs:
           lines[browser_apply_line] = 'text = text[:browser_start_index] + browser_replacement + text[browser_end_index:]'
           code = '\n'.join(lines) + '\n'
           exec(compile(code, 'stage04-update.py', 'exec'))
+          for temporary_workflow in (
+              '.github/workflows/apply-stage04-canonical-context.yml',
+              '.github/workflows/stage04-canonical-context-apply.yml',
+              '.github/workflows/stage04-canonical-context-apply-v2.yml',
+          ):
+              Path(temporary_workflow).unlink(missing_ok=True)
           PYRUN
       - name: Rebuild retained fixture and run deterministic proofs
         run: |
@@ -95,11 +101,8 @@ jobs:
           trap - EXIT
       - name: Commit the tested minimal change
         run: |
-          rm .github/workflows/apply-stage04-canonical-context.yml
-          rm .github/workflows/stage04-canonical-context-apply.yml
-          rm .github/workflows/stage04-canonical-context-apply-v2.yml
           git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config user.email 41898218+github-actions[bot]@users.noreply.github.com
           git add -A
           git commit -m "Make Stage 04 use canonical context only [stage04-applied]"
           git push origin HEAD:fix-stage04-canonical-context
