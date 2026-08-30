@@ -32,6 +32,42 @@ jobs:
           python3 tools/fix_stage1_locality_and_fixtures_v28.py
           python3 tools/ensure_stage1_generic_questions_v30.py
           python3 tools/fix_stage1_inventory_boundary_v32.py
+      - name: Enforce exact v1 primitive contract and refresh runtime identity
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          p=Path('test-runtime.js'); t=p.read_text()
+          for line in [
+            "  ASSERT_EXISTS:{required:[],optional:['message'],types:{message:'string'}},\n",
+            "  ASSERT_TYPE:{required:['value'],optional:['message'],types:{value:'typeName',message:'string'}},\n",
+            "  ASSERT_NE:{required:['value'],optional:['message','numericMode','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'}},\n"
+          ]: t=t.replace(line,'')
+          t=t.replace("const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);","const ASSERTION_OPS=new Set(['ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);")
+          t=re.sub(r"\n\s*case 'ASSERT_EXISTS':finalAssertion=resultForAssertion\([^\n]+",'',t)
+          t=re.sub(r"\n\s*case 'ASSERT_TYPE':\{[^\n]+",'',t)
+          t=re.sub(r"\n\s*case 'ASSERT_NE':finalAssertion=resultForAssertion\([^\n]+",'',t)
+          p.write_text(t)
+          required=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE']
+          source=p.read_text()
+          for op in required:
+            if not re.search(r'^\s*'+re.escape(op)+r':\{',source,re.M): raise SystemExit('missing required Test IR primitive '+op)
+          for op in ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']:
+            if re.search(r'^\s*'+re.escape(op)+r':\{',source,re.M): raise SystemExit('undeclared Test IR primitive remains '+op)
+          runtime=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def git_blob_sha(path):
+            data=Path(path).read_bytes(); return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+          manifest=''.join(f'{f}:{git_blob_sha(f)}\n' for f in runtime)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          h=Path('index.html'); html=h.read_text()
+          for f in runtime:
+            pattern=r'(<script\s+defer\s+src="'+re.escape(f)+r')(?:\?v=[^"]+)?("\s*></script>)'
+            html,n=re.subn(pattern,lambda m:m.group(1)+'?v='+token+m.group(2),html,count=1)
+            if n!=1: raise SystemExit('runtime script tag missing '+f)
+          h.write_text(html)
+          print('RUNTIME_BUILD_ID='+token)
+          PY
       - name: Complete deterministic proof
         shell: bash
         run: |
