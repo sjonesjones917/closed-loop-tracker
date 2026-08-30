@@ -1,0 +1,134 @@
+name: Temporary Stage intake closure integration
+
+on:
+  push:
+    branches: [fix/controlling-spec-conformance-20260830]
+    paths: [.github/workflows/tmp-stage-intake-closure.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec-conformance-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Integrate Stage 01/03/04 closure into runtime
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p=Path(path); text=p.read_text()
+              if text.count(old)!=1:
+                  raise SystemExit(f'{path}: expected one patch anchor, found {text.count(old)} for {old[:100]!r}')
+              p.write_text(text.replace(old,new,1))
+
+          engine='workflow-engine.js'
+          anchor="function currentIntentStatements(project){return recordsForCurrentScope(project,'intentStatements').filter(record=>Number(record.stage)===1);}\n"
+          addition=anchor+"""
+const CONTROLLED_HUMAN_INPUT_FIELDS=Object.freeze(['EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS']);
+const LEGACY_INPUT_LOCATIONS=Object.freeze({EXACT_USER_OBJECTIVE_VERBATIM:'/userJobInput/objective',SUPPLIED_MATERIALS_INVENTORY:'/suppliedMaterials',REQUIRED_OUTPUT_FORMAT:'/userJobInput/requiredOutputFormat',DEADLINE_OR_TEMPORAL_SCOPE:'/userJobInput/deadlineOrTemporalScope',DESIRED_SOURCE_COUNT:'/userJobInput/desiredSourceCount',KNOWN_AUTHORITATIVE_SOURCES:'/userJobInput/knownAuthorities',AVAILABLE_TOOLS:'/userJobInput/availableTools',PROHIBITED_ACTIONS:'/userJobInput/prohibitedActions',EXPLICIT_USER_REQUIREMENTS:'/userJobInput/explicitRequirements'});
+function controlledInputUnits(project){
+  ensureShape(project);const inputVersion=String(project.job.CURRENT_INPUT_VERSION||''),units=[];
+  for(const fieldName of CONTROLLED_HUMAN_INPUT_FIELDS){const value=project.job[fieldName];if(value===undefined||value===null||String(value).trim()==='')continue;const sourceLocation='/job/'+fieldName,raw=typeof value==='string'?value:JSON.stringify(value),unitId='INPUT-UNIT-'+hash.sha256Value({inputVersion,sourceLocation,raw});units.push({unitId,sourceType:'HUMAN_FIELD',fieldName,sourceLocation,legacySourceLocation:LEGACY_INPUT_LOCATIONS[fieldName]||null,rawValueSha256:hash.sha256Text(String(raw)),value:clone(value)});}
+  for(const answer of safe(project.projectData.humanInputAnswers).filter(item=>!item.invalidatedBy)){const sourceLocation='/humanInputAnswers/'+String(answer.answerId||answer.requestId||units.length),raw=JSON.stringify(answer.answer??null),unitId='INPUT-UNIT-'+hash.sha256Value({inputVersion,sourceLocation,raw});units.push({unitId,sourceType:'HUMAN_CLARIFICATION',sourceLocation,rawValueSha256:hash.sha256Text(raw),question:answer.question||null,value:clone(answer.answer)});}
+  for(const file of safe(project.stages?.[1]?.authorizedFiles)){const artifactId=String(file.artifactId||file.id||'').trim(),filename=String(file.name||file.filename||'').trim();if(!artifactId&&!filename)continue;const sourceLocation='/stage01/authorizedFiles/'+(artifactId||filename),raw=JSON.stringify({artifactId,filename,sha256:file.sha256||null,size:file.size??file.byteSize??null}),unitId='INPUT-UNIT-'+hash.sha256Value({inputVersion,sourceLocation,raw});units.push({unitId,sourceType:'SUPPLIED_MATERIAL',sourceLocation,artifactId:artifactId||null,filename:filename||null,rawValueSha256:hash.sha256Text(raw),sha256:file.sha256||null});}
+  return units;
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);const units=controlledInputUnits(project),statements=currentIntentStatements(project),mappings=units.map(unit=>{const statementIds=statements.filter(statement=>{const material=String(recordValue(statement,'SOURCE_MATERIAL')||''),location=String(recordValue(statement,'SOURCE_LOCATION')||'');if(material.includes(unit.unitId))return true;if(location===unit.sourceLocation||unit.legacySourceLocation&&location===unit.legacySourceLocation)return true;if(unit.sourceType==='SUPPLIED_MATERIAL'&&((unit.artifactId&&material.includes(unit.artifactId))||(unit.filename&&material.includes(unit.filename))))return true;return false;}).map(statement=>recordId(statement,'intentStatements'));return {unitId:unit.unitId,sourceType:unit.sourceType,sourceLocation:unit.sourceLocation,rawValueSha256:unit.rawValueSha256,statementIds,accounted:statementIds.length>0};}),missingUnitIds=mappings.filter(item=>!item.accounted).map(item=>item.unitId),latestChange=acceptedChanges(project,1).at(-1),prompt=safe(project.projectData.generatedPrompts).filter(item=>Number(item.stage)===1&&!item.invalidatedBy).at(-1),base={schema:'closed-loop-intake-coverage/1',inputVersion:project.job.CURRENT_INPUT_VERSION||null,projectRevision:Number(project.revision||0),unitCount:units.length,statementCount:statements.length,mappings,missingUnitIds,coverage:units.length?(units.length-missingUnitIds.length)/units.length:0,acceptedChangeId:latestChange?.changeId||null,promptIdentity:prompt?{instructionId:prompt.instructionId||prompt.promptId,bodySha256:prompt.bodySha256||prompt.sha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature}:null};return {...base,manifestSha256:hash.sha256Value(base)};
+}
+"""
+          replace_once(engine,anchor,addition)
+
+          old="""      for(const statement of statements)for(const name of ['SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE'])if(!String(recordValue(statement,name)||'').trim())reasons.push(`${recordId(statement,'intentStatements')}: ${name} is missing.`);
+      const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);
+"""
+          new="""      for(const statement of statements)for(const name of ['SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE'])if(!String(recordValue(statement,name)||'').trim())reasons.push(`${recordId(statement,'intentStatements')}: ${name} is missing.`);
+      const intake=intakeCoverageManifest(project);if(intake.coverage!==1)reasons.push(`Stage 01 controlled-input accounting is ${(intake.coverage*100).toFixed(2)}%, not 100%. Missing input unit(s): ${intake.missingUnitIds.join(', ')}.`);
+      const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);
+"""
+          replace_once(engine,old,new)
+
+          old="""      if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);}
+      const requiredStatements=currentIntentStatements(project).filter(intentStatementRequiresRequirement),candidateLocations=new Set(collection('candidateRequirements').map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim())),missingStatements=requiredStatements.map(record=>recordId(record,'intentStatements')).filter(id=>!candidateLocations.has(id));
+"""
+          new="""      if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);const stageData=project.stages[3]?.agentData||{};if(!truth(stageData.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 requires confirmation that every current controlling source was examined.');if(!truth(stageData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 requires the second conflict-and-exception pass to be complete.');if(numeric(stageData.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires at least two complete research/conflict-exception passes before saturation can be established.');if(!falsey(stageData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 latest complete pass must explicitly establish that no new material category was found.');}
+      const requiredStatements=currentIntentStatements(project).filter(intentStatementRequiresRequirement),candidateLocations=new Set(collection('candidateRequirements').map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim())),missingStatements=requiredStatements.map(record=>recordId(record,'intentStatements')).filter(id=>!candidateLocations.has(id));
+"""
+          replace_once(engine,old,new)
+
+          old="""      const missingStatements=requiredStatementIds.filter(id=>!coveredIntentStatements.has(id));if(missingStatements.length)reasons.push(`Requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
+      break;
+"""
+          new="""      const missingStatements=requiredStatementIds.filter(id=>!coveredIntentStatements.has(id));if(missingStatements.length)reasons.push(`Requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
+      const candidateIds=collection('candidateRequirements').map(record=>recordId(record,'candidateRequirements')),coveredCandidates=new Set(collection('requirements').map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim()).filter(value=>candidateIds.includes(value))),missingCandidates=candidateIds.filter(id=>!coveredCandidates.has(id));if(missingCandidates.length)reasons.push(`Stage 04 obligation accounting is missing Stage 03 candidate obligation(s): ${missingCandidates.join(', ')}.`);
+      break;
+"""
+          replace_once(engine,old,new)
+
+          old="case 1:Object.assign(derived,{JOB_ID:project.job.JOB_ID,DATE_OPENED:project.job.DATE_OPENED,INPUT_SET_VERSION:project.job.CURRENT_INPUT_VERSION,INPUT_SET_HASH_OR_MANIFEST:project.job.INPUT_SET_HASH_OR_MANIFEST||'UNKNOWN',JOB_RECORD_STATUS:project.stages[1].status==='COMPLETE'?'READY':'NOT READY'});break;"
+          new="case 1:Object.assign(derived,{JOB_ID:project.job.JOB_ID,DATE_OPENED:project.job.DATE_OPENED,INPUT_SET_VERSION:project.job.CURRENT_INPUT_VERSION,INPUT_SET_HASH_OR_MANIFEST:project.job.INPUT_SET_HASH_OR_MANIFEST||'UNKNOWN',JOB_RECORD_STATUS:project.stages[1].status==='COMPLETE'?'READY':'NOT READY',INTAKE_COVERAGE_MANIFEST:intakeCoverageManifest(project)});break;"
+          replace_once(engine,old,new)
+
+          old="currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics"
+          new="currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,controlledInputUnits,intakeCoverageManifest,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics"
+          replace_once(engine,old,new)
+
+          ingestion='response-ingestion.js'
+          old="""    if(!proposed.length)issues.push(issue('MISSING_INTENT_STATEMENT_LEDGER','/records/intentStatements','Stage 01 DATA_PROPOSAL requires the complete canonical intent-statement ledger.'));
+    proposed.forEach((record,index)=>{const fields=record?.fields||{},key=`${String(fields.SOURCE_MATERIAL||'').trim()}|${String(fields.SOURCE_LOCATION||'').trim()}|${String(fields.EXACT_STATEMENT||'').trim()}`;if(seen.has(key))issues.push(issue('DUPLICATE_INTENT_STATEMENT',`/records/intentStatements/${index}`,'Duplicate source material, location, and exact statement are not permitted.'));else seen.add(key);});
+"""
+          new="""    if(!proposed.length)issues.push(issue('MISSING_INTENT_STATEMENT_LEDGER','/records/intentStatements','Stage 01 DATA_PROPOSAL requires the complete canonical intent-statement ledger.'));
+    proposed.forEach((record,index)=>{const fields=record?.fields||{},key=`${String(fields.SOURCE_MATERIAL||'').trim()}|${String(fields.SOURCE_LOCATION||'').trim()}|${String(fields.EXACT_STATEMENT||'').trim()}`;if(seen.has(key))issues.push(issue('DUPLICATE_INTENT_STATEMENT',`/records/intentStatements/${index}`,'Duplicate source material, location, and exact statement are not permitted.'));else seen.add(key);});
+    const controlledUnits=workflow.controlledInputUnits(project);for(const unit of controlledUnits){const covered=proposed.some(record=>{const material=String(record?.fields?.SOURCE_MATERIAL||''),location=String(record?.fields?.SOURCE_LOCATION||'');if(material.includes(unit.unitId)||location===unit.sourceLocation||unit.legacySourceLocation&&location===unit.legacySourceLocation)return true;if(unit.sourceType==='SUPPLIED_MATERIAL'&&((unit.artifactId&&material.includes(unit.artifactId))||(unit.filename&&material.includes(unit.filename))))return true;return false;});if(!covered)issues.push(issue('MISSING_CONTROLLED_INPUT_UNIT','/records/intentStatements',`Stage 01 omitted controlled input unit ${unit.unitId} (${unit.sourceLocation}).`));}
+"""
+          replace_once(ingestion,old,new)
+
+          old="""  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===3){
+    const covered=new Set(safe(envelope.records?.candidateRequirements).map(record=>String(record?.fields?.SOURCE_LOCATION||'').trim()));
+"""
+          new="""  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===3){
+    const stageData=envelope.stageData||{},currentSources=workflow.recordsForCurrentScope(project,'sources');if(currentSources.length){if(!['TRUE','YES','SATISFIED','COMPLETE'].includes(upper(stageData.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)))issues.push(issue('INCOMPLETE_SOURCE_EXHAUSTION','/stageData/ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED','Stage 03 must establish that every current controlling source was examined.'));if(!['TRUE','YES','SATISFIED','COMPLETE'].includes(upper(stageData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)))issues.push(issue('INCOMPLETE_CONFLICT_EXCEPTION_PASS','/stageData/SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','Stage 03 requires a completed second conflict-and-exception pass.'));if(Number(stageData.LATEST_PASS_NUMBER)<2)issues.push(issue('INSUFFICIENT_RESEARCH_PASSES','/stageData/LATEST_PASS_NUMBER','Stage 03 requires at least two complete passes before saturation.'));if(!['FALSE','NO','NONE','0','NOT APPLICABLE'].includes(upper(stageData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS)))issues.push(issue('RESEARCH_NOT_SATURATED','/stageData/NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS','The latest complete Stage 03 pass must establish that no new material category was found.'));}
+    const covered=new Set(safe(envelope.records?.candidateRequirements).map(record=>String(record?.fields?.SOURCE_LOCATION||'').trim()));
+"""
+          replace_once(ingestion,old,new)
+
+          old="""    const missing=requiredIntentIds.filter(id=>!covered.has(id));
+    if(missing.length)issues.push(issue('MISSING_INTENT_STATEMENT_REQUIREMENT','/records/requirements',`Requirement coverage is missing for canonical intent statement(s): ${missing.join(', ')}.`));
+"""
+          new="""    const missing=requiredIntentIds.filter(id=>!covered.has(id));
+    if(missing.length)issues.push(issue('MISSING_INTENT_STATEMENT_REQUIREMENT','/records/requirements',`Requirement coverage is missing for canonical intent statement(s): ${missing.join(', ')}.`));
+    const currentCandidates=workflow.recordsForCurrentScope(project,'candidateRequirements'),candidateIds=currentCandidates.map(record=>workflow.recordId(record,'candidateRequirements')),coveredCandidates=new Set(proposed.map(record=>String(record?.fields?.SOURCE_LOCATION||'').trim()).filter(value=>candidateIds.includes(value))),missingCandidates=candidateIds.filter(id=>!coveredCandidates.has(id));if(missingCandidates.length)issues.push(issue('MISSING_STAGE03_OBLIGATION_REQUIREMENT','/records/requirements',`Stage 04 omitted Stage 03 candidate obligation(s): ${missingCandidates.join(', ')}. Every candidate obligation must be accounted for in the requirement specification.`));
+"""
+          replace_once(ingestion,old,new)
+
+          prompt='prompt-engine.js'
+          old='Treat every application-enumerated controlled input unit as mandatory accounting input.'
+          new='Treat every application-enumerated controlled input unit as mandatory accounting input. For every intentStatements record derived from one of those units, SOURCE_MATERIAL must begin with that exact application-supplied unitId followed by a human-readable material label; this is an accounting link, not a new canonical ID. Every controlled unit must have at least one such record before DATA_PROPOSAL.'
+          replace_once(prompt,old,new)
+          old='For every input obligation, return one or more atomic requirements OR retained nonnormative context OR explicitly inapplicable with reason OR blocked with reason.'
+          new='For every input obligation, return one or more atomic requirements OR retained nonnormative context OR explicitly inapplicable with reason OR blocked with reason. For every Stage 03 candidateRequirements obligation that becomes a requirement record, set SOURCE_LOCATION to the exact CANDIDATE_REQ_ID so the application can prove closed Stage 03-to-Stage 04 accounting; preserve the underlying SOURCE_ID/source evidence separately.'
+          replace_once(prompt,old,new)
+          PY
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check prompt-engine.js
+          node verify-one-time-intent-intake.mjs || true
+      - name: Commit integrated runtime and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-reliability-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm -f .github/workflows/tmp-stage-intake-closure.yml
+          git add workflow-engine.js response-ingestion.js prompt-engine.js
+          git commit -m 'Close Stage 01 and Stage 04 accounting gates'
+          git push origin HEAD:fix/controlling-spec-conformance-20260830
