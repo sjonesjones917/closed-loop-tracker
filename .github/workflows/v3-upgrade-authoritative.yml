@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Apply base v3 transformation
         run: |
+          sed -i 's/closedLoopSchema/closedLoopWorkflowSchema/g' upgrade-v3.mjs
           set +e
           node upgrade-v3.mjs > v3-upgrade-base.log 2>&1
           STATUS=$?
@@ -92,4 +93,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Implement complete closed-loop v3 deterministic reliability contract"
           git push origin HEAD:implementation/closed-loop-v3
-# rerun after semantic-proof correction
