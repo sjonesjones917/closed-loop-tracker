@@ -1,0 +1,27 @@
+name: Finalize Stage 16 wording
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+permissions: {contents: write}
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message || '', '[stage16-final]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workbook.js'); s=p.read_text().replace("'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'"); p.write_text(s)
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),c=require('crypto'),files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];const blob=f=>{const b=fs.readFileSync(f);return c.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')},m=files.map(f=>`${f}:${blob(f)}\n`).join(''),token='runtime-'+c.createHash('sha256').update(m).digest('hex').slice(0,16);let h=fs.readFileSync('index.html','utf8');h=h.replace(/v=[^\"]+/g,'v='+token);fs.writeFileSync('index.html',h);
+          NODE
+          git config user.name closed-loop-finalizer
+          git config user.email closed-loop-finalizer@users.noreply.github.com
+          git add workbook.js index.html
+          git commit -m 'Finalize Stage 16 root-cause wording [stage16-final]'
+          git push origin HEAD:implementation/closed-loop-v3
