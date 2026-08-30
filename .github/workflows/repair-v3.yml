@@ -1,0 +1,55 @@
+name: Temporary v3 integration repair
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/complete-intent-stage4-v3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply integrated repair
+        run: python3 .repair-v3.py
+      - name: Syntax proof
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-one-time-intent-intake.mjs
+      - name: Closure and runtime proof
+        run: |
+          node verify-one-time-intent-intake.mjs
+          node verify-test-runtime.mjs
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+      - name: Full repository proof
+        run: |
+          node build-test-project.mjs
+          node verify-schema-explicit.mjs
+          node verify-ingestion.mjs
+          node verify-full-cycle.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+      - name: Remove temporary repair machinery
+        run: rm -f .repair-v3.py .github/workflows/repair-v3.yml
+      - name: Commit integrated result only after proof
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Complete v3 intent closure and deterministic runtime"
+          git push origin HEAD:fix/complete-intent-stage4-v3
