@@ -9,7 +9,7 @@ def require(cond,msg):
 # Prompt engine: Stage 1 is generic but must derive project-specific human-only questions.
 def patch_prompt(t):
     old="Ask only genuinely human-only questions. Never ask for information already present in User Job Input, an available supplied artifact, a prior answer, or canonical project memory."
-    new="Ask only genuinely human-only questions. Derive subject-specific human-authority questions from the user's actual request, accessible supplied materials, and current canonical context; do not use a hard-coded project-subject catalogue. Never ask for information already present in User Job Input, an available supplied artifact, a prior answer, or canonical project memory."
+    new="Ask only genuinely human-only questions. Derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context; do not use a hard-coded project-subject catalogue. Never ask for information already present in User Job Input, an available supplied artifact, a prior answer, or canonical project memory."
     if old in t: t=t.replace(old,new,1)
     require(new in t,'Stage 01 project-derived question algorithm missing')
     anchor=" const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),activeExisting=existing.filter(x=>!x.invalidatedBy&&x.promptEngineVersion===PROMPT_ENGINE_VERSION);const operation=options.operation||schema.STAGE_CONTRACTS[stage].operations[0];if(!schema.STAGE_CONTRACTS[stage].operations.includes(operation))throw new Error(`Operation ${operation} is not valid for Stage ${stage}.`);\n"
@@ -29,13 +29,11 @@ def patch_semantic(t):
  if(/STAGE 0[23]|Stage 0[23] may|Research only the current accepted Stage 02|Build the independent external source inventory|Stage 02 owns source\\/material/.test(r.prompt))throw new Error('Stage 01 contains future Stage 02/03 work.');
 """
     new=""" const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target audit/repair boundary is missing.');
- if(!r.prompt.includes("Derive subject-specific human-authority questions from the user's actual request, accessible supplied materials, and current canonical context; do not use a hard-coded project-subject catalogue"))throw new Error('Stage 01 does not derive project-specific human-only questions from current project authority.');
+ if(!r.prompt.includes('Derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context; do not use a hard-coded project-subject catalogue'))throw new Error('Stage 01 does not derive project-specific human-only questions from current project authority.');
  if(/STAGE 0[23]|Stage 0[23] may|Research only the current accepted Stage 02|Build the independent external source inventory|Stage 02 owns source\\/material/.test(r.prompt))throw new Error('Stage 01 contains future Stage 02/03 work.');
 """
     if old in t: t=t.replace(old,new,1)
-    # Also remove any residual console declaration that presents specialist domains as runtime architecture.
     t=t.replace(",specialistDomains:['patent','software-multifile','building-aec','physical-engineering-cad-cam-cnc-additive']",",subjectNeutralStage1:true")
-    # Add direct Stage 4 prerequisite regression before contract tests.
     marker="// Contract identity must bind the complete stage/record validation contract, not only field names.\n"
     block="""// Stage 04 cannot produce a current executable prompt from incomplete Stage 01 or Stage 03 state.
 {
@@ -50,16 +48,14 @@ def patch_semantic(t):
     if block not in t:
         require(marker in t,'Stage 04 prompt regression insertion marker missing')
         t=t.replace(marker,block+marker,1)
-    # Hard-coded domain runtime expectations must be gone.
     for obsolete in ['Stage 01 specialist intake adaptation is missing.','STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY']:
         require(obsolete not in t,'obsolete domain assertion remains: '+obsolete)
     return t
 rw('verify-prompt-semantics.mjs',patch_semantic)
 
-# Permanent capture-once regression must explicitly assert the new prerequisite gate and generic Stage 1 algorithm.
 def patch_capture(t):
     inserts=[
-      "a(p.includes(\"Derive subject-specific human-authority questions from the user's actual request, accessible supplied materials, and current canonical context; do not use a hard-coded project-subject catalogue\"),'Stage 01 generic project-derived question algorithm missing');",
+      "a(p.includes('Derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context; do not use a hard-coded project-subject catalogue'),'Stage 01 generic project-derived question algorithm missing');",
       "a(p.includes('Stage 04 prompt cannot be generated until Stage 01 and Stage 03 are complete and current.'),'Stage 04 upstream completion gate missing');"
     ]
     marker="a(p.includes('Exhaustively research every current accepted Stage 02'),'Stage 03 exhaustion absent');\n"
