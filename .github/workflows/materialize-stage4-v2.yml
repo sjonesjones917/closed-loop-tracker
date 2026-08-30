@@ -27,6 +27,43 @@ jobs:
         run: sed -i 's/SOURCE_MATERIAL must equal the exact INPUT-UNIT ID/SOURCE_MATERIAL must be the exact INPUT-UNIT ID/' .github/scripts/materialize_stage4_v2.py
       - name: Materialize current-main repair
         run: python3 .github/scripts/materialize_stage4_v2.py
+      - name: Make prior intent canonical state only, never a Stage 4 handoff
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          engine=Path('workflow-engine.js')
+          data=engine.read_text()
+          old="if(stage>1)withhold.set('original Stage 01 intent file',{artifactIdOrCategory:'original Stage 01 intent file',reason:'One-time intake only. Later stages use the canonical intentStatements ledger and must not request, attach, resend, reopen, or rely on the original file.'});"
+          new="if(stage>1&&stage!==4)withhold.set('original Stage 01 intent file',{artifactIdOrCategory:'original Stage 01 intent file',reason:'One-time intake only. Later stages use canonical project state and must not request, attach, resend, reopen, or rely on the original file.'});"
+          if old not in data:
+              raise SystemExit('expected later-stage intent withhold rule was not found')
+          engine.write_text(data.replace(old,new,1))
+
+          regression=Path('verify-one-time-intent-intake.mjs')
+          r=regression.read_text()
+          old="assert(handoff.conversationMaterials.length===0,'Stage 04 still creates a material resend payload.');\nassert(handoff.withhold.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'),'Stage 04 does not explicitly withhold the original intent file.');"
+          new="assert(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length&&!handoff.conversationMaterials.length&&!handoff.optionalApplicationCopies.length,'Stage 04 converted already-captured intent into an execution handoff instead of using canonical state.');"
+          if old not in r:
+              raise SystemExit('expected Stage 04 handoff regression assertion was not found')
+          regression.write_text(r.replace(old,new,1))
+
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
+          for file in runtime_files:
+              b=Path(file).read_bytes()
+              blob=hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+              manifest+=f'{file}:{blob}\n'
+          build='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          html=Path('index.html')
+          h=html.read_text()
+          h,n=re.subn(r'(\?v=)[A-Za-z0-9._-]+',lambda m:m.group(1)+build,h)
+          if n!=len(runtime_files):
+              raise SystemExit(f'expected {len(runtime_files)} runtime cache tokens, changed {n}')
+          html.write_text(h)
+          PY
       - name: Syntax checks
         run: |
           node --check app-core.js
