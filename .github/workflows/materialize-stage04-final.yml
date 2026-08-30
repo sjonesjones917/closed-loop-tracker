@@ -1,0 +1,200 @@
+name: Materialize final Stage 04 capture-once repair
+
+on:
+  push:
+    branches:
+      - fix/stage04-capture-once-visual-restore-final
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-capture-once-visual-restore-final
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact Stage 04 repair and permanent regressions
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const {createHash}=require('crypto');
+
+          function replaceOnce(text, before, after, label){
+            const first=text.indexOf(before);
+            if(first<0)throw new Error(`${label}: anchor not found`);
+            if(text.indexOf(before,first+before.length)>=0)throw new Error(`${label}: anchor is not unique`);
+            return text.slice(0,first)+after+text.slice(first+before.length);
+          }
+
+          let app=fs.readFileSync('app-core.js','utf8');
+          app=replaceOnce(
+            app,
+            "function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)",
+            "function artifactControlMarkup(n,locked){if(n===19)",
+            'restore Stage 04 visual controls'
+          );
+          fs.writeFileSync('app-core.js',app);
+
+          let prompt=fs.readFileSync('prompt-engine.js','utf8');
+          prompt=replaceOnce(
+            prompt,
+            "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",
+            "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';",
+            'invalidate pre-repair prompts'
+          );
+          prompt=replaceOnce(
+            prompt,
+            "- Continue the same conversation from the human answer. Ask only the next genuinely useful human-only question(s); do not interrogate the human for facts available in supplied materials, common domain knowledge, or authorized research/tools.\n- humanInputRequests is NOT the normal conversation channel.",
+            "- Continue the same conversation from the human answer. Ask only the next genuinely useful human-only question(s); do not interrogate the human for facts available in supplied materials, common domain knowledge, or authorized research/tools.\n- Project information is supplied by the human once. If project-relevant information is already present in this generated instruction or current canonical context, never ask the human to attach, resend, retype, summarize, select, or otherwise provide it again. Missing projected context is an application or prior-stage defect, not a human resupply task.\n- humanInputRequests is NOT the normal conversation channel.",
+            'capture-once collaboration invariant'
+          );
+          prompt=replaceOnce(
+            prompt,
+            "ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT",
+            "PERSISTED PROJECT INPUT — APPLICATION-SUPPLIED, NO USER RESUPPLY",
+            'persisted project input heading'
+          );
+          prompt=replaceOnce(
+            prompt,
+            "- Stage 04 consumes the application-selected canonical input union. Do not ask the human to attach or resend the original intent file. Missing canonical prior-stage content is an earlier-stage defect, not a new file-transfer request.",
+            "- Stage 04 receives its project information through this generated instruction. Never ask the human to attach, resend, retype, summarize, select, or otherwise resupply information already supplied for this project. Missing projected context is an application or prior-stage defect, not a human resupply task.",
+            'Stage 04 no-resupply rule'
+          );
+          prompt=replaceOnce(
+            prompt,
+            "const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),runIds=plan?.triples?.map(x=>x.runId),handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds});if(!handoff.send.length",
+            "const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),runIds=plan?.triples?.map(x=>x.runId),rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff;if(!handoff.send.length",
+            'Stage 04 rendered handoff suppression'
+          );
+          prompt=replaceOnce(
+            prompt,
+            "batchPlan=verificationBatchPlan(stage,state,operation,scope),handoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),promptHandoff=",
+            "batchPlan=verificationBatchPlan(stage,state,operation,scope),rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff,promptHandoff=",
+            'Stage 04 context-manifest handoff suppression'
+          );
+          fs.writeFileSync('prompt-engine.js',prompt);
+
+          let html=fs.readFileSync('index.html','utf8');
+          html=replaceOnce(
+            html,
+            ".expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}.expandable-prompt.expanded{height:auto;max-height:none}",
+            ".expandable-prompt{height:clamp(260px,45vh,520px);max-height:80vh}.expandable-prompt.expanded{height:auto;max-height:none}",
+            'restore generated-prompt box dimensions'
+          );
+
+          let verifyHash=fs.readFileSync('verify-hash.mjs','utf8');
+          const verifyTail=`const appCore=fs.readFileSync('app-core.js','utf8');
+          assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');
+
+          console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));`;
+          const repairedTail=`const appCore=fs.readFileSync('app-core.js','utf8');
+          const promptEngine=fs.readFileSync('prompt-engine.js','utf8');
+          assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not be visually special-cased or hidden.');
+          assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 must preserve the standard artifact-control rendering used before the regression.');
+          assert(html.includes('.expandable-prompt{height:clamp(260px,45vh,520px);max-height:80vh}'),'The generated prompt box must retain its regular responsive height.');
+          assert(!html.includes('.expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}'),'The generated prompt box must not collapse to its short content height.');
+          assert(promptEngine.includes("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';"),'Pre-repair saved prompts must be invalidated.');
+          assert((promptEngine.match(/handoff=stage===4\?\{\.\.\.rawHandoff,send:\[\]\}:rawHandoff/g)||[]).length===2,'Stage 04 file-send suppression must control both rendered prompt text and the persisted context manifest.');
+          assert(promptEngine.includes('PERSISTED PROJECT INPUT — APPLICATION-SUPPLIED, NO USER RESUPPLY'),'Stage 04 prompts must carry persisted project input instead of requesting resupply.');
+
+          console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04VisualsRestored:true,promptBoxResponsiveHeightRestored:true,stage04CaptureOnce:true}));`;
+          verifyHash=replaceOnce(verifyHash,verifyTail,repairedTail,'replace incorrect Stage 04 visual regression');
+          fs.writeFileSync('verify-hash.mjs',verifyHash);
+
+          const focusedTest=`import fs from 'node:fs';
+          import vm from 'node:vm';
+          import assert from 'node:assert/strict';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore;
+          const engine=globalThis.closedLoopWorkflowEngine;
+          const prompts=globalThis.closedLoopPromptEngine;
+          const project=core.createBlankState('JOB-STAGE04-CAPTURE-ONCE');
+          Object.assign(project.job,{
+            EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested product from the supplied intent.',
+            SUPPLIED_MATERIALS_INVENTORY:'intent.pdf',
+            CURRENT_INPUT_VERSION:'INPUT-v001',
+            CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',
+            EXACT_DELIVERABLE_REQUESTED:'Requested product',
+            ASSUMPTIONS:'NONE',
+            UNKNOWN_INFORMATION:'NONE',
+            INPUT_SET_CONTENTS:'CAPTURE_ONCE_SENTINEL: preserve the supplied safety constraint and acceptance condition.'
+          });
+          engine.ensureShape(project);
+          engine.recalculate(project);
+          const stage4=prompts.buildPromptRecord(4,project);
+          assert.equal(stage4.promptEngineVersion,'closed-loop-prompt-engine/26');
+          assert.match(stage4.prompt,/PERSISTED PROJECT INPUT — APPLICATION-SUPPLIED, NO USER RESUPPLY/);
+          assert.match(stage4.prompt,/CAPTURE_ONCE_SENTINEL: preserve the supplied safety constraint and acceptance condition\./);
+          assert.match(stage4.prompt,/Project information is supplied by the human once\./);
+          assert.match(stage4.prompt,/Never ask the human to attach, resend, retype, summarize, select, or otherwise resupply information already supplied for this project\./);
+          assert.deepEqual(stage4.contextManifest.executionHandoff.send,[]);
+          project.projectData.generatedPrompts=[{...stage4,instructionId:'OLD-STAGE04-INSTRUCTION',promptId:'OLD-STAGE04-INSTRUCTION',promptEngineVersion:'closed-loop-prompt-engine/25'}];
+          const replacement=prompts.buildPromptRecord(4,project);
+          assert.equal(replacement.promptEngineVersion,'closed-loop-prompt-engine/26');
+          assert.notEqual(replacement.instructionId,'OLD-STAGE04-INSTRUCTION');
+          console.log(JSON.stringify({stage04UsesPersistedProjectInput:true,stage04UserResupplyRequired:false,preRepairPromptInvalidated:true},null,2));
+          `;
+          fs.writeFileSync('verify-stage04-capture-once.mjs',focusedTest);
+
+          let workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
+          workflow=workflow.replace(/\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/,'');
+          workflow=replaceOnce(
+            workflow,
+            '          node --check verify-test-runtime.mjs\n',
+            '          node --check verify-test-runtime.mjs\n          node --check verify-stage04-capture-once.mjs\n',
+            'add focused test syntax check'
+          );
+          workflow=replaceOnce(
+            workflow,
+            '          node verify-complete.mjs\n      - name: Prove one continuous 30-stage lifecycle',
+            '          node verify-complete.mjs\n          node verify-stage04-capture-once.mjs\n      - name: Prove one continuous 30-stage lifecycle',
+            'run focused test before full cycle'
+          );
+          workflow=replaceOnce(
+            workflow,
+            'node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs',
+            'node verify-ingestion.mjs && node verify-complete.mjs && node verify-stage04-capture-once.mjs && node verify-full-cycle.mjs',
+            'run focused test before deployment'
+          );
+          fs.writeFileSync('.github/workflows/pages.yml',workflow);
+
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{
+            const bytes=fs.readFileSync(file);
+            return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+          };
+          const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const runtimeBuildIdentity=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
+          const tokens=html.match(/runtime-[0-9a-f]{16}/g)||[];
+          if(tokens.length!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime cache tokens; found ${tokens.length}`);
+          html=html.replace(/runtime-[0-9a-f]{16}/g,runtimeBuildIdentity);
+          fs.writeFileSync('index.html',html);
+
+          fs.rmSync('.github/workflows/materialize-stage04-final.yml');
+          console.log(JSON.stringify({runtimeBuildIdentity,stage04VisualsRestored:true,stage04CaptureOnce:true,temporaryWorkflowRemoved:true},null,2));
+          NODE
+          node --check app-core.js
+          node --check prompt-engine.js
+          node --check verify-hash.mjs
+          node --check verify-stage04-capture-once.mjs
+          node verify-hash.mjs
+          node verify-stage04-capture-once.mjs
+      - name: Commit the final repair to the branch
+        shell: bash
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Restore Stage 04 visuals and enforce capture-once input"
+          git push origin HEAD:fix/stage04-capture-once-visual-restore-final
