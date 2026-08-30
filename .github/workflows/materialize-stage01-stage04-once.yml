@@ -114,11 +114,8 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
           node verify-single-supply-prompts.mjs
-          node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
           git diff --check
-      - name: Remove temporary materialization machinery
+      - name: Remove temporary materialization machinery and prove final repository shape
         shell: bash
         run: |
           set -euo pipefail
@@ -127,6 +124,10 @@ jobs:
           rm -f stage4-*.log stage4-diagnostic-summary.txt .gate-diag-trigger
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
       - name: Commit permanent verified implementation
         shell: bash
         run: |
