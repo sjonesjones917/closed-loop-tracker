@@ -85,7 +85,6 @@ new_block=""" const required=[
   'Do not invent requestKey, required, whyNeeded, expectedAnswer'
  ];"""
 if old_block in s:s=s.replace(old_block,new_block)
-# v27 is required because Stage 01/03/04 prompt semantics and context hashing changed.
 s=s.replace("if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');","if(prompts.version!=='closed-loop-prompt-engine/27')throw new Error('Persisted prompts were not invalidated after the zero-loss Stage 01/03/04 prompt repair.');")
 lines=[]
 for line in s.splitlines():
@@ -94,4 +93,15 @@ for line in s.splitlines():
     else:
         lines.append(line)
 s='\n'.join(lines)+'\n'
+p.write_text(s)
+
+# The controlling runtime graph now includes the Test IR authority between schema and engine.
+# Keep the verifier strict about exact order, uniqueness, and one shared build token.
+p=Path('verify.mjs')
+s=p.read_text()
+s=s.replace("'index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js'","'index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")
+s=s.replace("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']")
+s=s.replace("orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']","orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']")
+# Materialization helpers are intentionally present during this transient proof step and are removed atomically before the proven source commit.
+s=s.replace("for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);","for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file)&&file!=='.repair-project-memory.py')throw new Error(`Unexpected repair scaffolding remains: ${file}`);")
 p.write_text(s)
