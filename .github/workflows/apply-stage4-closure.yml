@@ -56,6 +56,14 @@ jobs:
           if oldh not in t: raise SystemExit('Stage 04 handoff assertion anchor missing')
           t=t.replace(oldh,newh,1)
           test.write_text(t)
+
+          generic=Path('verify-ingestion.mjs')
+          g=generic.read_text()
+          anchor="  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
+          replacement="  const stageData={};\n  if(stage===1){const manifest=engine.intakeCoverageManifest(p);stageData.INPUT_SET_CONTENTS={schema:'closed-loop-intake-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'fixture-'+String(index+1),text:unit.label||unit.sourceLocation,statementClass:unit.kind==='SUPPLIED_MATERIAL'?'MATERIAL_REFERENCE':'FACT'}]})),conversationStatements:[]};}\n  else if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
+          if anchor not in g: raise SystemExit('generic Stage 01 ingestion fixture anchor missing')
+          g=g.replace(anchor,replacement,1)
+          generic.write_text(g)
           PY
           for f in *.js *.mjs; do node --check "$f"; done
           node build-test-project.mjs
