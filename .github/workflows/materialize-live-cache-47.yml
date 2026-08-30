@@ -1,0 +1,37 @@
+name: Advance deployed runtime cache identity
+on:
+  push:
+    branches: [fix/live-cache-current-47-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          token='runtime-20260830-live-operator-47'
+          p=Path('index.html')
+          text=p.read_text()
+          text=re.sub(r'runtime-20260830-live-operator-\d+',token,text)
+          p.write_text(text)
+          for filename in ('app-core.js','test-runtime.js'):
+              f=Path(filename)
+              src=f.read_text()
+              src=re.sub(r'runtime-20260830-live-operator-\d+',token,src)
+              f.write_text(src)
+          PY
+          rm -f .github/workflows/materialize-live-cache-47.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Advance deployed runtime cache identity"
+          git push origin HEAD:fix/live-cache-current-47-20260830
