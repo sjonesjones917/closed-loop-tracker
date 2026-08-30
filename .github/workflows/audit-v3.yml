@@ -25,7 +25,7 @@ jobs:
             git commit -m "Apply one-time v3 verification repair"
             git push origin HEAD:spec-v3-zero-loss-20260830
           fi
-      - name: Syntax
+      - name: Syntax and controlling contracts
         run: |
           node --check workbook.js
           node --check workflow-schema.js
@@ -37,6 +37,7 @@ jobs:
           node --check project-store.js
           node --check app-core.js
           node verify-controlling-spec.mjs
+          node verify-stage1-stage3-stage4.mjs
       - name: Existing deterministic proofs
         run: |
           node build-test-project.mjs
