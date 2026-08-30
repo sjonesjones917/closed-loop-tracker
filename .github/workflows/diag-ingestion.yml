@@ -10,6 +10,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node verify-ingestion.mjs > ingestion.log 2>&1 || true
+      - run: |
+          node verify-ingestion.mjs > diagnostic.log 2>&1 || true
+          echo '--- VERIFY COMPLETE ---' >> diagnostic.log
+          node verify-complete.mjs >> diagnostic.log 2>&1 || true
       - uses: actions/upload-artifact@v4
-        with: {name: ingestion-diagnostic, path: ingestion.log}
+        with: {name: ingestion-diagnostic, path: diagnostic.log}
