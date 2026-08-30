@@ -1,0 +1,41 @@
+name: Materialize operator-copy prompt authority repair
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/materialize-operator-copy-prompt-authority.yml'
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Materialize operator-only UI copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='repair/operator-copy-prompt-authority-source-20260830'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B "$BRANCH"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="Enter only genuine human-owned User Job Input. The source count is a search target, not a quota and never permission to invent weaker sources. You do not need to know the final file format in advance: Stage 01 determines the actual artifact set and suitable formats. If the chosen agent can reliably construct the requested file or package from a defined representation and sufficient inputs, it should produce that real artifact even when a downstream authoring, build, CAD/CAM, filing, manufacturing, or other consuming system is unavailable. Opening, importing, building, executing, manufacturing, filing, or testing remains separately verified. A specification substitute requires human confirmation and is used only when the requested actual artifact cannot be generated reliably. This static application does not itself access external repositories, websites, or accounts; those capabilities depend on the external agent context you choose to run. The application derives workflow identity, versions, status, counts, and next action."
+          new="Enter only genuine human-owned User Job Input. The source count is a search target, not a quota. Project-relevant information is supplied once and then reused from canonical project state; do not re-enter data already captured. This static application does not itself access external repositories, websites, or accounts. The application derives workflow identity, versions, status, counts, and next action."
+          if old not in s:
+              raise SystemExit('Project information UI copy anchor not found')
+          s=s.replace(old,new,1)
+          s=re.sub(r'runtime-20260830-live-operator-\d+','runtime-20260830-live-operator-55',s)
+          p.write_text(s)
+          for name in ['index.html','test-runtime.js']:
+              p=Path(name); s=p.read_text(); s=re.sub(r'runtime-20260830-live-operator-\d+','runtime-20260830-live-operator-55',s); p.write_text(s)
+          wf=Path('.github/workflows/materialize-operator-copy-prompt-authority.yml')
+          if wf.exists(): wf.unlink()
+          PY
+          git add -A
+          git commit -m 'Keep agent behavior instructions in generated prompts only'
+          git push origin HEAD:"$BRANCH" --force
