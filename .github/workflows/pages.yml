@@ -34,6 +34,7 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-full-cycle.mjs
           node --check verify-prompt-semantics.mjs
+          node --check verify-stage4-intent-capture.mjs
           node --check verify-live.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
@@ -53,8 +54,10 @@ jobs:
           node verify-complete.mjs
       - name: Prove one continuous 30-stage lifecycle
         run: node verify-full-cycle.mjs
-      - name: Reject semantic prompt contradictions and operation leakage
-        run: node verify-prompt-semantics.mjs
+      - name: Reject semantic prompt contradictions and prove Stage 4 intent carry-forward
+        run: |
+          node verify-prompt-semantics.mjs
+          node verify-stage4-intent-capture.mjs
       - name: Prove semantic false-acceptance invariant
         run: node verify-semantic-invariant.mjs
       - name: Derive definition-of-done coverage metrics
@@ -117,7 +120,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-stage4-intent-capture.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -174,10 +177,12 @@ jobs:
           node verify-ingestion.mjs > /tmp/verify-ingestion.out
           node verify.mjs > /tmp/verify-source.out
           node verify-complete.mjs > /tmp/verify-complete.out
+          node verify-stage4-intent-capture.mjs > /tmp/verify-stage4-intent-capture.out
           node verify-semantic-invariant.mjs > /tmp/verify-semantic-invariant.out
           node verify-definition-of-done.mjs > /tmp/verify-definition-of-done.out
           node verify-project-lifecycle.mjs > /tmp/verify-project-lifecycle.out
           grep -q 'verify-test-runtime: PASS' /tmp/verify-test-runtime.out
+          grep -q 'Stage 04 canonical intent carry-forward regression passed.' /tmp/verify-stage4-intent-capture.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
@@ -239,6 +244,7 @@ jobs:
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
             nativeTestSpecVersion:'closed-loop-test-spec/1',
+            stage4IntentCarryForward:true,
             stagesCompleted:30,
             negativeCasesPassed:Number(process.env.NEGATIVE_CASES),
             storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES),
@@ -258,6 +264,7 @@ jobs:
               canonicalWorkflow:'verify.mjs',
               ingestion:'verify-ingestion.mjs',
               workflowGates:'verify-complete.mjs',
+              stage4IntentCarryForward:'verify-stage4-intent-capture.mjs',
               semanticAdjudication:'verify-semantic-invariant.mjs',
               projectLifecycle:'verify-project-lifecycle.mjs',
               browserPersistence:'verify-browser-extra.mjs',
@@ -268,7 +275,7 @@ jobs:
           for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
           const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
           for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} must be zero.`);
-          if(!report.nativeTestRuntime||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
+          if(!report.nativeTestRuntime||!report.stage4IntentCarryForward||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - name: Upload acceptance report
