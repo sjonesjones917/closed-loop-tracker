@@ -10,6 +10,10 @@ source=source.replaceAll('every semantically relevant human-supplied statement',
 source=source.replaceAll('every semantically relevant supplied statement','every materially relevant supplied statement');
 source=source.replaceAll("`3:${JSON.stringify(stage3)},\\n4:`","`3:'${stage3}',\\n4:`");
 source=source.replaceAll("`4:${JSON.stringify(stage4)},\\n5:`","`4:'${stage4}',\\n5:`");
+source=source.replaceAll(
+  'It is the canonical later-stage intake representation; later stages must not reopen or request the original material.',
+  'It is the canonical later-stage intake representation; later stages must not reopen or request the original material. Do not turn it into a Stage 02 archive/file inventory.'
+);
 fs.writeFileSync(file,source);
 
 const promptTestFile='verify-prompt-semantics.mjs';
