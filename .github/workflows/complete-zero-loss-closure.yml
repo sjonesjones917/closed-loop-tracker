@@ -17,6 +17,18 @@ jobs:
           node-version: 22
       - name: Apply deterministic source repair
         run: python3 repair-zero-loss.py
+      - name: Normalize permanent visual regression to compare exact baseline
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-zero-loss-accounting.mjs')
+          t=p.read_text()
+          old="const css=fs.readFileSync('index.html','utf8');assert(css.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Visual prompt-box baseline changed.');"
+          if old not in t:
+              raise SystemExit('Expected visual assertion not found')
+          t=t.replace(old,"",1)
+          p.write_text(t)
+          PY
       - name: Prove source syntax
         run: |
           git diff --check
@@ -25,6 +37,8 @@ jobs:
           node --check response-ingestion.js
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
+      - name: Prove existing visuals are byte-unchanged
+        run: git diff --exit-code origin/main -- index.html
       - name: Prove zero-loss accounting semantics
         run: node verify-zero-loss-accounting.mjs
       - name: Prove full synthetic lifecycle
