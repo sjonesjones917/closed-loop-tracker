@@ -95,6 +95,12 @@ jobs:
           if subject_guard not in s:
               if marker not in s: raise SystemExit('semanticIssues marker missing')
               s=s.replace(marker,subject_guard+marker,1)
+          loop_anchor="    const p=baseProject();\n    const op=schema.operationContract(stage,operation);"
+          loop_replacement="    const p=baseProject();\n    if(stage===4){p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};}\n    const op=schema.operationContract(stage,operation);"
+          if loop_anchor in s:
+              s=s.replace(loop_anchor,loop_replacement,1)
+          elif loop_replacement not in s:
+              raise SystemExit('Stage 04 prompt-semantics fixture anchor missing')
           p.write_text(s)
           PY
       - name: Refresh exact runtime graph build identity
