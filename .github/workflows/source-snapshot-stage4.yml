@@ -1,0 +1,25 @@
+name: Temporary Stage 04 source snapshot
+
+on:
+  push:
+    branches:
+      - fix/stage4-canonical-reuse-v3
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact source tree
+        run: tar --exclude=.git -czf /tmp/closed-loop-v3-source.tgz .
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-v3-source-${{ github.sha }}
+          path: /tmp/closed-loop-v3-source.tgz
+          if-no-files-found: error
+          retention-days: 1
