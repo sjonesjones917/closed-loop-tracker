@@ -62,7 +62,7 @@ function validEnvelope(p,stage,promptRecord){
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
   if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
   const records={};
-  if(!Object.keys(stageData).length){
+  if(!Object.keys(stageData).length||stage===4){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
