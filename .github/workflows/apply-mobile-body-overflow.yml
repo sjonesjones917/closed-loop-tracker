@@ -32,6 +32,7 @@ jobs:
           .stage-hero>.stage-action-strip>span:first-child::before{content:'Current state: ';font-weight:850;color:var(--ink)}
           .stage-hero>.stage-action-strip>span:last-child::before{content:'Next: ';font-weight:850;color:var(--ink)}
           .notice,.section-intro,.record-value,.prompt-meta,.field .help{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+          input[type="file"],#stage-files,#stage-directory{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
           @media(max-width:620px){
             .stage-hero>.stage-action-strip{grid-template-columns:minmax(0,1fr)}
             .stage-hero>.stage-action-strip>span:first-child{white-space:normal}
