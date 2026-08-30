@@ -4,6 +4,7 @@ on:
     branches: ['fix/stage-input-once']
     paths:
       - apply-stage-input-once.mjs
+      - prepare-stage-input-once.mjs
       - .github/workflows/apply-stage-input-once.yml
   workflow_dispatch:
 permissions:
@@ -22,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Correct the one-time applicator
+        run: node prepare-stage-input-once.mjs
       - name: Apply exact source and regression changes
         run: node apply-stage-input-once.mjs
       - name: Rebuild retained test project
@@ -45,6 +48,7 @@ jobs:
       - name: Remove one-time applicator and commit verified implementation
         run: |
           rm apply-stage-input-once.mjs
+          rm prepare-stage-input-once.mjs
           rm .github/workflows/apply-stage-input-once.yml
           git config user.name 'closed-loop-fix-bot'
           git config user.email 'closed-loop-fix-bot@users.noreply.github.com'
