@@ -1,0 +1,73 @@
+name: Close Stage 03 and Stage 04 prerequisites once
+on:
+  push:
+    branches:
+      - fix/final-controlling-v3-20260830
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-controlling-v3-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Close Stage 03 gate and Stage 04 prompt prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="""    case 3:{
+      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
+      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}
+      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;
+    }
+"""
+          new="""    case 3:{
+      requireAccepted();
+      const intake=evaluateIntakeCoverage(project);if(!intake.complete)reasons.push('Stage 03 cannot complete while Stage 01 intake accounting is incomplete.');
+      const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
+      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');}
+      else{requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);}
+      const stage3=project.stages[3]?.agentData||{};
+      if(!truth(stage3.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');
+      if(!truth(stage3.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 conflict and exception pass is incomplete.');
+      if(numeric(stage3.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires at least two complete research/conflict passes.');
+      if(truth(stage3.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 cannot complete while the latest pass found a new material category; research must continue to saturation.');
+      break;
+    }
+"""
+          if old not in s: raise SystemExit('Stage 03 gate anchor not found')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old=""" const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),activeExisting=existing.filter(x=>!x.invalidatedBy&&x.promptEngineVersion===PROMPT_ENGINE_VERSION);const operation=options.operation||schema.STAGE_CONTRACTS[stage].operations[0];if(!schema.STAGE_CONTRACTS[stage].operations.includes(operation))throw new Error(`Operation ${operation} is not valid for Stage ${stage}.`);
+ const opContract=schema.operationContract(stage,operation);"""
+          new=""" const d=core.STAGES[stage-1],existing=(state?.projectData?.generatedPrompts||[]).filter(x=>Number(x.stage)===stage),activeExisting=existing.filter(x=>!x.invalidatedBy&&x.promptEngineVersion===PROMPT_ENGINE_VERSION);const operation=options.operation||schema.STAGE_CONTRACTS[stage].operations[0];if(!schema.STAGE_CONTRACTS[stage].operations.includes(operation))throw new Error(`Operation ${operation} is not valid for Stage ${stage}.`);
+ if(stage===4){for(const prerequisite of [1,2,3]){const prior=state?.stages?.[prerequisite];if(upper(prior?.status)!=='COMPLETE'||prior?.gate?.complete!==true){const error=new Error(`Stage 04 prompt generation is blocked until Stage ${String(prerequisite).padStart(2,'0')} is complete and exhausted. Previously supplied project information must be repaired in canonical state, not requested from the human again.`);error.code=`INCOMPLETE_STAGE_${String(prerequisite).padStart(2,'0')}`;error.prerequisiteStage=prerequisite;throw error;}}const intake=workflow.evaluateIntakeCoverage(state);if(!intake.complete){const error=new Error('Stage 04 prompt generation is blocked because Stage 01 intake accounting is incomplete. Do not ask the human to resupply captured project information.');error.code='INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING';throw error;}const obligations=workflow.obligationManifest(state);if(!obligations?.items?.length){const error=new Error('Stage 04 prompt generation is blocked because the application-generated obligation universe is empty.');error.code='EMPTY_STAGE_04_OBLIGATION_MANIFEST';throw error;}}
+ const opContract=schema.operationContract(stage,operation);"""
+          if old not in s: raise SystemExit('Prompt prerequisite anchor not found')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('verify-v3-definition-of-done.mjs'); s=p.read_text()
+          old="assert.match(engine,/intakeCoverageManifest/);assert.match(engine,/evaluateIntakeCoverage/);assert.match(engine,/obligationManifest/);assert.match(engine,/evaluateObligationAccounting/);"
+          new="assert.match(engine,/intakeCoverageManifest/);assert.match(engine,/evaluateIntakeCoverage/);assert.match(engine,/obligationManifest/);assert.match(engine,/evaluateObligationAccounting/);assert.match(engine,/Stage 03 cannot complete while Stage 01 intake accounting is incomplete/);assert.match(engine,/SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED/);assert.match(engine,/LATEST_PASS_NUMBER/);assert.match(prompt,/INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING/);assert.match(prompt,/Stage 04 prompt generation is blocked until Stage/);assert.match(prompt,/Exhaust the complete current accepted Stage 02/);assert.match(prompt,/Never ask the human to repeat or reattach information already captured in Stage 01/);"
+          if old not in s: raise SystemExit('Definition-of-done anchor not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),{createHash}=require('crypto');const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];const blob=f=>{const b=fs.readFileSync(f);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};const token=`runtime-${createHash('sha256').update(files.map(f=>`${f}:${blob(f)}\n`).join('')).digest('hex').slice(0,16)}`;let h=fs.readFileSync('index.html','utf8').replace(/runtime-[0-9a-f]{16}/g,token);fs.writeFileSync('index.html',h);console.log(token);
+          NODE
+          git checkout HEAD -- .github/workflows/close-stage03-stage04-once.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js verify-v3-definition-of-done.mjs index.html
+          git diff --cached --check
+          git commit -m "Enforce exhaustive Stage 03 and Stage 04 prompt prerequisites"
+          git push origin HEAD:fix/final-controlling-v3-20260830
