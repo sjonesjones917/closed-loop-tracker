@@ -82,6 +82,13 @@ if stale_specialist in s:s=s.replace(stale_specialist,neutral_specialist,1)
 elif prior_neutral_specialist in s:s=s.replace(prior_neutral_specialist,neutral_specialist,1)
 elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier anchor missing')
 
+old_practical=""" const required=['Ask only what must come from the human','Do not block Stage 01 merely because information will be needed by a later','do not enumerate archive entries','Do not begin substantive external-source research','The application already owns JOB_ID'];
+ for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);"""
+new_practical=""" const required=['Ask only for facts or choices that must come from the human','Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority','do not enumerate archive entries','Do not begin substantive external-source research or downstream production work.','The application already owns JOB_ID'];
+ for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);"""
+if old_practical in s:s=s.replace(old_practical,new_practical,1)
+elif new_practical not in s:raise SystemExit('Stage 01 practical-intake verifier anchor missing')
+
 old_mutants="""const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
   {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
