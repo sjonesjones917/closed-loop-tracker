@@ -117,6 +117,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The repository contract permits exactly one permanent workflow. The
+          # current workflow is a one-run repair mechanism and deletes itself
+          # before repository acceptance is evaluated.
+          rm -f .github/workflows/stage4-reconcile-main.yml
           node build-test-project.mjs
           for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-one-time-intent-intake.mjs; do
             node --check "$file"
@@ -136,7 +140,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/stage4-reconcile-main.yml
           git add -A
           git diff --cached --check
           git commit -m "Complete Stage 04 one-time intent reuse on current main"
