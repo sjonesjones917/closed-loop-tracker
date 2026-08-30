@@ -20,17 +20,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Correct materializer syntax and materialize the repair
+      - name: Normalize materializer template delimiters and materialize the repair
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           path=Path('.github/scripts/materialize_stage4.py')
           data=path.read_text()
-          old="`/records/intentStatements/${index}/fields/SOURCE_MATERIAL','SOURCE_MATERIAL"
-          new="`/records/intentStatements/${index}/fields/SOURCE_MATERIAL`,'SOURCE_MATERIAL"
-          if old not in data:
-              raise SystemExit('expected materializer syntax defect was not found')
-          path.write_text(data.replace(old,new,1))
+          data,n=re.subn(r"(`\/records\/[^`\n]+?)(?=',)",r"\1`",data)
+          if n < 1:
+              raise SystemExit('expected generated-validator delimiter defects were not found')
+          path.write_text(data)
           PY
           python3 .github/scripts/materialize_stage4.py
       - name: Syntax and targeted regressions
