@@ -348,6 +348,7 @@ function gate(stage,project){
         if(!sourceId&&!userRelationship)reasons.push(`${recordId(req,'requirements')}: requirement lacks source provenance or an exact canonical intent STATEMENT_ID.`);
       }
       const missingStatements=requiredStatementIds.filter(id=>!coveredIntentStatements.has(id));if(missingStatements.length)reasons.push(`Requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
+      const obligationManifest=stage04ObligationManifest(project),accounting=safe(project.stages[4]?.agentData?.OBLIGATION_ACCOUNTING),accountedIds=new Set(accounting.map(entry=>String(entry?.obligationId||'')).filter(Boolean)),missingObligations=safe(obligationManifest?.entries).map(entry=>String(entry.obligationId||'')).filter(id=>id&&!accountedIds.has(id));if(missingObligations.length)reasons.push(`Stage 04 obligation accounting is missing application-generated obligation(s): ${missingObligations.join(', ')}.`);
       break;
     }
     case 5:

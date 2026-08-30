@@ -274,6 +274,25 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     proposed.forEach((record,index)=>{const reference=String(record?.fields?.USER_INPUT_RELATIONSHIP||'').trim();if(!reference)return;if(!canonicalIntentIds.has(reference))issues.push(issue('INVALID_INTENT_STATEMENT_REFERENCE',`/records/requirements/${index}/fields/USER_INPUT_RELATIONSHIP`,'USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID.'));else covered.add(reference);});
     const missing=requiredIntentIds.filter(id=>!covered.has(id));
     if(missing.length)issues.push(issue('MISSING_INTENT_STATEMENT_REQUIREMENT','/records/requirements',`Requirement coverage is missing for canonical intent statement(s): ${missing.join(', ')}.`));
+    const obligationManifest=workflow.stage04ObligationManifest(project),manifestIds=new Set(safe(obligationManifest?.entries).map(entry=>String(entry.obligationId||''))),accounting=safe(envelope.stageData?.OBLIGATION_ACCOUNTING),seenObligations=new Set(),requirementTempKeys=new Set(proposed.map(record=>String(record?.tempKey||'')).filter(Boolean)),allowedDispositions=new Set(['REQUIREMENT','RETAINED_NONNORMATIVE_CONTEXT','INAPPLICABLE','BLOCKED']);
+    accounting.forEach((entry,index)=>{
+      const path=`/stageData/OBLIGATION_ACCOUNTING/${index}`,keys=entry&&typeof entry==='object'&&!Array.isArray(entry)?Object.keys(entry):[];
+      if(!entry||typeof entry!=='object'||Array.isArray(entry)){issues.push(issue('INVALID_OBLIGATION_DISPOSITION',path,'Every obligation accounting entry must be an object.'));return;}
+      const unknownKeys=keys.filter(key=>!['obligationId','disposition','requirementTempKeys','reason'].includes(key));if(unknownKeys.length)issues.push(issue('UNKNOWN_OBLIGATION_DISPOSITION_PROPERTY',path,`Unknown obligation accounting properties: ${unknownKeys.join(', ')}.`));
+      const obligationId=String(entry.obligationId||'').trim(),disposition=String(entry.disposition||'').trim(),mapped=safe(entry.requirementTempKeys).map(value=>String(value||'').trim()).filter(Boolean),reason=String(entry.reason||'').trim();
+      if(!manifestIds.has(obligationId))issues.push(issue('UNKNOWN_OBLIGATION_ID',`${path}/obligationId`,'obligationId must equal a current application-generated Stage 04 obligation identity.'));
+      if(seenObligations.has(obligationId)&&obligationId)issues.push(issue('DUPLICATE_OBLIGATION_DISPOSITION',`${path}/obligationId`,`Obligation ${obligationId} appears more than once.`));else if(obligationId)seenObligations.add(obligationId);
+      if(!allowedDispositions.has(disposition))issues.push(issue('INVALID_OBLIGATION_DISPOSITION',`${path}/disposition`,'Disposition must be REQUIREMENT, RETAINED_NONNORMATIVE_CONTEXT, INAPPLICABLE, or BLOCKED.'));
+      if(disposition==='REQUIREMENT'){
+        if(!mapped.length)issues.push(issue('MISSING_OBLIGATION_REQUIREMENT_MAPPING',`${path}/requirementTempKeys`,'REQUIREMENT disposition must map to one or more proposed requirement tempKeys.'));
+        for(const tempKey of mapped)if(!requirementTempKeys.has(tempKey))issues.push(issue('INVALID_OBLIGATION_REQUIREMENT_MAPPING',`${path}/requirementTempKeys`,`Unknown proposed requirement tempKey ${tempKey}.`));
+      }else if(allowedDispositions.has(disposition)){
+        if(mapped.length)issues.push(issue('PROHIBITED_OBLIGATION_REQUIREMENT_MAPPING',`${path}/requirementTempKeys`,`${disposition} must not map to requirement tempKeys.`));
+        if(!reason)issues.push(issue('MISSING_OBLIGATION_DISPOSITION_REASON',`${path}/reason`,`${disposition} requires a nonempty reason.`));
+      }
+    });
+    const missingObligations=safe(obligationManifest?.entries).map(entry=>String(entry.obligationId||'')).filter(id=>id&&!seenObligations.has(id));
+    if(missingObligations.length)issues.push(issue('MISSING_OBLIGATION_DISPOSITION','/stageData/OBLIGATION_ACCOUNTING',`Stage 04 obligation accounting is missing application-generated obligation(s): ${missingObligations.join(', ')}.`));
   }
 
   if(envelope.responseType==='HUMAN_INPUT_REQUIRED'){
