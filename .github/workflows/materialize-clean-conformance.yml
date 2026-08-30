@@ -1,23 +1,144 @@
-name: Materialize clean conformance patch
+name: Apply zero-loss project-memory repair
 on: [push]
 permissions: {contents: write}
 jobs:
   apply:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - run: |
-          git fetch origin fix/spec-conformance-zero-loss
-          git checkout origin/fix/spec-conformance-zero-loss -- index.html workbook.js workflow-schema.js prompt-engine.js
+      - name: Repair controlling implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=7a8b4e88962a01fdd3e2245879fa6adbc3e97469
+          git show "$BASE:index.html" > index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def edit(path, fn):
+              p=Path(path); s=p.read_text(); n=fn(s)
+              if n==s: print(f'NOTE: {path}: no textual change')
+              p.write_text(n)
+
+          # Restore the exact pre-change visual baseline, then make only nonvisual worker/runtime-loader changes.
+          def patch_index(s):
+              s=s.replace("base-uri 'none'\">", "base-uri 'none'; worker-src 'self'\">")
+              m=re.search(r'<script defer src="workflow-schema\.js\?v=([^\"]+)"></script>',s)
+              if not m: raise SystemExit('workflow-schema script token not found')
+              token=m.group(1)
+              line=f'<script defer src="test-runtime.js?v={token}"></script>'
+              if line not in s:
+                  anchor=f'<script defer src="workflow-schema.js?v={token}"></script>'
+                  s=s.replace(anchor,anchor+'\n'+line)
+              return s
+          edit('index.html',patch_index)
+
+          def patch_schema(s):
+              s=s.replace("executableKinds:Object.freeze(['NONE','CUSTOM_PIPELINE'])", "executableKinds:Object.freeze(['NONE','TEST_IR'])")
+              s=s.replace("if(String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')issues.push('EXECUTABLE_KIND must be CUSTOM_PIPELINE.');", "if(String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')issues.push('EXECUTABLE_KIND must be TEST_IR.');")
+              s=s.replace("'PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH'", "'PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML'")
+              return s
+          edit('workflow-schema.js',patch_schema)
+
+          def patch_runtime(s):
+              s=s.replace("'PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH'", "'PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML'")
+              s=s.replace("if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')return false;", "if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')return false;")
+              # Add restricted XML parsing/selectors without arbitrary XPath.
+              if 'function parseXml(' not in s:
+                  anchor='function selectJsonPath(value,path){'
+                  insert="""function parseXml(text){\n  const doc=new DOMParser().parseFromString(String(text),'application/xml');\n  if(doc.querySelector('parsererror'))throw new Error('Malformed XML.');\n  return doc;\n}\nfunction selectXml(value,selector){\n  const text=String(selector||'').trim();if(!/^\/[A-Za-z_][A-Za-z0-9_.:-]*(?:\/[A-Za-z_][A-Za-z0-9_.:-]*)*$/.test(text))throw new Error('SELECT_XML supports only absolute element-name paths.');\n  let nodes=[value?.documentElement].filter(Boolean),parts=text.slice(1).split('/');\n  if(!nodes.length||nodes[0].nodeName!==parts[0])return [];\n  for(const name of parts.slice(1)){const next=[];for(const node of nodes)for(const child of node.children||[])if(child.nodeName===name)next.push(child);nodes=next;}\n  return nodes.map(node=>node.textContent);\n}\n"""
+                  s=s.replace(anchor,insert+anchor)
+              s=s.replace("case 'PARSE_CSV':value=parseCsv(String(value));break;\n      case 'SELECT_JSON_PATH'", "case 'PARSE_CSV':value=parseCsv(String(value));break;\n      case 'PARSE_XML':value=parseXml(String(value));break;\n      case 'SELECT_JSON_PATH'")
+              s=s.replace("case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;", "case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;\n      case 'SELECT_XML':value=selectXml(value,step.path);break;")
+              return s
+          edit('test-runtime.js',patch_runtime)
+
+          def patch_engine(s):
+              # Persist application-owned intake and obligation manifests as infrastructure, not a second canonical model.
+              marker="'humanInputAnswers','executionFailures','responseDispositions'"
+              if marker in s:
+                  s=s.replace(marker,"'humanInputAnswers','executionFailures','responseDispositions','intakeCoverageManifests','obligationManifests'")
+              if 'function rebuildIntakeCoverageManifest' not in s:
+                  anchor='function openBlockers(project,stage){'
+                  helpers=r'''function materialInputUnits(value,sourceLocation,origin='HUMAN'){const out=[];const add=(raw,location)=>{const text=typeof raw==='string'?raw.trim():raw===undefined||raw===null?'':JSON.stringify(raw);if(!text||['NONE','UNKNOWN','NOT APPLICABLE'].includes(upper(text)))return;const parts=typeof raw==='string'?text.split(/(?:\r?\n){2,}|\r?\n(?=\s*(?:[-*•]|\d+[.)])\s+)/).map(x=>x.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim()).filter(Boolean):[text];for(const [index,part] of parts.entries()){const rawValueSha256=hash.sha256Value(part),unitId='INPUT-UNIT-'+hash.sha256Value([String(projectIdentityForUnit||''),sourceLocation,index,rawValueSha256]).slice(0,20).toUpperCase();out.push({unitId,origin,sourceLocation:parts.length>1?sourceLocation+'#'+(index+1):sourceLocation,rawValue:part,rawValueSha256});}};let projectIdentityForUnit='';return {collect(project){projectIdentityForUnit=project?.job?.JOB_ID||'';add(value,sourceLocation);return out;}};}\nfunction enumerateProjectInputUnits(project){ensureShape(project);const units=[];const seen=new Set(),push=(value,location,origin='HUMAN')=>{const helper=materialInputUnits(value,location,origin);for(const unit of helper.collect(project))if(!seen.has(unit.rawValueSha256+'|'+unit.sourceLocation)){seen.add(unit.rawValueSha256+'|'+unit.sourceLocation);units.push(unit);}};for(const name of schema.HUMAN_INTAKE_FIELDS||[])push(project.job?.[name],`job.${name}`,'HUMAN');for(const item of safe(project.projectData?.userEntered?.clarifications)){push(item.answer,`clarification.${item.answerId||item.requestId||'UNKNOWN'}`,'HUMAN');}for(const name of ['EXACT_DELIVERABLE_REQUESTED','INPUT_SET_CONTENTS'])push(project.job?.[name]||project.stages?.[1]?.agentData?.[name],`stage1.${name}`,'STAGE01_CAPTURE');return units;}\nfunction rebuildIntakeCoverageManifest(project,{acceptedChangeId=null}={}){ensureShape(project);const inputVersion=String(project.job?.CURRENT_INPUT_VERSION||'UNKNOWN'),units=enumerateProjectInputUnits(project),manifestSha256=hash.sha256Value({inputVersion,units:units.map(({unitId,rawValueSha256,sourceLocation,origin})=>({unitId,rawValueSha256,sourceLocation,origin}))}),manifestId='INTAKE-MANIFEST-'+manifestSha256.slice(0,20).toUpperCase(),manifest={manifestId,inputVersion,manifestSha256,unitCount:units.length,coverage:units.length?1:0,units,acceptedChangeId,createdAt:now(),producer:'APPLICATION'};project.projectData.intakeCoverageManifests=safe(project.projectData.intakeCoverageManifests).filter(x=>String(x.inputVersion)!==inputVersion);project.projectData.intakeCoverageManifests.push(manifest);project.job.INPUT_SET_HASH_OR_MANIFEST=manifestId;return manifest;}\nfunction currentIntakeCoverageManifest(project){ensureShape(project);const inputVersion=String(project.job?.CURRENT_INPUT_VERSION||'');return safe(project.projectData.intakeCoverageManifests).filter(x=>String(x.inputVersion)===inputVersion).at(-1)||rebuildIntakeCoverageManifest(project);}\nfunction buildObligationManifest(project){ensureShape(project);const intake=currentIntakeCoverageManifest(project),obligations=[],seen=new Set(),push=(raw,origin,sourceIdentity,provenance={})=>{const text=typeof raw==='string'?raw.trim():raw===undefined||raw===null?'':JSON.stringify(raw);if(!text||['NONE','UNKNOWN','NOT APPLICABLE'].includes(upper(text)))return;const key=hash.sha256Value([origin,sourceIdentity,text]);if(seen.has(key))return;seen.add(key);obligations.push({obligationId:'OBL-'+key.slice(0,20).toUpperCase(),origin,sourceIdentity,rawValue:text,rawValueSha256:hash.sha256Value(text),provenance});};for(const unit of intake.units||[])push(unit.rawValue,'HUMAN_INPUT',unit.unitId,{inputVersion:intake.inputVersion,sourceLocation:unit.sourceLocation,rawValueSha256:unit.rawValueSha256});for(const r of recordsForCurrentScope(project,'candidateRequirements'))push(recordValue(r,'CANDIDATE_OBLIGATION'),'STAGE03_CANDIDATE',recordId(r,'candidateRequirements'),{sourceId:String(recordValue(r,'SOURCE_ID')||r.relationships?.SOURCE_ID||''),sourceLocation:String(recordValue(r,'SOURCE_LOCATION')||'')});for(const r of recordsForCurrentScope(project,'research'))for(const name of ['MANDATORY_STATEMENTS','PROHIBITIONS','RESTRICTIONS','DEPENDENCIES','APPLICABILITY_FACTS','EXCEPTIONS'])push(recordValue(r,name),'STAGE03_RESEARCH',recordId(r,'research')+':'+name,{sourceId:String(recordValue(r,'SOURCE_ID')||r.relationships?.SOURCE_ID||''),field:name});const scope=currentScope(project),manifestSha256=hash.sha256Value({inputVersion:scope.inputVersion,sourceSetVersion:scope.sourceSetVersion,obligations:obligations.map(x=>[x.obligationId,x.rawValueSha256])}),manifestId='OBLIGATION-MANIFEST-'+manifestSha256.slice(0,20).toUpperCase();return {manifestId,manifestSha256,inputVersion:scope.inputVersion,sourceSetVersion:scope.sourceSetVersion,requirementsVersion:scope.requirementsVersion,obligationCount:obligations.length,obligations,producer:'APPLICATION'};}\nfunction persistObligationManifest(project,manifest){ensureShape(project);const value=clone(manifest||buildObligationManifest(project));project.projectData.obligationManifests=safe(project.projectData.obligationManifests).filter(x=>x.manifestId!==value.manifestId&&!(String(x.inputVersion)===String(value.inputVersion)&&String(x.sourceSetVersion)===String(value.sourceSetVersion)));project.projectData.obligationManifests.push(value);return value;}\n'''
+                  s=s.replace(anchor,helpers+anchor)
+              # Persist manifest when Stage 04 controlling prompt is registered.
+              needle="const record={...clone(promptRecord),source:'APPLICATION_PROMPT_REGISTRATION'};project.projectData.generatedPrompts.push(record);"
+              repl="const record={...clone(promptRecord),source:'APPLICATION_PROMPT_REGISTRATION'};project.projectData.generatedPrompts.push(record);if(Number(record.stage)===1)rebuildIntakeCoverageManifest(project);if(Number(record.stage)===4&&record.contextManifest?.obligationManifest)persistObligationManifest(project,record.contextManifest.obligationManifest);"
+              s=s.replace(needle,repl)
+              # Export helpers.
+              s=s.replace('currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,', 'currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,rebuildIntakeCoverageManifest,currentIntakeCoverageManifest,buildObligationManifest,persistObligationManifest,verificationMatrix,')
+              return s
+          edit('workflow-engine.js',patch_engine)
+
+          def patch_prompt(s):
+              s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';")
+              s=s.replace('EXECUTABLE_KIND = CUSTOM_PIPELINE', 'EXECUTABLE_KIND = TEST_IR')
+              # Make durable memory explicit in every external prompt.
+              if 'function durableProjectMemoryBlock' not in s:
+                  anchor='const procedures={'
+                  helper=r'''function durableProjectMemoryBlock(state){const job=state?.job||{},intake=workflow.currentIntakeCoverageManifest(state),clarifications=(state?.projectData?.humanInputAnswers||[]).filter(x=>!x.invalidatedBy).map(x=>({requestId:x.requestId,question:x.question,answer:x.answer,inputVersion:x.inputVersion}));return show({inputVersion:job.CURRENT_INPUT_VERSION,intakeManifestId:intake?.manifestId||null,intakeUnits:intake?.units||[],acceptedStage01:{EXACT_DELIVERABLE_REQUESTED:job.EXACT_DELIVERABLE_REQUESTED||state?.stages?.[1]?.agentData?.EXACT_DELIVERABLE_REQUESTED||'',ASSUMPTIONS:job.ASSUMPTIONS||state?.stages?.[1]?.agentData?.ASSUMPTIONS||'',UNKNOWN_INFORMATION:job.UNKNOWN_INFORMATION||state?.stages?.[1]?.agentData?.UNKNOWN_INFORMATION||'',INPUT_SET_CONTENTS:job.INPUT_SET_CONTENTS||state?.stages?.[1]?.agentData?.INPUT_SET_CONTENTS||''},clarifications});}\n'''
+                  s=s.replace(anchor,helper+anchor)
+              # Add general no-repeat rule immediately after user-input block.
+              needle='${humanInputBlock(j)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
+              replacement='${humanInputBlock(j)}\n\nDURABLE PROJECT MEMORY — ALREADY SUPPLIED; NEVER ASK THE HUMAN TO REPEAT IT\nBefore asking any human question, search this durable project memory and all current canonical context below. If the fact, decision, constraint, requirement, material reference, or substantive content is already present, USE IT. Do not ask the human to reconfirm, retype, restate, resend, re-upload, or reattach it solely because this is a later stage or a fresh external conversation. Ask only genuinely new human-only information that is absent from this memory and cannot be established from authorized material or research.\n\n${durableProjectMemoryBlock(state)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
+              if needle not in s: raise SystemExit('prompt durable-memory insertion anchor not found')
+              s=s.replace(needle,replacement)
+              # Add actual Stage 04 obligation universe to both prompt text and context signature input.
+              if 'const obligationManifest=stage===4?' not in s:
+                  needle='const context=contextFor(stage,state,scope,operation);'
+                  repl='const context=contextFor(stage,state,scope,operation);const obligationManifest=stage===4?workflow.buildObligationManifest(state):null;if(obligationManifest)context.obligationManifest=obligationManifest;'
+                  if needle not in s: raise SystemExit('prompt context anchor not found')
+                  s=s.replace(needle,repl)
+              # Ensure visible Stage 04 block exists in body.
+              needle='${priorStageBlock}\n\nCURRENT CANONICAL CONTEXT'
+              replacement='${priorStageBlock}\n\n${stage===4?`STAGE 04 APPLICATION-ENUMERATED OBLIGATION MANIFEST — COMPLETE INPUT UNIVERSE\\nThe application, not the human, selected and identified these obligations. Account for every obligationId. Do not ask the human to supply any item already represented here.\\n\\n${show(obligationManifest)}`:\'\'}\n\nCURRENT CANONICAL CONTEXT'
+              if needle not in s: raise SystemExit('stage4 visible manifest anchor not found')
+              s=s.replace(needle,replacement)
+              return s
+          edit('prompt-engine.js',patch_prompt)
+
+          def patch_ingestion(s):
+              # Enforce the no-repeat invariant for Stage 04 instead of relying only on prompt obedience.
+              anchor="if(Array.isArray(envelope.humanInputRequests))envelope.humanInputRequests.forEach((request,index)=>{"
+              if anchor not in s: raise SystemExit('humanInputRequests validator anchor not found')
+              # Insert check inside existing loop after request object validation/key registration by replacing answerType validation line.
+              needle="if(!ANSWER_TYPES.includes(request.answerType))issues.push(issue('INVALID_ANSWER_TYPE',`${path}/answerType`,`${request.answerType||'MISSING'} is not a supported answerType.`));"
+              addition=needle+"if(stageNumber===4){const q=String(request.question||'')+' '+String(request.whyRequired||'');const repeatVerb=/\\b(?:re-?attach|re-?upload|resend|re-?send|retype|re-?type|restate|re-?state|repeat|provide again|supply again|upload again|attach again)\\b/i.test(q),intentMaterial=/\\b(?:intent|original input|project input|supplied material|source file|requirements file|input file)\\b/i.test(q),memoryPresent=Boolean(String(project.job?.INPUT_SET_CONTENTS||project.job?.EXACT_USER_OBJECTIVE_VERBATIM||project.job?.EXPLICIT_USER_REQUIREMENTS||'').trim());if(memoryPresent&&(repeatVerb||(request.answerType==='FILE_REFERENCE'&&intentMaterial)))issues.push(issue('REPEATED_PROJECT_INPUT_REQUEST',path,'Stage 04 cannot request project information or intent material that is already captured in current canonical project memory. Return BLOCKED with the earlier capture deficiency only when canonical memory is actually incomplete.'));}"
+              if needle not in s: raise SystemExit('answer type validation anchor not found')
+              s=s.replace(needle,addition)
+              # Rebuild Stage 01 intake coverage after accepted Stage 01 proposal becomes canonical.
+              needle="if(stage===1)for(const name of schema.AGENT_JOB_FIELDS)if(Object.hasOwn(proposal.proposedStageData,name))next.job[name]=clone(proposal.proposedStageData[name]);"
+              repl=needle+"if(stage===1)workflow.rebuildIntakeCoverageManifest(next,{acceptedChangeId:changeId});"
+              if needle not in s: raise SystemExit('stage1 commit anchor not found')
+              s=s.replace(needle,repl)
+              return s
+          edit('response-ingestion.js',patch_ingestion)
+
+          # Add a focused permanent regression test for the reported failure.
+          Path('verify-project-memory.mjs').write_text(r'''import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';\nconst ctx={console,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone};ctx.globalThis=ctx;vm.createContext(ctx);for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInContext(fs.readFileSync(file,'utf8'),ctx,{filename:file});\nconst core=ctx.closedLoopCore,engine=ctx.closedLoopWorkflowEngine,prompts=ctx.closedLoopPromptEngine,schema=ctx.closedLoopWorkflowSchema;const p=core.createBlankState('JOB-MEMORY-REGRESSION');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Build the requested project from the supplied intent.';p.job.EXPLICIT_USER_REQUIREMENTS='Never ask me to supply the same project information twice.';p.job.INPUT_SET_CONTENTS='Intent file statement: preserve every supplied project requirement.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.rebuildIntakeCoverageManifest(p);p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Requested project deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:p.job.INPUT_SET_CONTENTS};p.stages[1].acceptedData=p.stages[1].agentData;p.stages[1].status='COMPLETE';const manifest=engine.buildObligationManifest(p);assert.ok(manifest.obligations.some(x=>x.rawValue.includes('Never ask me')));assert.ok(manifest.obligations.some(x=>x.rawValue.includes('Intent file statement')));const rec=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});assert.match(rec.prompt,/APPLICATION-ENUMERATED OBLIGATION MANIFEST/);assert.match(rec.prompt,/Never ask me to supply the same project information twice/);assert.match(rec.prompt,/Intent file statement: preserve every supplied project requirement/);assert.match(rec.prompt,/NEVER ASK THE HUMAN TO REPEAT IT/);assert.ok(rec.contextManifest.obligationManifest);assert.equal(rec.contextManifest.obligationManifest.manifestSha256,manifest.manifestSha256);assert.deepEqual(schema.TEST_IR.executableKinds,['NONE','TEST_IR']);console.log('project-memory regression: PASS');\n''')
+          PY
+
           node --check workbook.js
           node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check workflow-engine.js
           node --check prompt-engine.js
-          grep -F ".expandable-prompt{height:280px;max-height:280px}" index.html
-          grep -F "closed-loop-project/3" workbook.js
-          grep -F "closed-loop-stage-response/3" workflow-schema.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-project-memory.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+          grep -F "EXECUTABLE_KIND = TEST_IR" prompt-engine.js
+          ! grep -q "EXECUTABLE_KIND = CUSTOM_PIPELINE" prompt-engine.js
+          ! grep -q "CUSTOM_PIPELINE')return false" test-runtime.js
+          git rm .github/workflows/materialize-clean-conformance.yml
           git config user.name closed-loop-spec-repair
           git config user.email actions@users.noreply.github.com
-          git add index.html workbook.js workflow-schema.js prompt-engine.js
-          git commit -m 'Restore visuals and align prompt contracts with controlling specification'
+          git add index.html workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js verify-project-memory.mjs
+          git commit -m 'Enforce one-time project input and Stage 04 obligation memory'
           git push origin HEAD:fix/spec-conformance-zero-loss-clean
