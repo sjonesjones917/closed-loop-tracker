@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const f='verify-full-cycle.mjs';
+let s=fs.readFileSync(f,'utf8');
+const old1="const s1=data(1,{stageData:{EXACT_DELIVERABLE_REQUESTED:'Verified deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'Verbatim job input plus clarification.'}});";
+const new1="const intakeForFullCycle=prompts.buildPromptRecord(1,p,{}).contextManifest.intakeCoverageManifest;const s1=data(1,{stageData:{EXACT_DELIVERABLE_REQUESTED:'Verified deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({units:intakeForFullCycle.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'FULL-'+String(i+1),text:u.sourceLocation?.startsWith('job.')?String(p.job?.[u.sourceLocation.slice(4)]??u.label):String(u.label),statementClass:u.label==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUIREMENT':'FACT'}]}))})}});";
+if(!s.includes(old1))throw new Error('Stage 1 full-cycle fixture anchor missing');
+s=s.replace(old1,new1);
+const old3="data(3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:'1',NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'}});complete(3);";
+if(!s.includes(old3))throw new Error('Stage 3 full-cycle fixture anchor missing');
+s=s.replace(old3,"data(3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE'}});complete(3);");
+fs.writeFileSync(f,s);
+console.log('Full-cycle fixtures aligned.');
