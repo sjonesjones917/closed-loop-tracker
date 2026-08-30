@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
@@ -65,4 +66,8 @@ for(const [key,needed] of Object.entries(opNeed)){const [stage,operation]=key.sp
 for(const [stage,forbidden] of [[11,['verification','comparisons','rootCauses','changes']],[12,['comparisons','rootCauses','changes']],[23,['deterministicResults','adversarialResults']],[24,['deterministicResults','meaningResults']]]){
   const c=schema.operationContract(stage,schema.STAGE_CONTRACTS[stage].operations[0]);for(const x of forbidden)if(c.readCollections.includes(x))throw new Error(`Stage ${stage} leaks forbidden ${x} through its declared read contract.`);
 }
-console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true},null,2));
+const browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mjs'],{encoding:'utf8',env:process.env});
+if(browserWalk.status!==0)throw new Error(`Sequential browser stage walkthrough failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
+const browserProof=JSON.parse(String(browserWalk.stdout||'{}'));
+if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Sequential browser stage walkthrough did not establish all 30 stages and one-time project input reuse.');
+console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));

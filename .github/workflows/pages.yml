@@ -34,7 +34,9 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-full-cycle.mjs
           node --check verify-prompt-semantics.mjs
+          node --check verify-stage-prompts-complete.mjs
           node --check verify-one-time-intent-intake.mjs
+          node --check verify-stage01-intake-closure.mjs
           node --check verify-live.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
@@ -46,6 +48,8 @@ jobs:
         run: node verify-test-runtime.mjs
       - name: Verify one-time exhaustive intent capture and Stage 04 canonical reuse
         run: node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs
+      - name: Exercise every stage and operation prompt against complete context contracts
+        run: node verify-stage-prompts-complete.mjs
       - name: Verify canonical serialization and SHA-256
         run: node verify-hash.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
@@ -120,7 +124,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs && node verify-stage-prompts-complete.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -174,7 +178,8 @@ jobs:
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
           node verify-test-runtime.mjs > /tmp/verify-test-runtime.out
-          node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs > /tmp/verify-one-time-intent-intake.out
+          { node verify-one-time-intent-intake.mjs; node verify-stage01-intake-closure.mjs; } > /tmp/verify-one-time-intent-intake.out
+          node verify-stage-prompts-complete.mjs > /tmp/verify-stage-prompts-complete.out
           node verify-ingestion.mjs > /tmp/verify-ingestion.out
           node verify.mjs > /tmp/verify-source.out
           node verify-complete.mjs > /tmp/verify-complete.out
@@ -183,6 +188,7 @@ jobs:
           node verify-project-lifecycle.mjs > /tmp/verify-project-lifecycle.out
           grep -q 'verify-test-runtime: PASS' /tmp/verify-test-runtime.out
           grep -q 'verify-one-time-intent-intake: PASS' /tmp/verify-one-time-intent-intake.out
+          grep -Eq '"stagesChecked"[[:space:]]*:[[:space:]]*30' /tmp/verify-stage-prompts-complete.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
@@ -230,6 +236,8 @@ jobs:
           if(!semantic.semanticFalseAcceptanceInvariant||!semantic.epistemicEvidenceChains)throw new Error('Semantic false-acceptance/evidence-sufficiency proof is incomplete.');
           if(!lifecycle.projectLifecycleControls||!lifecycle.lifecycleMetadataDeleteAtomic||lifecycle.unsafeOverrides!==0)throw new Error('Project lifecycle proof is incomplete.');
           if(!browser.includes('extra:package-round-trip')||!browser.includes('extra:blob-persistence'))throw new Error('Browser custody/round-trip proof is incomplete.');
+          const promptProof=JSON.parse(fs.readFileSync('/tmp/verify-stage-prompts-complete.out','utf8'));
+          if(promptProof.stagesChecked!==30)throw new Error('All-stage prompt proof did not cover exactly 30 stages.');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
@@ -245,6 +253,9 @@ jobs:
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
             oneTimeIntentIntake:true,
+            allStagePromptContracts:true,
+            stagePromptsChecked:promptProof.stagesChecked,
+            promptOperationsChecked:promptProof.promptsChecked,
             stagesCompleted:30,
             negativeCasesPassed:Number(process.env.NEGATIVE_CASES),
             storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES),
@@ -260,7 +271,8 @@ jobs:
             proofSources:{
               structuralCoverage:'verify-definition-of-done.mjs',
               nativeTestRuntime:'verify-test-runtime.mjs',
-              oneTimeIntentIntake:'verify-one-time-intent-intake.mjs',
+              oneTimeIntentIntake:'verify-one-time-intent-intake.mjs + verify-stage01-intake-closure.mjs',
+              allStagePromptContracts:'verify-stage-prompts-complete.mjs',
               canonicalWorkflow:'verify.mjs',
               ingestion:'verify-ingestion.mjs',
               workflowGates:'verify-complete.mjs',
