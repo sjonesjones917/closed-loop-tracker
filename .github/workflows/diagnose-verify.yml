@@ -1,17 +1,18 @@
-name: Diagnose all stage prompt regression
+name: Commit verified all stage prompt repairs
 on:
   push:
     branches: [fix/stage01-intake-closure-20260830]
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
-  diagnose:
+  commit:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply candidate patch
+      - name: Apply exact verified candidate
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -25,37 +26,25 @@ jobs:
           PY
           python3 repair-all-prompts.py
           sed -i "s/closed-loop-prompt-engine\/28/closed-loop-prompt-engine\/29/" prompt-engine.js
-      - name: Capture verification failure
-        id: verify
-        continue-on-error: true
+      - name: Reprove exact candidate before commit
         run: |
-          set +e
-          {
-            for cmd in \
-              'node --check workflow-schema.js' \
-              'node --check prompt-engine.js' \
-              'node --check verify-stage-prompts-complete.mjs' \
-              'node verify-stage-prompts-complete.mjs' \
-              'node verify-stage01-intake-closure.mjs' \
-              'node verify-one-time-intent-intake.mjs' \
-              'node verify-prompt-semantics.mjs' \
-              'node verify-test-runtime.mjs' \
-              'node verify-ingestion.mjs' \
-              'node verify.mjs' \
-              'node verify-full-cycle.mjs' \
-              'node verify-definition-of-done.mjs'; do
-                echo "=== $cmd ==="
-                eval "$cmd" || exit $?
-              done
-          } > all-stage-regression.log 2>&1
-          status=$?
-          cat all-stage-regression.log
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: all-stage-regression-log
-          path: all-stage-regression.log
-          if-no-files-found: error
-      - name: Preserve failure
-        if: steps.verify.outputs.status != '0'
-        run: exit 1
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check verify-stage-prompts-complete.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-test-runtime.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+      - name: Commit source
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js prompt-engine.js verify-stage-prompts-complete.mjs
+          git commit -m "Make all stage prompts context-complete and operation-specific"
+          git pull --rebase origin fix/stage01-intake-closure-20260830
+          git push origin HEAD:fix/stage01-intake-closure-20260830
