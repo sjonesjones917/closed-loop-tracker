@@ -1,15 +1,13 @@
-name: Repair v3 one-time intent ledger and Stage 04 closure
+name: Restore proven one-time intent ledger on v3
 on:
   push:
     branches: [fix/closed-loop-v3-final-20260830]
-    paths:
-      - '.repair-v3-intent-ledger.py.gz.b64'
-      - '.github/workflows/repair-v3-intent-ledger.yml'
+    paths: ['.github/workflows/repair-v3-intent-ledger.yml']
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
-  repair:
+  restore:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -17,27 +15,34 @@ jobs:
         with:
           ref: fix/closed-loop-v3-final-20260830
           fetch-depth: 0
-      - name: Materialize and apply exact repair
+      - name: Reapply the previously merged intent-ledger repair
         run: |
           set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git fetch origin main
-          base64 --decode .repair-v3-intent-ledger.py.gz.b64 | gzip --decompress > /tmp/repair-v3-intent-ledger.py
-          python3 /tmp/repair-v3-intent-ledger.py
+          if ! git cherry-pick -m 1 --no-commit 69add6a0548eeb89cb0b6e666147008edef7662d; then
+            echo 'CONFLICTED FILES:'
+            git diff --name-only --diff-filter=U
+            echo 'CONFLICT DETAIL:'
+            git diff --cc
+            git cherry-pick --abort || true
+            exit 1
+          fi
           rm -f .repair-v3-intent-ledger.py.gz.b64 .github/workflows/repair-v3-intent-ledger.yml
-      - name: Syntax and focused one-time-intent proof
+      - name: Syntax and focused intent proof
         run: |
           set -euo pipefail
           for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$f"; done
-          for f in verify-v3-migration.mjs verify-prompt-semantics.mjs verify-user-prompt-invariants.mjs verify-intent-ledger-v3.mjs verify-ingestion.mjs verify-browser.mjs; do node --check "$f"; done
-          node verify-v3-migration.mjs
           node verify-prompt-semantics.mjs
           node verify-user-prompt-invariants.mjs
-          node verify-intent-ledger-v3.mjs
+          node verify-one-time-intent-intake.mjs
           node verify-ingestion.mjs
-      - name: Complete deterministic and lifecycle suite
+      - name: Complete deterministic and lifecycle proof
         run: |
           set -euo pipefail
           node build-test-project.mjs
+          node verify-v3-migration.mjs
           node verify-v3-contract.mjs
           node verify-v3-definition-of-done.mjs
           node verify-test-runtime.mjs
@@ -49,7 +54,7 @@ jobs:
           node verify-semantic-invariant.mjs
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
-      - name: Responsive Chromium regression proof
+      - name: Responsive Chromium proof
         run: |
           set -euo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -61,14 +66,12 @@ jobs:
           node verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Commit only the tested application changes
+      - name: Commit tested application changes and remove repair scaffolding
         run: |
           set -euo pipefail
           test ! -e .repair-v3-intent-ledger.py.gz.b64
           test ! -e .github/workflows/repair-v3-intent-ledger.yml
           test -z "$(find .github/workflows -maxdepth 1 -type f ! -name pages.yml -print -quit)"
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m "Restore exhaustive one-time intent capture and Stage 04 closure"
+          git commit -m "Restore proven one-time intent ledger on v3"
           git push origin HEAD:fix/closed-loop-v3-final-20260830
