@@ -16,10 +16,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply integrated repair
+      - name: Apply integrated repair and remove temporary scaffolding
         run: |
           python3 .repair-v3-fix.py
           python3 .repair-v3.py
+          rm -f .repair-v3.py .repair-v3-fix.py .github/workflows/repair-v3.yml
       - name: Syntax proof
         run: |
           node --check workbook.js
@@ -48,8 +49,6 @@ jobs:
           node verify-full-cycle.mjs
           node verify-semantic-invariant.mjs
           node verify-definition-of-done.mjs
-      - name: Remove temporary repair machinery
-        run: rm -f .repair-v3.py .repair-v3-fix.py .github/workflows/repair-v3.yml
       - name: Commit integrated result only after proof
         run: |
           git config user.name github-actions[bot]
