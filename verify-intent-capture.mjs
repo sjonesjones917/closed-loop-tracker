@@ -10,6 +10,12 @@ a(e.includes('validateStage1IntakeAccounting'),'Stage 01 closure validator missi
 a(e.includes('validateStage4ObligationAccounting'),'Stage 04 closure validator missing');
 a(i.includes('INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING'),'Stage 01 ingestion closure missing');
 a(i.includes('INCOMPLETE_STAGE_04_OBLIGATION_ACCOUNTING'),'Stage 04 ingestion closure missing');
+a(e.includes('function registerIntakeArtifactSnapshot(project'),'Stage 01 byte-content snapshot command missing');
+a(e.includes("'intakeArtifactSnapshots'"),'durable intake artifact snapshot storage missing');
+a(app.includes("new TextDecoder('utf-8',{fatal:true})"),'Stage 01 does not decode textual intent bytes exactly once');
+a(app.includes("role:Number(stage)===1?'INPUT_INTENT_ARTIFACT':'STAGE_ARTIFACT'"),'Stage 01 intent artifact role is not preserved');
+a(app.includes('Do not reattach, resend, retype, restate, reconstruct, or summarize project information already captured.'),'Stage 04 operator text does not enforce capture-once reuse');
+a(s.includes('"EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256"'),'Test IR version/hash are not application-owned');
 a(p.includes('APPLICATION INTAKE COVERAGE MANIFEST — ACCOUNT FOR EVERY ID'),'Stage 01 manifest absent');
 a(p.includes('STAGE 04 COMPLETE CANONICAL INPUT UNION — DO NOT ASK THE USER TO RESUPPLY IT'),'Stage 04 union absent');
 a(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'repeat-input prohibition absent');
