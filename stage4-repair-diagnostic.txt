@@ -6,3 +6,5 @@ prompt_stage4_start=True
 prompt_stage5_start=True
 prompt_version24=True
 ci_marker=True
+runtime_identity_synced=True
+final_proof_trigger=True
