@@ -36,6 +36,12 @@ jobs:
           NODE
           node - <<'NODE'
           const fs=require('fs');
+          let e=fs.readFileSync('workflow-engine.js','utf8');
+          const bad="'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures,'intakeArtifactSnapshots'";
+          const good="'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeArtifactSnapshots'";
+          if(e.includes(bad))e=e.replace(bad,good);
+          if(!e.includes(good))throw new Error('Expected application collection list not found after syntax repair.');
+          fs.writeFileSync('workflow-engine.js',e);
           let p=fs.readFileSync('prompt-engine.js','utf8');
           const anchor='Classify unresolved issues as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE.';
           if(!p.includes(anchor))throw new Error('Stage 01 unresolved-issue classification anchor missing.');
