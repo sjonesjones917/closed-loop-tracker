@@ -21,8 +21,9 @@ jobs:
           python3 .github/spec-reconcile-capture.py
           python3 .github/spec-reconcile-proof.py
           python3 .github/spec-reconcile-proof2.py
+          python3 .github/spec-reconcile-retoken.py
       - name: Remove temporary repair files
-        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py .github/spec-reconcile-capture.py .github/spec-reconcile-proof.py .github/spec-reconcile-proof2.py
+        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py .github/spec-reconcile-capture.py .github/spec-reconcile-proof.py .github/spec-reconcile-proof2.py .github/spec-reconcile-retoken.py
       - name: Verify source and controlling invariants
         run: |
           node --check workbook.js
