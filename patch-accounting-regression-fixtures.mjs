@@ -86,5 +86,10 @@ for(const path of ['build-test-project.mjs','verify.mjs']){
   ];
   for(const mutant of obsoleteMutants)text=text.split(mutant).join('');
 
+  const oldContract="if(descriptor.contractVersion!=='closed-loop-response-contract/2.4')throw new Error('Versioned response-contract descriptor is missing.');";
+  const newContract="if(descriptor.contractVersion!=='closed-loop-response-contract/3.1')throw new Error('Versioned response-contract descriptor is not the current /3 contract.');";
+  if(text.includes(oldContract))text=text.replace(oldContract,newContract);
+  else if(!text.includes(newContract))throw new Error('Response-contract semantic proof anchor missing.');
+
   fs.writeFileSync(path,text);
 }
