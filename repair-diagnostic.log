@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/runner/work/closed-loop-tracker/closed-loop-tracker/tools/apply-controlling-spec-fix.py", line 188, in <module>
+    s = replace_regex(s, r"const APPLICATION_TEST_EXECUTORS=Object\.freeze\(\{\}\);\nfunction applicationTestCapabilities\(\)\{return Object\.freeze\(Object\.keys\(APPLICATION_TEST_EXECUTORS\)\);\}", "function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}", 'native capability authority')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/closed-loop-tracker/closed-loop-tracker/tools/apply-controlling-spec-fix.py", line 26, in replace_regex
+    raise RuntimeError(f'{label}: expected exactly one match, found {count}')
+RuntimeError: native capability authority: expected exactly one match, found 0
