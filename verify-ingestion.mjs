@@ -24,7 +24,27 @@ function project(jobId='JOB-INGESTION-TEST'){
   engine.recalculate(p);
   return p;
 }
+function completeIntakeCapture(p){
+  const manifest=engine.intakeCoverageManifest(p);
+  const statementClass=unit=>{
+    const label=String(unit?.label||unit?.sourceLocation||'').toUpperCase();
+    if(unit?.kind==='SUPPLIED_MATERIAL')return 'MATERIAL_REFERENCE';
+    if(label.includes('PROHIBITED_ACTIONS'))return 'PROHIBITION';
+    if(label.includes('REQUIRED_OUTPUT_FORMAT'))return 'CONSTRAINT';
+    if(label.includes('EXPLICIT_USER_REQUIREMENTS')||label.includes('EXACT_USER_OBJECTIVE_VERBATIM'))return 'REQUIREMENT';
+    return 'FACT';
+  };
+  return {schema:'closed-loop-intake-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:`Captured human authority from ${unit.label}.`,statementClass:statementClass(unit)}]})),conversationStatements:[]};
+}
+function seedCompleteStageOne(p){
+  if(engine.evaluateIntakeCoverage(p).complete)return;
+  const agentData={...(p.stages?.[1]?.agentData||{}),EXACT_DELIVERABLE_REQUESTED:'Verified deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(completeIntakeCapture(p))};
+  p.stages[1].agentData=agentData;
+  p.stages[1].acceptedData={...agentData};
+  engine.recalculate(p);
+}
 function savePrompt(p,stage){
+  if(stage===4)seedCompleteStageOne(p);
   const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
   const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
@@ -47,25 +67,17 @@ function safeValue(name){
   return `verified-${name.toLowerCase()}`;
 }
 function valueForDefinition(def){if(def.enumValues?.length)return def.enumValues[0];if(def.valueType==='INTEGER')return 1;if(def.valueType==='NUMBER')return 1;if(def.valueType==='BOOLEAN')return true;if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['verified'];if(def.valueType==='OBJECT')return {};return 'verified';}
-function completeIntakeCapture(p){
-  const manifest=engine.intakeCoverageManifest(p);
-  const statementClass=unit=>{
-    const label=String(unit?.label||unit?.sourceLocation||'').toUpperCase();
-    if(unit?.kind==='SUPPLIED_MATERIAL')return 'MATERIAL_REFERENCE';
-    if(label.includes('PROHIBITED_ACTIONS'))return 'PROHIBITION';
-    if(label.includes('REQUIRED_OUTPUT_FORMAT'))return 'CONSTRAINT';
-    if(label.includes('EXPLICIT_USER_REQUIREMENTS')||label.includes('EXACT_USER_OBJECTIVE_VERBATIM'))return 'REQUIREMENT';
-    return 'FACT';
-  };
-  return {schema:'closed-loop-intake-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:`Captured human authority from ${unit.label}.`,statementClass:statementClass(unit)}]})),conversationStatements:[]};
-}
 function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   if(stage===1){Object.assign(stageData,{EXACT_DELIVERABLE_REQUESTED:'Verified deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(completeIntakeCapture(p))});}
   else if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
   const records={};
-  if(!Object.keys(stageData).length){
+  if(stage===4){
+    const manifest=engine.obligationManifest(p),definition=schema.RECORD_SCHEMAS.requirements;
+    records.requirements=manifest.items.map((item,index)=>{const fields={};for(const name of definition.required)if(definition.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);Object.assign(fields,{OBLIGATION:item.text,USER_INPUT_RELATIONSHIP:item.obligationId,SOURCE_LOCATION:`Application obligation manifest ${item.obligationId}`,SOURCE_AUTHORITY:item.origin,APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'The mapped obligation is demonstrably satisfied.',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_OR_INDEPENDENT',EXPECTED_EVIDENCE:'Current sufficient evidence',FAILURE_CONDITION:'The mapped obligation is not satisfied.',SEVERITY:'MAJOR',NOTES:''});return {tempKey:`requirement-${index+1}`,fields,relationships:{},evidenceRefs:['evidence-1']};});
+  }
+  if(!Object.keys(stageData).length&&!Object.keys(records).length){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
