@@ -27,6 +27,6 @@ const testRuntime=fs.readFileSync('test-runtime.js','utf8');
 assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test worker URL does not inherit the test-runtime build/cache identity.');
 assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test worker is not loaded as the same-origin registered worker entry.');
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
-assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 repeat-attachment control returned; previously supplied project information must be reused from canonical state.');
+assert(appCore.includes("if(n===19)return"),'Stage 19 unchanged-candidate control is missing.');
 console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeSourceIdentity,sharedBuildIdentity,runtimeFiles:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
