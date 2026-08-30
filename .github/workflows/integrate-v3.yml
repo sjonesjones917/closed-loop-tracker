@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Merge repair without discarding current-main intent capture
+      - name: Merge and patch
         run: |
           set -o pipefail
           {
@@ -29,16 +29,9 @@ jobs:
             git config user.email actions@users.noreply.github.com
             git fetch origin fix/full-controlling-bundle-20260830
             git merge --no-ff -X ours origin/fix/full-controlling-bundle-20260830 -m "Integrate controlling bundle v3 onto current main"
-            python - <<'PY'
-            from pathlib import Path
-            p=Path('.github/integration_patch.py')
-            t=p.read_text()
-            t=t.replace("if new not in t:\n    if old not in t: raise SystemExit('schema stage type override anchor missing')\n    t=t.replace(old,new,1)","if 'INTAKE_ACCOUNTING:Object.freeze' not in t:\n    if old not in t: raise SystemExit('schema stage type override anchor missing')\n    t=t.replace(old,new,1)")
-            p.write_text(t)
-            PY
-            python .github/integration_patch.py
+            python .github/run_integration_patch.py
           } 2>&1 | tee .github/integration-merge-failure.log
-      - name: Verify current-main intent and v3 contracts together
+      - name: Verify
         run: |
           set -o pipefail
           {
@@ -69,6 +62,6 @@ jobs:
       - name: Commit integrated application
         run: |
           git add -A
-          git reset -- .github/workflows/integrate-v3.yml .github/integration_patch.py .github/integration-trigger.txt .github/integration-merge-failure.log .github/integration-v3-failure.log .github/workflows/pages.yml || true
+          git reset -- .github/workflows/integrate-v3.yml .github/integration_patch.py .github/run_integration_patch.py .github/integration-trigger.txt .github/integration-merge-failure.log .github/integration-v3-failure.log .github/workflows/pages.yml || true
           git commit -m "Integrate exhaustive intent capture with controlling v3 contracts" || true
           git push origin HEAD:integration/closed-loop-v3-exhaustive-intent
