@@ -1,0 +1,33 @@
+name: Fix accounting runner fixture syntax
+on:
+  push:
+    branches:
+      - fix/stage01-stage04-closed-accounting-current
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: contains(github.event.head_commit.message, 'Fix accounting runner fixture syntax')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove extra generated fixture brace
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/apply-closed-accounting.yml')
+          s=p.read_text()
+          old="attachments:[]};}\\n}\\n`;"
+          new="attachments:[]};}\\n`;"
+          if s.count(old)!=1:
+              raise SystemExit(f'expected one extra-brace anchor; found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/fix-accounting-runner.yml
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Correct accounting fixture generator"
+          git push origin HEAD:fix/stage01-stage04-closed-accounting-current
