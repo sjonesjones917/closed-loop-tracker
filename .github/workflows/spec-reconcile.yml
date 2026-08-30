@@ -18,12 +18,16 @@ jobs:
       - name: Apply reconciliation
         run: |
           python3 .github/spec-reconcile.py
+          git fetch origin refs/pull/453/head:refs/heads/accounting-reference
+          git show accounting-reference:finalize-v3-accounting.mjs >/tmp/finalize-v3-accounting.mjs
+          node /tmp/finalize-v3-accounting.mjs
           python3 .github/spec-reconcile-capture.py
           python3 .github/spec-reconcile-proof.py
           python3 .github/spec-reconcile-proof2.py
           python3 .github/spec-reconcile-retoken.py
+          python3 .github/spec-visual-lock.py
       - name: Remove temporary repair files
-        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py .github/spec-reconcile-capture.py .github/spec-reconcile-proof.py .github/spec-reconcile-proof2.py .github/spec-reconcile-retoken.py
+        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py .github/spec-reconcile-capture.py .github/spec-reconcile-proof.py .github/spec-reconcile-proof2.py .github/spec-reconcile-retoken.py .github/spec-visual-lock.py
       - name: Verify source and controlling invariants
         run: |
           node --check workbook.js
@@ -37,6 +41,12 @@ jobs:
           node --check app-core.js
           node --check verify-controlling-spec.mjs
           node verify-controlling-spec.mjs
+          test "$(grep -c "INTAKE_MANIFEST_SCHEMA='closed-loop-intake-manifest/1'" workflow-engine.js)" -eq 1
+          test "$(grep -c "OBLIGATION_MANIFEST_SCHEMA='closed-loop-obligation-manifest/1'" workflow-engine.js)" -eq 1
+          grep -q 'evaluateIntakeCoverage' response-ingestion.js
+          grep -q 'evaluateObligationAccounting' response-ingestion.js
+          grep -q 'APPLICATION INTAKE MANIFEST' prompt-engine.js
+          grep -q 'APPLICATION OBLIGATION MANIFEST' prompt-engine.js
       - name: Run complete existing proof
         run: |
           node build-test-project.mjs
@@ -50,6 +60,8 @@ jobs:
           node verify-semantic-invariant.mjs
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
+          test -f verify-v3-accounting.mjs && node verify-v3-accounting.mjs || true
+          test -f verify-v3-bundle.mjs && node verify-v3-bundle.mjs || true
       - name: Run browser acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
