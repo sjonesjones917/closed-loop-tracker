@@ -25,6 +25,7 @@ jobs:
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f app.js
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           ! grep -R "document.write" --include='*.js' --include='*.html' .
           ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
           ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
@@ -63,6 +64,12 @@ jobs:
 
       - name: Raw-first ingestion
         run: node verify-ingestion.mjs
+
+      - name: One-time intent intake and closed obligation accounting
+        run: |
+          node verify-one-time-intent-intake.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-single-supply-prompts.mjs
 
       - name: Workflow and gates
         run: |
@@ -123,6 +130,9 @@ jobs:
           node verify-test-runtime.mjs
           node verify-hash.mjs
           node verify-ingestion.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-single-supply-prompts.mjs
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
@@ -191,6 +201,9 @@ jobs:
           node verify-project-lifecycle.mjs > /tmp/lifecycle.out
           node verify-test-runtime-v3.mjs > /tmp/runtime-v3.out
           node verify-test-runtime-limits.mjs > /tmp/runtime-limits.out
+          node verify-one-time-intent-intake.mjs > /tmp/one-time-intake.out
+          node verify-intake-obligation-accounting.mjs > /tmp/intake-obligation.out
+          node verify-single-supply-prompts.mjs > /tmp/single-supply.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/report-http.log 2>&1 &
@@ -207,6 +220,9 @@ jobs:
           const semantic=readJsonLines('/tmp/semantic.out');
           const lifecycle=readJsonLines('/tmp/lifecycle.out');
           const ingestion=readJsonLines('/tmp/ingestion.out');
+          const oneTimeIntake=readJsonLines('/tmp/one-time-intake.out');
+          const intakeObligation=readJsonLines('/tmp/intake-obligation.out');
+          const singleSupply=readJsonLines('/tmp/single-supply.out');
           const browser=fs.readFileSync('/tmp/browser.out','utf8');
           const report={
             commit:process.env.GITHUB_SHA,
@@ -217,6 +233,9 @@ jobs:
             verificationPackageSchema:'closed-loop-verification-package/1',
             ...definition,
             ...v3,
+            ...oneTimeIntake,
+            ...intakeObligation,
+            ...singleSupply,
             mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
@@ -239,6 +258,9 @@ jobs:
               testIrSecurity:'verify-test-runtime-v3.mjs',
               resourceLimits:'verify-test-runtime-limits.mjs',
               ingestion:'verify-ingestion.mjs',
+              oneTimeIntentIntake:'verify-one-time-intent-intake.mjs',
+              intakeObligationAccounting:'verify-intake-obligation-accounting.mjs',
+              singleSupplyPrompts:'verify-single-supply-prompts.mjs',
               workflowGates:'verify-complete.mjs',
               promptSemantics:'verify-prompt-semantics.mjs',
               fullCycle:'verify-full-cycle.mjs',
