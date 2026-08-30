@@ -14,7 +14,7 @@ p=Path('app-core.js'); text=p.read_text()
 anchor="function importSeed(raw){if(![core.SCHEMA,'human-project/30'].includes(raw?.schema))throw new Error('Bundled project must use a supported 30-stage project schema.');"
 helper="""function migrateLegacyIntentStatements(p,raw){
   if(safe(p?.projectData?.intentStatements).length)return;
-  const input=raw?.userJobInput&&typeof raw.userJobInput==='object'?raw.userJobInput:{},units=[],legacyUnknown='UNKNOWN - legacy input did not encode this semantic classification.';
+  const input=raw?.userJobInput&&typeof raw.userJobInput==='object'?raw.userJobInput:{},units=[],legacyUnknown='UNKNOWN - legacy input did not encode this classification.';
   const add=(location,value,statementKind,requirementRelevance,normativeForce)=>{const values=Array.isArray(value)?value:[value];values.forEach((item,index)=>{const exact=typeof item==='string'?item.trim():item===undefined||item===null?'':JSON.stringify(item);if(!exact)return;units.push({location:Array.isArray(value)?`${location}/${index}`:location,exact,statementKind,requirementRelevance,normativeForce});});};
   add('/userJobInput/objective',input.objective,'OBJECTIVE','REQUIREMENT','MUST');
   add('/userJobInput/deliverable',input.deliverable,'DELIVERABLE','REQUIREMENT','MUST');
