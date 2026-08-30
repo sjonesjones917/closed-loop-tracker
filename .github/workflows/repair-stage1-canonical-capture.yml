@@ -1,0 +1,45 @@
+name: One-time canonical Stage 1 retained capture repair
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/closed-loop-v3-final-20260830'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch canonical retained Stage 1 capture
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='app-core.js';let text=fs.readFileSync(path,'utf8');
+          const from="const legacyStage01Capture=JSON.stringify({userJobInput:clone(raw.userJobInput||{}),suppliedMaterials:clone(raw.suppliedMaterials||[]),jobTitle:raw.title||'',jobOwner:raw.jobOwner||''});";
+          const to="const legacyStage01Capture=JSON.stringify({humanAuthority:{JOB_TITLE:p.job.JOB_TITLE||'',JOB_OWNER:p.job.JOB_OWNER||'',EXACT_USER_OBJECTIVE_VERBATIM:p.job.EXACT_USER_OBJECTIVE_VERBATIM||'',SUPPLIED_MATERIALS_INVENTORY:p.job.SUPPLIED_MATERIALS_INVENTORY||'',REQUIRED_OUTPUT_FORMAT:p.job.REQUIRED_OUTPUT_FORMAT||'',DEADLINE_OR_TEMPORAL_SCOPE:p.job.DEADLINE_OR_TEMPORAL_SCOPE||'',DESIRED_SOURCE_COUNT:p.job.DESIRED_SOURCE_COUNT??null,KNOWN_AUTHORITATIVE_SOURCES:p.job.KNOWN_AUTHORITATIVE_SOURCES||'',AVAILABLE_TOOLS:p.job.AVAILABLE_TOOLS||'',PROHIBITED_ACTIONS:p.job.PROHIBITED_ACTIONS||'',EXPLICIT_USER_REQUIREMENTS:p.job.EXPLICIT_USER_REQUIREMENTS||''},originalUserJobInput:clone(raw.userJobInput||{}),suppliedMaterials:clone(raw.suppliedMaterials||[])});";
+          const first=text.indexOf(from),last=text.lastIndexOf(from);if(first<0||first!==last)throw new Error('Expected exactly one retained Stage 1 capture expression.');
+          text=text.slice(0,first)+to+text.slice(first+from.length);fs.writeFileSync(path,text);
+          NODE
+          node --check app-core.js
+          node --check verify-browser.mjs
+          git diff --check
+      - name: Commit integrated repair and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "closed-loop-repair-bot"
+          git config user.email "closed-loop-repair-bot@users.noreply.github.com"
+          git add app-core.js
+          git commit -m "Persist canonical human authority in Stage 1 capture"
+          git rm .github/workflows/repair-stage1-canonical-capture.yml
+          git commit -m "Remove completed canonical Stage 1 capture repair workflow"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
