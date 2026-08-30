@@ -16,24 +16,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply verified conformance patches including runtime semantics
+      - name: Apply and diagnose extended conformance patch
         run: |
-          python3 .github/apply_controlling_spec.py
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check test-runtime.js
-          node --check verify-controlling-spec.mjs
-          node verify-controlling-spec.mjs
-          node verify-test-runtime.mjs
-      - name: Commit conformance product changes
+          set +e
+          : > repair-diagnostics.txt
+          run(){ echo ">>> $*" >> repair-diagnostics.txt; "$@" >> repair-diagnostics.txt 2>&1; c=$?; echo "exit=$c" >> repair-diagnostics.txt; return $c; }
+          run python3 .github/apply_controlling_spec.py || true
+          for f in workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js verify-controlling-spec.mjs verify-test-runtime.mjs; do run node --check "$f" || true; done
+          run node verify-controlling-spec.mjs || true
+          run node verify-test-runtime.mjs || true
+          git restore .github/workflows/pages.yml 2>/dev/null || true
+          cat repair-diagnostics.txt
+      - name: Commit diagnostic only
         run: |
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
-          git restore .github/workflows/pages.yml
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js index.html verify-controlling-spec.mjs verify-test-runtime.mjs
-          git diff --cached --quiet && { echo 'No source changes to commit'; exit 0; }
-          git commit -m "Complete Test IR and durable Stage 01-04 accounting"
+          git add repair-diagnostics.txt
+          git commit -m "Capture extended repair diagnostic" || true
           git push origin HEAD:controlling-spec-conformance
