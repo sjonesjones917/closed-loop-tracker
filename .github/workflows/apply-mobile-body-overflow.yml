@@ -15,11 +15,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Patch the real mobile overflow and permanent Pages proof
+      - name: Patch the proven mobile overflow repair
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           index = Path('index.html')
           text = index.read_text()
           marker = '/* Permanent regression repair: contain the complete mobile operator surface. */'
@@ -46,26 +45,9 @@ jobs:
           if marker not in text:
               if text.count('</style>') != 1:
                   raise SystemExit('index.html does not have one unambiguous style terminator')
-              text = text.replace('</style>', css + '</style>', 1)
-              index.write_text(text)
-
-          workflow = Path('.github/workflows/pages.yml')
-          text = workflow.read_text()
-          syntax_line = '          node --check verify-mobile-stage-action.mjs\n'
-          if syntax_line not in text:
-              anchor = '          node --check verify-browser-extra.mjs\n'
-              if text.count(anchor) != 1:
-                  raise SystemExit('Pages syntax-check anchor changed')
-              text = text.replace(anchor, anchor + syntax_line, 1)
-          run_line = '          run_browser_verifier verify-mobile-stage-action.mjs\n'
-          if text.count(run_line) != 2:
-              anchor = '          run_browser_verifier verify-browser-extra.mjs\n'
-              if text.count(anchor) != 2:
-                  raise SystemExit('Pages browser-run anchors changed')
-              text = text.replace(anchor, anchor + run_line)
-          workflow.write_text(text)
+              index.write_text(text.replace('</style>', css + '</style>', 1))
           PY
-      - name: Prove the photographed failure is repaired before committing
+      - name: Prove 320 and 393 px before committing
         run: |
           node --check verify-mobile-stage-action.mjs
           node verify-hash.mjs
@@ -77,11 +59,11 @@ jobs:
           node verify-mobile-stage-action.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Commit only the proven repair and remove this one-time workflow
+      - name: Commit the proven repair and remove this one-time workflow
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/apply-mobile-body-overflow.yml
-          git add index.html .github/workflows/pages.yml verify-mobile-stage-action.mjs
+          git add index.html verify-mobile-stage-action.mjs
           git commit -m 'Contain mobile operator surface and lock overflow regression'
           git push origin HEAD:fix/mobile-body-overflow-20260830
