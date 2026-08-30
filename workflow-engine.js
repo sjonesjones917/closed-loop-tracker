@@ -825,8 +825,9 @@ function operationalNextAction(project,currentStage){
   return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Return the final structured response',explanation:'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Continue the external work or conversation until the executor is ready to return one final strict JSON response and any required files.',primaryButton:'Paste final JSON'});
 }
 
-function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}
-function applicationTestSupported(test){return schema.validateTestIRTest(test).valid;}
+function deterministicRuntime(){return globalThis.closedLoopTestRuntime||null;}
+function applicationTestCapabilities(){const runtime=deterministicRuntime();return runtime?.capabilities?runtime.capabilities():Object.freeze([]);}
+function applicationTestSupported(test){const runtime=deterministicRuntime();return Boolean(runtime?.supports&&runtime.supports(test));}
 const TEST_EXECUTION_ACTIONS=Object.freeze({
   APPLICATION_DETERMINISTIC:'No operator execution is required only when the exact REQUIRED_CAPABILITY names a registered application-native test executor. Otherwise request a corrected test definition; the browser must not pretend it can run the test.',
   EXTERNAL_AGENT_TOOL:'Use the generated verification instruction in an external agent/tool environment that actually has the declared capability and exact required artifacts, then ingest its structured result and evidence.',
@@ -852,7 +853,7 @@ function testExecutionPlan(project){
 }
 function recordApplicationDeterministicResult(project,{testId,productId,runtimeResult,inputArtifacts=[]}={}){
   ensureShape(project);const tid=String(testId||''),pid=String(productId||'');const test=recordsForCurrentScope(project,'tests').find(r=>recordId(r,'tests')===tid),product=recordsForCurrentScope(project,'products').find(r=>recordId(r,'products')===pid);
-  if(!test||!schema.validateTestIRTest(test).valid)throw new Error(`Test ${tid||'UNKNOWN'} is not a valid current application-native Test IR test.`);if(!product)throw new Error(`Product ${pid||'UNKNOWN'} is not the current product.`);
+  if(!test||!applicationTestSupported(test))throw new Error(`Test ${tid||'UNKNOWN'} is not a valid current application-native Test IR test.`);if(!product)throw new Error(`Product ${pid||'UNKNOWN'} is not the current product.`);
   const determination=upper(runtimeResult?.determination||'UNDETERMINED');if(!['SATISFIED','VIOLATED','UNDETERMINED'].includes(determination))throw new Error('Native deterministic runtime returned an invalid determination.');if(runtimeResult?.status!=='COMPLETE'&&determination!=='UNDETERMINED')throw new Error('Incomplete native runtime execution cannot claim a conclusive determination.');
   const spec=recordValue(test,'EXECUTABLE_SPEC'),specSha256=hash.sha256Value(spec),artifactIdentities=inputArtifacts.map(a=>({artifactId:String(a.artifactId),filename:String(a.filename||''),byteSize:Number(a.byteSize),sha256:String(a.sha256||'')}));
   if(!artifactIdentities.length)throw new Error('Application-native deterministic execution requires at least one exact input artifact identity.');for(const a of artifactIdentities){const canonical=recordsForCurrentScope(project,'artifacts').find(r=>recordId(r,'artifacts')===a.artifactId);if(!canonical||upper(recordValue(canonical,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED'||String(recordValue(canonical,'SHA256'))!==a.sha256||Number(recordValue(canonical,'BYTE_SIZE'))!==a.byteSize)throw new Error(`Native deterministic input ${a.artifactId} is not application-verified current bytes.`);}
