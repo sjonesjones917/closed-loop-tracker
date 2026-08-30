@@ -1,0 +1,63 @@
+name: authority-contract-patch
+on:
+  push:
+    branches: ['fix/final-zero-loss-v3-20260830']
+    paths: ['.github/workflows/authority-contract-patch.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-zero-loss-v3-20260830
+          fetch-depth: 0
+      - name: Correct controlling authority contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          # Stage 04 semantic obligation accounting is agent content; the app validates closure and derives counts/gate.
+          p=Path('workbook.js'); t=p.read_text()
+          old='''    "agent": [\n      "DEFINED_TERM_GAPS",\n      "CONDITIONAL_REQUIREMENTS",\n      "OPTIONAL_REQUIREMENTS",\n      "BLOCKED_REQUIREMENTS"\n    ],\n    "application": [\n      "REQUIREMENTS_VERSION",\n      "REQUIREMENT_RECORDS",\n      "ATOMICITY_REVIEW_RESULTS",'''
+          new='''    "agent": [\n      "ATOMICITY_REVIEW_RESULTS",\n      "DEFINED_TERM_GAPS",\n      "CONDITIONAL_REQUIREMENTS",\n      "OPTIONAL_REQUIREMENTS",\n      "BLOCKED_REQUIREMENTS"\n    ],\n    "application": [\n      "REQUIREMENTS_VERSION",\n      "REQUIREMENT_RECORDS",'''
+          if old not in t: raise SystemExit('Stage 04 ownership block did not match expected v3 source')
+          t=t.replace(old,new,1); p.write_text(t)
+
+          # Stage 03 application-owned exhaustive-source fact is derived from exact current source coverage,
+          # not accepted from agentData. Existing per-source category/saturation checks remain mandatory.
+          p=Path('workflow-engine.js'); t=p.read_text()
+          impossible="if(!truth(project.stages[3]?.agentData?.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 must affirm that all current controlling sources were examined.');"
+          if impossible not in t: raise SystemExit('Stage 03 impossible agent-owned check not found')
+          t=t.replace(impossible,"if(missing.length)reasons.push('Stage 03 application-derived all-sources-examined condition is false.');",1)
+          p.write_text(t)
+
+          # Schema and runtime publish the exact controlling V1 primitive registry.
+          p=Path('workflow-schema.js'); t=p.read_text()
+          pat=r"operations:Object\.freeze\(\[[^\]]*\]\),"
+          exact="operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE']),"
+          t,n=re.subn(pat,exact,t,count=1)
+          if n!=1: raise SystemExit('Test IR operation registry not found')
+          p.write_text(t)
+
+          # Permanent regression: semantic Stage 4 rows are writable, app aggregate facts are not.
+          p=Path('verify.mjs'); t=p.read_text()
+          marker="if(core.STAGES.length!==30)throw new Error"
+          inject="if(schema.STAGE_FIELDS[4].ATOMICITY_REVIEW_RESULTS.producer!==schema.PRODUCER.AGENT)throw new Error('Stage 04 semantic obligation accounting must be agent-owned.');if(schema.STAGE_FIELDS[4].TOTAL_REQUIREMENTS.producer!==schema.PRODUCER.APPLICATION)throw new Error('Stage 04 aggregate counts must remain application-owned.');if(schema.STAGE_FIELDS[3].ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED.producer!==schema.PRODUCER.APPLICATION)throw new Error('Stage 03 all-sources-examined fact must be application-owned.');\n"
+          if inject not in t:
+              idx=t.find(marker)
+              if idx<0: raise SystemExit('verify.mjs insertion point missing')
+              t=t[:idx]+inject+t[idx:]
+          p.write_text(t)
+          PY
+          for f in workbook.js workflow-engine.js workflow-schema.js verify.mjs; do node --check "$f"; done
+          git add workbook.js workflow-engine.js workflow-schema.js verify.mjs
+          git diff --cached --check
+          git commit -m 'Correct Stage 3 and Stage 4 authority boundaries'
+          git push origin HEAD:fix/final-zero-loss-v3-20260830
