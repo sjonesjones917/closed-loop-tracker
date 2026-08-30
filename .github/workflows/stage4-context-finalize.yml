@@ -18,27 +18,25 @@ jobs:
           from pathlib import Path
           p=Path('.github/workflows/repair-stage4-durable-intent.yml')
           s=p.read_text()
-          old='''          s=s[:start]+"4:"+json.dumps(text)+","+s[end:]
-          p.write_text(s)
-
-          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.'''
-          new='''          s=s[:start]+"4:"+json.dumps(text)+","+s[end:]
-          old="contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
+          if 'humanInputSha256:hash.sha256Value' not in s:
+              anchor='          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.'
+              if anchor not in s:
+                  raise SystemExit('Stage 4 repair insertion anchor missing')
+              insertion='''          old="contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
           new="contextManifest={stage,operation,scope,humanInputSha256:hash.sha256Value(Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,d])=>d?.producer==='HUMAN').map(([name])=>[name,state?.job?.[name]??null]))),verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
           if old not in s: raise SystemExit('context manifest marker missing')
           s=s.replace(old,new,1)
           p.write_text(s)
 
-          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.'''
-          if old not in s:
-              raise SystemExit('Stage 4 repair insertion marker missing')
-          p.write_text(s.replace(old,new,1))
+'''
+              s=s.replace(anchor,insertion+anchor,1)
+              p.write_text(s)
           PY
-      - name: Commit only the one-line proof correction
+      - name: Commit only the missing context-binding correction
         run: |
           rm -f .github/workflows/stage4-context-finalize.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add .github/workflows/repair-stage4-durable-intent.yml .github/workflows/stage4-context-finalize.yml
+          git add -A
           git commit -m 'Bind Stage 4 prompt identity to retained human input'
           git push origin HEAD:fix/stage4-durable-intent-final-20260830
