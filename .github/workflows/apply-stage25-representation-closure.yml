@@ -1,0 +1,114 @@
+name: Apply Stage 25 representation closure
+on:
+  push:
+    branches:
+      - fix/stage25-representation-closure-20260830
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage25-representation-closure-20260830
+      - name: Apply implementation fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # Restore the established prompt-box geometry exactly; no redesign.
+          p = Path('index.html')
+          s = p.read_text()
+          old = '.completion-control-body>.record-card{box-shadow:none}.expandable-prompt.expanded{height:auto;max-height:none}'
+          new = '.completion-control-body>.record-card{box-shadow:none}.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          if old not in s and '.expandable-prompt{height:280px;max-height:280px}' not in s:
+              raise SystemExit('Expected prompt geometry anchor not found')
+          s = s.replace(old, new)
+          p.write_text(s)
+
+          # Require a deterministic, project-neutral representation coverage payload in Stage 25.
+          p = Path('prompt-engine.js')
+          s = p.read_text()
+          old = 'For every required representation inspect the exact delivered bytes and record what was opened, rendered, transformed, or package-inspected. Objective file identity comes from the application; irreducible visual or semantic observations come from the proper human or reviewer authority.'
+          if old in s:
+              new = old + ' For each artifact, OBSERVATIONS must be a JSON STRING with keys requiredPageOrViewIds, inspectedPageOrViewIds, requiredPackagedFileIds, openedOrTestedPackagedFileIds, requiredTransformationIds, inspectedTransformationIds, and observation. Use empty arrays only when that coverage class genuinely does not apply. The application compares the required and inspected identity sets exactly; prose alone cannot satisfy page/view, package-file, or transformation coverage.'
+              s = s.replace(old, new)
+          else:
+              # Insert the same rule into the Stage 25 completion directive if the stage-special wording differs.
+              marker = "25:'Complete only after every current product/delivery artifact, required representation, page/view, transformation, and packaged file has actually been inspected through the proper authority path and no mandatory representation unknown remains.'"
+              replacement = "25:'Complete only after every current product/delivery artifact, required representation, page/view, transformation, and packaged file has actually been inspected through the proper authority path and no mandatory representation unknown remains. For each artifact, OBSERVATIONS must be a JSON STRING containing requiredPageOrViewIds, inspectedPageOrViewIds, requiredPackagedFileIds, openedOrTestedPackagedFileIds, requiredTransformationIds, inspectedTransformationIds, and observation. Use empty arrays only when that class genuinely does not apply; the application compares required and inspected identity sets exactly.'"
+              if marker not in s:
+                  raise SystemExit('Stage 25 prompt anchor not found')
+              s = s.replace(marker, replacement)
+          s = s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/47';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/48';")
+          p.write_text(s)
+
+          # Add application-owned representation coverage calculation and gate integration.
+          p = Path('workflow-engine.js')
+          s = p.read_text()
+          anchor = '\nconst applicationadjudicationGate=gate;\n'
+          helper = r'''
+function representationInspectionCoverage(project){
+  ensureShape(project);
+  const scope=currentScope(project),productId=String(scope.productId||''),artifacts=recordsForCurrentScope(project,'artifacts').filter(a=>productId&&String(a.scope?.productId||'')===productId),inspections=recordsForCurrentScope(project,'representationInspections'),reasons=[],details=[];
+  const normalizeList=value=>[...new Set(safe(value).map(x=>String(x??'').trim()).filter(Boolean))].sort();
+  const sameSet=(a,b)=>hash.sha256Value(normalizeList(a))===hash.sha256Value(normalizeList(b));
+  let totalPagesOrViewsRequired=0,totalPagesOrViewsInspected=0,totalPackagedFilesRequired=0,totalPackagedFilesOpenedOrTested=0,totalTransformationsRequired=0,totalTransformationsInspected=0;
+  for(const artifact of artifacts){
+    const artifactId=recordId(artifact,'artifacts'),rows=inspections.filter(i=>String(recordValue(i,'ARTIFACT_ID')||i.relationships?.ARTIFACT_ID||'')===artifactId);
+    if(rows.length!==1){reasons.push(`Exactly one current aggregate representation inspection is required for ${artifactId}; found ${rows.length}.`);continue;}
+    const inspection=rows[0];let payload=null;try{payload=JSON.parse(String(recordValue(inspection,'OBSERVATIONS')||''));}catch{reasons.push(`${recordId(inspection,'representationInspections')}: OBSERVATIONS must be the contracted strict JSON coverage object.`);continue;}
+    if(!payload||typeof payload!=='object'||Array.isArray(payload)){reasons.push(`${recordId(inspection,'representationInspections')}: OBSERVATIONS coverage payload is not an object.`);continue;}
+    const requiredPageOrViewIds=normalizeList(payload.requiredPageOrViewIds),inspectedPageOrViewIds=normalizeList(payload.inspectedPageOrViewIds),requiredPackagedFileIds=normalizeList(payload.requiredPackagedFileIds),openedOrTestedPackagedFileIds=normalizeList(payload.openedOrTestedPackagedFileIds),requiredTransformationIds=normalizeList(payload.requiredTransformationIds),inspectedTransformationIds=normalizeList(payload.inspectedTransformationIds),observation=String(payload.observation||'').trim();
+    totalPagesOrViewsRequired+=requiredPageOrViewIds.length;totalPagesOrViewsInspected+=inspectedPageOrViewIds.length;totalPackagedFilesRequired+=requiredPackagedFileIds.length;totalPackagedFilesOpenedOrTested+=openedOrTestedPackagedFileIds.length;totalTransformationsRequired+=requiredTransformationIds.length;totalTransformationsInspected+=inspectedTransformationIds.length;
+    if(!sameSet(requiredPageOrViewIds,inspectedPageOrViewIds))reasons.push(`${artifactId}: required page/view identities do not exactly match inspected page/view identities.`);
+    if(!sameSet(requiredPackagedFileIds,openedOrTestedPackagedFileIds))reasons.push(`${artifactId}: required packaged-file identities do not exactly match opened/tested packaged-file identities.`);
+    if(!sameSet(requiredTransformationIds,inspectedTransformationIds))reasons.push(`${artifactId}: required transformation identities do not exactly match inspected transformation identities.`);
+    if(!observation)reasons.push(`${artifactId}: representation observation is empty.`);
+    details.push({artifactId,requiredPageOrViewIds,inspectedPageOrViewIds,requiredPackagedFileIds,openedOrTestedPackagedFileIds,requiredTransformationIds,inspectedTransformationIds,observation});
+  }
+  const inspectionArtifactIds=new Set(inspections.map(i=>String(recordValue(i,'ARTIFACT_ID')||i.relationships?.ARTIFACT_ID||''))),expectedArtifactIds=new Set(artifacts.map(a=>recordId(a,'artifacts')));
+  for(const id of inspectionArtifactIds)if(id&&!expectedArtifactIds.has(id))reasons.push(`Representation inspection references non-current product artifact ${id}.`);
+  return {complete:artifacts.length>0&&reasons.length===0,reasons,productId,totalDeliveryArtifacts:artifacts.length,totalPagesOrViewsRequired,totalPagesOrViewsInspected,totalPackagedFilesRequired,totalPackagedFilesOpenedOrTested,totalTransformationsRequired,totalTransformationsInspected,details};
+}
+'''
+          if 'function representationInspectionCoverage(project)' not in s:
+              if anchor not in s:
+                  raise SystemExit('Workflow gate anchor not found')
+              s = s.replace(anchor, '\n'+helper+anchor)
+
+          gate_anchor = "  const stageCollection={22:'deterministicResults',23:'meaningResults',24:'adversarialResults',25:'representationInspections'}[stage];if(stageCollection)for(const r of recordsForCurrentScope(project,stageCollection)){const e=evaluateResultConsistency(stageCollection,r,testForResult(project,r),project);if(e.determination!=='SATISFIED')add(e.reasons.length?e.reasons:[stageCollection+' contains a non-satisfied effective result.']);}\n"
+          gate_extra = gate_anchor + "  if(stage===25){const coverage=representationInspectionCoverage(project);if(!coverage.complete)add(coverage.reasons.length?coverage.reasons:['Stage 25 representation coverage is incomplete.']);}\n"
+          if "if(stage===25){const coverage=representationInspectionCoverage(project)" not in s:
+              if gate_anchor not in s:
+                  raise SystemExit('Stage collection gate anchor not found')
+              s = s.replace(gate_anchor, gate_extra)
+
+          # Extend derived Stage 25 application facts without changing agent ownership.
+          old = "case 27:Object.assign(derived,{TOTAL_MANDATORY_REQUIREMENTS:release.mandatoryRequirementCount,MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE:release.satisfied,MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED:release.violated,MANDATORY_REQUIREMENTS_NOT_ESTABLISHED:release.undetermined,UNRESOLVED_CRITICAL_DEFECTS:release.criticalDefects,UNRESOLVED_MAJOR_DEFECTS:release.majorDefects,SELECTED_RELEASE_STATE:release.determination});break;case 28:"
+          new = "case 25:{const coverage=representationInspectionCoverage(project),baseline=recordsForCurrentScope(project,'baselines').at(-1),product=recordsForCurrentScope(project,'products').at(-1),defects=unresolvedMaterialDefects(project);Object.assign(derived,{PRODUCT_ID:recordId(product,'products')||project.job.CURRENT_PRODUCT_ID||'NONE',PRODUCT_VERSION:recordValue(product,'PRODUCT_VERSION')||'NONE',REPRESENTATION_REVIEW_VERSION:'REPRESENTATION-'+hash.sha256Value(coverage.details).slice(0,16).toUpperCase(),APPROVED_BASELINE_ID:recordId(baseline,'baselines')||project.job.CURRENT_BASELINE_ID||'NONE',DELIVERY_ARTIFACT_INVENTORY:coverage.details.map(x=>x.artifactId),TRANSFORMATION_CHAIN_RECORDS:coverage.totalTransformationsInspected,PAGE_OR_VIEW_INSPECTION_RECORDS:coverage.totalPagesOrViewsInspected,PACKAGE_INSPECTION_RECORDS:coverage.totalPackagedFilesOpenedOrTested,TOTAL_DELIVERY_ARTIFACTS:coverage.totalDeliveryArtifacts,TOTAL_PAGES_OR_VIEWS_REQUIRED:coverage.totalPagesOrViewsRequired,TOTAL_PAGES_OR_VIEWS_INSPECTED:coverage.totalPagesOrViewsInspected,TOTAL_PACKAGED_FILES_REQUIRED:coverage.totalPackagedFilesRequired,TOTAL_PACKAGED_FILES_OPENED_OR_TESTED:coverage.totalPackagedFilesOpenedOrTested,UNRESOLVED_CRITICAL_DEFECTS:defects.filter(r=>upper(recordValue(r,'SEVERITY'))==='CRITICAL').length,UNRESOLVED_MAJOR_DEFECTS:defects.filter(r=>upper(recordValue(r,'SEVERITY'))==='MAJOR').length,UNRESOLVED_REPRESENTATION_UNKNOWNS:coverage.reasons.length,FINAL_REPRESENTATION_DETERMINATION:coverage.complete?'SATISFIED':'UNDETERMINED'});break;}case 27:Object.assign(derived,{TOTAL_MANDATORY_REQUIREMENTS:release.mandatoryRequirementCount,MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE:release.satisfied,MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED:release.violated,MANDATORY_REQUIREMENTS_NOT_ESTABLISHED:release.undetermined,UNRESOLVED_CRITICAL_DEFECTS:release.criticalDefects,UNRESOLVED_MAJOR_DEFECTS:release.majorDefects,SELECTED_RELEASE_STATE:release.determination});break;case 28:"
+          if 'case 25:{const coverage=representationInspectionCoverage(project)' not in s:
+              if old not in s:
+                  raise SystemExit('deriveStageData Stage 27 anchor not found')
+              s = s.replace(old, new)
+
+          export_anchor = 'evaluateIntakeAccounting,obligationManifest,evaluateObligationAccounting,gate,deriveStageData,recalculate'
+          if 'representationInspectionCoverage' not in s[s.rfind('globalThis.closedLoopWorkflowEngine'):]:
+              if export_anchor not in s:
+                  raise SystemExit('workflow export anchor not found')
+              s = s.replace(export_anchor, 'evaluateIntakeAccounting,obligationManifest,evaluateObligationAccounting,representationInspectionCoverage,gate,deriveStageData,recalculate')
+          p.write_text(s)
+          PY
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html prompt-engine.js workflow-engine.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Close Stage 25 representation coverage and restore prompt geometry"
+          git push origin HEAD:fix/stage25-representation-closure-20260830
