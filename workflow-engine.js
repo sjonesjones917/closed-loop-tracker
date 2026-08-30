@@ -679,65 +679,11 @@ function executionStability(project,iterationId){
   const defects=recordsForIteration(project,'defects',iterationId),patterns=new Map(),newDefectsByRun={};for(const d of defects){const key=hash.sha256Value([recordValue(d,'OBSERVED_FAILURE'),recordValue(d,'EXPECTED_CONDITION')]);patterns.set(key,(patterns.get(key)||0)+1);const run=String(recordValue(d,'RUN_ID')||d.relationships?.RUN_ID||'UNASSIGNED');newDefectsByRun[run]=(newDefectsByRun[run]||0)+1;}
   return {runCount:matrix.runs.length,requirementStability:byReq,testStability:byTest,totalDistinctDefects:defects.length,repeatedDefectCount:[...patterns.values()].filter(n=>n>1).reduce((a,n)=>a+n,0),uniqueDefectCount:[...patterns.values()].filter(n=>n===1).length,newDefectsByRun,unexplainedVarianceCount:recordsForIteration(project,'comparisons',iterationId).filter(r=>truth(recordValue(r,'CORRECTNESS_AFFECTING_VARIANCE'))&&!truth(recordValue(r,'AUTHORIZED_VARIANCE'))).length};
 }
-function suppliedMaterialReferences(project){
-  const raw=String(project?.job?.SUPPLIED_MATERIALS_INVENTORY||'').trim();
-  if(!raw||/^(?:UNKNOWN|NONE|NOT APPLICABLE|NULL|\[\]|\{\}|NONE SUPPLIED|NO MATERIALS?(?: SUPPLIED)?)$/i.test(raw))return [];
-  const references=[],seen=new Set();
-  const transferMode=(type,label)=>{
-    const declared=upper(type),value=String(label||'').trim();
-    if(/MESSAGE|INLINE|TEXT|NOTE|CHAT/.test(declared))return 'INLINE_JOB_INPUT';
-    if(/URL|URI|LINK|WEB|REFERENCE/.test(declared)||/^https?:\/\//i.test(value))return 'AUTHORIZED_REFERENCE';
-    if(/FILE|ATTACH|DOCUMENT|ARCHIVE|FOLDER|DIRECTORY|IMAGE|DRAWING|MODEL|SPREADSHEET|REPOSITORY|PACKAGE/.test(declared)||/\.[A-Za-z0-9]{1,12}(?:$|[?#])/.test(value))return 'ORIGINAL_ATTACHMENT';
-    return 'ORIGINAL_MATERIAL';
-  };
-  const add=(label,type='SUPPLIED_PROJECT_INPUT')=>{
-    const clean=String(label||'').trim();
-    if(!clean||/^(?:UNKNOWN|NONE|NOT APPLICABLE)$/i.test(clean))return;
-    const key=clean.toLowerCase();
-    if(seen.has(key))return;
-    seen.add(key);
-    references.push({label:clean,type:String(type||'SUPPLIED_PROJECT_INPUT').trim()||'SUPPLIED_PROJECT_INPUT',transferMode:transferMode(type,clean)});
-  };
-  const walk=(value,depth=0)=>{
-    if(depth>4||value===null||value===undefined)return;
-    if(Array.isArray(value)){for(const item of value)walk(item,depth+1);return;}
-    if(typeof value==='string'){add(value);return;}
-    if(typeof value!=='object')return;
-    const label=value.exactNameOrReference??value.filename??value.fileName??value.name??value.title??value.reference??value.path??value.url;
-    const type=value.type??value.materialType??value.kind??value.role??'SUPPLIED_PROJECT_INPUT';
-    if(label!==undefined&&label!==null&&String(label).trim()){add(label,type);return;}
-    for(const key of ['files','materials','items','attachments','references','suppliedMaterials','inventory'])if(Object.prototype.hasOwnProperty.call(value,key))walk(value[key],depth+1);
-  };
-  try{walk(JSON.parse(raw));}
-  catch{
-    const parts=raw.split(/\r?\n|;/).map(value=>value.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean);
-    for(const part of parts.length?parts:[raw])add(part);
-  }
-  return references;
-}
 function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){
-  const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map(),withhold=new Map(),expectBack=new Map(),artifacts=recordsForCurrentScope(project,'artifacts'),artifactsById=new Map(artifacts.map(a=>[recordId(a,'artifacts'),a])),conversationMaterials=[],optionalApplicationCopies=new Map();
+  const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map(),withhold=new Map(),expectBack=new Map(),artifacts=recordsForCurrentScope(project,'artifacts'),artifactsById=new Map(artifacts.map(a=>[recordId(a,'artifacts'),a]));
   const exactArtifact=a=>{if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')return null;const id=recordId(a,'artifacts');return {artifactId:id,filename:String(recordValue(a,'FILENAME')||id),byteSize:Number(recordValue(a,'BYTE_SIZE')||0),sha256:String(recordValue(a,'SHA256')||'UNKNOWN'),role:String(recordValue(a,'ROLE')||'AUTHORIZED_INPUT')};};
   const addArtifact=a=>{const exact=exactArtifact(a);if(!exact)return false;send.set(exact.artifactId,exact);return true;};
   const addReferenced=value=>{for(const id of new Set((JSON.stringify(value||'').match(/ARTIFACT-[A-Za-z0-9-]+/g)||[])))addArtifact(artifactsById.get(id));};
-  if(stage===4){
-    const currentInput=String(currentScope(project).inputVersion||''),activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput);
-    const basename=value=>String(value||'').trim().split(/[\\/]/).pop().toLowerCase();
-    for(const reference of suppliedMaterialReferences(project)){
-      if(reference.transferMode==='INLINE_JOB_INPUT')continue;
-      const key=basename(reference.label),matches=activeArtifacts.filter(a=>basename(recordValue(a,'FILENAME'))===key),verified=matches.map(exactArtifact).filter(Boolean),copy=verified.length===1?verified[0]:null;
-      conversationMaterials.push({
-        label:reference.label,
-        type:reference.type,
-        transferMode:reference.transferMode,
-        externalAccessStatus:'NOT_OBSERVABLE_BY_APPLICATION',
-        operatorAction:reference.transferMode==='AUTHORIZED_REFERENCE'?'Provide this reference with the Stage 04 instruction.':'Attach or provide the original material with the Stage 04 instruction.',
-        applicationUploadRequired:false,
-        optionalApplicationArtifactId:copy?.artifactId||null
-      });
-      if(copy)optionalApplicationCopies.set(copy.artifactId,copy);
-    }
-  }
   for(const item of items){for(const a of item.handoff.send)addArtifact(artifactsById.get(a.artifactId));for(const x of item.handoff.withhold)withhold.set(x.artifactIdOrCategory,x);for(const x of item.handoff.expectBack)expectBack.set(x.kind+'|'+x.filenameOrPattern,x);}
   const current=currentScope(project),runExecution=stage===11||(stage===17&&op==='EXECUTE_RUN')||(stage===19&&op==='EXECUTE_RUN');
   if(runExecution){const candidate=recordsForCurrentScope(project,'candidateFreezes').find(c=>recordId(c,'candidateFreezes')===String(current.candidateId||''))||recordsForCurrentScope(project,'candidateFreezes').at(-1);addReferenced(recordValue(candidate,'COMPONENT_MANIFEST'));addReferenced(recordValue(candidate,'IMMUTABLE_LOCATIONS'));}
@@ -746,7 +692,7 @@ function executionHandoff(project,{stage=Number(project.activeStage||0),operatio
   if(stage===12){const wanted=runIds?new Set(runIds.map(String)):null;for(const run of recordsForCurrentScope(project,'runs'))if(!wanted||wanted.has(recordId(run,'runs')))addReferenced(recordValue(run,'OUTPUT_ARTIFACT_IDENTITIES'));}
   const stageWithhold={11:['outputs from other runs','reviewer feedback','failure explanations','proposed corrections'],12:['other verifiers’ determinations','Stage 13 comparison findings','root-cause analysis','correction proposals'],23:['Stage 21 generator correctness claims','unneeded deterministic pass conclusions','adversarial findings'],24:['generator reasoning or self-evaluation','prior reviewer conclusions that tell the adversarial reviewer what to find']};for(const label of stageWithhold[stage]||[])withhold.set(label,{artifactIdOrCategory:label,reason:'Withheld to preserve information isolation and reduce verification bias.'});
   const externalWork=[11,12,17,19,21,23,24,25].includes(stage);if(externalWork)expectBack.set('STRUCTURED_RESPONSE|final strict JSON response',{kind:'STRUCTURED_RESPONSE',filenameOrPattern:'final strict JSON response',required:true});
-  return {send:[...send.values()],withhold:[...withhold.values()],expectBack:[...expectBack.values()],conversationMaterials,optionalApplicationCopies:[...optionalApplicationCopies.values()]};
+  return {send:[...send.values()],withhold:[...withhold.values()],expectBack:[...expectBack.values()]};
 }
 function evidenceChainExplanation(project,chain){const req=String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||''),requirement=recordsForCurrentScope(project,'requirements').find(r=>requirementId(r)===req)||records(project,'requirements').find(r=>requirementId(r)===req)||null,tests=safe(recordValue(chain,'TEST_ID')),results=safe(recordValue(chain,'TEST_RESULT_ID')),evidence=safe(recordValue(chain,'EVIDENCE_ID')),identities=safe(recordValue(chain,'ARTIFACT_HASH_IDENTITY')),support=[],unresolved=[...safe(recordValue(chain,'MISSING_LINKS'))],resultCollections=['verification','deterministicResults','meaningResults','adversarialResults'];for(const t of tests)support.push(t+' applies to '+req);for(const id of results){let hit=null;for(const collection of resultCollections){const record=recordsForCurrentScope(project,collection).find(r=>recordId(r,collection)===String(id));if(record){hit={collection,record};break;}}if(!hit){unresolved.push('CURRENT_RESULT:'+id);continue;}const test=testForResult(project,hit.record),effective=effectiveDetermination(hit.collection,hit.record,test,project),contract=evaluateEvidenceContract(test,hit.record,null,project),sufficiency=evaluateEvidenceSufficiency(project,{requirement,test,result:hit.record});support.push('Effective determination for '+id+' is '+effective);if(contract.sufficient&&sufficiency.sufficient)support.push((contract.evidenceIds||sufficiency.presentEvidenceIds||[]).join(', ')+' satisfies the structural evidence contract and is capable of proving the proposition for '+id);else unresolved.push('INSUFFICIENT_EVIDENCE:'+id);if(effective!=='SATISFIED')unresolved.push('NON_SATISFIED_EFFECTIVE_RESULT:'+id);}for(const e of evidence)support.push(e+' is canonical evidence linked to the current proposition');for(const id of identities){const record=recordsForCurrentScope(project,'artifactIdentities').find(x=>recordId(x,'artifactIdentities')===id);if(record&&upper(recordValue(record,'AUTHORIZATION'))==='AUTHORIZED'&&truth(recordValue(record,'EXACT_HASH_MATCH'))&&truth(recordValue(record,'EXACT_SIZE_MATCH')))support.push(id+' proves audited delivery bytes match: '+String(recordValue(record,'PRE_DELIVERY_SHA256')||'UNKNOWN'));else unresolved.push('UNAUTHORIZED_ARTIFACT_IDENTITY:'+id);}return {proposition:'Delivered artifact satisfies '+req,support,unresolved:[...new Set(unresolved)]};}
 
@@ -786,7 +732,7 @@ function operationalNextAction(project,currentStage){
   if(proposals.length)return actionEnvelope(project,stage,{actionType:'REVIEW_PROPOSAL',heading:'Review the proposed canonical change',explanation:'Validation succeeded. Review the current value beside the proposed value, provenance, and validation result before accepting or rejecting this proposal.',primaryButton:'Review proposal'});
   if(requests.length)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Answer the current human-only question',explanation:'Continue the human conversation. Saving an answer creates a new User Job Input version, invalidates the old prompt and proposal, and requires a replacement prompt for this same stage.',primaryButton:'Continue conversation',newPromptRequired:true});
   if(stage===16){const correction=stage16CorrectionPlan(project);if(correction.actionType==='BLOCKED')return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:correction.heading,explanation:correction.explanation,blockingReason:correction.explanation});if(correction.actionType==='HUMAN_AUTHORITY')return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:correction.heading,explanation:correction.explanation,primaryButton:'Provide human authority'});return actionEnvelope(project,stage,{actionType:'REVIEW_PROPOSAL',heading:correction.heading,explanation:correction.explanation,primaryButton:'Review correction'});}
-  if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Continue requirement compilation with the agent',explanation:'Send the current Stage 04 instruction with '+materials.join(', ')+'. The application does not imply those materials were transferred automatically. When the agent finishes, return its final JSON.',primaryButton:'Continue conversation',filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack});}
+
   if([23,24].includes(stage)){const reviewer=records(project,'freshContexts').filter(r=>isActiveRecord(r)&&Number(r.stage)===stage).at(-1);if(!reviewer){const handoff=executionHandoff(project,{stage,operation:'COMPLETE'});return actionEnvelope(project,stage,{actionType:'AI_REVIEW',heading:'Open a fresh independent reviewer context',explanation:'Use a reviewer context that did not generate the product. Register its external context identifier before sending any product or review material so the application can bind and evaluate independence.',primaryButton:'Register reviewer context',filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack});}}
   const plan=testExecutionPlan(project),relevant=[12,22,23,24].includes(stage)?plan.items:[];
   const blocked=relevant.find(item=>!item.executableNow);
