@@ -1,30 +1,113 @@
-name: Diagnose retained browser state
+name: One-time legacy Stage 01 migration repair
 'on':
   push:
     branches: [fix/stage06-authoring-contract-final]
     paths: ['.github/workflows/diagnose-browser-state.yml']
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
-  diagnose:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {ref: fix/stage06-authoring-contract-final}
+        with: {ref: fix/stage06-authoring-contract-final, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Print exact retained browser state at failing assertion
+      - name: Preserve accepted legacy Stage 01 without bypassing changed-input accounting
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('verify-browser.mjs');s=p.read_text()
-          old="assert(retained.stages['1'].status==='COMPLETE'&&Number(retained.job.CURRENT_STAGE)===2,'Retained Stage 01/02 state is wrong.');"
-          new="assert(retained.stages['1'].status==='COMPLETE'&&Number(retained.job.CURRENT_STAGE)===2,`Retained Stage 01/02 state is wrong: ${JSON.stringify({stage1:retained.stages['1'],currentStage:retained.job.CURRENT_STAGE,currentState:retained.job.CURRENT_STATE})}`);"
-          if old not in s: raise SystemExit('diagnostic assertion anchor missing')
+
+          # 1) Persist deterministic application-owned migration evidence in workbook migration.
+          p=Path('workbook.js');s=p.read_text()
+          old="  if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Legacy project migration requires exactly 30 stages.');\n  return migrated;\n}"
+          new="""  if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Legacy project migration requires exactly 30 stages.');
+  const legacyStage1=migrated.stages?.[1]||migrated.stages?.['1']||{};
+  if(String(legacyStage1.status||'').trim().toUpperCase()==='COMPLETE'){
+    const humanAuthoritySnapshot=Object.fromEntries((STAGE_OWNERSHIP[1]?.human||[]).map(name=>[name,migrated.job?.[name]??null]));
+    migrated.projectData.stage01MigrationAcceptance={schema:'closed-loop-stage01-migration-acceptance/1',sourceSchema:'human-project/30',inputVersion:migrated.job?.CURRENT_INPUT_VERSION||'INPUT-v001',priorStageStatus:'COMPLETE',humanAuthoritySnapshot,acceptedDataChangeIds:Array.isArray(legacyStage1.acceptedDataChangeIds)?[...legacyStage1.acceptedDataChangeIds]:[],acceptedResponseIds:Array.isArray(legacyStage1.acceptedResponseIds)?[...legacyStage1.acceptedResponseIds]:[]};
+  }
+  return migrated;
+}"""
+          if old not in s: raise SystemExit('workbook migration anchor missing')
           p.write_text(s.replace(old,new,1))
+
+          # 2) Derive an effective structured capture from migration evidence only while human input is byte-for-byte semantically unchanged.
+          p=Path('workflow-engine.js');s=p.read_text()
+          old="const INTAKE_DISPOSITIONS=new Set(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);\nfunction evaluateStage01IntakeAccounting(project,{inputSetContents}={}){ensureShape(project);const manifest=buildIntakeCoverageManifest(project),raw=inputSetContents!==undefined?inputSetContents:(project.stages?.[1]?.agentData?.INPUT_SET_CONTENTS??project.stages?.[1]?.acceptedData?.INPUT_SET_CONTENTS??''),capture=parseStage01CapturedUnits(raw),expected=new Set(manifest.units.map(unit=>unit.unitId)),counts=new Map(),unknown=[],invalid=[];"
+          new="""const INTAKE_DISPOSITIONS=new Set(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+function currentHumanAuthoritySnapshot(project){return Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>definition?.producer==='HUMAN').map(([name])=>[name,project?.job?.[name]??null]));}
+function migratedStage01Capture(project,manifest){const acceptance=project?.projectData?.stage01MigrationAcceptance;if(!acceptance||acceptance.schema!=='closed-loop-stage01-migration-acceptance/1'||upper(acceptance.priorStageStatus)!=='COMPLETE'||String(acceptance.inputVersion||'')!==String(manifest.inputVersion||''))return null;if(hash.sha256Value(acceptance.humanAuthoritySnapshot||{})!==hash.sha256Value(currentHumanAuthoritySnapshot(project)))return null;const units=manifest.units.map((unit,index)=>{let text='';if(unit.kind==='JOB_FIELD'){const name=String(unit.sourceLocation||'').replace(/^job\\./,'');text=String(project?.job?.[name]??'');}else if(unit.kind==='SUPPLIED_MATERIAL')text=String(unit.label||'');return {sourceUnitId:unit.unitId,disposition:'retained as context',reason:'Deterministic migration of a previously completed pre-/3 Stage 01. The exact human-authority value remains authoritative in current User Job Input and preserved migration evidence; migration does not invent a new agent interpretation.',extractedStatements:text?[{statementKey:`migration-${String(index+1).padStart(4,'0')}`,text,statementClass:'CONTEXT'}]:[]};});return {format:'STRUCTURED',units,raw:JSON.stringify({units}),migrationAcceptance:true,migrationSourceSchema:acceptance.sourceSchema};}
+function effectiveStage01Capture(project,{inputSetContents}={}){const raw=inputSetContents!==undefined?inputSetContents:(project.stages?.[1]?.agentData?.INPUT_SET_CONTENTS??project.stages?.[1]?.acceptedData?.INPUT_SET_CONTENTS??''),parsed=parseStage01CapturedUnits(raw);if(parsed.format==='STRUCTURED'||inputSetContents!==undefined)return parsed;return migratedStage01Capture(project,buildIntakeCoverageManifest(project))||parsed;}
+function evaluateStage01IntakeAccounting(project,{inputSetContents}={}){ensureShape(project);const manifest=buildIntakeCoverageManifest(project),capture=effectiveStage01Capture(project,{...(inputSetContents!==undefined?{inputSetContents}: {})}),expected=new Set(manifest.units.map(unit=>unit.unitId)),counts=new Map(),unknown=[],invalid=[];"""
+          if old not in s: raise SystemExit('Stage 01 evaluator anchor missing')
+          s=s.replace(old,new,1)
+          old2="const capture=parseStage01CapturedUnits(project.stages?.[1]?.agentData?.INPUT_SET_CONTENTS??project.stages?.[1]?.acceptedData?.INPUT_SET_CONTENTS??'');for(const unit of safe(capture.units))"
+          new2="const capture=effectiveStage01Capture(project);for(const unit of safe(capture.units))"
+          if old2 not in s: raise SystemExit('Stage 04 effective capture anchor missing')
+          s=s.replace(old2,new2,1)
+          # Export the effective capture for the prompt engine and migration regressions.
+          if 'evaluateStage01IntakeAccounting,' not in s: raise SystemExit('workflow engine export anchor missing')
+          s=s.replace('evaluateStage01IntakeAccounting,','evaluateStage01IntakeAccounting,effectiveStage01Capture,',1)
+          p.write_text(s)
+
+          # 3) Stage 04 prompt must display the same effective migrated capture that the engine gates and compiles.
+          p=Path('prompt-engine.js');s=p.read_text()
+          old="stage01AcceptedCapture:parseCapturedInputSet(state?.stages?.[1]||{})"
+          new="stage01AcceptedCapture:(workflow.effectiveStage01Capture?workflow.effectiveStage01Capture(state):parseCapturedInputSet(state?.stages?.[1]||{}))"
+          if old not in s: raise SystemExit('Stage 04 prompt capture anchor missing')
+          p.write_text(s.replace(old,new,1))
+
+          # 4) Browser expectation uses the actual application stage-label representation; retain /3 response assertions.
+          p=Path('verify-browser.mjs');s=p.read_text()
+          old="retained.stages['1'].status==='COMPLETE'&&Number(retained.job.CURRENT_STAGE)===2"
+          new="retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02'"
+          if old not in s: raise SystemExit('browser retained-stage assertion anchor missing')
+          p.write_text(s.replace(old,new,1))
+
+          # 5) Strengthen migration proof through the actual engine recalculation path and changed-input invalidation.
+          p=Path('verify-v3-migration.mjs');s=p.read_text()
+          old="for(const file of ['workbook.js','hash.js','workflow-schema.js'])vm.runInContext"
+          new="for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInContext"
+          if old not in s: raise SystemExit('migration runtime load anchor missing')
+          s=s.replace(old,new,1)
+          anchor="assert.deepEqual(previous,original,'migration must not mutate the imported object');\n"
+          addition="""assert.deepEqual(previous,original,'migration must not mutate the imported object');
+
+const core=context.closedLoopCore,engine=context.closedLoopWorkflowEngine;
+const retainedLegacy=JSON.parse(fs.readFileSync(new URL('./TEST_PROJECT.json',import.meta.url),'utf8'));
+assert.equal(retainedLegacy.schema,'human-project/30','retained migration fixture must exercise human-project/30');
+const retainedMigrated=core.migrateState(retainedLegacy);
+engine.ensureShape(retainedMigrated);engine.recalculate(retainedMigrated);
+assert.equal(retainedMigrated.stages[1].status,'COMPLETE','legacy accepted Stage 01 must remain complete after deterministic /3 migration');
+assert.equal(retainedMigrated.job.CURRENT_STAGE,'STAGE 02','legacy accepted project must remain at Stage 02 after deterministic /3 migration');
+const effectiveCapture=engine.effectiveStage01Capture(retainedMigrated);
+assert.equal(effectiveCapture.format,'STRUCTURED','legacy accepted Stage 01 must have an effective structured /3 capture');
+assert.equal(effectiveCapture.migrationAcceptance,true,'legacy capture must be explicitly identified as migration-derived, not a fabricated agent response');
+assert.equal(engine.evaluateStage01IntakeAccounting(retainedMigrated).coverage,1,'migration-derived Stage 01 accounting must cover the exact unchanged human-input manifest');
+const priorRequirementText=retainedMigrated.job.EXPLICIT_USER_REQUIREMENTS;
+retainedMigrated.job.EXPLICIT_USER_REQUIREMENTS=String(priorRequirementText||'')+'\\nMIGRATION INPUT CHANGE SENTINEL';
+engine.recalculate(retainedMigrated);
+assert.notEqual(retainedMigrated.stages[1].status,'COMPLETE','changed human input must invalidate migration-only Stage 01 acceptance');
+assert.equal(retainedMigrated.job.CURRENT_STAGE,'STAGE 01','changed human input must require a fresh current Stage 01 /3 response');
+retainedMigrated.job.EXPLICIT_USER_REQUIREMENTS=priorRequirementText;
+"""
+          if anchor not in s: raise SystemExit('migration regression insertion anchor missing')
+          s=s.replace(anchor,addition,1)
+          p.write_text(s)
           PY
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
+          node --check workbook.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-browser.mjs
+          node --check verify-v3-migration.mjs
+          node verify-v3-migration.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          git rm .github/workflows/diagnose-browser-state.yml
+          git config user.name closed-loop-migration-repair
+          git config user.email closed-loop-migration-repair@users.noreply.github.com
+          git add workbook.js workflow-engine.js prompt-engine.js verify-browser.mjs verify-v3-migration.mjs
+          git commit -m 'Preserve legacy Stage 01 through deterministic v3 migration'
+          git push origin HEAD:fix/stage06-authoring-contract-final
