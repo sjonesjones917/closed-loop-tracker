@@ -1,0 +1,78 @@
+name: Apply controlling specification corrections
+on:
+  push:
+    branches: [fix/controlling-spec-single-supply]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply controlling requirements without visual redesign
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const must=(ok,msg)=>{if(!ok)throw new Error(msg)};
+          const read=p=>fs.readFileSync(p,'utf8');
+          const write=(p,s)=>fs.writeFileSync(p,s);
+          const once=(s,a,b,label)=>{const i=s.indexOf(a);must(i>=0,label+' anchor missing');must(s.indexOf(a,i+a.length)<0,label+' anchor duplicated');return s.slice(0,i)+b+s.slice(i+a.length)};
+          let w=read('workbook.js');
+          w=once(w,"const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';",'project schema');
+          w=once(w,"'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'",'Stage 16 visible title');
+          w=once(w,"2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked']","2:['Every accepted independent external source has a complete record','At least one legitimate inspected external authority exists or an evidence-supported NO_APPLICABLE_EXTERNAL_SOURCE determination exists','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked']",'Stage 02 gate');
+          const legacyAnchor="  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);";
+          const legacyBlock="  if(p.schema==='closed-loop-project/2'&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\n    const migrated=JSON.parse(JSON.stringify(p)),original=JSON.parse(JSON.stringify(p));\n    migrated.schema=PROJECT_SCHEMA;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\n    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];\n    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),payload:original});\n    return migrated;\n  }\n"+legacyAnchor;
+          w=once(w,legacyAnchor,legacyBlock,'/2 to /3 migration');write('workbook.js',w);
+          let s=read('workflow-schema.js');s=once(s,"const RESPONSE_SCHEMA='closed-loop-stage-response/2';","const RESPONSE_SCHEMA='closed-loop-stage-response/3';",'response schema');s=s.replaceAll('CUSTOM_PIPELINE','TEST_IR');write('workflow-schema.js',s);
+          let p=read('prompt-engine.js');p=once(p,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';",'prompt engine version');p=p.replaceAll('CUSTOM_PIPELINE','TEST_IR');p=p.replace(/For PATENT \/ REGULATED FILING jobs,[\s\S]*?Do not turn researchable legal strategy into a human question\.\n/,'');
+          p=p.replace("Supplied project materials remain project input and are inspected later only when the stage performing substantive work actually needs them.","Once Stage 01 has captured the relevant human-authority meaning from supplied project material, every later stage must consume that canonical capture instead of asking the human to provide the material or information again. Direct byte inspection later is allowed only when the later proposition genuinely depends on the bytes themselves; if the application already has verified bytes, use application custody rather than asking the human to resupply them.");
+          const stage4Old="4:'Compile atomic requirement proposals only from the complete current canonical input union selected by the application: current User Job Input, the accepted Stage 01 job definition, human-origin obligations already captured from supplied material, accepted Stage 03 source research, candidate external-source obligations, and their applicable provenance. The application must create and provide the obligation universe before this stage; do not rediscover an unspecified input universe. Do not ask the human to attach, resend, retype, or summarize the original intent file or any other material whose relevant human-authority content was already captured in canonical state.";
+          const stage4New="4:'Compile atomic requirement proposals only from the complete current canonical input union selected by the application: current User Job Input, the accepted Stage 01 job definition, every captured human-origin obligation, every captured obligation from supplied project material, accepted Stage 03 source research, candidate external-source obligations, and their applicable provenance. The application must create and provide the complete obligation universe before this stage; do not rediscover an unspecified input universe. Treat the supplied canonical project context as the project memory for this stage. DO NOT ask the human to attach, resend, retype, restate, summarize, or otherwise supply again any project fact, requirement, constraint, decision, prohibition, acceptance condition, material reference, or intent that was supplied previously and is present in canonical context. DO NOT request the original intent file merely because Stage 04 is a different conversation. Use the captured content in this prompt. If the application omitted previously supplied information, return BLOCKED and identify the earliest defective prior stage; never transfer the application capture defect back to the human.";
+          p=once(p,stage4Old,stage4New,'Stage 04 procedure');
+          const mandatoryAnchor="- A materially inadequate accepted prior-stage result requires BLOCKED with INADEQUATE_PRIOR_OUTPUT and must identify the earliest accepted result that needs refinement. This is distinct from missing application context and from missing human input.\n";
+          const memoryPolicy="PROJECT MEMORY / SINGLE-SUPPLY INVARIANT — MANDATORY IN EVERY STAGE\n- The human supplies each project fact, requirement, constraint, decision, prohibition, acceptance condition, material, and material-derived human-authority statement once. If it exists in current authorized canonical context, use it; never ask the human to repeat, retype, restate, summarize, reattach, or resend it.\n- Information captured in an earlier accepted stage remains project information for every later stage where it is relevant. A stage boundary is not permission to forget project information.\n- Do not ask the human for information reliably obtainable from current canonical state, verified application-held artifacts, supplied materials already available to the executing context, accepted prior-stage output, or authorized research/tools.\n- If required information was previously supplied but is absent from the current canonical projection, this is MISSING_APPLICATION_CONTEXT or INADEQUATE_PRIOR_OUTPUT. Identify the earliest responsible stage and fail closed. Do not make the human repair application memory by supplying the same information again.\n- A filename or artifact identity is not a substitute for captured semantic content. A later need for semantic content must be satisfied from the canonical capture. A later need for exact bytes must use verified application custody when available; only a genuine custody gap may require an explicit transfer action, and the prompt must say exactly what bytes are unavailable and why.\n- Never discard compatible project information merely because a later stage uses a narrower task. Context selectors may withhold information for independence or bias control only when this specification explicitly requires that withholding.\n\n";
+          p=once(p,mandatoryAnchor,memoryPolicy+mandatoryAnchor,'global single-supply prompt invariant');write('prompt-engine.js',p);
+          for(const file of ['test-runtime.js','workflow-engine.js','response-ingestion.js','verify-test-runtime.mjs','verify-complete.mjs','verify-ingestion.mjs','verify-prompt-semantics.mjs','verify-full-cycle.mjs','verify-definition-of-done.mjs','verify.mjs','build-test-project.mjs','build-test-project-impl.mjs'])if(fs.existsSync(file)){let x=read(file);x=x.replaceAll('CUSTOM_PIPELINE','TEST_IR');write(file,x);}
+          let html=read('index.html');must(html.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;'),'Prompt visual baseline unexpectedly changed before this repair');html=html.replace("object-src 'none'; base-uri 'none'","object-src 'none'; worker-src 'self'; base-uri 'none'");const schemaScript=/<script defer src="workflow-schema\.js\?v=([^"]+)"><\/script>\n/;const m=html.match(schemaScript);must(m,'workflow-schema script missing');must(!html.includes('test-runtime.js?v='),'test-runtime already loaded unexpectedly');html=html.replace(schemaScript,match=>match+`<script defer src="test-runtime.js?v=${m[1]}"></script>\n`);write('index.html',html);
+          let pages=read('.github/workflows/pages.yml');pages=pages.replace("node --check verify-test-runtime.mjs\n","node --check verify-test-runtime.mjs\n          node --check verify-user-authority-contract.mjs\n");pages=pages.replace("run: node verify-test-runtime.mjs\n","run: node verify-test-runtime.mjs\n      - name: Verify controlling user-authority and single-supply invariants\n        run: node verify-user-authority-contract.mjs\n");pages=pages.replace("const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];");pages=pages.replace("node build-test-project.mjs && node verify-test-runtime.mjs &&","node build-test-project.mjs && node verify-test-runtime.mjs && node verify-user-authority-contract.mjs &&");write('.github/workflows/pages.yml',pages);
+          write('verify-user-authority-contract.mjs',String.raw`import fs from 'node:fs';
+const fail=m=>{throw new Error(m)};
+const workbook=fs.readFileSync('workbook.js','utf8'),schema=fs.readFileSync('workflow-schema.js','utf8'),prompt=fs.readFileSync('prompt-engine.js','utf8'),html=fs.readFileSync('index.html','utf8'),pages=fs.readFileSync('.github/workflows/pages.yml','utf8');
+if(!workbook.includes("const PROJECT_SCHEMA='closed-loop-project/3';"))fail('PROJECT_SCHEMA is not /3');
+if(!schema.includes("const RESPONSE_SCHEMA='closed-loop-stage-response/3';"))fail('RESPONSE_SCHEMA is not /3');
+if(!workbook.includes("'CORRECT THE ROOT CAUSE'"))fail('Stage 16 visible name is not corrected');
+if(workbook.includes('Every relied-upon supplied file was inspected'))fail('Stage 02 still treats supplied project files as source-inventory gate material');
+if(/PATENT \/ REGULATED FILING/.test(prompt))fail('Prompt engine contains a prohibited subject-specific branch');
+if(/CUSTOM_PIPELINE/.test(prompt+schema))fail('Obsolete CUSTOM_PIPELINE runtime kind remains');
+for(const required of ['PROJECT MEMORY / SINGLE-SUPPLY INVARIANT','never ask the human to repeat, retype, restate, summarize, reattach, or resend it','DO NOT request the original intent file','MISSING_APPLICATION_CONTEXT or INADEQUATE_PRIOR_OUTPUT'])if(!prompt.includes(required))fail('Missing prompt invariant: '+required);
+if(!html.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;'))fail('Prompt box visual baseline changed');
+const order=[...html.matchAll(/<script defer src="([^"?]+)\?v=[^"]+"><\/script>/g)].map(x=>x[1]);const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];if(JSON.stringify(order)!==JSON.stringify(expected))fail('Runtime script order mismatch: '+JSON.stringify(order));if(!html.includes("worker-src 'self'"))fail('CSP lacks same-origin worker permission');if(!pages.includes('verify-user-authority-contract.mjs'))fail('Permanent regression missing from CI');console.log(JSON.stringify({projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',singleSupplyInvariant:true,stage4IntentReuse:true,subjectNeutralPrompt:true,promptVisualBaselinePreserved:true,runtimeOrder:true},null,2));`);
+          NODE
+      - name: Run targeted controlling-spec regressions
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check verify-user-authority-contract.mjs
+          node verify-user-authority-contract.mjs
+          node verify-test-runtime.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit source repair and remove one-time workflow
+        shell: bash
+        run: |
+          rm .github/workflows/apply-controlling-spec.yml
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m "Enforce controlling prompt memory and contract invariants"
+          git push origin HEAD:fix/controlling-spec-single-supply
