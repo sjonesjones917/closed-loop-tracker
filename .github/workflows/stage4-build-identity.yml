@@ -1,0 +1,54 @@
+name: Align runtime identity with Stage 04 canonical capture
+on:
+  push:
+    branches: [fix/stage4-canonical-intent-capture]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: "!contains(github.event.head_commit.message, 'Align runtime build identity for Stage 04 capture')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-canonical-intent-capture
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update Stage 04 hash invariant and shared build identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-hash.mjs')
+          s=p.read_text()
+          old="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===19)\"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
+          new="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4){const intake=engine.currentIntakeCoverageManifest(current),obligations=engine.currentObligationManifest(current);\"),'Stage 04 must render the captured canonical intake/obligation state instead of a generic repeat-attachment control.');\nassert(appCore.includes('Do not reattach or re-enter the original intent file.'),'Stage 04 must explicitly tell the operator that captured intent is reused without reattachment.');"
+          if old not in s: raise SystemExit('verify-hash Stage 04 UI invariant anchor missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          for(const file of runtimeFiles){const re=new RegExp(`(<script\\s+defer\\s+src=\"${file.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')}\\?v=)[^\"]+(\"\\s*><\\/script>)`);if(!re.test(html))throw new Error(`Runtime tag missing for ${file}`);html=html.replace(re,`$1${identity}$2`);}
+          fs.writeFileSync('index.html',html);
+          console.log(identity);
+          NODE
+          rm -f .github/workflows/stage4-build-identity.yml
+      - name: Verify canonical hashing and Stage 04 reuse
+        run: |
+          node --check verify-hash.mjs
+          node verify-hash.mjs
+          node verify-stage4-intent-reuse.mjs
+      - name: Commit fix
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Align runtime build identity for Stage 04 capture"
+          git push origin HEAD:fix/stage4-canonical-intent-capture
