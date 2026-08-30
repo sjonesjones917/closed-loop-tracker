@@ -28,11 +28,17 @@ if old2 in s:
     s = s.replace(old2, new2, 1)
 elif new2 not in s:
     raise SystemExit('Stage 01 exhaustive-human-authority anchor missing')
+neutral_anchor = 'Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome, even when a later stage will use them.'
+neutral_rule = neutral_anchor + ' Derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context; do not use or require a hard-coded project-domain catalogue.'
+if neutral_anchor in s and neutral_rule not in s:
+    s = s.replace(neutral_anchor, neutral_rule, 1)
+elif neutral_rule not in s:
+    raise SystemExit('Stage 01 subject-neutral derivation anchor missing')
 for forbidden in [old1, old2]:
     if forbidden in s:
         raise SystemExit('Stage 01 contradictory deferral rule remains')
-if not all(token in s for token in ['BLOCKING_NOW', 'ASK_NOW_NONBLOCKING', 'LATER_RESOLVABLE', 'nonblocking never means the question may be skipped']):
-    raise SystemExit('Stage 01 classification contract incomplete')
+if not all(token in s for token in ['BLOCKING_NOW', 'ASK_NOW_NONBLOCKING', 'LATER_RESOLVABLE', 'nonblocking never means the question may be skipped', 'Derive subject-specific human-authority questions from the user’s actual request']):
+    raise SystemExit('Stage 01 classification/derivation contract incomplete')
 p.write_text(s)
 
 # Stage 03: application gate requires explicit saturation, not just one record per source.
@@ -120,9 +126,25 @@ elif new_init not in s:
     raise SystemExit('TEST application initialization anchor missing')
 p.write_text(s)
 
-# Stage 06 tells the agent which version it targets, but does not tell it to write an application-owned field.
+# Prompt-wide action/capability honesty is a controlling invariant, not a stage-local convention.
 p = Path('prompt-engine.js')
 s = p.read_text()
+honesty_anchor = 'CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION\n'
+honesty_block = '''EXTERNAL ACTION / CAPABILITY HONESTY
+- Never claim or imply that a file was transferred, a source or supplied artifact was inspected, a web/repository/tool action ran, a build/test/simulation/measurement/fabrication/filing/submission occurred, a human inspection occurred, an external system acted, or application-native execution occurred unless that event actually occurred in the current executing context.
+- If an action belongs to a later or external executor, do not pretend it happened. Describe the exact capability, input files or records, withheld material, expected return files/evidence, and structured result required from the real executor.
+- Browser-local artifact custody is not external-agent or external-system custody. State unavailable bytes as unavailable and require the explicit transfer action when bytes must cross that boundary.
+- If the required external capability is genuinely unavailable before execution, return BLOCKED with the exact missing capability or material. If the action was attempted and the execution failed, return EXECUTION_FAILED. Never convert unavailable or failed execution into a pass.
+
+'''
+if honesty_block not in s:
+    if honesty_anchor not in s:
+        raise SystemExit('common prompt honesty anchor missing')
+    s = s.replace(honesty_anchor, honesty_anchor + honesty_block, 1)
+if 'Never claim or imply that a file was transferred' not in s or 'do not pretend it happened' not in s:
+    raise SystemExit('common capability honesty contract incomplete')
+
+# Stage 06 tells the agent which version it targets, but does not tell it to write an application-owned field.
 old_instr = 'If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = TEST_IR, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS.'
 new_instr = 'If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = TEST_IR, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS targeting Test IR version ${schema.TEST_IR.version}. The application owns EXECUTABLE_SPEC_VERSION and will stamp that version after validation; do not write or override it.'
 if old_instr in s:
@@ -157,7 +179,7 @@ must(w.includes("closed-loop-project/3"),'project schema is not /3');
 must(s.includes("closed-loop-stage-response/3"),'response schema is not /3');
 must(w.includes('CORRECT THE ROOT CAUSE'),'Stage 16 visible title not corrected');
 must(p.includes('EXHAUSTIVE HUMAN-AUTHORITY INTAKE IS REQUIRED'),'Stage 01 is not explicitly exhaustive');
-for(const token of ['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','nonblocking never means the question may be skipped'])must(p.includes(token),`Stage 01 classification missing ${token}`);
+for(const token of ['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','nonblocking never means the question may be skipped','Derive subject-specific human-authority questions from the user’s actual request'])must(p.includes(token),`Stage 01 classification/derivation missing ${token}`);
 must(!p.includes('Stage 01 does not require every fact needed to execute later stages.'),'Stage 01 still permits human-authority escape');
 must(!p.includes('Record such later-needed information in UNKNOWN_INFORMATION and let the earliest stage that actually requires it resolve it.'),'Stage 01 still silently defers foreseeable human-only information');
 must(p.includes('EXHAUSTIVE STAGE 03 RESEARCH IS REQUIRED'),'Stage 03 is not explicitly exhaustive');
@@ -168,6 +190,7 @@ must(p.includes('Stage 04 prompt generation blocked: current Stage 01'),'Stage 0
 must(p.includes('Stage 04 prompt generation blocked: current Stage 03'),'Stage 04 does not hard-block incomplete Stage 03');
 must(p.includes('Never ask the human to retype it, re-explain it, resend it, or re-attach'),'no-repeat rule missing');
 must(e.includes('CURRENT_USER_JOB_INPUT')&&e.includes('STAGE_01_JOB_DEFINITION')&&e.includes('STAGE_03_ACCEPTED_DATA'),'Stage 04 obligation universe omits required upstream classes');
+must(p.includes('EXTERNAL ACTION / CAPABILITY HONESTY')&&p.includes('Never claim or imply that a file was transferred'),'common action/capability honesty missing');
 must(!p.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'CUSTOM_PIPELINE still exposed in prompt');
 must(!s.includes("executableKinds:Object.freeze(['NONE','CUSTOM_PIPELINE'])"),'CUSTOM_PIPELINE still exposed in schema');
 must(s.includes("executableKinds:Object.freeze(['NONE','TEST_IR'])"),'TEST_IR canonical kind missing');
