@@ -39,6 +39,16 @@ import fs from 'node:fs';
 }
 
 {
+  const path='verify-definition-of-done.mjs';
+  let text=fs.readFileSync(path,'utf8');
+  const old="assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');";
+  const current="assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Schema identity changed.');";
+  if(text.includes(old))text=text.replace(old,current);
+  if(!text.includes(current))throw new Error('Definition-of-done verifier does not enforce v3 schema identities.');
+  fs.writeFileSync(path,text);
+}
+
+{
   const path='verify-prompt-semantics.mjs';
   let text=fs.readFileSync(path,'utf8');
   const old=` const required=[\n  'do not ask the human to re-enter facts that are already present in those materials',\n  'Do not block Stage 01 merely because information will be needed by a later',\n  'Stage 01 does not require every fact needed to execute later stages',\n  'A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01',\n  'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers',\n  'Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome',\n  'humanInputRequestContract',\n  'temporaryKey',\n  'whyRequired',\n  'affectedStageFields',\n  'answerType',\n  'allowedValues',\n  'Do not invent requestKey, required, whyNeeded, expectedAnswer'\n ];`;
