@@ -38,7 +38,6 @@ jobs:
           helper="function suppliedMaterialReferences(project){\n  const raw=project&&project.job?project.job.SUPPLIED_MATERIALS_INVENTORY:null;\n  if(raw===undefined||raw===null||String(raw).trim()==='')return [];\n  const out=[];\n  const push=value=>{const label=String(value===undefined?'':value).trim();if(label)out.push({label,type:'SUPPLIED_MATERIAL',transferMode:'REFERENCE'});};\n  const ingest=value=>{\n    if(value===undefined||value===null)return;\n    if(Array.isArray(value)){value.forEach(ingest);return;}\n    if(typeof value==='object'){const label=value.exactNameOrReference||value.filename||value.name||value.label||value.reference||value.path;if(label!==undefined)push(label);else Object.values(value).forEach(ingest);return;}\n    const text=String(value).trim();if(!text)return;\n    try{const parsed=JSON.parse(text);if(typeof parsed!=='string'){ingest(parsed);return;}}catch(error){}\n    text.split(/\\r?\\n|;/).map(line=>line.trim()).filter(Boolean).forEach(push);\n  };\n  ingest(raw);\n  const seen=new Set();return out.filter(item=>{const key=item.label.toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});\n}\n"
           if marker not in s: raise SystemExit('intake manifest anchor missing')
           if 'function suppliedMaterialReferences(project){' not in s: s=s.replace(marker,helper+marker,1)
-          # Stage 01 agent acceptance captures the current human-input version; it must not create a new human-input version.
           s=s.replace("1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],","2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],",1)
           p.write_text(s)
 
@@ -52,6 +51,10 @@ jobs:
           new4="const obligations=engine.obligationManifest(p);assert(obligations.obligationCount>=4,'Stage 04 did not build the complete obligation universe.');const prompt4=prompts.buildPromptRecord(4,p);p.projectData.generatedPrompts.push({...prompt4,generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'});"
           if old4 not in t: raise SystemExit('Stage 04 focused-test prompt anchor missing')
           t=t.replace(old4,new4,1)
+          oldh="assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 still derives an original-intent-file handoff.');"
+          newh="assert((Array.isArray(handoff.conversationMaterials)?handoff.conversationMaterials:[]).length===0&&(Array.isArray(handoff.send)?handoff.send:[]).length===0&&(Array.isArray(handoff.filesToSend)?handoff.filesToSend:[]).length===0,'Stage 04 still derives an original-intent-file handoff.');"
+          if oldh not in t: raise SystemExit('Stage 04 handoff assertion anchor missing')
+          t=t.replace(oldh,newh,1)
           test.write_text(t)
           PY
           for f in *.js *.mjs; do node --check "$f"; done
