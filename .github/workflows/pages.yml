@@ -1,4 +1,4 @@
-# proof-trigger-stage07-20260830
+# proof-trigger-stage-boundary-20260830
 name: Apply complete 30-stage prompt audit repair
 on:
   push:
@@ -20,6 +20,7 @@ jobs:
         run: |
           python3 .repair-all-stage-prompts.py
           python3 .repair-prompt-compat.py
+          python3 .repair-stage-boundary-test.py
           git fetch origin f91db9249878f5e2cb21facd401f5f5616458693 --depth=1
           git show f91db9249878f5e2cb21facd401f5f5616458693:.github/workflows/pages.yml > /tmp/pages.final.yml
           python3 - <<'PY'
@@ -33,7 +34,7 @@ jobs:
           p.write_text(s)
           PY
           mv /tmp/pages.final.yml .github/workflows/pages.yml
-          rm .repair-all-stage-prompts.py .repair-prompt-compat.py
+          rm .repair-all-stage-prompts.py .repair-prompt-compat.py .repair-stage-boundary-test.py
       - name: Prove syntax, schema, prompts, runtime, ingestion, workflow, and lifecycle
         run: |
           for file in *.js *.mjs; do node --check "$file"; done
@@ -71,6 +72,6 @@ jobs:
         run: |
           git config user.name closed-loop-integrator
           git config user.email closed-loop-integrator@users.noreply.github.com
-          git add app-core.js workflow-schema.js prompt-engine.js index.html verify-all-stage-prompts.mjs .github/workflows/pages.yml
+          git add app-core.js workflow-schema.js prompt-engine.js index.html verify-prompt-semantics.mjs verify-all-stage-prompts.mjs .github/workflows/pages.yml
           git commit -m 'Complete all 30 stage prompts and preserve captured project memory'
           git push origin HEAD:implementation/closed-loop-v3
