@@ -1,4 +1,4 @@
-# proof-trigger-stage01-locality-20260830
+# proof-trigger-stage06-false-positive-20260830
 name: Apply complete 30-stage prompt audit repair
 on:
   push:
