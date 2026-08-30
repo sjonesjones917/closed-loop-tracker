@@ -40,27 +40,41 @@ jobs:
       - name: Apply controlling Stage 01 and Stage 04 closure
         run: node finalize-v3-accounting.mjs
       - name: Syntax
-        run: |
-          for file in *.js *.mjs; do node --check "$file"; done
-      - name: Complete deterministic proof
-        run: |
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-v3-migration.mjs
-          node verify-intake-obligation-accounting.mjs
-          node verify-v3-contract.mjs
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-          node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
+        run: for file in *.js *.mjs; do node --check "$file"; done
+      - name: Build test project
+        run: node build-test-project.mjs
+      - name: Verify architecture
+        run: node verify.mjs
+      - name: Verify migration
+        run: node verify-v3-migration.mjs
+      - name: Verify intake and obligation accounting
+        run: node verify-intake-obligation-accounting.mjs
+      - name: Verify v3 contract
+        run: node verify-v3-contract.mjs
+      - name: Verify Test IR v3
+        run: node verify-test-runtime-v3.mjs
+      - name: Verify Test IR limits
+        run: node verify-test-runtime-limits.mjs
+      - name: Verify Test IR runtime
+        run: node verify-test-runtime.mjs
+      - name: Verify hashes
+        run: node verify-hash.mjs
+      - name: Verify ingestion
+        run: node verify-ingestion.mjs
+      - name: Verify complete gates
+        run: node verify-complete.mjs
+      - name: Verify full cycle
+        run: node verify-full-cycle.mjs
+      - name: Verify prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Verify semantic invariant
+        run: node verify-semantic-invariant.mjs
+      - name: Verify definition of done
+        run: node verify-definition-of-done.mjs
+      - name: Verify v3 definition of done
+        run: node verify-v3-definition-of-done.mjs
+      - name: Verify project lifecycle
+        run: node verify-project-lifecycle.mjs
       - name: Local browser proof
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
