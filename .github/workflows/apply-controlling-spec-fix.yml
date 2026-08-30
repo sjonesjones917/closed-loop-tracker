@@ -1,0 +1,93 @@
+# temporary one-shot repair; remove after successful source commit
+name: Apply controlling spec fix
+
+on:
+  push:
+    branches:
+      - fix/controlling-spec-capture-once
+    paths:
+      - tools/apply-controlling-spec-fix.py
+      - .github/workflows/apply-controlling-spec-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Align repair script to current main engine
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/apply-controlling-spec-fix.py')
+          s=p.read_text(encoding='utf-8')
+          old="s = replace_regex(s, r\"const APPLICATION_TEST_EXECUTORS=Object\\.freeze\\(\\{\\}\\);\\nfunction applicationTestCapabilities\\(\\)\\{return Object\\.freeze\\(Object\\.keys\\(APPLICATION_TEST_EXECUTORS\\)\\);\\}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 'native capability authority')"
+          new="s = replace_exact(s, \"function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 'native capability authority')"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('native capability anchor unavailable')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Apply deterministic repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply-controlling-spec-fix.py
+          git checkout HEAD -- tools/apply-controlling-spec-fix.py .github/workflows/apply-controlling-spec-fix.yml
+      - name: Complete transformed Test IR field partition
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js')
+          s=p.read_text(encoding='utf-8')
+          old="'EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'"
+          new="'EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('Test IR field anchor unavailable')
+          p.write_text(s,encoding='utf-8')
+          p=Path('verify-capture-once.mjs')
+          lines=p.read_text(encoding='utf-8').splitlines();out=[];replaced=False
+          for line in lines:
+              if 'Stage 04 prompt asks human to resupply original intent' in line:
+                  if not replaced:
+                      out.append("const improperRepeatRequest=rec.prompt.split(/\\r?\\n/).filter(line=>/(attach|resend|retype|summarize).{0,80}original intent/i.test(line)&&!/(do not|must not|never)/i.test(line));")
+                      out.append("assert(improperRepeatRequest.length===0,'Stage 04 prompt asks human to resupply original intent: '+improperRepeatRequest.join(' | '));")
+                      replaced=True
+                  continue
+              out.append(line)
+          if not replaced: raise SystemExit('capture-once assertion line unavailable')
+          p.write_text('\n'.join(out)+'\n',encoding='utf-8')
+          PY
+      - name: Verify transformed runtime and capture-once behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs; do node --check "$f"; done
+          node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')"
+      - name: Commit transformed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workbook.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html verify-capture-once.mjs
+          git commit -m "Implement controlling /3 capture-once contracts"
+      - name: Push transformed source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
