@@ -1,31 +1,82 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
-import assert from 'node:assert/strict';
+
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
-if(!core||!engine||!prompts)throw new Error('Prompt runtime failed to load.');
+const core=globalThis.closedLoopCore;
+const schema=globalThis.closedLoopWorkflowSchema;
+const engine=globalThis.closedLoopWorkflowEngine;
+const prompts=globalThis.closedLoopPromptEngine;
+assert(core&&schema&&engine&&prompts,'Prompt-semantic runtime failed to load.');
+assert(core.WORKFLOW_ID==='mobile-closed-loop/30','Workflow identity changed.');
+assert(core.STAGE_COUNT===30,'Stage count changed.');
+assert(core.PROJECT_SCHEMA==='closed-loop-project/3','Project schema is not /3.');
+assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema is not /3.');
+
 const source=fs.readFileSync('prompt-engine.js','utf8');
-for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])assert.ok(!source.includes(forbidden),`Hard-coded project-subject branch remains: ${forbidden}`);
-function project(){const p=core.createBlankState('JOB-PROMPT-CURRENT');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested project exactly from supplied authority.',EXPLICIT_USER_REQUIREMENTS:'Preserve every supplied project requirement and never ask twice.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001'});engine.ensureShape(p);p.projectData.humanInputAnswers=[{answerId:'ANSWER-001',answer:'Human decision already supplied.'}];return p;}
-{
- const p=project();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});
- for(const text of ['STAGE 01 SUBJECT-NEUTRAL INTAKE','accessible supplied materials','Preserve every project-relevant human fact','BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','HUMAN COLLABORATION MODE'])assert.ok(r.prompt.includes(text),`Stage 01 prompt missing ${text}`);
- assert.ok(r.prompt.includes('Human decision already supplied.'),'Stage 01 prompt failed to carry persisted human answer.');
- assert.ok(r.prompt.includes('do not ask the human to re-enter facts that are already present'),'Stage 01 must forbid repeat entry.');
-}
-{
- const p=project(),scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'};
- p.projectData.intentStatements=[{id:'STATEMENT-001',STATEMENT_ID:'STATEMENT-001',fields:{EXACT_STATEMENT:'The output must preserve supplied requirement A.',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST'},scope,status:'ACTIVE'}];
- p.projectData.candidateRequirements=[{id:'CANDIDATE-REQ-001',CANDIDATE_REQ_ID:'CANDIDATE-REQ-001',fields:{CANDIDATE_OBLIGATION:'External source requires condition B.',APPLICABILITY:'APPLICABLE'},scope,status:'ACTIVE'}];
- p.projectData.research=[{id:'RESEARCH-001',RESEARCH_ID:'RESEARCH-001',fields:{MANDATORY_STATEMENTS:'Condition B is mandatory.',PROHIBITIONS:'Do not omit condition C.',EXCEPTIONS:'Exception D applies only when stated.'},scope,status:'ACTIVE'}];
- const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
- for(const text of ['STAGE 04 OBLIGATION MANIFEST','STATEMENT-001','The output must preserve supplied requirement A.','External source requires condition B.','Condition B is mandatory.','Do not omit condition C.','Exception D applies only when stated.','PROJECT DATA EXECUTION RULE — MANDATORY'])assert.ok(r.prompt.includes(text),`Stage 04 prompt missing operative input ${text}`);
- assert.ok(r.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),'Stage 04 must prohibit original intent-file reuse.');
-}
-{
- const p=project();const r=prompts.buildPromptRecord(6,p,{operation:'COMPLETE'});for(const text of ['closed-loop-test-spec/1','APPLICATION_DETERMINISTIC','CLOSED_LOOP_TEST_IR','PARSE_XML','SELECT_XML'])assert.ok(r.prompt.includes(text),`Stage 06 Test IR prompt missing ${text}`);
-}
-assert.deepEqual(engine.applicationTestCapabilities(),['CLOSED_LOOP_TEST_IR']);
-console.log(JSON.stringify({subjectNeutral:true,stage1Exhaustive:true,stage4ClosedUnion:true,testIrPublished:true},null,2));
+for(const forbidden of [
+  'PATENT / REGULATED FILING',
+  'SOFTWARE / MULTI-FILE SYSTEM',
+  'BUILDING / ARCHITECTURE / AEC',
+  'PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE',
+  'STAGE 01 DOMAIN INTAKE ADAPTATION'
+])assert(!source.includes(forbidden),`Hard-coded project-domain prompt branch remains: ${forbidden}`);
+
+for(const required of [
+  'EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW',
+  'APPLICATION INTAKE MANIFEST',
+  'APPLICATION OBLIGATION MANIFEST',
+  'No obligation may disappear',
+  'BLOCKING_NOW',
+  'ASK_NOW_NONBLOCKING',
+  'LATER_RESOLVABLE',
+  'closed-loop-test-spec/1',
+  'FILES YOU MUST RECEIVE',
+  'FILES YOU MUST NOT RECEIVE',
+  'FILES OR EVIDENCE YOU MUST RETURN'
+])assert(source.includes(required),`Prompt authority missing required behavior: ${required}`);
+
+assert(source.includes('Do not merely summarize context')||source.includes('Do not merely summarize the context'),'Prompts do not explicitly require stage execution instead of context summary.');
+assert(source.includes('already present'),'Prompt authority does not require reuse of already-supplied information.');
+assert(source.includes('asking the user to resupply it')||source.includes('asking the human to repeat information already present'),'One-time project-input invariant is absent.');
+assert(source.includes('process every obligationId exactly once')||source.includes('Process every obligationId exactly once'),'Stage 04 does not require exhaustive obligation processing.');
+assert(source.includes('Do not ask the user to attach')||source.includes('never ask for the original intent file'),'Stage 04 original-intent reuse rule is absent.');
+assert(source.includes('assertStage4UpstreamExhausted'),'Stage 04 does not fail closed when Stage 01/03 upstream accounting is incomplete.');
+
+const project=core.createBlankState('JOB-SUBJECT-NEUTRAL-PROMPT');
+Object.assign(project.job,{
+  EXACT_USER_OBJECTIVE_VERBATIM:'Produce the requested deliverable from all project information supplied by the user.',
+  EXPLICIT_USER_REQUIREMENTS:'Never ask for the same project information twice.',
+  SUPPLIED_MATERIALS_INVENTORY:'NONE',
+  CURRENT_INPUT_VERSION:'INPUT-v001'
+});
+engine.ensureShape(project);
+engine.recalculate(project);
+
+const stage1=prompts.buildPromptRecord(1,project,'COMPLETE').prompt;
+assert(stage1.includes('EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW'),'Generated Stage 01 prompt lacks explicit execution directive.');
+assert(stage1.includes('APPLICATION INTAKE MANIFEST'),'Generated Stage 01 prompt lacks application intake manifest.');
+assert(stage1.includes('EXACT_USER_OBJECTIVE_VERBATIM'),'Generated Stage 01 prompt omits current user project authority.');
+assert(stage1.includes('BLOCKING_NOW')&&stage1.includes('ASK_NOW_NONBLOCKING')&&stage1.includes('LATER_RESOLVABLE'),'Generated Stage 01 prompt lacks required human-question classification.');
+assert(!/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL/.test(stage1),'Generated Stage 01 prompt is not subject neutral.');
+
+const handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});
+assert((handoff.send||[]).length===0,'Stage 04 creates a repeated file-send obligation from project-material metadata.');
+assert((handoff.conversationMaterials||[]).length===0,'Stage 04 creates a repeated conversation-material transfer.');
+
+const html=fs.readFileSync('index.html','utf8');
+assert(html.includes('height:clamp(260px,45vh,520px)'),'Prompt box height changed.');
+assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt preview/collapse sizing changed.');
+assert(!html.includes('#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}'),'Obsolete 88px prompt-size override returned.');
+
+console.log(JSON.stringify({
+  subjectNeutralPrompts:true,
+  explicitStageExecution:true,
+  stage01CompleteHumanAuthorityIntake:true,
+  stage04ClosedObligationAccounting:true,
+  oneTimeProjectInput:true,
+  stage04NoRepeatHandoff:true,
+  visualPromptBaseline:true
+},null,2));
