@@ -83,10 +83,23 @@ jobs:
           node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')"
       - name: Commit repaired source tree
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          set +e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          git status --short
           git commit -m "Implement capture-once Stage 4 and /3 controlling contracts"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          commit_rc=$?
+          if [ "$commit_rc" -ne 0 ]; then
+            echo "::error title=Repair commit failed::git commit returned $commit_rc"
+            exit "$commit_rc"
+          fi
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
+          push_rc=$?
+          if [ "$push_rc" -ne 0 ]; then
+            echo "::error title=Repair push failed::git push returned $push_rc"
+            exit "$push_rc"
+          fi
