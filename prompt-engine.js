@@ -1,1 +1,4 @@
-PLACEHOLDER
+(()=>{
+'use strict';
+throw new Error('TEMPORARY RESTORE REQUIRED');
+})();
