@@ -20,7 +20,9 @@ jobs:
       - name: Prove syntax and core architecture
         run: |
           for f in *.js *.mjs; do node --check "$f"; done
+          mv .github/workflows/conformance-repair-run.yml /tmp/conformance-repair-run.yml
           node build-test-project.mjs
+          mv /tmp/conformance-repair-run.yml .github/workflows/conformance-repair-run.yml
           node verify.mjs
       - name: Prove v3 contracts and deterministic runtime
         run: |
