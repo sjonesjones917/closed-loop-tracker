@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const file='verify-ingestion.mjs';
+let s=fs.readFileSync(file,'utf8');
+if(!s.includes('function prepareStage4Upstream(p)'))throw new Error('Stage 4 fixture helper was not materialized.');
+const save='const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||\'NOT APPLICABLE\'};';
+if(s.includes(save))s=s.replace(save,"if(stage===4)prepareStage4Upstream(p);\n  "+save);
+const next='nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt';
+if(s.includes(next))s=s.replace(next,"nextPrompt=(nextStage===4?(prepareStage4Upstream(reloaded),prompts.buildPromptRecord(nextStage,reloaded,nextOptions)):prompts.buildPromptRecord(nextStage,reloaded,nextOptions)).prompt");
+if(!s.includes('if(stage===4)prepareStage4Upstream(p);'))throw new Error('Stage 4 savePrompt fixture correction missing.');
+if(!s.includes('nextStage===4?(prepareStage4Upstream(reloaded)'))throw new Error('Stage 4 next-prompt fixture correction missing.');
+fs.writeFileSync(file,s);
+console.log('Stage 4 ingestion verifier fixture corrected.');
