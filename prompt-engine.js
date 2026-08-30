@@ -4,7 +4,7 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';
 if(!core||!schema||!hash||!workflow)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
 function humanInputBlock(job){
@@ -73,6 +73,7 @@ function recoveryFeedback(state,stage,operation,scope={}){
 }
 function contextFor(stage,state,operation,scope={}){
  const parts=[];
+ if(stage===4&&state?.stages?.[1]){const intake={agentData:state.stages[1].agentData||state.stages[1].acceptedData||{},humanData:state.stages[1].humanData||{},derivedData:state.stages[1].derivedData||{}};parts.push(`ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE\n${show(intake)}`);}
  if(stage>1&&![11,12,23,24].includes(stage)){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:state.stages[stage-1].derivedData||{}}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\n${show(prior)}`);}
  const open=(state?.projectData?.blockers||[]).filter(x=>!x.invalidatedBy&&!['CLOSED','RESOLVED','RETIRED'].includes(String(x?.fields?.STATUS||x?.STATUS||x?.status||'OPEN').toUpperCase()));if(open.length)parts.push(`APPLICABLE OPEN BLOCKERS\n${show(open)}`);
  const questions=(state?.projectData?.humanInputRequests||[]).filter(x=>Number(x.stage)===stage&&String(x.status||'OPEN').toUpperCase()==='OPEN'&&(!x.operation||x.operation===operation)&&(!x.scope||samePromptScope(x.scope,scope)));if(questions.length)parts.push(`UNRESOLVED HUMAN INPUT REQUESTS\n${show(questions)}`);
