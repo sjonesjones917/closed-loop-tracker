@@ -1,0 +1,95 @@
+name: Run closed Stage 01 and Stage 04 accounting patch
+on:
+  push:
+    branches:
+      - fix/stage01-stage04-closed-accounting-v2
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, 'Run closed accounting patch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply accounting source changes
+        shell: bash
+        run: |
+          set -o pipefail
+          cp index.html /tmp/index-before.html
+          node apply-accounting.mjs 2>&1 | tee /tmp/accounting-patch.log
+      - name: Update runtime byte identity without visual changes
+        shell: bash
+        run: |
+          set -o pipefail
+          node <<'NODE' 2>&1 | tee /tmp/runtime-token.log
+          const fs=require('fs'),crypto=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const bytes=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const token=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8'),count=0;
+          html=html.replace(/(<script\s+defer\s+src="[^"?]+)\?v=[^"]+("\s*><\/script>)/g,(_,a,b)=>{count++;return `${a}?v=${token}${b}`;});
+          if(count!==files.length)throw new Error(`Expected ${files.length} runtime cache tokens; updated ${count}.`);
+          fs.writeFileSync('index.html',html);
+          console.log(token);
+          NODE
+          python3 <<'PY' 2>&1 | tee /tmp/visual-guard.log
+          from pathlib import Path
+          import re, hashlib
+          before=Path('/tmp/index-before.html').read_text()
+          after=Path('index.html').read_text()
+          style=lambda s: re.search(r'<style>([\s\S]*?)</style>',s).group(1)
+          if style(before)!=style(after): raise SystemExit('VISUAL REGRESSION: CSS changed')
+          if re.sub(r'\?v=[^"\s]+','?v=TOKEN',before)!=re.sub(r'\?v=[^"\s]+','?v=TOKEN',after): raise SystemExit('VISUAL REGRESSION: index.html changed beyond runtime cache tokens')
+          print('visual-css-sha256',hashlib.sha256(style(after).encode()).hexdigest())
+          PY
+      - name: Syntax checks
+        shell: bash
+        run: |
+          set -o pipefail
+          { node --check workflow-engine.js; node --check prompt-engine.js; node --check response-ingestion.js; node --check verify-ingestion.mjs; node --check verify-full-cycle.mjs; node --check verify-stage01-stage04-accounting.mjs; } 2>&1 | tee /tmp/syntax.log
+      - name: Focused closed-accounting regression
+        shell: bash
+        run: node verify-stage01-stage04-accounting.mjs 2>&1 | tee /tmp/focused.log
+      - name: Ingestion regression suite
+        shell: bash
+        run: node verify-ingestion.mjs 2>&1 | tee /tmp/ingestion.log
+      - name: Full-cycle regression suite
+        shell: bash
+        run: node verify-full-cycle.mjs 2>&1 | tee /tmp/full-cycle.log
+      - name: Prompt semantic regression suite
+        shell: bash
+        run: node verify-prompt-semantics.mjs 2>&1 | tee /tmp/prompt.log
+      - name: Complete deterministic suite
+        shell: bash
+        run: node verify-complete.mjs 2>&1 | tee /tmp/complete.log
+      - name: Runtime hash and architecture proof
+        shell: bash
+        run: node verify-hash.mjs 2>&1 | tee /tmp/hash.log
+      - name: Preserve failure diagnostics on branch
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p ACCOUNTING_PATCH_DIAGNOSTIC
+          for f in accounting-patch runtime-token visual-guard syntax focused ingestion full-cycle prompt complete hash; do test ! -f "/tmp/$f.log" || cp "/tmp/$f.log" "ACCOUNTING_PATCH_DIAGNOSTIC/$f.log"; done
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add ACCOUNTING_PATCH_DIAGNOSTIC
+          git diff --cached --quiet || git commit -m "Record closed-accounting patch failure diagnostic"
+          git push origin HEAD:fix/stage01-stage04-closed-accounting-v2
+      - name: Commit permanent accounting repair
+        if: success()
+        shell: bash
+        run: |
+          rm apply-accounting.mjs .github/workflows/run-closed-accounting-patch.yml
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Close Stage 01 intake and Stage 04 obligation accounting"
+          git push origin HEAD:fix/stage01-stage04-closed-accounting-v2
