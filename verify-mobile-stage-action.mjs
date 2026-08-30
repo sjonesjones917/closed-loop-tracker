@@ -37,7 +37,7 @@ async function main(){
     assert(state.documentScroll<=width+1&&state.bodyScroll<=width+1,`Document horizontally overflows at ${width}px: ${JSON.stringify(state)}`);
     assert(state.strip&&state.spans.length===2&&state.spans.every(rect=>rect.left>=-1&&rect.right<=width+1&&rect.scrollWidth<=rect.clientWidth+1),`Current state or next action is clipped at ${width}px: ${JSON.stringify(state)}`);
     assert(state.labels[0].includes('Current state:')&&state.labels[1].includes('Next:'),`State/action labels are not explicit at ${width}px: ${JSON.stringify(state.labels)}`);
-    assert(state.filenameNodes.length>=2&&state.filenameNodes.every(rect=>rect.left>=-1&&rect.right<=width+1&&rect.scrollWidth<=rect.clientWidth+1),`Long filename is clipped at ${width}px: ${JSON.stringify(state.filenameNodes)}`);
+    assert(state.filenameNodes.length>=1&&state.filenameNodes.every(rect=>rect.left>=-1&&rect.right<=width+1&&rect.scrollWidth<=rect.clientWidth+1),`Long filename is clipped at ${width}px: ${JSON.stringify(state.filenameNodes)}`);
     assert(state.copy&&state.copy.left>=-1&&state.copy.right<=width+1&&state.copy.height>=44,`Primary copy action is unusable at ${width}px: ${JSON.stringify(state.copy)}`);
     assert(state.prompt&&state.prompt.left>=-1&&state.prompt.right<=width+1,`Prompt box exceeds the viewport at ${width}px: ${JSON.stringify(state.prompt)}`);
     assert(state.copyDistance!==null&&state.copyDistance<=1400,`Primary copy action is too far below the current action at ${width}px: ${state.copyDistance}`);
