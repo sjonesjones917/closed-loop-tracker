@@ -12,14 +12,18 @@ jobs:
         with: {ref: spec-v3-zero-loss-20260830}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply pending repair
+      - name: Apply exhaustive Stage 1-3-4 repair
         run: |
-          node --check repair-ingestion-accounting.mjs
-          node repair-ingestion-accounting.mjs
-          node --check verify-ingestion.mjs
+          node --check repair-exhaustive-stage1-stage3-stage4.mjs
+          node repair-exhaustive-stage1-stage3-stage4.mjs
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify-stage1-stage3-stage4.mjs
+          node verify-stage1-stage3-stage4.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm repair-ingestion-accounting.mjs
-          git add verify-ingestion.mjs
-          git commit -m "Prove Stage 1 and Stage 4 accounting closure"
+          git rm repair-exhaustive-stage1-stage3-stage4.mjs
+          git add workflow-engine.js prompt-engine.js response-ingestion.js verify-stage1-stage3-stage4.mjs
+          git commit -m "Enforce exhaustive intake and research before Stage 4"
           git push origin HEAD:spec-v3-zero-loss-20260830
