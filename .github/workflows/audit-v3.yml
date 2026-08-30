@@ -1,0 +1,48 @@
+name: Audit v3 implementation
+on:
+  push:
+    branches: [spec-v3-zero-loss-20260830]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: spec-v3-zero-loss-20260830}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Syntax
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-controlling-spec.mjs
+      - name: Existing deterministic proofs
+        run: |
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Browser proofs
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/audit-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
