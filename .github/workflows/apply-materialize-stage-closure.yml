@@ -1,0 +1,56 @@
+name: Apply materialized stage closure
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Materialize prompt context and operator state
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('prompt-engine.js')
+          text=p.read_text()
+          m=re.search(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/(\d+)';",text)
+          if not m: raise SystemExit('prompt engine version not found')
+          text=text[:m.start()]+f"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/{int(m.group(1))+1}';"+text[m.end():]
+          start='const PROMPT_CONTEXT_ADDITIONS=Object.freeze('
+          end=');\nconst PROMPT_OPERATION_CONTEXT_ADDITIONS='
+          a=text.find(start); b=text.find(end,a)
+          if a<0 or b<0: raise SystemExit('prompt context additions block not found')
+          replacement="const PROMPT_CONTEXT_ADDITIONS=Object.freeze({2:Object.freeze([]),3:Object.freeze([]),4:Object.freeze(['sourceConflicts']),5:Object.freeze(['sources','research','candidateRequirements','sourceConflicts','evidenceRecords']),6:Object.freeze(['requirements','requirementResolutions','sources','research','artifacts','evidenceRecords']),7:Object.freeze(['requirements','tests','artifacts','evidenceRecords']),8:Object.freeze(['requirements','requirementResolutions','tests','failureTests','sources','research','sourceConflicts','evidenceRecords']),9:Object.freeze(['instructions','requirements','requirementResolutions','tests','failureTests','sources','sourceConflicts','evidenceRecords','freshContexts']),10:Object.freeze(['instructions','preflightRecords','requirements','tests','failureTests','artifacts']),11:Object.freeze(['candidateFreezes','iterations','instructions','artifacts','freshContexts']),12:Object.freeze(['runs','requirements','tests','sources','research','evidenceRecords','artifacts','freshContexts']),13:Object.freeze(['runs','verification','requirements','tests']),14:Object.freeze(['comparisons','verification','defects','requirements','tests','instructions','runs','sources','research','candidateRequirements','requirementResolutions','failureTests','preflightRecords','artifacts','evidenceRecords','changes']),15:Object.freeze(['defects','rootCauses','requirements','tests','runs','verification','artifacts','evidenceRecords']),16:Object.freeze(['defects','rootCauses','regressions','regressionExecutions','requirements','requirementResolutions','instructions','tests','failureTests','artifacts','evidenceRecords','changes']),18:Object.freeze(['iterations','runs','verification','comparisons','defects','rootCauses','regressions','regressionExecutions','requirements','tests','changes','blockers','evidenceRecords']),20:Object.freeze(['confirmationRecords','candidateFreezes','iterations','artifacts']),21:Object.freeze(['baselines','instructions','artifacts','freshContexts']),22:Object.freeze(['products','requirements','tests','artifacts','evidenceRecords']),23:Object.freeze(['products','requirements','tests','sources','research','evidenceRecords','artifacts','freshContexts']),24:Object.freeze(['products','requirements','tests','regressions','regressionExecutions','sources','research','evidenceRecords','artifacts','freshContexts']),25:Object.freeze(['products','baselines','tests','artifacts','evidenceRecords']),26:Object.freeze(['requirements','tests','instructions','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','confirmationRecords','baselines','products','evidenceRecords']),27:Object.freeze(['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','confirmationRecords','baselines','products','blockers','evidenceRecords']),29:Object.freeze(['requirements','instructions','instructionTraces','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','evidenceRecords','releaseRecords','artifactIdentities','baselines','products','evidenceChains']),30:Object.freeze(['requirements','defects','regressions','regressionExecutions','baselines','evidenceRecords'])})"
+          text=text[:a]+replacement+text[b+2:]
+          if 'function stageCompletionDirective(stage)' not in text:
+              marker='function projectDataExecutionRule(stage){'
+              i=text.find(marker)
+              if i<0: raise SystemExit('project data execution rule not found')
+              helper="function stageCompletionDirective(stage){return 'Complete the entire current STAGE PROCEDURE before returning final JSON. Do not return DATA_PROPOSAL until every completion condition stated by this stage procedure and response contract is satisfied. If a required condition is not satisfied, return the correct HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED disposition instead. Do not perform work assigned to a later stage.';}\n"
+              text=text[:i]+helper+text[i:]
+          old='\\n\\nSTAGE PROCEDURE\\n${procedureFor(stage,operation)}\\n\\n'
+          new='\\n\\nSTAGE PROCEDURE\\n${procedureFor(stage,operation)}\\n\\nSTAGE COMPLETION BOUNDARY — DO NOT STOP EARLY\\n${stageCompletionDirective(stage)}\\n\\n'
+          if old in text: text=text.replace(old,new,1)
+          elif 'STAGE COMPLETION BOUNDARY — DO NOT STOP EARLY' not in text: raise SystemExit('stage completion insertion point not found')
+          p.write_text(text)
+          w=Path('workflow-engine.js')
+          text=w.read_text()
+          old="  if(stage===4)return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Compile the complete requirement specification',explanation:'Use the current Stage 04 instruction. It already contains the exhausted Stage 01 human-authority capture, the complete Stage 03 research, and the application obligation manifest. Do not reattach or restate the original project-intent file. Return one final strict JSON response only after every obligation in the manifest has been accounted for.',primaryButton:'Paste final JSON'});\n  return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Return the final structured response',explanation:'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Continue the external work or conversation until the executor is ready to return one final strict JSON response and any required files.',primaryButton:'Paste final JSON'});"
+          new="  if(stage===4)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Run Stage 04 with the complete captured project data',explanation:'Send the current Stage 04 instruction to the agent. That exact prompt contains the exhausted Stage 01 human-authority capture, complete Stage 03 research and candidate obligations, applicable source/evidence context, and the application obligation manifest. Do not reattach, reopen, restate, summarize, or retype the original project-intent file. Continue the Stage 04 conversation until every obligation is accounted for and the agent returns one final strict JSON response; paste only that final JSON into the response box.',primaryButton:null});\n  return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Run the current stage with the generated instruction',explanation:'Send the current Stage '+String(stage).padStart(2,'0')+' instruction to the required executor and continue only that stage until its complete stage boundary is satisfied. Do not paste intermediate conversation into the application. When the executor returns one final strict JSON response and any required returned files, paste only that final JSON and attach only those listed returned files.',primaryButton:null});"
+          if old in text: text=text.replace(old,new,1)
+          elif 'Run the current stage with the generated instruction' not in text: raise SystemExit('operator default action block not found')
+          w.write_text(text)
+          PY
+          rm -f .github/workflows/apply-all-stage-prompt-context-closure.yml .github/workflows/apply-operator-conversation-state.yml .github/workflows/apply-materialize-stage-closure.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js workflow-engine.js .github/workflows
+          git commit -m "Materialize all-stage prompt closure and operator state"
+          git push origin HEAD:main
