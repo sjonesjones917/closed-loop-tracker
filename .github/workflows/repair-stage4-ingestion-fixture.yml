@@ -1,0 +1,40 @@
+name: Repair Stage 04 ingestion fixture and self-remove
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+permissions:
+  contents: write
+concurrency:
+  group: repair-stage4-ingestion-fixture-once
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.event.head_commit.message == 'Run one-time Stage 04 ingestion fixture repair'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+          fetch-depth: 0
+      - name: Generate all manifest-bound Stage 04 requirement fixtures
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          t=p.read_text()
+          old="  if(!Object.keys(stageData).length){"
+          new="  if(!Object.keys(stageData).length||stage===4){"
+          if old not in t and new not in t:
+              raise SystemExit('validEnvelope record-generation condition not found')
+          if old in t:
+              t=t.replace(old,new,1)
+          p.write_text(t)
+          PY
+          node --check verify-ingestion.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git rm .github/workflows/repair-stage4-ingestion-fixture.yml
+          git commit -m "Generate complete Stage 04 ingestion fixtures"
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
