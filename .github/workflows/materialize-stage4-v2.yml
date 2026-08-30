@@ -23,6 +23,8 @@ jobs:
         run: |
           git config user.name "closed-loop-repair"
           git config user.email "actions@users.noreply.github.com"
+      - name: Align prompt contract wording
+        run: sed -i 's/SOURCE_MATERIAL must equal the exact INPUT-UNIT ID/SOURCE_MATERIAL must be the exact INPUT-UNIT ID/' .github/scripts/materialize_stage4_v2.py
       - name: Materialize current-main repair
         run: python3 .github/scripts/materialize_stage4_v2.py
       - name: Syntax checks
