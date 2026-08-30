@@ -395,7 +395,7 @@ import fsStageBoundary from 'node:fs';
 {
  const p=baseProject();p.job.EXACT_USER_OBJECTIVE_VERBATIM='I need to turn my project packet into a patent application.';p.job.SUPPLIED_MATERIALS_INVENTORY='invention-packet.zip';
  const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}),d=prompts.responseContractDescriptor(1,'COMPLETE');
- for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','Do not turn it into a Stage 02 archive/file inventory'])if(!r.prompt.includes(token))throw new Error('Stage 01 exact-output/locality contract missing: '+token);
+ for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','INPUT_SET_CONTENTS must preserve the substantive human-authority statements','Do not return only filenames, a material list, or a summary that drops supplied requirements','Do not turn it into a Stage 02 archive/file inventory'])if(!r.prompt.includes(token))throw new Error('Stage 01 exact-output/locality contract missing: '+token);
  const expectedEvidence=['temporaryKey','kind','description','authorityType','sourceRef','location','content','attachmentRef','notes'];if(JSON.stringify(d.envelope.evidenceKeys)!==JSON.stringify(expectedEvidence))throw new Error('Prompt evidence schema does not match ingestion evidence keys.');
 }
 
@@ -430,6 +430,9 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   p.job.ASSUMPTIONS='CANONICAL-STAGE-01-ASSUMPTION';
   p.job.UNKNOWN_INFORMATION='CANONICAL-STAGE-01-UNKNOWN';
   p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE';
+  const inputVersionBeforeStage1Acceptance=p.job.CURRENT_INPUT_VERSION;
+  engine.registerStageVersion(p,1,'STAGE-01-AGENT-ACCEPTANCE');
+  if(p.job.CURRENT_INPUT_VERSION!==inputVersionBeforeStage1Acceptance)throw new Error('Stage 01 agent acceptance changed the HUMAN input version.');
   p.projectData.candidateRequirements.push({id:'CANDIDATE-REQ-STAGE04',stage:3,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-STAGE04',SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},relationships:{},evidenceRefs:['EVIDENCE-STAGE-03']});
   const record=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
   const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
@@ -440,6 +443,7 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
   const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
   if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
+  if(renamed.contextSignature===record.contextSignature)throw new Error('Current human input change did not change the Stage 04 context identity.');
 }
 console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.

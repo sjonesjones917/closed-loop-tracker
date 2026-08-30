@@ -112,6 +112,7 @@ function registerStageVersion(project,stage,acceptedChangeId){
   ensureShape(project);
   const config=VERSION_BY_STAGE[stage];
   if(!config)return null;
+  if(Number(stage)===1)return safe(project.projectData.inputVersions).at(-1)||null;
   if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE'){project.job.CURRENT_SOURCE_SET_VERSION='NOT APPLICABLE';return null;}
   const [jobField,prefix]=config;
   const payload={stage,collections:Object.fromEntries(versionCollections(stage).map(collection=>[collection,records(project,collection).map(record=>({id:recordId(record,collection),fields:recordFields(record),relationships:record.relationships||{},sha256:record.sha256||null}))])),acceptedData:project.stages[stage].acceptedData};
