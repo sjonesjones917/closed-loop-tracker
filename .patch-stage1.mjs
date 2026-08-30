@@ -46,6 +46,11 @@ const old="for(const source of legacy){const project=core.migrateState(clone(sou
 const neu="for(const source of legacy){const project=core.migrateState(clone(source));engine.ensureShape(project);if(typeof engine.migrateLegacyStage01Accounting==='function')engine.migrateLegacyStage01Accounting(project);engine.recalculate(project);assertProjectIntegrity(project,{verifyDerived:true});";
 if(!s.includes(old))throw new Error('store migration anchor missing');
 fs.writeFileSync('project-store.js',s.replace(old,neu));
+s=fs.readFileSync('app-core.js','utf8');
+const appOld="p.activeStage=raw.currentStage||1;p.activeView='Overview';return ensureState(p);}";
+const appNew="p.activeStage=raw.currentStage||1;p.activeView='Overview';if(typeof engine.migrateLegacyStage01Accounting==='function')engine.migrateLegacyStage01Accounting(p);return ensureState(p);}";
+if(!s.includes(appOld))throw new Error('app seed migration anchor missing');
+fs.writeFileSync('app-core.js',s.replace(appOld,appNew));
 const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
 const blobSha=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
 const manifest=runtimeFiles.map(file=>`${file}:${blobSha(file)}\n`).join('');
