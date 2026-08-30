@@ -1,0 +1,29 @@
+name: Apply operator-discovered repairs
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/live-repair.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply exact repairs
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text(); old="if(!wasComplete||state.status!=='COMPLETE'||!state.derivedData||!Object.keys(state.derivedData).length)state.derivedData=deriveStageData(project,stage);"; assert old in s; p.write_text(s.replace(old,"state.derivedData=deriveStageData(project,stage);",1))
+          p=Path('prompt-engine.js'); s=p.read_text(); old="derivedData:state.stages[stage-1].derivedData||{}"; assert old in s; s=s.replace(old,"derivedData:workflow.deriveStageData(state,stage-1)",1); p.write_text(s)
+          p=Path('app-core.js'); s=p.read_text(); start=s.index('function proposalMarkup(n)'); end=s.index('\nfunction stageConfirmationMarkup',start)
+          replacement="""function proposalMarkup(n){const p=pendingProposal();if(!p)return '';const rows=safe(p.changes).map(c=>({recordType:c.canonicalRecordType||c.canonicalCollection||'stageData',temporaryKey:c.temporaryResponseKey||'',canonicalId:c.canonicalRecordId||'APPLICATION_ASSIGNED',field:c.canonicalField||c.canonicalRelationship||'',currentValue:(()=>{const collection=c.canonicalCollection||c.canonicalRecordType,record=collection&&c.canonicalRecordId?engine.records(current,collection).find(r=>engine.recordId(r,collection)===c.canonicalRecordId):null;return record?engine.recordValue(record,c.canonicalField||c.canonicalRelationship||'')??'NONE':current.stages[n]?.agentData?.[c.canonicalField]??current.stages[n]?.humanData?.[c.canonicalField]??current.stages[n]?.derivedData?.[c.canonicalField]??'NONE';})(),proposedValue:c.normalizedValue,jsonPointer:c.jsonPointer||'',evidence:c.evidenceIds||'',validation:'SATISFIED'})),stale=!proposalVersionCurrent(p),longProposal=rows.length>50,stageOne=n===1,stageOneAccounting=safe(p.envelope?.stageData?.INTAKE_ACCOUNTING),stageOneIntents=safe(p.envelope?.records?.intentStatements),stageOneSummary=stageOne?`<div class=\"record-card\"><div class=\"record-body\"><div class=\"record-rows\">${field('Requested deliverable',p.envelope?.stageData?.EXACT_DELIVERABLE_REQUESTED||'UNKNOWN')}${field('Controlled input units accounted',stageOneAccounting.length)}${field('Intent statements captured',stageOneIntents.length)}${field('Assumptions',p.envelope?.stageData?.ASSUMPTIONS||'NONE')}${field('Unresolved human information',p.envelope?.stageData?.UNKNOWN_INFORMATION||'NONE')}</div></div></div><details class=\"record-card\"><summary>Advanced Stage 01 extraction details<span>${rows.length}</span></summary><div class=\"record-body\">${details('Complete extraction diff',rows,false)}</div></details>`:details('Proposal diff',rows,!longProposal);return `<div class=\"panel\" id=\"proposal-heading\" data-long-review=\"${longProposal}\" tabindex=\"-1\"><h2 class=\"section-title\">Proposed extracted changes</h2>${stale?'<div class=\"notice warn\"><strong>Obsolete instruction version.</strong><br>This proposal cannot be accepted. Save and send the current instruction, then parse the replacement response.</div>':'<p class=\"section-intro\">Nothing below is canonical until you accept the complete validated proposal.</p>'}${stageOneSummary}<details class=\"record-card\"><summary>Advanced raw proposal<span>Audit</span></summary><div class=\"record-body\">${details('Complete proposal',p)}</div></details><div class=\"button-row\" id=\"proposal-actions\" tabindex=\"-1\">${stale?'':'<button class=\"primary\" id=\"accept-proposal\">Accept response</button>'}<button id=\"reject-proposal\">Reject response</button><button id=\"request-correction\">Request correction</button></div><div class=\"field\"><label>Correction or refinement needed</label><textarea id=\"correction-reason\" placeholder=\"State exactly what is missing, incorrect, or should be made more complete.\"></textarea></div></div>`;}"""
+          p.write_text(s[:start]+replacement+s[end:])
+          Path('.github/workflows/live-repair.yml').unlink()
+      - name: Commit repaired application
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js app-core.js .github/workflows/live-repair.yml
+          git commit -m "Fix live prompt state and Stage 01 review behavior"
+          git push
