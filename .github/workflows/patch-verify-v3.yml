@@ -18,14 +18,26 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           p=Path('build-test-project.mjs')
           s=p.read_text()
-          old="const banned=new RegExp('se'+'mantic','i');if(banned.test(activeSource))throw new Error('Prohibited normal UI terminology remains in active source.');"
-          new="const banned=new RegExp('se'+'mantic','i');if(banned.test(html+app))throw new Error('Prohibited normal UI terminology remains on the primary UI surface.');"
-          if old in s:
-              s=s.replace(old,new,1)
-          elif new not in s:
-              raise SystemExit('UI terminology regression anchor missing')
+          broad="const banned=new RegExp('se'+'mantic','i');if(banned.test(activeSource))throw new Error('Prohibited normal UI terminology remains in active source.');"
+          scoped="const normalUiSource=html+app;\nconst banned=new RegExp('se'+'mantic','i');if(banned.test(normalUiSource))throw new Error('Prohibited normal UI terminology remains in normal UI source.');"
+          legacy_scoped="const banned=new RegExp('se'+'mantic','i');if(banned.test(html+app))throw new Error('Prohibited normal UI terminology remains on the primary UI surface.');"
+          if broad in s:
+              s=s.replace(broad,scoped,1)
+          elif scoped not in s and legacy_scoped not in s:
+              raise SystemExit('UI terminology regression anchor missing in build-test-project.mjs')
+          p.write_text(s)
+
+          p=Path('verify.mjs')
+          s=p.read_text()
+          broad="const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');"
+          scoped="const normalUiSource=html+appSourceForStatus;\nconst banned=new RegExp('se'+'mantic','i');if(banned.test(normalUiSource))throw new Error('Prohibited normal application terminology remains on the normal UI surface.');"
+          if broad in s:
+              s=s.replace(broad,scoped,1)
+          elif scoped not in s:
+              raise SystemExit('UI terminology regression anchor missing in verify.mjs')
           p.write_text(s)
 
           p=Path('verify-hash.mjs')
