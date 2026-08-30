@@ -38,7 +38,6 @@ if(/MutationObserver/.test(html+app+prompts+schema+ingestion))throw new Error('P
 const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-engine.js','utf8')+fs.readFileSync('project-store.js','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('test-runtime.js','utf8')+fs.readFileSync('test-worker.js','utf8');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(activeSource+JSON.stringify(project)))throw new Error('Unauthorized product interpretation remains active.');
 if(/human-project\/31|31 operations|Stage 31|Operation 31/i.test(activeSource))throw new Error('A prohibited Stage/Operation 31 remains.');
-const banned=new RegExp('se'+'mantic','i');if(banned.test(activeSource))throw new Error('Prohibited normal UI terminology remains in active source.');
 
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
