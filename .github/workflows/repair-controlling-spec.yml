@@ -25,6 +25,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ ! -f .tmp-stage4-exhaustive-patch.mjs || ! -f .tmp-fullcycle-stage4-refresh.mjs ]]; then
+            echo "Controlling implementation is already materialized; no temporary materializer input remains."
+            exit 0
+          fi
           git fetch origin implementation/closed-loop-v3:refs/remotes/origin/implementation/closed-loop-v3 closed-loop-v3-completion:refs/remotes/origin/closed-loop-v3-completion
           node <<'NODE'
           const fs=require('fs');
@@ -111,7 +115,7 @@ jobs:
           const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
           if(style!==fs.readFileSync('/tmp/visual-style-baseline.txt','utf8'))throw new Error('Visual stylesheet changed.');
           NODE
-          rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml .tmp-stage4-exhaustive-patch.mjs .tmp-fullcycle-stage4-refresh.mjs
+          rm -f .tmp-stage4-exhaustive-patch.mjs .tmp-fullcycle-stage4-refresh.mjs
           node --check workbook.js
           node --check app-core.js
           node --check workflow-schema.js
@@ -135,6 +139,8 @@ jobs:
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
           node verify-v3-definition-of-done.mjs
+          git diff --check
+          git checkout HEAD -- .github/workflows/pages.yml
           git diff --check
           git config user.name closed-loop-spec-repair
           git config user.email actions@users.noreply.github.com
