@@ -40,7 +40,12 @@ jobs:
           if html.count(shrink)!=1: raise SystemExit('index.html: 88px override count changed')
           html=html.replace(shrink,'',1)
           runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          manifest=''.join(f"{name}:{hashlib.sha1(b'blob '+str(len(data:=Path(name).read_bytes())).encode()+b'\\0'+data).hexdigest()}\n" for name in runtime_files)
+          manifest=''
+          for name in runtime_files:
+              data=Path(name).read_bytes()
+              prefix=b'blob '+str(len(data)).encode()+bytes([0])
+              blob_sha=hashlib.sha1(prefix+data).hexdigest()
+              manifest += f'{name}:{blob_sha}\n'
           identity='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
           pattern=re.compile(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)')
           html,count=pattern.subn(lambda m:m.group(1)+identity+m.group(2),html)
