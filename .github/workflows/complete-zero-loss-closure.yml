@@ -27,15 +27,18 @@ jobs:
           PY
       - name: Apply deterministic source repair
         run: python3 repair-zero-loss.py
-      - name: Align retained-project browser proof to application-owned manifest
+      - name: Align browser proof to native current-project intake manifest
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify-browser.mjs'); t=p.read_text()
-          old="const intakeProof=await evalValue(cdp,`(()=>{const p=globalThis.closedLoopPromptEngine.buildPromptRecord(1,${JSON.stringify(retained)});const m=p.contextManifest?.intakeCoverageManifest;return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM')};})()`);assert(intakeProof&&intakeProof.inputVersion===retained.job.CURRENT_INPUT_VERSION&&intakeProof.unitCount>0&&intakeProof.hasObjective,'Application-owned Stage 01 intake manifest did not preserve current human-authority identity.');"
-          new="const intakeProof=await evalValue(cdp,`(()=>{const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(${JSON.stringify(retained)});return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM')};})()`);assert(intakeProof&&intakeProof.inputVersion===retained.job.CURRENT_INPUT_VERSION&&intakeProof.unitCount>0&&intakeProof.hasObjective,'Application-owned Stage 01 intake manifest did not preserve current human-authority identity.');"
-          if old not in t: raise SystemExit('Expected browser intake proof not found')
-          p.write_text(t.replace(old,new,1))
+          start="const intakeProof=await evalValue(cdp,`"
+          end="assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');"
+          a=t.find(start); b=t.find(end,a)
+          if a<0 or b<0: raise SystemExit('Expected retained intake proof block not found')
+          replacement="const nativeIntakeProof=await evalValue(cdp,`(()=>{const p=globalThis.closedLoopCore.createBlankState('JOB-BROWSER-INTAKE-PROOF');p.job.EXACT_USER_OBJECTIVE_VERBATIM='browser-intake-objective';p.job.EXPLICIT_USER_REQUIREMENTS='browser-intake-requirement';p.projectData.userEntered={objective:'browser-intake-objective',nested:{acceptance:'browser-intake-acceptance'}};globalThis.closedLoopWorkflowEngine.recalculate(p);const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(p);return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM'),hasNested:(m?.units||[]).some(u=>u.sourceLocation==='projectData.userEntered.nested.acceptance')};})()`);assert(nativeIntakeProof&&nativeIntakeProof.unitCount>0&&nativeIntakeProof.hasObjective&&nativeIntakeProof.hasNested,'Application-owned Stage 01 intake manifest did not enumerate native current human-authority input.');"
+          t=t[:a]+replacement+t[b:]
+          p.write_text(t)
           PY
       - name: Normalize permanent visual regression to compare exact baseline
         run: |
