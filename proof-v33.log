@@ -1,0 +1,73 @@
+===== node --check workflow-schema.js =====
+EXIT=0
+===== node --check workflow-engine.js =====
+EXIT=0
+===== node --check prompt-engine.js =====
+EXIT=0
+===== node --check response-ingestion.js =====
+EXIT=0
+===== node --check project-store.js =====
+EXIT=0
+===== node --check app-core.js =====
+EXIT=0
+===== node --check test-runtime.js =====
+EXIT=0
+===== node --check test-worker.js =====
+EXIT=0
+===== node --check verify-prompt-semantics.mjs =====
+EXIT=0
+===== node --check verify-intent-capture.mjs =====
+EXIT=0
+===== node verify-intent-capture.mjs =====
+intent capture and Stage 04 capture-once regression passed
+EXIT=0
+===== node verify-prompt-semantics.mjs =====
+{
+  "promptSemanticContradictions": true,
+  "stageOperationsChecked": 41,
+  "mutationCasesRejected": 9,
+  "stage2SourceCount": true,
+  "testExecutionOrchestration": true,
+  "artifactGenerationBoundary": true,
+  "promptVersionBoundary": true,
+  "insufficiencyRecovery": true,
+  "operationIsolation": true,
+  "applicationOwnership": true,
+  "subjectNeutralStage1": true
+}
+{
+  "reliabilityV2PromptIsolation": true
+}
+{
+  "stage23PriorConclusionIsolation": true,
+  "stage24PriorConclusionIsolation": true,
+  "stage12PriorSummaryIsolation": true
+}
+{"stage04CapturedInputReuse":true}
+{
+  "independentReviewerPromptIdentity": true,
+  "promptEngineVersion": "closed-loop-prompt-engine/31"
+}
+EXIT=0
+===== node verify-semantic-invariant.mjs =====
+{"semanticFalseAcceptanceInvariant":true,"conclusionBearingCollections":12,"releaseGradeIndependence":true,"traceIntegrity":true,"centralAdjudication":true,"affirmativeCapabilityAvailability":true,"epistemicEvidenceChains":true,"effectiveStability":true}
+EXIT=0
+===== node verify-v3-migration.mjs =====
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+Error: Cannot find module '/home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-v3-migration.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.23.2
+EXIT=1
