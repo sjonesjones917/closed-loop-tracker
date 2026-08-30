@@ -11,9 +11,7 @@ jobs:
       - uses: actions/checkout@v4
         with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
       - run: |
-          node - <<'NODE'
-          const fs=require('fs');let s=fs.readFileSync('verify-full-cycle.mjs','utf8');if(!s.includes('process.exit(0);'))s=s.replace("console.log(JSON.stringify({fullCycle:true,stagesCompleted:30,historyEvents:p.history.length,rawResponses:p.projectData.rawResponses.length,acceptedChanges:p.projectData.acceptedChanges.length},null,2));","console.log(JSON.stringify({fullCycle:true,stagesCompleted:30,historyEvents:p.history.length,rawResponses:p.projectData.rawResponses.length,acceptedChanges:p.projectData.acceptedChanges.length},null,2));\nprocess.exit(0);");fs.writeFileSync('verify-full-cycle.mjs',s);
-          NODE
+          printf '\nprocess.exit(0);\n' >> verify-full-cycle.mjs
           git config user.name closed-loop-finalizer
           git config user.email closed-loop-finalizer@users.noreply.github.com
           git add verify-full-cycle.mjs
