@@ -356,7 +356,7 @@ import fsStageBoundary from 'node:fs';
  const s2=capture(2,3);
  const forbidden1=[/supplied-material inventory/i,/inspection state/i,/build .*source inventory/i,/discover independent external sources/i,/establish source identity/i,/authority hierarchy/i,/source conflicts/i,/research requirements/i];
  for(const re of forbidden1)if(re.test(s1))throw new Error('Stage 01 leaks Stage 02/03 work: '+re);
- const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
+ const required1=[/job definition and clarification only/i,/authorized human job input/i,/inspect them deeply enough to extract every human-supplied fact/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
  for(const re of required1)if(!re.test(s1))throw new Error('Stage 01 missing locality boundary: '+re);
  const required2=[/Stage 02 is not a supplied-project-material inventory stage/i,/Missing project-material bytes do not by themselves block Stage 02/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
  for(const re of required2)if(!re.test(s2))throw new Error('Stage 02 missing ownership boundary: '+re);
@@ -439,7 +439,7 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   if(record.contextManifest.executionHandoff?.conversationMaterials)throw new Error('Obsolete Stage 04 conversation-material state remains in prompt identity.');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
   const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
+  if(renamed.bodySha256!==record.bodySha256)throw new Error('Original intent filename leaked into Stage 04 after canonical Stage 01 capture.');
 }
 console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
