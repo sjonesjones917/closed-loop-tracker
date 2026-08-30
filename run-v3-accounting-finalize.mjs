@@ -47,3 +47,15 @@ if(!engine.includes('function suppliedMaterialReferences(project){')){
   engine=engine.replace(marker,helper+marker);
   fs.writeFileSync(enginePath,engine);
 }
+
+const focusedPath='verify-intake-obligation-accounting.mjs';
+let focused=fs.readFileSync(focusedPath,'utf8');
+const stage1Needle="const prompt1=prompts.buildPromptRecord(1,p),envelope=";
+const stage1Replacement="const prompt1=prompts.buildPromptRecord(1,p);p.projectData.generatedPrompts.push(structuredClone(prompt1));const envelope=";
+if(!focused.includes(stage1Needle))throw new Error('Stage 01 accounting fixture prompt anchor missing.');
+focused=focused.replace(stage1Needle,stage1Replacement);
+const stage4Needle="const prompt4=prompts.buildPromptRecord(4,p);assert(";
+const stage4Replacement="const prompt4=prompts.buildPromptRecord(4,p);p.projectData.generatedPrompts.push(structuredClone(prompt4));assert(";
+if(!focused.includes(stage4Needle))throw new Error('Stage 04 accounting fixture prompt anchor missing.');
+focused=focused.replace(stage4Needle,stage4Replacement);
+fs.writeFileSync(focusedPath,focused);
