@@ -20,7 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply exact repair
-        run: python3 .repair-controlling-spec.py
+        run: |
+          python3 .repair-controlling-spec.py
+          python3 .repair-post.py
       - name: Syntax proof
         run: |
           node --check workbook.js
@@ -44,7 +46,7 @@ jobs:
           node verify-ingestion.mjs
           node verify-prompt-semantics.mjs
       - name: Remove one-time repair machinery
-        run: rm -f .repair-controlling-spec.py .github/workflows/_apply-controlling-spec.yml
+        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml
       - name: Commit verified repair
         run: |
           git config user.name github-actions[bot]
