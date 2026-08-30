@@ -315,6 +315,7 @@ function gate(stage,project){
     case 1:{
       if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');
       requireAccepted();
+      {const intakeManifest=stage01IntakeManifest(project),accounting=safe(project.stages[1]?.agentData?.INTAKE_ACCOUNTING),seen=new Set(accounting.map(entry=>String(entry?.inputId||'')).filter(Boolean)),missing=safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(id=>id&&!seen.has(id));if(missing.length)reasons.push(`Stage 01 intake accounting is missing application-generated input unit(s): ${missing.join(', ')}.`);}
       const statements=currentIntentStatements(project);
       if(!statements.length)reasons.push('Stage 01 requires a canonical intent-statement ledger; the original intent file may not be deferred to a later stage.');
       for(const statement of statements)for(const name of ['SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE'])if(!String(recordValue(statement,name)||'').trim())reasons.push(`${recordId(statement,'intentStatements')}: ${name} is missing.`);
@@ -798,6 +799,7 @@ function stage01IntakeManifest(project){
   const add=(sourceKind,sourceIdentity,location,value)=>{if(value===undefined||value===null||String(value).trim()==='')return;const rawValueHash=hash.sha256Value(value),inputId='INPUT-'+hash.sha256Value({inputVersion,sourceKind,sourceIdentity,location,rawValueHash}).slice(0,20).toUpperCase();if(seen.has(inputId))return;seen.add(inputId);entries.push({inputId,sourceKind,sourceIdentity,location,rawValueHash,value:clone(value)});};
   for(const [fieldName,definition] of Object.entries(schema.JOB_FIELDS||{}))if([schema.PRODUCER.HUMAN,schema.PRODUCER.HUMAN_DECISION].includes(definition.producer))add('JOB_FIELD',fieldName,fieldName,project.job?.[fieldName]);
   for(const [i,answer] of safe(project.projectData?.humanInputAnswers).entries())add('HUMAN_ANSWER',String(answer.answerId||answer.requestId||i+1),String(answer.requestId||i+1),answer.answer??answer.value??answer.response??'');
+  for(const artifact of records(project,'artifacts').filter(record=>Number(record.stage)===1)){const artifactId=recordId(artifact,'artifacts'),filename=String(recordValue(artifact,'FILENAME')||artifactId),identity={artifactId,filename,sha256:String(recordValue(artifact,'SHA256')||''),byteSize:Number(recordValue(artifact,'BYTE_SIZE')||0),role:String(recordValue(artifact,'ROLE')||'STAGE_ARTIFACT'),availability:String(recordValue(artifact,'AVAILABILITY')||'UNKNOWN')};add('SUPPLIED_ARTIFACT',artifactId,filename,identity);}
   return {schema:'closed-loop-intake-manifest/1',jobId:String(project.job?.JOB_ID||''),inputVersion,entries,coverageDenominator:entries.length,manifestSha256:hash.sha256Value(entries.map(x=>({inputId:x.inputId,rawValueHash:x.rawValueHash})))};
 }
 function stage04ObligationManifest(project){
