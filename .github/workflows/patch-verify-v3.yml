@@ -8,6 +8,7 @@ on:
       - .github/workflows/patch-verify-v3.yml
       - .github/patch_verify_v3.py
       - .github/finalize_v3_verifiers.py
+      - .github/finalize_v3_verifiers_fixed.py
 
 permissions:
   contents: write
@@ -26,7 +27,7 @@ jobs:
       - name: Materialize controlling implementation
         run: python3 .github/patch_verify_v3.py
       - name: Align deterministic proof fixtures
-        run: python3 .github/finalize_v3_verifiers.py
+        run: python3 .github/finalize_v3_verifiers_fixed.py
       - name: Syntax and architecture checks
         run: |
           node --check workbook.js
@@ -56,7 +57,7 @@ jobs:
           node verify-definition-of-done.mjs
       - name: Remove one-time repair machinery and commit exact source
         run: |
-          rm -f .github/patch_verify_v3.py .github/finalize_v3_verifiers.py .github/workflows/patch-verify-v3.yml
+          rm -f .github/patch_verify_v3.py .github/finalize_v3_verifiers.py .github/finalize_v3_verifiers_fixed.py .github/workflows/patch-verify-v3.yml
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
           git config user.name closed-loop-conformance
