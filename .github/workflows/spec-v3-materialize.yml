@@ -7,6 +7,7 @@ permissions:
   contents: write
 jobs:
   materialize:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,6 +21,7 @@ jobs:
         run: |
           node spec-v3-materialize.mjs
           node spec-v3-postfix.mjs
+          git checkout -- .github/workflows/pages.yml
       - name: Syntax and controlling checks
         run: |
           node --check workbook.js
@@ -34,11 +36,11 @@ jobs:
           node --check verify-spec-v3.mjs
           node verify-spec-v3.mjs
           node verify-test-runtime.mjs
-      - name: Commit integrated implementation and remove repair machinery
+      - name: Commit integrated implementation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm spec-v3-materialize.mjs spec-v3-postfix.mjs .github/workflows/spec-v3-materialize.yml
+          git rm spec-v3-materialize.mjs spec-v3-postfix.mjs
           git add -A
           git commit -m "Implement controlling v3 reliability contract"
           git push origin HEAD:spec-v3-controlling-bundle
