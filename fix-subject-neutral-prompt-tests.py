@@ -1,0 +1,33 @@
+from pathlib import Path
+import re
+p=Path('verify-prompt-semantics.mjs')
+text=p.read_text()
+# Delete legacy assertions that require forbidden hard-coded project-subject branches.
+for token in [
+    "if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');",
+    "if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');",
+    "if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');",
+    "if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');"
+]:
+    if token in text:text=text.replace(token,'')
+# Replace Stage 01 legacy domain/adaptive wording assertions with the controlling generic semantics.
+text=re.sub(
+    r"\s*if\(!record\.prompt\.includes\('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY'\)\|\|!record\.prompt\.includes\('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'\)\)issues\.push\('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING'\);",
+    "\n    if(!/Stage 01/i.test(record.prompt)||!/human-authority/i.test(record.prompt)||!/source research|external research/i.test(record.prompt)||!/requirement atomization|requirement derivation/i.test(record.prompt))issues.push('STAGE01_GENERIC_INTAKE_BOUNDARY_MISSING');",
+    text,count=1)
+# Replace the old patent-specific proactive gate check. The patent list is a fixture, not runtime prompt content.
+text=re.sub(
+    r"\s*if\(!record\.prompt\.includes\('MANDATORY STAGE 01 HUMAN-INTAKE GATE'\)\|\|!record\.prompt\.includes\('BLOCKING_NOW'\)\|\|!record\.prompt\.includes\('ASK_NOW_NONBLOCKING'\)\|\|!record\.prompt\.includes\('LATER_RESOLVABLE'\)\|\|!record\.prompt\.includes\('Nonblocking means the human may defer; it does not mean the agent may skip the question'\)\|\|!record\.prompt\.includes\('intended jurisdiction\(s\)'\)\|\|!record\.prompt\.includes\('additional human-controlled invention materials exist'\)\)issues\.push\('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING'\);",
+    "\n    if(!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!/must come from (?:the )?human|human-only/i.test(record.prompt)||!/do not ask|must not ask/i.test(record.prompt))issues.push('STAGE01_GENERIC_HUMAN_INTAKE_GATE_MISSING');",
+    text,count=1)
+# Remove the obsolete Stage 01 artifact-production policy. Stage 01 is intake only under the controlling bundle.
+text=re.sub(
+    r"\s*if\(!record\.prompt\.includes\('do not require the human to know those formats in advance'\)\|\|!record\.prompt\.includes\('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose'\)\|\|!record\.prompt\.includes\('Only propose an implementation-ready'\)\)issues\.push\('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING'\);",
+    "\n    if(/generate the actual artifact|implementation-ready|manufacturing-ready/i.test(record.prompt))issues.push('STAGE01_LATER_STAGE_PRODUCTION_LEAK');",
+    text,count=1)
+# Add direct source-level protection against subject branches in prompt-engine.js.
+anchor="function semanticIssues(record){\n  const issues=[];"
+addition="function semanticIssues(record){\n  const issues=[];\n  const promptSource=fs.readFileSync('prompt-engine.js','utf8');\n  if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD \/ CAM \/ CNC \/ ADDITIVE/.test(promptSource))issues.push('FORBIDDEN_PROJECT_SUBJECT_BRANCH');"
+if anchor in text:text=text.replace(anchor,addition,1)
+elif 'FORBIDDEN_PROJECT_SUBJECT_BRANCH' not in text:raise SystemExit('semanticIssues anchor missing')
+p.write_text(text)
