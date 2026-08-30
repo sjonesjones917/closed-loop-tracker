@@ -1,0 +1,33 @@
+name: Apply intake manifest mirror repair
+on:
+  push:
+    branches: [fix/intake-manifest-mirrors]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove mirrored User Job Input duplicates from intake accounting
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          text=p.read_text()
+          old="  enumerateInputLeaves(project.projectData.userEntered,'projectData.userEntered','ORIGINAL_USER_INPUT','Original user input',units,{inputVersion});"
+          new="""  const mirroredUserEnteredKeys=new Set([\n    'objective','suppliedMaterials','requiredOutputFormat','deadlineOrTemporalScope','desiredSourceCount','knownAuthorities','availableTools','prohibitedActions','explicitRequirements','suppliedArtifactFiles','suppliedArtifactText',\n    ...Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name)\n  ]);\n  const nonMirroredUserEntered=Object.fromEntries(Object.entries(project.projectData.userEntered||{}).filter(([key])=>!mirroredUserEnteredKeys.has(key)));\n  if(Object.keys(nonMirroredUserEntered).length)enumerateInputLeaves(nonMirroredUserEntered,'projectData.userEntered','ORIGINAL_USER_INPUT','Original user input',units,{inputVersion});"""
+          if old not in text: raise SystemExit('intake userEntered enumeration point not found')
+          text=text.replace(old,new,1)
+          p.write_text(text)
+          PY
+          rm -f .github/workflows/patch-intake-manifest-mirrors.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Deduplicate mirrored Stage 01 intake units"
+          git push origin HEAD:fix/intake-manifest-mirrors
