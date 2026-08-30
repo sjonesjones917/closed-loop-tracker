@@ -314,6 +314,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     if(evidenceRecord.sourceReference&&(evidenceRecord.fields.SOURCE_ID==='UNKNOWN'||evidenceRecord.fields.SOURCE_ID===null))throw new Error('Validated evidence source failed canonical resolution.');if(evidenceRecord.attachmentReference&&(evidenceRecord.fields.ATTACHMENT_ID==='UNKNOWN'||evidenceRecord.fields.ATTACHMENT_ID===null))throw new Error('Validated evidence attachment failed canonical resolution.');
     evidenceRecord.fields.SHA256=evidenceRecord.SHA256=hash.sha256Text(String(evidenceRecord.CONTENT||''));evidenceRecord.sha256=hash.sha256Value(evidenceRecord.fields);
   }
+  for(const record of canonicalRecords.tests||[]){record.fields=record.fields||{};record.fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;record.fields.EXECUTABLE_SPEC_SHA256=String(record.fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'?hash.sha256Value(record.fields.EXECUTABLE_SPEC):null;record.EXECUTABLE_SPEC_VERSION=record.fields.EXECUTABLE_SPEC_VERSION;record.EXECUTABLE_SPEC_SHA256=record.fields.EXECUTABLE_SPEC_SHA256;}
   for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}
 
   const proposedStageData=clone(envelope.stageData||{});
