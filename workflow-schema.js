@@ -217,13 +217,14 @@ const RECORD_OWNERSHIP=Object.freeze({
       "FAILURE_CONDITION",
       "EVIDENCE_TO_PRESERVE",
       "EXECUTABLE_KIND",
-      "EXECUTABLE_SPEC_VERSION",
       "EXECUTABLE_SPEC",
       "EXECUTABLE_INPUT_BINDINGS"
     ],
     "application": [
       "TEST_ID",
       "REQ_ID",
+      "EXECUTABLE_SPEC_VERSION",
+      "EXECUTABLE_SPEC_SHA256",
       "STATUS"
     ]
   },
@@ -911,25 +912,58 @@ const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
 function ownerFromPartition(partition,name,label){const hits=[['human',PRODUCER.HUMAN],['humanDecision',PRODUCER.HUMAN_DECISION],['agent',PRODUCER.AGENT],['application',PRODUCER.APPLICATION]].filter(([key])=>partition?.[key]?.includes(name));if(hits.length!==1)throw new Error(`${label} field ${name} must occur in exactly one ownership partition.`);return hits[0][1];}
 
 function stageFieldProducer(stage,name){return ownerFromPartition(core.STAGES[Number(stage)-1]?.ownership,name,`Stage ${stage}`);}
-const TEST_IR=Object.freeze({
-  version:'closed-loop-test-spec/1',
-  capability:'CLOSED_LOOP_TEST_IR',
-  executableKinds:Object.freeze(['NONE','TEST_IR']),
-  operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE','ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']),
-  limits:Object.freeze({maxSteps:64,maxTextBytes:16777216,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000})
+const TEST_IR_STEP_CONTRACTS=Object.freeze({
+  LOAD_ARTIFACT:Object.freeze({required:Object.freeze(['binding']),optional:Object.freeze([])}),
+  READ_BYTES:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  DECODE_UTF8:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  PARSE_JSON:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  PARSE_CSV:Object.freeze({required:Object.freeze(['delimiter','header','quote','newline','encoding']),optional:Object.freeze([])}),
+  PARSE_XML:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  SELECT_JSON_PATH:Object.freeze({required:Object.freeze(['path']),optional:Object.freeze([])}),
+  SELECT_XML:Object.freeze({required:Object.freeze(['path']),optional:Object.freeze([])}),
+  COUNT:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  SUM:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  MIN:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  MAX:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  SORT:Object.freeze({required:Object.freeze([]),optional:Object.freeze(['direction'])}),
+  UNIQUE:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  HASH_SHA256:Object.freeze({required:Object.freeze([]),optional:Object.freeze([])}),
+  REGEX:Object.freeze({required:Object.freeze(['pattern']),optional:Object.freeze(['flags'])}),
+  COMPARE:Object.freeze({required:Object.freeze([]),optional:Object.freeze(['value','binding','operator','numericMode','absoluteTolerance','relativeTolerance']),exactlyOne:Object.freeze(['value','binding'])}),
+  ASSERT_EQ:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message','numericMode','absoluteTolerance','relativeTolerance'])}),
+  ASSERT_GT:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  ASSERT_GTE:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  ASSERT_LT:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  ASSERT_LTE:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  ASSERT_MATCH:Object.freeze({required:Object.freeze(['pattern']),optional:Object.freeze(['flags','message'])}),
+  ASSERT_CONTAINS:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  ASSERT_NOT_CONTAINS:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  ASSERT_SET_EQUAL:Object.freeze({required:Object.freeze(['value']),optional:Object.freeze(['message'])}),
+  BYTE_COMPARE:Object.freeze({required:Object.freeze(['binding']),optional:Object.freeze([])})
 });
-const TEST_IR_FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script']);
+const TEST_IR=Object.freeze({version:'closed-loop-test-spec/1',capability:'CLOSED_LOOP_TEST_IR',executableKinds:Object.freeze(['NONE','TEST_IR']),operations:Object.freeze(Object.keys(TEST_IR_STEP_CONTRACTS)),operationContracts:TEST_IR_STEP_CONTRACTS,limits:Object.freeze({maxSteps:128,maxInputBytes:33554432,maxTotalInputBytes:33554432,maxTextBytes:16777216,maxCollectionItems:100000,maxParsedDepth:64,maxSelectorDepth:32,maxRegexLength:2000,maxRegexInputBytes:2097152,maxCsvCells:250000,workerTimeoutMs:5000,maxArchiveExpandedBytes:67108864})});
+const TEST_IR_FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script','source']);
 function validateTestIRSpec(spec){
   const issues=[];
-  if(!spec||typeof spec!=='object'||Array.isArray(spec))issues.push('EXECUTABLE_SPEC must be an object.');
-  if(spec?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);
-  if(!Array.isArray(spec?.steps)||!spec.steps.length)issues.push('EXECUTABLE_SPEC.steps must be a non-empty array.');
-  if((spec?.steps?.length||0)>TEST_IR.limits.maxSteps)issues.push(`EXECUTABLE_SPEC exceeds ${TEST_IR.limits.maxSteps} steps.`);
-  for(const [index,step] of (spec?.steps||[]).entries()){
+  if(!spec||typeof spec!=='object'||Array.isArray(spec))return {valid:false,issues:['EXECUTABLE_SPEC must be an object.']};
+  for(const key of Object.keys(spec))if(!['version','steps'].includes(key))issues.push(`EXECUTABLE_SPEC contains unsupported root property ${key}.`);
+  if(spec.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);
+  if(!Array.isArray(spec.steps)||!spec.steps.length)issues.push('EXECUTABLE_SPEC.steps must be a non-empty array.');
+  if((spec.steps?.length||0)>TEST_IR.limits.maxSteps)issues.push(`EXECUTABLE_SPEC exceeds ${TEST_IR.limits.maxSteps} steps.`);
+  for(const [index,step] of (spec.steps||[]).entries()){
     if(!step||typeof step!=='object'||Array.isArray(step)){issues.push(`Step ${index} must be an object.`);continue;}
-    if(!TEST_IR.operations.includes(step.op))issues.push(`Step ${index} uses unsupported operation ${String(step.op||'UNKNOWN')}.`);
+    const contract=TEST_IR_STEP_CONTRACTS[step.op];if(!contract){issues.push(`Step ${index} uses unsupported operation ${String(step.op||'UNKNOWN')}.`);continue;}
     for(const key of TEST_IR_FORBIDDEN_STEP_KEYS)if(Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} contains forbidden executable field ${key}.`);
-    if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&String(step.pattern??step.value??'').length>TEST_IR.limits.maxRegexLength)issues.push(`Step ${index} regex exceeds the deterministic runtime limit.`);
+    const allowed=new Set(['op',...contract.required,...contract.optional]);for(const key of Object.keys(step))if(!allowed.has(key))issues.push(`Step ${index} ${step.op} contains unsupported property ${key}.`);
+    for(const key of contract.required)if(!Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} ${step.op} requires ${key}.`);
+    if(contract.exactlyOne){const count=contract.exactlyOne.filter(key=>Object.prototype.hasOwnProperty.call(step,key)).length;if(count!==1)issues.push(`Step ${index} ${step.op} requires exactly one of ${contract.exactlyOne.join(', ')}.`);}
+    if(['LOAD_ARTIFACT','BYTE_COMPARE'].includes(step.op)&&typeof step.binding!=='string')issues.push(`Step ${index} ${step.op} binding must be a string.`);
+    if(step.op==='PARSE_CSV'){if(typeof step.delimiter!=='string'||step.delimiter.length!==1)issues.push(`Step ${index} PARSE_CSV delimiter must be one character.`);if(typeof step.header!=='boolean')issues.push(`Step ${index} PARSE_CSV header must be BOOLEAN.`);if(typeof step.quote!=='string'||step.quote.length!==1)issues.push(`Step ${index} PARSE_CSV quote must be one character.`);if(!['LF','CRLF','AUTO'].includes(step.newline))issues.push(`Step ${index} PARSE_CSV newline must be LF, CRLF, or AUTO.`);if(step.encoding!=='UTF-8')issues.push(`Step ${index} PARSE_CSV encoding must be UTF-8.`);}
+    if(step.op==='SELECT_JSON_PATH'&&(typeof step.path!=='string'||!/^(?:\$)(?:\.[A-Za-z_][A-Za-z0-9_]*|\[\d+\]|\[\*\])*$/.test(step.path)))issues.push(`Step ${index} uses unsupported JSON selector syntax.`);
+    if(step.op==='SELECT_XML'&&(typeof step.path!=='string'||!/^\/?[A-Za-z_][A-Za-z0-9_.:-]*(?:\/[A-Za-z_][A-Za-z0-9_.:-]*)*$/.test(step.path)))issues.push(`Step ${index} uses unsupported XML selector syntax.`);
+    if(['REGEX','ASSERT_MATCH'].includes(step.op)&&(typeof step.pattern!=='string'||step.pattern.length>TEST_IR.limits.maxRegexLength))issues.push(`Step ${index} regex is invalid or exceeds the deterministic runtime limit.`);
+    if(['ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE'].includes(step.op)&&typeof step.value!=='number')issues.push(`Step ${index} ${step.op} requires a numeric value.`);
+    if(step.op==='ASSERT_SET_EQUAL'&&!Array.isArray(step.value))issues.push(`Step ${index} ASSERT_SET_EQUAL value must be an array.`);
   }
   return {valid:issues.length===0,issues};
 }
@@ -962,6 +996,7 @@ const ADDITIONAL_RECORD_FIELD_TYPES=Object.freeze({
     EXECUTABLE_KIND:Object.freeze({valueType:VALUE_TYPES.ENUM,enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
     EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
     EXECUTABLE_SPEC:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
     EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   }),
   'DETERMINISTIC-RESULT':Object.freeze({
@@ -1025,7 +1060,7 @@ const RECORD_SCHEMAS=Object.freeze({
     'RESOLUTION_ID','DEFECT_TYPE','AFFECTED_REQ_IDS','GOVERNING_EVIDENCE','RESOLUTION','CHANGED_REQUIREMENT_REFS','RESULTING_REQUIREMENTS_VERSION','AFFECTED_DOWNSTREAM_WORK','STATUS'
   ],required:['DEFECT_TYPE','AFFECTED_REQ_IDS','GOVERNING_EVIDENCE','RESOLUTION','AFFECTED_DOWNSTREAM_WORK','STATUS']}),
   tests:recordSchema({ownership:RECORD_OWNERSHIP.tests,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Verification tests',idField:'TEST_ID',prefix:'TEST',stage:6,fields:[
-    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'
+    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_SPEC_SHA256','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'
   ],required:['TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'],relationships:{REQ_ID:'requirements'}}),
   failureTests:recordSchema({ownership:RECORD_OWNERSHIP.failureTests,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Failure and mutation tests',idField:'MUTATION_ID',prefix:'MUTATION',stage:7,fields:[
     'MUTATION_ID','REQ_ID','VIOLATION_MODE','FIXTURE','EXPECTED_REJECTION','ACTUAL_RESULT','EXECUTION_OUTCOME','VALIDATOR_DEFECT_ID','EVIDENCE'

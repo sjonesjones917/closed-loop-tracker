@@ -180,6 +180,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
           }
         }
         if(collection==='sources')for(const message of schema.sourceClassificationIssues(record.fields))issues.push(issue('INVALID_EXTERNAL_SOURCE',path,message));
+        if(collection==='tests'){const mode=upper(record.fields.EXECUTION_MODE),kind=upper(record.fields.EXECUTABLE_KIND);if(mode==='APPLICATION_DETERMINISTIC'||kind==='TEST_IR'){const candidate={fields:{...record.fields,EXECUTABLE_SPEC_VERSION:schema.TEST_IR.version}},shape=schema.validateTestIRTest(candidate);for(const message of shape.issues)issues.push(issue('INVALID_TEST_IR',path,message));const runtime=globalThis.closedLoopTestRuntime;if(!runtime)issues.push(issue('TEST_RUNTIME_UNAVAILABLE',path,'The application Test IR runtime is unavailable.'));else{const runtimeCheck=runtime.validateSpec(record.fields.EXECUTABLE_SPEC,record.fields.EXECUTABLE_INPUT_BINDINGS);for(const message of runtimeCheck.issues)issues.push(issue('INVALID_TEST_IR',path,message));}}}
       });
     }
   }
@@ -301,6 +302,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
       const definition=schema.RECORD_SCHEMAS[collection];
       const id=proposed.targetId?String(proposed.targetId):tempToCanonical[proposed.tempKey].id;
       const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};
+      if(collection==='tests'){fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;const runtime=globalThis.closedLoopTestRuntime;if(String(fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'&&runtime)fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(runtime.normalizeSpec(fields.EXECUTABLE_SPEC));else fields.EXECUTABLE_SPEC_SHA256=null;}
       fields[definition.idField]=id;
       const relationships={};
       for(const [name,reference] of Object.entries(proposed.relationships||{})){const target=reference.tempKey?tempToCanonical[reference.tempKey]:{collection:definition.relationships[name],id:String(reference.recordId)};relationships[name]=target.id;fields[name]=target.id;}
