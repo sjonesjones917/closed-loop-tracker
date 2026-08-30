@@ -1,0 +1,30 @@
+name: Export current main history once
+
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths: [.github/workflows/export-current-main-once.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create exact main Git bundle
+        run: |
+          set -euo pipefail
+          git fetch origin main:refs/remotes/origin/main --force
+          git bundle create current-main.bundle refs/remotes/origin/main
+          git bundle verify current-main.bundle
+          git bundle list-heads current-main.bundle
+      - name: Upload exact main Git bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-main-${{ github.sha }}
+          path: current-main.bundle
+          if-no-files-found: error
