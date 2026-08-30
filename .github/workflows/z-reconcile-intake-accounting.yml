@@ -24,6 +24,7 @@ jobs:
           node --check workflow-engine.js
           node --check prompt-engine.js
           node --check response-ingestion.js
+          node --check verify-ingestion.mjs
           node --check verify-stage1-intake-accounting.mjs
           node verify-stage1-intake-accounting.mjs
       - name: Run complete current-main deterministic proof suite
@@ -70,7 +71,7 @@ jobs:
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           rm -f reconcile-intake-accounting.py
-          git add workflow-engine.js prompt-engine.js response-ingestion.js verify-stage1-intake-accounting.mjs
+          git add workflow-engine.js prompt-engine.js response-ingestion.js verify-ingestion.mjs verify-stage1-intake-accounting.mjs
           git add -u -- reconcile-intake-accounting.py
           git diff --cached --check
           git commit -m 'Enforce application-owned Stage 01 intake accounting'
