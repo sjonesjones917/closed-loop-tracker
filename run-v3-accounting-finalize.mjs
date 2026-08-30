@@ -50,6 +50,10 @@ if(!engine.includes('function suppliedMaterialReferences(project){')){
 `;
   engine=engine.replace(marker,helper+marker);
 }
+const genericActionAnchor="  return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Return the final structured response',";
+if(!engine.includes(genericActionAnchor))throw new Error('Generic next-action anchor missing.');
+const stage4Action="  if(stage===4)return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Compile requirements from captured project intent',explanation:'The application is reusing the complete accepted Stage 01 intake and current Stage 03 research to build the Stage 04 obligation manifest. Do not attach or resend the original intent file. Provide new human input only if the application explicitly identifies a genuinely human-only unresolved question.',primaryButton:'Paste final JSON'});\n";
+if(!engine.includes("heading:'Compile requirements from captured project intent'"))engine=engine.replace(genericActionAnchor,stage4Action+genericActionAnchor);
 fs.writeFileSync(enginePath,engine);
 
 const focusedPath='verify-intake-obligation-accounting.mjs';
@@ -62,4 +66,8 @@ const stage4Needle="const prompt4=prompts.buildPromptRecord(4,p);assert(";
 const stage4Replacement="const prompt4=prompts.buildPromptRecord(4,p);p.projectData.generatedPrompts.push(structuredClone(prompt4));assert(";
 if(!focused.includes(stage4Needle))throw new Error('Stage 04 accounting fixture prompt anchor missing.');
 focused=focused.replace(stage4Needle,stage4Replacement);
+const obsoleteHandoff="assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 still derives an original-intent-file handoff.');";
+const currentHandoff="assert(Array.isArray(handoff.send)&&handoff.send.length===0,'Stage 04 still derives an original-intent-file handoff.');const stage4Action=engine.operationalNextAction(p,4);assert(/Do not attach or resend the original intent file/i.test(stage4Action.explanation),'Stage 04 next action does not state that captured intent is reused without reattachment.');";
+if(!focused.includes(obsoleteHandoff))throw new Error('Stage 04 obsolete handoff assertion anchor missing.');
+focused=focused.replace(obsoleteHandoff,currentHandoff);
 fs.writeFileSync(focusedPath,focused);
