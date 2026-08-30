@@ -17,10 +17,23 @@ jobs:
           node-version: 22
       - name: Apply complete prompt and accounting repair
         run: |
+          git show 5a82dc376cf47ed8a896d096464036374785ecfa:verify-browser-extra.mjs > verify-browser-extra.mjs
           python3 finalize-zero-loss.py
           python3 patch-browser-extra-v3.py
           python3 patch-all-stage-audit-v2.py
           python3 patch-stage01-operator.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser-extra.mjs')
+          t=p.read_text()
+          old="'Continue talking to the agent'"
+          new="'Continue the external conversation'"
+          if old in t:
+              t=t.replace(old,new,1)
+          elif new not in t:
+              raise SystemExit('Expected operator interaction-mode assertion not found')
+          p.write_text(t)
+          PY
       - name: Prove source syntax
         run: |
           git diff --check
