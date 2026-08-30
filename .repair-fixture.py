@@ -40,3 +40,18 @@ if old not in s:
     raise SystemExit('Smart quote stageData provenance count anchor not found.')
 s=s.replace(old,new,1)
 p.write_text(s)
+
+# Full-cycle lifecycle must satisfy the same accounting invariants instead of bypassing them.
+p=Path('verify-full-cycle.mjs')
+s=p.read_text()
+old="""function data(stage,{operation,stageData={},records={},scope={}}={}){const pr=prompt(stage,operation,scope);if(!Object.keys(stageData).length&&!Object.keys(records).length){const f=schema.STAGE_CONTRACTS[stage].allowedStageData[0];if(f)stageData[f]=schema.STAGE_FIELDS[stage][f].valueType==='BOOLEAN'?true:`fixture-${f.toLowerCase()}`;}
+ if(stage===4&&!stageData.OBLIGATION_ACCOUNTING){const manifest=engine.stage04ObligationManifest(p),requirementTempKeys=(records.requirements||[]).map(r=>String(r?.tempKey||'')).filter(Boolean),requiredIntentIds=new Set(engine.recordsForCurrentScope(p,'intentStatements').filter(r=>String(engine.recordValue(r,'REQUIREMENT_RELEVANCE')||'').toUpperCase()==='REQUIREMENT').map(r=>engine.recordId(r,'intentStatements'));"""
+# Keep anchor small because the Stage 4 line is minified and long; insert immediately before its marker.
+marker=" if(stage===4&&!stageData.OBLIGATION_ACCOUNTING){"
+if marker not in s:
+    raise SystemExit('Full-cycle Stage 4 accounting marker not found.')
+insert=""" if(stage===1&&!stageData.INTAKE_ACCOUNTING){const statementTempKeys=(records.intentStatements||[]).map(r=>String(r?.tempKey||'')).filter(Boolean),target=statementTempKeys[0];stageData.INTAKE_ACCOUNTING=engine.stage01IntakeManifest(p).entries.map(entry=>target?{inputId:String(entry.inputId||''),disposition:'INCORPORATED',statementTempKeys:[target],reason:''}:{inputId:String(entry.inputId||''),disposition:'RETAINED_CONTEXT',statementTempKeys:[],reason:'Full-cycle fixture retains this controlled human input as project context.'});}
+ if(stage===3&&!stageData.RESEARCH_ACCOUNTING){const candidateTempKeys=(records.candidateRequirements||[]).map(r=>String(r?.tempKey||'')).filter(Boolean),candidate=candidateTempKeys[0];stageData.RESEARCH_ACCOUNTING=engine.stage03ResearchManifest(p).entries.map(entry=>entry.category==='INTENT_REQUIREMENT'&&candidate?{researchUnitId:String(entry.researchUnitId||''),disposition:'CAPTURED',researchTempKeys:[],candidateTempKeys:[candidate],reason:''}:{researchUnitId:String(entry.researchUnitId||''),disposition:'NONE_FOUND',researchTempKeys:[],candidateTempKeys:[],reason:'Full-cycle fixture has no applicable finding for this enumerated research unit.'});}
+"""
+s=s.replace(marker,insert+marker,1)
+p.write_text(s)
