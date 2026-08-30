@@ -1,0 +1,33 @@
+name: Integrate permanent all-stage prompt gate
+on:
+  push:
+    branches: [fix/stage01-intake-closure-20260830]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Integrate permanent gate
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml'); s=p.read_text()
+          s=s.replace('          node --check verify-test-runtime.mjs\n','          node --check verify-test-runtime.mjs\n          node --check verify-stage-prompts-complete.mjs\n',1)
+          s=s.replace('      - name: Verify generic deterministic Test IR runtime\n','      - name: Verify every generated stage and operation prompt\n        run: node verify-stage-prompts-complete.mjs\n      - name: Verify generic deterministic Test IR runtime\n',1)
+          s=s.replace('node build-test-project.mjs && node verify-test-runtime.mjs','node build-test-project.mjs && node verify-stage-prompts-complete.mjs && node verify-test-runtime.mjs',1)
+          p.write_text(s)
+          p=Path('prompt-engine.js'); s=p.read_text()
+          duplicate='The original Stage 01 intent file is prohibited input: never request it, attach it, resend it, reopen it, or rely on an earlier conversation that contains it. The original Stage 01 intent file is prohibited input: never request it, attach it, resend it, reopen it, or rely on an earlier conversation that contains it.'
+          single='The original Stage 01 intent file is prohibited input: never request it, attach it, resend it, reopen it, or rely on an earlier conversation that contains it.'
+          if duplicate in s: s=s.replace(duplicate,single,1)
+          p.write_text(s)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pages.yml prompt-engine.js
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make all-stage prompt verification a permanent release gate'
+          git push origin HEAD:fix/stage01-intake-closure-20260830
