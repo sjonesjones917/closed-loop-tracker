@@ -18,8 +18,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin implementation/full-spec-repair165
-          source_ref=origin/implementation/full-spec-repair165
+          git fetch origin implementation/full-spec-repair219
+          source_ref=origin/implementation/full-spec-repair219
           files=(
             .github/workflows/pages.yml
             README.md
@@ -54,7 +54,6 @@ jobs:
           )
           git checkout "$source_ref" -- "${files[@]}"
 
-          # Exact visual preservation: the stylesheet remains byte-for-byte the established pre-repair baseline.
           python3 - <<'PY'
           from pathlib import Path
           import re, subprocess
@@ -68,15 +67,12 @@ jobs:
           if '.expandable-prompt:not(.expanded){height:88px' in cur: raise SystemExit('unauthorized prompt-box size override remains')
           PY
 
-          # One-time repair/materialization files are prohibited from the final implementation.
           rm -f .gate-diag-trigger finalize-v3-accounting.mjs patch-accounting-regression-fixtures.mjs run-v3-accounting-finalize.mjs
           rm -f .github/workflows/materialize-stage01-stage04-once.yml
 
-          # Source-level invariants that are direct controlling requirements.
           node - <<'NODE'
-          const fs=require('fs');
-          const need=(x,m)=>{if(!x)throw new Error(m)};
-          const wb=fs.readFileSync('workbook.js','utf8'), sc=fs.readFileSync('workflow-schema.js','utf8'), pe=fs.readFileSync('prompt-engine.js','utf8'), app=fs.readFileSync('app-core.js','utf8'), html=fs.readFileSync('index.html','utf8');
+          const fs=require('fs'); const need=(x,m)=>{if(!x)throw new Error(m)};
+          const wb=fs.readFileSync('workbook.js','utf8'),sc=fs.readFileSync('workflow-schema.js','utf8'),pe=fs.readFileSync('prompt-engine.js','utf8'),app=fs.readFileSync('app-core.js','utf8'),html=fs.readFileSync('index.html','utf8');
           need(wb.includes("const WORKFLOW_ID='mobile-closed-loop/30'")&&wb.includes("const PROJECT_SCHEMA='closed-loop-project/3'")&&wb.includes('const STAGE_COUNT=30'),'identity mismatch');
           need(sc.includes("const RESPONSE_SCHEMA='closed-loop-stage-response/3'")&&sc.includes('closed-loop-test-spec/1')&&sc.includes('closed-loop-verification-package/1'),'schema identity mismatch');
           need(pe.includes('The application has already captured and versioned the human-authority information supplied earlier. Use that project memory.'),'Stage 04 canonical reuse instruction missing');
