@@ -49,6 +49,8 @@ const omitted=engine.evaluateObligationAccounting(p,[],{manifest:obligation,requ
 if(omitted.complete||!omitted.missingIds.length)throw new Error('Incomplete Stage 04 accounting was not rejected.');
 const complete=engine.evaluateObligationAccounting(p,obligation.obligations.map(item=>({obligationId:item.obligationId,disposition:'REQUIREMENT',requirementTempKeys:['req-1'],reason:''})),{manifest:obligation,requirementTempKeys:['req-1']});
 if(!complete.complete||complete.coverage!==1)throw new Error('Complete Stage 04 accounting did not close.');
+p.stages[1].gate={...(p.stages[1].gate||{}),complete:true,blocked:false,reasons:[]};
+p.stages[3].gate={...(p.stages[3].gate||{}),complete:true,blocked:false,reasons:[]};
 const prompt=prompts.buildPromptRecord(4,p);
 if(!prompt.prompt.includes('NEVER-RESUPPLY-INTENT-SENTINEL'))throw new Error('Stage 04 prompt did not receive captured intent.');
 if(!prompt.prompt.includes(obligation.manifestId)||!prompt.contextManifest.obligationManifest?.manifestId)throw new Error('Stage 04 prompt identity is not bound to the obligation manifest.');
