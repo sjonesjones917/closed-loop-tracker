@@ -50,4 +50,6 @@ const legacy=JSON.parse(JSON.stringify(p));
 legacy.schema='closed-loop-project/2';
 const migrated=core.migrateState(legacy);
 if(migrated.schema!=='closed-loop-project/3'||!migrated.projectData.migrationArchives.some(item=>item.schema==='closed-loop-project/2'))throw new Error('/2 to /3 migration failed or lost audit source.');
+const migratedAgain=core.migrateState(JSON.parse(JSON.stringify(legacy)));
+if(JSON.stringify(migrated)!==JSON.stringify(migratedAgain))throw new Error('/2 to /3 migration is not deterministic for identical input.');
 console.log('Stage 01 capture -> Stage 04 canonical reuse regression passed.');

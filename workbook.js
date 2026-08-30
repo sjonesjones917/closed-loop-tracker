@@ -753,6 +753,7 @@ function validateStageDraft(stage,s,state){const issues=[];if(!String(s.draftRec
 async function immutableRevision(revisions,payload,meta={}){const hash=await sha256Text(JSON.stringify(payload));const latest=(revisions||[]).at(-1);if(latest?.sha256===hash)return {changed:false,record:latest};return {changed:true,record:{...meta,version:`v${String((revisions||[]).length+1).padStart(3,'0')}`,sha256:hash,createdAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(payload))}};}
 function invalidateDownstream(state,n,changeId){const out=[];for(let i=n+1;i<=30;i++){const s=state?.stages?.[i];if(!s)continue;if(s.status!=='NOT STARTED'||s.decision||s.decisionEvidence)out.push(`STAGE-${String(i).padStart(2,'0')}`);Object.assign(s,{status:'NOT STARTED',decision:'',decisionEvidence:'',nextStage:'',decidedBy:'',dateTime:'',invalidatedBy:changeId});}if(state?.release)Object.assign(state.release,{gateState:'',authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]});return out;}
 function compareArtifactSets(a=[],r=[],gateState=''){const comparisons=[];for(let i=0;i<Math.max(a.length,r.length);i++){const x=a[i],y=r[i];comparisons.push({artifactId:x?.artifactId||`ARTIFACT-${String(i+1).padStart(3,'0')}`,auditedFile:x?.name||'MISSING',releaseFile:y?.name||'MISSING',auditedSha256:x?.sha256||'UNKNOWN',releaseSha256:y?.sha256||'UNKNOWN',hashesIdentical:Boolean(x&&y&&x.sha256===y.sha256),byteSizesIdentical:Boolean(x&&y&&Number(x.size)===Number(y.size))});}const exact=gateState==='ACCEPTED'&&a.length>0&&a.length===r.length&&comparisons.every(x=>x.hashesIdentical&&x.byteSizesIdentical);return {gateState,comparisons,authorization:exact?'AUTHORIZED':'NOT AUTHORIZED'};}
+function migrationEvidenceTime(p){return String(p?.updatedAt||p?.createdAt||p?.job?.DATE_OPENED||'')||null;}
 function migrateState(p){
   if(!p||typeof p!=='object')return createBlankState();
   if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
@@ -761,7 +762,7 @@ function migrateState(p){
     migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
     migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
     if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:PROJECT_SCHEMA,records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}
-    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
+    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:migrationEvidenceTime(p),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
     return migrated;
   }
   if(p.schema==='closed-loop-project/2'&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
@@ -772,7 +773,7 @@ function migrateState(p){
     migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
     if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:'closed-loop-project/2',records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});delete migrated.projectData.stageRecords;}
     if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length)delete migrated.projectData.fullProject;
-    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',targetSchema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:original});
+    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',targetSchema:PROJECT_SCHEMA,preservedAt:migrationEvidenceTime(p),payload:original});
     return migrated;
   }
   if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
@@ -784,7 +785,7 @@ function migrateState(p){
   migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
   if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});delete migrated.projectData.stageRecords;}
   if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length)delete migrated.projectData.fullProject;
-  migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:new Date().toISOString(),payload:original});
+  migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:migrationEvidenceTime(p),payload:original});
   if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Legacy project migration requires exactly 30 stages.');
   return migrated;
 }
