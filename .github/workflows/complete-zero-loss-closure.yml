@@ -18,6 +18,7 @@ jobs:
       - name: Apply complete prompt and accounting repair
         run: |
           git show 5a82dc376cf47ed8a896d096464036374785ecfa:verify-browser-extra.mjs > verify-browser-extra.mjs
+          git show 53458f1d79d01fe53ec58cb08616b8b49e9684dc:patch-browser-extra-v3.py > patch-browser-extra-v3.py
           python3 finalize-zero-loss.py
           python3 patch-browser-extra-v3.py
           python3 patch-all-stage-audit-v2.py
@@ -38,6 +39,7 @@ jobs:
       - name: Prove source syntax
         run: |
           git diff --check
+          python3 -m py_compile patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-complete-30-stage-prompts.py patch-stage01-operator.py
           node --check workflow-engine.js
           node --check workflow-schema.js
           node --check prompt-engine.js
@@ -74,9 +76,13 @@ jobs:
           trap - EXIT
       - name: Commit integrated source and remove one-time repair files
         run: |
+          git fetch origin fix/closed-loop-v3-final-20260830
+          REMOTE_HEAD="$(git rev-parse origin/fix/closed-loop-v3-final-20260830)"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA" || { echo "Remote branch advanced during proof: $REMOTE_HEAD != $GITHUB_SHA"; exit 1; }
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
           git rm -f repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-complete-30-stage-prompts.py patch-stage01-operator.py .github/workflows/complete-zero-loss-closure.yml zero-loss-failure.log || true
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
           git add workflow-engine.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-browser-extra.mjs verify-zero-loss-accounting.mjs verify-all-stage-prompts.mjs
           git commit -m "Make all 30 stage prompts explicit and context-complete [zero-loss-closure-applied]"
           git push origin HEAD:fix/closed-loop-v3-final-20260830
