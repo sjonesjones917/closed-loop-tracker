@@ -1,4 +1,4 @@
-# proof-trigger-all-stage-node-audit-20260830
+# proof-trigger-source-push-20260830
 name: Apply complete 30-stage prompt audit repair
 on:
   push:
@@ -71,10 +71,10 @@ jobs:
           node verify-browser-extra.mjs
           kill "$PID" 2>/dev/null || true
           trap - EXIT
-      - name: Commit only proven final source
+      - name: Commit and push proven source files
         run: |
           git config user.name closed-loop-integrator
           git config user.email closed-loop-integrator@users.noreply.github.com
-          git add app-core.js workflow-schema.js prompt-engine.js index.html verify-prompt-semantics.mjs verify-all-stage-prompts.mjs .github/workflows/pages.yml
+          git add app-core.js workflow-schema.js prompt-engine.js index.html verify-prompt-semantics.mjs verify-all-stage-prompts.mjs
           git commit -m 'Complete all 30 stage prompts and preserve captured project memory'
           git push origin HEAD:implementation/closed-loop-v3
