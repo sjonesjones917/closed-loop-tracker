@@ -30,13 +30,5 @@
 
 fs.copyFileSync('.stage4-regression.tmp','verify-stage4-intent-reuse.mjs');
 
-{
-  let s=read('.github/workflows/pages.yml');
-  s=mustReplace(s,'          node --check verify-test-runtime.mjs','          node --check verify-test-runtime.mjs\n          node --check verify-stage4-intent-reuse.mjs','CI syntax check');
-  s=mustReplace(s,'      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs','      - name: Verify Stage 01 capture and Stage 04 canonical intent reuse\n        run: node verify-stage4-intent-reuse.mjs\n      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs','CI regression run');
-  s=mustReplace(s,'node build-test-project.mjs && node verify-test-runtime.mjs','node build-test-project.mjs && node verify-stage4-intent-reuse.mjs && node verify-test-runtime.mjs','deploy regression run');
-  write('.github/workflows/pages.yml',s);
-}
-
 for(const file of ['.stage4-engine-helper.tmp','.stage4-regression.tmp','.stage4-repair.mjs','.github/workflows/stage4-repair.yml'])if(fs.existsSync(file))fs.rmSync(file);
 console.log('Applied Stage 01/04 canonical intent capture repair.');
