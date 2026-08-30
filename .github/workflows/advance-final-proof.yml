@@ -73,6 +73,15 @@ jobs:
               t=t.replace(anchor,replacement,1)
           p.write_text(t)
 
+          p=Path('verify-full-cycle.mjs'); t=p.read_text()
+          anchor="function data(stage,{operation,stageData={},records={},scope={}}={}){const pr=prompt(stage,operation,scope);"
+          replacement="function data(stage,{operation,stageData={},records={},scope={}}={}){const pr=prompt(stage,operation,scope);if(stage===1){const manifest=pr.contextManifest?.intakeManifest||engine.stage1IntakeManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({coverage:(manifest.units||[]).map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))});}if(stage===4){const manifest=pr.contextManifest?.obligationManifest||engine.stage4ObligationManifest(p),ids=(manifest.items||[]).map(item=>item.obligationId),proposed=(records.requirements||[])[0];if(proposed){proposed.fields=proposed.fields||{};proposed.fields.USER_INPUT_RELATIONSHIP=((proposed.fields.USER_INPUT_RELATIONSHIP||'User Job Input')+' '+ids.join(' ')).trim();}stageData.ATOMICITY_REVIEW_RESULTS=JSON.stringify({obligationAccounting:ids.map(obligationId=>({obligationId,disposition:'REQUIREMENT',reason:''}))});}"
+          if anchor in t:
+              t=t.replace(anchor,replacement,1)
+          if 'pr.contextManifest?.intakeManifest' not in t or 'pr.contextManifest?.obligationManifest' not in t:
+              raise SystemExit('Full-cycle manifest accounting was not installed.')
+          p.write_text(t)
+
           runtime_files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           def git_blob_sha(path):
               data=Path(path).read_bytes()
