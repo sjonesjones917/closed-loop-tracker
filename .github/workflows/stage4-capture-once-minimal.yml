@@ -28,61 +28,40 @@ jobs:
           const read=p=>fs.readFileSync(p,'utf8');
           const write=(p,s)=>fs.writeFileSync(p,s);
           const exact=(s,a,b,label)=>{if(!s.includes(a))throw new Error('Missing exact source: '+label);return s.replace(a,b)};
-
           let p=read('prompt-engine.js');
           p=exact(p,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';",'prompt version');
-          p=exact(p,
-`function humanInputBlock(job){
- const definitions=schema.JOB_FIELDS||{};
- const names=Object.entries(definitions).filter(([,definition])=>definition?.producer==='HUMAN').map(([name])=>name);
- return names.length?names.map(name=>\`${'${name}'}:\\n${'${show(job?.[name])}'}\`).join('\\n\\n'):'NONE';
-}`,
-`function humanInputBlock(job,stage=1){
- const definitions=schema.JOB_FIELDS||{};
- const names=Object.entries(definitions).filter(([name,definition])=>definition?.producer==='HUMAN'&&(Number(stage)===1||name!=='SUPPLIED_MATERIALS_INVENTORY')).map(([name])=>name);
- return names.length?names.map(name=>\`${'${name}'}:\\n${'${show(job?.[name])}'}\`).join('\\n\\n'):'NONE';
-}`,'stage-aware human input projection');
+          p=exact(p,"function humanInputBlock(job){\n const definitions=schema.JOB_FIELDS||{};\n const names=Object.entries(definitions).filter(([,definition])=>definition?.producer==='HUMAN').map(([name])=>name);\n return names.length?names.map(name=>`${name}:\\n${show(job?.[name])}`).join('\\n\\n'):'NONE';\n}","function humanInputBlock(job,stage=1){\n const definitions=schema.JOB_FIELDS||{};\n const names=Object.entries(definitions).filter(([name,definition])=>definition?.producer==='HUMAN'&&(Number(stage)===1||name!=='SUPPLIED_MATERIALS_INVENTORY')).map(([name])=>name);\n return names.length?names.map(name=>`${name}:\\n${show(job?.[name])}`).join('\\n\\n'):'NONE';\n}",'stage-aware human input projection');
           p=exact(p,'${humanInputBlock(j)}','${humanInputBlock(j,stage)}','human input invocation');
-          p=exact(p,
-'If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials. Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows, detailed disclosure chronology, reference lists, or other internal packet inventory in Stage 01. This limited intake inspection is Stage 01 job-definition work; Stage 02 does not own supplied-project-material inventory. Capture every material human-authority statement that is actually available and relevant to the job definition in the accepted Stage 01 job definition so later stages can consume it canonically. Later stages must not ask the human to attach, resend, retype, or summarize the same intent material merely because they run in a different conversation.',
-'If their actual contents are available in the current executing context, inspect them deeply enough to extract every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome; do not ask the human to re-enter facts that are already present in those materials. Do not turn that inspection into external research, source-authority analysis, requirement atomization, test design, production, or verification. Do not enumerate irrelevant archive internals merely for inventory. Preserve every extracted material human-authority statement in the accepted Stage 01 job definition so later stages can consume it canonically. Later stages must not ask the human to attach, resend, retype, summarize, reopen, or reuse the same intent material merely because they run in a different conversation.',
-'Stage 01 complete one-time capture');
-          p=exact(p,
-'INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.',
-'INPUT_SET_CONTENTS must be a complete, lossless semantic register of every material human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue extracted from the current request and every accessible supplied material, with enough source-location information to trace each unit back to what the human supplied. It must not collapse the intake into filenames, a summary, selected excerpts, or a partial inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed human-authority facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.',
-'INPUT_SET_CONTENTS capture contract');
+          p=exact(p,'If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials. Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows, detailed disclosure chronology, reference lists, or other internal packet inventory in Stage 01. This limited intake inspection is Stage 01 job-definition work; Stage 02 does not own supplied-project-material inventory. Capture every material human-authority statement that is actually available and relevant to the job definition in the accepted Stage 01 job definition so later stages can consume it canonically. Later stages must not ask the human to attach, resend, retype, or summarize the same intent material merely because they run in a different conversation.','If their actual contents are available in the current executing context, inspect them deeply enough to extract every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome; do not ask the human to re-enter facts that are already present in those materials. Do not turn that inspection into external research, source-authority analysis, requirement atomization, test design, production, or verification. Do not enumerate irrelevant archive internals merely for inventory. Preserve every extracted material human-authority statement in the accepted Stage 01 job definition so later stages can consume it canonically. Later stages must not ask the human to attach, resend, retype, summarize, reopen, or reuse the same intent material merely because they run in a different conversation.','Stage 01 complete one-time capture');
+          p=exact(p,'INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.','INPUT_SET_CONTENTS must be a complete, lossless semantic register of every material human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue extracted from the current request and every accessible supplied material, with enough source-location information to trace each unit back to what the human supplied. It must not collapse the intake into filenames, a summary, selected excerpts, or a partial inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed human-authority facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.','INPUT_SET_CONTENTS capture contract');
           write('prompt-engine.js',p);
-
           let html=read('index.html');
-          const tokens=[...html.matchAll(/\?v=([^\"']+)/g)].map(m=>m[1]);
-          if(!tokens.length)throw new Error('No runtime build token found.');
+          if(!/\?v=[^\"']+/.test(html))throw new Error('No runtime build token found.');
           html=html.replace(/\?v=[^\"']+/g,'?v=runtime-stage4-capture-once-20260830');
           write('index.html',html);
-
-          const test=`import fs from 'node:fs';
-import vm from 'node:vm';
-globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
-globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
-const assert=(v,m)=>{if(!v)throw new Error(m);};
-const project=core.createBlankState('JOB-STAGE4-CAPTURE-ONCE');engine.ensureShape(project);
-Object.assign(project.job,{JOB_ID:'JOB-STAGE4-CAPTURE-ONCE',EXACT_USER_OBJECTIVE_VERBATIM:'Build the deliverable described by the supplied intent.',SUPPLIED_MATERIALS_INVENTORY:'INTENT_SENTINEL_DO_NOT_REATTACH.txt',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',EXACT_DELIVERABLE_REQUESTED:'The requested deliverable',INPUT_SET_CONTENTS:'UNIT-001 source=intent.txt: CANONICAL_CAPTURED_REQUIREMENT. UNIT-002 source=intent.txt: CANONICAL_CAPTURED_CONSTRAINT.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'});
-project.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:project.job.EXACT_DELIVERABLE_REQUESTED,INPUT_SET_CONTENTS:project.job.INPUT_SET_CONTENTS,ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'};
-project.stages[1].acceptedData={...project.stages[1].agentData};
-project.stages[1].status='COMPLETE';project.stages[2].status='COMPLETE';project.stages[3].status='COMPLETE';
-const stage1=prompts.buildPromptRecord(1,project).prompt;
-assert(stage1.includes('complete, lossless semantic register'),'Stage 01 does not require complete semantic capture.');
-assert(stage1.includes('inspect them deeply enough to extract every human-supplied fact'),'Stage 01 does not deeply capture supplied human authority.');
-const stage4=prompts.buildPromptRecord(4,project).prompt;
-assert(stage4.includes('CANONICAL_CAPTURED_REQUIREMENT'),'Stage 04 did not receive canonical Stage 01 capture.');
-assert(!stage4.includes('INTENT_SENTINEL_DO_NOT_REATTACH.txt'),'Stage 04 leaked the original intent filename and can reconstruct a repeat attachment request.');
-assert(stage4.includes('Do not ask the human to attach, resend, retype, or summarize the original intent file'),'Stage 04 non-reattachment rule is missing.');
-assert(!stage4.includes('When a listed non-inline material is needed for Stage 04, the operator must attach or provide it'),'Legacy Stage 04 attachment rule remains.');
-console.log('verify-stage4-capture-once: PASS');
-`;
+          const test=[
+            "import fs from 'node:fs';",
+            "import vm from 'node:vm';",
+            "globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};",
+            "globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);",
+            "for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});",
+            "const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;",
+            "const assert=(v,m)=>{if(!v)throw new Error(m);};",
+            "const project=core.createBlankState('JOB-STAGE4-CAPTURE-ONCE');engine.ensureShape(project);",
+            "Object.assign(project.job,{JOB_ID:'JOB-STAGE4-CAPTURE-ONCE',EXACT_USER_OBJECTIVE_VERBATIM:'Build the deliverable described by the supplied intent.',SUPPLIED_MATERIALS_INVENTORY:'INTENT_SENTINEL_DO_NOT_REATTACH.txt',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',EXACT_DELIVERABLE_REQUESTED:'The requested deliverable',INPUT_SET_CONTENTS:'UNIT-001 source=intent.txt: CANONICAL_CAPTURED_REQUIREMENT. UNIT-002 source=intent.txt: CANONICAL_CAPTURED_CONSTRAINT.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'});",
+            "project.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:project.job.EXACT_DELIVERABLE_REQUESTED,INPUT_SET_CONTENTS:project.job.INPUT_SET_CONTENTS,ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'};",
+            "project.stages[1].acceptedData={...project.stages[1].agentData};project.stages[1].status='COMPLETE';project.stages[2].status='COMPLETE';project.stages[3].status='COMPLETE';",
+            "const stage1=prompts.buildPromptRecord(1,project).prompt;",
+            "assert(stage1.includes('complete, lossless semantic register'),'Stage 01 does not require complete semantic capture.');",
+            "assert(stage1.includes('inspect them deeply enough to extract every human-supplied fact'),'Stage 01 does not deeply capture supplied human authority.');",
+            "const stage4=prompts.buildPromptRecord(4,project).prompt;",
+            "assert(stage4.includes('CANONICAL_CAPTURED_REQUIREMENT'),'Stage 04 did not receive canonical Stage 01 capture.');",
+            "assert(!stage4.includes('INTENT_SENTINEL_DO_NOT_REATTACH.txt'),'Stage 04 leaked the original intent filename and can reconstruct a repeat attachment request.');",
+            "assert(stage4.includes('Do not ask the human to attach, resend, retype, or summarize the original intent file'),'Stage 04 non-reattachment rule is missing.');",
+            "assert(!stage4.includes('When a listed non-inline material is needed for Stage 04, the operator must attach or provide it'),'Legacy Stage 04 attachment rule remains.');",
+            "console.log('verify-stage4-capture-once: PASS');"
+          ].join('\n')+'\n';
           write('verify-stage4-capture-once.mjs',test);
-
           let pages=read('.github/workflows/pages.yml');
           pages=exact(pages,'          node --check verify-test-runtime.mjs\n','          node --check verify-test-runtime.mjs\n          node --check verify-stage4-capture-once.mjs\n','pages syntax hook');
           pages=exact(pages,'      - name: Reject semantic prompt contradictions and operation leakage\n        run: node verify-prompt-semantics.mjs\n','      - name: Reject semantic prompt contradictions and operation leakage\n        run: node verify-prompt-semantics.mjs\n      - name: Prove Stage 1 captures intent once and Stage 4 reuses canonical intake\n        run: node verify-stage4-capture-once.mjs\n','pages test hook');
