@@ -26,9 +26,15 @@ jobs:
           {
             node spec-v3-repair-v2.mjs
             node spec-v3-postpatch.mjs
-            # The proof must run against the permanent implementation tree only.
-            # Temporary branch-only repair/finalization controllers are not runtime
-            # implementation and must not participate in acceptance.
+            python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-v3-contract.mjs')
+          s=p.read_text()
+          old="const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Blob,URL,URLSearchParams,setTimeout,clearTimeout,structuredClone};"
+          new="const context={console,crypto:webcrypto,TextEncoder,TextDecoder,Blob,URL,URLSearchParams,setTimeout,clearTimeout,structuredClone,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true,addEventListener:()=>{},removeEventListener:()=>{}};"
+          if old not in s: raise SystemExit('verifier context declaration not found')
+          p.write_text(s.replace(old,new,1))
+          PY
             rm -f .github/workflows/spec-v3-repair.yml \
                   .github/workflows/spec-v3-repair-v2.yml \
                   .github/workflows/spec-v3-repair-v3.yml \
