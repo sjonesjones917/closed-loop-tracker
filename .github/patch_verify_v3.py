@@ -1,5 +1,14 @@
 from pathlib import Path
 
+# Correct the structured Stage 01/04 accounting contract. The application
+# validates rows structurally; these are not string blobs.
+p=Path('workflow-schema.js');s=p.read_text()
+s=s.replace("INTAKE_ACCOUNTING:Object.freeze({valueType:'STRING'","INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY'")
+s=s.replace("OBLIGATION_ACCOUNTING:Object.freeze({valueType:'STRING'","OBLIGATION_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY'")
+if "INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY'" not in s or "OBLIGATION_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY'" not in s:
+    raise SystemExit('accounting type correction did not materialize')
+p.write_text(s)
+
 # Keep verify.mjs aligned with the /3 runtime contract. This block is idempotent
 # because the branch may already contain some of these corrections.
 p=Path('verify.mjs');s=p.read_text()
@@ -38,8 +47,6 @@ elif new not in s:
     raise SystemExit('Stage 01 envelope anchor missing')
 s=s.replace("'{\"schema\":\"closed-loop-stage-response/2\"'","'{\"schema\":\"closed-loop-stage-response/3\"'")
 anchor="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');"
-extra="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');\nnegativeAt('incomplete Stage 01 intake accounting',1,(e)=>{e.stageData.INTAKE_ACCOUNTING=e.stageData.INTAKE_ACCOUNTING.slice(1);},'INCOMPLETE_INTAKE_ACCOUNTING');\nnegativeAt('incomplete Stage 04 obligation accounting',4,(e)=>{const rows=e.stageData.OBLIGATION_ACCOUNTING||[];if(rows.length)e.stageData.OBLIGATION_ACCOUNTING=rows.slice(1);else e.stageData.OBLIGATION_ACCOUNTING=[{id:'UNKNOWN-OBLIGATION',disposition:'blocked with reason'}];},rows=>rows);"
-# Use a direct, explicit negative case for Stage 04 because an empty obligation universe is valid.
 extra="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');\nnegativeAt('incomplete Stage 01 intake accounting',1,(e)=>{e.stageData.INTAKE_ACCOUNTING=e.stageData.INTAKE_ACCOUNTING.slice(1);},'INCOMPLETE_INTAKE_ACCOUNTING');"
 if "incomplete Stage 01 intake accounting" not in s:
     if anchor not in s: raise SystemExit('negative-test anchor missing')
