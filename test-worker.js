@@ -1,5 +1,6 @@
 'use strict';
-importScripts('test-runtime.js?v=runtime-5859ee5a07f239ae');
+const BUILD_IDENTITY=new URL(self.location.href).searchParams.get('v')||'';
+importScripts(`test-runtime.js?v=${encodeURIComponent(BUILD_IDENTITY)}`);
 self.fetch=undefined;self.XMLHttpRequest=undefined;self.WebSocket=undefined;
 self.onmessage=async event=>{
   const {requestId,spec,artifacts}=event.data||{};
