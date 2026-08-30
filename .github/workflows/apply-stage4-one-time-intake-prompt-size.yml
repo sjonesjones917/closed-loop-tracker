@@ -40,11 +40,15 @@ jobs:
               "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",
               "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';"
           )
-
           replace_once(
               'workflow-engine.js',
               "if(stage===4)return 'Use the current Stage 04 instruction. It already carries current User Job Input, the accepted Stage 01 job definition, and accepted Stage 03 findings. Do not attach or resend the original intent file. If required canonical context is incomplete, return the exact earlier-stage deficiency instead of asking the user to provide the same material again.';",
               "if(stage===4)return 'Use the current Stage 04 instruction. The application supplies current User Job Input, the accepted Stage 01 job definition, the accepted canonical Stage 01 intake, and accepted Stage 03 findings; no original intake file is required or used. When the agent finishes, paste its final JSON response here.';"
+          )
+          replace_once(
+              'app-core.js',
+              "if(n===4)return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>The current Stage 04 instruction contains the accepted canonical intake and research context. No original intake file is required or used. Paste only the final JSON below.</div>`;",
+              "if(n===4)return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>The current Stage 04 instruction contains the accepted canonical intake and research context. No original intake file is required or used. When the agent finishes, paste its final JSON response here.</div>`;"
           )
 
           index = Path('index.html')
