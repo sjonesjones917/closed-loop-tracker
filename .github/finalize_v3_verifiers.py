@@ -90,9 +90,8 @@ replacements={
 for old,new in replacements.items():s=s.replace(old,new)
 for old in replacements:
     if old in s:raise SystemExit('stale Stage 01 practical verifier wording remains: '+old)
-patent_token='A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01'
-s=s.replace(",'"+patent_token+"'",'').replace(",\""+patent_token+"\"",'').replace(",`"+patent_token+"`",'')
-if patent_token in s:raise SystemExit('patent-specific Stage 01 verifier token remains')
+# The patent scenario belongs in behavior fixtures, not as required generic prompt text.
+s='\n'.join(line for line in s.splitlines() if 'sufficient to define a patent-application drafting job at Stage 01' not in line)+'\n'
 
 old_mutants="""const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
