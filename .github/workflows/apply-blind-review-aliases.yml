@@ -1,0 +1,20 @@
+name: Apply blind review aliases
+on:
+  push:
+    branches: [fix/blind-review-aliases]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/blind-review-aliases
+      - run: python repair-blind-review-aliases.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js workflow-engine.js project-store.js app-core.js response-ingestion.js
+          git commit -m "Implement prompt-bound blind review aliases"
+          git push origin HEAD:fix/blind-review-aliases
