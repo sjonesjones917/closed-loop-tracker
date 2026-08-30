@@ -17,13 +17,21 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('app-core.js')
-          s=p.read_text()
-          old="function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();p.schema=core.SCHEMA;p.stages=p.stages&&typeof p.stages==='object'?p.stages:{};for(let n=1;n<=30;n++){const s=p.stages[n]||p.stages[String(n)]||blankStage(n);p.stages[n]={...blankStage(n),...s,number:n,authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{},acceptedResponseIds:safe(s.acceptedResponseIds),revisions:safe(s.revisions)};}p.activeView=views.includes(p.activeView)?p.activeView:'Overview';p.activeStage=Math.max(1,Math.min(30,Number(p.activeStage||String(p.job?.CURRENT_STAGE||'').match(/\\d+/)?.[0]||1)));p.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[],...(p.release||{})};engine.ensureShape(p);engine.recalculate(p);return p;}"
-          new="function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();p.schema=core.SCHEMA;p.stages=p.stages&&typeof p.stages==='object'?p.stages:{};for(let n=1;n<=30;n++){const s=p.stages[n]||p.stages[String(n)]||blankStage(n);p.stages[n]={...blankStage(n),...s,number:n,authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{},acceptedResponseIds:safe(s.acceptedResponseIds),revisions:safe(s.revisions)};}p.activeView=views.includes(p.activeView)?p.activeView:'Overview';p.activeStage=Math.max(1,Math.min(30,Number(p.activeStage||String(p.job?.CURRENT_STAGE||'').match(/\\d+/)?.[0]||1)));p.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[],...(p.release||{})};engine.ensureShape(p);if(typeof engine.migrateLegacyStage01Accounting==='function')engine.migrateLegacyStage01Accounting(p);engine.recalculate(p);return p;}"
-          if old not in s: raise SystemExit('ensureState target not found')
-          p.write_text(s.replace(old,new,1))
+          p=Path('app-core.js'); s=p.read_text()
+          old="engine.ensureShape(p);engine.recalculate(p);return p;}\nfunction importSeed(raw)"
+          new="engine.ensureShape(p);if(typeof engine.migrateLegacyStage01Accounting==='function')engine.migrateLegacyStage01Accounting(p);engine.recalculate(p);return p;}\nfunction importSeed(raw)"
+          if old in s: p.write_text(s.replace(old,new,1))
           PY
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const id='runtime-'+crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16);
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]{16}("\s*><\/script>)/g,`$1${id}$2`);
+          fs.writeFileSync('index.html',html);console.log(id);
+          NODE
       - name: Complete non-browser proof
         run: |
           for file in *.js *.mjs; do node --check "$file"; done
@@ -60,6 +68,6 @@ jobs:
         run: |
           git config user.name closed-loop-integrator
           git config user.email closed-loop-integrator@users.noreply.github.com
-          git add app-core.js
+          git add app-core.js index.html
           git commit -m 'Canonicalize retained Stage 01 accounting on every app load path'
           git push origin HEAD:implementation/closed-loop-v3
