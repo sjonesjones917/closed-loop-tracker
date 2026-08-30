@@ -29,6 +29,7 @@ scriptSources.forEach((source,index)=>{
  assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime bundle identity ${runtimeBuildIdentity}.`);
 });
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 must return before rendering any generic artifact upload control.');
+assert(appCore.includes("if([2,3,4].includes(stage))throw new Error('The original Stage 01 intent file cannot be registered or reused"),'Stage 04 must reject attempted intent-file registration even if the UI is bypassed.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true,stage04RepeatAttachmentRegistrationRejected:true}));
