@@ -1,0 +1,59 @@
+name: Materialize universal prompt prerequisite guard
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Patch source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/47';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/48';"
+          if old not in s: raise SystemExit('prompt engine version marker not found')
+          s=s.replace(old,new,1)
+          marker='function body(stage,state,operation,scope){'
+          guard="""function assertPromptPrerequisites(stage,state){
+  if(stage<=1)return true;
+  const prior=state?.stages?.[stage-1];
+  if(String(prior?.status||'').toUpperCase()!=='COMPLETE'||prior?.gate?.complete===false){
+    const error=new Error(`Stage ${String(stage).padStart(2,'0')} controlling instruction cannot be generated until Stage ${String(stage-1).padStart(2,'0')} is complete. Missing upstream work must be completed at its responsible stage; the human must not be asked to repeat or resupply captured project information.`);
+    error.code='UPSTREAM_STAGE_INCOMPLETE';
+    error.upstreamStage=stage-1;
+    throw error;
+  }
+  return true;
+}
+"""
+          if marker not in s: raise SystemExit('prompt body marker not found')
+          s=s.replace(marker,guard+marker,1)
+          old_start="function buildPromptRecord(stageOrDefinition,state,options={}){const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(stage===4)assertStage4UpstreamExhausted(state);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);"
+          new_start="function buildPromptRecord(stageOrDefinition,state,options={}){const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);assertPromptPrerequisites(stage,state);if(stage===4)assertStage4UpstreamExhausted(state);"
+          if old_start not in s: raise SystemExit('buildPromptRecord start marker not found')
+          s=s.replace(old_start,new_start,1)
+          p.write_text(s)
+          for name in ['app-core.js','test-runtime.js']:
+              f=Path(name); text=f.read_text()
+              if 'runtime-20260830-live-operator-50' not in text: raise SystemExit(f'{name} runtime marker not found')
+              f.write_text(text.replace('runtime-20260830-live-operator-50','runtime-20260830-live-operator-51'))
+          idx=Path('index.html'); html=idx.read_text()
+          if 'runtime-20260830-live-operator-50' not in html: raise SystemExit('index runtime marker not found')
+          idx.write_text(html.replace('runtime-20260830-live-operator-50','runtime-20260830-live-operator-51'))
+          Path('.github/workflows/materialize-universal-prompt-prerequisite-pr.yml').unlink()
+          PY
+          git add -A
+          git commit -m 'Enforce universal prompt prerequisites'
+          git push origin HEAD:${{ github.head_ref }}
