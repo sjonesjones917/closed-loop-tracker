@@ -1,0 +1,1 @@
+This branch restores the established 280px collapsed generated-instruction preview and adds a browser regression asserting that height on mobile. This marker will be removed before merge.
