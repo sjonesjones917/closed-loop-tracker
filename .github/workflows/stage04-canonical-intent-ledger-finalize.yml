@@ -44,11 +44,9 @@ jobs:
               if required: raise SystemExit(f'{path}: required anchor missing: {old[:120]!r}')
               return False
 
-          # Older revisions created a fake later-stage withhold item for the intake file. It is not a handoff.
           one('workflow-engine.js',
               "  if(stage>1)withhold.set('original Stage 01 intent file',{artifactIdOrCategory:'original Stage 01 intent file',reason:'One-time intake only. Later stages use the canonical intentStatements ledger and must not request, attach, resend, reopen, or rely on the original file.'});\n",'')
 
-          # Stage 01 must inspect available material deeply enough to capture all project-defining human authority once.
           one('prompt-engine.js',
               'If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials.',
               'If their actual contents are available in the current executing context, inspect them deeply enough to capture every human-authority statement relevant to defining the job while staying inside the Stage 01 boundary; do not atomize requirements or perform later-stage work, and do not ask the human to re-enter facts that are already present in those materials.')
@@ -67,7 +65,9 @@ jobs:
           text=text.replace('prior-stage semantic content','prior-stage captured project content')
           p.write_text(text)
 
-          # Focused permanent regression: Stage 03/04 require canonical reuse, not another human supply.
+          one('verify-one-time-intent-intake.mjs',
+              "assert(stage1.prompt.includes('Use the original intent file now, in Stage 01 only'),'Stage 01 prompt does not establish one-time use.');",
+              "assert(stage1.prompt.includes('ONE-TIME HUMAN SUPPLY RULE')&&stage1.prompt.includes('must not be asked to repeat, retype, summarize, or reattach information already captured'),'Stage 01 prompt does not establish one-time human supply and durable capture.');")
           one('verify-one-time-intent-intake.mjs',
               "  assert(prompt.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),`Stage ${stage} does not prohibit original-file reuse.`);",
               "  assert(prompt.prompt.includes('Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.'),`Stage ${stage} does not enforce one-time human supply.`);")
@@ -78,7 +78,6 @@ jobs:
               "if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');",
               "if((handoff?.withhold||[]).some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 still turns the original intent file into a later-stage handoff item.');")
 
-          # Existing aggregate fixture must have the canonical Stage 01 ledger or it should fail by design.
           vc=Path('verify-complete.mjs'); text=vc.read_text()
           old="  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});\n  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');"
           new="  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});\n  const intent=record('intentStatements',1,{SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1',EXACT_STATEMENT:'CANONICAL-STAGE-01-INTENT-STATEMENT',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'},'INTENT-STATEMENT-STAGE04');intent.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.intentStatements.push(intent);\n  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'INTENT-STATEMENT-STAGE04',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');"
@@ -88,7 +87,6 @@ jobs:
           if old in text: text=text.replace(old,new)
           vc.write_text(text)
 
-          # Make the focused regression part of the normal proof and remove obsolete repair machinery.
           wf=Path('.github/workflows/pages.yml'); workflow=wf.read_text()
           workflow=re.sub(r'\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)', '', workflow)
           if 'node --check verify-one-time-intent-intake.mjs' not in workflow:
@@ -98,12 +96,11 @@ jobs:
           workflow=workflow.replace('node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs','node verify-ingestion.mjs && node verify-complete.mjs && node verify-one-time-intent-intake.mjs && node verify-full-cycle.mjs')
           wf.write_text(workflow)
 
-          # End-state proof before running the full suite.
           required={
             'workflow-schema.js':['intentStatements'],
             'response-ingestion.js':['MISSING_INTENT_STATEMENT_CANDIDATE','MISSING_INTENT_STATEMENT_REQUIREMENT','INVALID_INTENT_STATEMENT_REFERENCE'],
             'prompt-engine.js':['ACCEPTED STAGE 01 JOB DEFINITION — CURRENT CANONICAL VALUES','complete current canonical input union','Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.'],
-            'verify-one-time-intent-intake.mjs':['MISSING_INTENT_STATEMENT_REQUIREMENT']}
+            'verify-one-time-intent-intake.mjs':['MISSING_INTENT_STATEMENT_REQUIREMENT','one-time human supply and durable capture']}
           for f,anchors in required.items():
               data=Path(f).read_text()
               for anchor in anchors:
@@ -113,7 +110,6 @@ jobs:
           if 'read only the minimum portions needed' in prompt: raise SystemExit('contradictory Stage 01 minimum-read rule remains')
           if 'Stage 04 does not explicitly withhold the original intent file' in sem: raise SystemExit('obsolete Stage 04 withhold regression remains')
 
-          # One shared runtime identity for the actual runtime files.
           runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest=''
           for f in runtime:
