@@ -1,0 +1,60 @@
+name: Full controlling-spec conformance repair
+on:
+  push:
+    branches: [fix/spec-zero-loss-20260830]
+    paths: [.github/workflows/conformance-repair-run.yml]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, ref: fix/spec-zero-loss-20260830}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Materialize Stage 01 and Stage 04 accounting
+        run: |
+          node run-v3-accounting-finalize.mjs
+          node patch-accounting-regression-fixtures.mjs
+      - name: Prove syntax and core architecture
+        run: |
+          for f in *.js *.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify.mjs
+      - name: Prove v3 contracts and deterministic runtime
+        run: |
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+      - name: Prove ingestion workflow and prompts
+        run: |
+          node verify-intake-obligation-accounting.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-single-supply-prompts.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Remove one-time repair machinery
+        run: |
+          rm -f .github/workflows/conformance-repair-run.yml .github/workflows/materialize-stage01-stage04-once.yml
+          rm -f finalize-v3-accounting.mjs run-v3-accounting-finalize.mjs patch-accounting-regression-fixtures.mjs
+          rm -f .gate-diag-trigger stage4-*.log stage4-diagnostic-summary.txt
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+      - name: Commit only proven implementation
+        run: |
+          git config user.name closed-loop-spec-finalizer
+          git config user.email closed-loop-spec-finalizer@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Finish Stage 01 capture and Stage 04 closed accounting'
+          git push origin HEAD:fix/spec-zero-loss-20260830
