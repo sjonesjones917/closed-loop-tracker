@@ -16,15 +16,17 @@ jobs:
         run: |
           python3 .github/patch_verify_v3.py
           node --check verify.mjs
+          node --check verify-ingestion.mjs
           node build-test-project.mjs
           node verify.mjs
           node verify-stage01-stage03-stage04-closure.mjs
           node verify-closed-accounting.mjs
+          node verify-ingestion.mjs
       - name: Commit permanent verifier changes
         run: |
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
-          git add verify.mjs
+          git add verify.mjs verify-ingestion.mjs
           git diff --cached --quiet && exit 0
-          git commit -m "Align canonical architecture verifier with v3 runtime"
+          git commit -m "Align canonical verifiers with v3 accounting"
           git push origin HEAD:controlling-spec-final-current
