@@ -1,0 +1,88 @@
+name: Exhaustive Stage 01 to Stage 04 proof
+on:
+  push:
+    branches: [fix/exhaustive-intake-stage3-stage4-20260830]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/exhaustive-intake-stage3-stage4-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply reconciled implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show ec101e3364880d343893409f5097bf78bf665060:.github/workflows/z-exhaustive-intake-stage4-repair.yml > /tmp/bootstrap.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/bootstrap.yml').read_text()
+          start=text.index('      - name: Reconcile proven v3 mechanisms onto current main')
+          run=text.index('        run: |\n',start)+len('        run: |\n')
+          end=text.index('      - name: Prove exact requested closure',run)
+          block=text[run:end]
+          lines=[]
+          for line in block.splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/reconcile.sh').write_text('\n'.join(lines)+'\n')
+          PY
+          bash /tmp/reconcile.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-exhaustive-stage1-stage3-stage4.mjs')
+          text=p.read_text()
+          old="const html=fs.readFileSync('index.html','utf8'),baseline=fs.readFileSync('/tmp/index-visual-baseline.html','utf8');\n          const promptCss=s=>s.match(/\\.prompt\\{[^}]+\\}/)?.[0];assert.equal(promptCss(html),promptCss(baseline),'Prompt box CSS changed from the restored visual baseline.');"
+          new="const html=fs.readFileSync('index.html','utf8');\n          const expectedPromptCss='.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;white-space:pre;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55}';\n          const promptCss=html.match(/\\.prompt\\{[^}]+\\}/)?.[0];assert.equal(promptCss,expectedPromptCss,'Prompt box CSS changed from the restored visual baseline.');"
+          if old not in text: raise SystemExit('focused visual regression anchor missing')
+          p.write_text(text.replace(old,new,1))
+          p=Path('.github/workflows/pages.yml'); text=p.read_text()
+          if 'node --check verify-exhaustive-stage1-stage3-stage4.mjs' not in text:
+              text=text.replace('          node --check verify-intake-obligation-accounting.mjs\n','          node --check verify-intake-obligation-accounting.mjs\n          node --check verify-exhaustive-stage1-stage3-stage4.mjs\n')
+          if 'node verify-exhaustive-stage1-stage3-stage4.mjs' not in text:
+              text=text.replace('          node verify-intake-obligation-accounting.mjs\n','          node verify-intake-obligation-accounting.mjs\n          node verify-exhaustive-stage1-stage3-stage4.mjs\n',1)
+              text=text.replace('node verify-intake-obligation-accounting.mjs && node verify-test-runtime.mjs','node verify-intake-obligation-accounting.mjs && node verify-exhaustive-stage1-stage3-stage4.mjs && node verify-test-runtime.mjs')
+          p.write_text(text)
+          PY
+      - name: Prove exact requested closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/z-exhaustive-intake-stage4.yml
+          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-exhaustive-stage1-stage3-stage4.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-exhaustive-stage1-stage3-stage4.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Commit proven implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html .github/workflows/pages.yml \
+            build-test-project.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-intake-obligation-accounting.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-test-runtime.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs verify.mjs verify-exhaustive-stage1-stage3-stage4.mjs
+          git diff --cached --check
+          git commit -m 'Enforce exhaustive Stage 01 and Stage 03 input closure for Stage 04'
+          git push origin HEAD:fix/exhaustive-intake-stage3-stage4-20260830
