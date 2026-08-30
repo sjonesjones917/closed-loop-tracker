@@ -1,0 +1,53 @@
+name: Apply v3 reliability phase 1
+on:
+  push:
+    branches: [implement-v3-reliability-bundle]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: implement-v3-reliability-bundle
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply prepared v3 source transformation
+        run: python3 .github/apply-v3-phase1.py
+      - name: Syntax and focused deterministic proofs
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+      - name: Run current full deterministic suite
+        run: |
+          node build-test-project.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Commit tested phase 1 and remove one-time files
+        run: |
+          rm .github/apply-v3-phase1.py
+          rm .github/workflows/apply-v3-phase1.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Introduce v3 schema and deterministic Test IR runtime"
+          git push origin HEAD:implement-v3-reliability-bundle
