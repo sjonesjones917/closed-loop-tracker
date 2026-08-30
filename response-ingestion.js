@@ -302,6 +302,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
       const definition=schema.RECORD_SCHEMAS[collection];
       const id=proposed.targetId?String(proposed.targetId):tempToCanonical[proposed.tempKey].id;
       const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};
+      if(collection==='tests'&&String(fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'){fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(fields.EXECUTABLE_SPEC);}
       fields[definition.idField]=id;
       const relationships={};
       for(const [name,reference] of Object.entries(proposed.relationships||{})){const target=reference.tempKey?tempToCanonical[reference.tempKey]:{collection:definition.relationships[name],id:String(reference.recordId)};relationships[name]=target.id;fields[name]=target.id;}
