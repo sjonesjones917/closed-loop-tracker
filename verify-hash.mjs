@@ -28,5 +28,8 @@ scriptSources.forEach((source,index)=>{
  const token=new URLSearchParams(query).get('v');
  assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime bundle identity ${runtimeBuildIdentity}.`);
 });
+const appCore=fs.readFileSync('app-core.js','utf8');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
+assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));
