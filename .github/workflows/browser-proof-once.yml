@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply migration repair
+      - name: Apply migration repair and refresh shared build identity
         run: node .patch-stage1.mjs
       - name: Complete non-browser proof
         run: |
