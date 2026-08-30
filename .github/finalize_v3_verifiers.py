@@ -82,7 +82,6 @@ if stale_specialist in s:s=s.replace(stale_specialist,neutral_specialist,1)
 elif prior_neutral_specialist in s:s=s.replace(prior_neutral_specialist,neutral_specialist,1)
 elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier anchor missing')
 
-# Replace obsolete Stage 01 practical assertions with current subject-neutral semantics.
 replacements={
 "Ask only what must come from the human":"Ask only for facts or choices that must come from the human",
 "Do not block Stage 01 merely because information will be needed by a later":"Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority",
@@ -91,11 +90,9 @@ replacements={
 for old,new in replacements.items():s=s.replace(old,new)
 for old in replacements:
     if old in s:raise SystemExit('stale Stage 01 practical verifier wording remains: '+old)
-# Remove the obsolete patent-specific sufficiency assertion from the generic runtime verifier.
-s=re.sub(r",?'A request such as \\"prepare a patent application for this project\\" is sufficient to define a patent-application drafting job at Stage 01'",'',s)
-s=s.replace(",\"A request such as \\\"prepare a patent application for this project\\\" is sufficient to define a patent-application drafting job at Stage 01\"",'')
-s=s.replace(",`A request such as \"prepare a patent application for this project\" is sufficient to define a patent-application drafting job at Stage 01`",'')
-if 'sufficient to define a patent-application drafting job at Stage 01' in s:raise SystemExit('patent-specific Stage 01 verifier token remains')
+patent_token='A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01'
+s=s.replace(",'"+patent_token+"'",'').replace(",\""+patent_token+"\"",'').replace(",`"+patent_token+"`",'')
+if patent_token in s:raise SystemExit('patent-specific Stage 01 verifier token remains')
 
 old_mutants="""const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
