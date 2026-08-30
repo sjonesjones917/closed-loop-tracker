@@ -71,6 +71,30 @@ function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
 function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
 function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
+
+// Compatibility helper consumed by the intake-accounting engine. It only parses the human-owned supplied-material inventory; it never infers semantic content from filenames and never requests the material again.
+globalThis.suppliedMaterialReferences=function suppliedMaterialReferences(project){
+  const raw=project?.job?.SUPPLIED_MATERIALS_INVENTORY;
+  if(raw===undefined||raw===null||String(raw).trim()==='')return [];
+  let value=raw;
+  if(typeof raw==='string'){
+    try{value=JSON.parse(raw);}catch{value=raw.split(/\r?\n/).map(item=>item.trim()).filter(Boolean);}
+  }
+  const list=Array.isArray(value)?value:[value],out=[];
+  for(const item of list){
+    if(item===undefined||item===null)continue;
+    if(typeof item==='string'){
+      const label=item.trim();if(label)out.push({label,type:'SUPPLIED_MATERIAL',transferMode:'REFERENCE_ONLY'});
+      continue;
+    }
+    if(typeof item!=='object'||Array.isArray(item))continue;
+    const label=String(item.filename??item.name??item.label??item.path??item.url??item.reference??'').trim();
+    if(!label)continue;
+    out.push({label,type:String(item.type??item.mediaType??item.kind??'SUPPLIED_MATERIAL'),transferMode:String(item.transferMode??item.mode??'REFERENCE_ONLY')});
+  }
+  return out;
+};
+
 globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/2',stableStringify,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
 })();
