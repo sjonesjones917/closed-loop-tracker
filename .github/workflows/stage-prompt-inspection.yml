@@ -1,17 +1,88 @@
-name: Inspect native worker integration before prompt repair
+name: Apply and verify complete stage prompt repair
 on:
   push:
     branches: [fix/complete-stage-prompts-20260830]
     paths: [.github/workflows/stage-prompt-inspection.yml]
-permissions: {contents: read}
+permissions:
+  contents: write
+  actions: write
 jobs:
-  inspect:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Trace application-native execution and worker loading
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply the bounded prompt, context, Test IR, and cache-identity repair
+        run: python3 apply-stage-prompt-repair.py
+      - name: Rebuild retained lifecycle fixture
+        run: node build-test-project.mjs
+      - name: Syntax-check the complete runtime and proof suite
         run: |
-          echo '=== native runtime references ==='
-          grep -R -n -E 'test-worker|new[[:space:]]+Worker|globalThis\.Worker|closedLoopTestRuntime|APPLICATION_TEST_RUNTIME|runNative|native.*test|executeTest' -- app-core.js workflow-engine.js test-runtime.js test-worker.js project-store.js response-ingestion.js || true
-          echo '=== stage action references ==='
-          grep -R -n -E 'RUN_APP_TESTS|RUN_IN_APP|Run tests|Run verification|APPLICATION_DETERMINISTIC' -- app-core.js workflow-engine.js workbook.js || true
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-all-stage-prompts.mjs verify-one-time-intent-intake.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs; do
+            node --check "$file"
+          done
+      - name: Run every deterministic, ingestion, workflow, prompt, and lifecycle proof
+        run: |
+          node verify-test-runtime.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Enforce the single runtime graph, worker isolation, and unchanged prompt layout
+        run: |
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          grep -Fq '.expandable-prompt{max-height:280px}' index.html
+          grep -Fq 'height:clamp(260px,45vh,520px)' index.html
+          node - <<'NODE'
+          const fs=require('fs'),html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} scripts; got ${src.length}`);
+          const tokens=new Set();
+          expected.forEach((file,index)=>{if(src[index].split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} lacks token`);tokens.add(token);});
+          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
+          const token=[...tokens][0],app=fs.readFileSync('app-core.js','utf8'),worker=fs.readFileSync('test-worker.js','utf8');
+          if(!app.includes(`test-worker.js?v=${token}`))throw new Error('Worker entry token differs from runtime graph');
+          if(!worker.includes(`test-runtime.js?v=${token}`))throw new Error('Worker import token differs from runtime graph');
+          NODE
+      - name: Use the application in Chromium at phone and desktop widths
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only the verified implementation and permanent regressions
+        run: |
+          rm apply-stage-prompt-repair.py .github/workflows/stage-prompt-inspection.yml
+          git config user.name 'closed-loop-implementation'
+          git config user.email 'closed-loop-implementation@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git status --short
+          git commit -m 'Complete every stage prompt and canonical context chain'
+          git push origin HEAD:fix/complete-stage-prompts-20260830
