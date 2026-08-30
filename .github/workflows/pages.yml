@@ -134,7 +134,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify exact deployed bytes
+      - name: Verify exact deployed source identity
         run: node verify-live.mjs
       - name: Deployed Chromium acceptance
         run: |
@@ -178,7 +178,7 @@ jobs:
           const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',...definition,...v3,projectLifecycleControls:Boolean(lifecycle.projectLifecycleControls),negativeCasesPassed:Number(ingestion.totalNegativeCases||0),stagesCompleted:30,deployedByteIdentity:true,browserWidths:[320,393,'desktop'],liveVerification:true,androidChromeAcceptance:false,realThirtyStageProjectAcceptance:false,fullProductionMaturity:false};
           const ones=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','stage01IntakeCoverage','stage04ObligationCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','mandatoryEvidenceSufficiencyCoverage','releaseArtifactIdentityCoverage','nativeExecutionCoverage'];
           for(const k of ones)if(report[k]!==1)throw new Error(`${k} is not 100%.`);
-          const zeros=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
+          const zeros=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
           for(const k of zeros)if(report[k]!==0)throw new Error(`${k} must be zero.`);
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
