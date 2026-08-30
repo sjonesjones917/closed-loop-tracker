@@ -1,0 +1,124 @@
+name: Stage 04 capture-once repair
+
+on:
+  push:
+    branches:
+      - fix/stage04-capture-once
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[stage04-capture-once-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-capture-once
+          fetch-depth: 0
+      - name: Patch Stage 01 capture and Stage 04 reuse
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text, old, new, label):
+              count=text.count(old)
+              if count!=1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              return text.replace(old,new,1)
+
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          s=replace_once(s,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",'prompt engine version')
+          old="If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials."
+          new="If their actual contents are available in the current executing context, inspect them deeply enough to capture every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue that is relevant to defining the requested outcome. Preserve that semantic capture durably in INPUT_SET_CONTENTS using the HUMAN_AUTHORITY_CAPTURE_V1 marker described below, so later stages consume the captured human authority instead of repeatedly asking for the same intent material. This is intake capture, not requirement atomization: do not split the captured material into Stage 04 atomic requirements here, and do not ask the human to re-enter facts that are already present in those materials."
+          s=replace_once(s,old,new,'stage01 capture rule')
+
+          m=re.search(r"4:'Compile atomic requirement proposals.*?Do not derive requirements from the target product or an existing implementation merely because that implementation contains a behavior\.',\n5:",s,re.S)
+          if not m:
+              raise SystemExit('stage04 procedure block not found')
+          new4="4:'Compile atomic requirement proposals for this current job from the complete current User Job Input, the durable accepted Stage 01 human-authority capture, and legitimately applicable Stage 03 external-source research, preserving provenance for every obligation. Treat HUMAN_AUTHORITY_CAPTURE_V1 content as the authoritative semantic capture of human intent for the current input version. Do not require the human to attach or provide an original intent material again merely because it is named in SUPPLIED_MATERIALS_INVENTORY when that exact material is marked MATERIAL_CAPTURED in the durable Stage 01 capture. Request original material only when the durable capture explicitly marks that material MATERIAL_UNREAD, omits a required obligation-bearing portion, or the current Stage 04 task demonstrably needs substantive material content that Stage 01 was not authorized to capture. When such uncaptured material is required, use the application-derived handoff; if the exact material is already present in this same Stage 04 external conversation, continue using it and do not ask for another attachment. Never ask the human to retype or summarize material merely because bytes are unavailable, and never infer substantive contents from a filename, path, link label, claimed hash, or metadata. If genuinely required uncaptured material remains inaccessible, return BLOCKED with the exact MISSING_ARTIFACT or MISSING_INPUT reason rather than fabricating a complete requirement set. For every application-enumerated obligation, create one or more independently testable requirements or preserve an explicit non-requirement disposition so no obligation silently disappears. Each proposed requirement should express one independently testable obligation where possible and record type, mandatory/optional status, governing source or user-input relationship, exact source location when applicable, authority, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, and notes. The application assigns REQ_ID and controlled requirement-set identity after validated ingestion. Do not derive requirements from the target product or an existing implementation merely because that implementation contains a behavior.',\n5:"
+          s=s[:m.start()]+new4+s[m.end():]
+
+          needle=" if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\\n${show(answered)}`);\n const feedback="
+          insert=" if(answered.length)parts.push(`ANSWERED HUMAN CLARIFICATIONS\\n${show(answered)}`);\n if(stage===4){const stageOne=state?.stages?.[1]||{},capture={inputVersion:state?.job?.CURRENT_INPUT_VERSION||null,acceptedDataChangeIds:stageOne.acceptedDataChangeIds||[],agentData:{EXACT_DELIVERABLE_REQUESTED:stageOne.agentData?.EXACT_DELIVERABLE_REQUESTED||state?.job?.EXACT_DELIVERABLE_REQUESTED||'',ASSUMPTIONS:stageOne.agentData?.ASSUMPTIONS||state?.job?.ASSUMPTIONS||'',UNKNOWN_INFORMATION:stageOne.agentData?.UNKNOWN_INFORMATION||state?.job?.UNKNOWN_INFORMATION||'',INPUT_SET_CONTENTS:stageOne.agentData?.INPUT_SET_CONTENTS||state?.job?.INPUT_SET_CONTENTS||''}};parts.push(`STAGE 01 DURABLE HUMAN-AUTHORITY CAPTURE\\n${show(capture)}`);}\n const feedback="
+          s=replace_once(s,needle,insert,'stage04 durable context')
+
+          oldshape="INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts."
+          newshape="INPUT_SET_CONTENTS is the durable semantic intake capture used by later stages. It MUST begin with the exact line HUMAN_AUTHORITY_CAPTURE_V1. For every named supplied material whose substantive contents were actually readable in this Stage 01 conversation, include an exact line MATERIAL_CAPTURED::<material label> followed by a concise but semantically complete capture of the human-authority statements from that material that are relevant to defining the requested outcome. For every named material whose bytes/content were not actually readable, include MATERIAL_UNREAD::<material label> and do not invent its contents. Also identify top-level inline human inputs. Do not turn INPUT_SET_CONTENTS into a Stage 02 archive/file inventory and do not atomize requirements here. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts."
+          s=replace_once(s,oldshape,newshape,'stage01 machine capture shape')
+
+          oldhandoff="if(materials.length){lines.push('MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION');for(const item of materials)lines.push('- '+item.label+' — '+item.type);lines.push('These materials are not embedded in the prompt. Attach or provide them in the agent conversation where this Stage 04 instruction is run. Do not assume access to any earlier stage conversation. If a required material is unavailable, ask the human to attach or provide the original before final JSON. Do not ask the human to retype or summarize its contents. Do not infer contents from a filename, path, link label, claimed hash, or metadata. If required material remains inaccessible, return BLOCKED with the exact missing-item reason.');}"
+          newhandoff="if(materials.length){lines.push('UNCAPTURED MATERIALS REQUIRED FOR THIS STAGE 04 CONVERSATION');for(const item of materials)lines.push('- '+item.label+' — '+item.type);lines.push('Only the uncaptured materials listed above require external transfer. Materials already marked MATERIAL_CAPTURED in the durable Stage 01 human-authority capture are already represented in this prompt context and must not be requested again. For an uncaptured item, attach or provide it in the Stage 04 agent conversation only if it is not already present and readable in that same conversation. Do not ask the human to retype or summarize its contents. Do not infer contents from a filename, path, link label, claimed hash, or metadata. If genuinely required uncaptured material remains inaccessible, return BLOCKED with the exact missing-item reason.');}"
+          s=replace_once(s,oldhandoff,newhandoff,'stage04 prompt handoff')
+          p.write_text(s)
+
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          marker="  return references;\n}\nfunction executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){"
+          helper="  return references;\n}\nfunction capturedStageOneMaterialLabels(project){\n  const capture=String(project?.stages?.[1]?.agentData?.INPUT_SET_CONTENTS||project?.job?.INPUT_SET_CONTENTS||'');\n  if(!capture.includes('HUMAN_AUTHORITY_CAPTURE_V1'))return new Set();\n  const captured=new Set();\n  for(const line of capture.split(/\\r?\\n/)){const match=String(line).match(/^MATERIAL_CAPTURED::(.+)$/);if(match?.[1])captured.add(match[1].trim().toLowerCase());}\n  return captured;\n}\nfunction executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){"
+          s=replace_once(s,marker,helper,'capture helper insertion')
+          old="  if(stage===4){\n    const currentInput=String(currentScope(project).inputVersion||''),activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput);\n    const basename=value=>String(value||'').trim().split(/[\\\\/]/).pop().toLowerCase();\n    for(const reference of suppliedMaterialReferences(project)){\n      if(reference.transferMode==='INLINE_JOB_INPUT')continue;"
+          new="  if(stage===4){\n    const currentInput=String(currentScope(project).inputVersion||''),activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput),capturedMaterials=capturedStageOneMaterialLabels(project);\n    const basename=value=>String(value||'').trim().split(/[\\\\/]/).pop().toLowerCase();\n    for(const reference of suppliedMaterialReferences(project)){\n      if(reference.transferMode==='INLINE_JOB_INPUT'||capturedMaterials.has(String(reference.label||'').trim().toLowerCase()))continue;"
+          s=replace_once(s,old,new,'stage04 captured material filter')
+          p.write_text(s)
+
+          p=Path('verify-prompt-semantics.mjs')
+          s=p.read_text()
+          pattern=r"// stage04-stage-prompt-material-regression-v3\n\{.*?console\.log\(JSON\.stringify\(\{stage04PromptMaterialHandoff:true\}\)\);"
+          m=re.search(pattern,s,re.S)
+          if not m:
+              raise SystemExit('stage04 prompt regression block not found')
+          test=r'''// stage04-stage-prompt-material-regression-v4
+{
+  const p=baseProject();
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  const uncaptured=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['UNCAPTURED MATERIALS REQUIRED FOR THIS STAGE 04 CONVERSATION','design-input.pdf','Only the uncaptured materials listed above require external transfer'])if(!uncaptured.prompt.includes(token))throw new Error('Stage 04 uncaptured-material handoff missing: '+token);
+  if(!uncaptured.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Uncaptured Stage 04 material handoff is not bound to prompt context identity.');
+
+  p.stages[1].agentData={...(p.stages[1].agentData||{}),EXACT_DELIVERABLE_REQUESTED:'Deliverable from captured intent.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'HUMAN_AUTHORITY_CAPTURE_V1\nMATERIAL_CAPTURED::design-input.pdf\nCaptured human authority: produce the requested deliverable and satisfy the stated acceptance conditions.'};
+  p.stages[1].acceptedDataChangeIds=['CHANGE-STAGE01-CAPTURE'];
+  const captured=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(captured.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 still asks for an intent material already durably captured in Stage 01.');
+  for(const token of ['STAGE 01 DURABLE HUMAN-AUTHORITY CAPTURE','HUMAN_AUTHORITY_CAPTURE_V1','MATERIAL_CAPTURED::design-input.pdf'])if(!captured.prompt.includes(token))throw new Error('Stage 04 prompt does not consume durable Stage 01 authority capture: '+token);
+  for(const prohibited of ['UNCAPTURED MATERIALS REQUIRED FOR THIS STAGE 04 CONVERSATION','Attach or provide the original material with the Stage 04 instruction.','ask the human conversationally to attach or provide the original'])if(captured.prompt.includes(prohibited))throw new Error('Stage 04 repeats an already captured intent-file attachment requirement: '+prohibited);
+
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'revised-design-input.pdf'}]);
+  const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(!revised.contextManifest.executionHandoff?.conversationMaterials?.length||!revised.prompt.includes('revised-design-input.pdf'))throw new Error('A newly named uncaptured Stage 04 material did not require an exact handoff.');
+  if(revised.bodySha256===captured.bodySha256||revised.contextSignature===captured.contextSignature)throw new Error('A changed Stage 04 material reference did not change prompt identity.');
+}
+console.log(JSON.stringify({stage04PromptMaterialHandoff:true,stage04CapturedIntentReuse:true}));'''
+          s=s[:m.start()]+test+s[m.end():]
+          p.write_text(s)
+
+          p=Path('verify-browser.mjs')
+          s=p.read_text()
+          needle="const stage04Layout=await evalValue(cdp,`(()=>({extraPanel:Boolean(document.querySelector('#stage04-material-handoff')),optionalCustody:Boolean(document.querySelector('#stage04-optional-custody')),overflow:document.documentElement.scrollWidth>innerWidth+1}))()`);assert(stage04Layout&&!stage04Layout.extraPanel&&!stage04Layout.optionalCustody&&!stage04Layout.overflow,`Stage 04 concise handoff is duplicated or overflows at 320px: ${JSON.stringify(stage04Layout)}`);await setWidth(cdp,393);"
+          replacement="const stage04Layout=await evalValue(cdp,`(()=>({extraPanel:Boolean(document.querySelector('#stage04-material-handoff')),optionalCustody:Boolean(document.querySelector('#stage04-optional-custody')),overflow:document.documentElement.scrollWidth>innerWidth+1}))()`);assert(stage04Layout&&!stage04Layout.extraPanel&&!stage04Layout.optionalCustody&&!stage04Layout.overflow,`Stage 04 concise handoff is duplicated or overflows at 320px: ${JSON.stringify(stage04Layout)}`);await evalValue(cdp,`(async()=>{const all=await globalThis.closedLoopProjectStore.readAll(),p=all.find(x=>x.job?.JOB_ID==='${newest.job.JOB_ID}');p.stages[1].agentData={...(p.stages[1].agentData||{}),EXACT_DELIVERABLE_REQUESTED:'Captured intent deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'HUMAN_AUTHORITY_CAPTURE_V1\\nMATERIAL_CAPTURED::design-input.pdf\\nCaptured human authority statement.'};p.stages[1].acceptedDataChangeIds=['CHANGE-STAGE01-CAPTURE'];await globalThis.closedLoopProjectStore.replaceProject(p,{expectedProjectRevision:Number(p.revision||0)});location.reload();return true})()`);await sleep(450);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);await openStage(cdp,4);const capturedStage04Text=(await snapshot(cdp)).text;assert(!capturedStage04Text.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 still asks the operator to resend an intent file already captured in Stage 01.');assert(!capturedStage04Text.includes('Attach or provide with the instruction: design-input.pdf.'),'Stage 04 still renders a repeated captured-intent attachment instruction.');assert(capturedStage04Text.includes('STAGE 01 DURABLE HUMAN-AUTHORITY CAPTURE')&&capturedStage04Text.includes('MATERIAL_CAPTURED::design-input.pdf'),'Stage 04 UI prompt does not contain the durable Stage 01 capture.');await setWidth(cdp,393);"
+          s=replace_once(s,needle,replacement,'browser stage04 capture regression')
+          p.write_text(s)
+          PY
+      - name: Run Stage 04 regression and deterministic suite
+        shell: bash
+        run: |
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node verify-browser.mjs
+      - name: Commit repaired production code and tests
+        shell: bash
+        run: |
+          git config user.name "closed-loop-repair"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/stage04-capture-once-repair.yml
+          git add prompt-engine.js workflow-engine.js verify-prompt-semantics.mjs verify-browser.mjs
+          git diff --cached --check
+          git commit -m "Fix Stage 04 captured intent reuse [stage04-capture-once-applied]"
+          git push origin HEAD:fix/stage04-capture-once
