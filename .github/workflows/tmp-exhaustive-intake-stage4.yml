@@ -29,6 +29,31 @@ jobs:
           PY
       - name: Apply repair
         run: python3 .repair-exhaustive-intake.py
+      - name: Update regressions for the stricter Stage 03 contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-one-time-intent-intake.mjs'); s=p.read_text()
+          old="""const p3={...prompts.buildPromptRecord(3,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
+let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]})),promptRecord:p3});
+assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_CANDIDATE'),'Stage 03 accepted incomplete intent-statement coverage.');
+prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001'),candidate('candidate-2','INTENT-STATEMENT-000002')]})),promptRecord:p3});
+assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);"""
+          new="""const p3={...prompts.buildPromptRecord(3,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
+const researchManifest=engine.stage03ResearchManifest(p),incompleteResearchAccounting=researchManifest.entries.map((entry,index)=>index===0?{researchUnitId:entry.researchUnitId,disposition:'CAPTURED',researchTempKeys:[],candidateTempKeys:['candidate-1'],reason:''}:{researchUnitId:entry.researchUnitId,disposition:'BLOCKED',researchTempKeys:[],candidateTempKeys:[],reason:'Deliberately blocked fixture to preserve the missing-candidate negative test.'}),completeResearchAccounting=researchManifest.entries.map((entry,index)=>({researchUnitId:entry.researchUnitId,disposition:'CAPTURED',researchTempKeys:[],candidateTempKeys:[`candidate-${index+1}`],reason:''}));
+let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]},{RESEARCH_ACCOUNTING:incompleteResearchAccounting})),promptRecord:p3});
+assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_CANDIDATE'),'Stage 03 accepted incomplete intent-statement coverage.');
+prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001'),candidate('candidate-2','INTENT-STATEMENT-000002')]},{RESEARCH_ACCOUNTING:completeResearchAccounting})),promptRecord:p3});
+assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);"""
+          if old not in s: raise SystemExit('Legacy Stage 03 fixture anchor not found.')
+          p.write_text(s.replace(old,new,1))
+          p=Path('verify-intake-closure.mjs'); s=p.read_text().replace('researchManifest.entries.entries()','researchManifest.entries.entries()')
+          # Correct Array iteration typo explicitly; the source text is researchManifest.entries.entries().
+          s=s.replace('researchManifest.entries.entries()','researchManifest.entries.entries()')
+          # JS Array .entries() is invoked on researchManifest.entries; normalize accidental duplicate token if present.
+          s=s.replace('researchManifest.entries.entries())','researchManifest.entries.entries())')
+          p.write_text(s)
+          PY
       - name: Syntax and focused deterministic proof
         run: |
           node --check workbook.js
@@ -38,6 +63,7 @@ jobs:
           node --check response-ingestion.js
           node --check app-core.js
           node --check verify-intake-closure.mjs
+          node --check verify-one-time-intent-intake.mjs
           node verify-hash.mjs
           node verify-test-runtime.mjs
           node verify-intake-closure.mjs
@@ -52,6 +78,6 @@ jobs:
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
           git rm .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs .github/workflows/pages.yml
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs verify-one-time-intent-intake.mjs .github/workflows/pages.yml
           git commit -m 'Close Stage 01 and Stage 03 accounting before Stage 04'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
