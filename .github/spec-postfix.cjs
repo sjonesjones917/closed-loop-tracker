@@ -25,6 +25,9 @@ t=t.replace(/\s*if\(!record\.prompt\.includes\('STAGE 01 DOMAIN INTAKE ADAPTATIO
 t=t.replace(/\s*if\(!record\.prompt\.includes\('MANDATORY STAGE 01 HUMAN-INTAKE GATE'\)[\s\S]*?issues\.push\('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING'\);/,'');
 t=t.replace(/\s*if\(!record\.prompt\.includes\('do not require the human to know those formats in advance'\)[\s\S]*?issues\.push\('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING'\);/,'');
 t=t.replace(/\s*else if\(!record\.prompt\.includes\('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION'\)[\s\S]*?issues\.push\('ENVIRONMENT_LIMIT_RULE_MISSING'\);/,'');
+const obsoleteSpecialist=" if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');";
+must(t.includes(obsoleteSpecialist),'Obsolete Stage 01 specialist assertion not found.');
+t=t.replace(obsoleteSpecialist," if(!r.prompt.includes('PROJECT-SUBJECT-NEUTRAL INTAKE SEMANTICS'))throw new Error('Stage 01 project-subject-neutral intake algorithm is missing.');\n for(const prohibited of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(r.prompt.includes(prohibited))throw new Error('Stage 01 runtime prompt contains prohibited subject branch: '+prohibited);");
 const mutantBlock=/const mutants=\[[\s\S]*?\n\];\nfor\(const \[index,mutant\] of mutants\.entries\(\)\)\{const issues=semanticIssues\(mutant\);if\(!issues\.length\)throw new Error\(`Semantic contradiction mutation \$\{index\+1\} escaped detection\.`\);\}/;
 must(mutantBlock.test(t),'Prompt semantic mutation block not found.');
 t=t.replace(mutantBlock,`const mutants=[
