@@ -136,7 +136,7 @@ for file in runtime_files:
 build='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
 html=Path('index.html')
 hdata=html.read_text()
-hdata,n=re.subn(r'(?<=\\?v=)[A-Za-z0-9._-]+',build,hdata)
+hdata,n=re.subn(r'(\?v=)[A-Za-z0-9._-]+',lambda match:match.group(1)+build,hdata)
 if n!=len(runtime_files):
     raise SystemExit(f'expected {len(runtime_files)} runtime cache tokens, changed {n}')
 html.write_text(hdata)
