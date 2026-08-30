@@ -31,7 +31,7 @@ jobs:
           rm -f upgrade-v3*.mjs v3-upgrade-report.json v3-upgrade-base.log
           git config user.name closed-loop-finalizer
           git config user.email closed-loop-finalizer@users.noreply.github.com
-          git add -A ':!.github/workflows'
+          git add -A -- . ':!.github/workflows/**'
           git diff --cached --check
           git commit -m 'Apply controlling closed-loop v3 source [v3-source-final]'
           git push origin HEAD:implementation/closed-loop-v3
