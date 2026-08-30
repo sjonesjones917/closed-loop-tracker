@@ -53,7 +53,7 @@ jobs:
             exit "$rc"
           fi
           rm -f repair-diagnostic.log
-      - name: Complete Test IR ownership field set
+      - name: Complete transformed contract details
         shell: bash
         run: |
           python3 - <<'PY'
@@ -64,6 +64,14 @@ jobs:
           new="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
           if old not in s:
               raise SystemExit('transformed Test IR field list anchor missing')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+
+          p=Path('verify-capture-once.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="assert(!/human[^\\n]{0,120}(attach|resend|retype|summarize) the original intent/i.test(rec.prompt),'Stage 04 prompt asks human to resupply original intent');"
+          new="const improperRepeatRequest=rec.prompt.split(/\\r?\\n/).filter(line=>/(attach|resend|retype|summarize).{0,80}original intent/i.test(line)&&!/(do not|must not|never)/i.test(line));\nassert(improperRepeatRequest.length===0,'Stage 04 prompt asks human to resupply original intent: '+improperRepeatRequest.join(' | '));"
+          if old not in s:
+              raise SystemExit('capture-once assertion anchor missing')
           p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
       - name: Syntax and capture-once proof
