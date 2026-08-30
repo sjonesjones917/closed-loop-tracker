@@ -17,6 +17,7 @@ jobs:
         run: |
           node run-v3-accounting-finalize.mjs
           node patch-accounting-regression-fixtures.mjs
+          node stamp-runtime-identity.mjs
       - name: Prove syntax and core architecture
         run: |
           for f in *.js *.mjs; do node --check "$f"; done
@@ -48,7 +49,7 @@ jobs:
       - name: Remove one-time repair machinery
         run: |
           rm -f .github/workflows/conformance-repair-run.yml .github/workflows/materialize-stage01-stage04-once.yml
-          rm -f finalize-v3-accounting.mjs run-v3-accounting-finalize.mjs patch-accounting-regression-fixtures.mjs
+          rm -f finalize-v3-accounting.mjs run-v3-accounting-finalize.mjs patch-accounting-regression-fixtures.mjs stamp-runtime-identity.mjs
           rm -f .gate-diag-trigger stage4-*.log stage4-diagnostic-summary.txt
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
