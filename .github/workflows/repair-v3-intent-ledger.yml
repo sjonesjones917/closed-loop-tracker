@@ -2,7 +2,9 @@ name: Repair v3 one-time intent ledger and Stage 04 closure
 on:
   push:
     branches: [fix/closed-loop-v3-final-20260830]
-    paths: ['.repair-v3-intent-ledger.py.gz.b64']
+    paths:
+      - '.repair-v3-intent-ledger.py.gz.b64'
+      - '.github/workflows/repair-v3-intent-ledger.yml'
   workflow_dispatch:
 permissions:
   contents: write
