@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: 22
       - name: Apply integrated repair
-        run: python3 .repair-v3.py
+        run: |
+          python3 .repair-v3-fix.py
+          python3 .repair-v3.py
       - name: Syntax proof
         run: |
           node --check workbook.js
@@ -47,7 +49,7 @@ jobs:
           node verify-semantic-invariant.mjs
           node verify-definition-of-done.mjs
       - name: Remove temporary repair machinery
-        run: rm -f .repair-v3.py .github/workflows/repair-v3.yml
+        run: rm -f .repair-v3.py .repair-v3-fix.py .github/workflows/repair-v3.yml
       - name: Commit integrated result only after proof
         run: |
           git config user.name github-actions[bot]
