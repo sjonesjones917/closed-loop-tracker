@@ -15,6 +15,23 @@ p.write_text(t.replace(old, new, 1))
 import subprocess
 subprocess.run(['python3', 'repair-zero-loss.py'], check=True)
 
+# 2a. A canonical OPEN blocker is project-wide control state even if it was entered
+# while inspecting a completed stage. Do not let the current stage's local status
+# hide an application-known blocker.
+p = Path('workflow-engine.js')
+t = p.read_text()
+old = "project.job.CURRENT_STATE=completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';"
+new = "const projectOpenBlockers=openBlockers(project);project.job.CURRENT_STATE=projectOpenBlockers.length?'BLOCKED':completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';"
+if old not in t:
+    raise SystemExit('Expected CURRENT_STATE derivation not found')
+t = t.replace(old, new, 1)
+old = "project.job.CURRENT_BLOCKERS=openBlockers(project).length?openBlockers(project).map(record=>recordId(record,'blockers')).join(', '):'NONE';"
+new = "project.job.CURRENT_BLOCKERS=projectOpenBlockers.length?projectOpenBlockers.map(record=>recordId(record,'blockers')).join(', '):'NONE';"
+if old not in t:
+    raise SystemExit('Expected CURRENT_BLOCKERS derivation not found')
+t = t.replace(old, new, 1)
+p.write_text(t)
+
 # 3. Make the Stage 04 generated instruction explicitly state the controlling union and one-time reuse rule.
 p = Path('prompt-engine.js')
 t = p.read_text()
