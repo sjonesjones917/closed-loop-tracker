@@ -1,21 +1,20 @@
-name: Generate Stage 4 retained-intent fix once
+name: Apply Stage 4 retained-intent fix once
 on:
   push:
-    branches: [main]
+    branches: [fix/stage4-retained-intent]
 permissions:
   contents: write
 jobs:
-  generate-fix:
+  patch-and-prove:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: fix/stage4-retained-intent
           fetch-depth: 0
-      - name: Build and prove fix branch
+      - name: Patch Stage 4 artifact retention and handoff semantics
         shell: bash
         run: |
-          git checkout -b fix/stage4-retained-intent-generated
           python - <<'PY'
           from pathlib import Path
           p=Path('workflow-engine.js'); s=p.read_text()
@@ -63,6 +62,9 @@ jobs:
           s=s.replace(old3,new3,1)
           p.write_text(s)
           PY
+      - name: Add permanent Stage 4 regression
+        shell: bash
+        run: |
           cat > verify-stage4-retained-intent.mjs <<'EOF'
           import fs from 'node:fs';
           import vm from 'node:vm';
@@ -91,7 +93,8 @@ jobs:
           needle='      - name: Prove semantic false-acceptance invariant\n        run: node verify-semantic-invariant.mjs\n'; assert needle in s; s=s.replace(needle,needle+'      - name: Prove Stage 4 retains supplied intent across input revisions\n        run: node verify-stage4-retained-intent.mjs\n',1)
           p.write_text(s)
           PY
-          git rm .github/workflows/stage4-fix-once.yml
+      - name: Prove Stage 4 fix and core regressions
+        run: |
           node --check workflow-engine.js
           node --check verify-stage4-retained-intent.mjs
           node verify-stage4-retained-intent.mjs
@@ -105,8 +108,12 @@ jobs:
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
           node verify-test-runtime.mjs
+      - name: Commit proven fix and remove one-time workflow
+        shell: bash
+        run: |
+          git rm .github/workflows/stage4-fix-once.yml
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add workflow-engine.js verify-stage4-retained-intent.mjs .github/workflows/pages.yml .github/workflows/stage4-fix-once.yml
+          git add workflow-engine.js verify-stage4-retained-intent.mjs .github/workflows/pages.yml
           git commit -m 'Fix Stage 4 retained intent artifact handling'
-          git push origin HEAD:fix/stage4-retained-intent-generated
+          git push origin HEAD:fix/stage4-retained-intent
