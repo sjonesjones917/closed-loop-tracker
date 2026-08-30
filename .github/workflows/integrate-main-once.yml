@@ -1,0 +1,24 @@
+name: Inspect exact main integration once
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths: [.github/workflows/integrate-main-once.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Inspect merge
+        run: |
+          set +e
+          git fetch origin main --force
+          git merge --no-commit --no-ff origin/main
+          rc=$?
+          echo "MERGE_RC=$rc"
+          git status --short
+          echo "CONFLICTS"
+          git diff --name-only --diff-filter=U
+          exit 0
