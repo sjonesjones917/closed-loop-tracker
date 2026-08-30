@@ -18,6 +18,15 @@ jobs:
       - name: Apply and verify the repair
         run: |
           python3 .github/repair-one-time-intent-intake.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('response-ingestion.js')
+          s=p.read_text()
+          bad="issue('INVALID_INTENT_STATEMENT_REFERENCE',`/records/requirements/${index}/fields/USER_INPUT_RELATIONSHIP','USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID.')"
+          good="issue('INVALID_INTENT_STATEMENT_REFERENCE',`/records/requirements/${index}/fields/USER_INPUT_RELATIONSHIP`,'USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID.')"
+          if s.count(bad)!=1: raise SystemExit('validator delimiter target not found exactly once')
+          p.write_text(s.replace(bad,good,1))
+          PY
           node --check workflow-schema.js
           node --check workflow-engine.js
           node --check prompt-engine.js
