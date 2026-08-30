@@ -1,0 +1,54 @@
+name: Controlling specification 3 repair
+on:
+  push:
+    branches: [fix/controlling-spec3-complete]
+    paths: [.github/workflows/spec3-repair.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec3-complete
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply controlling specification repair
+        run: node spec3-repair.mjs
+      - name: Syntax proof
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+      - name: Core regression proof
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-test-runtime.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-one-time-intent-intake.mjs
+      - name: Commit proven repair
+        run: |
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git rm -f spec3-repair.mjs .github/workflows/spec3-repair.yml
+          git add -A
+          git commit -m 'Implement controlling closed-loop project schema 3 contracts'
+          git push origin HEAD:fix/controlling-spec3-complete
