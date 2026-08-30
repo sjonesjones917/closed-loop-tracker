@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '22'
       - name: Apply guarded repair
-        run: python .github/bundle_repair.py
+        run: python .github/bundle_repair_shim.py
       - name: Verify syntax and controlling contracts
         run: |
           node --check workbook.js
@@ -40,6 +40,7 @@ jobs:
       - name: Remove one-time repair infrastructure
         run: |
           rm .github/bundle_repair.py
+          rm .github/bundle_repair_shim.py
           rm .github/workflows/bundle-repair.yml
       - name: Commit repaired repository
         run: |
