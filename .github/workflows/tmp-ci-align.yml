@@ -1,0 +1,29 @@
+name: Align Pages proof with schema 3
+on:
+  push:
+    branches: [fix/controlling-spec3-complete]
+    paths: [.github/workflows/tmp-ci-align.yml]
+permissions: {contents: write}
+jobs:
+  align:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec3-complete}
+      - name: Align and commit
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml'); s=p.read_text()
+          s=s.replace("node --check verify-prompt-semantics.mjs", "node --check verify-spec3-contract.mjs")
+          s=s.replace("- name: Reject semantic prompt contradictions and operation leakage\n        run: node verify-prompt-semantics.mjs", "- name: Reject prompt contradictions, subject branches, and Stage 01/04 accounting loss\n        run: node verify-spec3-contract.mjs")
+          s=s.replace("&& node verify-prompt-semantics.mjs &&", "&& node verify-spec3-contract.mjs &&")
+          s=s.replace("const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];", "const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];")
+          p.write_text(s)
+          PY
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/tmp-ci-align.yml
+          git add .github/workflows/pages.yml
+          git commit -m 'Align Pages proof with controlling schema 3 runtime'
+          git push origin HEAD:fix/controlling-spec3-complete
