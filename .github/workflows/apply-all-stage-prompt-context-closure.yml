@@ -1,0 +1,118 @@
+name: Apply all-stage prompt context closure
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Close every stage prompt over required current context
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('prompt-engine.js')
+          text=p.read_text()
+          text=text.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/40';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/41';",1)
+
+          start="const PROMPT_CONTEXT_ADDITIONS=Object.freeze("
+          end=");\nconst PROMPT_OPERATION_CONTEXT_ADDITIONS="
+          a=text.find(start)
+          b=text.find(end,a)
+          if a<0 or b<0:
+              raise SystemExit('PROMPT_CONTEXT_ADDITIONS block not found')
+          replacement="""const PROMPT_CONTEXT_ADDITIONS=Object.freeze({
+2:Object.freeze([]),
+3:Object.freeze([]),
+4:Object.freeze(['sourceConflicts']),
+5:Object.freeze(['sources','research','candidateRequirements','sourceConflicts','evidenceRecords']),
+6:Object.freeze(['requirements','requirementResolutions','sources','research','artifacts','evidenceRecords']),
+7:Object.freeze(['requirements','tests','artifacts','evidenceRecords']),
+8:Object.freeze(['requirements','requirementResolutions','tests','failureTests','sources','research','sourceConflicts','evidenceRecords']),
+9:Object.freeze(['instructions','requirements','requirementResolutions','tests','failureTests','sources','sourceConflicts','evidenceRecords','freshContexts']),
+10:Object.freeze(['instructions','preflightRecords','requirements','tests','failureTests','artifacts']),
+11:Object.freeze(['candidateFreezes','iterations','instructions','artifacts','freshContexts']),
+12:Object.freeze(['runs','requirements','tests','sources','research','evidenceRecords','artifacts','freshContexts']),
+13:Object.freeze(['runs','verification','requirements','tests']),
+14:Object.freeze(['comparisons','verification','defects','requirements','tests','instructions','runs','sources','research','candidateRequirements','requirementResolutions','failureTests','preflightRecords','artifacts','evidenceRecords','changes']),
+15:Object.freeze(['defects','rootCauses','requirements','tests','runs','verification','artifacts','evidenceRecords']),
+16:Object.freeze(['defects','rootCauses','regressions','regressionExecutions','requirements','requirementResolutions','instructions','tests','failureTests','artifacts','evidenceRecords','changes']),
+18:Object.freeze(['iterations','runs','verification','comparisons','defects','rootCauses','regressions','regressionExecutions','requirements','tests','changes','blockers','evidenceRecords']),
+20:Object.freeze(['confirmationRecords','candidateFreezes','iterations','artifacts']),
+21:Object.freeze(['baselines','instructions','artifacts','freshContexts']),
+22:Object.freeze(['products','requirements','tests','artifacts','evidenceRecords']),
+23:Object.freeze(['products','requirements','tests','sources','research','evidenceRecords','artifacts','freshContexts']),
+24:Object.freeze(['products','requirements','tests','regressions','regressionExecutions','sources','research','evidenceRecords','artifacts','freshContexts']),
+25:Object.freeze(['products','baselines','tests','artifacts','evidenceRecords']),
+26:Object.freeze(['requirements','tests','instructions','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','confirmationRecords','baselines','products','evidenceRecords']),
+27:Object.freeze(['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','confirmationRecords','baselines','products','blockers','evidenceRecords']),
+29:Object.freeze(['requirements','instructions','instructionTraces','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','evidenceRecords','releaseRecords','artifactIdentities','baselines','products','evidenceChains']),
+30:Object.freeze(['requirements','defects','regressions','regressionExecutions','baselines','evidenceRecords'])
+})"""
+          text=text[:a]+replacement+text[b+2:]
+
+          marker="function projectDataExecutionRule(stage){"
+          idx=text.find(marker)
+          if idx<0:
+              raise SystemExit('projectDataExecutionRule not found')
+          completion=r'''const STAGE_COMPLETION_DIRECTIVES=Object.freeze({
+1:'Before final JSON, objective and intended deliverable are defined; required supplied materials are identified; every controlled input unit is accounted for; every foreseeable human-only issue is already supplied, asked and answered, or asked and explicitly deferred; and no later-stage substantive work was performed.',
+2:'Complete only when every reasonably possible controlling external source category has been considered, every accepted source is actually inspected and classified for authority/applicability/currency/supersession, conflicts are resolved or explicitly blocked, and either at least one legitimate external authority exists or NO_APPLICABLE_EXTERNAL_SOURCE is evidence-supported.',
+3:'Complete only when every current Stage 02 source has current research coverage, all required finding classes and candidate obligations are extracted with evidence, the conflict/exception pass and second complete pass are finished, no research gap remains hidden, and the latest complete pass finds no new material requirement category.',
+4:'Complete only when every obligationId in the application obligation manifest has exactly one valid accounting path, every created requirement is atomic enough to test with provenance plus observable satisfaction and failure conditions, and no input obligation disappeared.',
+5:'Complete only when the entire current requirement set has been reviewed for duplicates, conflicts, impossible combinations, undefined terms, circular dependencies, missing prerequisites, unsupported propositions, applicability gaps, non-atomic wording, and missing verification paths; every defect is resolved or explicitly blocked.',
+6:'Complete only when every current active mandatory requirement has at least one complete ready test, mandatory coverage is complete, every test has verification semantics, exact route/capability/artifacts/procedure/expected result/failure/evidence, false-positive analysis is complete, and every native test contains valid supported Test IR.',
+7:'Complete only after every applicable failure fixture was actually executed through a capable route, expected rejection is compared with actual rejection, sufficient evidence is preserved, and every accepted-invalid fixture is linked to a validator defect. Fixture creation alone is never completion.',
+8:'Complete only when one coherent current production instruction contains every required section and every current mandatory requirement has a complete instruction trace. Do not execute production.',
+9:'Complete only after an independent reviewer has reviewed every material clause, all ambiguity/conflict/capability/verifiability/ordering/failure/traceability findings are resolved or blocked, and any correction causes a new instruction version followed by a complete re-review from the beginning.',
+10:'Complete only when the human has selected the authorized candidate components and the application can freeze exact component identities/bytes/tool configuration for identical use across all ten runs. Do not execute a run in this stage.',
+11:'This response is for exactly one application-reserved run lane. Perform the production instruction completely using only that run’s frozen package and context; preserve complete output/artifacts/tool failures/contamination facts. Stage 11 as a whole is complete only after the application has exactly ten accepted independent run lanes with identical candidate identity and no contamination.',
+12:'Verify only the application-listed missing REQ_ID × RUN_ID × TEST_ID cells for this operation. Each returned cell must come from an independent verifier and contain evidence capable of establishing that exact proposition. Stage 12 completes only when the application has exactly one current valid sufficiently evidenced determination for every required matrix cell.',
+13:'Complete only after every mandatory requirement is compared across all ten current runs, every correctness-affecting variance remains visible and is linked to a defect where required, and no run is omitted or averaged away.',
+14:'Complete only when every current material defect has exactly one evidence-supported root-cause analysis identifying the earliest defective layer. An unknown root cause remains blocked.',
+15:'Complete only when every confirmed defect has a permanent regression definition and a distinct actual pre-correction execution that reproduces the original failure with sufficient evidence. Do not claim later correction success here.',
+16:'Complete only when every confirmed RCA has a controlled correction or explicit blocker, legitimate human authorization exists where actually required, old versions are preserved, new versions are created instead of in-place mutation, and affected downstream work is identified for invalidation/rerun.',
+17:'Perform only the named operation. The corrected iteration is complete only after application-controlled freeze, exactly ten new independent executions, complete independent verification, cross-run comparison, RCA of all material defects, required regression execution, and evidenced root-cause correction are all complete in the new iteration.',
+18:'Complete only when the latest completed current iteration simultaneously has complete mandatory requirement coverage, complete mandatory verification coverage, complete applicable regression success, and zero critical defects, major defects, mandatory unresolved unknowns, correctness-affecting contradictions, ambiguities, and unexplained correctness-affecting variance.',
+19:'Perform only the named unchanged-confirmation operation. Final confirmation is complete only when candidate versions and hashes remain unchanged, ten new independent contexts execute the same frozen package, the complete verification and regression suites run, and there is no new requirement, missed failure, material defect, contradiction, or unexplained variance.',
+20:'Complete only after unchanged confirmation succeeded, the human makes the genuine baseline-authorization decision, and the application can freeze and hash the exact approved versions and bytes as an immutable baseline. Do not generate the product here.',
+21:'Complete only when a fresh production context uses only approved baseline material, performs the approved production instruction completely, and returns every requested finished-product byte plus execution observations for application storage. Do not self-verify or invent product identity/hash/lineage.',
+22:'For external deterministic work, execute only the exact deterministic tests routed externally and return objective execution observations/evidence; never impersonate application-native execution. Stage 22 completes only when the application has one current sufficient result for every applicable mandatory deterministic test and all are satisfied.',
+23:'Complete only when every active meaning-review requirement receives one current independent review with product location, required meaning, observed meaning, evidence-based comparison, source evidence where applicable, and a supported determination; no mandatory review may remain violated or undetermined.',
+24:'Complete only after every applicable attack category and active historical regression pattern authorized for this review was actually tested, findings carry sufficient evidence, independence is preserved, and every unresolved mandatory finding has a defect or blocker.',
+25:'Complete only after every current product/delivery artifact, required representation, page/view, transformation, and packaged file has actually been inspected through the proper authority path and no mandatory representation unknown remains.',
+26:'Complete only when current process evidence and current product evidence are reviewed as distinct propositions, identities and missing links are reconciled, contradictions/discrepancies are resolved or blocked, and both evidence bodies support progression.',
+27:'Provide advisory release analysis only. The application alone calculates exactly one idempotent ACCEPTED, REJECTED, or BLOCKED release result from complete current evidence; never set or override release state, counts, controlling rule, or normalized reason.',
+28:'No external agent operation is required for the authoritative byte-identity decision. The application must compare current audited and delivery bytes one-to-one by canonical artifact identity, authorized filename, byte size, and SHA-256; missing, extra, duplicate, renamed, stale, or mismatched bytes prevent authorization.',
+29:'Agent investigation may locate missing evidence only. Completion requires the application-generated graph for every mandatory requirement to contain every current structural link and sufficient evidence for each proposition through current release and artifact identity where applicable; never fabricate a link.',
+30:'Complete only when defect and regression histories remain append-only, corrections are new records, every confirmed defect has a permanent regression, and the latest applicable regression execution succeeded before baseline approval. Never rewrite history.'
+});
+function stageCompletionDirective(stage){return STAGE_COMPLETION_DIRECTIVES[stage]||'Complete the current stage only when every requirement of its declared stage contract is satisfied or explicitly blocked with exact reason and evidence.';}
+'''
+          if 'const STAGE_COMPLETION_DIRECTIVES=' not in text:
+              text=text[:idx]+completion+text[idx:]
+
+          old="\\n\\nSTAGE PROCEDURE\\n${procedureFor(stage,operation)}\\n\\n"
+          new="\\n\\nSTAGE PROCEDURE\\n${procedureFor(stage,operation)}\\n\\nSTAGE COMPLETION BOUNDARY — DO NOT STOP EARLY\\n${stageCompletionDirective(stage)}\\n\\n"
+          if old in text:
+              text=text.replace(old,new,1)
+          elif 'STAGE COMPLETION BOUNDARY — DO NOT STOP EARLY' not in text:
+              raise SystemExit('stage procedure insertion point not found')
+
+          p.write_text(text)
+          PY
+          rm -f .github/workflows/apply-prompt-data-closure.yml
+          rm -f .github/workflows/apply-all-stage-prompt-context-closure.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js .github/workflows
+          git commit -m "Close all stage prompt context and completion boundaries"
+          git push origin HEAD:main
