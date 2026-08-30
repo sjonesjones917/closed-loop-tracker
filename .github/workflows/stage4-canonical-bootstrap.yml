@@ -16,4 +16,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: bash .stage4-bootstrap.sh
+      - name: Run proof against final repository shape
+        shell: bash
+        run: |
+          rm -f .github/workflows/stage4-canonical-bootstrap.yml
+          sed -i "s#^rm \.github/workflows/stage4-canonical-bootstrap\.yml \.stage4-bootstrap\.sh#rm -f .github/workflows/stage4-canonical-bootstrap.yml .stage4-bootstrap.sh#" .stage4-bootstrap.sh
+          bash .stage4-bootstrap.sh
