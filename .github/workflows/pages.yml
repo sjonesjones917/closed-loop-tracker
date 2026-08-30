@@ -88,25 +88,34 @@ jobs:
           rm -rf _site
           mkdir _site
           cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
-          python3 - <<'PY'
-          import hashlib,json,pathlib,os
-          root=pathlib.Path('_site')
-          files={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.iterdir()) if p.is_file()}
-          report={
-            'commit':os.environ['GITHUB_SHA'],
-            'workflow':'mobile-closed-loop/30',
-            'projectSchema':'closed-loop-project/3',
-            'responseSchema':'closed-loop-stage-response/3',
-            'testIrSchema':'closed-loop-test-spec/1',
-            'stageCount':30,
-            'stage01IntakeAccounting':1,
-            'stage04ObligationAccounting':1,
-            'allStagePromptAudit':True,
-            'browserWidths':[320,393,1280],
-            'deployedFiles':files
-          }
-          root.joinpath('spec-acceptance.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
-          PY
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto'),path=require('path');
+          const root='_site';
+          const deployedFiles=Object.fromEntries(fs.readdirSync(root).sort().filter(f=>fs.statSync(path.join(root,f)).isFile()).map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stageCount:30,
+            stage01IntakeCoverage:1,
+            stage04ObligationCoverage:1,
+            acceptedAgentValueExtractionCoverage:1,
+            currentScopeSelectorCoverage:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            nativeExecutionCoverage:1,
+            allStagePromptAudit:true,
+            unsupportedTestIrTreatedAsExecutable:0,
+            externalAssertionsOverridingApplicationProof:0,
+            nativeExecutionReceiptsFabricatedExternally:0,
+            releaseAcceptedWithContradiction:0,
+            browserWidths:[320,393,1280],
+            deployedFiles
+          };
+          fs.writeFileSync(path.join(root,'spec-acceptance.json'),JSON.stringify(report,null,2)+'\n');
+          NODE
 
       - uses: actions/upload-artifact@v4
         with:
