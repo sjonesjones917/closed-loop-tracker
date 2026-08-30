@@ -1,0 +1,55 @@
+name: finalize-proof-v29
+on:
+  push:
+    branches: [fix/controlling-spec-zero-loss-20260830]
+    paths: [.github/workflows/finalize-proof-v29.yml]
+permissions: {contents: write}
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec-zero-loss-20260830, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply complete guarded repair set
+        run: |
+          set -euo pipefail
+          python3 tools/finalize_capture_once_v4.py
+          python3 tools/update_prompt_semantic_regressions.py
+          python3 tools/fix_semantic_mutation_v15.py
+          python3 tools/fix_semantic_mutation_v17.py
+          python3 tools/finalize_stage1_stage4_gate_v17.py
+          python3 tools/fix_stage1_prompt_quote_v21.py
+          python3 tools/fix_stage1_ownership_v24.py
+          python3 tools/fix_stage1_deliverable_confirmation_v26.py
+          python3 tools/fix_stage1_locality_and_fixtures_v28.py
+      - name: Complete proof
+        shell: bash
+        run: |
+          set +e
+          : > proof-v29.log
+          rc=0
+          run_test(){ echo "===== $* =====" | tee -a proof-v29.log; "$@" >> proof-v29.log 2>&1; x=$?; echo "EXIT=$x" >> proof-v29.log; if [ $x -ne 0 ]; then rc=$x; return $x; fi; return 0; }
+          for f in workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-runtime.js test-worker.js verify-prompt-semantics.mjs verify-intent-capture.mjs; do run_test node --check "$f" || break; done
+          if [ $rc -eq 0 ]; then for f in verify-intent-capture.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs verify.mjs; do run_test node "$f" || break; done; fi
+          if [ $rc -eq 0 ]; then
+            git show origin/main:index.html > /tmp/main-index.html
+            node - <<'NODE' >> proof-v29.log 2>&1
+          const fs=require('fs'),crypto=require('crypto');const get=s=>(s.match(/<style>([\s\S]*?)<\/style>/)||[])[1];const a=get(fs.readFileSync('/tmp/main-index.html','utf8')),b=get(fs.readFileSync('index.html','utf8'));if(!a||!b)throw Error('style block missing');const h=x=>crypto.createHash('sha256').update(x).digest('hex');if(h(a)!==h(b))throw Error(`VISUAL CSS CHANGED: main=${h(a)} candidate=${h(b)}`);if(!fs.readFileSync('index.html','utf8').includes('.expandable-prompt{max-height:280px}'))throw Error('prompt box baseline changed');console.log('VISUAL_CSS_UNCHANGED='+h(a));
+          NODE
+            x=$?; echo "VISUAL_EXIT=$x" >> proof-v29.log; [ $x -eq 0 ] || rc=$x
+          fi
+          if [ $rc -eq 0 ]; then
+            export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+            if [ -z "$BROWSER" ]; then echo 'No Chromium binary' >> proof-v29.log; rc=1; else python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 & pid=$!; run_test node verify-browser.mjs || true; if [ $rc -eq 0 ]; then run_test node verify-browser-extra.mjs || true; fi; kill "$pid" 2>/dev/null || true; fi
+          fi
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          if [ $rc -ne 0 ]; then git add proof-v29.log; git commit -m 'Record exact remaining final proof failure v29' || true; git push origin HEAD:fix/controlling-spec-zero-loss-20260830; exit $rc; fi
+          find .github/workflows -maxdepth 1 -type f ! -name pages.yml -delete
+          rm -rf tools
+          rm -f materialize-v4.log materialize-v4.status materialize-capture-once.log materialize-capture-once.status semantic-diagnostic.log semantic-v8.log semantic-v10.log semantic-v12.log semantic-v14.log semantic-v16.log semantic-v18.log semantic-v20.log semantic-v23.log proof-v25.log proof-v27.log proof-v29.log
+          git add -A
+          git commit -m 'Finalize controlling v3 closed-loop reliability implementation'
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
