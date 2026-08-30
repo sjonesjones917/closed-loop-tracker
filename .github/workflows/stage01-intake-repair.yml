@@ -42,9 +42,10 @@ jobs:
           node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
           node verify-test-runtime.mjs
-      - name: Commit exact tested source
+      - name: Commit exact tested application source
         run: |
           rm -f fix-repair-generator.mjs repair-stage01-intake-closure.mjs repair-stage01-intake-closure-v2.mjs repair-failure.log stage01-repair-trigger.txt
+          git checkout HEAD -- .github/workflows/pages.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
