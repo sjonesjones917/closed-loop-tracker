@@ -48,3 +48,13 @@ if old_css not in text:
     raise SystemExit('Historical prompt-box regression baseline not found')
 text = text.replace(old_css, main_css, 1)
 p.write_text(text)
+
+# Replace the old Stage 03 single-sentence regression with the controlling exhaustion semantics.
+p = Path('verify.mjs')
+text = p.read_text()
+old = "if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');"
+new = "if(stage===3){const s=record.prompt;if(!/current accepted Stage 02/i.test(s)||!/source/i.test(s)||!/conflict/i.test(s)||!/exception/i.test(s)||!/completeness/i.test(s))throw new Error('Stage 03 exhaustive current-source research contract missing.');}"
+if old not in text:
+    raise SystemExit('Stale Stage 03 literal regression anchor missing')
+text = text.replace(old, new, 1)
+p.write_text(text)
