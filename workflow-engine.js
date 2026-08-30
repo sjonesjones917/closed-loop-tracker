@@ -336,6 +336,13 @@ function gate(stage,project){
       if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);}
       const requiredStatements=currentIntentStatements(project).filter(intentStatementRequiresRequirement),candidateLocations=new Set(collection('candidateRequirements').map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim())),missingStatements=requiredStatements.map(record=>recordId(record,'intentStatements')).filter(id=>!candidateLocations.has(id));
       if(missingStatements.length)reasons.push(`Candidate requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
+      const stage3Data=project.stages?.[3]?.agentData||{};
+      if(!truth(stage3Data.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');
+      if(!truth(stage3Data.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 requires the second conflict and exception pass to be complete.');
+      if(numeric(stage3Data.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires at least two completed research passes before saturation can be established.');
+      const latestNew=stage3Data.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS;
+      if(latestNew===undefined||latestNew===null||String(latestNew).trim()==='')reasons.push('Stage 03 latest-pass new-material determination is missing.');
+      else if(!falsey(latestNew))reasons.push('Stage 03 is not saturated because the latest pass found a new material category.');
       break;
     }
     case 4:{
