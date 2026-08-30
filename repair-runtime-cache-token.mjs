@@ -1,0 +1,1 @@
+import fs from 'node:fs';const p='index.html';let s=fs.readFileSync(p,'utf8');const from='runtime-47c36b7579b44736',to='runtime-d1ab6a739c143019';if(!s.includes(from))throw new Error('Expected prior token not found.');s=s.replaceAll(from,to);fs.writeFileSync(p,s);console.log(`${from} -> ${to}`);
