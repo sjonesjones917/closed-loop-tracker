@@ -28,23 +28,27 @@ jobs:
           run=text.index('        run: |\n',start)+len('        run: |\n')
           end=text.index('      - name: Prove exact requested closure',run)
           block=text[run:end]
-          lines=[]
-          for line in block.splitlines():
-              lines.append(line[10:] if line.startswith('          ') else line)
-          Path('/tmp/reconcile.sh').write_text('\n'.join(lines)+'\n')
+          Path('/tmp/reconcile.sh').write_text('\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())+'\n')
           PY
           bash /tmp/reconcile.sh
+          cat > verify-exhaustive-stage1-stage3-stage4.mjs <<'EOF'
+          import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          assert.equal(core.PROJECT_SCHEMA,'closed-loop-project/3');assert.equal(globalThis.closedLoopWorkflowSchema.RESPONSE_SCHEMA,'closed-loop-stage-response/3');
+          const p=core.createBlankState('JOB-EXHAUSTIVE');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'});engine.ensureShape(p);
+          const intake=engine.intakeCoverageManifest(p);p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Exact requested product',ASSUMPTIONS:'No unstated assumptions.',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:'INPUT-v001',manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'s'+i,text:u.label,statementClass:'REQUIREMENT'}]})),conversationStatements:[]})};
+          p.stages[3].agentData={SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE',EXCEPTIONS_AND_EDGE_CONDITIONS:'All found conditions captured.',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE'};
+          const prompt1=prompts.buildPromptRecord(1,p).prompt;assert.match(prompt1,/APPLICATION INTAKE MANIFEST/);assert.doesNotMatch(prompt1,/patent application fixture|software\/repository|building\/AEC|physical\/mechanical/i);
+          const prompt4=prompts.buildPromptRecord(4,p).prompt;assert.match(prompt4,/APPLICATION OBLIGATION MANIFEST/);assert.match(prompt4,/COMPLETE ACCEPTED STAGE 01 JOB DEFINITION/);assert.match(prompt4,/COMPLETE EXHAUSTED STAGE 03 STAGE DATA/);assert.match(prompt4,/Do not omit, summarize away, or ask the human to repeat/i);assert.doesNotMatch(prompt4,/attach the original intent file again/i);
+          const html=fs.readFileSync('index.html','utf8');const expected='.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;white-space:pre;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55}';assert.equal(html.match(/\.prompt\{[^}]+\}/)?.[0],expected,'Prompt box CSS changed from the restored visual baseline.');
+          console.log('verify-exhaustive-stage1-stage3-stage4: PASS');
+          EOF
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('verify-exhaustive-stage1-stage3-stage4.mjs')
-          text=p.read_text()
-          old="const html=fs.readFileSync('index.html','utf8'),baseline=fs.readFileSync('/tmp/index-visual-baseline.html','utf8');\n          const promptCss=s=>s.match(/\\.prompt\\{[^}]+\\}/)?.[0];assert.equal(promptCss(html),promptCss(baseline),'Prompt box CSS changed from the restored visual baseline.');"
-          new="const html=fs.readFileSync('index.html','utf8');\n          const expectedPromptCss='.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;white-space:pre;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55}';\n          const promptCss=html.match(/\\.prompt\\{[^}]+\\}/)?.[0];assert.equal(promptCss,expectedPromptCss,'Prompt box CSS changed from the restored visual baseline.');"
-          if old not in text: raise SystemExit('focused visual regression anchor missing')
-          p.write_text(text.replace(old,new,1))
           p=Path('.github/workflows/pages.yml'); text=p.read_text()
-          if 'node --check verify-exhaustive-stage1-stage3-stage4.mjs' not in text:
-              text=text.replace('          node --check verify-intake-obligation-accounting.mjs\n','          node --check verify-intake-obligation-accounting.mjs\n          node --check verify-exhaustive-stage1-stage3-stage4.mjs\n')
+          if 'node --check verify-exhaustive-stage1-stage3-stage4.mjs' not in text:text=text.replace('          node --check verify-intake-obligation-accounting.mjs\n','          node --check verify-intake-obligation-accounting.mjs\n          node --check verify-exhaustive-stage1-stage3-stage4.mjs\n')
           if 'node verify-exhaustive-stage1-stage3-stage4.mjs' not in text:
               text=text.replace('          node verify-intake-obligation-accounting.mjs\n','          node verify-intake-obligation-accounting.mjs\n          node verify-exhaustive-stage1-stage3-stage4.mjs\n',1)
               text=text.replace('node verify-intake-obligation-accounting.mjs && node verify-test-runtime.mjs','node verify-intake-obligation-accounting.mjs && node verify-exhaustive-stage1-stage3-stage4.mjs && node verify-test-runtime.mjs')
