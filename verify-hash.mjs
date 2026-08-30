@@ -28,7 +28,15 @@ scriptSources.forEach((source,index)=>{
  const token=new URLSearchParams(query).get('v');
  assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime bundle identity ${runtimeBuildIdentity}.`);
 });
-const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));
+const appCore=fs.readFileSync('app-core.js','utf8');
+const promptEngine=fs.readFileSync('prompt-engine.js','utf8');
+assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not be visually special-cased or hidden.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 must preserve the standard artifact-control rendering used by the other applicable stages.');
+assert(html.includes('.expandable-prompt{height:clamp(260px,45vh,520px);max-height:80vh}'),'The generated prompt box must retain its regular responsive height.');
+assert(!html.includes('.expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}'),'The generated prompt box must not collapse to the height of short prompt content.');
+assert((promptEngine.match(/handoff=stage===4\?\{\.\.\.rawHandoff,send:\[\]\}:rawHandoff/g)||[]).length===2,'Stage 04 file-send suppression must control both rendered prompt text and the persisted context manifest.');
+assert(promptEngine.includes('ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT'),'Stage 04 must receive the accepted Stage 01 job definition through the generated prompt.');
+assert(promptEngine.includes('Do not ask the human to attach, resend, retype, or summarize the original intent file'),'Stage 04 must prohibit repeated intent-file supply.');
+
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04VisualsRestored:true,promptBoxResponsiveHeightRestored:true,stage04CanonicalInputReuse:true,stage04RepeatedFileSendSuppressed:true}));
