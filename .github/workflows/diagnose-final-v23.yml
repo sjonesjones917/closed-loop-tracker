@@ -1,0 +1,36 @@
+name: diagnose-final-v23
+on:
+  push:
+    branches: [fix/controlling-spec-zero-loss-20260830]
+    paths: [.github/workflows/diagnose-final-v23.yml]
+permissions: {contents: write}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec-zero-loss-20260830, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          set -euo pipefail
+          python3 tools/finalize_capture_once_v4.py
+          python3 tools/update_prompt_semantic_regressions.py
+          python3 tools/fix_semantic_mutation_v15.py
+          python3 tools/fix_semantic_mutation_v17.py
+          python3 tools/finalize_stage1_stage4_gate_v17.py
+          python3 tools/fix_stage1_prompt_quote_v21.py
+      - run: |
+          set +e
+          : > semantic-v23.log
+          for test in verify-intent-capture.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs; do
+            echo "===== $test =====" >> semantic-v23.log
+            node "$test" >> semantic-v23.log 2>&1
+            echo "EXIT=$?" >> semantic-v23.log
+          done
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add semantic-v23.log
+          git commit -m 'Record exact corrected semantic proof failure v23'
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
+          exit 0
