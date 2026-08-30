@@ -1,36 +1,35 @@
-name: Diagnose Stage 4 repair
+name: Install Stage 4 context binding repair
 on:
   push:
     branches: [fix/stage4-durable-intent-final-20260830]
 permissions:
   contents: write
 jobs:
-  diagnose:
-    if: github.event.head_commit.message != 'Record Stage 4 repair diagnostics'
+  install:
+    if: github.event.head_commit.message == 'Install Stage 4 context binding repair'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/stage4-durable-intent-final-20260830
-      - name: Record deterministic marker diagnostics
+      - name: Extend one-time repair with exact context binding and dynamic build identity
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          e=Path('workflow-engine.js').read_text(); p=Path('prompt-engine.js').read_text(); y=Path('.github/workflows/pages.yml').read_text()
-          checks={
-            'register_marker': "  if(!config)return null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')" in e,
-            'handoff_function': 'function executionHandoff(' in e,
-            'handoff_stage4': '  if(stage===4){' in e[e.index('function executionHandoff('):],
-            'next_action_exact': "if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}" in e,
-            'prompt_stage4_start': "\n4:'" in p,
-            'prompt_stage5_start': "\n5:'" in p,
-            'prompt_version24': "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';" in p,
-            'ci_marker': '      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n' in y,
-          }
-          Path('stage4-repair-diagnostic.txt').write_text('\n'.join(f'{k}={v}' for k,v in checks.items())+'\n')
+          p=Path('.github/workflows/repair-stage4-durable-intent.yml')
+          s=p.read_text()
+          anchor="""          s=s[:start]+\"4:\"+json.dumps(text)+\",\"+s[end:]\n          p.write_text(s)\n\n          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.\n"""
+          insertion="""          s=s[:start]+\"4:\"+json.dumps(text)+\",\"+s[end:]\n          p.write_text(s)\n\n          # 3b. Prompt context identity must bind the exact selected human-authority input, not only version labels.\n          p=Path('prompt-engine.js'); s=p.read_text()\n          old=\"promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack,conversationMaterials:handoff.conversationMaterials},contextManifest={stage,operation,scope,\"\n          new=\"promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack,conversationMaterials:handoff.conversationMaterials},humanAuthorityContext=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null])),contextManifest={stage,operation,scope,humanAuthorityInput:{inputVersion:scope.inputVersion,sha256:hash.sha256Value(humanAuthorityContext)},\"\n          if old not in s: raise SystemExit('prompt context-manifest binding marker missing')\n          s=s.replace(old,new,1)\n          p.write_text(s)\n\n          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.\n"""
+          if anchor not in s: raise SystemExit('repair workflow Stage 4 prompt anchor missing')
+          s=s.replace(anchor,insertion,1)
+          anchor="""          p.write_text(s)\n          PY\n      - name: Remove one-time repair/diagnostic infrastructure before acceptance\n"""
+          insertion="""          p.write_text(s)\n\n          # 9. Synchronize the shared runtime cache identity after all runtime-source edits.\n          import hashlib,re\n          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']\n          def git_blob_sha(path):\n            data=Path(path).read_bytes()\n            return hashlib.sha1(f'blob {len(data)}\\0'.encode()+data).hexdigest()\n          manifest=''.join(f'{name}:{git_blob_sha(name)}\\n' for name in runtime_files).encode()\n          runtime_identity='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]\n          p=Path('index.html'); html=p.read_text()\n          html,count=re.subn(r'runtime-[0-9a-f]{16}',runtime_identity,html)\n          if count!=8: raise SystemExit(f'expected 8 runtime cache tokens, updated {count}')\n          p.write_text(html)\n          PY\n      - name: Remove one-time repair/diagnostic infrastructure before acceptance\n"""
+          if anchor not in s: raise SystemExit('repair workflow final Python anchor missing')
+          s=s.replace(anchor,insertion,1)
+          p.write_text(s)
           PY
           git config user.name 'closed-loop-repair'
           git config user.email 'actions@users.noreply.github.com'
-          git add stage4-repair-diagnostic.txt
-          git commit -m 'Record Stage 4 repair diagnostics'
+          git add .github/workflows/repair-stage4-durable-intent.yml
+          git commit -m 'Install Stage 4 context binding and dynamic build identity'
           git push origin HEAD:fix/stage4-durable-intent-final-20260830
