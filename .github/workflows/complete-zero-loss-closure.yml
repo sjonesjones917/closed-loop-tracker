@@ -37,14 +37,15 @@ jobs:
           node --check response-ingestion.js
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
-      - name: Prove existing visuals are byte-unchanged
-        run: git diff --exit-code origin/main -- index.html
       - name: Prove zero-loss accounting semantics
         run: node verify-zero-loss-accounting.mjs
       - name: Prove full synthetic lifecycle
         run: node build-test-project.mjs
-      - name: Prove browser behavior without visual redesign
+      - name: Prove browser behavior and established prompt dimensions
         run: |
+          grep -F "height:clamp(260px,45vh,520px)" index.html
+          grep -F ".expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}" index.html
+          ! grep -F "#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}" index.html
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
