@@ -550,7 +550,7 @@ function recalculate(project){
     else state.status='READY';
     state.decision=state.status==='COMPLETE'?'READY TO PROCEED':state.status==='BLOCKED'?'BLOCKED':'';
     state.decisionEvidence=result.reasons.length?result.reasons.join('; '):'Derived canonical stage gate satisfied.';
-    if(!wasComplete||state.status!=='COMPLETE'||!state.derivedData||!Object.keys(state.derivedData).length)state.derivedData=deriveStageData(project,stage);
+    state.derivedData=deriveStageData(project,stage);
     previousComplete=state.status==='COMPLETE';
   }
   const completed=Object.values(project.stages).filter(state=>state.status==='COMPLETE').length;
