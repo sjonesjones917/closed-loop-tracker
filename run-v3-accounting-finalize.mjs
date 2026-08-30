@@ -83,4 +83,48 @@ const stage1Fixture=String.raw`  if(stage===1){
   }
 `;
 ingestionTest=ingestionTest.replace(genericStageData,genericStageData+stage1Fixture);
+
+const safeValueAnchor='function safeValue(name){';
+if(!ingestionTest.includes(safeValueAnchor))throw new Error('verify-ingestion safeValue anchor missing.');
+const prerequisiteHelpers=String.raw`function completeIntakeCapture(p){
+  const intake=engine.intakeCoverageManifest(p);
+  return {schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'seed-'+String(index+1),text:String(unit.rawValue??unit.label??unit.unitId),statementClass:unit.label==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUESTED_OUTPUT':'FACT'}]})),conversationStatements:[]};
+}
+function seedAcceptedStage1(p){
+  const promptRecord=savePrompt(p,1),capture=completeIntakeCapture(p);
+  const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Verified ingestion deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'seed-evidence-1',kind:'HUMAN_INPUT',description:'Accepted Stage 01 prerequisite',location:'controlled ingestion fixture',content:'Complete current human authority capture'}],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord});
+  if(!prepared.validation.valid)throw new Error('Failed to seed Stage 01 prerequisite: '+JSON.stringify(prepared.validation.issues));
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'INGESTION_FIXTURE',reviewNote:'Seed prerequisite.'});
+  const seeded=committed.project,acceptedChangeId=seeded.projectData.acceptedChanges.at(-1).changeId;
+  engine.recordStageConfirmation(seeded,1,true,'Current human authority captured for Stage 04 ingestion fixture.','INGESTION_FIXTURE',{acceptedChangeId,inputVersion:seeded.job.CURRENT_INPUT_VERSION,instructionId:promptRecord.instructionId,contextSignature:promptRecord.contextSignature,operatorLabel:'INGESTION_FIXTURE'});
+  engine.recalculate(seeded);
+  if(!engine.evaluateIntakeCoverage(seeded).complete)throw new Error('Seeded Stage 01 prerequisite did not close intake accounting.');
+  return seeded;
+}
+`;
+ingestionTest=ingestionTest.replace(safeValueAnchor,prerequisiteHelpers+safeValueAnchor);
+
+const returnEnvelopeAnchor="  return {\n    schema:schema.RESPONSE_SCHEMA,";
+if(!ingestionTest.includes(returnEnvelopeAnchor))throw new Error('verify-ingestion envelope return anchor missing.');
+const stage4Fixture=String.raw`  if(stage===4){
+    const obligations=engine.obligationManifest(p).items;
+    records.requirements=obligations.map((item,index)=>({tempKey:'requirement-'+String(index+1),fields:{OBLIGATION:item.text,REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',SOURCE_LOCATION:'manifest '+item.obligationId,SOURCE_AUTHORITY:item.origin,USER_INPUT_RELATIONSHIP:item.obligationId,APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'The obligation is demonstrably satisfied.',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_OR_INDEPENDENT',EXPECTED_EVIDENCE:'Current sufficient evidence',FAILURE_CONDITION:'The obligation is not satisfied.',SEVERITY:'MAJOR',NOTES:''},relationships:{},evidenceRefs:['evidence-1']}));
+  }
+`;
+ingestionTest=ingestionTest.replace(returnEnvelopeAnchor,stage4Fixture+returnEnvelopeAnchor);
+
+const loopProjectAnchor="  let p=project(`JOB-E2E-${String(stage).padStart(2,'0')}`);\n  p.activeStage=stage;";
+if(!ingestionTest.includes(loopProjectAnchor))throw new Error('verify-ingestion all-stage project anchor missing.');
+ingestionTest=ingestionTest.replace(loopProjectAnchor,"  let p=project(`JOB-E2E-${String(stage).padStart(2,'0')}`);\n  if(stage===4)p=seedAcceptedStage1(p);\n  p.activeStage=stage;");
+
+const prepareAnchor="  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});\n  if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);";
+if(!ingestionTest.includes(prepareAnchor))throw new Error('verify-ingestion prepare anchor missing.');
+ingestionTest=ingestionTest.replace(prepareAnchor,"  const acceptedBefore=p.projectData.acceptedChanges.length,manifestsBefore=p.projectData.extractionManifests.length;\n  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});\n  if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);");
+const noMutationAnchor="  if(prepared.project.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} mutated canonical state before operator acceptance.`);";
+if(!ingestionTest.includes(noMutationAnchor))throw new Error('verify-ingestion preaccept assertion anchor missing.');
+ingestionTest=ingestionTest.replace(noMutationAnchor,"  if(prepared.project.projectData.acceptedChanges.length!==acceptedBefore)throw new Error(`Stage ${stage} mutated canonical state before operator acceptance.`);");
+const commitChecksAnchor="  if(!p.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} did not create an accepted canonical change.`);\n  if(!p.projectData.extractionManifests.length)throw new Error(`Stage ${stage} did not create an extraction manifest.`);";
+if(!ingestionTest.includes(commitChecksAnchor))throw new Error('verify-ingestion commit assertion anchor missing.');
+ingestionTest=ingestionTest.replace(commitChecksAnchor,"  if(p.projectData.acceptedChanges.length!==acceptedBefore+1)throw new Error(`Stage ${stage} did not create exactly one accepted canonical change.`);\n  if(p.projectData.extractionManifests.length!==manifestsBefore+1)throw new Error(`Stage ${stage} did not create exactly one extraction manifest.`);");
 fs.writeFileSync(ingestionTestPath,ingestionTest);
