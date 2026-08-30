@@ -52,5 +52,16 @@ import fs from 'node:fs';
   if(!text.includes(blanketArtifactAssertion))throw new Error('Obsolete blanket artifact prompt assertion missing.');
   text=text.replace(blanketArtifactAssertion,'  }');
 
+  const stage1If='  if(record.stage===1){';
+  if(!text.includes(stage1If))throw new Error('Stage-specific semantic assertion anchor missing.');
+  text=text.replace(stage1If,"  if(record.stage===3){\n    if(!record.prompt.includes('Every current Stage 02 source must have current research coverage')||!record.prompt.includes('explanatory material')||!record.prompt.includes('Perform a second conflict-and-exception pass')||!record.prompt.includes('continue additional passes until saturation is supported by evidence'))issues.push('STAGE03_EXHAUSTIVE_SOURCE_RESEARCH_MISSING');\n  }\n  if(record.stage===1){");
+
+  const obsoleteMutants=[
+    "  {...original,prompt:original.prompt.replace('must not be represented as completed','may be represented as completed')},\n",
+    "  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},\n",
+    "  {...original,prompt:original.prompt.replace('PATENT / REGULATED FILING','GENERAL DOCUMENT')},\n"
+  ];
+  for(const mutant of obsoleteMutants)text=text.split(mutant).join('');
+
   fs.writeFileSync(path,text);
 }
