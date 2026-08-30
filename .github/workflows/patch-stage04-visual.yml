@@ -1,0 +1,52 @@
+name: Restore Stage 04 artifact controls
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+permissions:
+  contents: write
+concurrency:
+  group: restore-stage04-artifact-controls
+  cancel-in-progress: false
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Restore Stage 04 artifact controls and bind runtime identity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+      - name: Restore control and exact bundle identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          t=p.read_text()
+          old="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"
+          new="function artifactControlMarkup(n,locked){if(n===19)"
+          if t.count(old)!=1: raise SystemExit(f'expected one Stage 04 suppression, found {t.count(old)}')
+          p.write_text(t.replace(old,new,1))
+          PY
+          node --check app-core.js
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(f=>`${f}:${blob(f)}\n`).join('');
+          const identity=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          const rx=/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*><\/script>)/g;
+          let count=0; html=html.replace(rx,(_,a,b)=>{count++;return a+identity+b});
+          if(count!==9)throw new Error(`expected 9 runtime script tokens; found ${count}`);
+          fs.writeFileSync('index.html',html);
+          console.log(identity);
+          NODE
+          grep -F "height:clamp(260px,45vh,520px)" index.html
+          grep -F ".expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}" index.html
+          ! grep -F "function artifactControlMarkup(n,locked){if(n===4)return '';" app-core.js
+          grep -F "function artifactControlMarkup(n,locked){if(n===19)" app-core.js
+          node verify-hash.mjs
+          git config user.name closed-loop-patcher
+          git config user.email closed-loop-patcher@users.noreply.github.com
+          git add app-core.js index.html
+          git commit -m "Restore Stage 04 artifact controls without repeat input"
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
