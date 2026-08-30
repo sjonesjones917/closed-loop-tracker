@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Patch operator help authority boundary'
+    if: github.event.head_commit.message != 'Keep external-agent behavior inside generated prompts'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
