@@ -42,35 +42,23 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
       - name: Apply prepared v3 source transformation
-        run: python3 .github/apply-v3-phase1.py
+        run: |
+          python3 .github/apply-v3-phase1.py
+          git checkout HEAD -- .github/workflows/pages.yml
       - name: Syntax and focused deterministic proofs
         run: |
-          set +e
-          {
-            node --check workbook.js &&
-            node --check workflow-schema.js &&
-            node --check test-runtime.js &&
-            node --check test-worker.js &&
-            node --check workflow-engine.js &&
-            node --check prompt-engine.js &&
-            node --check response-ingestion.js &&
-            node --check project-store.js &&
-            node --check app-core.js &&
-            node verify-test-runtime.mjs &&
-            node verify-hash.mjs &&
-            node verify.mjs
-          } > /tmp/v3-focused.out 2>&1
-          status=$?
-          set -e
-          if [ "$status" -ne 0 ]; then
-            cp /tmp/v3-focused.out .github/v3-phase1-error.txt
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m "Capture transformed v3 phase 1 failure [v3-debug]"
-            git push origin HEAD:implement-v3-reliability-bundle
-            exit "$status"
-          fi
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
       - name: Run current full deterministic suite
         run: |
           node build-test-project.mjs
@@ -82,11 +70,10 @@ jobs:
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
           git diff --check
-      - name: Commit tested phase 1 and remove one-time files
+      - name: Commit tested phase 1 source only
         run: |
-          rm -f .github/v3-phase1-error.txt
-          rm .github/apply-v3-phase1.py
-          rm .github/workflows/apply-v3-phase1.yml
+          git checkout HEAD -- .github/workflows/apply-v3-phase1.yml
+          rm -f .github/v3-phase1-error.txt .github/apply-v3-phase1.py
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
