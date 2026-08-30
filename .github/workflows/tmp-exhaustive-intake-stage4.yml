@@ -50,3 +50,4 @@ jobs:
           git add prompt-engine.js
           git commit -m 'Make every stage prompt enforce its complete stage contract'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
+# audit harness v2
