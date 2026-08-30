@@ -1,7 +1,8 @@
 name: Apply exact current stage sequencing repair
 on:
   push:
-    branches: [fix/exact-current-stage-sequencing-20260830]
+    branches:
+      - fix/exact-current-stage-sequencing-20260830
 permissions:
   contents: write
 jobs:
@@ -10,136 +11,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
+        with:
+          fetch-depth: 2
+      - name: Apply repair
+        run: |
+          git show HEAD^:.github/workflows/apply-exact-current-stage-sequencing.yml > /tmp/previous-repair.yml
           python3 - <<'PY'
           from pathlib import Path
-
-          p=Path('workflow-schema.js'); s=p.read_text()
-          old="const independentReview=stage===9||stage===12||stage===23||stage===24||((stage===17||stage===19)&&operation==='VERIFY');if(independentReview&&!scopeRequirements.includes('contextId'))scopeRequirements=[...scopeRequirements,'contextId'];"
-          new="const runScopedIndependentVerification=stage===12||((stage===17||stage===19)&&operation==='VERIFY');if(runScopedIndependentVerification&&!scopeRequirements.includes('runId'))scopeRequirements=[...scopeRequirements,'runId'];const independentReview=stage===9||stage===12||stage===23||stage===24||((stage===17||stage===19)&&operation==='VERIFY');if(independentReview&&!scopeRequirements.includes('contextId'))scopeRequirements=[...scopeRequirements,'contextId'];"
-          if old not in s: raise SystemExit('operationContract isolation anchor not found')
-          s=s.replace(old,new,1)
-          p.write_text(s)
-
-          p=Path('workflow-engine.js'); s=p.read_text()
-          old="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','FREEZE_CANDIDATE','RESERVE_RUN_BATCH','BEGIN_UNCHANGED_CONFIRMATION','FREEZE_BASELINE','REGISTER_PRODUCTION_CONTEXT','RESERVE_PRODUCT_EXECUTION','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
-          new="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','FREEZE_CANDIDATE','RESERVE_RUN_BATCH','REGISTER_FRESH_CONTEXT','REGISTER_REVIEWER_CONTEXT','BEGIN_UNCHANGED_CONFIRMATION','FREEZE_BASELINE','REGISTER_PRODUCTION_CONTEXT','RESERVE_PRODUCT_EXECUTION','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
-          if old not in s: raise SystemExit('action types anchor not found')
-          s=s.replace(old,new,1)
-          helpers=r'''function verificationRoutingTarget(project,stage){
-  ensureShape(project);const number=Number(stage),iteration=number===12?latestIteration(project,[10,17,19]):latestIteration(project,[number]),iterationId=recordId(iteration,'iterations')||String(project.job.CURRENT_ITERATION||'');if(!iterationId)return {iterationId:'',runId:'',testIds:[],missing:[]};const matrix=verificationMatrix(project,iterationId),first=matrix.missing[0];if(!first)return {iterationId,runId:'',testIds:[],missing:[]};const [requirementId,runId]=String(first).split('|'),sameRun=matrix.missing.filter(key=>String(key).split('|')[1]===runId),testIds=[...new Set(sameRun.map(key=>String(key).split('|')[2]).filter(Boolean))];return {iterationId,runId,requirementId,testIds,missing:sameRun};
-}
-function availableReviewerContext(project,stage,operation='COMPLETE'){
-  ensureShape(project);const number=Number(stage),op=String(operation||'COMPLETE'),used=new Set(acceptedChanges(project,number).filter(change=>String(change.operation||'COMPLETE')===op).map(change=>String(change.scope?.contextId||'')).filter(Boolean)),noRun=value=>['','NONE','NOT APPLICABLE','UNASSIGNED','PENDING','UNKNOWN'].includes(upper(value));return records(project,'freshContexts').filter(record=>isActiveRecord(record)&&Number(record.stage)===number&&noRun(recordValue(record,'RUN_ID')||record.scope?.runId)&&!used.has(recordId(record,'freshContexts'))).at(-1)||null;
-}
-function nextRequiredOperation(project,stage){
-  ensureShape(project);const number=Number(stage);if(number===17){const iteration=latestIteration(project,[17]),freeze=recordsForCurrentScope(project,'candidateFreezes').filter(record=>Number(record.stage)===17&&isActiveRecord(record)).at(-1);if(!iteration||!freeze)return 'FREEZE';const iterationId=recordId(iteration,'iterations'),runs=recordsForIteration(project,'runs',iterationId).filter(run=>Number(run.stage)===17),complete=run=>['COMPLETED','SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(run,'EXECUTION_STATUS')||run.completionState||run.status||''));if(runs.length!==10||runs.some(run=>!complete(run)))return 'EXECUTE_RUN';const matrix=verificationMatrix(project,iterationId);if(!matrix.expected.length||matrix.missing.length||matrix.duplicates.length||matrix.invalid.length)return 'VERIFY';const ops=acceptedOperationSet(project,17,{iterationId});for(const op of ['COMPARE','ROOT_CAUSE','REGRESSION','CORRECT'])if(!ops.has(op))return op;return 'CORRECT';}
-  if(number===19){const iteration=latestIteration(project,[19]);if(!iteration)return 'CONFIRM_FREEZE';const iterationId=recordId(iteration,'iterations'),runs=recordsForIteration(project,'runs',iterationId).filter(run=>Number(run.stage)===19),complete=run=>['COMPLETED','SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(run,'EXECUTION_STATUS')||run.completionState||run.status||''));if(runs.length!==10||runs.some(run=>!complete(run)))return 'EXECUTE_RUN';const matrix=verificationMatrix(project,iterationId);if(!matrix.expected.length||matrix.missing.length||matrix.duplicates.length||matrix.invalid.length)return 'VERIFY';const ops=acceptedOperationSet(project,19,{iterationId});for(const op of ['COMPARE','REGRESSION_VERIFY','CONFIRM'])if(!ops.has(op))return op;return 'CONFIRM';}
-  return null;
-}
-'''
-          anchor="function actionReceiptState(project,stage){"
-          if anchor not in s: raise SystemExit('actionReceiptState anchor not found')
-          s=s.replace(anchor,helpers+anchor,1)
-
-          # Replace Stage 11 so every reserved run gets a real fresh external context before a run prompt exists.
-          start=s.index("  if(stage===11){")
-          end=s.index("  if(stage===17){",start)
-          block=r'''  if(stage===11){
-    const iteration=latestIteration(project,[10]),iterationId=recordId(iteration,'iterations');
-    if(iterationId){const runs=records(project,'runs').filter(r=>isActiveRecord(r)&&String(recordValue(r,'ITERATION_ID')||r.relationships?.ITERATION_ID||r.scope?.iterationId||'')===iterationId);if(!runs.length)return actionEnvelope(project,stage,{actionType:'RESERVE_RUN_BATCH',heading:'Reserve the ten independent execution lanes',explanation:'The application must create exactly ten current run identities and ten context identities for the frozen candidate before any run prompt is sent. You do not allocate run IDs or context IDs.',primaryButton:'Reserve 10 runs'});if(runs.length!==10)return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:'Run reservation is inconsistent',explanation:'The current iteration contains '+runs.length+' reserved run records instead of exactly ten. Do not create ad hoc runs or reuse contexts.',blockingReason:'Exactly ten application-reserved run lanes are required.'});const contexts=recordsForIteration(project,'freshContexts',iterationId),unassigned=contexts.find(context=>Number(context.stage)===11&&['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE'].includes(upper(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER'))));if(unassigned)return actionEnvelope(project,stage,{actionType:'REGISTER_FRESH_CONTEXT',heading:'Open the fresh context for '+String(recordValue(unassigned,'RUN_ID')||unassigned.scope?.runId||'the next run'),explanation:'Open a genuinely fresh external execution conversation/context and record its real external identifier before sending this run prompt. Do not reuse another run context or invent an identifier.',primaryButton:'Enter fresh context'});}
-  }
-'''
-          s=s[:start]+block+s[end:]
-
-          # Replace Stage 17 + Stage 19 control blocks with operation-aware sequencing.
-          start=s.index("  if(stage===17){")
-          end=s.index("  if(stage===20",start)
-          block=r'''  const repeatedOperation=nextRequiredOperation(project,stage);
-  if(stage===17){
-    const iteration=latestIteration(project,[17]),iterationId=recordId(iteration,'iterations'),freeze=recordsForCurrentScope(project,'candidateFreezes').filter(r=>Number(r.stage)===17&&isActiveRecord(r)).at(-1);
-    if(!iterationId||!freeze)return actionEnvelope(project,stage,{actionType:'FREEZE_CANDIDATE',heading:'Freeze the corrected candidate',explanation:'Select the exact corrected candidate files. The application creates the new iteration/candidate identities, hashes the exact bytes, preserves the prior candidate, and determines downstream scope. No external FREEZE response is required.',primaryButton:'Freeze corrected candidate'});
-    if(repeatedOperation==='EXECUTE_RUN'){const runs=recordsForIteration(project,'runs',iterationId).filter(r=>Number(r.stage)===17);if(!runs.length)return actionEnvelope(project,stage,{actionType:'RESERVE_RUN_BATCH',heading:'Reserve ten new corrected-run lanes',explanation:'The corrected iteration requires exactly ten new run/context identities before execution. The application allocates them; prior run conversations and outputs remain outside authorized inputs.',primaryButton:'Reserve 10 runs'});if(runs.length!==10)return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:'Corrected run reservation is inconsistent',explanation:'The corrected iteration contains '+runs.length+' current run records instead of exactly ten.',blockingReason:'Exactly ten application-reserved corrected run lanes are required.'});const contexts=recordsForIteration(project,'freshContexts',iterationId),unassigned=contexts.find(context=>Number(context.stage)===17&&['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE'].includes(upper(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER'))));if(unassigned)return actionEnvelope(project,stage,{actionType:'REGISTER_FRESH_CONTEXT',heading:'Open the next fresh corrected-run context',explanation:'Open a genuinely fresh execution context for '+String(recordValue(unassigned,'RUN_ID')||unassigned.scope?.runId||'the next corrected run')+' and register its real external identifier before the run instruction is exposed.',primaryButton:'Enter fresh context'});}
-  }
-  if(stage===19){
-    const iteration=latestIteration(project,[19]),iterationId=recordId(iteration,'iterations');if(!iterationId)return actionEnvelope(project,stage,{actionType:'BEGIN_UNCHANGED_CONFIRMATION',heading:'Begin the unchanged confirmation iteration',explanation:'The application binds a new confirmation iteration to the exact converged candidate and confirms the frozen versions/hashes are unchanged. No external CONFIRM_FREEZE prompt is required.',primaryButton:'Begin unchanged confirmation'});
-    if(repeatedOperation==='EXECUTE_RUN'){const runs=recordsForIteration(project,'runs',iterationId).filter(r=>Number(r.stage)===19);if(!runs.length)return actionEnvelope(project,stage,{actionType:'RESERVE_RUN_BATCH',heading:'Reserve ten new confirmation lanes',explanation:'The unchanged confirmation requires ten new run/context identities. The application allocates them before any execution prompt is sent.',primaryButton:'Reserve 10 runs'});if(runs.length!==10)return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:'Confirmation run reservation is inconsistent',explanation:'The confirmation iteration contains '+runs.length+' current run records instead of exactly ten.',blockingReason:'Exactly ten application-reserved confirmation run lanes are required.'});const contexts=recordsForIteration(project,'freshContexts',iterationId),unassigned=contexts.find(context=>Number(context.stage)===19&&['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE'].includes(upper(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER'))));if(unassigned)return actionEnvelope(project,stage,{actionType:'REGISTER_FRESH_CONTEXT',heading:'Open the next fresh confirmation-run context',explanation:'Open a genuinely fresh execution context for '+String(recordValue(unassigned,'RUN_ID')||unassigned.scope?.runId||'the next confirmation run')+' and register its real external identifier before the run instruction is exposed.',primaryButton:'Enter fresh context'});}
-  }
-'''
-          s=s[:start]+block+s[end:]
-
-          # Stage 20 is human authorization + application byte reuse, never another agent response or file re-supply.
-          old="  if(stage===20&&acceptedChanges(project,20).length){\n    const baselines=recordsForCurrentScope(project,'baselines').filter(isActiveRecord);\n    if(!baselines.length)return actionEnvelope(project,stage,{actionType:'FREEZE_BASELINE',heading:'Authorize and freeze the production baseline',explanation:'Select the exact approved component files. The application binds them to the successful unchanged confirmation, computes byte identities, allocates the baseline identity, and freezes the immutable baseline.',primaryButton:'Freeze baseline'});\n  }"
-          new="  if(stage===20){const baselines=recordsForCurrentScope(project,'baselines').filter(isActiveRecord);if(!baselines.length)return actionEnvelope(project,stage,{actionType:'FREEZE_BASELINE',heading:'Authorize and freeze the production baseline',explanation:'The exact unchanged-confirmed candidate is already in canonical artifact custody. Do not attach, upload, resend, or manually reselect those files. The human provides only the baseline authorization; the application reuses the exact candidate identities, verifies the stored bytes, computes hashes, allocates BASELINE_ID, and freezes the immutable baseline.',primaryButton:'Authorize and freeze baseline'});}"
-          if old not in s: raise SystemExit('Stage20 operational block anchor not found')
-          s=s.replace(old,new,1)
-          old="case 20:{requireAccepted();const confirmations="
-          if old in s:s=s.replace(old,"case 20:{const confirmations=",1)
-
-          # Stage 21 context must be a real registered external context, not only an empty reserved record.
-          old="    const productionContext=records(project,'freshContexts').filter(r=>isActiveRecord(r)&&Number(r.stage)===21).at(-1);\n    if(!productionContext)return actionEnvelope(project,stage,{actionType:'REGISTER_PRODUCTION_CONTEXT'"
-          new="    const productionContext=records(project,'freshContexts').filter(r=>isActiveRecord(r)&&Number(r.stage)===21&&!['','UNASSIGNED','UNKNOWN','PENDING','NOT APPLICABLE','NONE'].includes(upper(recordValue(r,'EXTERNAL_CONTEXT_IDENTIFIER')))).at(-1);\n    if(!productionContext)return actionEnvelope(project,stage,{actionType:'REGISTER_PRODUCTION_CONTEXT'"
-          if old not in s: raise SystemExit('Stage21 context anchor not found')
-          s=s.replace(old,new,1)
-
-          # Require a fresh unused reviewer for each missing Stage 12/17/19 verification run lane.
-          reviewer_insert=r'''  const verificationOperation=stage===12?'COMPLETE':([17,19].includes(stage)&&repeatedOperation==='VERIFY'?'VERIFY':null),verificationTarget=verificationOperation?verificationRoutingTarget(project,stage):null;if(verificationTarget?.runId&&!availableReviewerContext(project,stage,verificationOperation))return actionEnvelope(project,stage,{actionType:'REGISTER_REVIEWER_CONTEXT',heading:'Open a fresh independent verifier for '+verificationTarget.runId,explanation:'Open a new verifier conversation/context for this run lane and register its real identifier before the prompt is generated. A verifier context already used for an accepted run-verification response is consumed and cannot be reused because it contains a prior verifier conclusion.',primaryButton:'Enter reviewer context'});
-'''
-          anchor="  if([9,23,24].includes(stage)){"
-          if anchor not in s: raise SystemExit('reviewer block anchor not found')
-          s=s.replace(anchor,reviewer_insert+anchor,1)
-          old="const plan=testExecutionPlan(project),allRelevant=stage===12?plan.items:stage===22?plan.items.filter(item=>item.testType==='DETERMINISTIC'):stage===23?plan.items.filter(item=>item.testType==='MEANING'):stage===24?plan.items.filter(item=>item.testType==='ADVERSARIAL'):[],resultCollection="
-          new="const plan=testExecutionPlan(project),verificationTargetForRouting=(stage===12||([17,19].includes(stage)&&repeatedOperation==='VERIFY'))?verificationRoutingTarget(project,stage):null,allRelevant=stage===12||([17,19].includes(stage)&&repeatedOperation==='VERIFY')?plan.items.filter(item=>!verificationTargetForRouting?.testIds?.length||verificationTargetForRouting.testIds.includes(item.testId)):stage===22?plan.items.filter(item=>item.testType==='DETERMINISTIC'):stage===23?plan.items.filter(item=>item.testType==='MEANING'):stage===24?plan.items.filter(item=>item.testType==='ADVERSARIAL'):[],resultCollection="
-          if old not in s: raise SystemExit('verification routing anchor not found')
-          s=s.replace(old,new,1)
-          old="stage16CorrectionPlan,operationalNextAction,operationalMetrics"
-          new="stage16CorrectionPlan,nextRequiredOperation,verificationRoutingTarget,availableReviewerContext,operationalNextAction,operationalMetrics"
-          if old not in s: raise SystemExit('engine export anchor not found')
-          s=s.replace(old,new,1)
-          p.write_text(s)
-
-          p=Path('app-core.js'); s=p.read_text()
-          s=s.replace("function selectedOperation(n){const allowed=stageOperations(n);return allowed.includes(operationSelection[n])?operationSelection[n]:allowed[0];}","function selectedOperation(n){const allowed=stageOperations(n),required=engine?.nextRequiredOperation?.(current,n);if(required&&allowed.includes(required))return required;return allowed.includes(operationSelection[n])?operationSelection[n]:allowed[0];}",1)
-          old="function selectedRun(n){const runs=currentRunSlots(n),selected=runs.find(r=>engine.recordId(r,'runs')===runSelection[n]);return selected||runs.find(r=>String(r.completionState||r.status||recordValue(r,'EXECUTION_STATUS')||'').toUpperCase()!=='COMPLETED')||runs[0]||null;}"
-          new="function selectedRun(n){const runs=currentRunSlots(n),operation=selectedOperation(n),verification=n===12||([17,19].includes(n)&&operation==='VERIFY');if(verification){const target=engine.verificationRoutingTarget(current,n),hit=runs.find(r=>engine.recordId(r,'runs')===String(target.runId||''));if(hit)return hit;}const selected=runs.find(r=>engine.recordId(r,'runs')===runSelection[n]);return selected||runs.find(r=>!['COMPLETED','SATISFIED','SUCCESS','PASSED'].includes(String(r.completionState||r.status||recordValue(r,'EXECUTION_STATUS')||'').toUpperCase()))||runs[0]||null;}"
-          if old not in s: raise SystemExit('selectedRun anchor not found')
-          s=s.replace(old,new,1)
-          old="function currentReviewerContext(n){const noRun=value=>['','NONE','NOT APPLICABLE','UNASSIGNED','PENDING'].includes(String(value??'').trim().toUpperCase());return engine.records(current,'freshContexts').filter(r=>engine.isActiveRecord(r)&&Number(r.stage)===Number(n)&&noRun(recordValue(r,'RUN_ID')||r.scope?.runId)).at(-1)||null;}"
-          new="function currentReviewerContext(n){return engine.availableReviewerContext(current,n,selectedOperation(n));}"
-          if old not in s: raise SystemExit('reviewer context anchor not found')
-          s=s.replace(old,new,1)
-          old="function operationMarkup(n,locked){const operations=stageOperations(n);if(operations.length<=1)return '';const active=selectedOperation(n);return `<div class=\"panel\"><h2 class=\"section-title\">Stage operation</h2><p class=\"section-intro\">Choose the exact sub-operation before generating or copying its controlling instruction. Each operation has its own readable context, writable collections, and scope.</p><div class=\"field\"><label>Operation</label><select id=\"operation-picker\"${locked?' disabled':''}>${operations.map(op=>`<option value=\"${esc(op)}\"${op===active?' selected':''}>${esc(op.replaceAll('_',' '))}</option>`).join('')}</select></div></div>`;}"
-          new="function operationMarkup(n,locked){const operations=stageOperations(n);if(operations.length<=1)return '';const active=selectedOperation(n);return `<div class=\"panel\"><h2 class=\"section-title\">Current stage operation</h2><p class=\"section-intro\">The application selects the next required operation from canonical completion state. Future operations remain visible for orientation but cannot be chosen out of order.</p><div class=\"field\"><label>Operation</label><select id=\"operation-picker\" disabled>${operations.map(op=>`<option value=\"${esc(op)}\"${op===active?' selected':''}>${esc(op.replaceAll('_',' '))}</option>`).join('')}</select></div></div>`;}"
-          if old not in s: raise SystemExit('operation markup anchor not found')
-          s=s.replace(old,new,1)
-
-          # Stage 20 renders only authorization, never an upload/reselection control.
-          anchor="function artifactControlMarkup(n,locked){"
-          idx=s.index(anchor); insert_at=s.index("  const files=safe(current.stages[n].authorizedFiles);",idx)
-          special="  if(n===20){const confirmation=engine.recordsForCurrentScope(current,'confirmationRecords').find(record=>String(engine.recordValue(record,'DETERMINATION')||'').toUpperCase()==='SATISFIED'),iteration=engine.recordsForCurrentScope(current,'iterations').filter(record=>Number(record.stage)===19).at(-1),candidateId=iteration?String(engine.recordValue(iteration,'CANDIDATE_ID')||iteration.relationships?.CANDIDATE_ID||''):'';return `<div class=\"panel\"><h2 class=\"section-title\">Production baseline</h2><p class=\"section-intro\">The application will freeze the exact unchanged-confirmed candidate already held in canonical artifact custody. Do not attach, reattach, upload, or manually reselect those files. Your only input is the genuine baseline authorization decision.</p><div class=\"notice\"><strong>Candidate to freeze</strong><br>${esc(candidateId||'Current unchanged-confirmed candidate')} · Confirmation ${esc(confirmation?engine.recordId(confirmation,'confirmationRecords'):'current confirmation')}</div><div class=\"button-row\"><button id=\"freeze-baseline\"${locked?' disabled':''}>Authorize and freeze unchanged-confirmed candidate</button></div></div>`;}\n"
-          if special not in s:s=s[:insert_at]+special+s[insert_at:]
-
-          # Reuse existing context entry control for run and reviewer registration; do not create new visual surfaces.
-          old="function actionActor(action){return ({RUN_APP_TESTS:'Application',CALCULATE_RELEASE:'Application',BUILD_EVIDENCE_CHAINS:'Application',FREEZE_CANDIDATE:'Human authorization + application',RESERVE_RUN_BATCH:'Application',BEGIN_UNCHANGED_CONFIRMATION:'Application',FREEZE_BASELINE:'Human authorization + application',REGISTER_PRODUCTION_CONTEXT:'Human operator',RESERVE_PRODUCT_EXECUTION:'Application'"
-          new="function actionActor(action){return ({RUN_APP_TESTS:'Application',CALCULATE_RELEASE:'Application',BUILD_EVIDENCE_CHAINS:'Application',FREEZE_CANDIDATE:'Human authorization + application',RESERVE_RUN_BATCH:'Application',REGISTER_FRESH_CONTEXT:'Human operator',REGISTER_REVIEWER_CONTEXT:'Human operator',BEGIN_UNCHANGED_CONFIRMATION:'Application',FREEZE_BASELINE:'Human authorization + application',REGISTER_PRODUCTION_CONTEXT:'Human operator',RESERVE_PRODUCT_EXECUTION:'Application'"
-          if old not in s: raise SystemExit('actionActor anchor not found')
-          s=s.replace(old,new,1)
-          # Existing next-action renderer gets buttons for the two new context registration actions.
-          old="action.actionType==='REGISTER_PRODUCTION_CONTEXT'?`<button class=\"primary\" id=\"next-register-production-context\" type=\"button\">${esc(action.primaryButton)}</button>`"
-          new="['REGISTER_FRESH_CONTEXT','REGISTER_REVIEWER_CONTEXT'].includes(action.actionType)?`<button class=\"primary\" id=\"next-register-context\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='REGISTER_PRODUCTION_CONTEXT'?`<button class=\"primary\" id=\"next-register-production-context\" type=\"button\">${esc(action.primaryButton)}</button>`"
-          if old not in s: raise SystemExit('context action button anchor not found')
-          s=s.replace(old,new,1)
-          wire="if($('#next-register-production-context'))$('#next-register-production-context').onclick=()=>{"
-          if wire not in s: raise SystemExit('production context wire anchor not found')
-          s=s.replace(wire,"if($('#next-register-context'))$('#next-register-context').onclick=()=>{const node=$('#fresh-context-id')||$('#reviewer-context-required');node?.scrollIntoView({behavior:'smooth',block:'center'});node?.focus();};"+wire,1)
-          old="applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28||['CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','FREEZE_CANDIDATE','RESERVE_RUN_BATCH','BEGIN_UNCHANGED_CONFIRMATION','FREEZE_BASELINE','REGISTER_PRODUCTION_CONTEXT','RESERVE_PRODUCT_EXECUTION'].includes(displayedStageAction(n).actionType)"
-          new="applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28||['CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','FREEZE_CANDIDATE','RESERVE_RUN_BATCH','REGISTER_FRESH_CONTEXT','REGISTER_REVIEWER_CONTEXT','BEGIN_UNCHANGED_CONFIRMATION','FREEZE_BASELINE','REGISTER_PRODUCTION_CONTEXT','RESERVE_PRODUCT_EXECUTION'].includes(displayedStageAction(n).actionType)"
-          if old not in s: raise SystemExit('applicationOnlyInteraction anchor not found')
-          s=s.replace(old,new,1)
-          p.write_text(s)
+          text=Path('/tmp/previous-repair.yml').read_text()
+          start=text.index("          python3 - <<'PY'")+len("          python3 - <<'PY'\n")
+          end=text.index("          PY\n",start)
+          lines=text[start:end].splitlines()
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)+'\n'
+          exec(compile(script,'exact-current-stage-sequencing-repair','exec'),{})
           PY
-          git config user.name "closed-loop-reliability-bot"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
           git add workflow-schema.js workflow-engine.js app-core.js
           git commit -m "Enforce exact operation order and fresh verification contexts"
           git push
