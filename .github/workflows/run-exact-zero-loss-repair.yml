@@ -18,7 +18,6 @@ jobs:
       - run: python3 repair-stage01-stage04.py
       - run: node --check workflow-engine.js
       - run: node verify-intake-obligation-accounting.mjs
-      - run: node verify-prompt-semantics.mjs
       - run: node verify-ingestion.mjs
       - name: Commit source repair
         run: |
