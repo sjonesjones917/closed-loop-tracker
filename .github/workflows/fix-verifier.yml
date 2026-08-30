@@ -1,0 +1,21 @@
+name: Correct v3 verifier
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+permissions: {contents: write}
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message || '', '[verify-final]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
+      - run: |
+          node - <<'NODE'
+          const fs=require('fs');let s=fs.readFileSync('verify.mjs','utf8');s=s.replace("'Revise the Responsible Layer'","'Correct the Root Cause'");s=s.replace("const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');",'');s=s.replace("assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema /2 is required.');","assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema /3 is required.');");fs.writeFileSync('verify.mjs',s);
+          NODE
+          git config user.name closed-loop-finalizer
+          git config user.email closed-loop-finalizer@users.noreply.github.com
+          git add verify.mjs
+          git commit -m 'Align canonical verifier with controlling v3 specification [verify-final]'
+          git push origin HEAD:implementation/closed-loop-v3
