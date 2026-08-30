@@ -14,5 +14,5 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/exhaustive-intake-stage4-20260830
-      - name: Show read-collection contract source
-        run: grep -n "readCollections" workflow-schema.js
+      - name: Show READ_COLLECTIONS source
+        run: grep -n "READ_COLLECTIONS" workflow-schema.js
