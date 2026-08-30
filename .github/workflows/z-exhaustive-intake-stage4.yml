@@ -24,12 +24,13 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('.github/workflows/pages.yml'); text=p.read_text()
           text=text.replace("projectSchema:'closed-loop-project/2'","projectSchema:'closed-loop-project/3'")
           text=text.replace("responseSchema:'closed-loop-stage-response/2'","responseSchema:'closed-loop-stage-response/3'")
-          anchor="""            responseSchema:'closed-loop-stage-response/3',
-            ...definition,"""
-          replacement="""            responseSchema:'closed-loop-stage-response/3',
+          marker="responseSchema:'closed-loop-stage-response/3',"
+          if marker not in text: raise SystemExit('response schema acceptance marker missing')
+          addition="""
             testIrSchema:'closed-loop-test-spec/1',
             verificationPackageSchema:'closed-loop-verification-package/1',
             stage01IntakeCoverage:1,
@@ -39,10 +40,9 @@ jobs:
             unsupportedTestIrTreatedAsExecutable:0,
             externalAssertionsOverridingApplicationProof:0,
             nativeExecutionReceiptsFabricatedExternally:0,
-            releaseAcceptedWithContradiction:0,
-            ...definition,"""
-          if anchor not in text: raise SystemExit('acceptance report anchor missing')
-          p.write_text(text.replace(anchor,replacement,1))
+            releaseAcceptedWithContradiction:0,"""
+          if "testIrSchema:'closed-loop-test-spec/1'" not in text:text=text.replace(marker,marker+addition,1)
+          p.write_text(text)
           PY
       - name: Prove exact requested closure
         shell: bash
