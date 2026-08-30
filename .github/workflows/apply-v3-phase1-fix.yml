@@ -1,0 +1,71 @@
+name: Apply corrected v3 reliability phase 1
+on:
+  push:
+    branches: [implement-v3-reliability-bundle]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: implement-v3-reliability-bundle
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Align prepared updater with current source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/apply-v3-phase1.py'); s=p.read_text(encoding='utf-8')
+          replacements=[
+          ("s = replace_once(s, \"function migrateState(p){\\n  if(p.schema===PROJECT_SCHEMA){\", \"function migrateState(p){\\n  if(p.schema===PROJECT_SCHEMA||p.schema==='closed-loop-project/2'){\", 'migrateState current schema branch')","s = replace_once(s, \"function migrateState(p){\\n  if(!p||typeof p!=='object')return createBlankState();\\n  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\", \"function migrateState(p){\\n  if(!p||typeof p!=='object')return createBlankState();\\n  if((p.schema===PROJECT_SCHEMA||p.schema==='closed-loop-project/2')&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\", 'migrateState current schema branch')"),
+          ("s = replace_once(s, \"    const migrated=JSON.parse(JSON.stringify(p));\\n    migrated.schema=PROJECT_SCHEMA;\", \"    const migrated=JSON.parse(JSON.stringify(p));\\n    const migrationSourceSchema=String(p.schema||PROJECT_SCHEMA);\\n    migrated.schema=PROJECT_SCHEMA;\", 'migrateState schema assignment')","s = replace_once(s, \"    const migrated=JSON.parse(JSON.stringify(p));\\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\", \"    const migrated=JSON.parse(JSON.stringify(p));\\n    const migrationSourceSchema=String(p.schema||PROJECT_SCHEMA);\\n    migrated.schema=PROJECT_SCHEMA;\\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\", 'migrateState schema assignment')"),
+          ("s = replace_once(s, \"  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',\", \"  'EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',\", 'human job ownership')","old_human=\"const HUMAN_JOB_FIELDS=Object.freeze([\\n  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',\"\nnew_human=\"const HUMAN_JOB_FIELDS=Object.freeze([\\n  'EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',\"\ns = replace_once(s, old_human, new_human, 'human job ownership')")]
+          for old,new in replacements:
+              if old not in s: raise SystemExit('updater assumption not found: '+old[:100])
+              s=s.replace(old,new,1)
+          s=s.replace("{op:'SELECT_XML',path:'/root/item[2]'},{op:'ASSERT_CONTAINS',value:'two'}","{op:'SELECT_XML',path:'/root/item'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}",1)
+          s=s.replace("await assert.rejects(()=>runtime.execute({spec:{version:runtime.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:0.3}]},artifacts:{}}),/Precision-sensitive/);","const precisionBytes=new TextEncoder().encode(JSON.stringify({value:0.30000000000000004}));await assert.rejects(()=>runtime.execute({spec:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.value'},{op:'ASSERT_EQ',value:0.3}]},artifacts:{VALUE:{artifactId:'ARTIFACT-PRECISION',bytes:precisionBytes}}}),/Precision-sensitive/);",1)
+          s += '''\nfor name in ['verify.mjs','verify-ingestion.mjs','verify-complete.mjs','verify-full-cycle.mjs','verify-prompt-semantics.mjs','verify-semantic-invariant.mjs','verify-definition-of-done.mjs','verify-project-lifecycle.mjs','verify-live.mjs','build-test-project.mjs']:\n    path=Path(name)\n    if not path.exists(): continue\n    text=path.read_text(encoding='utf-8')\n    text=text.replace("'workbook.js','hash.js','workflow-schema.js','workflow-engine.js'","'workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")\n    text=text.replace("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")\n    text=text.replace("const orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];")\n    text=text.replace("'index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js'","'index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")\n    text=text.replace('REVISE THE RESPONSIBLE LAYER','CORRECT THE ROOT CAUSE').replace('Revise the Responsible Layer','Correct the Root Cause')\n    path.write_text(text,encoding='utf-8')\np=Path('verify-hash.mjs'); t=p.read_text(encoding='utf-8').replace("const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];"); p.write_text(t,encoding='utf-8')\nimport hashlib,re\nruntime_files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; manifest=b''\nfor file in runtime_files:\n    data=Path(file).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\\0'+data).hexdigest(); manifest += f'{file}:{blob}\\n'.encode()\nbuild='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]\np=Path('index.html'); t=p.read_text(encoding='utf-8'); t=re.sub(r'runtime-[0-9a-f]{16}',build,t); p.write_text(t,encoding='utf-8')\n'''
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Apply v3 transformation and immutable-record fix
+        run: |
+          python3 .github/apply-v3-phase1.py
+          python3 .github/fix-v3-phase1-hash.py
+          git checkout HEAD -- .github/workflows/pages.yml
+      - name: Run complete deterministic acceptance
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node build-test-project.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Commit tested production changes
+        run: |
+          git checkout HEAD -- .github/workflows/apply-v3-phase1.yml .github/workflows/apply-v3-phase1-fix.yml
+          rm -f .github/v3-phase1-error.txt .github/apply-v3-phase1.py .github/fix-v3-phase1-hash.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Introduce v3 schema and deterministic Test IR runtime"
+          git push origin HEAD:implement-v3-reliability-bundle
