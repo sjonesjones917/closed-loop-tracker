@@ -1,6 +1,6 @@
 name: Materialize Stage 01 and Stage 04 accounting once
 
-# One-shot verifier/materializer. Remove after permanent subject-neutral Stage 01 intake, exhaustive Stage 03 research, and zero-loss Stage 04 obligation closure are committed. Includes all current prompt-boundary proofs and runs from the latest branch head.
+# One-shot verifier/materializer. Remove after permanent subject-neutral Stage 01 intake, exhaustive Stage 03 research, and zero-loss Stage 04 obligation closure are committed. Includes current /3 response-contract proof and runs from the latest branch head.
 on:
   push:
     branches: [implementation/closed-loop-v3]
