@@ -1,0 +1,36 @@
+name: Apply operator conversation state repair
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Keep external work in conversation mode until final JSON exists
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          text=p.read_text()
+          old="""  if(stage===4)return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Compile the complete requirement specification',explanation:'Use the current Stage 04 instruction. It already contains the exhausted Stage 01 human-authority capture, the complete Stage 03 research, and the application obligation manifest. Do not reattach or restate the original project-intent file. Return one final strict JSON response only after every obligation in the manifest has been accounted for.',primaryButton:'Paste final JSON'});
+  return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Return the final structured response',explanation:'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Continue the external work or conversation until the executor is ready to return one final strict JSON response and any required files.',primaryButton:'Paste final JSON'});"""
+          new="""  if(stage===4)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Run Stage 04 with the complete captured project data',explanation:'Send the current Stage 04 instruction to the agent. That exact prompt already contains the exhausted Stage 01 human-authority capture, complete Stage 03 research/candidate obligations, applicable source/evidence context, and the application obligation manifest. Do not reattach, reopen, restate, summarize, or retype the original project-intent file. Continue the same Stage 04 conversation until the agent has accounted for every obligation and returns one final strict JSON response; then paste only that final JSON into the response box.',primaryButton:null});
+  return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Run the current stage with the generated instruction',explanation:'Send the current Stage '+String(stage).padStart(2,'0')+' instruction to the required executor and continue that stage work until its complete stage boundary is satisfied. Do not paste intermediate conversation into the application. When the executor returns one final strict JSON response and any required files, paste only that final JSON into the response box and attach only the listed returned files.',primaryButton:null});"""
+          if old not in text:
+              raise SystemExit('operationalNextAction default block not found')
+          text=text.replace(old,new,1)
+          p.write_text(text)
+          PY
+          rm -f .github/workflows/apply-operator-conversation-state.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js .github/workflows
+          git commit -m "Keep external stages in conversation mode until final JSON"
+          git push origin HEAD:main
