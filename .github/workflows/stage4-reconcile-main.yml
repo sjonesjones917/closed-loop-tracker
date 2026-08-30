@@ -1,0 +1,141 @@
+name: Temporary Stage 04 current-main reconciliation
+on:
+  push:
+    branches: [fix/stage4-intent-reuse-current-main]
+permissions:
+  contents: write
+concurrency:
+  group: stage4-reconcile-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-intent-reuse-current-main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Merge current main without losing the complete Stage 04 repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git fetch origin main --prune
+          merge_status=0
+          git merge --no-ff --no-commit origin/main || merge_status=$?
+          mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+          printf 'Merge status: %s\n' "$merge_status"
+          printf 'Conflicts: %s\n' "${conflicts[*]:-NONE}"
+          for file in "${conflicts[@]}"; do
+            case "$file" in
+              app-core.js|index.html)
+                git checkout --ours -- "$file"
+                git add "$file"
+                ;;
+              *)
+                echo "Unexpected merge conflict: $file" >&2
+                exit 1
+                ;;
+            esac
+          done
+          if test -n "$(git diff --name-only --diff-filter=U)"; then
+            echo 'Unresolved merge conflicts remain.' >&2
+            git diff --name-only --diff-filter=U >&2
+            exit 1
+          fi
+          if test "$merge_status" -ne 0 && test "${#conflicts[@]}" -eq 0; then
+            echo 'Merge failed without a resolvable content conflict.' >&2
+            exit 1
+          fi
+      - name: Preserve the stronger regression and make it permanent CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          def replace_exact(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one match, found {count}')
+              p.write_text(text.replace(old, new))
+
+          replace_exact(
+              'verify-hash.mjs',
+              'assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return \'\';if(n===19)"),\'Stage 04 must not render the generic artifact upload control after canonical intent capture.\');',
+              'assert(appCore.includes("if([2,3,4].includes(n))return `<div class=\\"panel\\"><h2 class=\\"section-title\\">Original intent file prohibited"),\'Stages 02 through 04 must not render generic file-upload controls for the original Stage 01 intent file.\');\nassert(appCore.includes("if([2,3,4].includes(stage))throw new Error(\'The original Stage 01 intent file cannot be registered or reused"),\'Stages 02 through 04 must reject direct registration of the original Stage 01 intent file.\');'
+          )
+
+          replace_exact(
+              '.github/workflows/pages.yml',
+              '          node --check verify-test-runtime.mjs\n',
+              '          node --check verify-test-runtime.mjs\n          node --check verify-one-time-intent-intake.mjs\n'
+          )
+          replace_exact(
+              '.github/workflows/pages.yml',
+              "      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n",
+              "      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n      - name: Prove one-time Stage 01 intent capture and Stage 04 canonical reuse\n        run: node verify-one-time-intent-intake.mjs\n"
+          )
+          replace_exact(
+              '.github/workflows/pages.yml',
+              'node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs',
+              'node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-hash.mjs'
+          )
+
+          runtime_files = [
+              'workbook.js', 'hash.js', 'workflow-schema.js', 'workflow-engine.js',
+              'prompt-engine.js', 'response-ingestion.js', 'project-store.js', 'app-core.js'
+          ]
+          manifest = ''
+          for file in runtime_files:
+              data = Path(file).read_bytes()
+              header = f'blob {len(data)}\0'.encode()
+              blob_sha = hashlib.sha1(header + data).hexdigest()
+              manifest += f'{file}:{blob_sha}\n'
+          token = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          html_path = Path('index.html')
+          html = html_path.read_text()
+          html, count = re.subn(r'runtime-[0-9a-f]{16}', token, html)
+          if count != len(runtime_files):
+              raise SystemExit(f'index.html: expected {len(runtime_files)} runtime tokens, replaced {count}')
+          html_path.write_text(html)
+          print(token)
+          PY
+          git diff --check
+      - name: Prove the reconciled implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-one-time-intent-intake.mjs; do
+            node --check "$file"
+          done
+          node verify-test-runtime.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit only the permanent reconciled implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/stage4-reconcile-main.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "Complete Stage 04 one-time intent reuse on current main"
+          git push origin HEAD:fix/stage4-intent-reuse-current-main
