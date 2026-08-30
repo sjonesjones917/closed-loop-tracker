@@ -34,3 +34,13 @@ if old not in text:
 text = text.replace(old, new, 1)
 
 p.write_text(text)
+
+# The exhaustive verifier must distinguish an explicit prohibition from an affirmative reattachment instruction.
+p = Path('verify-exhaustive-stage1-stage3-stage4.mjs')
+text = p.read_text()
+old = "assert.doesNotMatch(stage4.body,/attach the original intent file again/i);"
+new = "assert.match(stage4.body,/(?:do not|never)[^\\n]{0,160}(?:attach|re-attach|reattach)[^\\n]{0,120}original intent file/i,'Stage 04 must explicitly prohibit asking for the original intent file again.');"
+if old not in text:
+    raise SystemExit('Stage 04 exhaustive no-reattach assertion anchor missing')
+text = text.replace(old, new, 1)
+p.write_text(text)
