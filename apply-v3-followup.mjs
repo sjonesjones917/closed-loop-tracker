@@ -45,6 +45,10 @@ import fs from 'node:fs';
     if(!s.includes(stage1Line))throw new Error('Stage 1 migrated fixture anchor missing for Stage 4 insertion.');
     s=s.replace(stage1Line,stage1Line+stage4Line);
   }
+  const smartOld="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};";
+  const smartNew="  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Controlled deliverable draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later-resolvable facts',INPUT_SET_CONTENTS:'Human request and supplied project packet'};";
+  if(s.includes(smartOld))s=s.replace(smartOld,smartNew);
+  s=s.replace("if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))","if(stageEntries.length!==5||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))");
   fs.writeFileSync(path,s);
-  console.log('aligned Stage 01 and Stage 04 ingestion fixtures to exhaustive accounting contracts');
+  console.log('aligned ingestion fixtures and smart-quote regression with exhaustive Stage 01/04 accounting');
 }
