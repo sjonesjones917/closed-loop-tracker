@@ -1,0 +1,28 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,runtime=globalThis.closedLoopTestRuntime;
+assert.ok(core&&schema&&runtime);
+assert.equal(core.WORKFLOW_ID,'mobile-closed-loop/30');
+assert.equal(core.STAGE_COUNT,30);
+assert.equal(core.PROJECT_SCHEMA,'closed-loop-project/3');
+assert.equal(schema.PROJECT_SCHEMA,'closed-loop-project/3');
+assert.equal(schema.RESPONSE_SCHEMA,'closed-loop-stage-response/3');
+assert.equal(schema.TEST_IR_SCHEMA,'closed-loop-test-spec/1');
+assert.equal(schema.PACKAGE_SCHEMA,'closed-loop-verification-package/1');
+assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
+assert.deepEqual(schema.RESPONSE_TYPES,['DATA_PROPOSAL','HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']);
+const expectedOps=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];
+assert.deepEqual([...runtime.OPS],expectedOps,'Test IR v1 operation registry must be exact.');
+const tests=schema.RECORD_SCHEMAS.tests;
+for(const field of ['EXECUTABLE_KIND','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'])assert.equal(tests.fieldDefinitions[field].producer,schema.PRODUCER.AGENT,`${field} must be AGENT-owned.`);
+for(const field of ['EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256'])assert.equal(tests.fieldDefinitions[field].producer,schema.PRODUCER.APPLICATION,`${field} must be APPLICATION-owned.`);
+assert.ok(schema.STAGE_CONTRACTS[1].allowedStageData.includes('INPUT_SET_CONTENTS'),'Stage 01 accounting field is not in the response contract.');
+assert.ok(schema.STAGE_CONTRACTS[4].allowedStageData.includes('ATOMICITY_REVIEW_RESULTS'),'Stage 04 accounting field is not in the response contract.');
+for(const [name,def] of Object.entries(schema.JOB_FIELDS))assert.ok(Object.values(schema.PRODUCER).includes(def.producer),`Unclassified job field ${name}.`);
+for(const [collection,record] of Object.entries(schema.RECORD_SCHEMAS))for(const [name,def] of Object.entries(record.fieldDefinitions||{}))assert.ok(Object.values(schema.PRODUCER).includes(def.producer),`Unclassified field ${collection}.${name}.`);
+console.log(JSON.stringify({workflow:'mobile-closed-loop/30',projectSchema:core.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,testIrSchema:runtime.SPEC_VERSION,verificationPackageSchema:schema.PACKAGE_SCHEMA,stageCount:core.STAGE_COUNT,exactPrimitiveCount:runtime.OPS.length},null,2));
