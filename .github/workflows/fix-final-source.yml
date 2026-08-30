@@ -1,0 +1,55 @@
+name: Final source corrections
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths: [.github/workflows/fix-final-source.yml]
+  workflow_dispatch:
+permissions: {contents: write}
+concurrency: {group: closed-loop-v3-source-fix, cancel-in-progress: false}
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact corrections
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          let runtime=fs.readFileSync('test-runtime.js','utf8');
+          runtime=runtime.replace('approximate comparison requires a positive absoluteTolerance or relativeTolerance.','approximate comparison requires a positive tolerance: absoluteTolerance or relativeTolerance.');
+          fs.writeFileSync('test-runtime.js',runtime);
+          let p=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
+          for(const line of [
+            "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');\n"
+          ])p=p.replace(line,'');
+          p=p.replace("    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');",
+            "    if(!record.prompt.includes('STAGE 01 SUBJECT-NEUTRAL INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Derive the human-authority questions from this job')||!record.prompt.includes('Do not use a hard-coded catalogue of project subjects or domain labels')||!record.prompt.includes('Do not perform source discovery, external-authority analysis, requirement atomization, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_SUBJECT_NEUTRAL_INTAKE_BOUNDARY_MISSING');");
+          p=p.replace("  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');",
+            "  }else if(!record.prompt.includes('SUBJECT-NEUTRAL DELIVERABLE ADAPTATION')||!record.prompt.includes('never claim downstream import, compilation, simulation, manufacturing, filing, deployment, physical performance, or other execution unless it actually occurred and is evidenced'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');");
+          p=p.replace("    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');",
+            "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('Ask BLOCKING_NOW and ASK_NOW_NONBLOCKING questions in normal chat before the final machine response'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');");
+          fs.writeFileSync('verify-prompt-semantics.mjs',p);
+          NODE
+          rm -f .diag-trigger .github/workflows/diag-ingestion.yml
+      - name: Verify corrections before commit
+        run: |
+          node --check test-runtime.js
+          node --check verify-prompt-semantics.mjs
+          node verify-v3-contract.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit and remove one-time machinery
+        run: |
+          rm -f .github/workflows/fix-final-source.yml
+          git config user.name closed-loop-finalizer
+          git config user.email closed-loop-finalizer@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Finish subject-neutral verification and Test IR diagnostics'
+          git push origin HEAD:implementation/closed-loop-v3
