@@ -53,8 +53,12 @@ jobs:
                   lines=[]
                   for line in s.splitlines():
                       if any(label in line for label in obsolete): continue
+                      if "replace('PATENT / REGULATED FILING','GENERAL DOCUMENT')" in line: continue
                       lines.append(line)
                   s='\n'.join(lines)+'\n'
+                  anchor='  return issues;\n}'
+                  addition="  if(record.stage!==1&&(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed')))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');\n  if(record.stage!==1&&!record.prompt.includes('SUBJECT-NEUTRAL PROJECT EXECUTION'))issues.push('SUBJECT_NEUTRAL_RULE_MISSING');\n  return issues;\n}"
+                  if anchor in s:s=s.replace(anchor,addition,1)
               p.write_text(s)
           PY
       - name: Syntax proof
