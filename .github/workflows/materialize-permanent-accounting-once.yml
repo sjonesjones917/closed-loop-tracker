@@ -58,7 +58,7 @@ jobs:
           const token=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
           let html=fs.readFileSync('index.html','utf8').replace(/runtime-[0-9a-f]{16}/g,token);fs.writeFileSync('index.html',html);console.log(token);
           NODE
-          rm -f .github/workflows/materialize-permanent-accounting-once.yml
+          git checkout HEAD -- .github/workflows/pages.yml .github/workflows/materialize-permanent-accounting-once.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
