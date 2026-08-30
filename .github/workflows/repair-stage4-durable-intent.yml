@@ -1,0 +1,121 @@
+name: One-time Stage 4 durable intent repair
+on:
+  push:
+    branches: [fix/stage4-durable-intent-final-20260830]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.event.head_commit.message != 'Fix Stage 4 durable human-intent reuse'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-durable-intent-final-20260830
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Repair Stage 01 authority and Stage 04 retained intent flow
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          # Stage 01 agent acceptance must never create a new human-input version.
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="  if(!config)return null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          new="  if(!config)return null;\n  if(Number(stage)===1)return safe(project.projectData.inputVersions).at(-1)||null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          if old not in s: raise SystemExit('registerStageVersion Stage 01 authority insertion point not found')
+          s=s.replace(old,new,1)
+
+          # Stage 04 must consume captured canonical input; it is not an artifact re-handoff stage.
+          fn=s.index('function executionHandoff(')
+          start=s.index('  if(stage===4){',fn)
+          end=s.index('  for(const item of items)',start)
+          s=s[:start]+"  // Stage 04 consumes durable canonical human-authority and Stage 01/03 context.\n  // A filename in SUPPLIED_MATERIALS_INVENTORY is provenance, not an instruction to reacquire bytes.\n"+s[end:]
+          old="if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}"
+          new="if(stage===4)return 'Use the current Stage 04 instruction. The application supplies the retained human-authority input and accepted Stage 01/03 context; do not resend the original intent file merely because its filename is recorded. When the agent finishes, paste its final JSON response here.';"
+          if old not in s: raise SystemExit('Stage 04 next-action reattachment block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          # Replace the Stage 04 agent instruction with the controlling closed-accounting boundary.
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",1)
+          start=s.index("\n4:'")+1
+          end=s.index("\n5:'",start)
+          stage4=(
+            "4:"+json.dumps(
+              "Compile atomic requirement proposals only from the complete application-supplied Stage 04 obligation universe: current User Job Input, accepted Stage 01 job definition, human-origin obligations already captured from supplied material, accepted Stage 03 source research, candidate external-source obligations, and applicable source identities/evidence. The application owns input selection, stable obligation identities, provenance, current scope, and accounting completeness. Do not rediscover an unspecified input universe. Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file or any other material merely because a filename or material reference is present in SUPPLIED_MATERIALS_INVENTORY; those references are provenance and the semantic human-authority information already captured in canonical context controls this stage. Request original bytes only when the current Stage 04 context explicitly identifies a genuinely unresolved byte-dependent obligation that was not previously captured and whose substantive meaning cannot be established from canonical context; otherwise no Stage 04 file handoff exists. For every application-enumerated obligation, produce one or more atomic requirements or an explicit retained-nonnormative, inapplicable-with-reason, or blocked-with-reason disposition as required by the current response contract. No obligation may disappear. Preserve every original obligation identity independently even when multiple equivalent obligations map to one requirement. Each proposed requirement must be independently testable where possible and record requirement type, mandatory/optional status, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, provenance, and notes. The application assigns REQ_ID, versions, hashes, counts, scope, and gate status; do not assign them. Do not derive requirements from the target product or implementation behavior merely because it exists."
+            )+","
+          )
+          s=s[:start]+stage4+s[end:]
+          p.write_text(s)
+
+          # Permanent regression: Stage 04 may not require an already-captured user-intent file.
+          Path('verify-stage04-retained-intent.mjs').write_text(r'''import fs from 'node:fs';
+          import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
+          const p=core.createBlankState('JOB-STAGE04-RETAINED-INTENT');
+          engine.ensureShape(p);
+          Object.assign(p.job,{
+            EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested reliable product using the requirements already supplied.',
+            SUPPLIED_MATERIALS_INVENTORY:'user-intent.txt',
+            EXPLICIT_USER_REQUIREMENTS:'Do not ask me to provide the same intent twice.',
+            CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001'
+          });
+          p.projectData.inputVersions.push({inputVersionId:'INPUT-VERSION-000001',version:'INPUT-v001',sha256:'fixture',payload:{EXACT_USER_OBJECTIVE_VERBATIM:p.job.EXACT_USER_OBJECTIVE_VERBATIM,SUPPLIED_MATERIALS_INVENTORY:p.job.SUPPLIED_MATERIALS_INVENTORY,EXPLICIT_USER_REQUIREMENTS:p.job.EXPLICIT_USER_REQUIREMENTS}});
+          const before=p.job.CURRENT_INPUT_VERSION;
+          engine.registerStageVersion(p,1,'ACCEPTED-CHANGE-000001');
+          assert(p.job.CURRENT_INPUT_VERSION===before,'Stage 01 agent acceptance changed CURRENT_INPUT_VERSION.');
+          const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+          assert(Array.isArray(handoff.conversationMaterials)&&handoff.conversationMaterials.length===0,'Stage 04 still creates a user-intent material re-handoff.');
+          assert(handoff.send.length===0,'Stage 04 incorrectly turned the retained intent reference into a file transfer.');
+          const prompt=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt;
+          assert(prompt.includes('AUTHORIZED USER JOB INPUT'),'Stage 04 prompt does not carry durable human-authority input.');
+          assert(prompt.includes('user-intent.txt'),'Stage 04 prompt lost the retained material reference/provenance.');
+          for(const forbidden of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide the original material with the Stage 04 instruction','ask the human conversationally to attach or provide the original','operator must attach or provide it with this Stage 04 instruction'])assert(!prompt.includes(forbidden),'Stage 04 still instructs reattachment: '+forbidden);
+          assert(prompt.includes('Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file'),'Stage 04 retained-intent prohibition is missing.');
+          p.job.EXACT_USER_OBJECTIVE_VERBATIM+=' Human correction.';
+          const version=engine.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM'],'HUMAN_OPERATOR');
+          assert(version.version!==before&&p.job.CURRENT_INPUT_VERSION===version.version,'A real human-input change did not create a new input version.');
+          console.log(JSON.stringify({stage04RetainedIntent:true,stage01AgentCannotVersionHumanInput:true,humanInputChangeVersions:true}));
+          console.log('verify-stage04-retained-intent: PASS');
+          ''')
+
+          # Keep the regression in normal CI/deployment proof.
+          p=Path('.github/workflows/pages.yml'); s=p.read_text()
+          if 'node --check verify-stage04-retained-intent.mjs' not in s:
+            s=s.replace('          node --check verify-test-runtime.mjs','          node --check verify-test-runtime.mjs\n          node --check verify-stage04-retained-intent.mjs',1)
+          if 'Verify Stage 04 retained human intent' not in s:
+            marker='      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n'
+            if marker not in s: raise SystemExit('CI Test IR marker not found')
+            s=s.replace(marker,marker+'      - name: Verify Stage 04 retained human intent\n        run: node verify-stage04-retained-intent.mjs\n',1)
+          s=s.replace('node build-test-project.mjs && node verify-test-runtime.mjs','node build-test-project.mjs && node verify-test-runtime.mjs && node verify-stage04-retained-intent.mjs',1)
+          p.write_text(s)
+          PY
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-stage04-retained-intent.mjs
+          node verify-stage04-retained-intent.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit proven repair and remove one-time workflow
+        run: |
+          rm .github/workflows/repair-stage4-durable-intent.yml
+          git config user.name 'closed-loop-repair'
+          git config user.email 'actions@users.noreply.github.com'
+          git add workflow-engine.js prompt-engine.js verify-stage04-retained-intent.mjs .github/workflows/pages.yml .github/workflows/repair-stage4-durable-intent.yml
+          git commit -m 'Fix Stage 4 durable human-intent reuse'
+          git push origin HEAD:fix/stage4-durable-intent-final-20260830
