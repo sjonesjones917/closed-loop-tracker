@@ -41,12 +41,16 @@ jobs:
           const intake=engine.intakeCoverageManifest(p);p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Exact requested product',ASSUMPTIONS:'No unstated assumptions.',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:'INPUT-v001',manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'s'+i,text:u.label,statementClass:'REQUIREMENT'}]})),conversationStatements:[]})};
           p.stages[3].agentData={SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE',EXCEPTIONS_AND_EDGE_CONDITIONS:'All found conditions captured.',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE'};
           const prompt1=prompts.buildPromptRecord(1,p).prompt;assert.match(prompt1,/APPLICATION INTAKE MANIFEST/);assert.doesNotMatch(prompt1,/patent application fixture|software\/repository|building\/AEC|physical\/mechanical/i);
+          const prompt3=prompts.buildPromptRecord(3,p).prompt;assert.match(prompt3,/Exhaust the current accepted Stage 02 source universe before Stage 04/);assert.match(prompt3,/second conflict\/exception\/completeness pass/i);assert.match(prompt3,/latest complete pass must find no new material category/i);
           const prompt4=prompts.buildPromptRecord(4,p).prompt;assert.match(prompt4,/APPLICATION OBLIGATION MANIFEST/);assert.match(prompt4,/COMPLETE ACCEPTED STAGE 01 JOB DEFINITION/);assert.match(prompt4,/COMPLETE EXHAUSTED STAGE 03 STAGE DATA/);assert.match(prompt4,/Do not omit, summarize away, or ask the human to repeat/i);assert.doesNotMatch(prompt4,/attach the original intent file again/i);
           const html=fs.readFileSync('index.html','utf8');const expected='.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;white-space:pre;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55}';assert.equal(html.match(/\.prompt\{[^}]+\}/)?.[0],expected,'Prompt box CSS changed from the restored visual baseline.');
           console.log('verify-exhaustive-stage1-stage3-stage4: PASS');
           EOF
           python3 - <<'PY'
           from pathlib import Path
+          p=Path('build-test-project.mjs'); text=p.read_text()
+          text=text.replace("'Research only the current accepted Stage 02 independent external source set'","'Exhaust the current accepted Stage 02 source universe before Stage 04','second conflict/exception/completeness pass','latest complete pass must find no new material category'")
+          p.write_text(text)
           p=Path('.github/workflows/pages.yml'); text=p.read_text()
           if 'node --check verify-exhaustive-stage1-stage3-stage4.mjs' not in text:text=text.replace('          node --check verify-intake-obligation-accounting.mjs\n','          node --check verify-intake-obligation-accounting.mjs\n          node --check verify-exhaustive-stage1-stage3-stage4.mjs\n')
           if 'node verify-exhaustive-stage1-stage3-stage4.mjs' not in text:
