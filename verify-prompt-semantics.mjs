@@ -441,7 +441,8 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
   if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
 }
-console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
+if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
+console.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
   const p=baseProject();
