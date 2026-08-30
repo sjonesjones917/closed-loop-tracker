@@ -61,6 +61,10 @@ for old_contract,new_contract in [
 ]:
     if old_contract not in text: raise SystemExit('Expected obsolete response-contract assertion not found.')
     text = text.replace(old_contract,new_contract,1)
+old_specialist = " if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');"
+new_specialist = " if(!r.prompt.includes('APPLICATION INTAKE MANIFEST')||!r.prompt.includes('Classify every supplied unit exactly once')||!r.prompt.includes('accepted capture is the durable meaning-preserving handoff to every later stage'))throw new Error('Stage 01 generic complete-intake behavior is missing.');\n if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD/.test(r.prompt))throw new Error('Stage 01 prompt contains prohibited subject-specific runtime branches.');"
+if old_specialist not in text: raise SystemExit('Expected obsolete Stage 01 specialist fixture not found.')
+text = text.replace(old_specialist,new_specialist,1)
 p.write_text(text)
 
 pages = Path('.github/workflows/pages.yml')
