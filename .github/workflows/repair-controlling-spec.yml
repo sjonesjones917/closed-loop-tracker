@@ -37,6 +37,7 @@ jobs:
           for f in workbook.js app-core.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js response-ingestion.js project-store.js build-test-project.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs; do
             git show "origin/implementation/closed-loop-v3:$f" > "$f"
           done
+          git show origin/implementation/closed-loop-v3:.github/workflows/pages.yml > .github/workflows/pages.yml
           git show origin/closed-loop-v3-completion:prompt-engine.js > prompt-engine.js
           node <<'NODE'
           const fs=require('fs');
