@@ -8,6 +8,9 @@ p.write_text(s)
 
 p=Path('prompt-engine.js')
 s=p.read_text()
+# Hash a JSON-normalized plain value at the prompt-context boundary. This preserves
+# canonical hashing rules and prevents cross-realm VM objects from bypassing the plain-object contract.
+s=s.replace("hash.sha256Value(record.fields||record)","hash.sha256Value(JSON.parse(JSON.stringify(record.fields||record)))")
 anchor='Capture every material human-authority statement that is actually available and relevant to the job definition in the accepted Stage 01 job definition so later stages can consume it canonically.'
 replacement=anchor+' Treat the application-enumerated intake identity set as exhaustive: account for every supplied input unit, omit none, and do not finalize Stage 01 until each unit is incorporated into the job definition, retained as context, identified as unresolved human-only, marked later-resolvable, or marked inapplicable with a reason. Never silently drop an intake identity.'
 if anchor in s:s=s.replace(anchor,replacement)
