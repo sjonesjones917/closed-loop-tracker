@@ -17,7 +17,7 @@ jobs:
           node-version: 22
       - name: Apply deterministic source repair
         run: python3 repair-zero-loss.py
-      - name: Prove focused zero-loss semantics
+      - name: Prove source syntax
         run: |
           git diff --check
           node --check workflow-engine.js
@@ -25,8 +25,10 @@ jobs:
           node --check response-ingestion.js
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
-          node verify-zero-loss-accounting.mjs
-          node build-test-project.mjs
+      - name: Prove zero-loss accounting semantics
+        run: node verify-zero-loss-accounting.mjs
+      - name: Prove full synthetic lifecycle
+        run: node build-test-project.mjs
       - name: Prove browser behavior without visual redesign
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
