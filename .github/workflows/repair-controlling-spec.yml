@@ -1,0 +1,173 @@
+name: One-time controlling specification materializer
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  materialize:
+    if: github.head_ref == 'fix/controlling-spec-final-20260830' || github.ref_name == 'fix/controlling-spec-final-20260830'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec-final-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize controlling implementation without visual redesign
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin implementation/closed-loop-v3:refs/remotes/origin/implementation/closed-loop-v3 closed-loop-v3-completion:refs/remotes/origin/closed-loop-v3-completion
+
+          node <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
+          if(!style)throw new Error('Unable to capture current visual stylesheet.');
+          fs.writeFileSync('/tmp/visual-style-baseline.txt',style);
+          const promptRule=style.match(/\.prompt\{[^}]*\}/)?.[0]||'';
+          if(!promptRule.includes('height:clamp(260px,45vh,520px)'))throw new Error('Prompt box is not at the retained pre-repair size.');
+          if(!style.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'))throw new Error('Prompt expansion baseline changed before this repair.');
+          NODE
+
+          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js response-ingestion.js project-store.js build-test-project.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs; do
+            git show "origin/implementation/closed-loop-v3:$f" > "$f"
+          done
+          git show origin/closed-loop-v3-completion:prompt-engine.js > prompt-engine.js
+
+          node <<'NODE'
+          const fs=require('fs');
+          let s=fs.readFileSync('prompt-engine.js','utf8');
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/30';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/31';");
+          const anchor=`ROLE\\nYou are the \${definition.role}. Perform only this stage and operation for JOB_ID \${job.JOB_ID||'UNKNOWN'}.\\n`;
+          if(!s.includes(anchor))throw new Error('Prompt ROLE anchor not found.');
+          const directive=`ROLE\\nYou are the \${definition.role}. Perform only this stage and operation for JOB_ID \${job.JOB_ID||'UNKNOWN'}.\\n\\nEXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW\\nThe project data, manifests, current records, evidence, and bounded context included below are the actual inputs to this operation. They are not decorative background and they are not a substitute for instructions. Apply the PROCEDURE below to those exact inputs now. Do not merely summarize the context, restate the schema, describe what another agent should do, or ask the human to repeat information already present. If this stage is semantically executable with the supplied context, perform the stage work and return the required proposal/result. If a required fact is already present anywhere in authorized current project input or an accepted prior-stage capture, use it rather than asking for it again. Only genuinely unavailable human-only authority may be requested from the human.\\n`;
+          s=s.replace(anchor,directive);
+          const stage4="Compile atomic requirement proposals from the complete APPLICATION OBLIGATION MANIFEST.";
+          if(!s.includes(stage4))throw new Error('Stage 04 directive anchor missing.');
+          s=s.replace(stage4,stage4+" You MUST process every manifest obligationId exactly once before final JSON. The prompt already carries forward the user's captured project intent and obligation universe; never ask for the original intent file, a re-summary, a re-description, or a second copy of any project fact already captured. Schema-valid output with an omitted obligation is invalid and must not be returned.");
+          const stage1="Perform complete human-authority intake only.";
+          if(!s.includes(stage1))throw new Error('Stage 01 directive anchor missing.');
+          s=s.replace(stage1,stage1+" The user supplies project information once. Capture every materially relevant project statement that is actually available now so later stages can reuse it without asking the user to resupply it. The durable intake manifest and structured INPUT_SET_CONTENTS are the downstream memory boundary.");
+          fs.writeFileSync('prompt-engine.js',s);
+          NODE
+
+          node <<'NODE'
+          const fs=require('fs');
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src");
+          if(!html.includes('test-runtime.js'))html=html.replace(/(<script\s+defer\s+src=\"workflow-schema\.js\?v=[^\"]+\"\s*><\/script>)/, '$1\n<script defer src="test-runtime.js?v=controlling-v3-20260830"></script>');
+          html=html.replace(/(workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=[^\"']+/g,'$1.js?v=controlling-v3-20260830');
+          fs.writeFileSync('index.html',html);
+          const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
+          const baseline=fs.readFileSync('/tmp/visual-style-baseline.txt','utf8');
+          if(style!==baseline)throw new Error('Visual stylesheet changed.');
+          NODE
+
+          cat > verify-prompt-semantics.mjs <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          import assert from 'node:assert/strict';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          assert(core&&schema&&engine&&prompts);
+          assert.equal(core.WORKFLOW_ID,'mobile-closed-loop/30');
+          assert.equal(core.PROJECT_SCHEMA,'closed-loop-project/3');
+          assert.equal(schema.RESPONSE_SCHEMA,'closed-loop-stage-response/3');
+          assert.equal(core.STAGE_COUNT,30);
+          const source=fs.readFileSync('prompt-engine.js','utf8');
+          for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE','STAGE 01 DOMAIN INTAKE ADAPTATION'])assert(!source.includes(forbidden),`Hard-coded domain prompt branch remains: ${forbidden}`);
+          const p=core.createBlankState('JOB-PROMPT-CONTROL');
+          Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Create the requested project deliverable exactly from the supplied intent.',EXPLICIT_USER_REQUIREMENTS:'Preserve every supplied project requirement; never ask me to repeat a fact already supplied.',SUPPLIED_MATERIALS_INVENTORY:JSON.stringify([{type:'FILE',exactNameOrReference:'intent.pdf'}]),CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001',CURRENT_ITERATION:'ITERATION-000001',CURRENT_BASELINE_ID:'BASELINE-000001',CURRENT_PRODUCT_ID:'PRODUCT-000001'});
+          engine.ensureShape(p);engine.recalculate(p);
+          for(let stage=1;stage<=30;stage++){
+            const operation=schema.STAGE_OPERATIONS[stage][0];
+            const r=prompts.buildPromptRecord(stage,p,operation);
+            assert(r.prompt.includes('EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW'),`Stage ${stage} lacks explicit execution directive.`);
+            assert(r.prompt.includes('They are not decorative background and they are not a substitute for instructions.'),`Stage ${stage} does not distinguish project data from instructions.`);
+            assert(r.prompt.includes('Do not merely summarize the context'),`Stage ${stage} permits non-execution.`);
+            assert(r.prompt.toLowerCase().includes('never ask the human to repeat information already present')||r.prompt.toLowerCase().includes('do not ask the human to repeat information already present'),`Stage ${stage} lacks one-time-input rule.`);
+            assert(r.prompt.includes(`OPERATION: ${operation}`),`Stage ${stage} operation identity missing.`);
+            assert(r.prompt.includes('closed-loop-stage-response/3'),`Stage ${stage} response schema missing.`);
+          }
+          const s1=prompts.buildPromptRecord(1,p,'COMPLETE').prompt;
+          for(const required of ['APPLICATION INTAKE MANIFEST','classify every','INPUT_SET_CONTENTS','extractedStatements','The user supplies project information once','downstream memory boundary','BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE'])assert(s1.toLowerCase().includes(required.toLowerCase()),`Stage 01 missing ${required}`);
+          const s4=prompts.buildPromptRecord(4,p,'COMPLETE').prompt;
+          for(const required of ['APPLICATION OBLIGATION MANIFEST','process every manifest obligationId exactly once','never ask for the original intent file','Schema-valid output with an omitted obligation is invalid','No obligation may disappear'])assert(s4.toLowerCase().includes(required.toLowerCase()),`Stage 04 missing ${required}`);
+          assert(!/attach[^\n]{0,80}intent\.pdf/i.test(s4),'Stage 04 still asks to attach the original intent file.');
+          const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+          assert.equal((handoff.send||[]).length,0,'Stage 04 still creates a file-send handoff from supplied-material metadata.');
+          assert.equal((handoff.conversationMaterials||[]).length,0,'Stage 04 still creates conversation material resend instructions.');
+          const s6=prompts.buildPromptRecord(6,p,'COMPLETE').prompt;
+          for(const required of ['closed-loop-test-spec/1','LOAD_ARTIFACT','BYTE_COMPARE','APPLICATION_DETERMINISTIC','defective product','boundary','stale','malformed'])assert(s6.toLowerCase().includes(required.toLowerCase()),`Stage 06 missing ${required}`);
+          const ui=fs.readFileSync('app-core.js','utf8');
+          assert(ui.includes("if(n===4)return ''"),'Stage 04 generic upload panel can return.');
+          const html=fs.readFileSync('index.html','utf8');
+          assert(html.includes('height:clamp(260px,45vh,520px)'),'Prompt box visual height changed.');
+          assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt box expansion sizing changed.');
+          console.log('verify-prompt-semantics: PASS');
+          NODE
+
+          cat > verify-visual-baseline.mjs <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const html=fs.readFileSync('index.html','utf8');
+          const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0]||'';
+          assert(style.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;'));
+          assert(style.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'));
+          assert(!style.includes('#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}'));
+          console.log('verify-visual-baseline: PASS');
+          NODE
+
+          node <<'NODE'
+          const fs=require('fs');
+          let y=fs.readFileSync('.github/workflows/pages.yml','utf8');
+          y=y.replace(/\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/,'');
+          y=y.replace("const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];");
+          if(!y.includes('node --check verify-v3-contract.mjs'))y=y.replace('          node --check verify-test-runtime.mjs\n','          node --check verify-test-runtime.mjs\n          node --check verify-test-runtime-limits.mjs\n          node --check verify-test-runtime-v3.mjs\n          node --check verify-v3-contract.mjs\n          node --check verify-v3-migration.mjs\n          node --check verify-v3-definition-of-done.mjs\n          node --check verify-visual-baseline.mjs\n');
+          if(!y.includes('Verify /3 migration and controlling contracts'))y=y.replace('      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n','      - name: Verify /3 migration and controlling contracts\n        run: |\n          node verify-v3-contract.mjs\n          node verify-v3-migration.mjs\n          node verify-v3-definition-of-done.mjs\n          node verify-test-runtime-v3.mjs\n          node verify-test-runtime-limits.mjs\n          node verify-visual-baseline.mjs\n      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n');
+          y=y.replace('node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs', 'node build-test-project.mjs && node verify-v3-contract.mjs && node verify-v3-migration.mjs && node verify-v3-definition-of-done.mjs && node verify-test-runtime-v3.mjs && node verify-test-runtime-limits.mjs && node verify-visual-baseline.mjs && node verify-test-runtime.mjs && node verify-hash.mjs');
+          fs.writeFileSync('.github/workflows/pages.yml',y);
+          NODE
+
+          rm .github/workflows/repair-controlling-spec.yml
+
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check verify-prompt-semantics.mjs
+          node --check verify-visual-baseline.mjs
+          node build-test-project.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-prompt-semantics.mjs
+          node verify-visual-baseline.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-v3-definition-of-done.mjs
+          git diff --check
+
+          git config user.name closed-loop-spec-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m "Implement controlling /3 reliability specification without visual redesign"
+          git push origin HEAD:fix/controlling-spec-final-20260830
