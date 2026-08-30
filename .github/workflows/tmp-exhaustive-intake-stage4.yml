@@ -1,4 +1,4 @@
-name: Apply exhaustive all-stage prompt repair
+name: Inspect stage context contract source
 on:
   push:
     branches:
@@ -6,48 +6,13 @@ on:
     paths:
       - .github/workflows/tmp-exhaustive-intake-stage4.yml
 permissions:
-  contents: write
+  contents: read
 jobs:
-  repair:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/exhaustive-intake-stage4-20260830
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Apply all-stage prompt repair
-        run: python3 .repair-all-prompts.py
-      - name: Print exact stage context contracts
-        run: node .print-stage-contracts.mjs
-      - name: Syntax and deterministic proof
-        run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check app-core.js
-          node --check verify-intake-closure.mjs
-          node --check verify-one-time-intent-intake.mjs
-          node --check verify-ingestion.mjs
-          node --check verify-full-cycle.mjs
-          node verify-hash.mjs
-          node verify-test-runtime.mjs
-          node verify-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-prompt-semantics.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          git diff --check
-      - name: Commit tested application repair
-        run: |
-          git config user.name closed-loop-reliability-bot
-          git config user.email actions@users.noreply.github.com
-          git checkout -- .github/workflows/pages.yml .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py .repair-all-prompts.py .print-stage-contracts.mjs
-          git add prompt-engine.js
-          git commit -m 'Make every stage prompt enforce its complete stage contract'
-          git push origin HEAD:fix/exhaustive-intake-stage4-20260830
-# audit harness v2
+      - name: Show read-collection contract source
+        run: grep -n "readCollections" workflow-schema.js
