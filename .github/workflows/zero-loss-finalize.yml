@@ -21,6 +21,7 @@ jobs:
           python3 tools/zero_loss_finalize.py
           python3 tools/fix_zero_loss_test.py
           python3 tools/fix_inherited_tests.py
+          python3 tools/fix_stage4_next_action.py
       - name: Run proven regression set
         run: |
           node --check workbook.js
@@ -44,6 +45,7 @@ jobs:
             tools/zero_loss_finalize.py \
             tools/fix_zero_loss_test.py \
             tools/fix_inherited_tests.py \
+            tools/fix_stage4_next_action.py \
             .github/workflows/zero-loss-finalize.yml \
             .github/workflows/apply-controlling-spec-fix.yml \
             .github/workflows/apply-followup-spec-fix.yml \
