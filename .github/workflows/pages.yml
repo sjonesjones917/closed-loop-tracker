@@ -205,27 +205,72 @@ jobs:
           process.stdout.write(matches.at(-1)[1]);
           NODE
           )
-          STORAGE_FAILURES=$(node - <<'NODE'
-          const fs=require('fs'),text=fs.readFileSync('/tmp/verify-project-lifecycle.out','utf8');
-          const match=text.match(/"storageFailureCasesPassed"\s*:\s*(\d+)/);
-          process.stdout.write(match?match[1]:'0');
+          STORAGE_FAILURE_CASES=$(node - <<'NODE'
+          const fs=require('fs');
+          const proofs=[
+            ['/tmp/verify-source.out',/"transactionRollback"\s*:\s*true/],
+            ['/tmp/verify-complete.out',/"acceptedStateStorageRollback"\s*:\s*true/],
+            ['/tmp/verify-browser-extra.out',/"storageFailureRollback"\s*:\s*true/]
+          ];
+          let count=0;
+          for(const [path,re] of proofs){const text=fs.readFileSync(path,'utf8');if(!re.test(text))throw new Error(`Missing executed storage proof: ${path}`);count++;}
+          process.stdout.write(String(count));
           NODE
           )
+          test "$NEGATIVE_CASES" -gt 0
+          test "$STORAGE_FAILURE_CASES" -eq 3
+          grep -q '"semanticFalseAcceptanceInvariant":true' /tmp/verify-semantic-invariant.out
+          grep -q '"projectLifecycleControls":true' /tmp/verify-project-lifecycle.out
+          grep -q '"lifecycleMetadataDeleteAtomic":true' /tmp/verify-project-lifecycle.out
+          grep -q 'extra:package-round-trip' /tmp/verify-browser-extra.out
+          grep -q 'extra:blob-persistence' /tmp/verify-browser-extra.out
+          export NEGATIVE_CASES STORAGE_FAILURE_CASES
           node - <<'NODE'
           const fs=require('fs');
-          const readJson=path=>{const text=fs.readFileSync(path,'utf8').trim();const start=text.lastIndexOf('{');if(start<0)return {};try{return JSON.parse(text.slice(start));}catch{return {};}};
-          const dod=readJson('/tmp/verify-definition-of-done.out');
-          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',ownershipCoverage:dod.ownershipCoverage??1,derivationCoverage:dod.derivationCoverage??1,relationshipCoverage:dod.relationshipCoverage??1,stage01IntakeCoverage:dod.stage01IntakeCoverage??1,stage04ObligationCoverage:dod.stage04ObligationCoverage??1,acceptedAgentValueExtractionCoverage:dod.acceptedAgentValueExtractionCoverage??1,currentScopeSelectorCoverage:dod.currentScopeSelectorCoverage??1,nativeExecutionCoverage:dod.nativeExecutionCoverage??1,stagesCompleted:30,negativeCasesPassed:Number(process.env.NEGATIVE_CASES||0),storageFailureCasesPassed:Number(process.env.STORAGE_FAILURES||0),artifactRoundTrip:true,deployedByteIdentity:true,browserWidths:[320,393,'desktop'],liveVerification:true};
-          fs.writeFileSync('acceptance-report.json',JSON.stringify(report,null,2)+'\n');
-          NODE
-        env:
-          NEGATIVE_CASES: ${{ env.NEGATIVE_CASES }}
-          STORAGE_FAILURES: ${{ env.STORAGE_FAILURES }}
-      - name: Publish machine acceptance artifact
-        run: |
-          git config user.name closed-loop-reliability-bot
-          git config user.email actions@users.noreply.github.com
-          git add acceptance-report.json
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Publish verified acceptance report"
-          git push origin HEAD:main
+          const definition=JSON.parse(fs.readFileSync('/tmp/verify-definition-of-done.out','utf8'));
+          const jsonLines=path=>fs.readFileSync(path,'utf8').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>JSON.parse(line));
+          const semantic=Object.assign({},...jsonLines('/tmp/verify-semantic-invariant.out'));
+          const lifecycle=Object.assign({},...jsonLines('/tmp/verify-project-lifecycle.out'));
+          const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');
+          if(!semantic.semanticFalseAcceptanceInvariant)throw new Error('Semantic false-acceptance proof is not true.');
+          if(!lifecycle.projectLifecycleControls||!lifecycle.lifecycleMetadataDeleteAtomic||lifecycle.unsafeOverrides!==0)throw new Error('Project lifecycle proof is incomplete.');
+          if(!browser.includes('extra:package-round-trip')||!browser.includes('extra:blob-persistence'))throw new Error('Browser custody/round-trip proof is incomplete.');
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            ...definition,
+            nativeTestRuntime:true,
+            nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
+            nativeTestSpecVersion:'closed-loop-test-spec/1',
+            oneTimeIntentIntake:true,
+            stagesCompleted:30,
+            negativeCasesPassed:Number(process.env.NEGATIVE_CASES),
+            storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES),
+            semanticFalseAcceptanceInvariant:Boolean(semantic.semanticFalseAcceptanceInvariant),
+            conclusionBearingCollections:Number(semantic.conclusionBearingCollections||0),
+            releaseGradeIndependence:Boolean(semantic.releaseGradeIndependence),
+            traceIntegrity:Boolean(semantic.traceIntegrity),
+            projectLifecycleControls:Boolean(lifecycle.projectLifecycleControls),
+            lifecycleMetadataDeleteAtomic:Boolean(lifecycle.lifecycleMetadataDeleteAtomic),
+            unsafeLifecycleOverrides:Number(lifecycle.unsafeOverrides),
+            artifactRoundTrip:browser.includes('extra:package-round-trip'),
+            blobPersistence:browser.includes('extra:blob-persistence'),
+            deployedByteIdentity:process.env.LIVE_RESULT==='success',
+            proofSources:{
+              structuralCoverage:'verify-definition-of-done.mjs',
+              nativeTestRuntime:'verify-test-runtime.mjs',
+              oneTimeIntentIntake:'verify-one-time-intent-intake.mjs',
+              canonicalWorkflow:'verify.mjs',
+              ingestion:'verify-ingestion.mjs',
+              workflowGates:'verify-complete.mjs',
+              semanticAdjudication:'verify-semantic-invariant.mjs',
+              projectLifecycle:'verify-project-lifecycle.mjs',
+              browserPersistence:'verify-browser-extra.mjs',
+              deployedIdentity:'verify-live job'
+            }
+          };
+          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
+          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.
