@@ -27,9 +27,9 @@ jobs:
           import re
           path=Path('.github/scripts/materialize_stage4.py')
           data=path.read_text()
-          data,n=re.subn(r"(`\/records\/[^`\n]+?)','",r"\1`,'",data)
+          data,n=re.subn(r"(`\/records\/[^`\n]+?)'",r"\1`",data)
           if n < 1:
-              raise SystemExit('expected generated-validator delimiter defects were not found')
+              raise SystemExit('expected generated-validator path terminator defects were not found')
           path.write_text(data)
           PY
           python3 .github/scripts/materialize_stage4.py
