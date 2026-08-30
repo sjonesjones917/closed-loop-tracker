@@ -1,0 +1,66 @@
+name: Minimal Stage 04 context fix
+on:
+  push:
+    branches: [fix/stage04-captured-intent-minimal]
+    paths: [.github/workflows/stage04-minimal-fix.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-captured-intent-minimal
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch only prompt-engine.js
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';"
+          if s.count(old)!=1:
+              raise SystemExit(f'expected exactly one prompt engine version marker, found {s.count(old)}')
+          s=s.replace(old,new,1)
+          old_ctx="function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage>1&&![11,12,23,24].includes(stage)){"
+          new_ctx="function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage===4&&state?.stages?.[1]){const intake={agentData:state.stages[1].agentData||state.stages[1].acceptedData||{},humanData:state.stages[1].humanData||{},derivedData:state.stages[1].derivedData||{}};parts.push(`ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE\\n${show(intake)}`);}\n if(stage>1&&![11,12,23,24].includes(stage)){"
+          if s.count(old_ctx)!=1:
+              raise SystemExit(f'expected exactly one contextFor marker, found {s.count(old_ctx)}')
+          s=s.replace(old_ctx,new_ctx,1)
+          p.write_text(s)
+          PY
+      - name: Prove Stage 04 receives captured Stage 01 intent
+        run: |
+          node --check prompt-engine.js
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          const p=core.createBlankState('JOB-STAGE04-MINIMAL');
+          Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'HUMAN-INTENT-SENTINEL',SUPPLIED_MATERIALS_INVENTORY:'intent-file.pdf',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'NOT APPLICABLE',CURRENT_REQUIREMENTS_VERSION:'NOT APPLICABLE',CURRENT_TEST_SUITE_VERSION:'NOT APPLICABLE',CURRENT_INSTRUCTION_VERSION:'NOT APPLICABLE'});
+          engine.ensureShape(p);
+          p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'CAPTURED-DELIVERABLE-SENTINEL',INPUT_SET_CONTENTS:'CAPTURED-INTENT-CONTENT-SENTINEL'};
+          const rec=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+          assert(rec.prompt.includes('ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE'));
+          assert(rec.prompt.includes('CAPTURED-DELIVERABLE-SENTINEL'));
+          assert(rec.prompt.includes('CAPTURED-INTENT-CONTENT-SENTINEL'));
+          assert(rec.prompt.includes('HUMAN-INTENT-SENTINEL'));
+          console.log('stage04-minimal-context-proof: PASS');
+          NODE
+      - name: Commit only permanent prompt fix
+        run: |
+          rm .github/workflows/stage04-minimal-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js .github/workflows/stage04-minimal-fix.yml
+          git diff --cached --check
+          git commit -m "Fix Stage 04 reuse of captured Stage 01 intent"
+          git push origin HEAD:fix/stage04-captured-intent-minimal
