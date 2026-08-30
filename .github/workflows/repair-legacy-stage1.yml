@@ -1,0 +1,38 @@
+name: Repair legacy Stage 01 migration
+on:
+  push:
+    branches:
+      - fix/stage06-authoring-contract-final
+    paths:
+      - .github/workflows/repair-legacy-stage1.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage06-authoring-contract-final
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic migration repair
+        run: |
+          python3 repair_legacy_stage1.py
+          node --check workbook.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-browser.mjs
+          node --check verify-v3-migration.mjs
+          node verify-v3-migration.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          git rm .github/workflows/repair-legacy-stage1.yml .github/workflows/diagnose-browser-state.yml repair_legacy_stage1.py
+          git config user.name closed-loop-migration-repair
+          git config user.email closed-loop-migration-repair@users.noreply.github.com
+          git add -A
+          git commit -m 'Preserve legacy Stage 01 through deterministic v3 migration'
+          git push origin HEAD:fix/stage06-authoring-contract-final
