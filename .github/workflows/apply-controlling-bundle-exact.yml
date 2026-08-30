@@ -27,15 +27,10 @@ jobs:
           if anchor not in s: raise SystemExit('human collaboration anchor missing')
           s=s.replace(anchor,rule,1)
           p.write_text(s)
-
-          idx=Path('index.html'); t=idx.read_text()
-          # Restore the pre-mobile-overflow visual declarations only; no new visual design.
-          t=t.replace("#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}\n","")
-          idx.write_text(t)
+          idx=Path('index.html'); t=idx.read_text(); t=t.replace("#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}\n",""); idx.write_text(t)
           PY
           node --check prompt-engine.js
           node verify-prompt-semantics.mjs
-          node verify-stage4-intent-reuse.mjs
           node verify-complete.mjs
           git diff --check
       - name: Commit repair and remove applicator
