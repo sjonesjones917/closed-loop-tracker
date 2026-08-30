@@ -1,0 +1,45 @@
+name: Recompute rebased runtime identity
+on:
+  push:
+    branches: [controlling-spec-v3-final-rebased]
+    paths: ['.github/workflows/rebase-runtime-token.yml']
+permissions: {contents: write}
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: controlling-spec-v3-final-rebased, fetch-depth: 0}
+      - name: Recompute exact runtime graph identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          direct=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          graph=direct+['test-worker.js']
+          rows=[]
+          for name in graph:
+              data=Path(name).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              rows.append(f'{name}:{blob}\n')
+          identity='runtime-'+hashlib.sha256(''.join(rows).encode()).hexdigest()[:16]
+          p=Path('index.html'); html=p.read_text()
+          for name in direct:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[0-9a-f]+)?("\s*></script>)'
+              html,n=re.subn(pattern,rf'\1?v={identity}\2',html,count=1)
+              if n!=1: raise SystemExit(f'Runtime script tag missing for {name}')
+          p.write_text(html)
+          print(identity)
+          PY
+          node verify-hash.mjs
+      - name: Remove one-time workflow and commit exact source
+        run: |
+          rm -f .github/workflows/rebase-runtime-token.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name closed-loop-conformance
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Bind rebased runtime graph identity"
+          git push origin HEAD:controlling-spec-v3-final-rebased
