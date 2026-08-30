@@ -1,4 +1,4 @@
-name: One-time Stage 04 UI repair
+name: One-time exhaustive Stage 01 byte accounting repair
 on:
   push:
     branches: [controlling-spec-final-current]
@@ -15,46 +15,69 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Restore Stage 04 no-repeat attachment behavior
+      - name: Capture Stage 01 text units into controlled input
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,re
-          p=Path('app-core.js')
-          s=p.read_text()
-          old="function artifactControlMarkup(n,locked){if(n===19)"
-          new="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"
+
+          engine=Path('workflow-engine.js')
+          s=engine.read_text()
+          old="function recordHumanInputVersion(project,changedFields,operator='HUMAN_OPERATOR'){\n  ensureShape(project);\n  const payload={...Object.fromEntries(schema.HUMAN_INTAKE_FIELDS.map(name=>[name,project.job[name]??''])),clarifications:clone(project.projectData.userEntered?.clarifications||[])};"
+          new="function stageOneSuppliedMaterialSnapshot(project){return safe(project.stages?.[1]?.authorizedFiles).map(file=>({artifactId:String(file?.artifactId||file?.id||''),filename:String(file?.name||file?.filename||''),mediaType:String(file?.type||file?.mediaType||''),sha256:String(file?.sha256||''),size:Number(file?.size||file?.byteSize||0),intakeUnits:safe(file?.intakeUnits).map(unit=>({sourceLocation:String(unit?.sourceLocation||''),rawValueSha256:String(unit?.rawValueSha256||''),text:String(unit?.text??'')}))}));}\nfunction recordHumanInputVersion(project,changedFields,operator='HUMAN_OPERATOR'){\n  ensureShape(project);\n  const payload={...Object.fromEntries(schema.HUMAN_INTAKE_FIELDS.map(name=>[name,project.job[name]??''])),clarifications:clone(project.projectData.userEntered?.clarifications||[]),stage1SuppliedMaterials:stageOneSuppliedMaterialSnapshot(project)};"
           if new not in s:
-              if old not in s:
-                  raise SystemExit('expected current artifactControlMarkup preimage not found')
-              p.write_text(s.replace(old,new,1))
-          v=Path('verify-hash.mjs')
-          t=v.read_text()
-          old_proof="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===19)\"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
-          new_proof="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)\"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');\nassert(appCore.includes(\"if([2,3,4].includes(stage))throw new Error('The original Stage 01 intent file cannot be registered or reused in Stages 02 through 04; use the canonical intentStatements ledger.')\"),'Stages 02 through 04 must reject reuse of the original Stage 01 intent file.');"
-          if old_proof not in t:
-              raise SystemExit('expected contradictory Stage 04 verifier preimage not found')
-          v.write_text(t.replace(old_proof,new_proof,1))
+              if old not in s: raise SystemExit('recordHumanInputVersion preimage not found')
+              s=s.replace(old,new,1)
+          old_files="for(const [index,file] of safe(project.stages?.[1]?.authorizedFiles).entries()){const artifactId=String(file?.artifactId||file?.id||''),filename=String(file?.name||file?.filename||'');if(!artifactId&&!filename)continue;const stable={artifactId,filename,sha256:String(file?.sha256||''),size:Number(file?.size||0)};units.push({unitId:`INPUT-UNIT-${hash.sha256Value({inputVersion,file:stable,index}).slice(0,20)}`,inputVersion,sourceKind:'SUPPLIED_MATERIAL',sourceLocation:`STAGE1.authorizedFiles[${index}]`,sourceField:'SUPPLIED_MATERIAL',rawValueSha256:hash.sha256Value(stable),artifactId,filename,text:`Supplied material ${filename||artifactId}`});}"
+          new_files="const suppliedMaterials=safe(payload?.stage1SuppliedMaterials?.length?payload.stage1SuppliedMaterials:stageOneSuppliedMaterialSnapshot(project));for(const [index,file] of suppliedMaterials.entries()){const artifactId=String(file?.artifactId||file?.id||''),filename=String(file?.filename||file?.name||'');if(!artifactId&&!filename)continue;const stable={artifactId,filename,mediaType:String(file?.mediaType||file?.type||''),sha256:String(file?.sha256||''),size:Number(file?.size||file?.byteSize||0)};units.push({unitId:`INPUT-UNIT-${hash.sha256Value({inputVersion,file:stable,index}).slice(0,20)}`,inputVersion,sourceKind:'SUPPLIED_MATERIAL',sourceLocation:`STAGE1.authorizedFiles[${index}]`,sourceField:'SUPPLIED_MATERIAL',rawValueSha256:hash.sha256Value(stable),artifactId,filename,text:`Supplied material ${filename||artifactId}`});for(const [unitIndex,unit] of safe(file?.intakeUnits).entries()){const text=String(unit?.text??'');if(!text.trim())continue;const locator=String(unit?.sourceLocation||`logical-line:${unitIndex+1}`),rawValueSha256=hash.sha256Value(text);units.push({unitId:`INPUT-UNIT-${hash.sha256Value({inputVersion,artifactId,filename,locator,unitIndex,rawValueSha256}).slice(0,20)}`,inputVersion,sourceKind:'SUPPLIED_MATERIAL_TEXT_UNIT',sourceLocation:`STAGE1.authorizedFiles[${index}].intakeUnits[${unitIndex}] (${locator})`,sourceField:'SUPPLIED_MATERIAL',rawValueSha256,artifactId,filename,text});}}"
+          if new_files not in s:
+              if old_files not in s: raise SystemExit('buildIntakeCoverageManifest file-loop preimage not found')
+              s=s.replace(old_files,new_files,1)
+          engine.write_text(s)
+
+          app=Path('app-core.js')
+          a=app.read_text()
+          anchor="async function storeArtifactFile(file,stage=current.activeStage,lineage={})"
+          helper="const STAGE_ONE_TEXT_EXTENSIONS=new Set(['txt','md','markdown','csv','tsv','json','xml','yaml','yml','js','mjs','cjs','ts','tsx','jsx','css','html','htm','svg']);\nasync function stageOneIntakeUnits(file){const name=String(file?.name||''),extension=name.includes('.')?name.split('.').pop().toLowerCase():'',media=String(file?.type||'').toLowerCase(),textLike=media.startsWith('text/')||['application/json','application/xml','application/yaml','application/x-yaml'].includes(media)||STAGE_ONE_TEXT_EXTENSIONS.has(extension);if(!textLike)return [];const bytes=await file.arrayBuffer();let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw new Error(`Stage 01 supplied text material ${name||'UNKNOWN'} is not valid UTF-8. Preserve the bytes, but do not claim statement-level application accounting until a deterministic decoder is available.`);}return text.split(/\\r\\n|\\n|\\r|\\u2028|\\u2029/).map((raw,index)=>({sourceLocation:`logical-line:${index+1}`,rawValueSha256:globalThis.closedLoopHash.sha256Value(raw),text:raw})).filter(unit=>unit.text.trim().length>0);}\n"
+          if helper not in a:
+              if anchor not in a: raise SystemExit('storeArtifactFile anchor not found')
+              a=a.replace(anchor,helper+anchor,1)
+          old_store="async function storeArtifactFile(file,stage=current.activeStage,lineage={}){const artifactId=artifactIdFor(),filename=logicalFilePath(file),blob=file.slice(0,file.size,file.type||'application/octet-stream'),stored=await projectStore.putArtifact({artifactId,jobId:current.job.JOB_ID,blob,filename,mediaType:file.type||'application/octet-stream',lineage:{stage,role:core.STAGES[stage-1]?.role||'UNKNOWN',logicalPath:filename,...lineage}});return {stored,view:{artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,stage:`STAGE ${String(stage).padStart(2,'0')}`,role:core.STAGES[stage-1]?.role||'UNKNOWN',retainedBytes:true,availability:'IndexedDB Blob bytes persisted and rehashed on read-back.',addedAt:new Date().toISOString()}};}"
+          new_store="async function storeArtifactFile(file,stage=current.activeStage,lineage={}){const artifactId=artifactIdFor(),filename=logicalFilePath(file),blob=file.slice(0,file.size,file.type||'application/octet-stream'),intakeUnits=Number(stage)===1?await stageOneIntakeUnits(file):[],stored=await projectStore.putArtifact({artifactId,jobId:current.job.JOB_ID,blob,filename,mediaType:file.type||'application/octet-stream',lineage:{stage,role:core.STAGES[stage-1]?.role||'UNKNOWN',logicalPath:filename,...lineage}});return {stored,view:{artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,stage:`STAGE ${String(stage).padStart(2,'0')}`,role:core.STAGES[stage-1]?.role||'UNKNOWN',retainedBytes:true,availability:'IndexedDB Blob bytes persisted and rehashed on read-back.',intakeUnits,addedAt:new Date().toISOString()}};}"
+          if new_store not in a:
+              if old_store not in a: raise SystemExit('storeArtifactFile preimage not found')
+              a=a.replace(old_store,new_store,1)
+          old_reg="next.stages[stage].authorizedFiles.push(item.view);}await persistReplacement(next);announce('artifact bytes saved and verified');"
+          new_reg="next.stages[stage].authorizedFiles.push(item.view);}if(stage===1){engine.recordHumanInputVersion(next,created.map(item=>`STAGE_01_SUPPLIED_MATERIAL:${item.view.name}`),'HUMAN_OPERATOR');if(current.stages[1].status==='COMPLETE'&&!next.isRetainedTestProject)engine.invalidateStageForAuthorityChange(next,{stage:1,reason:'Stage 01 supplied material changed after acceptance.',operatorLabel:'HUMAN_OPERATOR'});}await persistReplacement(next);announce('artifact bytes saved and verified');"
+          if new_reg not in a:
+              if old_reg not in a: raise SystemExit('registerStageFiles preimage not found')
+              a=a.replace(old_reg,new_reg,1)
+          app.write_text(a)
+
+          test=Path('verify-stage01-file-accounting.mjs')
+          test.write_text("""import fs from 'node:fs';\nimport vm from 'node:vm';\nfor(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst core=globalThis.closedLoopCore,hash=globalThis.closedLoopHash,engine=globalThis.closedLoopWorkflowEngine;\nconst assert=(ok,msg)=>{if(!ok)throw new Error(msg);};\nconst p=engine.ensureShape(core.createBlankState('JOB-STAGE01-FILE-ACCOUNTING'));\np.job.EXACT_USER_OBJECTIVE_VERBATIM='Build exactly what is specified in the supplied intent file.';\np.stages[1].authorizedFiles.push({artifactId:'ART-INTENT',name:'intent.txt',type:'text/plain',size:17,sha256:'a'.repeat(64),intakeUnits:[{sourceLocation:'logical-line:1',rawValueSha256:hash.sha256Value('alpha requirement'),text:'alpha requirement'},{sourceLocation:'logical-line:2',rawValueSha256:hash.sha256Value('beta prohibition'),text:'beta prohibition'}]});\nconst v1=engine.recordHumanInputVersion(p,['STAGE_01_SUPPLIED_MATERIAL:intent.txt']);\nassert(v1.payload.stage1SuppliedMaterials.length===1,'Stage 01 supplied material must be part of the controlled input version.');\nconst m1=engine.buildIntakeCoverageManifest(p);\nconst textUnits=m1.units.filter(x=>x.sourceKind==='SUPPLIED_MATERIAL_TEXT_UNIT');\nassert(textUnits.length===2,'Every non-empty captured Stage 01 text unit must receive an application-owned intake identity.');\nassert(new Set(textUnits.map(x=>x.unitId)).size===2,'Stage 01 text-unit identities must be unique.');\nassert(textUnits.every(x=>x.inputVersion===p.job.CURRENT_INPUT_VERSION&&x.rawValueSha256&&x.sourceLocation.includes('logical-line')),'Stage 01 text units must bind input version, locator, and raw-value hash.');\nconst incompleteRows=m1.units.slice(1).map(x=>({id:x.unitId,disposition:'incorporated into the job definition'}));\nconst incomplete=engine.validateAccountingClosure(p,1,{INTAKE_ACCOUNTING:incompleteRows});\nassert(!incomplete.valid&&incomplete.missing.includes(m1.units[0].unitId),'Omitting any application-enumerated Stage 01 unit must fail accounting closure.');\nconst complete=engine.validateAccountingClosure(p,1,{INTAKE_ACCOUNTING:m1.units.map(x=>({id:x.unitId,disposition:'retained as context'}))});\nassert(complete.valid&&complete.coverage===1,'Complete Stage 01 accounting must reach exactly 100% coverage.');\np.stages[1].authorizedFiles.push({artifactId:'ART-SECOND',name:'second.txt',type:'text/plain',size:5,sha256:'b'.repeat(64),intakeUnits:[{sourceLocation:'logical-line:1',rawValueSha256:hash.sha256Value('gamma'),text:'gamma'}]});\nconst v2=engine.recordHumanInputVersion(p,['STAGE_01_SUPPLIED_MATERIAL:second.txt']);\nassert(v2.version!==v1.version&&v2.sha256!==v1.sha256,'Changing Stage 01 supplied material must create a new controlled input version.');\nconst app=fs.readFileSync('app-core.js','utf8');\nassert(app.includes("text.split(/\\\\r\\\\n|\\\\n|\\\\r|\\\\u2028|\\\\u2029/)"),'Stage 01 UTF-8 text capture must enumerate CRLF, LF, CR, and Unicode line separators.');\nassert(app.includes("if(stage===1){engine.recordHumanInputVersion"),'Stage 01 file registration must version the newly captured human input.');\nconsole.log(JSON.stringify({stage01FileAccounting:true,textUnitCoverage:1,inputVersionChangesWithSuppliedMaterial:true}));\n""")
+
           runtime_files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','test-worker.js']
           manifest=''
           for name in runtime_files:
-              b=Path(name).read_bytes()
-              blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
-              manifest+=f'{name}:{blob}\n'
+              b=Path(name).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{name}:{blob}\n'
           token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
-          h=Path('index.html')
-          html=h.read_text()
-          html,n=re.subn(r'(src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]+',lambda m:m.group(1)+token,html)
-          if n!=9:
-              raise SystemExit(f'expected 9 runtime script cache tokens, updated {n}')
+          h=Path('index.html'); html=h.read_text(); html,n=re.subn(r'(src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]+',lambda m:m.group(1)+token,html)
+          if n!=9: raise SystemExit(f'expected 9 runtime script cache tokens, updated {n}')
           h.write_text(html)
           PY
+          node --check workflow-engine.js
           node --check app-core.js
+          node --check verify-stage01-file-accounting.mjs
+          node verify-stage01-file-accounting.mjs
           node verify-hash.mjs
+          node verify-stage01-stage03-stage04-closure.mjs
+          node verify-closed-accounting.mjs
+          node verify-prompt-semantics.mjs
       - name: Commit repair
         run: |
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add app-core.js verify-hash.mjs index.html
-          git commit -m "Restore Stage 04 no-repeat attachment control"
+          git add workflow-engine.js app-core.js index.html verify-stage01-file-accounting.mjs
+          git commit -m "Bind Stage 01 text units to controlled input accounting"
           git push origin HEAD:controlling-spec-final-current
