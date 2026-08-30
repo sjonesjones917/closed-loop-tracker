@@ -25,6 +25,9 @@ text=re.sub(
     r"\s*if\(!record\.prompt\.includes\('do not require the human to know those formats in advance'\)\|\|!record\.prompt\.includes\('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose'\)\|\|!record\.prompt\.includes\('Only propose an implementation-ready'\)\)issues\.push\('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING'\);",
     "\n    if(/generate the actual artifact|implementation-ready|manufacturing-ready/i.test(record.prompt))issues.push('STAGE01_LATER_STAGE_PRODUCTION_LEAK');",
     text,count=1)
+# Replace obsolete exact-heading environment assertion. The controlling requirement is semantic honesty,
+# not a mandatory heading on every prompt. External action honesty remains asserted below for every stage.
+text=text.replace("  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');","  }else if(!record.prompt.includes('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred'))issues.push('ENVIRONMENT_ACTION_HONESTY_MISSING');")
 # Add direct source-level protection against subject branches in prompt-engine.js.
 anchor="function semanticIssues(record){\n  const issues=[];"
 addition="function semanticIssues(record){\n  const issues=[];\n  const promptSource=fs.readFileSync('prompt-engine.js','utf8');\n  if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD \/ CAM \/ CNC \/ ADDITIVE/.test(promptSource))issues.push('FORBIDDEN_PROJECT_SUBJECT_BRANCH');"
