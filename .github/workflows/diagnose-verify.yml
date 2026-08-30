@@ -1,16 +1,18 @@
-name: Diagnose Stage 01 ingestion fixture
+name: Repair Stage 01 ingestion fixtures
 on:
   push:
     branches: [fix/stage01-intake-closure-20260830]
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
-  diagnose:
+  repair:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply fixture repair in runner
+      - name: Update Stage 01 fixtures
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -22,29 +24,28 @@ jobs:
             stageData.INTAKE_ACCOUNTING=entries.map((entry,index)=>({inputId:String(entry.inputId||''),disposition:'RETAINED_AS_CONTEXT',statementTempKeys:[`intent-statement-${index+1}`],reason:''}));
           }"""
           if old not in s: raise SystemExit('Stage 01 valid fixture anchor not found')
-          p.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          old2="""  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"""
+          new2="""  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"""
+          if old2 not in s: raise SystemExit('Smart-quote Stage 01 stageData anchor not found')
+          s=s.replace(old2,new2,1)
+          old3="""  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');"""
+          new3="""  if(stageEntries.length!==5||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence, including Stage 01 intake accounting.');"""
+          if old3 not in s: raise SystemExit('Smart-quote stageData provenance anchor not found')
+          s=s.replace(old3,new3,1)
+          p.write_text(s)
           PY
-      - name: Capture exact regression
-        id: verify
-        continue-on-error: true
+      - name: Verify canonical suite and Stage 01 regression
         run: |
-          set +e
-          {
-            echo '=== verify-stage01-intake-closure ==='
-            node verify-stage01-intake-closure.mjs
-            echo '=== verify-ingestion ==='
-            node verify-ingestion.mjs
-            echo '=== verify.mjs ==='
-            node verify.mjs
-          } > fixture-regression.log 2>&1
-          status=$?
-          cat fixture-regression.log
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: fixture-regression-log
-          path: fixture-regression.log
-          if-no-files-found: error
-      - name: Preserve failure
-        if: steps.verify.outputs.status != '0'
-        run: exit 1
+          node --check verify-ingestion.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+      - name: Commit corrected fixtures
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Update Stage 01 ingestion fixtures for closed accounting"
+          git pull --rebase origin fix/stage01-intake-closure-20260830
+          git push origin HEAD:fix/stage01-intake-closure-20260830
