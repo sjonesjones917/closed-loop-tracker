@@ -1,0 +1,39 @@
+name: Restore prompt box only
+on:
+  push:
+    branches: [fix/restore-prompt-box-only]
+permissions:
+  contents: write
+jobs:
+  restore:
+    if: contains(github.event.head_commit.message, 'Restore prompt box only')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-prompt-box-only
+          fetch-depth: 0
+      - name: Restore only the prompt preview size
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          bad='  #prompt-heading .expandable-prompt:not(.expanded){max-height:88px}\n'
+          if s.count(bad) != 1:
+              raise SystemExit('Expected one prompt-size override; refusing any broader edit')
+          p.write_text(s.replace(bad,'',1))
+          PY
+          git diff -- index.html
+          test "$(git diff --numstat -- index.html | awk '{print $1+$2}')" = "1"
+      - name: Commit exact one-line restoration and remove this workflow
+        shell: bash
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/restore-prompt-box.yml
+          git add index.html
+          git diff --cached --check
+          git commit -m "Restore prompt box to prior size"
+          git push origin HEAD:fix/restore-prompt-box-only
