@@ -16,9 +16,11 @@ jobs:
         with:
           node-version: '22'
       - name: Apply reconciliation
-        run: python3 .github/spec-reconcile.py
+        run: |
+          python3 .github/spec-reconcile.py
+          python3 .github/spec-reconcile-proof.py
       - name: Remove temporary repair files
-        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py
+        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py .github/spec-reconcile-proof.py
       - name: Verify source and controlling invariants
         run: |
           node --check workbook.js
