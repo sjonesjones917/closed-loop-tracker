@@ -302,6 +302,7 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
       const definition=schema.RECORD_SCHEMAS[collection];
       const id=proposed.targetId?String(proposed.targetId):tempToCanonical[proposed.tempKey].id;
       const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};
+      if(collection==='tests'){const kind=String(fields.EXECUTABLE_KIND||'NONE').toUpperCase();if(kind==='TEST_IR'){const runtime=globalThis.closedLoopTestRuntime;if(!runtime)throw new Error('Test IR runtime is unavailable during canonicalization.');const normalized=runtime.normalizeSpec(fields.EXECUTABLE_SPEC);fields.EXECUTABLE_SPEC_VERSION=runtime.SPEC_VERSION;fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized);}else{fields.EXECUTABLE_SPEC_VERSION=null;fields.EXECUTABLE_SPEC_SHA256=null;}}
       fields[definition.idField]=id;
       const relationships={};
       for(const [name,reference] of Object.entries(proposed.relationships||{})){const target=reference.tempKey?tempToCanonical[reference.tempKey]:{collection:definition.relationships[name],id:String(reference.recordId)};relationships[name]=target.id;fields[name]=target.id;}

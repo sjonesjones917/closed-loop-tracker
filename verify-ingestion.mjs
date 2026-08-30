@@ -51,6 +51,8 @@ function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  if(stage===1){const manifest=promptRecord.contextManifest?.intakeManifest||engine.stage1IntakeManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({coverage:(manifest.units||[]).map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))});}
+  if(stage===4){const manifest=promptRecord.contextManifest?.obligationManifest||engine.stage4ObligationManifest(p);stageData.ATOMICITY_REVIEW_RESULTS=JSON.stringify({obligationAccounting:(manifest.items||[]).map(item=>({obligationId:item.obligationId,disposition:'CONTEXT',reason:'Controlled complete-accounting fixture'}))});}
   const records={};
   if(!Object.keys(stageData).length){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
