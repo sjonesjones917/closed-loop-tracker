@@ -28,6 +28,17 @@ jobs:
           PY
       - name: Apply repair
         run: python3 .repair-project-memory.py
+      - name: Match regression harness to repository browser stubs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-project-memory.mjs')
+          s=p.read_text()
+          old="const ctx={console,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone};ctx.globalThis=ctx;"
+          new="const Event=globalThis.Event||class Event{constructor(type){this.type=type;}};const ctx={console,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,Event,dispatchEvent:()=>true,addEventListener:()=>{}};ctx.globalThis=ctx;"
+          if old not in s: raise SystemExit('regression VM context anchor not found')
+          p.write_text(s.replace(old,new))
+          PY
       - name: Syntax and regression proof
         run: |
           node --check workflow-schema.js
