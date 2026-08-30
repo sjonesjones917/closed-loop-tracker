@@ -66,17 +66,21 @@ assert.equal(new Set(scriptTokens).size,1,'all runtime scripts must share one bu
 assert.match(html,/worker-src\s+'self'/,'CSP must permit only the same-origin worker');
 assert.doesNotMatch(html,/worker-src[^;]*(?:\*|https?:|blob:|data:)/,'CSP must not open arbitrary worker sources');
 
-assert.match(workflow,/projectSchema:'closed-loop-project\/3'/,'acceptance report must identify project schema /3');
-assert.match(workflow,/responseSchema:'closed-loop-stage-response\/3'/,'acceptance report must identify response schema /3');
-assert.match(workflow,/testIrSchema:'closed-loop-test-spec\/1'/,'acceptance report must identify the Test IR schema');
-assert.match(workflow,/stage01IntakeCoverage/,'acceptance report must prove Stage 01 accounting');
-assert.match(workflow,/stage04ObligationCoverage/,'acceptance report must prove Stage 04 accounting');
-assert.match(workflow,/mandatoryEvidenceSufficiencyCoverage/,'acceptance report must prove evidence sufficiency');
-assert.match(workflow,/nativeExecutionCoverage/,'acceptance report must prove native execution coverage');
-assert.match(workflow,/unsupportedTestIrTreatedAsExecutable/,'acceptance report must prove unsupported Test IR acceptance is zero');
-assert.match(workflow,/externalAssertionsOverridingApplicationProof/,'acceptance report must prove external proof overrides are zero');
-assert.match(workflow,/nativeExecutionReceiptsFabricatedExternally/,'acceptance report must prove native receipt fabrication is zero');
-assert.match(workflow,/releaseAcceptedWithContradiction/,'acceptance report must prove contradiction-safe release');
+const reportField=(name,valuePattern)=>new RegExp(`(?:['\"])?${name}(?:['\"])?\\s*:\\s*${valuePattern}`);
+assert.match(workflow,reportField('projectSchema',"['\"]closed-loop-project\\/3['\"]"),'acceptance report must identify project schema /3');
+assert.match(workflow,reportField('responseSchema',"['\"]closed-loop-stage-response\\/3['\"]"),'acceptance report must identify response schema /3');
+assert.match(workflow,reportField('testIrSchema',"['\"]closed-loop-test-spec\\/1['\"]"),'acceptance report must identify the Test IR schema');
+assert.match(workflow,reportField('verificationPackageSchema',"['\"]closed-loop-verification-package\\/1['\"]"),'acceptance report must identify the verification-package schema');
+for(const field of [
+  'stage01IntakeCoverage','stage04ObligationCoverage','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage',
+  'acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage',
+  'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainStructuralCoverage','releaseArtifactIdentityCoverage',
+  'unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof',
+  'nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'
+])assert.match(workflow,new RegExp(`\\b${field}\\b`),`acceptance report must identify ${field}`);
+assert.match(workflow,/final-acceptance\.json/,'post-deploy machine acceptance artifact is required');
+assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
+assert.match(workflow,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
 
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
