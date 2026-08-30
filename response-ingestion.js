@@ -75,6 +75,8 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
   workflow.ensureShape(project);
   const issues=[];
   const stageNumber=Number(stage);
+  if(envelope?.responseType==='DATA_PROPOSAL'&&stageNumber===1){const evidence=safe(envelope.evidence).filter(e=>String(e?.kind||'').toUpperCase()==='INTAKE_ACCOUNTING');if(evidence.length!==1)issues.push(issue('INTAKE_ACCOUNTING_REQUIRED','/evidence','Stage 01 requires exactly one INTAKE_ACCOUNTING evidence object.'));else{const check=workflow.validateIntakeAccounting(project,evidence[0].content);for(const message of check.issues)issues.push(issue('INCOMPLETE_INTAKE_ACCOUNTING','/evidence',message));}}
+  if(envelope?.responseType==='DATA_PROPOSAL'&&stageNumber===4){const evidence=safe(envelope.evidence).filter(e=>String(e?.kind||'').toUpperCase()==='OBLIGATION_ACCOUNTING');if(evidence.length!==1)issues.push(issue('OBLIGATION_ACCOUNTING_REQUIRED','/evidence','Stage 04 requires exactly one OBLIGATION_ACCOUNTING evidence object.'));else{const check=workflow.validateObligationAccounting(project,evidence[0].content,envelope);for(const message of check.issues)issues.push(issue('INCOMPLETE_OBLIGATION_ACCOUNTING','/evidence',message));}}
   const contract=schema.STAGE_CONTRACTS[stageNumber];
   if(!contract)issues.push(issue('INVALID_STAGE','/stage',`Stage ${stage} is outside the 30-stage workflow.`));
   unknownKeys(envelope,TOP_LEVEL_KEYS,'',issues);

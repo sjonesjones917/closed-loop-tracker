@@ -24,7 +24,7 @@ There is no second parser, store, workflow engine, prompt layer, application she
 ## Current contracts
 
 - Project schema: `closed-loop-project/2`.
-- Response schema: `closed-loop-stage-response/2`.
+- Response schema: `closed-loop-stage-response/3`.
 - Workflow identity: `mobile-closed-loop/30` with exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
 - Required browser capabilities: IndexedDB, Web Crypto, Blob, CompressionStream, and DecompressionStream for complete compressed package export/import.
