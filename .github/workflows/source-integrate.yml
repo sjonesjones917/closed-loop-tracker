@@ -1,0 +1,31 @@
+name: Integrate prompt source changes
+on:
+  push:
+    branches: [fix/stage01-intake-closure-20260830]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Integrate source
+        run: |
+          python3 prepare-current-candidate.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="  1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],"
+          new="  2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],"
+          if old not in s: raise SystemExit('Stage 01 version authority anchor not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js workflow-engine.js prompt-engine.js verify-stage-prompts-complete.mjs verify-full-cycle.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Integrate complete stage prompt contracts and stable human input authority'
+          git push origin HEAD:fix/stage01-intake-closure-20260830
