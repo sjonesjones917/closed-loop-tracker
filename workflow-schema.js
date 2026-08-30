@@ -217,14 +217,15 @@ const RECORD_OWNERSHIP=Object.freeze({
       "FAILURE_CONDITION",
       "EVIDENCE_TO_PRESERVE",
       "EXECUTABLE_KIND",
-      "EXECUTABLE_SPEC_VERSION",
       "EXECUTABLE_SPEC",
       "EXECUTABLE_INPUT_BINDINGS"
     ],
     "application": [
       "TEST_ID",
       "REQ_ID",
-      "STATUS"
+      "STATUS",
+      "EXECUTABLE_SPEC_VERSION",
+      "EXECUTABLE_SPEC_SHA256"
     ]
   },
   "failureTests": {
