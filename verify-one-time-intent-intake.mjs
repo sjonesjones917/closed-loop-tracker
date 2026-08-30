@@ -31,7 +31,9 @@ function evidence(){return [{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',
 function envelope(stage,prompt,records,stageData={}){return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:evidence(),unresolved:[],warnings:[],attachments:[]};}
 function candidate(key,id){return {tempKey:key,fields:{SOURCE_LOCATION:id,CANDIDATE_OBLIGATION:'Preserve '+id,CLASSIFICATION:'USER_REQUIREMENT',APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',EVIDENCE:'Canonical statement '+id},relationships:{},evidenceRefs:['evidence-1']};}
 function requirement(key,id){return {tempKey:key,fields:{OBLIGATION:'Implement '+id,REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:id,APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'Observed satisfied',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC',EXPECTED_EVIDENCE:'Verification evidence',FAILURE_CONDITION:'Requirement absent',SEVERITY:'MAJOR',NOTES:'NONE'},relationships:{},evidenceRefs:['evidence-1']};}
-const stage3Data={RESEARCH_VERSION:'RESEARCH-v001',ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'YES',LATEST_PASS_NUMBER:'2',NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'NO'};
+// Only AGENT-owned Stage 03 fields are submitted by the external response.
+// RESEARCH_VERSION and ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED are application-owned and must never be fabricated by the agent fixture.
+const stage3Data={SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'YES',LATEST_PASS_NUMBER:'2',NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'NO'};
 const p3={...stage3Prompt,generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
 let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]},stage3Data)),promptRecord:p3});
 assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_CANDIDATE'),'Stage 03 accepted incomplete intent-statement coverage.');
@@ -43,6 +45,8 @@ assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejec
 p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
 p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
 p.stages[3].agentData={...stage3Data};
+p.stages[3].derivedData={...(p.stages[3].derivedData||{}),RESEARCH_VERSION:'RESEARCH-v001',ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true};
+p.job.CURRENT_RESEARCH_VERSION='RESEARCH-v001';
 const p4={...prompts.buildPromptRecord(4,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p4);
 assert(p4.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),'Stage 04 does not prohibit original-file reuse.');
 assert(!p4.prompt.includes('Attach or provide the original material with the Stage 04 instruction.'),'Stage 04 still requests the original file.');
