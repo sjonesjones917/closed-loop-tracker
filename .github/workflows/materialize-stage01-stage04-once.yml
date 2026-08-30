@@ -1,5 +1,6 @@
 name: Materialize Stage 01 and Stage 04 accounting once
 
+# One-shot verifier/materializer. Remove after the permanent accounting implementation is committed.
 on:
   push:
     branches: [implementation/closed-loop-v3]
