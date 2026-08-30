@@ -1,0 +1,23 @@
+name: Inspect single-use intake defect
+on:
+  push:
+    branches: [fix-intake-single-use-20260830]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate Stage 01, 03, and 04 intake and handoff logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== prompt procedures ==='
+          grep -n -E "^[[:space:]]*[134]:'" prompt-engine.js || true
+          echo '=== workflow material references ==='
+          grep -n -C 12 -E 'SUPPLIED_MATERIALS_INVENTORY|original material|original materials|attach or provide|Stage 04 instruction|stage 04 instruction|material.*handoff|handoff.*material|filesToSend|filesToWithhold|operationalNextAction' workflow-engine.js || true
+          echo '=== app material references ==='
+          grep -n -C 10 -E 'SUPPLIED_MATERIALS_INVENTORY|original material|original materials|attach or provide|Stage 04 instruction|stage 04 instruction|filesToSend|filesToWithhold' app-core.js || true
+          echo '=== tests protecting the wrong behavior ==='
+          grep -n -C 8 -E 'Send the Stage 04 instruction with|prompt does not include|attach or provide|original material|original materials|SUPPLIED_MATERIALS_INVENTORY' verify*.mjs || true
