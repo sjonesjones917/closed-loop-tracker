@@ -40,9 +40,19 @@ jobs:
           block=t[start:end]
           block=block.replace('      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC",','      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC",')
           block=block.replace('      "TEST_ID",\n      "REQ_ID",\n      "STATUS"\n','      "TEST_ID",\n      "REQ_ID",\n      "STATUS",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256"\n')
-          if '"EXECUTABLE_SPEC_VERSION"' not in block or block.count('"EXECUTABLE_SPEC_VERSION"')!=1 or block.count('"EXECUTABLE_SPEC_SHA256"')!=1:
+          if block.count('"EXECUTABLE_SPEC_VERSION"')!=1 or block.count('"EXECUTABLE_SPEC_SHA256"')!=1:
               raise SystemExit('Test ownership partition repair did not produce exactly one application-owned version/hash field.')
           t=t[:start]+block+t[end:]
+
+          rs=t.index("tests:recordSchema({ownership:RECORD_OWNERSHIP.tests")
+          re=t.index("failureTests:recordSchema",rs)
+          record=t[rs:re]
+          old="'EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'"
+          new="'EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'"
+          if record.count(old)!=1:
+              raise SystemExit(f'Expected one verification-test field-universe insertion point, found {record.count(old)}.')
+          record=record.replace(old,new)
+          t=t[:rs]+record+t[re:]
           p.write_text(t)
           PY
           git diff --check
