@@ -16,6 +16,11 @@ r('verify-ingestion.mjs',
 # Test IR v1 permits TEST_IR only; CUSTOM_PIPELINE is explicitly prohibited.
 r('verify-test-runtime.mjs',"EXECUTABLE_KIND:'CUSTOM_PIPELINE'","EXECUTABLE_KIND:'TEST_IR'")
 
+# Stage 4 next action is a structured application-owned action, not free-form prose.
+r('verify-test-runtime.mjs',
+  "const nextAction=String(engine.operationalNextAction(project,4)||'');assert.ok(nextAction.includes('canonical Stage 01 intent-statement ledger')&&nextAction.includes('Do not attach, resend, reopen, or otherwise reuse the original intent file.'),'Stage 04 next action must identify canonical intent reuse and prohibit original-file reuse.');assert.ok(!/required stage 04 input file|add the exact supplied project file|missing or unverified.*stage 04|send the stage 04 instruction with|attach or provide the original|required material/i.test(nextAction),'Stage 04 next action must not require a filename-derived re-upload.');",
+  "const nextAction=engine.operationalNextAction(project,4);assert.equal(typeof nextAction,'object');assert.ok(['PASTE_FINAL_JSON','CONTINUE_AGENT_CONVERSATION'].includes(nextAction.actionType),'Stage 04 next action must remain a structured operator action.');assert.ok(nextAction.explanation.includes('canonical Stage 01 intent-statement ledger')&&nextAction.explanation.includes('Do not attach, resend, reopen'),'Stage 04 next action must identify canonical intent reuse and prohibit original-file reuse.');assert.ok(nextAction.explanation.includes('Do not ask the user to repeat project information already captured.'),'Stage 04 must explicitly prohibit repeated project input.');assert.ok(!/required stage 04 input file|add the exact supplied project file|missing or unverified.*stage 04|send the stage 04 instruction with|attach or provide the original|required material/i.test(nextAction.explanation),'Stage 04 next action must not require a filename-derived re-upload.');")
+
 # Node test harness needs the same minimal DOM-ready stubs as the other verification files.
 p=Path('verify-capture-once.mjs'); t=p.read_text()
 needle="import fs from 'node:fs';\nimport vm from 'node:vm';\n"
