@@ -20,7 +20,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Normalize materializer template delimiters and materialize the repair
+      - name: Normalize materializer declarations and materialize the repair
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -30,6 +30,9 @@ jobs:
           data,n=re.subn(r"(`\/records\/[^`\n]+?)'",r"\1`",data)
           if n < 1:
               raise SystemExit('expected generated-validator path terminator defects were not found')
+          data=data.replace('valueType:VALUE_TYPES.STRING_ARRAY',"valueType:'STRING_ARRAY'")
+          data=data.replace('valueType:VALUE_TYPES.STRING',"valueType:'STRING'")
+          data=data.replace('valueType:VALUE_TYPES.ENUM',"valueType:'STRING'")
           path.write_text(data)
           PY
           python3 .github/scripts/materialize_stage4.py
