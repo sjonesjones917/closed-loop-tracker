@@ -72,6 +72,18 @@ jobs:
 
           node - <<'NODE'
           const fs=require('fs');
+          let prompt=fs.readFileSync('prompt-engine.js','utf8');
+          const old='Build the complete verification suite before production instructions. For every mandatory requirement analyze how a defective product could falsely appear compliant, including boundary, partial-success, stale-state, malformed-input, incorrect-authority, wrong-artifact, and capability-substitution cases. Use application deterministic execution only when the proposition is faithfully expressible in the registered Closed Loop Test IR; otherwise route to the exact external executor.';
+          const replacement='Build the complete verification suite before production instructions. The controlling Test IR schema is closed-loop-test-spec/1. Publish and use the application-owned registered Test IR operations, exact operation argument contracts, available immutable bindings, current centralized authoring limits, and prohibited constructs for this operation. For every mandatory requirement analyze how a defective product could falsely appear compliant, including boundary, partial-success, stale-state, malformed-input, incorrect-authority, wrong-artifact, and capability-substitution cases. Use APPLICATION_DETERMINISTIC and valid closed-loop-test-spec/1 Test IR whenever the proposition is faithfully expressible in the currently registered primitives without substantive meaning loss; otherwise route to the exact non-native executor. Never invent runtime semantics or mark an unsupported operation executable.';
+          if(!prompt.includes('closed-loop-test-spec/1')){
+            if(!prompt.includes(old))throw new Error('Stage 06 prompt anchor missing');
+            prompt=prompt.replace(old,replacement);
+            fs.writeFileSync('prompt-engine.js',prompt);
+          }
+          NODE
+
+          node - <<'NODE'
+          const fs=require('fs');
           let html=fs.readFileSync('index.html','utf8');
           if(!html.includes("connect-src 'self'; worker-src 'self';")){
             const old="connect-src 'self'; object-src 'none';";
