@@ -360,7 +360,6 @@ const RECORD_OWNERSHIP=Object.freeze({
     "agent": [
       "VERIFIER",
       "VERIFIER_CONTEXT_ID",
-      "INDEPENDENCE_STATUS",
       "INPUTS",
       "PROCEDURE",
       "EXPECTED_RESULT",
@@ -374,7 +373,8 @@ const RECORD_OWNERSHIP=Object.freeze({
       "REQ_ID",
       "RUN_ID",
       "TEST_ID",
-      "DEFECT_ID"
+      "DEFECT_ID",
+      "INDEPENDENCE_STATUS"
     ]
   },
   "comparisons": {
