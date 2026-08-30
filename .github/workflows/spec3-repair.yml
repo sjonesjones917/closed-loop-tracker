@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Remove hard-coded project-subject prompt branches
+      - name: Restore visual baseline and remove subject prompt branches
         run: |
           python3 <<'PY'
           from pathlib import Path
@@ -29,6 +29,9 @@ jobs:
           s=s[:start]+generic+s[end:]
           s=re.sub(r'For PATENT / REGULATED FILING jobs,[^\n]*\n','Derive ASK_NOW_NONBLOCKING questions from the actual project whenever a foreseeable fact or decision must come from the human and is not already supplied. The human may answer unknown or defer; retain that state without inventing an answer.\n',s)
           p.write_text(s)
+          h=Path('index.html'); x=h.read_text()
+          x=x.replace('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}','')
+          h.write_text(x)
           PY
       - name: Apply controlling specification repair
         run: node spec3-repair.mjs
