@@ -1,0 +1,54 @@
+name: Apply Stage 01 03 04 one-time intake fix
+on:
+  push:
+    branches: ['fix/stage-input-once']
+    paths:
+      - apply-stage-input-once.mjs
+      - .github/workflows/apply-stage-input-once.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: apply-stage-input-once
+  cancel-in-progress: true
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage-input-once
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact source and regression changes
+        run: node apply-stage-input-once.mjs
+      - name: Rebuild retained test project
+        run: node build-test-project.mjs
+      - name: Syntax check changed runtime and proof files
+        run: |
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify-stage-input-once.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-complete.mjs
+          node --check verify-browser.mjs
+      - name: Prove one-time intake and canonical Stage 04 context
+        run: node verify-stage-input-once.mjs
+      - name: Run prompt, gate, and architecture regressions
+        run: |
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          node verify.mjs
+      - name: Remove one-time applicator and commit verified implementation
+        run: |
+          rm apply-stage-input-once.mjs
+          rm .github/workflows/apply-stage-input-once.yml
+          git config user.name 'closed-loop-fix-bot'
+          git config user.email 'closed-loop-fix-bot@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Fix Stage 01 03 04 to use one-time canonical intake'
+          git push origin HEAD:fix/stage-input-once
