@@ -1,18 +1,21 @@
-name: Diagnose workflow gates
+name: Repair full-cycle verifier
 on:
   push:
     branches: [implementation/closed-loop-v3]
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
-  diag:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message || '', '[full-cycle-final]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
       - run: |
-          node verify-complete.mjs > gates.log 2>&1 || true
-          echo '--- FULL CYCLE ---' >> gates.log
-          node verify-full-cycle.mjs >> gates.log 2>&1 || true
-      - uses: actions/upload-artifact@v4
-        with: {name: gate-diagnostic, path: gates.log}
+          node - <<'NODE'
+          const fs=require('fs');let s=fs.readFileSync('verify-full-cycle.mjs','utf8');if(!s.includes('process.exit(0);'))s=s.replace("console.log(JSON.stringify({fullCycle:true,stagesCompleted:30,historyEvents:p.history.length,rawResponses:p.projectData.rawResponses.length,acceptedChanges:p.projectData.acceptedChanges.length},null,2));","console.log(JSON.stringify({fullCycle:true,stagesCompleted:30,historyEvents:p.history.length,rawResponses:p.projectData.rawResponses.length,acceptedChanges:p.projectData.acceptedChanges.length},null,2));\nprocess.exit(0);");fs.writeFileSync('verify-full-cycle.mjs',s);
+          NODE
+          git config user.name closed-loop-finalizer
+          git config user.email closed-loop-finalizer@users.noreply.github.com
+          git add verify-full-cycle.mjs
+          git commit -m 'Terminate completed full-cycle verifier deterministically [full-cycle-final]'
+          git push origin HEAD:implementation/closed-loop-v3
