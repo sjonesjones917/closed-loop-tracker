@@ -84,7 +84,6 @@ for old,new in replacements.items():s=s.replace(old,new)
 for old in replacements:
     if old in s:raise SystemExit('stale Stage 01 practical verifier wording remains: '+old)
 s='\n'.join(line for line in s.splitlines() if 'sufficient to define a patent-application drafting job at Stage 01' not in line)+'\n'
-# Every one-time-intent Stage 04 fixture must satisfy the real Stage 01/03 prerequisite.
 one_time="  const p=baseProject();\n  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);"
 one_time_ready="  const p=baseProject();\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};\n  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);"
 if one_time in s:s=s.replace(one_time,one_time_ready,1)
@@ -122,4 +121,4 @@ for name in graph:
 identity='runtime-'+hashlib.sha256(''.join(rows).encode()).hexdigest()[:16]
 p=Path('index.html');html=p.read_text()
 for name in direct:
-    pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[
+    pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[0-9a-f]+)?("\s*></script>)';html,n=re.subn(pattern,rf'\1?v={identity}\2
