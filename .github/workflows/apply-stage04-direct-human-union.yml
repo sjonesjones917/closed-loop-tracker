@@ -1,0 +1,34 @@
+name: Apply Stage 04 direct human authority union
+on:
+  push:
+    branches: [fix/stage04-direct-human-authority-union]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          text=p.read_text()
+          needle="  const capture=parseCapturedInputSet(project);"
+          if needle not in text:
+              raise SystemExit('obligation manifest insertion point not found')
+          insertion="""  const directHumanIntake=intakeCoverageManifest(project);for(const unit of safe(directHumanIntake.units)){if(String(unit?.kind||'').toUpperCase()==='SUPPLIED_MATERIAL')continue;add(unit?.rawValueText,'CURRENT_USER_JOB_INPUT',{sourceUnitId:String(unit?.unitId||'UNKNOWN'),sourceLocation:String(unit?.sourceLocation||'UNKNOWN'),rawValueSha256:String(unit?.rawValueSha256||''),inputVersion},null,[],'HUMAN_AUTHORITY_RAW');}\n"""
+          if "CURRENT_USER_JOB_INPUT" not in text:
+              text=text.replace(needle,insertion+needle,1)
+          p.write_text(text)
+          PY
+          rm -f .github/workflows/apply-stage04-direct-human-union.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Include direct human authority in Stage 04 obligation universe"
+          git push origin HEAD:fix/stage04-direct-human-authority-union
