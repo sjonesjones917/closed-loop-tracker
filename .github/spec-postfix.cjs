@@ -53,6 +53,7 @@ const practical=`// stage01-practical-intake-regression-v2 — project-specific 
 
 `;
 t=t.slice(0,practicalStart)+practical+t.slice(practicalEnd);
+t=t.replace("if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');","if(prompts.version!=='closed-loop-prompt-engine/28')throw new Error('Persisted prompts were not invalidated after the controlling prompt-engine repair.');");
 const mutantBlock=/const mutants=\[[\s\S]*?\n\];\nfor\(const \[index,mutant\] of mutants\.entries\(\)\)\{const issues=semanticIssues\(mutant\);if\(!issues\.length\)throw new Error\(`Semantic contradiction mutation \$\{index\+1\} escaped detection\.`\);\}/;
 must(mutantBlock.test(t),'Prompt semantic mutation block not found.');
 t=t.replace(mutantBlock,`const mutants=[
