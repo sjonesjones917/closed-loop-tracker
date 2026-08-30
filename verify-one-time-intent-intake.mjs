@@ -67,6 +67,7 @@ project.stages[1].agentData={
   UNKNOWN_INFORMATION:'NONE',
   INPUT_SET_CONTENTS:JSON.stringify(capture)
 };
+project.job.EXACT_DELIVERABLE_REQUESTED=project.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED;
 project.stages[1].status='COMPLETE';
 project.stages[1].gate={complete:true,blocked:false,reasons:[]};
 
