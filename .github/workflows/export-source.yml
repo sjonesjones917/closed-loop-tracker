@@ -1,0 +1,23 @@
+name: Export blind review implementation
+on:
+  push:
+    branches:
+      - fix/blind-review-aliases-latest
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage exact source
+        shell: bash
+        run: |
+          mkdir -p /tmp/closed-loop-blind-review-source
+          rsync -a --exclude='.git' ./ /tmp/closed-loop-blind-review-source/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-blind-review-source
+          path: /tmp/closed-loop-blind-review-source
+          include-hidden-files: true
+          retention-days: 1
