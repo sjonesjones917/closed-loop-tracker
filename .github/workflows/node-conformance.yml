@@ -1,0 +1,20 @@
+name: Non-browser conformance suite
+on:
+  push:
+    branches: [fix/final-spec-conformance]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-spec-conformance
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          set -euxo pipefail
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-worker.js; do node --check "$f"; done
+          for f in verify.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-intent-pipeline.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-stage4-intent-reuse.mjs verify-test-ir-contract-v1.mjs verify-test-runtime.mjs; do echo "=== $f ==="; node "$f"; done
