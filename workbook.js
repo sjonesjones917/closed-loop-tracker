@@ -128,9 +128,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "6": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "BLOCKED_MANDATORY_REQUIREMENTS"
-    ],
+    "agent": [],
     "application": [
       "TEST_SUITE_VERSION",
       "TEST_RECORDS",
@@ -138,6 +136,7 @@ const STAGE_OWNERSHIP=Object.freeze({
       "TOTAL_ACTIVE_MANDATORY_REQUIREMENTS",
       "ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST",
       "MANDATORY_TEST_COVERAGE",
+      "BLOCKED_MANDATORY_REQUIREMENTS",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -186,7 +185,6 @@ const STAGE_OWNERSHIP=Object.freeze({
     "human": [],
     "humanDecision": [],
     "agent": [
-      "REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR",
       "EVERY_SENTENCE_REVIEWED",
       "KNOWN_MATERIAL_AMBIGUITIES",
       "KNOWN_MATERIAL_CONFLICTS",
@@ -197,6 +195,7 @@ const STAGE_OWNERSHIP=Object.freeze({
       "INPUT_INSTRUCTION_VERSION",
       "OUTPUT_INSTRUCTION_VERSION",
       "PREFLIGHT_REVIEWER_ID",
+      "REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR",
       "SENTENCE_REVIEW_RECORDS",
       "PREFLIGHT_ITERATION_RECORDS",
       "STAGE_DECISION",
@@ -208,10 +207,7 @@ const STAGE_OWNERSHIP=Object.freeze({
     "humanDecision": [
       "FREEZE_OWNER"
     ],
-    "agent": [
-      "HASHES_RECORDED_WHERE_PRACTICAL",
-      "CHANGES_ALLOWED_DURING_BATCH"
-    ],
+    "agent": [],
     "application": [
       "CANDIDATE_ID",
       "ITERATION_ID",
@@ -220,6 +216,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "TOOL_CONFIGURATION_RECORDS",
       "ALL_REQUIRED_COMPONENTS_PRESENT",
       "ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS",
+      "HASHES_RECORDED_WHERE_PRACTICAL",
+      "CHANGES_ALLOWED_DURING_BATCH",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -245,11 +243,10 @@ const STAGE_OWNERSHIP=Object.freeze({
   "12": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "RUNS"
-    ],
+    "agent": [],
     "application": [
       "ITERATION_ID",
+      "RUNS",
       "REQUIREMENTS_VERSION",
       "TEST_SUITE_VERSION",
       "VERIFICATION_RECORDS",
