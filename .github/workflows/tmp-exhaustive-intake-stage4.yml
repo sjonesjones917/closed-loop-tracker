@@ -18,7 +18,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply integrated repair
-        run: python3 .repair-orchestrate.py
+        run: |
+          python3 .repair-orchestrate.py
+          python3 .repair-fixture.py
       - name: Syntax and focused deterministic proof
         run: |
           node --check workbook.js
@@ -42,7 +44,7 @@ jobs:
         run: |
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
-          git rm .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py .repair-orchestrate.py
+          git rm .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py
           git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs verify-one-time-intent-intake.mjs .github/workflows/pages.yml
           git commit -m 'Close Stage 01 and Stage 03 accounting before Stage 04'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
