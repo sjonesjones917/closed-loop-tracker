@@ -11,3 +11,11 @@ source=source.replaceAll('every semantically relevant supplied statement','every
 source=source.replaceAll("`3:${JSON.stringify(stage3)},\\n4:`","`3:'${stage3}',\\n4:`");
 source=source.replaceAll("`4:${JSON.stringify(stage4)},\\n5:`","`4:'${stage4}',\\n5:`");
 fs.writeFileSync(file,source);
+
+const promptTestFile='verify-prompt-semantics.mjs';
+let promptTests=fs.readFileSync(promptTestFile,'utf8');
+const obsolete='/limited intake inspection is Stage 01 job-definition work/i';
+const corrected='/complete meaning-preserving intake inspection is Stage 01 job-definition work/i';
+if(promptTests.split(obsolete).length-1!==1)throw new Error('Unable to locate obsolete Stage 01 locality assertion.');
+promptTests=promptTests.replace(obsolete,corrected);
+fs.writeFileSync(promptTestFile,promptTests);
