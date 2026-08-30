@@ -1,0 +1,35 @@
+name: Export source for single-use intake repair
+on:
+  push:
+    branches: [fix-intake-single-use-20260830]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-source-${{ github.sha }}
+          path: |
+            app-core.js
+            prompt-engine.js
+            workflow-engine.js
+            workflow-schema.js
+            response-ingestion.js
+            project-store.js
+            workbook.js
+            index.html
+            verify-browser.mjs
+            verify-complete.mjs
+            verify-prompt-semantics.mjs
+            verify-test-runtime.mjs
+            verify-ingestion.mjs
+            verify-full-cycle.mjs
+            verify.mjs
+            build-test-project.mjs
+            test-fixtures.mjs
+            test-runtime.js
+            test-worker.js
+          if-no-files-found: error
