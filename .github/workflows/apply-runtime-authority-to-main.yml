@@ -1,0 +1,24 @@
+name: Apply runtime authority correction to main
+on:
+  push:
+    branches: [apply/runtime-authority-main-20260830-2]
+    paths: [.github/workflows/apply-runtime-authority-to-main.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply functional Test IR runtime authority correction
+        run: |
+          set -euo pipefail
+          git fetch origin fix/test-ir-runtime-authority-v2
+          git diff 7d0975b2da0b4089e0863d19c331d3bcf60aad9f adceecdc721c98edf910aa60239749154b00dc50 -- workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js | git apply --3way --index
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git commit -m 'Use Test IR runtime as native execution authority'
+          git push origin HEAD:main
