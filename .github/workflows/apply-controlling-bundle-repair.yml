@@ -24,8 +24,26 @@ jobs:
         with:
           node-version: '22'
       - name: Apply deterministic repository repair
-        run: node repair-controlling-bundle.mjs
+        id: repair
+        shell: bash
+        run: |
+          set +e
+          node repair-controlling-bundle.mjs > repair.log 2>&1
+          code=$?
+          cat repair.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Commit repair diagnostic on failure
+        if: steps.repair.outputs.exit_code != '0'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add repair.log
+          git commit -m 'Capture controlling-bundle repair diagnostic'
+          git push origin HEAD:fix/complete-spec-stage4-prompts-20260830
+          exit 1
       - name: Syntax checks
+        if: steps.repair.outputs.exit_code == '0'
         run: |
           node --check workbook.js
           node --check workflow-schema.js
@@ -34,10 +52,13 @@ jobs:
           node --check response-ingestion.js
           node --check verify-stage01-stage04-exhaustion.mjs
       - name: Stage 01 and Stage 04 zero-loss regression
+        if: steps.repair.outputs.exit_code == '0'
         run: node verify-stage01-stage04-exhaustion.mjs
       - name: Diff integrity
+        if: steps.repair.outputs.exit_code == '0'
         run: git diff --check
       - name: Commit repaired implementation
+        if: steps.repair.outputs.exit_code == '0'
         run: |
           if git diff --quiet; then
             echo 'No changes to commit.'
