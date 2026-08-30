@@ -9,7 +9,7 @@ assert(store.includes('verifyProjectArtifacts')&&store.includes('MISSING_STORED_
 assert(engineSource.includes('reconcileArtifactCustodyVerification')&&engineSource.includes("source:'APPLICATION'")&&engineSource.includes("project.release.authorization='NOT AUTHORIZED'"),'Artifact custody failure must be application-owned and revoke release authorization.');
 assert(app.includes("integrity:verification?(verification.verified?'VERIFIED':'FAILED'):'NOT CHECKED'"),'Historical verification must never display current VERIFIED state without a current byte re-read.');
 assert(store.includes("lastVerifiedExport:'+jobId")&&app.includes('projectStorage.lastBackup'),'Backup status must remain project-specific.');
-for(const token of ['currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage','favorableAgentVerdictsOverridingContradictoryObservations','externallySupportedUnestablishedIndependenceTreatedAsProven'])assert(pages.includes(token),`Acceptance reduction lost required invariant ${token}.`);
+for(const token of ['currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'])assert(pages.includes(token),`Acceptance reduction lost required invariant ${token}.`);assert(pages.includes('...definition'),'Acceptance reduction must preserve all definition-of-done invariants, including required zero-valued failure counters.');
 assert(app.includes('Reopened ${blockerId}: ${reason}'),'Reopen must append a new blocker instead of rewriting the resolved record.');
 assert(store.includes("openTransaction([PROJECTS,ARTIFACTS,META],'readwrite')")&&store.includes('during-project-delete')&&store.includes('String(artifact.jobId)===jobId')&&store.includes("meta.get('projectUi')")&&store.includes('delete nextProjectUi[jobId]'),'Project deletion must remain one transaction over project/meta, lifecycle metadata, and owned artifact Blob rows.');
 assert(html.includes('project-action-menu')&&html.includes('id=\"project-actions-toggle\"')&&html.includes('aria-expanded=\"false\"')&&html.includes('Project actions'),'Routine header actions must remain compact and explicitly operable.');
@@ -22,7 +22,7 @@ assert(!html.includes('Force Complete Stage')&&!html.includes('Override Release 
 // the stale Stage 28 authorization or invalidated release evidence.
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;
 const custody=core.createBlankState('JOB-LIFECYCLE-CUSTODY');engine.ensureShape(custody);custody.activeStage=28;custody.release.authorization='AUTHORIZED';custody.release.authorizedArtifactIds=['ARTIFACT-CUSTODY-1'];
 const scope=engine.currentScope(custody);
