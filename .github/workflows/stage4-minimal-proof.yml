@@ -83,6 +83,8 @@ jobs:
           p.write_text(s)
           print(token)
           PY
+      - name: Remove temporary workflow from proof workspace
+        run: rm -f .github/workflows/stage4-minimal-proof.yml
       - name: Run the complete repository proof
         run: |
           node build-test-project.mjs
