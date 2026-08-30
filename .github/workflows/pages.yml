@@ -41,7 +41,8 @@ jobs:
               s=s.replace(old,new,1)
           p.write_text(s)
           PY
-          git show c534b690d800e9f079f12ed068217f05263fdc26:.github/workflows/pages.yml > /tmp/pages.final.yml
+          git fetch origin f91db9249878f5e2cb21facd401f5f5616458693 --depth=1
+          git show f91db9249878f5e2cb21facd401f5f5616458693:.github/workflows/pages.yml > /tmp/pages.final.yml
           python3 - <<'PY'
           from pathlib import Path
           p=Path('/tmp/pages.final.yml'); s=p.read_text()
