@@ -37,6 +37,11 @@ jobs:
             'If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials.',
             'If their actual contents are available in the current executing context, inspect them deeply enough to capture every human-authority statement relevant to defining the job while staying inside the Stage 01 boundary; do not atomize requirements or perform later-stage work, and do not ask the human to re-enter facts that are already present in those materials.')
 
+          # Stage 04's controlling input union includes the accepted Stage 01 job definition as well as the statement ledger.
+          replace_exact('prompt-engine.js',
+            "CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\n${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY",
+            "CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\n${stage===4?`ACCEPTED STAGE 01 JOB DEFINITION — CURRENT CANONICAL VALUES\nASSUMPTIONS:\n${show(j.ASSUMPTIONS)}\n\nUNKNOWN_INFORMATION:\n${show(j.UNKNOWN_INFORMATION)}\n\nINPUT_SET_CONTENTS:\n${show(j.INPUT_SET_CONTENTS)}`:''}\n\n${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY")
+
           # Focused runtime regression: Stage 04 sends/withholds no original-file artifact; the prompt and canonical ledger carry the information.
           replace_exact('verify-test-runtime.mjs',
             "assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,1);assert.equal(stage4Handoff.withhold[0]?.artifactIdOrCategory,'original Stage 01 intent file');assert.equal(stage4Handoff.expectBack.length,0);",
