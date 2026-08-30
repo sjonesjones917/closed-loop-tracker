@@ -14,6 +14,14 @@ async function rejectsCode(promise,code){await assert.rejects(promise,error=>err
 for(const [name,value] of Object.entries(runtime.LIMITS))assert.equal(Number.isFinite(value)&&value>0,true,`limit ${name} must be an explicit positive finite constant`);
 for(const name of ['maxTotalInputBytes','maxDecompressedBytes','maxTextBytes','maxSteps','maxSelectorDepth','maxParsedDepth','maxParsedNodes','maxCollectionItems','maxRegexPatternBytes','maxRegexInputBytes','maxCsvCells','maxXmlNodes','workerTimeoutMs','maxArchiveExpansionBytes'])assert.ok(name in runtime.LIMITS,`missing centralized limit ${name}`);
 
+assert.equal(runtime.validateResourceEnvelope({totalInputBytes:runtime.LIMITS.maxTotalInputBytes}).valid,true);
+assert.equal(runtime.validateResourceEnvelope({totalInputBytes:runtime.LIMITS.maxTotalInputBytes+1}).valid,false);
+assert.equal(runtime.validateResourceEnvelope({decompressedBytes:runtime.LIMITS.maxDecompressedBytes}).valid,true);
+assert.equal(runtime.validateResourceEnvelope({decompressedBytes:runtime.LIMITS.maxDecompressedBytes+1}).valid,false);
+assert.equal(runtime.validateResourceEnvelope({archiveExpansionBytes:runtime.LIMITS.maxArchiveExpansionBytes}).valid,true);
+assert.equal(runtime.validateResourceEnvelope({archiveExpansionBytes:runtime.LIMITS.maxArchiveExpansionBytes+1}).valid,false);
+const resourceEnvelopeBoundaries=true;
+
 const totalBytes=new Uint8Array(runtime.LIMITS.maxTotalInputBytes+1);
 await rejectsCode(runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:true}]),artifacts:{PRODUCT:binding('ART-PRODUCT',totalBytes)},metadata:metadata(['PRODUCT'])}),'INPUT_BYTE_LIMIT');
 
@@ -53,7 +61,7 @@ const bytes=encoder.encode('hash authority');
 const hashResult=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:createHash('sha256').update(bytes).digest('hex')}]),artifacts:{PRODUCT:binding('ART-HASH',bytes)},metadata:metadata(['PRODUCT'])});
 assert.equal(hashResult.determination,'SATISFIED');
 
-const one=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'ONE'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:[111,110,101]}]),artifacts:{ONE:binding('ART-ONE',encoder.encode('one'))},metadata:metadata(['ONE'])});
+const one=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'ONE'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'ASSERT_EQ',value:'one'}]),artifacts:{ONE:binding('ART-ONE',encoder.encode('one'))},metadata:metadata(['ONE'])});
 assert.equal(one.determination,'SATISFIED');
 const two=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'LEFT'},{op:'READ_BYTES'},{op:'BYTE_COMPARE',binding:'RIGHT'},{op:'ASSERT_EQ',value:true}]),artifacts:{LEFT:binding('ART-LEFT',encoder.encode('same')),RIGHT:binding('ART-RIGHT',encoder.encode('same'))},metadata:metadata(['LEFT','RIGHT'])});
 assert.equal(two.determination,'SATISFIED');assert.equal(new Set(two.inputArtifactIds).size,2);
@@ -61,6 +69,6 @@ assert.equal(two.determination,'SATISFIED');assert.equal(new Set(two.inputArtifa
 class SilentWorker{postMessage(){}terminate(){this.terminated=true;}}
 const timeoutTest={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{kind:'ARTIFACT',artifactId:'ART-TIMEOUT'}},EXECUTABLE_SPEC:spec([{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:true}])};
 const timeout=await runtime.executeTest(timeoutTest,{PRODUCT:binding('ART-TIMEOUT',encoder.encode('x'))},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
-assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.deepEqual(timeout.observations,[]);
+assert.equal(timeout.status,'EXECUTION_FAILED');assert.equal(timeout.failure.code,'WORKER_TIMEOUT');assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);
 
-console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true}));
+console.log(JSON.stringify({verifyTestRuntimeLimits:'PASS',limits:Object.keys(runtime.LIMITS).sort(),totalInputBoundary:true,textBoundary:true,parsedDepthBoundary:true,collectionBoundary:true,selectorDepthBoundary:true,regexPatternBoundary:true,regexInputBoundary:true,csvCellBoundary:true,xmlNodeBoundary:true,workerTimeoutBoundary:true,hashAuthority:true,oneArtifact:true,multiArtifact:true,arbitraryCodeImpossible:true,resourceEnvelopeBoundaries}));

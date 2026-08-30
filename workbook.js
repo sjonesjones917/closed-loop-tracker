@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const WORKFLOW_ID='mobile-closed-loop/30';
-const PROJECT_SCHEMA='closed-loop-project/2';
+const PROJECT_SCHEMA='closed-loop-project/3';
 const STAGE_COUNT=30;
 const SCHEMA=PROJECT_SCHEMA;
 const STAGE_DECISIONS=Object.freeze(['READY TO PROCEED','BLOCKED','NOT READY - CORRECTION REQUIRED']);

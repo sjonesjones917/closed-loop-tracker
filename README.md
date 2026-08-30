@@ -23,8 +23,8 @@ There is no second parser, store, workflow engine, prompt layer, application she
 
 ## Current contracts
 
-- Project schema: `closed-loop-project/2`.
-- Response schema: `closed-loop-stage-response/2`.
+- Project schema: `closed-loop-project/3`.
+- Response schema: `closed-loop-stage-response/3`.
 - Workflow identity: `mobile-closed-loop/30` with exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
 - Required browser capabilities: IndexedDB, Web Crypto, Blob, CompressionStream, and DecompressionStream for complete compressed package export/import.
@@ -57,7 +57,7 @@ The application requests persistent browser storage and reports storage usage/qu
 
 ## Migration policy
 
-The deterministic legacy migration is `human-project/30` → `closed-loop-project/2`. Migrations preserve unknown extension data, raw outputs, receipts, historical records, project identities, and all 30 stages. Original imported payloads remain auditable in non-operational migration history and do not act as current canonical state. A migration never creates Stage 31.
+The deterministic legacy migration is `human-project/30` → `closed-loop-project/3`. Migrations preserve unknown extension data, raw outputs, receipts, historical records, project identities, and all 30 stages. Original imported payloads remain auditable in non-operational migration history and do not act as current canonical state. A migration never creates Stage 31.
 
 ## Verification
 

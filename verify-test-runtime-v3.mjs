@@ -81,7 +81,7 @@ assert.equal(integer.determination,'SATISFIED');
 const unsafeEquality=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:0.1}]));
 assert.equal(unsafeEquality.valid,false);assert.match(unsafeEquality.issues.join(' '),/APPROXIMATE/);
 const missingTolerance=runtime.validateSpec(spec([{op:'ASSERT_EQ',value:0.1,numericMode:'APPROXIMATE'}]));
-assert.equal(missingTolerance.valid,false);assert.match(missingTolerance.issues.join(' '),/tolerance/);
+assert.equal(missingTolerance.valid,false);assert.match(missingTolerance.issues.join(' '),/tolerance/i);
 const approximate=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:0.3,numericMode:'APPROXIMATE',absoluteTolerance:1e-12}]),canonicalBindings:{VALUE:{value:0.1+0.2}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});
 assert.equal(approximate.determination,'SATISFIED');
 const decimal=await runtime.execute({spec:spec([{op:'LOAD_ARTIFACT',binding:'VALUE'},{op:'ASSERT_EQ',value:'1.2300',numericMode:'DECIMAL_STRING'}]),canonicalBindings:{VALUE:{value:'1.23'}},metadata:{bindings:{VALUE:{kind:'CANONICAL_VALUE',canonicalKey:'VALUE'}}}});

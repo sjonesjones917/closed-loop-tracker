@@ -11,6 +11,7 @@ const CAPABILITY='CLOSED_LOOP_TEST_IR';
    about every browser or every possible project. Every boundary is fail-closed. */
 const LIMITS=Object.freeze({
   maxTotalInputBytes:32*1024*1024,
+  maxTextBytes:16*1024*1024,
   maxDecompressedBytes:64*1024*1024,
   maxSteps:128,
   maxSelectorDepth:32,
@@ -18,6 +19,7 @@ const LIMITS=Object.freeze({
   maxParsedNodes:250000,
   maxCollectionItems:100000,
   maxRegexPatternBytes:2048,
+  maxRegexLength:2000,
   maxRegexInputBytes:2*1024*1024,
   maxCsvCells:250000,
   maxXmlNodes:100000,
@@ -50,6 +52,9 @@ const OP_DEFINITIONS=Object.freeze({
   HASH_SHA256:{required:[],optional:[],types:{}},
   REGEX:{required:['pattern'],optional:['flags'],types:{pattern:'regex',flags:'regexFlags'}},
   COMPARE:{required:[],optional:['value','binding','operator','numericMode','absoluteTolerance','relativeTolerance'],types:{binding:'binding',operator:'compareOperator',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'},oneOf:[['value'],['binding']]},
+  ASSERT_EXISTS:{required:[],optional:['message'],types:{message:'string'}},
+  ASSERT_TYPE:{required:['value'],optional:['message'],types:{value:'typeName',message:'string'}},
+  ASSERT_NE:{required:['value'],optional:['message','numericMode','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'}},
   ASSERT_EQ:{required:['value'],optional:['message','numericMode','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'}},
   ASSERT_GT:{required:['value'],optional:['message'],types:{message:'string'}},
   ASSERT_GTE:{required:['value'],optional:['message'],types:{message:'string'}},
@@ -62,7 +67,7 @@ const OP_DEFINITIONS=Object.freeze({
   BYTE_COMPARE:{required:['binding'],optional:[],types:{binding:'binding'}}
 });
 const OPS=Object.freeze(Object.keys(OP_DEFINITIONS));
-const ASSERTION_OPS=new Set(['ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);
+const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);
 const encoder=new TextEncoder();
 const hasOwn=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
@@ -82,9 +87,15 @@ async function sha256(bytes){
 }
 async function sha256Canonical(value){return sha256(encoder.encode(canonical(value)));}
 
+function validateResourceEnvelope(claim={}){
+  const issues=[];const allowed=new Set(['totalInputBytes','decompressedBytes','archiveExpansionBytes']);for(const key of Object.keys(claim||{}))if(!allowed.has(key))issues.push('Unknown resource-envelope property '+key+'.');
+  const checks=[['totalInputBytes','maxTotalInputBytes'],['decompressedBytes','maxDecompressedBytes'],['archiveExpansionBytes','maxArchiveExpansionBytes']];
+  for(const [key,limitKey] of checks){if(!Object.prototype.hasOwnProperty.call(claim,key))continue;const value=claim[key];if(!Number.isSafeInteger(value)||value<0)issues.push(key+' must be a nonnegative safe integer.');else if(value>LIMITS[limitKey])issues.push(key+' exceeds '+limitKey+'.');}
+  return {valid:issues.length===0,issues};
+}
 function validateRegex(pattern,flags=''){
   const issues=[];const text=String(pattern);const flagText=String(flags||'');
-  if(byteLength(text)>LIMITS.maxRegexPatternBytes)issues.push('Regex pattern exceeds the registered byte limit.');
+  if(byteLength(text)>LIMITS.maxRegexPatternBytes||text.length>LIMITS.maxRegexLength)issues.push('Regex pattern exceeds the registered byte limit.');
   if(!/^[imsu]*$/.test(flagText)||new Set(flagText).size!==flagText.length)issues.push('Regex flags must be a unique subset of i, m, s, and u.');
   if(/\\[1-9]/.test(text)||/\\k</.test(text))issues.push('Regex backreferences are not supported.');
   if(/\(\?/.test(text))issues.push('Regex lookaround, named groups, and inline mode groups are not supported.');
@@ -238,6 +249,7 @@ function validateType(value,type){
     case 'jsonSelector':try{parseJsonSelector(value);return true;}catch{return false;}
     case 'xmlSelector':try{parseXmlSelector(value);return true;}catch{return false;}
     case 'compareOperator':return ['EQ','NE','GT','GTE','LT','LTE'].includes(value);
+    case 'typeName':return ['string','number','boolean','object','array','null','undefined','bytes'].includes(value);
     case 'numericMode':return ['INTEGER','DECIMAL_STRING','APPROXIMATE'].includes(value);
     case 'nonnegativeNumber':return typeof value==='number'&&Number.isFinite(value)&&value>=0;
     default:return true;
@@ -307,18 +319,20 @@ function resultForAssertion(ok,expected,actual,message){return {determination:ok
 async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
   const normalized=normalizeSpec(spec);const bindingCheck=validateBindings(metadata.bindings||Object.fromEntries([...Object.keys(artifacts),...Object.keys(canonicalBindings)].map(key=>[key,{kind:hasOwn(artifacts,key)?'ARTIFACT':'CANONICAL_VALUE',artifactId:hasOwn(artifacts,key)?String(artifacts[key]?.artifactId||key):undefined,canonicalKey:hasOwn(canonicalBindings,key)?key:undefined}])));if(!bindingCheck.valid)fail('INVALID_BINDINGS',bindingCheck.issues.join(' '));
   const uniqueBuffers=new Set();let totalInputBytes=0;for(const artifact of Object.values(artifacts||{})){const bytes=bytesOf(artifact?.bytes??artifact);if(bytes&&!uniqueBuffers.has(bytes.buffer)){uniqueBuffers.add(bytes.buffer);totalInputBytes+=bytes.byteLength;}}
-  if(totalInputBytes>LIMITS.maxTotalInputBytes)fail('INPUT_BYTE_LIMIT',`Bound input bytes exceed ${LIMITS.maxTotalInputBytes}.`);
+  const envelope=validateResourceEnvelope({totalInputBytes});if(!envelope.valid)fail('INPUT_BYTE_LIMIT',envelope.issues.join(' '));
   let value=null,current=null;const observations=[];let finalAssertion=null;const inputArtifactIds=[];const inputArtifactSha256Values=[];
+  /* PREHASH_EVERY_BOUND_ARTIFACT: every consumed package input is identity-bound, even when a comparison operation references it without LOAD_ARTIFACT. */
+  for(const [bindingName,artifact] of Object.entries(artifacts||{})){const bytes=bytesOf(artifact?.bytes??artifact);if(!bytes)continue;const calculated=await sha256(bytes);if(artifact?.sha256&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||bindingName} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||bindingName));inputArtifactSha256Values.push(calculated);}
   for(const [index,step] of normalized.steps.entries()){
     switch(step.op){
       case 'LOAD_ARTIFACT':{
-        const resolved=resolveBinding(step.binding,artifacts,canonicalBindings);current=resolved;value=resolved.value;
+        const resolved=resolveBinding(step.binding,artifacts,canonicalBindings);current=resolved;value=resolved.kind==='CANONICAL_VALUE'?(resolved.value?.value??resolved.value):resolved.value;
         if(resolved.kind==='ARTIFACT'){const artifact=resolved.value;const bytes=bytesOf(artifact?.bytes??artifact);const calculated=bytes?await sha256(bytes):null;if(artifact?.sha256&&calculated&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||step.binding} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||step.binding));inputArtifactSha256Values.push(calculated||String(artifact?.sha256||''));observations.push({step:index,op:step.op,binding:step.binding,bindingKind:'ARTIFACT',artifactId:artifact?.artifactId||null,filename:artifact?.filename||null,sha256:calculated||artifact?.sha256||null});}
         else observations.push({step:index,op:step.op,binding:step.binding,bindingKind:'CANONICAL_VALUE'});
         break;
       }
       case 'READ_BYTES':{const bytes=bytesOf(current?.kind==='ARTIFACT'?(current.value?.bytes??current.value):value);if(!bytes)fail('BYTES_REQUIRED','READ_BYTES requires a byte-backed artifact binding.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
-      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)fail('BYTES_REQUIRED','DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxDecompressedBytes)fail('DECOMPRESSED_BYTE_LIMIT','UTF-8 input exceeds the registered decompressed-byte limit.');try{value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{fail('INVALID_UTF8','Input is not valid UTF-8.',STATUS.UNDETERMINED);}break;}
+      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)fail('BYTES_REQUIRED','DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)fail('TEXT_BYTE_LIMIT','UTF-8 input exceeds the registered text-byte limit.');if(bytes.byteLength>LIMITS.maxDecompressedBytes)fail('DECOMPRESSED_BYTE_LIMIT','UTF-8 input exceeds the registered decompressed-byte limit.');try{value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{fail('INVALID_UTF8','Input is not valid UTF-8.',STATUS.UNDETERMINED);}break;}
       case 'PARSE_JSON':{try{value=JSON.parse(String(value));}catch(error){fail('MALFORMED_JSON',`JSON parse failed: ${error.message}`,STATUS.UNDETERMINED);}inspectStructure(value);break;}
       case 'PARSE_CSV':value=parseCsv(String(value),step);inspectStructure(value);break;
       case 'PARSE_XML':value=parseXml(String(value));inspectStructure(value);break;
@@ -332,6 +346,9 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
       case 'REGEX':{const input=String(value);if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(step.pattern,step.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));value=new RegExp(step.pattern,step.flags||'').test(input);break;}
       case 'COMPARE':{const expected=hasOwn(step,'value')?step.value:valueFromBinding(step.binding,artifacts,canonicalBindings);const operator=step.operator||'EQ';const cmp=['EQ','NE'].includes(operator)?null:orderedCompare(value,expected);if(operator==='EQ')value=exactEqual(value,expected,step);else if(operator==='NE')value=!exactEqual(value,expected,step);else if(operator==='GT')value=cmp>0;else if(operator==='GTE')value=cmp>=0;else if(operator==='LT')value=cmp<0;else value=cmp<=0;break;}
       case 'BYTE_COMPARE':{const left=bytesOf(value),resolved=resolveBinding(step.binding,artifacts,canonicalBindings),right=bytesOf(resolved.kind==='ARTIFACT'?(resolved.value?.bytes??resolved.value):resolved.value?.value??resolved.value);if(!left||!right)fail('BYTES_REQUIRED','BYTE_COMPARE requires byte-backed current and target bindings.');let equal=left.byteLength===right.byteLength;if(equal)for(let i=0;i<left.byteLength;i++)if(left[i]!==right[i]){equal=false;break;}value=equal;break;}
+      case 'ASSERT_EXISTS':finalAssertion=resultForAssertion(value!==null&&value!==undefined,'present',value,step.message);break;
+      case 'ASSERT_TYPE':{const actual=bytesOf(value)?'bytes':Array.isArray(value)?'array':value===null?'null':typeof value;finalAssertion=resultForAssertion(actual===step.value,step.value,actual,step.message);break;}
+      case 'ASSERT_NE':finalAssertion=resultForAssertion(!exactEqual(value,step.value,step),`not ${canonical(step.value)}`,value,step.message);break;
       case 'ASSERT_EQ':finalAssertion=resultForAssertion(exactEqual(value,step.value,step),step.value,value,step.message);break;
       case 'ASSERT_GT':finalAssertion=resultForAssertion(orderedCompare(value,step.value)>0,`> ${step.value}`,value,step.message);break;
       case 'ASSERT_GTE':finalAssertion=resultForAssertion(orderedCompare(value,step.value)>=0,`>= ${step.value}`,value,step.message);break;
@@ -350,7 +367,7 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
     testId:metadata.testId||null,
     testSpecVersion:SPEC_VERSION,
     testSpecSha256,
-    status:finalAssertion?.determination||STATUS.UNDETERMINED,
+    status:'COMPLETE',
     determination:finalAssertion?.determination||STATUS.UNDETERMINED,
     expected:finalAssertion?.expected??null,
     actual:finalAssertion?.actual??value,
@@ -367,7 +384,8 @@ function workerUrl(){
   const source=typeof document!=='undefined'?document.currentScript?.src:null;const base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);if(source)url.search=new URL(source).search;return url.href;
 }
 function executionFailure(test,startedAtDeviceTime,error){
-  return {testId:field(test,'TEST_ID')||test?.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:null,status:STATUS.EXECUTION_FAILED,determination:STATUS.UNDETERMINED,expected:null,actual:null,observations:[],evidence:[],executorVersion:VERSION,runtimeVersion:VERSION,inputArtifactIds:[],inputArtifactSha256Values:[],startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString(),failure:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error)}};
+  const disposition=error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED;
+  return {testId:field(test,'TEST_ID')||test?.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:null,status:disposition,determination:STATUS.UNDETERMINED,expected:null,actual:null,observations:[],evidence:[],executorVersion:VERSION,runtimeVersion:VERSION,inputArtifactIds:[],inputArtifactSha256Values:[],startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString(),failure:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error)}};
 }
 function executeTest(test,artifacts,canonicalBindings,options={}){
   const spec=field(test,'EXECUTABLE_SPEC');const bindings=field(test,'EXECUTABLE_INPUT_BINDINGS');const check=validateSpec(spec,bindings);const startedAtDeviceTime=new Date().toISOString();if(!check.valid)return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('INVALID_TEST_IR',check.issues.join(' '))));
@@ -376,7 +394,7 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
     const requestId=`test-ir-${Date.now()}-${Math.random().toString(36).slice(2)}`;let settled=false;const worker=new WorkerClass(options.workerUrl||workerUrl());
     const finish=result=>{if(settled)return;settled=true;clearTimeout(timer);try{worker.terminate();}catch{}resolve(result);};
     const timer=setTimeout(()=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_TIMEOUT',`Test IR worker exceeded ${LIMITS.workerTimeoutMs} ms.`))),Number(options.timeoutMs||LIMITS.workerTimeoutMs));
-    worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.')));};
+    worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.',message.error?.disposition||STATUS.EXECUTION_FAILED)));};
     worker.onerror=event=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_ERROR',event?.message||'Test IR worker failed.')));
     try{worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizeSpec(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings}});}catch(error){finish(executionFailure(test,startedAtDeviceTime,error));}
   });
@@ -384,5 +402,5 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
 
 const operationContracts=()=>JSON.parse(JSON.stringify(OP_DEFINITIONS));
 const capabilities=()=>Object.freeze([CAPABILITY]);
-root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,OPS,OP_DEFINITIONS,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical});
+root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,OPS,OP_DEFINITIONS,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope});
 })();
