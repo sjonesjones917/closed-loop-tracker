@@ -50,6 +50,27 @@ jobs:
               raise SystemExit('runtime identity verifier anchor missing')
           p.write_text(s)
           PY
+      - name: Refresh exact runtime build identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          rows=[]
+          for name in files:
+              data=Path(name).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              rows.append(f'{name}:{blob}\n')
+          identity='runtime-'+hashlib.sha256(''.join(rows).encode()).hexdigest()[:16]
+          p=Path('index.html')
+          html=p.read_text()
+          for name in files:
+              pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[0-9a-f]+)?("\s*></script>)'
+              html,n=re.subn(pattern,rf'\1?v={identity}\2',html,count=1)
+              if n!=1: raise SystemExit(f'Runtime script tag missing for {name}')
+          p.write_text(html)
+          print(identity)
+          PY
       - name: Syntax and architecture checks
         run: |
           node --check workbook.js
