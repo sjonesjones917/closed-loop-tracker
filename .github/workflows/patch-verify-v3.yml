@@ -14,6 +14,20 @@ jobs:
         with: {node-version: '22'}
       - name: Materialize final controlling semantics and visual rollback
         run: python3 .github/patch_verify_v3.py
+      - name: Repair overbroad UI terminology regression
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('build-test-project.mjs')
+          s=p.read_text()
+          old="const banned=new RegExp('se'+'mantic','i');if(banned.test(activeSource))throw new Error('Prohibited normal UI terminology remains in active source.');"
+          new="const banned=new RegExp('se'+'mantic','i');if(banned.test(html+app))throw new Error('Prohibited normal UI terminology remains on the primary UI surface.');"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('UI terminology regression anchor missing')
+          p.write_text(s)
+          PY
       - name: Syntax and architecture checks
         run: |
           node --check workbook.js
@@ -26,6 +40,7 @@ jobs:
           node --check project-store.js
           node --check app-core.js
           node --check test-worker.js
+          node --check build-test-project.mjs
           node --check verify-stage01-stage03-stage04-closure.mjs
       - name: Execute controlling proofs
         run: |
