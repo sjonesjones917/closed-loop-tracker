@@ -1,4 +1,4 @@
-name: Apply exhaustive intake and Stage 04 closure repair
+name: Apply exhaustive all-stage prompt repair
 on:
   push:
     branches:
