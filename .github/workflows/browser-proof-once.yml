@@ -13,8 +13,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply final migration repair and build identity
-        run: node .patch-stage1.mjs
+      - name: Apply final migration and acceptance repairs
+        run: |
+          node .patch-ci.mjs
+          node .patch-stage1.mjs
       - name: Complete non-browser proof
         run: |
           for file in *.js *.mjs; do node --check "$file"; done
