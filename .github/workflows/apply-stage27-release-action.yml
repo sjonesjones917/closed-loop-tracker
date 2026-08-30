@@ -1,0 +1,47 @@
+name: Apply Stage 27 application release action
+on:
+  push:
+    branches: [fix/stage27-application-release-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','BUILD_EVIDENCE_CHAINS','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
+          new="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
+          if old not in s: raise SystemExit('ACTION_TYPES anchor not found')
+          s=s.replace(old,new,1)
+          anchor="  if(stage===28)return actionEnvelope(project,stage,{actionType:'ATTACH_REQUIRED_FILES',heading:'Verify the exact delivery bytes'"
+          addition="  if(stage===27&&acceptedChanges(project,27).length&&!recordsForCurrentScope(project,'releaseRecords').length)return actionEnvelope(project,stage,{actionType:'CALCULATE_RELEASE',heading:'Calculate the release determination',explanation:'The advisory Stage 27 review is accepted. No agent or human may select the release state. The application must now evaluate the complete current release evidence, blockers, violations, unknowns, contradictions, baseline identity, product identity, and evidence sufficiency and record exactly one idempotent ACCEPTED, REJECTED, or BLOCKED determination.',primaryButton:'Calculate release'});\n"
+          if anchor not in s: raise SystemExit('Stage 28 anchor not found')
+          s=s.replace(anchor,addition+anchor,1)
+          p.write_text(s)
+
+          p=Path('app-core.js'); s=p.read_text()
+          s=s.replace("RUN_APP_TESTS:'Application',BUILD_EVIDENCE_CHAINS:'Application'","RUN_APP_TESTS:'Application',CALCULATE_RELEASE:'Application',BUILD_EVIDENCE_CHAINS:'Application'",1)
+          old="action.actionType==='BUILD_EVIDENCE_CHAINS'?`<button class=\"primary\" id=\"build-evidence-chains\" type=\"button\">${esc(action.primaryButton)}</button>`"
+          new="action.actionType==='CALCULATE_RELEASE'?`<button class=\"primary\" id=\"calculate-stage27-release\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='BUILD_EVIDENCE_CHAINS'?`<button class=\"primary\" id=\"build-evidence-chains\" type=\"button\">${esc(action.primaryButton)}</button>`"
+          if old not in s: raise SystemExit('action button anchor not found')
+          s=s.replace(old,new,1)
+          old="applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28"
+          new="applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28||displayedStageAction(n).actionType==='CALCULATE_RELEASE'"
+          if old not in s: raise SystemExit('applicationOnlyInteraction anchor not found')
+          s=s.replace(old,new,1)
+          wire="if($('#build-evidence-chains'))$('#build-evidence-chains').onclick=async()=>{"
+          insertion="if($('#calculate-stage27-release'))$('#calculate-stage27-release').onclick=async()=>{try{if(Number(current.activeStage)!==27)throw new Error('Release calculation belongs only to Stage 27.');const next=clone(current);engine.recordReleaseDetermination(next);await persistReplacement(next);announce('release determination calculated');render();requestAnimationFrame(()=>$('#next-required-action')?.focus());}catch(error){announce('release calculation blocked');alert(error.message||error);}};"
+          if wire not in s: raise SystemExit('wire anchor not found')
+          s=s.replace(wire,insertion+wire,1)
+          p.write_text(s)
+          PY
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add workflow-engine.js app-core.js
+          git commit -m "Make Stage 27 release determination application-owned in the operator flow"
+          git push
