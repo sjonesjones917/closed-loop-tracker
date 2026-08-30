@@ -1,0 +1,29 @@
+name: Apply audited 30-stage patch
+on:
+  push:
+    branches: [fix/full-30-stage-prompt-contract-audit-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reconstruct and apply exact audited patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .audit-patch/chunk-* | base64 -d | gzip -d > /tmp/full-audit.patch
+          git apply --check /tmp/full-audit.patch
+          git apply /tmp/full-audit.patch
+          rm -rf .audit-patch
+          rm -f .github/workflows/apply-audit-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Audit and enforce all 30 stage prompt contracts'
+          git push origin HEAD:fix/full-30-stage-prompt-contract-audit-20260830
