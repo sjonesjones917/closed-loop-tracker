@@ -5,4 +5,7 @@ const old="  source = replaceRegex(source, /runtime-bec66cf2784e2a2b/g, 'runtime
 const replacement="  const buildTokenMatches=source.split('runtime-bec66cf2784e2a2b').length-1;\n  if(buildTokenMatches!==8)throw new Error(`shared runtime build token: expected 8 matches, found ${buildTokenMatches}`);\n  source=source.replaceAll('runtime-bec66cf2784e2a2b','runtime-stage-input-once-20260830a');";
 if(source.split(old).length-1!==1)throw new Error('Unable to locate runtime-token applicator line.');
 source=source.replace(old,replacement);
+source=source.replaceAll('complete semantic intake inspection','complete meaning-preserving intake inspection');
+source=source.replaceAll('every semantically relevant human-supplied statement','every materially relevant human-supplied statement');
+source=source.replaceAll('every semantically relevant supplied statement','every materially relevant supplied statement');
 fs.writeFileSync(file,source);
