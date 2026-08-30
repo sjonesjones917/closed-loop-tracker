@@ -782,6 +782,39 @@ function evaluateIntakeCoverage(project,captureOverride){
   if(missingUnitIds.length)errors.push('Unaccounted intake units: '+missingUnitIds.join(', ')+'.');if(unknownUnitIds.length)errors.push('Unknown intake unit identities: '+unknownUnitIds.join(', ')+'.');
   return {manifest,capture,coverage,accountedUnitIds,missingUnitIds,unknownUnitIds,errors,capturedStatements:[...normalizedUnits.flatMap(unit=>unit.extractedStatements),...normalizedConversation],normalizedUnits,normalizedConversation,complete:errors.length===0&&coverage===1};
 }
+function migrateLegacyStage01Accounting(project){
+  ensureShape(project);
+  project.projectData.intakeCoverageManifests=safe(project.projectData.intakeCoverageManifests);
+  const stage=project.stages?.[1],existing=stage?.agentData?.INPUT_SET_CONTENTS??stage?.acceptedData?.INPUT_SET_CONTENTS;
+  if(parseIntakeCaptureValue(existing))return {migrated:false,reason:'CURRENT_CAPTURE_EXISTS'};
+  const imported=safe(project.projectData?.nonOperationalImportedPayloads).length>0||safe(stage?.acceptedDataChangeIds).some(id=>String(id).startsWith('IMPORTED-'))||safe(stage?.acceptedResponseIds).some(id=>String(id).startsWith('IMPORTED-'));
+  if(!imported)return {migrated:false,reason:'NOT_LEGACY_IMPORTED'};
+  const manifest=intakeCoverageManifest(project),job=project.job||{},answers=safe(project.projectData?.humanInputAnswers),classFor=unit=>{
+    const field=String(unit.sourceLocation||'').startsWith('job.')?String(unit.sourceLocation).slice(4):'';
+    if(field==='EXPLICIT_USER_REQUIREMENTS')return 'REQUIREMENT';
+    if(field==='PROHIBITED_ACTIONS')return 'PROHIBITION';
+    if(['REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE'].includes(field))return 'CONSTRAINT';
+    if(['JOB_TITLE','JOB_OWNER'].includes(field))return 'DECISION';
+    if(field==='EXACT_USER_OBJECTIVE_VERBATIM')return 'REQUESTED_OUTPUT';
+    if(field==='SUPPLIED_MATERIALS_INVENTORY'||unit.kind==='SUPPLIED_MATERIAL')return 'MATERIAL_REFERENCE';
+    return 'FACT';
+  },valueFor=unit=>{
+    const source=String(unit.sourceLocation||'');
+    if(source.startsWith('job.'))return job[source.slice(4)];
+    if(unit.kind==='SUPPLIED_MATERIAL')return unit.label;
+    if(unit.kind==='HUMAN_ANSWER'){const hit=answers.find(x=>String(x.answerId||x.requestId||'')===String(unit.answerId||unit.requestId||''));return hit?.answer??unit.label;}
+    return unit.label;
+  };
+  const units=manifest.units.map(unit=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'Deterministically migrated from preserved legacy human-authority input; original imported payload remains non-operational audit evidence.',extractedStatements:[{statementKey:'legacy-'+unit.unitId.slice(-12),text:String(valueFor(unit)??unit.label??'').trim(),statementClass:classFor(unit)}]}));
+  const capture={schema:INTAKE_CAPTURE_SCHEMA,inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units,conversationStatements:[]},serialized=JSON.stringify(capture);
+  stage.agentData=stage.agentData&&typeof stage.agentData==='object'?stage.agentData:{};stage.agentData.INPUT_SET_CONTENTS=serialized;
+  stage.acceptedData=stage.acceptedData&&typeof stage.acceptedData==='object'?stage.acceptedData:{};stage.acceptedData.INPUT_SET_CONTENTS=serialized;
+  project.job.INPUT_SET_CONTENTS=serialized;
+  const snapshot={...manifest,captureSha256:hash.sha256Value(capture),source:'DETERMINISTIC_LEGACY_MIGRATION',projectRevision:Number(project.revision||0)};
+  if(!safe(project.projectData.intakeCoverageManifests).some(x=>x.manifestSha256===manifest.manifestSha256&&x.captureSha256===snapshot.captureSha256))project.projectData.intakeCoverageManifests.push(snapshot);
+  addHistory(project,'LEGACY_STAGE01_ACCOUNTING_MATERIALIZED',{stage:1,inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,captureSha256:snapshot.captureSha256,unitCount:manifest.unitCount});
+  return {migrated:true,manifestSha256:manifest.manifestSha256,captureSha256:snapshot.captureSha256,unitCount:manifest.unitCount};
+}
 function obligationFragments(value){
   if(value===undefined||value===null)return [];
   if(Array.isArray(value))return value.flatMap(obligationFragments);
@@ -945,7 +978,7 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,reconcileArtifactCustodyVerification,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,recordApplicationDeterministicResult,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
   unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
-  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,intakeCoverageManifest,evaluateIntakeCoverage,obligationManifest,evaluateObligationAccounting,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
+  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,intakeCoverageManifest,evaluateIntakeCoverage,obligationManifest,evaluateObligationAccounting,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,migrateLegacyStage01Accounting,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
   recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
 })();
