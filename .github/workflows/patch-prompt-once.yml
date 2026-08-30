@@ -1,0 +1,35 @@
+name: Patch prompt authority once
+on:
+  push:
+    branches: [fix/controlling-spec-final-20260830]
+permissions: {contents: write}
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs');
+          const file='prompt-engine.js';
+          let s=fs.readFileSync(file,'utf8');
+          const old='The user supplies project information once; if information is already present, capture and reuse it rather than asking for it again.';
+          const next='The user supplies project information once; if information is already present, capture and reuse it rather than asking for it again or asking the user to resupply it. This one-time project-input invariant applies throughout the workflow: project-relevant information already captured in canonical state must be reused by later stages instead of being requested again.';
+          if(!s.includes('asking the user to resupply it')){
+            if(!s.includes(old))throw new Error('Stage 01 one-time input anchor missing');
+            s=s.replace(old,next);
+            fs.writeFileSync(file,s);
+          }
+          NODE
+          node verify-prompt-semantics.mjs
+          git add prompt-engine.js
+          git diff --cached --quiet && exit 0
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'Enforce one-time project input reuse in prompt authority'
+          git push origin HEAD:fix/controlling-spec-final-20260830
