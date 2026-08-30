@@ -28,19 +28,7 @@ jobs:
       - name: Existing one-time intent regression
         run: node verify-one-time-intent-intake.mjs
       - name: Prompt semantics
-        id: prompt_semantics
-        continue-on-error: true
-        run: node verify-prompt-semantics.mjs > v3-prompt-semantics.log 2>&1
-      - name: Preserve prompt semantic diagnostic
-        if: steps.prompt_semantics.outcome == 'failure'
-        run: |
-          cat v3-prompt-semantics.log
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add v3-prompt-semantics.log
-          git commit -m 'Capture v3 prompt semantic diagnostic [skip ci]' || true
-          git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
-          exit 1
+        run: node verify-prompt-semantics.mjs
       - name: Ingestion
         run: node verify-ingestion.mjs
       - name: Test runtime
@@ -50,4 +38,4 @@ jobs:
       - name: Complete verification
         run: node verify-complete.mjs
       - name: Acceptance marker
-        run: echo 'V3 response-contract identity and Stage 1/3/4 zero-loss acceptance sequence completed.'
+        run: echo 'V3 subject-neutral zero-loss acceptance sequence completed.'
