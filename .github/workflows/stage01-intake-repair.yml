@@ -22,9 +22,7 @@ jobs:
         with:
           node-version: 22
       - name: Apply repair
-        run: |
-          node fix-repair-generator.mjs
-          node repair-stage01-intake-closure.mjs
+        run: node repair-stage01-intake-closure-v2.mjs
       - name: Syntax and focused regression
         id: focused
         continue-on-error: true
@@ -56,8 +54,7 @@ jobs:
         if: steps.focused.outputs.status == '0'
         run: |
           rm -f repair-failure.log
-          rm fix-repair-generator.mjs
-          rm repair-stage01-intake-closure.mjs
+          rm -f fix-repair-generator.mjs repair-stage01-intake-closure.mjs repair-stage01-intake-closure-v2.mjs
           rm .github/workflows/stage01-intake-repair.yml
       - name: Commit repaired source
         if: steps.focused.outputs.status == '0'
