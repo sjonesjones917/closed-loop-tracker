@@ -1,0 +1,61 @@
+name: One-time Stage 04 captured-intent hotfix 3
+on:
+  push:
+    branches: ['fix/stage4-captured-intent']
+    paths: ['.github/workflows/stage4-hotfix3.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply Stage 04 correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          start=s.index("4:'Compile atomic requirement proposals for this current job")
+          end=s.index("\n5:'Resolve the current job",start)
+          replacement="4:'Compile atomic requirement proposals for this current job from the complete application-supplied Stage 04 obligation universe: current User Job Input, the accepted Stage 01 job definition, human-origin obligations already captured from supplied materials, accepted Stage 03 external-source research, candidate external-source obligations, and their application-owned provenance identities. Treat the application-supplied obligation manifest as the complete input set for this compilation pass. Do not ask the human to reattach, resend, retype, summarize, or restate a user-intent file or other supplied material merely because this is a new stage or a new agent conversation. Information already captured into current canonical User Job Input, accepted Stage 01 data, intake-accounting entries, evidence, or the Stage 04 obligation manifest is authoritative input for this stage and must be used directly. Original file bytes are required again only when the application explicitly identifies a specific uncaptured byte-dependent obligation that cannot be established from the canonical captured content; filename presence alone is never such a reason. If the application-provided obligation universe itself is incomplete, return BLOCKED with the exact missing canonical obligation identity or missing byte-dependent input; do not convert that defect into a repeated human upload request. For every obligation identity, map it to one or more atomic requirements, retained nonnormative context, explicitly inapplicable with reason, or blocked with reason; no obligation may disappear. Each proposed requirement should express one independently testable obligation where possible and record type, mandatory/optional status, governing source or user-input relationship, exact source location when applicable, authority, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, and notes. The application assigns REQ_ID and controlled requirement-set identity after validated ingestion. Do not derive requirements from the target product or an existing implementation merely because that implementation contains a behavior.',"
+          s=s[:start]+replacement+s[end:]
+          legacy="MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION"
+          if legacy in s:
+            block_start=s.rfind("if(materials.length){",0,s.index(legacy))
+            block_end=s.index("}\n",s.index(legacy))+1
+            newblock="if(materials.length){lines.push('CAPTURED STAGE 04 MATERIAL CONTEXT');for(const item of materials)lines.push('- '+item.label+' — '+item.type);lines.push('These labels identify material already represented in current canonical intake/obligation context. Do not ask the human to attach the material again unless the application explicitly marks a specific byte-dependent obligation as uncaptured and unavailable.');}"
+            s=s[:block_start]+newblock+s[block_end:]
+          p.write_text(s)
+
+          a=Path('app-core.js'); s=a.read_text()
+          marker="function stageArtifactHelpText(n){\n  const supplied=suppliedFileMaterialLabels();"
+          if marker in s:
+            s=s.replace(marker,"function stageArtifactHelpText(n){\n  if(n===4)return 'Use the captured current User Job Input, accepted Stage 01 intake, and application-generated Stage 04 obligation manifest. Do not reattach the user-intent file unless the application identifies a specific uncaptured byte-dependent obligation.';\n  const supplied=suppliedFileMaterialLabels();",1)
+          elif "if(n===4)return 'Use the captured current User Job Input" not in s:
+            raise SystemExit('stageArtifactHelpText marker not found')
+          a.write_text(s)
+
+          v=Path('verify-prompt-semantics.mjs'); s=v.read_text()
+          if 'Stage 04 captured-intent regression' not in s:
+            checks="\n// Stage 04 captured-intent regression.\n{\n const src=fs.readFileSync('prompt-engine.js','utf8');\n if(src.includes('operator must attach or provide it with this Stage 04 instruction'))throw new Error('Stage 04 still requires repeated attachment.');\n if(!src.includes('Do not ask the human to reattach, resend, retype, summarize, or restate a user-intent file'))throw new Error('Stage 04 captured-intent invariant missing.');\n}\n"
+            idx=s.rfind('console.log'); s=s[:idx]+checks+s[idx:] if idx>=0 else s+checks
+            v.write_text(s)
+          PY
+      - name: Verify
+        run: |
+          node --check prompt-engine.js
+          node --check app-core.js
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          ! grep -Fq "operator must attach or provide it with this Stage 04 instruction" prompt-engine.js
+          grep -Fq "Do not ask the human to reattach, resend, retype, summarize, or restate a user-intent file" prompt-engine.js
+      - name: Commit source correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm -f .github/workflows/stage4-hotfix.yml .github/workflows/stage4-hotfix2.yml .github/workflows/stage4-hotfix3.yml
+          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs
+          git commit -m "Fix Stage 04 repeated intent-file requests"
+          git push origin HEAD:fix/stage4-captured-intent
