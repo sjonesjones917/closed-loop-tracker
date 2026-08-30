@@ -1,0 +1,137 @@
+name: Stage 4 minimal retained-intent proof
+on:
+  push:
+    branches:
+      - fix/stage4-retained-intent-minimal-20260830
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    if: github.event.head_commit.message == 'Apply Stage 4 minimal patch and proof'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-retained-intent-minimal-20260830
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply only the retained-intent defect corrections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          # Stage 1 agent acceptance must not manufacture a new HUMAN input version.
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="  if(!config)return null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          new="  if(!config)return null;\n  if(Number(stage)===1)return safe(project.projectData.inputVersions).at(-1)||null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          if s.count(old)!=1: raise SystemExit('Stage 1 version-authority anchor missing or duplicated')
+          p.write_text(s.replace(old,new,1))
+
+          # Stage 1 captures the relevant meaning once; Stage 4 prompt identity tracks that HUMAN input.
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';"
+          if s.count(old)!=1: raise SystemExit('Prompt-engine version anchor missing or duplicated')
+          s=s.replace(old,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';",1)
+          old_guidance='INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.'
+          new_guidance='INPUT_SET_CONTENTS must preserve a concise semantic capture of every material human-authority statement that Stage 01 actually read from the current human input and any supplied material bytes available in the executing context, together with the top-level material references. It must be sufficient for later stages to reuse that captured meaning without asking the human to attach, resend, retype, or summarize the same intent material. Do not copy an entire file or turn it into a Stage 02 archive/file inventory. If bytes were unavailable, preserve only the material reference and do not infer contents. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.'
+          if s.count(old_guidance)!=1: raise SystemExit('Stage 1 semantic-capture guidance anchor missing or duplicated')
+          s=s.replace(old_guidance,new_guidance,1)
+          old_context='contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:'
+          new_context="contextManifest={stage,operation,scope,humanInputSha256:hash.sha256Value(Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>definition?.producer==='HUMAN').map(([name])=>[name,state?.job?.[name]??null]))),verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
+          if s.count(old_context)!=1: raise SystemExit('Prompt context-manifest anchor missing or duplicated')
+          p.write_text(s.replace(old_context,new_context,1))
+
+          # Stage 4 must not show a generic file uploader after retained intent is already canonical.
+          p=Path('app-core.js'); s=p.read_text()
+          old="function artifactControlMarkup(n,locked){if(n===19)return"
+          new="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)return"
+          if s.count(old)!=1: raise SystemExit('Stage artifact-control anchor missing or duplicated')
+          p.write_text(s.replace(old,new,1))
+
+          # Strengthen the existing semantic regressions; do not add another test family.
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
+          old="for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','Do not turn it into a Stage 02 archive/file inventory'])"
+          new="for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','INPUT_SET_CONTENTS must preserve a concise semantic capture of every material human-authority statement','without asking the human to attach, resend, retype, or summarize the same intent material','Do not copy an entire file or turn it into a Stage 02 archive/file inventory'])"
+          if s.count(old)!=1: raise SystemExit('Stage 1 prompt-regression anchor missing or duplicated')
+          s=s.replace(old,new,1)
+          old="  p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE';\n  p.projectData.candidateRequirements.push"
+          new="  p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE';\n  const inputVersionBeforeStage1Acceptance=p.job.CURRENT_INPUT_VERSION;\n  engine.registerStageVersion(p,1,'STAGE-01-AGENT-ACCEPTANCE');\n  if(p.job.CURRENT_INPUT_VERSION!==inputVersionBeforeStage1Acceptance)throw new Error('Stage 01 agent acceptance changed the HUMAN input version.');\n  p.projectData.candidateRequirements.push"
+          if s.count(old)!=1: raise SystemExit('Stage 4 regression setup anchor missing or duplicated')
+          s=s.replace(old,new,1)
+          old="  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');"
+          new="  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');\n  if(renamed.contextSignature===record.contextSignature)throw new Error('Current human input change did not change the Stage 04 context identity.');"
+          if s.count(old)!=1: raise SystemExit('Stage 4 context-identity regression anchor missing or duplicated')
+          p.write_text(s.replace(old,new,1))
+
+          # Prove the user-facing Stage 4 page has no file reattachment control.
+          p=Path('verify-browser.mjs'); s=p.read_text()
+          old="const stage04Layout=await evalValue(cdp,`(()=>({extraPanel:Boolean(document.querySelector('#stage04-material-handoff')),optionalCustody:Boolean(document.querySelector('#stage04-optional-custody')),overflow:document.documentElement.scrollWidth>innerWidth+1}))()`);assert(stage04Layout&&!stage04Layout.extraPanel&&!stage04Layout.optionalCustody&&!stage04Layout.overflow,`Stage 04 canonical-input view is duplicated or overflows at 320px: ${JSON.stringify(stage04Layout)}`);"
+          new="const stage04Layout=await evalValue(cdp,`(()=>({upload:Boolean(document.querySelector('#stage-files')),extraPanel:Boolean(document.querySelector('#stage04-material-handoff')),optionalCustody:Boolean(document.querySelector('#stage04-optional-custody')),overflow:document.documentElement.scrollWidth>innerWidth+1}))()`);assert(stage04Layout&&!stage04Layout.upload&&!stage04Layout.extraPanel&&!stage04Layout.optionalCustody&&!stage04Layout.overflow,`Stage 04 still exposes a repeated-file control, duplicate panel, or overflow at 320px: ${JSON.stringify(stage04Layout)}`);"
+          if s.count(old)!=1: raise SystemExit('Stage 4 browser-regression anchor missing or duplicated')
+          p.write_text(s.replace(old,new,1))
+
+          # One shared cache identity for the changed runtime graph.
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          digest=hashlib.sha256()
+          for name in runtime:
+              digest.update(name.encode()); digest.update(b'\0'); digest.update(Path(name).read_bytes()); digest.update(b'\0')
+          token='runtime-'+digest.hexdigest()[:16]
+          p=Path('index.html'); s=p.read_text()
+          s,count=re.subn(r'v=runtime-[A-Za-z0-9-]+',f'v={token}',s)
+          if count!=8: raise SystemExit(f'Expected 8 shared runtime build tokens; changed {count}')
+          p.write_text(s)
+          print(token)
+          PY
+      - name: Run the complete repository proof
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check verify-hash.mjs
+          node --check verify.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-complete.mjs
+          node --check verify-full-cycle.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-semantic-invariant.mjs
+          node --check verify-definition-of-done.mjs
+          node --check verify-project-lifecycle.mjs
+          node --check verify-test-runtime.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Run local browser acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit only proven source and existing regression changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js app-core.js verify-prompt-semantics.mjs verify-browser.mjs index.html
+          git diff --cached --check
+          git commit -m 'Fix Stage 4 retained human-intent reuse'
+          git push origin HEAD:fix/stage4-retained-intent-minimal-20260830
