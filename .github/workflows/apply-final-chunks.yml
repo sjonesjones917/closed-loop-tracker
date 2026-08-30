@@ -20,8 +20,8 @@ jobs:
           cat .repair/final_patch.part* > /tmp/final.patch.gz.b64
           base64 -d /tmp/final.patch.gz.b64 > /tmp/final.patch.gz
           gzip -dc /tmp/final.patch.gz > /tmp/final.patch
-          git apply --check /tmp/final.patch
-          git apply /tmp/final.patch
+          git apply -p1 --check /tmp/final.patch
+          git apply -p1 /tmp/final.patch
           rm -rf .repair
           rm -f .github/workflows/apply-blind-context-final.yml .github/workflows/apply-final-chunks.yml
           git config user.name "closed-loop-implementation"
