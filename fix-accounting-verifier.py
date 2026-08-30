@@ -9,8 +9,14 @@ if old not in text:
     raise SystemExit('Stage 01 prompt fixture anchor missing')
 text = text.replace(old, new, 1)
 
+old = "prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope(captureFor(intake.units))),promptRecord:prompt1});assert(prepared.validation.valid,JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'ACCOUNTING_TEST'}).project;"
+new = "const inputVersionBeforeStage1Acceptance=p.job.CURRENT_INPUT_VERSION;const manifestBeforeStage1Acceptance=engine.intakeCoverageManifest(p);prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope(captureFor(intake.units))),promptRecord:prompt1});assert(prepared.validation.valid,JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'ACCOUNTING_TEST'}).project;assert.equal(p.job.CURRENT_INPUT_VERSION,inputVersionBeforeStage1Acceptance,'Accepting Stage 01 AGENT data must not mint a new human input version.');const manifestAfterStage1Acceptance=engine.intakeCoverageManifest(p);assert.equal(manifestAfterStage1Acceptance.manifestSha256,manifestBeforeStage1Acceptance.manifestSha256,'Accepting Stage 01 AGENT data must not change the controlled human-input manifest identity.');"
+if old not in text:
+    raise SystemExit('Stage 01 acceptance regression anchor missing')
+text = text.replace(old, new, 1)
+
 old = "engine.recalculate(p);assert(engine.evaluateIntakeCoverage(p).complete&&engine.evaluateIntakeCoverage(p).coverage===1,'Complete Stage 01 capture did not close accounting.');"
-new = "engine.recalculate(p);const postCommitIntake=engine.evaluateIntakeCoverage(p);if(!(postCommitIntake.complete&&postCommitIntake.coverage===1))console.error('POST_COMMIT_INTAKE',JSON.stringify({stage1AgentData:p.stages[1].agentData,stage1HumanData:p.stages[1].humanData,coverage:postCommitIntake},null,2));assert(postCommitIntake.complete&&postCommitIntake.coverage===1,'Complete Stage 01 capture did not close accounting.');"
+new = "engine.recalculate(p);const postCommitIntake=engine.evaluateIntakeCoverage(p);assert(postCommitIntake.complete&&postCommitIntake.coverage===1,'Complete Stage 01 capture did not close accounting.');"
 if old not in text:
     raise SystemExit('Stage 01 post-commit assertion anchor missing')
 text = text.replace(old, new, 1)
