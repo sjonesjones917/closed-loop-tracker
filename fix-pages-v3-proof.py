@@ -1,4 +1,15 @@
 from pathlib import Path
+
+# The legacy definition-of-done verifier remains useful for its broad coverage metrics,
+# but its schema identity assertion must track the controlling /3 contract exactly.
+dod=Path('verify-definition-of-done.mjs')
+dod_text=dod.read_text()
+old_schema="assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');"
+new_schema="assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Schema identity changed.');"
+if old_schema not in dod_text and new_schema not in dod_text:
+    raise SystemExit('definition-of-done schema identity anchor missing')
+dod.write_text(dod_text.replace(old_schema,new_schema,1))
+
 p=Path('.github/workflows/pages.yml')
 text=p.read_text()
 
