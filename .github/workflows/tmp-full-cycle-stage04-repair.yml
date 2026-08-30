@@ -1,0 +1,41 @@
+name: One-time full-cycle Stage 04 fixture repair
+
+on:
+  push:
+    branches:
+      - fix/controlling-spec3-complete
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec3-complete
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply fixture repair
+        run: python3 tmp_full_cycle_stage04_repair.py
+      - name: Prove full-cycle and focused contracts
+        run: |
+          node --check verify-full-cycle.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify.mjs
+      - name: Commit repair and remove temporary files
+        run: |
+          rm .github/workflows/tmp-full-cycle-stage04-repair.yml
+          rm tmp_full_cycle_stage04_repair.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Update full-cycle proof for Stage 04 accounting"
+          git push origin HEAD:fix/controlling-spec3-complete
