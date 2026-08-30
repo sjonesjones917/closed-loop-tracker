@@ -32,10 +32,21 @@ jobs:
           if(!style.includes('height:clamp(260px,45vh,520px)'))throw new Error('Prompt box visual baseline changed.');
           if(!style.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'))throw new Error('Prompt expansion baseline changed.');
           NODE
-          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js response-ingestion.js project-store.js build-test-project.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs; do
+          for f in workbook.js app-core.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js response-ingestion.js project-store.js build-test-project.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs; do
             git show "origin/implementation/closed-loop-v3:$f" > "$f"
           done
           git show origin/closed-loop-v3-completion:prompt-engine.js > prompt-engine.js
+          node <<'NODE'
+          const fs=require('fs');
+          let ui=fs.readFileSync('app-core.js','utf8');
+          if(!ui.includes("if(n===4)return ''")){
+            const anchor='function artifactControlMarkup(n,locked){';
+            if(!ui.includes(anchor))throw new Error('Stage 04 artifact-control anchor missing in v3 app-core.');
+            ui=ui.replace(anchor,anchor+"if(n===4)return '';");
+          }
+          if(!ui.includes('RUN_APP_TESTS'))throw new Error('v3 app-core lacks native RUN_APP_TESTS control.');
+          fs.writeFileSync('app-core.js',ui);
+          NODE
           node <<'NODE'
           const fs=require('fs');
           let s=fs.readFileSync('prompt-engine.js','utf8');
@@ -63,6 +74,7 @@ jobs:
           if(style!==fs.readFileSync('/tmp/visual-style-baseline.txt','utf8'))throw new Error('Visual stylesheet changed.');
           NODE
           node --check workbook.js
+          node --check app-core.js
           node --check workflow-schema.js
           node --check test-runtime.js
           node --check test-worker.js
@@ -84,7 +96,7 @@ jobs:
           node verify-project-lifecycle.mjs
           node verify-v3-definition-of-done.mjs
           git diff --check
-          rm .github/workflows/repair-controlling-spec.yml
+          rm .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml
           git config user.name closed-loop-spec-repair
           git config user.email actions@users.noreply.github.com
           git add -A
