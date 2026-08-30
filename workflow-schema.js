@@ -962,23 +962,23 @@ function validateTestIRTest(test){
 }
 const ADDITIONAL_RECORD_FIELD_TYPES=Object.freeze({
   TEST:Object.freeze({
-    EXECUTABLE_KIND:Object.freeze({valueType:VALUE_TYPES.ENUM,enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_SPEC:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
+    EXECUTABLE_KIND:Object.freeze({valueType:'STRING',enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC:Object.freeze({valueType:'OBJECT',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:'OBJECT',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   }),
   'DETERMINISTIC-RESULT':Object.freeze({
-    APPLICATION_DETERMINATION:Object.freeze({valueType:VALUE_TYPES.ENUM,enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),nullable:true,normalizerKey:null,closedProperties:null}),
-    RUNTIME_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    TEST_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    INPUT_ARTIFACT_IDENTITIES:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    RUNTIME_OBSERVATIONS:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
+    APPLICATION_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),nullable:true,normalizerKey:null,closedProperties:null}),
+    RUNTIME_VERSION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    TEST_SPEC_SHA256:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    INPUT_ARTIFACT_IDENTITIES:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    RUNTIME_OBSERVATIONS:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   }),
   EVIDENCE:Object.freeze({
-    APPLICATION_EVIDENCE_KIND:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    APPLICATION_EVIDENCE_DESCRIPTION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    APPLICATION_EVIDENCE_CONTENT:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
+    APPLICATION_EVIDENCE_KIND:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    APPLICATION_EVIDENCE_DESCRIPTION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    APPLICATION_EVIDENCE_CONTENT:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   })
 });
 

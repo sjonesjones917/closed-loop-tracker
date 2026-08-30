@@ -226,7 +226,9 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     for(const evidenceRef of safe(record?.evidenceRefs))if(!evidenceIndex.has(String(evidenceRef)))issues.push(issue('UNRESOLVED_EVIDENCE_REFERENCE',`${path}/evidenceRefs`,`Evidence reference ${evidenceRef} does not exist.`));
     const hasAgentData=object(record?.fields)&&Object.keys(record.fields).some(name=>definition?.fieldDefinitions?.[name]?.provenanceRequired);
     if(hasAgentData&&!safe(record.evidenceRefs).length)issues.push(issue('MISSING_PROVENANCE',`${path}/evidenceRefs`,'Agent-produced canonical record data requires at least one evidence reference.'));
-    if(collection==='tests'&&String(record?.fields?.ARTIFACT_REQUIREMENTS||'').trim().toUpperCase()!=='NONE'){const linkedArtifact=safe(record.evidenceRefs).some(reference=>{const evidence=evidenceIndex.get(String(reference))?.evidence,attachment=evidence?.attachmentRef;if(!attachment)return false;if(attachment.tempKey)return attachmentIndex.has(String(attachment.tempKey));if(attachment.recordId)return workflow.records(project,'artifacts',{active:true}).some(item=>workflow.recordId(item,'artifacts')===String(attachment.recordId));return false;});if(!linkedArtifact)issues.push(issue('MISSING_REQUIRED_TEST_ARTIFACT',`${path}/evidenceRefs`,'Test ARTIFACT_REQUIREMENTS is not NONE, so at least one evidence reference must resolve to application-verified artifact bytes.'));}
+    // Stage 06 defines tests before candidate/product bytes necessarily exist.
+    // Artifact availability is execution readiness owned by testExecutionPlan()/workflow gates.
+    // Explicit current artifactId bindings are still validated above; future CURRENT_PRODUCT/CURRENT_SCOPE bindings stay declarative until execution.
     if(object(record?.relationships))for(const [name,reference] of Object.entries(record.relationships)){
       const expectedCollection=definition?.relationships?.[name];
       if(!expectedCollection||!object(reference))continue;
