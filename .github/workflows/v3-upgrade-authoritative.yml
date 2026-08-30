@@ -22,7 +22,19 @@ jobs:
         with:
           node-version: '22'
       - name: Apply base v3 transformation
-        run: node upgrade-v3.mjs
+        run: |
+          set +e
+          node upgrade-v3.mjs > v3-upgrade-base.log 2>&1
+          STATUS=$?
+          cat v3-upgrade-base.log
+          if [ "$STATUS" -ne 0 ]; then
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add v3-upgrade-base.log
+            git commit -m "Capture v3 base transformer failure" || true
+            git push origin HEAD:implementation/closed-loop-v3
+          fi
+          exit "$STATUS"
       - name: Apply v3 compatibility transformation
         run: node upgrade-v3-compat.mjs
       - name: Apply v3 correction transformation
@@ -72,7 +84,7 @@ jobs:
           trap - EXIT
       - name: Remove all temporary implementation machinery and commit proven source
         run: |
-          rm -f upgrade-v3.mjs upgrade-v3-compat.mjs upgrade-v3-corrections.mjs upgrade-v3-final.mjs v3-upgrade-report.json
+          rm -f upgrade-v3.mjs upgrade-v3-compat.mjs upgrade-v3-corrections.mjs upgrade-v3-final.mjs v3-upgrade-report.json v3-upgrade-base.log
           rm -f .github/workflows/v3-upgrade.yml .github/workflows/v3-upgrade-compat.yml .github/workflows/v3-upgrade-corrections.yml .github/workflows/v3-upgrade-final.yml .github/workflows/v3-upgrade-authoritative.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
