@@ -1,0 +1,27 @@
+name: Preserve completed Stage 01 migration
+on:
+  push:
+    branches: [fix/stage01-intake-closure-20260830]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve migrated completion without weakening new intake
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="{const intakeManifest=stage01IntakeManifest(project),accounting=safe(project.stages[1]?.agentData?.INTAKE_ACCOUNTING),seen=new Set(accounting.map(entry=>String(entry?.inputId||'')).filter(Boolean)),missing=safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(id=>id&&!seen.has(id));if(missing.length)reasons.push(`Stage 01 intake accounting is missing application-generated input unit(s): ${missing.join(', ')}.`);}"
+          new="{const intakeManifest=stage01IntakeManifest(project),accounting=safe(project.stages[1]?.agentData?.INTAKE_ACCOUNTING),seen=new Set(accounting.map(entry=>String(entry?.inputId||'')).filter(Boolean)),missing=safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(id=>id&&!seen.has(id)),preservedCompletedStage01=project.stages[1]?.status==='COMPLETE'&&acceptedChanges(project,1).length>0&&currentIntentStatements(project).length>0&&safe(project.projectData?.migrationArchives).length>0;if(missing.length&&!preservedCompletedStage01)reasons.push(`Stage 01 intake accounting is missing application-generated input unit(s): ${missing.join(', ')}.`);}"
+          if old not in s: raise SystemExit('Stage 01 gate migration anchor not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js
+          git commit -m 'Preserve migrated completed Stage 01 while enforcing closure for new input'
+          git push origin HEAD:fix/stage01-intake-closure-20260830
