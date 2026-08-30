@@ -37,9 +37,7 @@ jobs:
           git config user.email actions@users.noreply.github.com
           if grep -q '^RESULT=PASS$' repair-diagnostics.txt; then
             git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js index.html verify-controlling-spec.mjs verify-test-runtime.mjs
-            git rm -f repair-diagnostics.txt >/dev/null 2>&1 || true
-            git add -A repair-diagnostics.txt
-            git commit -m "Complete Test IR and durable Stage 01-04 accounting" || true
+            git commit -m "Complete Test IR and durable Stage 01-04 accounting"
           else
             git add repair-diagnostics.txt
             git commit -m "Capture extended repair diagnostic" || true
