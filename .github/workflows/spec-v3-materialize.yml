@@ -1,13 +1,12 @@
-name: Materialize controlling v3 bundle
+name: Verify controlling v3 repair branch
 on:
   push:
     branches: [spec-v3-controlling-bundle]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  materialize:
-    if: github.actor != 'github-actions[bot]'
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,10 +16,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply controlling conformance corrections
-        run: |
-          node spec-v3-followup-fix.mjs
-          node spec-v3-followup.mjs
       - name: Syntax and controlling checks
         run: |
           node --check workbook.js
@@ -37,22 +32,3 @@ jobs:
           node verify-spec-v3.mjs
           node verify-intent-exhaustion.mjs
           node verify-test-runtime.mjs
-      - name: Upload patched source for independent audit
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: spec-v3-patched-source
-          path: |
-            *.js
-            *.mjs
-            *.html
-            .github/workflows/pages.yml
-      - name: Commit verified implementation
-        if: success()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm -f spec-v3-followup.mjs spec-v3-followup-fix.mjs spec-v3-followup-2.mjs spec-v3-followup-3.mjs
-          git add -A
-          git commit -m "Exhaust intent and research before Stage 4"
-          git push origin HEAD:spec-v3-controlling-bundle
