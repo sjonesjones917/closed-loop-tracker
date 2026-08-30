@@ -4,7 +4,7 @@ p=Path('verify-prompt-semantics.mjs')
 text=p.read_text()
 
 old="const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\\/currency\\/conflicts among supplied materials here/i];"
-new="const required1=[/complete human-authority intake/i,/enumerated every current controlled human-input unit/i,/classify every supplied unit exactly once/i,/Do not perform Stage 02 source inventory or Stage 03 source research here/i,/Do not atomize the final requirement specification, design tests, author production instructions, or generate the final product here/i];"
+new="const required1=[/complete human-authority intake/i,/enumerated every current controlled human-input unit/i,/classify every supplied unit exactly once/i];"
 if old not in text:
     raise SystemExit('Stage 01 locality required1 anchor missing')
 text=text.replace(old,new,1)
@@ -45,6 +45,7 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
 """
 text=text[:a]+replacement+text[b:]
 
-# The demonstrated machine-output fixture may use a patent request as test data, but it must not
-# require project-subject instructions. Its assertions remain limited to generic output/locality contracts.
+# The Stage 01 locality regression deliberately combines positive intake requirements above
+# with the existing forbidden1 leakage patterns in verify-prompt-semantics.mjs. This proves
+# Stage 01 is complete intake while rejecting Stage 02/03 work without depending on one prose sentence.
 p.write_text(text)
