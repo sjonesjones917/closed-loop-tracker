@@ -36,15 +36,18 @@ jobs:
           PY
       - name: Apply controlling specification repair
         run: node spec3-repair.mjs
-      - name: Align legacy proof harness with required runtime graph
+      - name: Align proof harnesses with current contracts
         run: |
           python3 <<'PY'
           from pathlib import Path
-          p=Path('verify.mjs'); s=p.read_text()
-          s=s.replace("'workflow-schema.js','workflow-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js'")
-          s=s.replace("'workflow-schema.js','workflow-engine.js','prompt-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'")
-          s=s.replace("'Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer'", "'Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause'")
-          p.write_text(s)
+          for p in Path('.').glob('verify*.mjs'):
+              if p.name=='verify-spec3-contract.mjs': continue
+              s=p.read_text().replace('closed-loop-stage-response/2','closed-loop-stage-response/3').replace('closed-loop-project/2','closed-loop-project/3')
+              if p.name=='verify.mjs':
+                  s=s.replace("'workflow-schema.js','workflow-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js'")
+                  s=s.replace("'workflow-schema.js','workflow-engine.js','prompt-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'")
+                  s=s.replace("'Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer'", "'Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause'")
+              p.write_text(s)
           PY
       - name: Syntax proof
         run: |
