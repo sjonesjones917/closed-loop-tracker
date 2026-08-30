@@ -27,7 +27,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git revert -m 1 --no-edit 69add6a0548eeb89cb0b6e666147008edef7662d
-          git cherry-pick origin/fix/controlling-spec-capture-once
+          REPAIR_SHA="$(git log origin/fix/controlling-spec-capture-once --format='%H%x09%s' --grep='^Implement capture-once Stage 4 and /3 controlling contracts$' | cut -f1)"
+          test "$(printf '%s\n' "$REPAIR_SHA" | sed '/^$/d' | wc -l)" -eq 1
+          git cat-file -e "${REPAIR_SHA}^{commit}"
+          echo "Using verified source commit ${REPAIR_SHA}"
+          git cherry-pick "$REPAIR_SHA"
       - name: Enforce Stage 1 and Stage 3 exhaustion before Stage 4
         shell: bash
         run: |
@@ -38,7 +42,7 @@ jobs:
           old="function gateStage04(project){"
           if old not in s:
               raise SystemExit('gateStage04 anchor missing')
-          prefix="function stage01Exhausted(project){const stage=project.stages?.[1];const manifest=project.projectData?.intakeCoverageManifests?.filter?.(m=>!m.invalidatedBy&&m.inputVersion===project.job.CURRENT_INPUT_VERSION)?.at?.(-1);return Boolean(stage?.status==='COMPLETE'&&manifest&&Number(manifest.coverage)===1&&Number(manifest.omittedCount||0)===0&&Number(manifest.unaskedHumanOnlyCount||0)===0);}\nfunction stage03Exhausted(project){const stage=project.stages?.[3];if(stage?.status!=='COMPLETE')return false;if(String(project.stages?.[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION||'').toUpperCase()==='NO_APPLICABLE_EXTERNAL_SOURCE')return true;const currentSources=recordsForCurrentScope(project,'sources');const currentResearch=recordsForCurrentScope(project,'research');if(!currentSources.length)return false;const covered=new Set(currentResearch.map(r=>String(recordValue(r,'SOURCE_ID')||r.relationships?.SOURCE_ID||'')));return currentSources.every(src=>covered.has(recordId(src,'sources')))&&truth(stage.agentData?.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)&&truth(stage.agentData?.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)&&['FALSE','NO','NONE','NOT APPLICABLE'].includes(upper(stage.agentData?.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS));}\n"
+          prefix="function stage01Exhausted(project){const stage=project.stages?.[1];const manifests=Array.isArray(project.projectData?.intakeCoverageManifests)?project.projectData.intakeCoverageManifests:[];const manifest=manifests.filter(m=>!m.invalidatedBy&&m.inputVersion===project.job.CURRENT_INPUT_VERSION).at(-1);return Boolean(stage?.status==='COMPLETE'&&manifest&&Number(manifest.coverage)===1&&Number(manifest.omittedCount||0)===0&&Number(manifest.unaskedHumanOnlyCount||0)===0);}\nfunction stage03Exhausted(project){const stage=project.stages?.[3];if(stage?.status!=='COMPLETE')return false;if(String(project.stages?.[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION||'').toUpperCase()==='NO_APPLICABLE_EXTERNAL_SOURCE')return true;const currentSources=recordsForCurrentScope(project,'sources');const currentResearch=recordsForCurrentScope(project,'research');if(!currentSources.length)return false;const covered=new Set(currentResearch.map(r=>String(recordValue(r,'SOURCE_ID')||r.relationships?.SOURCE_ID||'')));return currentSources.every(src=>covered.has(recordId(src,'sources')))&&truth(stage.agentData?.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)&&truth(stage.agentData?.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)&&['FALSE','NO','NONE','NOT APPLICABLE'].includes(upper(stage.agentData?.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS));}\n"
           s=s.replace(old,prefix+old,1)
           needle="function gateStage04(project){"
           idx=s.index(needle)+len(needle)
@@ -54,6 +58,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('workflow-schema.js')
           s=p.read_text(encoding='utf-8')
           for old,new in [('valueType:VALUE_TYPES.ENUM',"valueType:'STRING'"),('valueType:VALUE_TYPES.STRING_ARRAY',"valueType:'STRING_ARRAY'"),('valueType:VALUE_TYPES.STRING',"valueType:'STRING'"),('valueType:VALUE_TYPES.OBJECT',"valueType:'OBJECT'")]: s=s.replace(old,new)
@@ -65,7 +70,7 @@ jobs:
           s=p.read_text(encoding='utf-8')
           anchor="  for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}"
           if anchor not in s: raise SystemExit('record hash anchor missing')
-          insertion="""  for(const record of canonicalRecords.tests||[]){record.fields=record.fields||{};record.fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;record.fields.EXECUTABLE_SPEC_SHA256=String(record.fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'?hash.sha256Value(record.fields.EXECUTABLE_SPEC):null;record.EXECUTABLE_SPEC_VERSION=record.fields.EXECUTABLE_SPEC_VERSION;record.EXECUTABLE_SPEC_SHA256=record.fields.EXECUTABLE_SPEC_SHA256;}\n"""
+          insertion="  for(const record of canonicalRecords.tests||[]){record.fields=record.fields||{};record.fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;record.fields.EXECUTABLE_SPEC_SHA256=String(record.fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'?hash.sha256Value(record.fields.EXECUTABLE_SPEC):null;record.EXECUTABLE_SPEC_VERSION=record.fields.EXECUTABLE_SPEC_VERSION;record.EXECUTABLE_SPEC_SHA256=record.fields.EXECUTABLE_SPEC_SHA256;}\n"
           s=s.replace(anchor,insertion+anchor,1)
           p.write_text(s,encoding='utf-8')
 
@@ -73,8 +78,11 @@ jobs:
           s=p.read_text(encoding='utf-8')
           s=s.replace("connect-src 'self'; object-src 'none';","connect-src 'self'; worker-src 'self'; object-src 'none';")
           s=s.replace('.expandable-prompt{max-height:280px}', '.expandable-prompt{max-height:80vh}')
-          schema_script='<script defer src="workflow-schema.js?v=runtime-5859ee5a07f239ae"></script>'
-          runtime_script='<script defer src="test-runtime.js?v=runtime-5859ee5a07f239ae"></script>'
+          m=re.search(r'<script defer src="workflow-schema\.js\?v=([^"]+)"></script>',s)
+          if not m: raise SystemExit('workflow-schema build token missing')
+          token=m.group(1)
+          schema_script=f'<script defer src="workflow-schema.js?v={token}"></script>'
+          runtime_script=f'<script defer src="test-runtime.js?v={token}"></script>'
           if runtime_script not in s:s=s.replace(schema_script,schema_script+'\n'+runtime_script,1)
           p.write_text(s,encoding='utf-8')
           PY
@@ -87,7 +95,7 @@ jobs:
           grep -q "closed-loop-stage-response/3" workflow-schema.js
           grep -q "closed-loop-project/3" workbook.js
           grep -q "worker-src 'self'" index.html
-          grep -q 'src="test-runtime.js?v=runtime-5859ee5a07f239ae"' index.html
+          grep -q 'src="test-runtime.js?v=' index.html
           ! grep -q 'CUSTOM_PIPELINE' workflow-schema.js
           ! grep -q 'CUSTOM_PIPELINE' test-runtime.js
           grep -q 'function stage01Exhausted' workflow-engine.js
