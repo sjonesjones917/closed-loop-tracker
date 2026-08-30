@@ -1,0 +1,35 @@
+name: Patch conformance materializer at the correct layer
+on:
+  push:
+    branches: [fix/spec-conformance-zero-loss-20260830-0215]
+    paths: [.github/workflows/spec-conformance-materializer-fix2.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Patch embedded schema transformation and retrigger
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.github/workflows/spec-conformance-materializer.yml')
+          s=path.read_text()
+          anchor="          write('workflow-schema.js',s);"
+          insertion="""          s=rep(s,\"    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\",\"    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\\n    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\",'test hash type metadata');\n"""
+          if anchor not in s:
+              raise SystemExit('workflow-schema write anchor missing')
+          if "'test hash type metadata'" not in s:
+              s=s.replace(anchor,insertion+anchor,1)
+          path.write_text(s)
+          PY
+          rm -f .github/workflows/spec-conformance-materializer-fix.yml .github/workflows/spec-conformance-materializer-fix2.yml
+          git config user.name closed-loop-spec-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Patch Test IR hash metadata transformation"
+          git push origin HEAD
