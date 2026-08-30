@@ -1,0 +1,30 @@
+name: Reconcile final implementation with main
+
+on:
+  push:
+    branches:
+      - agent/final-main-20260830
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/final-main-20260830
+          fetch-depth: 0
+      - name: Merge completed implementation onto current main
+        run: |
+          set -e
+          git fetch origin agent/complete-app-20260830 main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-ff -X theirs origin/agent/complete-app-20260830 -m "Reconcile complete 30-stage implementation with current main"
+          rm -f .github/workflows/agent-reconcile-final.yml
+          git add -A
+          git commit --amend --no-edit
+          git push origin HEAD:agent/final-main-20260830
