@@ -1,0 +1,26 @@
+name: Apply Stage 1 input-version authority correction
+on:
+  push:
+    branches: [spec-v3-zero-loss-20260830]
+  workflow_dispatch:
+permissions: {contents: write}
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: spec-v3-zero-loss-20260830}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply authority correction
+        run: |
+          node repair-stage1-input-version-authority.mjs
+          node --check workflow-engine.js
+          node --check verify-stage1-input-version-authority.mjs
+          node verify-stage1-input-version-authority.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm -f repair-stage1-input-version-authority.mjs
+          git add workflow-engine.js verify-stage1-input-version-authority.mjs
+          git commit -m "Keep Stage 1 agent acceptance from versioning human input"
+          git push origin HEAD:spec-v3-zero-loss-20260830
