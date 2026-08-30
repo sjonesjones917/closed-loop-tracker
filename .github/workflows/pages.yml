@@ -1,68 +1,29 @@
-name: Repair controlling bundle branch
+name: Validate controlling bundle branch
 on:
   push:
     branches:
       - fix/complete-spec-stage4-prompts-20260830
 permissions:
-  contents: write
+  contents: read
 jobs:
-  repair:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: fix/complete-spec-stage4-prompts-20260830
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply repair
-        id: repair
-        shell: bash
+      - name: Syntax checks
         run: |
-          set +e
-          node repair-runner.mjs > repair.log 2>&1
-          code=$?
-          cat repair.log
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
-      - name: Preserve repair diagnostic on transform failure
-        if: steps.repair.outputs.exit_code != '0'
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add repair.log
-          git commit -m 'Capture controlling-bundle repair diagnostic [skip ci]' || true
-          git push origin HEAD:fix/complete-spec-stage4-prompts-20260830 || true
-          exit 1
-      - name: Preserve transformed implementation
-        if: steps.repair.outputs.exit_code == '0'
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-stage01-stage04-exhaustion.mjs
-          git commit -m 'Apply exhaustive Stage 1-4 accounting implementation [skip ci]'
-          git push origin HEAD:fix/complete-spec-stage4-prompts-20260830
-      - name: Syntax and zero-loss proof
-        if: steps.repair.outputs.exit_code == '0'
-        shell: bash
-        run: |
-          set +e
-          {
-            node --check workbook.js
-            node --check workflow-schema.js
-            node --check workflow-engine.js
-            node --check prompt-engine.js
-            node --check response-ingestion.js
-            node --check verify-stage01-stage04-exhaustion.mjs
-            node verify-stage01-stage04-exhaustion.mjs
-            git diff --check
-          } > proof.log 2>&1
-          code=$?
-          cat proof.log
-          if [ "$code" -ne 0 ]; then
-            git add proof.log
-            git commit -m 'Capture Stage 1-4 proof diagnostic [skip ci]'
-            git push origin HEAD:fix/complete-spec-stage4-prompts-20260830
-          fi
-          exit "$code"
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check verify-stage01-stage04-exhaustion.mjs
+      - name: Stage 01 and Stage 04 zero-loss proof
+        run: node verify-stage01-stage04-exhaustion.mjs
