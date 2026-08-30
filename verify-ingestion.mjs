@@ -16,7 +16,7 @@ if(core.STAGES.length!==30)throw new Error(`Expected 30 stages; found ${core.STA
 
 function prepareStage4Upstream(p){
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
-  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'S'+String(i+1),text:'Captured '+u.label,statementClass:'FACT'}]}))});
+  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
   p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
   p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
   p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
@@ -60,6 +60,7 @@ function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
   const records={};
   if(!Object.keys(stageData).length){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
@@ -69,6 +70,7 @@ function validEnvelope(p,stage,promptRecord){
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
+    if(stage===4&&collection==='requirements'){const obligationManifest=promptRecord.contextManifest.obligationManifest;records.requirements=(obligationManifest.items||[]).map((item,index)=>{const requirementFields={};for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)requirementFields[name]=safeValue(name);}requirementFields.USER_INPUT_RELATIONSHIP=item.obligationId;return {tempKey:'requirement-'+String(index+1),fields:requirementFields,relationships:{},evidenceRefs:['evidence-1']};});}
   }
   return {
     schema:schema.RESPONSE_SCHEMA,
