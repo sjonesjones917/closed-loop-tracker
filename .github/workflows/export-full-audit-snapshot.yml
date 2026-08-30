@@ -1,0 +1,26 @@
+name: Export full audit branch snapshot
+
+on:
+  push:
+    branches:
+      - repair/full-30-stage-prompt-audit-20260830
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v4
+      - name: Remove Git metadata
+        run: rm -rf .git
+      - name: Upload repository snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-tracker-full-audit-snapshot
+          path: .
+          include-hidden-files: true
+          retention-days: 1
