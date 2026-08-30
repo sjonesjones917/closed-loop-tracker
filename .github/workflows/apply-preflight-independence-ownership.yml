@@ -1,4 +1,4 @@
-name: Apply preflight independence ownership fixes
+name: Apply verification independence ownership fix
 on:
   push:
     branches: [main]
@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply source corrections
+      - name: Apply source correction
         shell: bash
         run: |
           python - <<'PY'
@@ -21,27 +21,44 @@ jobs:
 
           schema = Path('workflow-schema.js')
           text = schema.read_text()
-          text, n1 = re.subn(r'("VERIFIER_CONTEXT_ID",\s*)"INDEPENDENCE_STATUS",\s*("INPUTS",)', r'\1\2', text, count=1)
-          if n1 != 1 and '"VERIFIER_CONTEXT_ID",\n      "INPUTS",' not in text:
-              raise SystemExit('verification agent ownership target not found')
-          text, n2 = re.subn(r'("VERIFICATION_ID",\s*"REQ_ID",\s*"RUN_ID",\s*"TEST_ID",\s*"DEFECT_ID")', r'\1,\n      "INDEPENDENCE_STATUS"', text, count=1)
-          if n2 != 1 and '"DEFECT_ID",\n      "INDEPENDENCE_STATUS"' not in text:
-              raise SystemExit('verification application ownership target not found')
-          schema.write_text(text)
 
-          engine = Path('workflow-engine.js')
-          text = engine.read_text()
-          check = "if(true){const currentPrompt=safe(project?.projectData?.generatedPrompts).filter(p=>Number(p?.stage)===9&&!p?.invalidatedBy).at(-1),contextId=String(currentPrompt?.scope?.contextId||'').trim(),context=records(project,'freshContexts').find(record=>isActiveRecord(record)&&recordId(record,'freshContexts')===contextId),externalId=String(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim();if(!contextId||!context||!externalId)reasons.push('Independent preflight requires one current application-bound reviewer context with a supplied external context identifier.');}"
-          if check not in text:
-              pattern = r"(case 9:\s*requireAccepted\(\);requireCount\('preflightRecords',1\);)"
-              text, n3 = re.subn(pattern, r"\1" + check, text, count=1)
-              if n3 != 1:
-                  raise SystemExit('Stage 09 gate insertion target not found')
-          engine.write_text(text)
+          text, removed = re.subn(r'("VERIFIER_CONTEXT_ID",\s*)"INDEPENDENCE_STATUS",\s*("INPUTS",)', r'\1\2', text, count=1)
+          if removed != 1 and not re.search(r'"VERIFIER_CONTEXT_ID",\s*"INPUTS",', text):
+              raise SystemExit('verification agent ownership target not found')
+
+          start = text.find('"verification": {')
+          if start < 0:
+              raise SystemExit('verification ownership block not found')
+          end = text.find('\n  }', start)
+          if end < 0:
+              raise SystemExit('verification ownership block end not found')
+          block = text[start:end]
+          app_marker = '"application": ['
+          app_start = block.find(app_marker)
+          if app_start < 0:
+              raise SystemExit('verification application partition not found')
+          app_end = block.find(']', app_start)
+          if app_end < 0:
+              raise SystemExit('verification application partition end not found')
+          app_body = block[app_start:app_end]
+          if '"INDEPENDENCE_STATUS"' not in app_body:
+              block = block[:app_end] + ',\n      "INDEPENDENCE_STATUS"' + block[app_end:]
+              text = text[:start] + block + text[end:]
+
+          pattern = r"(verification:recordSchema\(\{.*?required:\[)(.*?)(\],relationships:)"
+          def remove_required(m):
+              body = re.sub(r"'INDEPENDENCE_STATUS',?", '', m.group(2), count=1)
+              body = re.sub(r',\s*,', ',', body)
+              return m.group(1) + body + m.group(3)
+          text, changed = re.subn(pattern, remove_required, text, count=1, flags=re.S)
+          if changed != 1:
+              raise SystemExit('verification required fields target not found')
+
+          schema.write_text(text)
           PY
           rm .github/workflows/apply-preflight-independence-ownership.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-schema.js workflow-engine.js .github/workflows/apply-preflight-independence-ownership.yml
-          git commit -m "Enforce preflight reviewer context and application independence ownership"
-          git push -f origin HEAD:refs/heads/automation/preflight-independence-ownership-result
+          git add workflow-schema.js .github/workflows/apply-preflight-independence-ownership.yml
+          git commit -m "Make verification independence application-owned"
+          git push -f origin HEAD:refs/heads/automation/verification-independence-ownership-result
