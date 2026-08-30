@@ -35,18 +35,15 @@ pattern=r"function stage01IntakeManifest\(project\)\{.*?\n\}\nfunction stage04Ob
 match=re.search(pattern,text,re.S)
 if not match: raise SystemExit('stage01/stage04 manifest boundary missing')
 text=text[:match.start()]+new_intake+"function stage04ObligationManifest(project){"+text[match.end():]
-# Stage 04 must consume the semantic capture, but retain current canonical intentStatements and newer mainline research logic.
 old="for(const item of stage01IntakeManifest(project).entries)add('HUMAN_INPUT',item.inputId,item.location,item.value);\n  for(const fieldName of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'])add('STAGE01_JOB_DEFINITION','STAGE-01',fieldName,project.job?.[fieldName]);"
 new="for(const unit of intakeCoverageManifest(project).units)add('HUMAN_INPUT',unit.unitId,unit.sourceLocation,unit.rawValue);\n  const intake=evaluateIntakeCoverage(project),capture=intake.capture;if(capture){for(const unit of safe(capture.units))for(const statement of safe(unit.extractedStatements))add('STAGE01_CAPTURE',`${unit.sourceUnitId}:${statement.statementKey}`,statement.statementKey,statement.text);for(const statement of safe(capture.conversationStatements))add('STAGE01_CONVERSATION',statement.statementKey,statement.question||statement.statementKey,statement.text);}\n  for(const fieldName of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])add('STAGE01_JOB_DEFINITION','STAGE-01',fieldName,project.job?.[fieldName]);"
 if old not in text: raise SystemExit('stage04 human/stage01 union anchor missing')
 text=text.replace(old,new,1)
-# Stage 01 gate must reject incomplete accounting in addition to existing canonical intent-statement checks.
 gate_anchor="case 1:{"
 pos=text.find(gate_anchor)
 if pos<0: raise SystemExit('stage1 gate anchor missing')
 insert="case 1:{const intakeAccounting=evaluateIntakeCoverage(project);if(!intakeAccounting.complete)reasons.push(...intakeAccounting.errors.map(reason=>'Stage 01 intake accounting: '+reason));"
 text=text[:pos]+insert+text[pos+len(gate_anchor):]
-# Export the strict accounting helpers while retaining existing aliases used by current main.
 export_old="operationalNextAction,stage01IntakeManifest,stage04ObligationManifest,operationalMetrics"
 export_new="operationalNextAction,intakeCoverageManifest,evaluateIntakeCoverage,stage01IntakeManifest,stage04ObligationManifest,operationalMetrics"
 if export_old not in text: raise SystemExit('workflow export anchor missing')
@@ -55,12 +52,10 @@ engine.write_text(text)
 
 prompt=Path('prompt-engine.js'); ptext=prompt.read_text()
 ptext=ptext.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/28';",1)
-# Add the application manifest and exact classification contract without removing newer one-time intentStatements behavior.
 proc_anchor="1:'ONE-TIME INTENT FILE INTAKE:"
 proc_prefix="1:'APPLICATION-OWNED INTAKE ACCOUNTING: Before final Stage 01 JSON, account for every identity in APPLICATION INTAKE MANIFEST exactly once. INPUT_SET_CONTENTS must be a JSON string using schema closed-loop-intake-capture/1 with exact root keys schema, inputVersion, manifestSha256, units, and optional conversationStatements. units must contain exactly one object for every manifest unit with only sourceUnitId, disposition, reason, extractedStatements. Allowed dispositions: INCORPORATED, RETAINED_CONTEXT, UNRESOLVED_HUMAN_ONLY, LATER_RESOLVABLE, INAPPLICABLE. Every non-inapplicable unit must contain at least one meaning-preserving extractedStatements entry with only statementKey, text, statementClass. Allowed statementClass values: FACT, REQUIREMENT, CONSTRAINT, DECISION, PROHIBITION, REQUESTED_OUTPUT, ACCEPTANCE_CONDITION, MATERIAL_REFERENCE, UNRESOLVED_HUMAN_ONLY, CONTEXT, ASSUMPTION, QUESTION, DEFINITION, DEPENDENCY, EXCEPTION, OTHER. Never omit a manifest identity. This accounting complements, and does not replace, the canonical intentStatements ledger. ONE-TIME INTENT FILE INTAKE:"
 if proc_anchor not in ptext: raise SystemExit('stage1 prompt procedure anchor missing')
 ptext=ptext.replace(proc_anchor,proc_prefix,1)
-# Supply exact application manifest to the agent; this is the set ingestion later verifies.
 ctx_anchor="function contextFor(stage,state,operation,scope={}){\n const parts=[];"
 ctx_new="function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage===1)parts.push('APPLICATION INTAKE MANIFEST\\n'+show(workflow.intakeCoverageManifest(state)));"
 if ctx_anchor not in ptext: raise SystemExit('prompt context anchor missing')
@@ -68,7 +63,6 @@ ptext=ptext.replace(ctx_anchor,ctx_new,1)
 prompt.write_text(ptext)
 
 ingest=Path('response-ingestion.js'); itext=ingest.read_text()
-# Fail closed before proposal creation when Stage 01 omits or invents controlled input identities.
 anchor="  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===4){"
 block="""  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){
     const accounting=workflow.evaluateIntakeCoverage(project,envelope.stageData?.INPUT_SET_CONTENTS);
@@ -79,3 +73,16 @@ block="""  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){
 if anchor not in itext: raise SystemExit('Stage 4 ingestion anchor missing')
 if 'INCOMPLETE_INTAKE_ACCOUNTING' not in itext: itext=itext.replace(anchor,block+anchor,1)
 ingest.write_text(itext)
+
+# Existing ingestion tests must construct the now-required application-bound Stage 01 capture;
+# changing the fixture is not a relaxation of the production gate.
+verify=Path('verify-ingestion.mjs'); vtext=verify.read_text()
+fixture_anchor="  if(stage===1)records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];"
+fixture_new="""  if(stage===1){
+    const intake=engine.intakeCoverageManifest(p);
+    stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:unit.rawValue,statementClass:unit.fieldName==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUESTED_OUTPUT':'CONTEXT'}]})),conversationStatements:[]});
+    records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];
+  }"""
+if fixture_anchor not in vtext: raise SystemExit('verify-ingestion Stage 01 fixture anchor missing')
+vtext=vtext.replace(fixture_anchor,fixture_new,1)
+verify.write_text(vtext)
