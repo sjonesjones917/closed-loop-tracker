@@ -1,0 +1,160 @@
+name: materialize-v3-source
+on:
+  push:
+    branches: ['fix/final-zero-loss-v3-20260830']
+    paths: ['.github/workflows/materialize-v3-source.yml']
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-zero-loss-v3-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply targeted controlling corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('workflow-engine.js'); t=p.read_text()
+          t=t.replace("'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures,'intakeArtifactSnapshots'","'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeArtifactSnapshots'",1)
+          if "'executionFailures','intakeArtifactSnapshots'" not in t: raise SystemExit('Stage 1 infrastructure collection partition invalid')
+          p.write_text(t)
+
+          p=Path('workflow-schema.js'); t=p.read_text()
+          t=t.replace("if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);","if(get('EXECUTABLE_SPEC')?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);",1)
+          old="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
+          new="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
+          if old in t: t=t.replace(old,new,1)
+          fields="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
+          fields2="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','EXECUTABLE_SPEC_SHA256','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
+          if fields in t: t=t.replace(fields,fields2,1)
+          if 'EXECUTABLE_SPEC_SHA256' not in t: raise SystemExit('canonical Test IR hash field missing')
+          p.write_text(t)
+
+          p=Path('response-ingestion.js'); t=p.read_text()
+          anchor="const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      fields[definition.idField]=id;"
+          insert="const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      if(collection==='tests'){const kind=String(fields.EXECUTABLE_KIND||'NONE').toUpperCase();if(kind==='TEST_IR'){const runtime=globalThis.closedLoopTestRuntime;if(!runtime)throw new Error('Test IR runtime is unavailable during canonicalization.');const normalized=runtime.normalizeSpec(fields.EXECUTABLE_SPEC);fields.EXECUTABLE_SPEC_VERSION=runtime.SPEC_VERSION;fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized);}else{fields.EXECUTABLE_SPEC_VERSION=null;fields.EXECUTABLE_SPEC_SHA256=null;}}\n      fields[definition.idField]=id;"
+          if anchor in t: t=t.replace(anchor,insert,1)
+          if "fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized)" not in t: raise SystemExit('Test IR canonical hash derivation missing')
+          marker="for(const [name,value] of Object.entries(proposed?.fields||{}))changes.push({origin:'AGENT_VALUE'"
+          dyn="if(collection==='tests'&&String(record.fields?.EXECUTABLE_KIND||record.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR')for(const name of ['EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256'])changes.push({origin:'APPLICATION_DERIVATION',jsonPointer:null,rawValueHash:null,normalizerUsed:null,canonicalCollection:collection,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:name,relationshipTargetId:null,evidenceIds:record.evidenceRefs||[],normalizedValue:clone(record.fields?.[name]??record[name]),temporaryResponseKey:record.temporaryKey,derivationKey:`${collection}.testIr.${name}`});"
+          if dyn not in t:
+              if marker not in t: raise SystemExit('agent extraction marker missing')
+              t=t.replace(marker,dyn+marker,1)
+          p.write_text(t)
+
+          p=Path('test-runtime.js'); t=p.read_text()
+          for op in ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']:
+              t=re.sub(rf'^\s*{op}:\{{[^\n]*\}},\n','',t,count=1,flags=re.M)
+          t=t.replace("const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ'","const ASSERTION_OPS=new Set(['ASSERT_EQ'",1)
+          t=re.sub(r"\n\s*case 'ASSERT_EXISTS':[^\n]*",'',t,count=1)
+          t=re.sub(r"\n\s*case 'ASSERT_TYPE':\{[^\n]*",'',t,count=1)
+          t=re.sub(r"\n\s*case 'ASSERT_NE':[^\n]*",'',t,count=1)
+          for op in ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']:
+              if re.search(rf'^\s*{op}:\{{',t,re.M): raise SystemExit('unapproved V1 primitive remains: '+op)
+          p.write_text(t)
+
+          p=Path('verify-ingestion.mjs'); t=p.read_text()
+          anchor="  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  const records={};"
+          replacement="  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const manifest=promptRecord.contextManifest?.intakeManifest||engine.stage1IntakeManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({coverage:(manifest.units||[]).map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))});}\n  if(stage===4){const manifest=promptRecord.contextManifest?.obligationManifest||engine.stage4ObligationManifest(p);stageData.ATOMICITY_REVIEW_RESULTS=JSON.stringify({obligationAccounting:(manifest.items||[]).map(item=>({obligationId:item.obligationId,disposition:'CONTEXT',reason:'Controlled complete-accounting fixture'}))});}\n  const records={};"
+          if anchor in t: t=t.replace(anchor,replacement,1)
+          stale="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
+          current="  const intake=engine.stage1IntakeManifest(p);e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:JSON.stringify({coverage:intake.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))})};"
+          if stale in t: t=t.replace(stale,current,1)
+          p.write_text(t)
+
+          old='Research only the current accepted Stage 02 independent external source set'
+          new='Exhaustively research every current accepted Stage 02 independent external source'
+          for p in Path('.').glob('*.mjs'):
+              t=p.read_text()
+              if old in t: p.write_text(t.replace(old,new))
+          PY
+      - name: Prove targeted corrections and unchanged visuals
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in workflow-engine.js workflow-schema.js response-ingestion.js test-runtime.js verify-ingestion.mjs build-test-project.mjs; do node --check "$f"; done
+          git fetch origin main
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,re,hashlib
+          candidate=Path('index.html').read_text(); main=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
+          cs=re.search(r'<style>(.*?)</style>',candidate,re.S); ms=re.search(r'<style>(.*?)</style>',main,re.S)
+          if not cs or not ms: raise SystemExit('style baseline missing')
+          if hashlib.sha256(cs.group(1).encode()).hexdigest()!=hashlib.sha256(ms.group(1).encode()).hexdigest(): raise SystemExit('VISUAL REGRESSION: CSS differs from current main')
+          if '.expandable-prompt{max-height:280px}' not in candidate: raise SystemExit('PROMPT BOX SIZE CHANGED')
+          prompt=Path('prompt-engine.js').read_text(); engine=Path('workflow-engine.js').read_text(); app=Path('app-core.js').read_text(); schema=Path('workflow-schema.js').read_text(); ingestion=Path('response-ingestion.js').read_text(); runtime=Path('test-runtime.js').read_text(); fixture=Path('verify-ingestion.mjs').read_text()
+          for token in ['Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE','account for EVERY INPUT UNIT ID','Exhaustively research every current accepted Stage 02 independent external source','Do not mark Stage 03 complete until all current sources have coverage','Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST','NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize','If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT']:
+              if token not in prompt: raise SystemExit('MISSING PROMPT INVARIANT: '+token)
+          if prompt.index('YOUR TASK — DO THIS NOW')>=prompt.index('JOB CONTROL'): raise SystemExit('task instruction follows project data')
+          for token in ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE']:
+              if token in prompt: raise SystemExit('hard-coded domain branch remains: '+token)
+          if "function artifactControlMarkup(n,locked){if(n===4)return '';" not in app: raise SystemExit('Stage 4 upload control remains')
+          if "'executionFailures','intakeArtifactSnapshots'" not in engine: raise SystemExit('Stage 1 snapshot infrastructure invalid')
+          if 'EXECUTABLE_SPEC_SHA256' not in schema or 'fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized)' not in ingestion: raise SystemExit('application Test IR hash authority missing')
+          for token in ['ASSERT_EXISTS:{','ASSERT_TYPE:{','ASSERT_NE:{']:
+              if token in runtime: raise SystemExit('unapproved V1 primitive remains: '+token)
+          if 'stageData.INPUT_SET_CONTENTS=JSON.stringify({coverage:' not in fixture or 'stageData.ATOMICITY_REVIEW_RESULTS=JSON.stringify({obligationAccounting:' not in fixture: raise SystemExit('closed accounting fixtures missing')
+          PY
+      - name: Commit targeted corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add workflow-engine.js workflow-schema.js response-ingestion.js test-runtime.js build-test-project.mjs verify-*.mjs
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m 'Materialize exhaustive Stage 1-4 and Test IR authority corrections'
+            git push origin HEAD:fix/final-zero-loss-v3-20260830
+          fi
+      - name: Run complete deterministic proof
+        id: proof
+        shell: bash
+        run: |
+          set +e
+          : > isolated-conformance-failure.log
+          run(){ echo "=== $* ===" | tee -a isolated-conformance-failure.log; "$@" >> isolated-conformance-failure.log 2>&1; rc=$?; if [ $rc -ne 0 ]; then echo "FAILED rc=$rc: $*" | tee -a isolated-conformance-failure.log; return $rc; fi; }
+          rc=0
+          for f in *.js *.mjs; do run node --check "$f" || { rc=$?; break; }; done
+          if [ $rc -eq 0 ]; then run node build-test-project.mjs || rc=$?; fi
+          if [ $rc -eq 0 ]; then
+            for t in verify.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-single-supply-prompts.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do
+              if [ -f "$t" ]; then run node "$t" || { rc=$?; break; }; fi
+            done
+          fi
+          if [ $rc -eq 0 ]; then echo 'ALL DETERMINISTIC PROOFS PASSED' | tee -a isolated-conformance-failure.log; fi
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Persist proof result
+        shell: bash
+        run: |
+          set -euo pipefail
+          rc='${{ steps.proof.outputs.rc }}'
+          if [ "$rc" = '0' ]; then
+            cat > deterministic-proof-status.json <<JSON
+          {"status":"PASSED","workflow":"mobile-closed-loop/30","projectSchema":"closed-loop-project/3","responseSchema":"closed-loop-stage-response/3","testIrSchema":"closed-loop-test-spec/1"}
+          JSON
+            git rm -f isolated-conformance-failure.log 2>/dev/null || true
+            git add deterministic-proof-status.json
+            message='Record complete deterministic v3 proof success'
+          else
+            git add isolated-conformance-failure.log
+            message='Record next isolated conformance failure'
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "$message"
+            git push origin HEAD:fix/final-zero-loss-v3-20260830
+          fi
+      - name: Fail on incomplete proof
+        if: steps.proof.outputs.rc != '0'
+        run: exit 1
