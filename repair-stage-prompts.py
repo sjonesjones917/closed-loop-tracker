@@ -60,8 +60,8 @@ p.write_text(s)
 # 3) Invalidate every pre-repair saved prompt so the application cannot reuse a prompt built from the old context contract.
 p=Path('prompt-engine.js')
 s=p.read_text()
-old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/33';"
-new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/34';"
+old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/35';"
+new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/36';"
 assert old in s, 'prompt engine version target not found'
 s=s.replace(old,new,1)
 p.write_text(s)
