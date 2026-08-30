@@ -15,29 +15,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Constrain repair transformation to the Stage 04 helper only
+      - name: Constrain repair transformation to preserve contextFor
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('repair-zero-loss.py')
-          t=p.read_text()
+          p=Path('repair-zero-loss.py'); t=p.read_text()
           old='stage4_pattern = r"function stage4ExhaustedInputs\\(state\\)\\{.*?\\nfunction assertStage4UpstreamExhausted"\n    stage4_repl = "function stage4ExhaustedInputs(state){const active=list=>safe(list).filter(r=>r?.active!==false&&!r?.invalidatedBy).map(r=>({id:r?.id||r?.recordId||null,stage:r?.stage??null,scope:r?.scope||{},fields:recordFields(r),relationships:r?.relationships||{},evidenceRefs:r?.evidenceRefs||[]})),humanJobInput=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>[\'HUMAN\',\'HUMAN_DECISION\'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null]));return {currentUserJobInput:humanJobInput,originalUserEntered:state?.projectData?.userEntered||{},stage01AcceptedCapture:parseCapturedInputSet(state),stage01AcceptedDefinition:{agentData:state?.stages?.[1]?.agentData||state?.stages?.[1]?.acceptedData||{},humanData:state?.stages?.[1]?.humanData||{},derivedData:state?.stages?.[1]?.derivedData||{}},stage03AcceptedData:{agentData:state?.stages?.[3]?.agentData||state?.stages?.[3]?.acceptedData||{},humanData:state?.stages?.[3]?.humanData||{},derivedData:state?.stages?.[3]?.derivedData||{}},stage03Research:active(state?.projectData?.research),stage03CandidateRequirements:active(state?.projectData?.candidateRequirements),applicableSources:active(state?.projectData?.sources),applicableEvidence:active(state?.projectData?.evidenceRecords).filter(record=>[2,3].includes(Number(record.stage)))};}\\nfunction assertStage4UpstreamExhausted"'
           new='stage4_pattern = r"function stage4ExhaustedInputs\\(state\\)\\{.*?\\n(?=function contextFor)"\n    stage4_repl = "function stage4ExhaustedInputs(state){const active=list=>safe(list).filter(r=>r?.active!==false&&!r?.invalidatedBy).map(r=>({id:r?.id||r?.recordId||null,stage:r?.stage??null,scope:r?.scope||{},fields:recordFields(r),relationships:r?.relationships||{},evidenceRefs:r?.evidenceRefs||[]})),humanJobInput=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>[\'HUMAN\',\'HUMAN_DECISION\'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null]));return {currentUserJobInput:humanJobInput,originalUserEntered:state?.projectData?.userEntered||{},stage01AcceptedCapture:parseCapturedInputSet(state),stage01AcceptedDefinition:{agentData:state?.stages?.[1]?.agentData||state?.stages?.[1]?.acceptedData||{},humanData:state?.stages?.[1]?.humanData||{},derivedData:state?.stages?.[1]?.derivedData||{}},stage03AcceptedData:{agentData:state?.stages?.[3]?.agentData||state?.stages?.[3]?.acceptedData||{},humanData:state?.stages?.[3]?.humanData||{},derivedData:state?.stages?.[3]?.derivedData||{}},stage03Research:active(state?.projectData?.research),stage03CandidateRequirements:active(state?.projectData?.candidateRequirements),applicableSources:active(state?.projectData?.sources),applicableEvidence:active(state?.projectData?.evidenceRecords).filter(record=>[2,3].includes(Number(record.stage)))}};\\n"'
-          if old not in t:
-              raise SystemExit('Expected Stage 04 repair transformation was not found')
+          if old not in t: raise SystemExit('Expected Stage 04 repair transformation was not found')
           p.write_text(t.replace(old,new,1))
           PY
       - name: Apply deterministic source repair
         run: python3 repair-zero-loss.py
+      - name: Align retained-project browser proof to application-owned manifest
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs'); t=p.read_text()
+          old="const intakeProof=await evalValue(cdp,`(()=>{const p=globalThis.closedLoopPromptEngine.buildPromptRecord(1,${JSON.stringify(retained)});const m=p.contextManifest?.intakeCoverageManifest;return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM')};})()`);assert(intakeProof&&intakeProof.inputVersion===retained.job.CURRENT_INPUT_VERSION&&intakeProof.unitCount>0&&intakeProof.hasObjective,'Application-owned Stage 01 intake manifest did not preserve current human-authority identity.');"
+          new="const intakeProof=await evalValue(cdp,`(()=>{const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(${JSON.stringify(retained)});return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM')};})()`);assert(intakeProof&&intakeProof.inputVersion===retained.job.CURRENT_INPUT_VERSION&&intakeProof.unitCount>0&&intakeProof.hasObjective,'Application-owned Stage 01 intake manifest did not preserve current human-authority identity.');"
+          if old not in t: raise SystemExit('Expected browser intake proof not found')
+          p.write_text(t.replace(old,new,1))
+          PY
       - name: Normalize permanent visual regression to compare exact baseline
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('verify-zero-loss-accounting.mjs')
-          t=p.read_text()
+          p=Path('verify-zero-loss-accounting.mjs'); t=p.read_text()
           old="const css=fs.readFileSync('index.html','utf8');assert(css.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Visual prompt-box baseline changed.');"
-          if old not in t:
-              raise SystemExit('Expected visual assertion not found')
+          if old not in t: raise SystemExit('Expected visual assertion not found')
           p.write_text(t.replace(old,"",1))
           PY
       - name: Prove source syntax
@@ -49,17 +55,7 @@ jobs:
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
       - name: Prove zero-loss accounting semantics
-        run: |
-          if node verify-zero-loss-accounting.mjs > zero-loss-failure.log 2>&1; then
-            rm -f zero-loss-failure.log
-          else
-            git config user.name closed-loop-diagnostic
-            git config user.email closed-loop-diagnostic@users.noreply.github.com
-            git add zero-loss-failure.log
-            git commit -m "Capture zero-loss semantic failure [diagnostic]"
-            git push origin HEAD:fix/closed-loop-v3-final-20260830
-            exit 1
-          fi
+        run: node verify-zero-loss-accounting.mjs
       - name: Prove full synthetic lifecycle
         run: node build-test-project.mjs
       - name: Prove browser behavior and established prompt dimensions
