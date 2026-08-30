@@ -88,6 +88,44 @@ new_residual = " if(!q.includes('EXACT_DELIVERABLE_REQUESTED')||!q.includes('obj
 if old_residual not in text: raise SystemExit('Expected obsolete feasible-substitute Stage 01 assertion not found.')
 text = text.replace(old_residual,new_residual,1)
 text = text.replace("specialistDomains:['patent','software-multifile','building-aec','physical-engineering-cad-cam-cnc-additive']","subjectNeutralIntake:true")
+old_locality = " const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\\/currency\\/conflicts among supplied materials here/i];"
+new_locality = " const required1=[/complete human-authority intake only/i,/objective, intended deliverable/i,/Do not perform source discovery, external-authority analysis, requirement atomization, verification design, production-instruction authoring, implementation, artifact production/i];"
+if old_locality not in text: raise SystemExit('Expected obsolete Stage 01 locality fixture not found.')
+text = text.replace(old_locality,new_locality,1)
+old_practical = """ const required=[
+  'do not ask the human to re-enter facts that are already present in those materials',
+  'Do not block Stage 01 merely because information will be needed by a later',
+  'Stage 01 does not require every fact needed to execute later stages',
+  'A request such as \"prepare a patent application for this project\" is sufficient to define a patent-application drafting job at Stage 01',
+  'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers',
+  'Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome',
+  'humanInputRequestContract',
+  'temporaryKey',
+  'whyRequired',
+  'affectedStageFields',
+  'answerType',
+  'allowedValues',
+  'Do not invent requestKey, required, whyNeeded, expectedAnswer'
+ ];
+"""
+new_practical = """ const required=[
+  'Never ask the human to repeat information available in supplied materials',
+  'BLOCKING_NOW',
+  'ASK_NOW_NONBLOCKING',
+  'LATER_RESOLVABLE',
+  'derive subject-specific questions from this job’s objective and materials',
+  'Do not ask the human to describe or re-enter its contents during Stage 01',
+  'humanInputRequestContract',
+  'temporaryKey',
+  'whyRequired',
+  'affectedStageFields',
+  'answerType',
+  'allowedValues',
+  'Do not invent requestKey, required, whyNeeded, expectedAnswer'
+ ];
+"""
+if old_practical not in text: raise SystemExit('Expected obsolete patent-literal practical intake fixture not found.')
+text = text.replace(old_practical,new_practical,1)
 p.write_text(text)
 
 pages = Path('.github/workflows/pages.yml')
