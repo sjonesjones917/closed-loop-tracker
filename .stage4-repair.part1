@@ -1,0 +1,40 @@
+import fs from 'node:fs';
+
+function read(path){return fs.readFileSync(path,'utf8');}
+function write(path,text){fs.writeFileSync(path,text);}
+function mustReplace(text,before,after,label){
+  if(text.includes(after)) return text;
+  const count=text.split(before).length-1;
+  if(count!==1) throw new Error(`${label}: expected one anchor, found ${count}`);
+  return text.replace(before,after);
+}
+function mustInclude(text,needle,label){if(!text.includes(needle))throw new Error(`${label}: missing anchor ${needle.slice(0,120)}`);}
+function appendStageField(block,stage,field){
+  const re=new RegExp(`(^|,)${stage}:\\[([^\\]]*)\\]`,`m`);
+  const match=block.match(re);if(!match)throw new Error(`fields stage ${stage} not found`);
+  if(match[2].includes(`'${field}'`))return block;
+  return block.replace(re,`${match[1]}${stage}:[${match[2]},'${field}']`);
+}
+function patchOwnership(text,stage,field){
+  const begin='const STAGE_OWNERSHIP=Object.freeze(';
+  const start=text.indexOf(begin);if(start<0)throw new Error('STAGE_OWNERSHIP start missing');
+  const jsonStart=start+begin.length,end=text.indexOf(');\nconst STAGES=',jsonStart);if(end<0)throw new Error('STAGE_OWNERSHIP end missing');
+  const value=JSON.parse(text.slice(jsonStart,end));
+  const owner=value[String(stage)];if(!owner)throw new Error(`ownership stage ${stage} missing`);
+  for(const group of ['human','humanDecision','agent','application'])owner[group]=Array.isArray(owner[group])?owner[group]:[];
+  for(const group of ['human','humanDecision','application'])owner[group]=owner[group].filter(x=>x!==field);
+  if(!owner.agent.includes(field))owner.agent.push(field);
+  return text.slice(0,jsonStart)+JSON.stringify(value,null,2)+text.slice(end);
+}
+
+{
+  let s=read('workbook.js');
+  s=mustReplace(s,"const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';",'workbook project schema');
+  s=mustReplace(s,"'CONVERT EVERY CONFIRMED FAILURE INTO A REGRESSION TEST','REVISE THE RESPONSIBLE LAYER','RE-RUN THE COMPLETE TEN-EXECUTION ITERATION'","'CONVERT EVERY CONFIRMED FAILURE INTO A REGRESSION TEST','CORRECT THE ROOT CAUSE','RE-RUN THE COMPLETE TEN-EXECUTION ITERATION'",'Stage 16 visible name');
+  const fieldStart=s.indexOf('const fields={'),fieldEnd=s.indexOf('};\nconst STAGE_OWNERSHIP',fieldStart);if(fieldStart<0||fieldEnd<0)throw new Error('fields block missing');
+  let fieldBlock=s.slice(fieldStart,fieldEnd+2);
+  fieldBlock=appendStageField(fieldBlock,1,'INTAKE_ACCOUNTING');
+  fieldBlock=appendStageField(fieldBlock,4,'OBLIGATION_ACCOUNTING');
+  s=s.slice(0,fieldStart)+fieldBlock+s.slice(fieldEnd+2);
+  s=patchOwnership(s,1,'INTAKE_ACCOUNTING');
+  s=patchOwnership(s,4,'OBLIGATION_ACCOUNTING');
