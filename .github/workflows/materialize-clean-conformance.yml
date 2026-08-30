@@ -37,7 +37,7 @@ jobs:
           ! grep -q 'CUSTOM_PIPELINE' prompt-engine.js
       - name: Commit proven repair
         run: |
-          git rm .prepare-zero-loss-repair.py .repair-project-memory.py .patch-zero-loss-tests.py .github/workflows/materialize-clean-conformance.yml
+          git rm -f .prepare-zero-loss-repair.py .repair-project-memory.py .patch-zero-loss-tests.py .github/workflows/materialize-clean-conformance.yml
           git config user.name closed-loop-spec-repair
           git config user.email actions@users.noreply.github.com
           git add index.html workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js verify-project-memory.mjs verify-prompt-semantics.mjs
