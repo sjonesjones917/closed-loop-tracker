@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Repair finalizer anchors
+      - name: Repair finalizer against current v3 source
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -33,20 +33,51 @@ jobs:
           strict="if(next===text)throw new Error(`Patch anchor not found: ${label}`);"
           tolerant="if(next===text){console.warn(`Patch anchor not found: ${label}`);return text;}"
           if strict in text: text=text.replace(strict,tolerant,1)
+          needle="const accountingKeys=(value,allowed)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.keys(value).filter(key=>!allowed.includes(key)):['<NOT_OBJECT>'];"
+          helper=r'''const accountingSuppliedMaterialReferences=project=>{
+  const raw=project?.job?.SUPPLIED_MATERIALS_INVENTORY;
+  if(raw===undefined||raw===null)return [];
+  const out=[],push=(value,type='SUPPLIED_MATERIAL',transferMode='REFERENCE')=>{const label=String(value??'').trim();if(label)out.push({label,type:String(type||'SUPPLIED_MATERIAL'),transferMode:String(transferMode||'REFERENCE')});};
+  const ingest=value=>{
+    if(value===undefined||value===null)return;
+    if(Array.isArray(value)){for(const item of value)ingest(item);return;}
+    if(typeof value==='object'){
+      const label=value.exactNameOrReference??value.filename??value.name??value.label??value.reference??value.path;
+      if(label!==undefined)push(label,value.type??value.kind??'SUPPLIED_MATERIAL',value.transferMode??'REFERENCE');
+      else for(const [key,item] of Object.entries(value))if(item!==undefined&&item!==null)push(typeof item==='string'?item:key,'SUPPLIED_MATERIAL','REFERENCE');
+      return;
+    }
+    const text=String(value).trim();if(!text)return;
+    try{const parsed=JSON.parse(text);if(parsed!==text){ingest(parsed);return;}}catch{}
+    for(const line of text.split(/\r?\n|;/).map(x=>x.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean))push(line);
+  };
+  ingest(raw);
+  const seen=new Set();return out.filter(item=>{const key=[item.label,item.type,item.transferMode].join('\u0000').toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});
+};'''
+          if 'const accountingSuppliedMaterialReferences=' not in text:
+              if needle not in text: raise SystemExit('accounting helper insertion anchor missing')
+              text=text.replace(needle,needle+'\n'+helper,1)
+          text=text.replace('for(const reference of suppliedMaterialReferences(project)){','for(const reference of accountingSuppliedMaterialReferences(project)){')
           path.write_text(text)
           PY
-      - name: Apply closure and capture output
-        run: node finalize-v3-accounting.mjs > stage4-finalizer.log 2>&1 || true
-      - name: Capture focused proofs
+      - name: Apply closure
+        run: node finalize-v3-accounting.mjs > stage4-finalizer.log 2>&1 || { cat stage4-finalizer.log; exit 1; }
+      - name: Syntax
+        run: for file in *.js *.mjs; do node --check "$file"; done
+      - name: Focused Stage 01 and Stage 04 proof
         run: |
-          (for file in *.js *.mjs; do node --check "$file"; done) > stage4-syntax.log 2>&1 || true
-          node build-test-project.mjs > stage4-build.log 2>&1 || true
-          node verify.mjs > stage4-architecture.log 2>&1 || true
-          node verify-intake-obligation-accounting.mjs > stage4-accounting.log 2>&1 || true
-      - name: Persist exact diagnostic logs only
+          node build-test-project.mjs
+          node verify-intake-obligation-accounting.mjs
+      - name: Architecture proof
+        run: node verify.mjs
+      - name: Commit repaired source for full PR testing
         run: |
-          git config user.name closed-loop-stage4-diagnostic
-          git config user.email closed-loop-stage4-diagnostic@users.noreply.github.com
-          git add -f stage4-finalizer.log stage4-syntax.log stage4-build.log stage4-architecture.log stage4-accounting.log
-          git commit -m "Capture exact Stage 01/04 proof failures"
+          rm -f stage4-*.log stage4-diagnostic-summary.txt
+          rm -f finalize-v3-accounting.mjs .github/workflows/apply-stage4-closure.yml .github/workflows/apply-stage4-closure-final.yml .github/workflows/z-finalize-v3-accounting.yml .github/workflows/z-finalize-v3-accounting-retry.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name closed-loop-accounting-finalizer
+          git config user.email closed-loop-accounting-finalizer@users.noreply.github.com
+          git add -A
+          git commit -m "Close Stage 01 intake and Stage 04 obligation accounting"
           git push origin HEAD:implementation/closed-loop-v3
