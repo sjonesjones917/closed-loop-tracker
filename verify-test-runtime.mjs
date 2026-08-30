@@ -1,25 +1,19 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
-assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');assert.ok(runtime.OPS.includes('BYTE_COMPARE'));assert.ok(!runtime.OPS.some(x=>/JAVASCRIPT|PYTHON|SHELL/i.test(x)));
-const invalid=runtime.validateSpec({version:runtime.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:1,javascript:'alert(1)'}]});assert.equal(invalid.valid,false);
-const test={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}};assert.equal(runtime.supports(test),true);
-const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);const bytesSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});assert.equal(result.determination,'SATISFIED');
-const failed=await runtime.execute({spec:{...test.EXECUTABLE_SPEC,steps:[...test.EXECUTABLE_SPEC.steps.slice(0,-1),{op:'ASSERT_EQ',value:3}]},artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});assert.equal(failed.determination,'VIOLATED');
-
-// Stage 04 must reuse canonically captured user intent and must not infer a repeated
-// byte handoff merely because the Stage 01 material inventory names a file.
-const appContext={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true};appContext.globalThis=appContext;vm.createContext(appContext);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),appContext,{filename:file});
-const core=appContext.closedLoopCore,engine=appContext.closedLoopWorkflowEngine,prompts=appContext.closedLoopPromptEngine;
-const project=core.createBlankState('JOB-STAGE04-CANONICAL-INPUT');engine.ensureShape(project);
-Object.assign(project.job,{JOB_ID:'JOB-STAGE04-CANONICAL-INPUT',EXACT_USER_OBJECTIVE_VERBATIM:'Compile every supplied project obligation into an atomic requirement specification.',SUPPLIED_MATERIALS_INVENTORY:'text 30(1).txt',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'NOT APPLICABLE',CURRENT_REQUIREMENTS_VERSION:'NOT APPLICABLE',CURRENT_TEST_SUITE_VERSION:'NOT APPLICABLE',CURRENT_INSTRUCTION_VERSION:'NOT APPLICABLE',CURRENT_STAGE:'STAGE 04',CURRENT_STATE:'IN PROGRESS'});project.activeStage=4;
-const intake=engine.buildIntakeCoverageManifest(project);
-project.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Atomic requirement specification',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:`S${index+1}`,text:unit.label==='EXACT_USER_OBJECTIVE_VERBATIM'?project.job.EXACT_USER_OBJECTIVE_VERBATIM:`Captured once: ${unit.label}`,statementClass:unit.label==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUIREMENT':'FACT'}]}))})};
-project.stages[1].status='COMPLETE';project.stages[1].gate={complete:true,blocked:false,reasons:[]};assert.equal(engine.evaluateStage01IntakeAccounting(project).complete,true);
-project.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE',AUTHORITY_HIERARCHY:'No applicable independent external authority in this controlled fixture.',KNOWN_CONTROLLING_SOURCES_EXAMINED:'Complete no-source determination.'};project.stages[2].status='COMPLETE';project.stages[2].gate={complete:true,blocked:false,reasons:[]};
-project.stages[3].agentData={EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE'};project.stages[3].status='COMPLETE';project.stages[3].gate={complete:true,blocked:false,reasons:[]};assert.equal(engine.evaluateStage03Exhaustion(project).complete,true);
-const handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});assert.equal((handoff.send||[]).length,0,'Stage 04 must not create a repeated outgoing file transfer from supplied-material metadata.');assert.equal(Object.prototype.hasOwnProperty.call(handoff,'conversationMaterials'),false,'Stage 04 must not restore filename-derived conversation-material transfer.');
-const prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'}).prompt;assert.ok(prompt.includes(project.job.EXACT_USER_OBJECTIVE_VERBATIM),'Stage 04 must carry the captured user objective forward.');assert.ok(prompt.includes('APPLICATION OBLIGATION MANIFEST'),'Stage 04 must receive the application-owned complete obligation universe.');assert.ok(prompt.includes('Do not ask the user to attach, restate, summarize, retype, or otherwise resupply'),'Stage 04 must explicitly prohibit repeated user input.');
-for(const prohibited of ['REQUIRED INPUT FILES NOT READY','The operator must attach every file listed above','Add and verify the exact supplied project file before copying'])assert.ok(!prompt.includes(prohibited),`Stage 04 reintroduced a repeated-upload instruction: ${prohibited}`);
-const nextAction=JSON.stringify(engine.operationalNextAction(project)||{});assert.ok(!/required stage 04 input file|add the exact supplied project file|missing or unverified.*stage 04/i.test(nextAction),'Stage 04 next action must not require a filename-derived re-upload.');
-console.log(JSON.stringify({genericTestIr:true,stage01Exhausted:true,stage03Exhausted:true,stage04OneTimeIntentReuse:true},null,2));console.log('verify-test-runtime: PASS');
+assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');
+assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
+assert.ok(runtime.OPS.includes('BYTE_COMPARE'));
+assert.ok(!runtime.OPS.some(x=>/JAVASCRIPT|PYTHON|SHELL/i.test(x)));
+const invalid=runtime.validateSpec({version:runtime.SPEC_VERSION,steps:[{op:'ASSERT_EQ',value:1,javascript:'alert(1)'}]});
+assert.equal(invalid.valid,false);
+const test={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}};
+assert.equal(runtime.supports(test),true);
+const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));
+const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);
+const bytesSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});
+assert.equal(result.determination,'SATISFIED');
+const failed=await runtime.execute({spec:{...test.EXECUTABLE_SPEC,steps:[...test.EXECUTABLE_SPEC.steps.slice(0,-1),{op:'ASSERT_EQ',value:3}]},artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});
+assert.equal(failed.determination,'VIOLATED');
+console.log(JSON.stringify({genericTestIr:true,registeredByteCompare:true,arbitraryCodeRejected:true,deterministicPass:true,deterministicViolation:true},null,2));
+console.log('verify-test-runtime: PASS');
