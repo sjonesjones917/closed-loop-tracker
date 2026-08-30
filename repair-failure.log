@@ -1,0 +1,17 @@
+hash.js:25
+      if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
+                                                              ^
+
+TypeError: Cannot canonically hash non-plain object at $.
+    at normalize (hash.js:25:63)
+    at stableStringify (hash.js:37:25)
+    at Object.sha256Value (hash.js:66:47)
+    at prompt-engine.js:298:1015
+    at Array.map (<anonymous>)
+    at prompt-engine.js:298:891
+    at Array.map (<anonymous>)
+    at Object.buildPromptRecord (prompt-engine.js:298:795)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-controlling-spec.mjs:7:1790
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+
+Node.js v22.23.2
