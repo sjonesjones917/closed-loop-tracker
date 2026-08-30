@@ -28,6 +28,10 @@ end=s.index(";\nconst obligations=engine.obligationManifest(p);",pos)+1
 block=s[pos:end]
 replacement=block+"\np.stages[3].status='COMPLETE';p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE'};"
 s=s[:pos]+replacement+s[end:]
+old="const prompt4=prompts.buildPromptRecord(4,p);assert(prompt4.body.includes('APPLICATION OBLIGATION MANIFEST'),'Stage 04 prompt is missing the application obligation manifest.');"
+new="const prompt4=prompts.buildPromptRecord(4,p);p.projectData.generatedPrompts.push({...prompt4,generatedAt:new Date().toISOString(),invalidatedBy:null});p.stages[4].currentPromptId=prompt4.instructionId;assert(prompt4.body.includes('APPLICATION OBLIGATION MANIFEST'),'Stage 04 prompt is missing the application obligation manifest.');"
+if old not in s: raise SystemExit('Stage4 prompt fixture anchor missing')
+s=s.replace(old,new,1)
 old="const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 still derives an original-intent-file handoff.');"
 new="const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});assert(Array.isArray(handoff.send)&&handoff.send.length===0,'Stage 04 still derives a file handoff for previously supplied project input.');assert(!JSON.stringify(handoff).match(/original intent|intent file|reattach|re-attach/i),'Stage 04 handoff still asks for previously supplied intent material.');"
 if old not in s: raise SystemExit('obsolete Stage4 handoff assertion missing')
