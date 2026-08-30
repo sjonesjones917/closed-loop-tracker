@@ -1,0 +1,48 @@
+name: Update canonical workflow acceptance for Stage 04 /3 contract
+on:
+  push:
+    branches: [fix/stage4-canonical-intent-capture]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: "!contains(github.event.head_commit.message, 'Update canonical workflow acceptance to /3')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-canonical-intent-capture
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Update exact acceptance expectations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs')
+          s=p.read_text()
+          replacements={
+            "'Revise the Responsible Layer'":"'Correct the Root Cause'",
+            "'closed-loop-stage-response/2'":"'closed-loop-stage-response/3'",
+            "core.PROJECT_SCHEMA==='closed-loop-project/2'":"core.PROJECT_SCHEMA==='closed-loop-project/3'",
+            "'Response schema /2 is required.'":"'Response schema /3 is required.'"
+          }
+          for old,new in replacements.items():
+              if old not in s: raise SystemExit(f'missing verify.mjs anchor: {old}')
+              s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/stage4-verify-contract.yml
+      - name: Run canonical workflow verification
+        run: |
+          node --check verify.mjs
+          node verify.mjs
+      - name: Commit updated acceptance
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Update canonical workflow acceptance to /3"
+          git push origin HEAD:fix/stage4-canonical-intent-capture
