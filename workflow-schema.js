@@ -56,6 +56,7 @@ const AGENT_JOB_FIELDS=Object.freeze([
 ]);
 
 function jobFieldDefinition(name){
+  if(name==='NEXT_REQUIRED_ACTION')return field(name,PRODUCER.APPLICATION,{valueType:'OBJECT',derivation:'operationalNextAction() derives the complete structured operator action from current canonical state.'});
   if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});
   if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{provenanceRequired:false,nullable:true});
   if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});
