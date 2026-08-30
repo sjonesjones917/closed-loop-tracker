@@ -1,0 +1,8 @@
+from pathlib import Path
+p=Path('prompt-engine.js')
+s=p.read_text()
+anchor='Stage 01 is job definition and clarification only.'
+addition=(' Stage 01 is job definition and clarification only. When accessible supplied materials are present, inspect them deeply enough to capture every human-supplied fact relevant to defining the job. Do not ask the human to re-enter facts that are already present in those materials. DO NOT ask the human to attach, reattach, resend, retype, restate, summarize, reconstruct, or otherwise resupply information already supplied and captured. Do not block Stage 01 merely because information will be needed by a later stage when supplied materials, authorized research, or that later stage can resolve it. Stage 01 does not require every fact needed to execute later stages; it requires complete human authority needed to define the requested outcome. Before finalizing, derive from the actual request and accessible supplied materials every foreseeable human-only fact or decision necessary to define the requested outcome. Classify unresolved issues as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE. The generic intake algorithm must derive subject-specific questions from the actual project rather than from hard-coded project-subject branches.')
+if anchor not in s: raise SystemExit('Stage 01 practical-regression anchor missing')
+s=s.replace(anchor,addition,1)
+p.write_text(s)
