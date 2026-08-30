@@ -28,6 +28,12 @@ text=re.sub(
 # Replace obsolete exact-heading environment assertion. The controlling requirement is semantic honesty,
 # not a mandatory heading on every prompt. External action honesty remains asserted below for every stage.
 text=text.replace("  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');","  }else if(!record.prompt.includes('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred'))issues.push('ENVIRONMENT_ACTION_HONESTY_MISSING');")
+# Replace the legacy universal specialist-content assertion. Domain-specific elicitation belongs in fixtures;
+# the runtime Stage 1 prompt must instead require derivation from the actual request/material and complete accounting.
+legacy="if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');"
+neutral="if(!/human-authority/i.test(r.prompt)||!r.prompt.includes('BLOCKING_NOW')||!r.prompt.includes('ASK_NOW_NONBLOCKING')||!r.prompt.includes('LATER_RESOLVABLE')||!/controlled input|intake coverage|account/i.test(r.prompt))throw new Error('Stage 01 subject-neutral exhaustive intake behavior is missing.');"
+if legacy in text:text=text.replace(legacy,neutral,1)
+elif "Stage 01 specialist intake adaptation is missing." in text:raise SystemExit('legacy specialist assertion shape changed')
 # Replace legacy mutations that targeted deleted domain headings / deleted environment heading with
 # mutations of current controlling prompt invariants. Every mutant must still prove the semantic checker fails.
 text=text.replace("  {...original,prompt:original.prompt.replace('must not be represented as completed','may be represented as completed')},","  {...original,prompt:original.prompt.replace('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','HUMAN COLLABORATION MODE REMOVED')},")
