@@ -30,6 +30,22 @@ function savePrompt(p,stage){
   p.projectData.generatedPrompts.push(record);
   return record;
 }
+function completeIntakeCapture(p){
+  const intake=engine.intakeCoverageManifest(p);
+  return {schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'seed-'+String(index+1),text:String(unit.rawValue??unit.label??unit.unitId),statementClass:unit.label==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUESTED_OUTPUT':'FACT'}]})),conversationStatements:[]};
+}
+function seedAcceptedStage1(p){
+  const promptRecord=savePrompt(p,1),capture=completeIntakeCapture(p);
+  const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Verified ingestion deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'seed-evidence-1',kind:'HUMAN_INPUT',description:'Accepted Stage 01 prerequisite',location:'controlled ingestion fixture',content:'Complete current human authority capture'}],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord});
+  if(!prepared.validation.valid)throw new Error('Failed to seed Stage 01 prerequisite: '+JSON.stringify(prepared.validation.issues));
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'INGESTION_FIXTURE',reviewNote:'Seed prerequisite.'});
+  const seeded=committed.project,acceptedChangeId=seeded.projectData.acceptedChanges.at(-1).changeId;
+  engine.recordStageConfirmation(seeded,1,true,'Current human authority captured for Stage 04 ingestion fixture.','INGESTION_FIXTURE',{acceptedChangeId,inputVersion:seeded.job.CURRENT_INPUT_VERSION,instructionId:promptRecord.instructionId,contextSignature:promptRecord.contextSignature,operatorLabel:'INGESTION_FIXTURE'});
+  engine.recalculate(seeded);
+  if(!engine.evaluateIntakeCoverage(seeded).complete)throw new Error('Seeded Stage 01 prerequisite did not close intake accounting.');
+  return seeded;
+}
 function safeValue(name){
   if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';
   if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';
@@ -51,6 +67,11 @@ function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  if(stage===1){
+    const intake=engine.intakeCoverageManifest(p);
+    const capture={schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'ingestion-'+String(index+1),text:String(unit.rawValue??unit.label??unit.unitId),statementClass:unit.label==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUESTED_OUTPUT':'FACT'}]})),conversationStatements:[]};
+    Object.assign(stageData,{EXACT_DELIVERABLE_REQUESTED:'Verified ingestion deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)});
+  }
   const records={};
   if(!Object.keys(stageData).length){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
@@ -60,6 +81,10 @@ function validEnvelope(p,stage,promptRecord){
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
+  }
+  if(stage===4){
+    const obligations=engine.obligationManifest(p).items;
+    records.requirements=obligations.map((item,index)=>({tempKey:'requirement-'+String(index+1),fields:{OBLIGATION:item.text,REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',SOURCE_LOCATION:'manifest '+item.obligationId,SOURCE_AUTHORITY:item.origin,USER_INPUT_RELATIONSHIP:item.obligationId,APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'The obligation is demonstrably satisfied.',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_OR_INDEPENDENT',EXPECTED_EVIDENCE:'Current sufficient evidence',FAILURE_CONDITION:'The obligation is not satisfied.',SEVERITY:'MAJOR',NOTES:''},relationships:{},evidenceRefs:['evidence-1']}));
   }
   return {
     schema:schema.RESPONSE_SCHEMA,
@@ -78,6 +103,7 @@ function sourceProposal(tempKey='source-1',overrides={}){return {tempKey,fields:
 const allStages=[];
 for(let stage=1;stage<=30;stage++){
   let p=project(`JOB-E2E-${String(stage).padStart(2,'0')}`);
+  if(stage===4)p=seedAcceptedStage1(p);
   p.activeStage=stage;
   const promptRecord=savePrompt(p,stage);
   const envelope=validEnvelope(p,stage,promptRecord);
@@ -88,14 +114,15 @@ for(let stage=1;stage<=30;stage++){
     allStages.push({stage,applicationControlled:true});
     continue;
   }
+  const acceptedBefore=p.projectData.acceptedChanges.length,manifestsBefore=p.projectData.extractionManifests.length;
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
   if(!prepared.validation.valid)throw new Error(`Stage ${stage} valid response rejected: ${JSON.stringify(prepared.validation.issues)}`);
   if(!prepared.proposal||prepared.proposal.status!=='PENDING_OPERATOR_REVIEW')throw new Error(`Stage ${stage} did not create a pending proposal.`);
-  if(prepared.project.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} mutated canonical state before operator acceptance.`);
+  if(prepared.project.projectData.acceptedChanges.length!==acceptedBefore)throw new Error(`Stage ${stage} mutated canonical state before operator acceptance.`);
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR',reviewNote:'Controlled test acceptance.'});
   p=committed.project;
-  if(!p.projectData.acceptedChanges.length)throw new Error(`Stage ${stage} did not create an accepted canonical change.`);
-  if(!p.projectData.extractionManifests.length)throw new Error(`Stage ${stage} did not create an extraction manifest.`);
+  if(p.projectData.acceptedChanges.length!==acceptedBefore+1)throw new Error(`Stage ${stage} did not create exactly one accepted canonical change.`);
+  if(p.projectData.extractionManifests.length!==manifestsBefore+1)throw new Error(`Stage ${stage} did not create exactly one extraction manifest.`);
   const receipt=p.projectData.outputReceipts.at(-1);
   if(receipt.acceptedCanonicalChangeId==='NONE'||receipt.extractionManifestId==='NONE')throw new Error(`Stage ${stage} receipt was not linked through canonical acceptance.`);
   const serialized=JSON.stringify(p); const reloaded=JSON.parse(serialized); engine.ensureShape(reloaded);
@@ -443,7 +470,7 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 // demonstrated-smart-quote-and-stageData-provenance-regression-v1
 {
   let p=project('JOB-SMART-JSON-RECOVERY'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
-  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};
+  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:JSON.stringify(completeIntakeCapture(p))};
   const standard=JSON.stringify(e);const smart=standard.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”');
   const prepared=ingestion.prepare(p,{stage:1,text:smart,promptRecord:pr});
   if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));

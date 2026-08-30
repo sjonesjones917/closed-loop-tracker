@@ -28,6 +28,7 @@ assert.match(schema,/closed-loop-project\/3/,'project schema /3 is required');
 assert.match(schema,/closed-loop-stage-response\/3/,'response schema /3 is required');
 assert.match(schema,/closed-loop-test-spec\/1/,'Test IR schema /1 is required');
 assert.match(schema,/closed-loop-verification-package\/1/,'verification-package schema /1 is required');
+assert.match(schema,/if\(AGENT_JOB_FIELDS\.includes\(name\)\)return field\(name,PRODUCER\.AGENT,\{requiredAtStage:1,valueType:'STRING'\}\);/,'Stage 01 agent job fields, including INPUT_SET_CONTENTS, must remain string-valued');
 assert.match(schema,/fields\.EXECUTABLE_KIND='NONE'/,'schema migration/default path must define NONE as the non-executable state');
 assert.doesNotMatch(schema,/enumValues\s*:\s*\[[^\]]*CUSTOM_PIPELINE[^\]]*\]/,'CUSTOM_PIPELINE cannot remain an active executable enum member');
 assert.match(schema,/fields\.EXECUTABLE_KIND==='CUSTOM_PIPELINE'[^\n]*fields\.EXECUTABLE_KIND='TEST_IR'/,'historical CUSTOM_PIPELINE records must migrate deterministically to TEST_IR');

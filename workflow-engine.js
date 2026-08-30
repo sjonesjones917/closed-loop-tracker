@@ -101,7 +101,7 @@ function nextVersion(current,prefix){
   return `${prefix}-v${String(number).padStart(3,'0')}`;
 }
 const VERSION_BY_STAGE=Object.freeze({
-  1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
+  2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
   4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });
@@ -312,7 +312,7 @@ function gate(stage,project){
   switch(stage){
     case 1:{
       if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');
-      requireAccepted();
+      requireAccepted();const intake=evaluateIntakeCoverage(project);if(!intake.complete)reasons.push(...intake.errors.map(reason=>'Stage 01 intake accounting: '+reason));
       const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);
       if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');
       break;
@@ -331,7 +331,7 @@ function gate(stage,project){
       requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;
     }
     case 4:{
-      requireAccepted();requireCount('requirements',1);
+      requireAccepted();requireCount('requirements',1);const accounting=evaluateObligationAccounting(project);if(!accounting.closed)reasons.push(...accounting.errors.map(reason=>'Stage 04 obligation accounting: '+reason));if(accounting.blocked.length)reasons.push('Stage 04 contains blocked obligation dispositions: '+accounting.blocked.map(item=>item.obligationId).join(', ')+'.');
       for(const req of collection('requirements')){
         for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: ${name} is missing.`);
         const sourceId=String(recordValue(req,'SOURCE_ID')||req.relationships?.SOURCE_ID||'').trim(),userRelationship=String(recordValue(req,'USER_INPUT_RELATIONSHIP')||'').trim();
@@ -452,7 +452,7 @@ gate=function adjudicationGate(stage,project){
   if(stage>=27&&releaseMetrics(project).determination==='ACCEPTED'&&detectCurrentContradictions(project).length)add(['Release cannot be ACCEPTED while a adjudication contradiction exists.']);
   return {...base,complete:reasons.length===0,reasons,blocked:base.blocked||reasons.some(r=>/UNDETERMINED|BLOCKED|missing|unavailable|not established|not conclusively/i.test(r))};
 };
-function deriveStageData(project,stage){ensureShape(project);const derived={};const ids=collection=>recordsForCurrentScope(project,collection).filter(r=>Number(r.stage)===Number(stage)).map(r=>recordId(r,collection));const metrics=[4,6,12].includes(Number(stage))?coverageMetrics(project):null;const convergence=Number(stage)===18?convergenceMetrics(project):null;const release=Number(stage)===27?releaseMetrics(project):null;switch(stage){case 1:Object.assign(derived,{JOB_ID:project.job.JOB_ID,DATE_OPENED:project.job.DATE_OPENED,INPUT_SET_VERSION:project.job.CURRENT_INPUT_VERSION,INPUT_SET_HASH_OR_MANIFEST:project.job.INPUT_SET_HASH_OR_MANIFEST||'UNKNOWN',JOB_RECORD_STATUS:project.stages[1].status==='COMPLETE'?'READY':'NOT READY'});break;case 2:Object.assign(derived,{SOURCE_SET_VERSION:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',SOURCE_RECORDS:ids('sources'),SOURCE_CONFLICT_RECORDS:ids('sourceConflicts')});break;case 4:Object.assign(derived,{REQUIREMENTS_VERSION:project.job.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE',TOTAL_REQUIREMENTS:recordsForCurrentScope(project,'requirements').length,MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount});break;case 6:Object.assign(derived,{TEST_SUITE_VERSION:project.job.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE',TOTAL_ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST:metrics.requirementsWithTests,MANDATORY_TEST_COVERAGE:metrics.requirementCoverage});break;case 11:case 17:case 19:{const it=latestIteration(project,[stage]);const ev=evaluateIteration(project,recordId(it,'iterations'),stage===19?'UNCHANGED_CONFIRMATION':stage===17?'CORRECTED':'INITIAL');Object.assign(derived,{ITERATION_ID:ev.iterationId,RUN_COUNT:ev.runs.length,FRESH_CONTEXT_COUNT:ev.contextCount,ITERATION_COMPLETE:ev.complete,ITERATION_REASONS:ev.reasons,STABILITY_SUMMARY:stage===19?ev.stability:null});break;}case 12:Object.assign(derived,{ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,RUNS:metrics.iterationRunCount,EXPECTED_MANDATORY_RECORDS:metrics.expectedVerificationCount,ACTUAL_MANDATORY_RECORDS:metrics.actualVerificationTripleCount,MISSING_RECORDS:metrics.missingVerificationTriples.length,VERIFICATION_COVERAGE:metrics.verificationCoverage});break;case 13:{const it=latestIteration(project,[10,17,19]),iterationId=recordId(it,'iterations'),scope=iterationId?scopeForIteration(project,iterationId):currentScope(project),facts={};for(const req of mandatoryRequirements(project,scope)){const f=comparisonFacts(project,requirementId(req),iterationId);facts[requirementId(req)]={RUN_DETERMINATIONS:f.runDeterminations,ALL_TEN_SATISFIED:f.allSatisfied,ANY_VIOLATION:f.anyViolation,ANY_UNDETERMINED:f.anyUndetermined,SATISFIED_COUNT:f.determinations.filter(x=>x==='SATISFIED').length,VIOLATED_COUNT:f.determinations.filter(x=>x==='VIOLATED').length,UNDETERMINED_COUNT:f.determinations.filter(x=>!['SATISFIED','VIOLATED'].includes(x)).length};}Object.assign(derived,{APPLICATION_DERIVED_COMPARISON_FACTS:facts,STABILITY_SUMMARY:iterationId?executionStability(project,iterationId):null});break;}case 18:Object.assign(derived,{MANDATORY_REQUIREMENT_COVERAGE:convergence.requirementCoverage,MANDATORY_VERIFICATION_COVERAGE:convergence.verificationCoverage,REGRESSION_TEST_SUCCESS:convergence.regressionSuccess,CRITICAL_DEFECTS:convergence.criticalDefects,MAJOR_DEFECTS:convergence.majorDefects,MANDATORY_UNRESOLVED_UNKNOWNS:convergence.mandatoryUnresolvedUnknowns,KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS:convergence.contradictions,KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES:convergence.ambiguities,UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE:convergence.unexplainedVariance,ALL_CONDITIONS_SIMULTANEOUSLY_TRUE:convergence.converged,STABILITY_SUMMARY:convergence.iterationId?executionStability(project,convergence.iterationId):null});break;case 27:Object.assign(derived,{TOTAL_MANDATORY_REQUIREMENTS:release.mandatoryRequirementCount,MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE:release.satisfied,MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED:release.violated,MANDATORY_REQUIREMENTS_NOT_ESTABLISHED:release.undetermined,UNRESOLVED_CRITICAL_DEFECTS:release.criticalDefects,UNRESOLVED_MAJOR_DEFECTS:release.majorDefects,SELECTED_RELEASE_STATE:release.determination});break;case 28:Object.assign(derived,DERIVATIONS['stage28.artifactIdentity'](project).value);break;case 29:Object.assign(derived,DERIVATIONS['stage29.evidenceChains'](project).value);break;}derived.STAGE_DECISION=project.stages[stage].status==='COMPLETE'?'READY TO PROCEED':project.stages[stage].status==='BLOCKED'?'BLOCKED':'NOT READY - CORRECTION REQUIRED';derived.DECISION_EVIDENCE=project.stages[stage].gate?.reasons?.length?project.stages[stage].gate.reasons.join('; '):'Canonical current-scope records and deterministic calculations satisfy the stage gate.';return derived;}
+function deriveStageData(project,stage){ensureShape(project);const derived={};const ids=collection=>recordsForCurrentScope(project,collection).filter(r=>Number(r.stage)===Number(stage)).map(r=>recordId(r,collection));const metrics=[4,6,12].includes(Number(stage))?coverageMetrics(project):null;const convergence=Number(stage)===18?convergenceMetrics(project):null;const release=Number(stage)===27?releaseMetrics(project):null;switch(stage){case 1:{const intake=evaluateIntakeCoverage(project);Object.assign(derived,{JOB_ID:project.job.JOB_ID,DATE_OPENED:project.job.DATE_OPENED,INPUT_SET_VERSION:project.job.CURRENT_INPUT_VERSION,INPUT_SET_HASH_OR_MANIFEST:project.job.INPUT_SET_HASH_OR_MANIFEST||intake.manifest.manifestSha256,JOB_RECORD_STATUS:project.stages[1].status==='COMPLETE'?'READY':'NOT READY',INTAKE_COVERAGE_MANIFEST:intake.manifest,INTAKE_COVERAGE:intake.coverage,UNACCOUNTED_INPUT_UNITS:intake.missingUnitIds});break;}case 2:Object.assign(derived,{SOURCE_SET_VERSION:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',SOURCE_RECORDS:ids('sources'),SOURCE_CONFLICT_RECORDS:ids('sourceConflicts')});break;case 4:{const accounting=evaluateObligationAccounting(project);Object.assign(derived,{REQUIREMENTS_VERSION:project.job.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE',TOTAL_REQUIREMENTS:recordsForCurrentScope(project,'requirements').length,MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,OBLIGATION_MANIFEST:accounting.manifest,OBLIGATION_ACCOUNTING_COVERAGE:accounting.coverage,UNACCOUNTED_OBLIGATIONS:accounting.missingObligationIds,BLOCKED_OBLIGATIONS:accounting.blocked.map(item=>item.obligationId)});break;}case 6:Object.assign(derived,{TEST_SUITE_VERSION:project.job.CURRENT_TEST_SUITE_VERSION||'NOT APPLICABLE',TOTAL_ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST:metrics.requirementsWithTests,MANDATORY_TEST_COVERAGE:metrics.requirementCoverage});break;case 11:case 17:case 19:{const it=latestIteration(project,[stage]);const ev=evaluateIteration(project,recordId(it,'iterations'),stage===19?'UNCHANGED_CONFIRMATION':stage===17?'CORRECTED':'INITIAL');Object.assign(derived,{ITERATION_ID:ev.iterationId,RUN_COUNT:ev.runs.length,FRESH_CONTEXT_COUNT:ev.contextCount,ITERATION_COMPLETE:ev.complete,ITERATION_REASONS:ev.reasons,STABILITY_SUMMARY:stage===19?ev.stability:null});break;}case 12:Object.assign(derived,{ACTIVE_MANDATORY_REQUIREMENTS:metrics.mandatoryRequirementCount,RUNS:metrics.iterationRunCount,EXPECTED_MANDATORY_RECORDS:metrics.expectedVerificationCount,ACTUAL_MANDATORY_RECORDS:metrics.actualVerificationTripleCount,MISSING_RECORDS:metrics.missingVerificationTriples.length,VERIFICATION_COVERAGE:metrics.verificationCoverage});break;case 13:{const it=latestIteration(project,[10,17,19]),iterationId=recordId(it,'iterations'),scope=iterationId?scopeForIteration(project,iterationId):currentScope(project),facts={};for(const req of mandatoryRequirements(project,scope)){const f=comparisonFacts(project,requirementId(req),iterationId);facts[requirementId(req)]={RUN_DETERMINATIONS:f.runDeterminations,ALL_TEN_SATISFIED:f.allSatisfied,ANY_VIOLATION:f.anyViolation,ANY_UNDETERMINED:f.anyUndetermined,SATISFIED_COUNT:f.determinations.filter(x=>x==='SATISFIED').length,VIOLATED_COUNT:f.determinations.filter(x=>x==='VIOLATED').length,UNDETERMINED_COUNT:f.determinations.filter(x=>!['SATISFIED','VIOLATED'].includes(x)).length};}Object.assign(derived,{APPLICATION_DERIVED_COMPARISON_FACTS:facts,STABILITY_SUMMARY:iterationId?executionStability(project,iterationId):null});break;}case 18:Object.assign(derived,{MANDATORY_REQUIREMENT_COVERAGE:convergence.requirementCoverage,MANDATORY_VERIFICATION_COVERAGE:convergence.verificationCoverage,REGRESSION_TEST_SUCCESS:convergence.regressionSuccess,CRITICAL_DEFECTS:convergence.criticalDefects,MAJOR_DEFECTS:convergence.majorDefects,MANDATORY_UNRESOLVED_UNKNOWNS:convergence.mandatoryUnresolvedUnknowns,KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS:convergence.contradictions,KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES:convergence.ambiguities,UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE:convergence.unexplainedVariance,ALL_CONDITIONS_SIMULTANEOUSLY_TRUE:convergence.converged,STABILITY_SUMMARY:convergence.iterationId?executionStability(project,convergence.iterationId):null});break;case 27:Object.assign(derived,{TOTAL_MANDATORY_REQUIREMENTS:release.mandatoryRequirementCount,MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE:release.satisfied,MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED:release.violated,MANDATORY_REQUIREMENTS_NOT_ESTABLISHED:release.undetermined,UNRESOLVED_CRITICAL_DEFECTS:release.criticalDefects,UNRESOLVED_MAJOR_DEFECTS:release.majorDefects,SELECTED_RELEASE_STATE:release.determination});break;case 28:Object.assign(derived,DERIVATIONS['stage28.artifactIdentity'](project).value);break;case 29:Object.assign(derived,DERIVATIONS['stage29.evidenceChains'](project).value);break;}derived.STAGE_DECISION=project.stages[stage].status==='COMPLETE'?'READY TO PROCEED':project.stages[stage].status==='BLOCKED'?'BLOCKED':'NOT READY - CORRECTION REQUIRED';derived.DECISION_EVIDENCE=project.stages[stage].gate?.reasons?.length?project.stages[stage].gate.reasons.join('; '):'Canonical current-scope records and deterministic calculations satisfy the stage gate.';return derived;}
 
 function recalculate(project){
   ensureShape(project);
@@ -679,6 +679,157 @@ function executionStability(project,iterationId){
   const defects=recordsForIteration(project,'defects',iterationId),patterns=new Map(),newDefectsByRun={};for(const d of defects){const key=hash.sha256Value([recordValue(d,'OBSERVED_FAILURE'),recordValue(d,'EXPECTED_CONDITION')]);patterns.set(key,(patterns.get(key)||0)+1);const run=String(recordValue(d,'RUN_ID')||d.relationships?.RUN_ID||'UNASSIGNED');newDefectsByRun[run]=(newDefectsByRun[run]||0)+1;}
   return {runCount:matrix.runs.length,requirementStability:byReq,testStability:byTest,totalDistinctDefects:defects.length,repeatedDefectCount:[...patterns.values()].filter(n=>n>1).reduce((a,n)=>a+n,0),uniqueDefectCount:[...patterns.values()].filter(n=>n===1).length,newDefectsByRun,unexplainedVarianceCount:recordsForIteration(project,'comparisons',iterationId).filter(r=>truth(recordValue(r,'CORRECTNESS_AFFECTING_VARIANCE'))&&!truth(recordValue(r,'AUTHORIZED_VARIANCE'))).length};
 }
+
+const INTAKE_MANIFEST_SCHEMA='closed-loop-intake-manifest/1';
+const INTAKE_CAPTURE_SCHEMA='closed-loop-intake-capture/1';
+const OBLIGATION_MANIFEST_SCHEMA='closed-loop-obligation-manifest/1';
+const INTAKE_DISPOSITIONS=Object.freeze(['INCORPORATED','RETAINED_CONTEXT','UNRESOLVED_HUMAN_ONLY','LATER_RESOLVABLE','INAPPLICABLE']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','FACT_AFFECTING_REQUIREMENTS','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY']);
+const CONVERSATION_STATUSES=Object.freeze(['ANSWERED','UNKNOWN','DEFERRED']);
+const OBLIGATION_NONREQUIREMENT_DISPOSITIONS=Object.freeze(['RETAINED_NONNORMATIVE_CONTEXT','INAPPLICABLE','BLOCKED']);
+const accountingId=(prefix,payload)=>prefix+'-'+hash.sha256Value(payload).slice(0,24).toUpperCase();
+const meaningfulAuthorityValue=value=>value!==undefined&&value!==null&&String(typeof value==='string'?value:JSON.stringify(value)).trim()&&!['UNKNOWN','NONE','NOT APPLICABLE','UNASSIGNED','PENDING'].includes(upper(typeof value==='string'?value:JSON.stringify(value)));
+const accountingKeys=(value,allowed)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.keys(value).filter(key=>!allowed.includes(key)):['<NOT_OBJECT>'];
+function suppliedMaterialReferences(project){
+  const raw=project&&project.job?project.job.SUPPLIED_MATERIALS_INVENTORY:null;
+  if(raw===undefined||raw===null||String(raw).trim()==='')return [];
+  const out=[];
+  const push=value=>{const label=String(value===undefined?'':value).trim();if(label)out.push({label,type:'SUPPLIED_MATERIAL',transferMode:'REFERENCE'});};
+  const ingest=value=>{
+    if(value===undefined||value===null)return;
+    if(Array.isArray(value)){value.forEach(ingest);return;}
+    if(typeof value==='object'){
+      const label=value.exactNameOrReference||value.filename||value.name||value.label||value.reference||value.path;
+      if(label!==undefined)push(label);else Object.values(value).forEach(ingest);
+      return;
+    }
+    const text=String(value).trim();
+    if(!text)return;
+    try{const parsed=JSON.parse(text);if(typeof parsed!=='string'){ingest(parsed);return;}}catch(error){}
+    text.split(/\r?\n|;/).map(line=>line.trim()).filter(Boolean).forEach(push);
+  };
+  ingest(raw);
+  const seen=new Set();
+  return out.filter(item=>{const key=item.label.toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);
+  const job=project.job||{},inputVersion=String(job.CURRENT_INPUT_VERSION||'UNKNOWN'),units=[],add=(kind,sourceLocation,label,value,extra={})=>{
+    if(!meaningfulAuthorityValue(value))return;
+    const rawValueSha256=hash.sha256Value(value),unitId=accountingId('INPUT-UNIT',{jobId:job.JOB_ID,inputVersion,kind,sourceLocation,rawValueSha256});
+    units.push({unitId,kind,sourceLocation,label:String(label||sourceLocation),rawValueSha256,inputVersion,...clone(extra)});
+  };
+  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){
+    if(!['HUMAN','HUMAN_DECISION'].includes(String(definition?.producer||''))||name==='SUPPLIED_MATERIALS_INVENTORY')continue;
+    add(definition.producer==='HUMAN_DECISION'?'HUMAN_DECISION':'JOB_FIELD','job.'+name,name,job[name]);
+  }
+  const artifacts=records(project,'artifacts').filter(isActiveRecord),basename=value=>String(value||'').trim().replaceAll('\\','/').split('/').pop().toLowerCase();
+  for(const reference of suppliedMaterialReferences(project)){
+    const matches=artifacts.filter(artifact=>basename(recordValue(artifact,'FILENAME'))===basename(reference.label)),artifact=matches.length===1?matches[0]:null;
+    add('SUPPLIED_MATERIAL','job.SUPPLIED_MATERIALS_INVENTORY',reference.label,reference,{materialType:reference.type,transferMode:reference.transferMode,artifactId:artifact?recordId(artifact,'artifacts'):null,artifactSha256:artifact?String(recordValue(artifact,'SHA256')||''):null,artifactAvailability:artifact?String(recordValue(artifact,'AVAILABILITY')||''):null});
+  }
+  for(const answer of safe(project.projectData?.humanInputAnswers).filter(item=>Number(item.stage||1)===1&&String(item.inputVersion||inputVersion)===inputVersion&&!item.invalidatedBy)){
+    add('HUMAN_ANSWER','projectData.humanInputAnswers/'+String(answer.answerId||answer.requestId||'UNKNOWN'),answer.question||answer.requestId||'Human answer',answer.answer,{answerId:answer.answerId||null,requestId:answer.requestId||null,answerType:answer.answerType||'UNKNOWN'});
+  }
+  units.sort((a,b)=>a.unitId.localeCompare(b.unitId));
+  const base={schema:INTAKE_MANIFEST_SCHEMA,jobId:String(job.JOB_ID||'UNKNOWN'),inputVersion,units,unitCount:units.length};
+  return {...base,manifestSha256:hash.sha256Value(base)};
+}
+function parseIntakeCaptureValue(value){
+  if(value&&typeof value==='object'&&!Array.isArray(value))return clone(value);
+  if(typeof value!=='string'||!value.trim())return null;
+  try{const parsed=JSON.parse(value);return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:null;}catch{return null;}
+}
+function evaluateIntakeCoverage(project,captureOverride){
+  const manifest=intakeCoverageManifest(project),source=captureOverride!==undefined?captureOverride:(project.stages?.[1]?.agentData?.INPUT_SET_CONTENTS??project.stages?.[1]?.acceptedData?.INPUT_SET_CONTENTS),capture=parseIntakeCaptureValue(source),errors=[],normalizedUnits=[],normalizedConversation=[];
+  if(!capture)return {manifest,capture:null,coverage:0,accountedUnitIds:[],missingUnitIds:manifest.units.map(unit=>unit.unitId),unknownUnitIds:[],errors:['INPUT_SET_CONTENTS is not a valid structured intake capture.'],capturedStatements:[],complete:false};
+  const rootUnknown=accountingKeys(capture,['schema','inputVersion','manifestSha256','units','conversationStatements']);if(rootUnknown.length)errors.push('Unknown intake-capture root properties: '+rootUnknown.join(', ')+'.');
+  if(capture.schema!==INTAKE_CAPTURE_SCHEMA)errors.push('Intake capture schema must be '+INTAKE_CAPTURE_SCHEMA+'.');
+  if(String(capture.inputVersion||'')!==manifest.inputVersion)errors.push('Intake capture inputVersion does not match the current controlled input version.');
+  if(String(capture.manifestSha256||'')!==manifest.manifestSha256)errors.push('Intake capture manifestSha256 does not match the controlling intake manifest.');
+  if(!Array.isArray(capture.units))errors.push('Intake capture units must be an array.');
+  if(capture.conversationStatements!==undefined&&!Array.isArray(capture.conversationStatements))errors.push('conversationStatements must be an array when present.');
+  const expected=new Set(manifest.units.map(unit=>unit.unitId)),seen=new Set(),unknownUnitIds=[];
+  for(const [index,unit] of safe(capture.units).entries()){
+    const unknown=accountingKeys(unit,['sourceUnitId','disposition','reason','extractedStatements']);if(unknown.length)errors.push('units['+index+'] has unknown properties: '+unknown.join(', ')+'.');
+    const sourceUnitId=String(unit?.sourceUnitId||''),disposition=upper(unit?.disposition),reason=String(unit?.reason||'').trim();
+    if(!sourceUnitId)errors.push('units['+index+'] is missing sourceUnitId.');
+    if(seen.has(sourceUnitId))errors.push('Duplicate intake sourceUnitId '+sourceUnitId+'.');seen.add(sourceUnitId);
+    if(sourceUnitId&&!expected.has(sourceUnitId))unknownUnitIds.push(sourceUnitId);
+    if(!INTAKE_DISPOSITIONS.includes(disposition))errors.push(sourceUnitId+': invalid disposition '+String(unit?.disposition||'MISSING')+'.');
+    if(disposition==='INAPPLICABLE'&&!reason)errors.push(sourceUnitId+': INAPPLICABLE requires a reason.');
+    if(!Array.isArray(unit?.extractedStatements))errors.push(sourceUnitId+': extractedStatements must be an array.');
+    if(disposition&&disposition!=='INAPPLICABLE'&&Array.isArray(unit?.extractedStatements)&&!unit.extractedStatements.length)errors.push(sourceUnitId+': materially relevant statements were not captured.');
+    const statementKeys=new Set(),statements=[];
+    for(const [statementIndex,statement] of safe(unit?.extractedStatements).entries()){
+      const statementUnknown=accountingKeys(statement,['statementKey','text','statementClass']);if(statementUnknown.length)errors.push(sourceUnitId+'.extractedStatements['+statementIndex+'] has unknown properties: '+statementUnknown.join(', ')+'.');
+      const statementKey=String(statement?.statementKey||'').trim(),text=String(statement?.text||'').trim(),statementClass=upper(statement?.statementClass);
+      if(!statementKey)errors.push(sourceUnitId+': statementKey is required.');if(statementKeys.has(statementKey))errors.push(sourceUnitId+': duplicate statementKey '+statementKey+'.');statementKeys.add(statementKey);
+      if(!text)errors.push(sourceUnitId+': statement text is required.');if(!INTAKE_STATEMENT_CLASSES.includes(statementClass))errors.push(sourceUnitId+': invalid statementClass '+String(statement?.statementClass||'MISSING')+'.');
+      if(statementKey&&text&&INTAKE_STATEMENT_CLASSES.includes(statementClass))statements.push({statementId:accountingId('INPUT-STATEMENT',{sourceUnitId,statementKey,text,statementClass}),sourceUnitId,statementKey,text,statementClass,disposition});
+    }
+    normalizedUnits.push({sourceUnitId,disposition,reason,extractedStatements:statements});
+  }
+  const conversationKeys=new Set();
+  for(const [index,statement] of safe(capture.conversationStatements).entries()){
+    const unknown=accountingKeys(statement,['statementKey','question','text','statementClass','status']);if(unknown.length)errors.push('conversationStatements['+index+'] has unknown properties: '+unknown.join(', ')+'.');
+    const statementKey=String(statement?.statementKey||'').trim(),question=String(statement?.question||'').trim(),text=String(statement?.text||'').trim(),statementClass=upper(statement?.statementClass),status=upper(statement?.status);
+    if(!statementKey)errors.push('conversationStatements['+index+'] is missing statementKey.');if(conversationKeys.has(statementKey))errors.push('Duplicate conversation statementKey '+statementKey+'.');conversationKeys.add(statementKey);
+    if(!question)errors.push(statementKey+': the human question is required.');if(!text)errors.push(statementKey+': the human answer or explicit UNKNOWN/DEFERRED value is required.');if(!INTAKE_STATEMENT_CLASSES.includes(statementClass))errors.push(statementKey+': invalid statementClass.');if(!CONVERSATION_STATUSES.includes(status))errors.push(statementKey+': status must be ANSWERED, UNKNOWN, or DEFERRED.');
+    if(statementKey&&question&&text&&INTAKE_STATEMENT_CLASSES.includes(statementClass)&&CONVERSATION_STATUSES.includes(status))normalizedConversation.push({statementId:accountingId('INPUT-STATEMENT',{inputVersion:manifest.inputVersion,statementKey,question,text,statementClass,status}),sourceUnitId:null,statementKey,question,text,statementClass,status,disposition:status==='ANSWERED'?'INCORPORATED':'UNRESOLVED_HUMAN_ONLY'});
+  }
+  const accountedUnitIds=[...seen].filter(id=>expected.has(id)),missingUnitIds=manifest.units.map(unit=>unit.unitId).filter(id=>!seen.has(id)),coverage=manifest.unitCount?accountedUnitIds.length/manifest.unitCount:0;
+  if(missingUnitIds.length)errors.push('Unaccounted intake units: '+missingUnitIds.join(', ')+'.');if(unknownUnitIds.length)errors.push('Unknown intake unit identities: '+unknownUnitIds.join(', ')+'.');
+  return {manifest,capture,coverage,accountedUnitIds,missingUnitIds,unknownUnitIds,errors,capturedStatements:[...normalizedUnits.flatMap(unit=>unit.extractedStatements),...normalizedConversation],normalizedUnits,normalizedConversation,complete:errors.length===0&&coverage===1};
+}
+function obligationFragments(value){
+  if(value===undefined||value===null)return [];
+  if(Array.isArray(value))return value.flatMap(obligationFragments);
+  if(typeof value==='object')return [JSON.stringify(value)];
+  const text=String(value).trim();if(!text||['NONE','UNKNOWN','NOT APPLICABLE'].includes(upper(text)))return [];
+  return text.split(/\r?\n/).map(line=>line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean);
+}
+function obligationManifest(project){
+  ensureShape(project);
+  const job=project.job||{},inputVersion=String(job.CURRENT_INPUT_VERSION||'UNKNOWN'),sourceSetVersion=String(job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE'),intake=evaluateIntakeCoverage(project),items=[],seen=new Set(),add=(text,origin,provenance,sourceIdentity=null)=>{
+    const clean=String(text||'').trim();if(!clean)return;
+    const obligationId=accountingId('OBLIGATION',{jobId:job.JOB_ID,inputVersion,sourceSetVersion,origin,provenance,text:clean});if(seen.has(obligationId))return;seen.add(obligationId);items.push({obligationId,text:clean,origin,provenance:clone(provenance),sourceIdentity});
+  };
+  const obligationClasses=new Set(['FACT','FACT_AFFECTING_REQUIREMENTS','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY']);
+  for(const statement of intake.capturedStatements||[]){if(!obligationClasses.has(statement.statementClass)||statement.disposition==='INAPPLICABLE'||statement.disposition==='RETAINED_CONTEXT')continue;add(statement.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{statementId:statement.statementId,sourceUnitId:statement.sourceUnitId,statementKey:statement.statementKey,inputVersion,status:statement.status||null});}
+  for(const text of obligationFragments(project.stages?.[1]?.agentData?.EXACT_DELIVERABLE_REQUESTED||job.EXACT_DELIVERABLE_REQUESTED))add(text,'STAGE01_JOB_DEFINITION',{field:'EXACT_DELIVERABLE_REQUESTED',inputVersion});
+  for(const text of obligationFragments(project.stages?.[1]?.agentData?.UNKNOWN_INFORMATION||job.UNKNOWN_INFORMATION))add(text,'STAGE01_UNRESOLVED_HUMAN_AUTHORITY',{field:'UNKNOWN_INFORMATION',inputVersion});
+  for(const candidate of recordsForCurrentScope(project,'candidateRequirements')){const text=String(recordValue(candidate,'CANDIDATE_OBLIGATION')||'').trim();if(!text)continue;const candidateRequirementId=recordId(candidate,'candidateRequirements'),sourceId=String(recordValue(candidate,'SOURCE_ID')||candidate.relationships?.SOURCE_ID||'').trim()||null;add(text,'STAGE03_CANDIDATE_REQUIREMENT',{candidateRequirementId,recordSha256:candidate.recordSha256||candidate.sha256||null,sourceId,sourceSetVersion},sourceId);}
+  const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];
+  for(const research of recordsForCurrentScope(project,'research')){const researchId=recordId(research,'research'),sourceId=String(recordValue(research,'SOURCE_ID')||research.relationships?.SOURCE_ID||'').trim()||null;for(const field of researchFields)for(const [index,text] of obligationFragments(recordValue(research,field)).entries())add(text,'STAGE03_SOURCE_RESEARCH',{researchId,field,index,recordSha256:research.recordSha256||research.sha256||null,sourceId,sourceSetVersion},sourceId);}
+  items.sort((a,b)=>a.obligationId.localeCompare(b.obligationId));
+  const base={schema:OBLIGATION_MANIFEST_SCHEMA,jobId:String(job.JOB_ID||'UNKNOWN'),inputVersion,sourceSetVersion,intakeManifestSha256:intake.manifest.manifestSha256,intakeCaptureComplete:intake.complete,items,obligationCount:items.length};
+  return {...base,manifestSha256:hash.sha256Value(base)};
+}
+const obligationIdsFromValue=value=>[...new Set((String(value||'').match(/OBLIGATION-[A-F0-9]{24}/g)||[]))];
+function parseObligationDispositionEvidence(item,index,errors){
+  const kind=upper(item?.kind??item?.KIND??item?.fields?.KIND);if(kind!=='OBLIGATION_DISPOSITION')return null;
+  const raw=item?.content??item?.CONTENT??item?.fields?.CONTENT;let value=raw;if(typeof raw==='string')try{value=JSON.parse(raw);}catch{errors.push('OBLIGATION_DISPOSITION evidence '+index+' content is not valid JSON.');return null;}
+  const unknown=accountingKeys(value,['obligationId','disposition','reason']);if(unknown.length){errors.push('OBLIGATION_DISPOSITION evidence '+index+' has unknown properties: '+unknown.join(', ')+'.');return null;}
+  const obligationId=String(value?.obligationId||''),disposition=upper(value?.disposition),reason=String(value?.reason||'').trim();if(!obligationId)errors.push('OBLIGATION_DISPOSITION evidence '+index+' is missing obligationId.');if(!OBLIGATION_NONREQUIREMENT_DISPOSITIONS.includes(disposition))errors.push(obligationId+': invalid non-requirement disposition.');if(!reason)errors.push(obligationId+': non-requirement disposition requires a reason.');return obligationId&&OBLIGATION_NONREQUIREMENT_DISPOSITIONS.includes(disposition)&&reason?{obligationId,disposition,reason}:null;
+}
+function evaluateObligationAccounting(project,options={}){
+  const manifest=obligationManifest(project),requirements=options.requirements!==undefined?safe(options.requirements):recordsForCurrentScope(project,'requirements'),evidence=options.evidence!==undefined?safe(options.evidence):recordsForCurrentScope(project,'evidenceRecords').filter(item=>Number(item.stage)===4),expected=new Set(manifest.items.map(item=>item.obligationId)),mapped=new Map(),dispositions=new Map(),errors=[],unmappedRequirementIndexes=[];
+  for(const [index,requirement] of requirements.entries()){
+    const fields=requirement?.fields&&typeof requirement.fields==='object'?requirement.fields:requirement||{},ids=obligationIdsFromValue(fields.USER_INPUT_RELATIONSHIP??requirement.USER_INPUT_RELATIONSHIP);
+    if(!ids.length){unmappedRequirementIndexes.push(index);errors.push('Requirement '+index+' does not reference an obligation-manifest identity.');continue;}
+    for(const id of ids){if(!expected.has(id))errors.push('Requirement '+index+' references unknown obligation '+id+'.');if(!mapped.has(id))mapped.set(id,[]);mapped.get(id).push(index);}
+  }
+  for(const [index,item] of evidence.entries()){
+    const disposition=parseObligationDispositionEvidence(item,index,errors);if(!disposition)continue;
+    if(!expected.has(disposition.obligationId))errors.push('Disposition references unknown obligation '+disposition.obligationId+'.');if(dispositions.has(disposition.obligationId))errors.push('Duplicate disposition for '+disposition.obligationId+'.');dispositions.set(disposition.obligationId,disposition);
+  }
+  for(const id of expected)if(mapped.has(id)&&dispositions.has(id))errors.push(id+' is both mapped to a requirement and given a non-requirement disposition.');
+  const accounted=[...expected].filter(id=>mapped.has(id)||dispositions.has(id)),missingObligationIds=[...expected].filter(id=>!mapped.has(id)&&!dispositions.has(id)),blocked=[...dispositions.values()].filter(item=>item.disposition==='BLOCKED');if(missingObligationIds.length)errors.push('Unaccounted obligations: '+missingObligationIds.join(', ')+'.');if(!manifest.intakeCaptureComplete)errors.push('Stage 01 intake capture is not complete for the current input version.');
+  const coverage=manifest.obligationCount?accounted.length/manifest.obligationCount:0,closed=errors.length===0&&coverage===1;
+  return {manifest,coverage,accountedObligationIds:accounted,missingObligationIds,unmappedRequirementIndexes,blocked,errors,closed,complete:closed&&blocked.length===0};
+}
+
 function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){
   const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map(),withhold=new Map(),expectBack=new Map(),artifacts=recordsForCurrentScope(project,'artifacts'),artifactsById=new Map(artifacts.map(a=>[recordId(a,'artifacts'),a]));
   const exactArtifact=a=>{if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')return null;const id=recordId(a,'artifacts');return {artifactId:id,filename:String(recordValue(a,'FILENAME')||id),byteSize:Number(recordValue(a,'BYTE_SIZE')||0),sha256:String(recordValue(a,'SHA256')||'UNKNOWN'),role:String(recordValue(a,'ROLE')||'AUTHORIZED_INPUT')};};
@@ -742,6 +893,7 @@ function operationalNextAction(project,currentStage){
   const item=relevant.find(item=>item.operatorAction!=='NO_ACTION');
   if(item){const handoff=item.handoff||{send:[],withhold:[],expectBack:[]},common={filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack};if(item.operatorAction==='SEND_TO_INDEPENDENT_REVIEWER')return actionEnvelope(project,stage,{...common,actionType:'AI_REVIEW',heading:'Send to a fresh independent reviewer',explanation:'Prepare the exact bounded verification package, send only the listed material, withhold the listed context, and return the contracted structured result and evidence.',primaryButton:'Prepare verification package'});if(item.operatorAction==='SEND_TO_TOOL_AGENT')return actionEnvelope(project,stage,{...common,actionType:'EXTERNAL_AGENT_TOOL',heading:'Run verification with the required external tool capability',explanation:'Use an external tool-capable environment that actually provides '+(item.requiredCapability||'the declared capability')+'. Send the exact listed files and return the contracted evidence.',primaryButton:'Prepare verification package'});if(item.operatorAction==='HUMAN_INSPECTION')return actionEnvelope(project,stage,{...common,actionType:'HUMAN_INSPECTION',heading:'Human inspection is required',explanation:'Perform the exact inspection and preserve an explicit human-owned observation. An AI assertion that a human inspected the product is insufficient.',primaryButton:'Open inspection instructions'});if(item.operatorAction==='USE_EXTERNAL_SYSTEM')return actionEnvelope(project,stage,{...common,actionType:'EXTERNAL_SYSTEM',heading:'Use the required external system',explanation:'Perform the declared operation in '+(item.requiredCapability||'the required external system')+' and return evidence attributable to that system.',primaryButton:'Prepare external-system package'});}
   if(stage===1)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Continue Stage 01 intake with the agent',explanation:'Talk with the agent until every human-only question that must be asked now is answered or explicitly deferred. Paste final JSON only after the conversation is complete.',primaryButton:'Continue conversation'});
+  if(stage===4)return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Compile requirements from captured project intent',explanation:'The application is reusing the complete accepted Stage 01 intake and current Stage 03 research to build the Stage 04 obligation manifest. Do not attach or resend the original intent file. Provide new human input only if the application explicitly identifies a genuinely human-only unresolved question.',primaryButton:'Paste final JSON'});
   return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Return the final structured response',explanation:'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Continue the external work or conversation until the executor is ready to return one final strict JSON response and any required files.',primaryButton:'Paste final JSON'});
 }
 
@@ -793,7 +945,7 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,reconcileArtifactCustodyVerification,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,recordApplicationDeterministicResult,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
   unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
-  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
+  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,intakeCoverageManifest,evaluateIntakeCoverage,obligationManifest,evaluateObligationAccounting,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
   recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
 })();

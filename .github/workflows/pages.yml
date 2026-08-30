@@ -47,6 +47,7 @@ jobs:
 
       - name: Migration
         run: node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
 
       - name: Test IR validation and security
         run: |
@@ -78,6 +79,7 @@ jobs:
         run: |
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
+          node verify-intake-obligation-accounting.mjs
           node verify-project-lifecycle.mjs
 
       - name: Local Chromium
@@ -249,7 +251,7 @@ jobs:
           };
           const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','stage01IntakeCoverage','stage04ObligationCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','mandatoryEvidenceSufficiencyCoverage','releaseArtifactIdentityCoverage','nativeExecutionCoverage'];
           for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
-          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
+          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
           for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} must be zero.`);
           if(!report.nativeTestRuntime||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance proof reduction is incomplete.');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');

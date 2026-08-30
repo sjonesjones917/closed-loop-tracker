@@ -273,6 +273,16 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
   if(envelope.responseType==='BLOCKED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','BLOCKED must not contain stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length)issues.push(issue('MISSING_BLOCKER_DETAIL','/unresolved','BLOCKED requires structured unresolved detail.'));else if(!safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MISSING_BLOCKING_UNRESOLVED','/unresolved','BLOCKED requires at least one actually blocking unresolved item.'));if(safe(envelope.unresolved).some(item=>item.kind==='MISSING_HUMAN_INPUT'))issues.push(issue('WRONG_RECOVERY_CHANNEL','/unresolved','Missing human-authority information must use HUMAN_INPUT_REQUIRED rather than BLOCKED.'));}
   if(envelope.responseType==='EXECUTION_FAILED'){if(Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length)||safe(envelope.humanInputRequests).length)issues.push(issue('MIXED_RESPONSE_TYPE','/','EXECUTION_FAILED must not contain canonical stageData, records, or humanInputRequests.'));if(!safe(envelope.unresolved).length&&!safe(envelope.warnings).length)issues.push(issue('MISSING_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires failure detail.'));if(!safe(envelope.unresolved).some(item=>['EXECUTION_FAILURE','TOOL_FAILURE'].includes(item.kind)))issues.push(issue('MISSING_EXECUTION_FAILURE_DETAIL','/unresolved','EXECUTION_FAILED requires an actual execution or tool failure; missing context, authority, evidence, or capability without an attempted failure must use BLOCKED.'));}
 
+
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){
+    const accounting=workflow.evaluateIntakeCoverage(project,envelope.stageData?.INPUT_SET_CONTENTS);
+    for(const message of accounting.errors)issues.push(issue('INCOMPLETE_INTAKE_ACCOUNTING','/stageData/INPUT_SET_CONTENTS',message));
+  }
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===4){
+    const accounting=workflow.evaluateObligationAccounting(project,{requirements:safe(envelope.records?.requirements),evidence:safe(envelope.evidence)});
+    for(const message of accounting.errors)issues.push(issue('INCOMPLETE_OBLIGATION_ACCOUNTING','/records/requirements',message));
+  }
+
   const canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);
   const priorCanonicalEnvelope=safe(project.projectData.rawResponses).find(record=>record.canonicalEnvelopeSha256===canonicalEnvelopeSha256&&Number(record.stage)===stageNumber&&(record.promptInstructionId||'')===(promptRecord?.instructionId||promptRecord?.promptId||''));if(priorCanonicalEnvelope)issues.push(issue('DUPLICATE_RESPONSE','/',`This canonical envelope already exists as ${priorCanonicalEnvelope.rawResponseId}.`));
   const priorDuplicate=safe(project.projectData.rawResponses).find(record=>record.status!=='PRESERVED'&&record.sha256===rawSha256&&Number(record.stage)===stageNumber&&(record.promptInstructionId||'')===(promptRecord?.instructionId||promptRecord?.promptId||''));
