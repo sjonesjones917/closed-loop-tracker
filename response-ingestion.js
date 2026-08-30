@@ -4,7 +4,8 @@
 const schema=globalThis.closedLoopWorkflowSchema;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const hash=globalThis.closedLoopHash;
-if(!schema||!workflow||!hash)throw new Error('workflow-schema.js, workflow-engine.js, and hash.js must load before response-ingestion.js.');
+const testRuntime=globalThis.closedLoopTestRuntime;
+if(!schema||!workflow||!hash||!testRuntime)throw new Error('workflow-schema.js, test-runtime.js, workflow-engine.js, and hash.js must load before response-ingestion.js.');
 
 const TOP_LEVEL_KEYS=Object.freeze(['schema','jobId','stage','operation','promptIdentity','scope','responseType','humanInputRequests','stageData','records','evidence','unresolved','warnings','attachments']);
 const RECORD_KEYS=Object.freeze(['tempKey','targetId','fields','relationships','evidenceRefs','notes']);
@@ -180,6 +181,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
           }
         }
         if(collection==='sources')for(const message of schema.sourceClassificationIssues(record.fields))issues.push(issue('INVALID_EXTERNAL_SOURCE',path,message));
+        if(collection==='tests'&&String(record.fields.EXECUTION_MODE||'').toUpperCase()==='APPLICATION_DETERMINISTIC'){const runtimeCheck=testRuntime.validateSpec(record.fields.EXECUTABLE_SPEC,record.fields.EXECUTABLE_INPUT_BINDINGS);for(const message of runtimeCheck.issues)issues.push(issue('INVALID_TEST_IR',`${path}/fields/EXECUTABLE_SPEC`,message));if(String(record.fields.REQUIRED_CAPABILITY||'')!==testRuntime.CAPABILITY)issues.push(issue('INVALID_TEST_IR_CAPABILITY',`${path}/fields/REQUIRED_CAPABILITY`,`Application deterministic tests require ${testRuntime.CAPABILITY}.`));if(String(record.fields.EXECUTABLE_KIND||'').toUpperCase()!=='TEST_IR')issues.push(issue('INVALID_TEST_IR_KIND',`${path}/fields/EXECUTABLE_KIND`,'Application deterministic tests require EXECUTABLE_KIND TEST_IR.'));if(record.fields.EXECUTABLE_SPEC_VERSION!==testRuntime.SPEC_VERSION)issues.push(issue('INVALID_TEST_IR_VERSION',`${path}/fields/EXECUTABLE_SPEC_VERSION`,`Expected ${testRuntime.SPEC_VERSION}.`));for(const [bindingName,binding] of Object.entries(record.fields.EXECUTABLE_INPUT_BINDINGS||{})){const artifactId=typeof binding==='string'?binding:String(binding?.artifactId||'');if(!artifactId)continue;const artifact=workflow.records(project,'artifacts',{active:true}).find(item=>workflow.recordId(item,'artifacts')===artifactId);if(!artifact)issues.push(issue('INVALID_TEST_IR_BINDING',`${path}/fields/EXECUTABLE_INPUT_BINDINGS/${pointerEscape(bindingName)}`,`Artifact binding ${artifactId} is not an active artifact in this project.`));}}
       });
     }
   }
