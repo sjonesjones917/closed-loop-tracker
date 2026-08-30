@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Repair candidate in runner and verify invariant preconditions
+      - name: Repair candidate and stale regression assertions in runner
         shell: bash
         run: |
           set -euo pipefail
@@ -28,6 +28,12 @@ jobs:
           if bad in t: t=t.replace(bad,good,1)
           if good not in t: raise SystemExit('Stage 1 infrastructure collection partition is not valid')
           p.write_text(t)
+          p=Path('build-test-project.mjs'); t=p.read_text()
+          old='Research only the current accepted Stage 02 independent external source set'
+          new='Exhaustively research every current accepted Stage 02 independent external source'
+          if old in t: t=t.replace(old,new,1)
+          if new not in t: raise SystemExit('Stage 3 semantic regression assertion missing')
+          p.write_text(t)
           PY
           git fetch origin main
           python3 - <<'PY'
@@ -36,7 +42,8 @@ jobs:
           candidate=Path('index.html').read_text(); main=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
           cs=re.search(r'<style>(.*?)</style>',candidate,re.S); ms=re.search(r'<style>(.*?)</style>',main,re.S)
           if not cs or not ms: raise SystemExit('style baseline missing')
-          if hashlib.sha256(cs.group(1).encode()).hexdigest()!=hashlib.sha256(ms.group(1).encode()).hexdigest(): raise SystemExit('VISUAL REGRESSION: CSS differs from current main')
+          ch=hashlib.sha256(cs.group(1).encode()).hexdigest(); mh=hashlib.sha256(ms.group(1).encode()).hexdigest(); print('candidate-style',ch); print('main-style',mh)
+          if ch!=mh: raise SystemExit('VISUAL REGRESSION: CSS differs from current main')
           if '.expandable-prompt{max-height:280px}' not in candidate: raise SystemExit('prompt preview size changed')
           PY
           node - <<'NODE'
@@ -44,9 +51,15 @@ jobs:
           q(p.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE')&&p.includes('account for EVERY INPUT UNIT ID'),'Stage 01 exhaustive intake/accounting missing');
           q(p.includes('Exhaustively research every current accepted Stage 02 independent external source')&&p.includes('Do not mark Stage 03 complete until all current sources have coverage'),'Stage 03 exhaustive research missing');
           q(p.includes('Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST')&&p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'Stage 04 closed union/single-supply missing');
+          q(p.includes('If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT'),'Stage 04 earlier-stage fail-closed rule missing');
           q(p.indexOf('YOUR TASK — DO THIS NOW')<p.indexOf('JOB CONTROL'),'task not before project data');
+          for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])q(!p.includes(x),'hard-coded domain branch remains: '+x);
           q(e.includes("'executionFailures','intakeArtifactSnapshots'"),'snapshot infrastructure bug remains');
+          q(e.includes('function stage1IntakeManifest(project)')&&e.includes('validateStage1IntakeAccounting'),'Stage 1 application accounting missing');
+          q(e.includes('function stage4ObligationManifest(project)')&&e.includes('validateStage4ObligationAccounting'),'Stage 4 application accounting missing');
+          q(e.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED')&&e.includes('SATURATION_STATUS'),'Stage 3 exhaustive gate missing');
           q(a.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 4 upload control remains');
+          q(a.includes('registerIntakeArtifactSnapshot'),'Stage 1 bytes are not snapshot-captured');
           console.log('preconditions: PASS');
           NODE
       - name: Run every deterministic proof and capture first failure
@@ -68,16 +81,16 @@ jobs:
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git add final-proof.log
-          git commit -m 'Record isolated conformance failure diagnostic'
+          git commit -m 'Update isolated conformance failure diagnostic'
           git push origin HEAD:fix/final-zero-loss-v3-20260830
-      - name: Commit proven source repair
+      - name: Commit proven repairs
         if: success()
         shell: bash
         run: |
           set -euo pipefail
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          rm -f final-proof.log
-          git add workflow-engine.js
+          git rm -f final-proof.log 2>/dev/null || true
+          git add workflow-engine.js build-test-project.mjs
           git diff --cached --check
-          if ! git diff --cached --quiet; then git commit -m 'Fix durable Stage 1 intent snapshot initialization'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
+          if ! git diff --cached --quiet; then git commit -m 'Fix Stage 1 snapshot persistence and exhaustive Stage 3 regression'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
