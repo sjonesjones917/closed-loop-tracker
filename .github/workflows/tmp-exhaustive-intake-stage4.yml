@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply integrated repair
+      - name: Apply integrated repair and current-scope proof fixture
         run: |
           python3 .repair-orchestrate.py
           python3 .repair-fixture.py
