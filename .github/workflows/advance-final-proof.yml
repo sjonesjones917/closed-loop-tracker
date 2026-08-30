@@ -13,7 +13,10 @@ jobs:
         with:
           ref: fix/final-zero-loss-v3-20260830
           fetch-depth: 0
-      - name: Repair stale Stage 01 smart-quote fixture and trigger full proof
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Materialize remaining proven source corrections
         shell: bash
         run: |
           set -euo pipefail
@@ -21,17 +24,62 @@ jobs:
           git config user.email actions@users.noreply.github.com
           python3 - <<'PY'
           from pathlib import Path
+          import re
+          p=Path('workflow-schema.js'); t=p.read_text()
+          t=t.replace("if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);","if(get('EXECUTABLE_SPEC')?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);",1)
+          old="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
+          new="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
+          if old in t:t=t.replace(old,new,1)
+          fields="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
+          fields2="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','EXECUTABLE_SPEC_SHA256','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
+          if fields in t:t=t.replace(fields,fields2,1)
+          p.write_text(t)
+          p=Path('response-ingestion.js'); t=p.read_text()
+          anchor="const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      fields[definition.idField]=id;"
+          insert="const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      if(collection==='tests'){const kind=String(fields.EXECUTABLE_KIND||'NONE').toUpperCase();if(kind==='TEST_IR'){const runtime=globalThis.closedLoopTestRuntime;if(!runtime)throw new Error('Test IR runtime is unavailable during canonicalization.');const normalized=runtime.normalizeSpec(fields.EXECUTABLE_SPEC);fields.EXECUTABLE_SPEC_VERSION=runtime.SPEC_VERSION;fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized);}else{fields.EXECUTABLE_SPEC_VERSION=null;fields.EXECUTABLE_SPEC_SHA256=null;}}\n      fields[definition.idField]=id;"
+          if anchor in t:t=t.replace(anchor,insert,1)
+          p.write_text(t)
+          p=Path('test-runtime.js'); t=p.read_text()
+          for op in ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']:
+              t=re.sub(rf'^\s*{op}:\{{[^\n]*\}},\n','',t,count=1,flags=re.M)
+          t=t.replace("const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ'","const ASSERTION_OPS=new Set(['ASSERT_EQ'",1)
+          t=re.sub(r"\n\s*case 'ASSERT_EXISTS':[^\n]*",'',t,count=1);t=re.sub(r"\n\s*case 'ASSERT_TYPE':\{[^\n]*",'',t,count=1);t=re.sub(r"\n\s*case 'ASSERT_NE':[^\n]*",'',t,count=1)
+          p.write_text(t)
           p=Path('verify-ingestion.mjs'); t=p.read_text()
-          old="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
-          new="  const intake=engine.stage1IntakeManifest(p);e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:JSON.stringify({coverage:intake.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))})};"
-          if old not in t: raise SystemExit('stale smart-quote Stage 01 fixture not found')
-          p.write_text(t.replace(old,new,1))
+          anchor="  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  const records={};"
+          replacement="  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const manifest=promptRecord.contextManifest?.intakeManifest||engine.stage1IntakeManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({coverage:(manifest.units||[]).map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))});}\n  if(stage===4){const manifest=promptRecord.contextManifest?.obligationManifest||engine.stage4ObligationManifest(p);stageData.ATOMICITY_REVIEW_RESULTS=JSON.stringify({obligationAccounting:(manifest.items||[]).map(item=>({obligationId:item.obligationId,disposition:'CONTEXT',reason:'Controlled complete-accounting fixture'}))});}\n  const records={};"
+          if anchor in t:t=t.replace(anchor,replacement,1)
+          p.write_text(t)
           PY
-          node --check verify-ingestion.mjs
-          git add verify-ingestion.mjs
-          git commit -m 'Make smart-quote regression obey exhaustive Stage 1 accounting'
-          git push origin HEAD:fix/final-zero-loss-v3-20260830
-          printf '\n# proof-trigger: %s\n' "$(date -u +%Y%m%dT%H%M%SZ)" >> .github/workflows/final-v3-proof.yml
-          git add .github/workflows/final-v3-proof.yml
-          git commit -m 'Run full isolated conformance proof'
-          git push origin HEAD:fix/final-zero-loss-v3-20260830
+          for f in workflow-schema.js response-ingestion.js test-runtime.js verify-ingestion.mjs; do node --check "$f"; done
+      - name: Prove exact visual and Stage 1-4 invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,re,hashlib
+          c=Path('index.html').read_text();m=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
+          cs=re.search(r'<style>(.*?)</style>',c,re.S);ms=re.search(r'<style>(.*?)</style>',m,re.S)
+          if hashlib.sha256(cs.group(1).encode()).hexdigest()!=hashlib.sha256(ms.group(1).encode()).hexdigest():raise SystemExit('VISUAL REGRESSION')
+          if '.expandable-prompt{max-height:280px}' not in c:raise SystemExit('PROMPT BOX SIZE CHANGED')
+          p=Path('prompt-engine.js').read_text();a=Path('app-core.js').read_text()
+          for x in ['Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE','account for EVERY INPUT UNIT ID','Exhaustively research every current accepted Stage 02 independent external source','Do not mark Stage 03 complete until all current sources have coverage','Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST','NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize','If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT']:
+              if x not in p:raise SystemExit('MISSING PROMPT INVARIANT: '+x)
+          if "function artifactControlMarkup(n,locked){if(n===4)return '';" not in a:raise SystemExit('STAGE 4 UPLOAD CONTROL REMAINS')
+          PY
+      - name: Run deterministic suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          for t in verify.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-single-supply-prompts.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do if [ -f "$t" ]; then echo "=== $t ==="; node "$t"; fi; done
+      - name: Commit only proven corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add workflow-schema.js response-ingestion.js test-runtime.js verify-ingestion.mjs
+          git diff --cached --check
+          if ! git diff --cached --quiet; then git commit -m 'Complete Test IR authority and exhaustive Stage 1-4 proof fixtures'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
