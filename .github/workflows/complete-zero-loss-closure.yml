@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: 22
       - name: Apply and integrate deterministic zero-loss repair
-        run: python3 finalize-zero-loss.py
+        run: |
+          python3 finalize-zero-loss.py
+          python3 patch-browser-extra-v3.py
       - name: Prove source syntax
         run: |
           git diff --check
@@ -26,6 +28,7 @@ jobs:
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
           node --check verify-browser.mjs
+          node --check verify-browser-extra.mjs
       - name: Prove established prompt dimensions
         run: |
           grep -F "height:clamp(260px,45vh,520px)" index.html
@@ -50,8 +53,8 @@ jobs:
         run: |
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git rm repair-zero-loss.py finalize-zero-loss.py .github/workflows/complete-zero-loss-closure.yml
+          git rm repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py .github/workflows/complete-zero-loss-closure.yml
           git rm -f zero-loss-failure.log || true
-          git add workflow-engine.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-zero-loss-accounting.mjs
+          git add workflow-engine.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-browser-extra.mjs verify-zero-loss-accounting.mjs
           git commit -m "Enforce zero-loss Stage 01 and Stage 04 accounting [zero-loss-closure-applied]"
           git push origin HEAD:fix/closed-loop-v3-final-20260830
