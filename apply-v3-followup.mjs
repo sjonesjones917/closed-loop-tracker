@@ -52,3 +52,15 @@ import fs from 'node:fs';
   fs.writeFileSync(path,s);
   console.log('aligned ingestion fixtures and smart-quote regression with exhaustive Stage 01/04 accounting');
 }
+{
+  const path='workflow-engine.js';
+  let s=fs.readFileSync(path,'utf8');
+  const anchor="function stage04ObligationManifest(project){const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNKNOWN'),sourceSetVersion=String(project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE'),entries=[];for(const s of currentIntentStatements(project)){";
+  const replacement="function stage04ObligationManifest(project){const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNKNOWN'),sourceSetVersion=String(project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE'),entries=[];const intake=stage01IntakeManifest(project);for(const unit of intake.units)entries.push({origin:'CURRENT_USER_JOB_INPUT',sourceIdentity:unit.inputUnitId,sourceLocation:unit.sourceLocation,text:unit.rawValue,evidenceSha256:unit.rawValueSha256,requirementRelevant:true});for(const s of currentIntentStatements(project)){";
+  if(!s.includes("origin:'CURRENT_USER_JOB_INPUT'")){
+    if(!s.includes(anchor))throw new Error('Stage 04 obligation manifest anchor not found.');
+    s=s.replace(anchor,replacement);
+    fs.writeFileSync(path,s);
+    console.log('patched Stage 04 to include current User Job Input directly in the obligation universe');
+  }else console.log('Stage 04 current User Job Input union already patched');
+}
