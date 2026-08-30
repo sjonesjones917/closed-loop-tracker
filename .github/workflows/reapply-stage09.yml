@@ -1,0 +1,19 @@
+name: Reapply Stage 09 independence
+on:
+  push:
+    branches: [fix/stage09-independent-preflight-v2]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git cherry-pick 721e7a4265cb8eb09c20a71f2036d788396c817c
+          git push
