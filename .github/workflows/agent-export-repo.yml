@@ -1,4 +1,4 @@
-name: Apply 30-stage source
+name: Finalize 30-stage implementation
 
 on:
   push:
@@ -10,23 +10,21 @@ permissions:
   contents: write
 
 jobs:
-  apply:
+  finalize:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/complete-app-20260830
           fetch-depth: 0
-      - name: Apply complete 30-stage source
+      - name: Apply remaining implementation corrections
+        run: python3 agent-finalize.py
+      - name: Preserve visual baseline and remove temporary implementation machinery
         run: |
           set -e
-          git fetch origin fix/full-30-stage-prompt-contract-audit-20260830
-          git checkout origin/fix/full-30-stage-prompt-contract-audit-20260830 -- prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js workbook.js
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "Complete all 30 stage prompts and canonical reuse"
+          git rm agent-finalize.py .github/workflows/agent-export-repo.yml
+          git add prompt-engine.js response-ingestion.js workflow-schema.js
+          git commit -m "Finalize 30-stage prompt state and Test IR authority"
           git push origin HEAD:agent/complete-app-20260830
