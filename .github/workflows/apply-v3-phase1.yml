@@ -15,6 +15,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Correct prepared updater against exact main migration shape
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/apply-v3-phase1.py')
+          s=p.read_text(encoding='utf-8')
+          old="s = replace_once(s, \"function migrateState(p){\\n  if(p.schema===PROJECT_SCHEMA){\", \"function migrateState(p){\\n  if(p.schema===PROJECT_SCHEMA||p.schema==='closed-loop-project/2'){\", 'migrateState current schema branch')"
+          new="s = replace_once(s, \"function migrateState(p){\\n  if(!p||typeof p!=='object')return createBlankState();\\n  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\", \"function migrateState(p){\\n  if(!p||typeof p!=='object')return createBlankState();\\n  if((p.schema===PROJECT_SCHEMA||p.schema==='closed-loop-project/2')&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){\", 'migrateState current schema branch')"
+          if old not in s: raise SystemExit('migrateState updater line not found')
+          s=s.replace(old,new,1)
+          old2="s = replace_once(s, \"    const migrated=JSON.parse(JSON.stringify(p));\\n    migrated.schema=PROJECT_SCHEMA;\", \"    const migrated=JSON.parse(JSON.stringify(p));\\n    const migrationSourceSchema=String(p.schema||PROJECT_SCHEMA);\\n    migrated.schema=PROJECT_SCHEMA;\", 'migrateState schema assignment')"
+          new2="s = replace_once(s, \"    const migrated=JSON.parse(JSON.stringify(p));\\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\", \"    const migrated=JSON.parse(JSON.stringify(p));\\n    const migrationSourceSchema=String(p.schema||PROJECT_SCHEMA);\\n    migrated.schema=PROJECT_SCHEMA;\\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\", 'migrateState schema assignment')"
+          if old2 not in s: raise SystemExit('migrate schema updater line not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+          PY
       - name: Apply prepared v3 source transformation
         run: python3 .github/apply-v3-phase1.py
       - name: Syntax and focused deterministic proofs
