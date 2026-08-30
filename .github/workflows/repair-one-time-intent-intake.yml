@@ -7,6 +7,7 @@ permissions:
   contents: write
 jobs:
   repair:
+    if: github.event.head_commit.message != 'Fix one-time intent intake contract'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -79,10 +80,9 @@ jobs:
           node verify-prompt-semantics.mjs
       - name: Commit the verified repair
         run: |
-          rm .github/repair-one-time-intent-intake.py
-          rm .github/workflows/repair-one-time-intent-intake.yml
+          git restore .github/workflows/pages.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add -A
+          git add app-core.js index.html prompt-engine.js response-ingestion.js verify-full-cycle.mjs verify-ingestion.mjs verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs workbook.js workflow-engine.js workflow-schema.js
           git commit -m 'Fix one-time intent intake contract'
           git push origin HEAD:fix/one-time-intent-intake
