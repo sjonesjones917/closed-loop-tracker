@@ -13,8 +13,7 @@ p.write_text(text)
 v=Path('verify-prompt-semantics.mjs')
 t=v.read_text()
 new_required="const required1=[/complete human-authority intake/i,/enumerated every current controlled human-input unit/i,/classify every supplied unit exactly once/i,/derive the complete foreseeable set of genuinely human-only questions from the actual user request, accessible supplied materials, and current canonical context/i];"
-pattern=r"(const \{body:s1\}=capture\(1\);\s*)const required1=\[[^\n]*\];"
-t,n=re.subn(pattern,lambda m:m.group(1)+new_required,t,count=1)
+t,n=re.subn(r"const required1=\[[^\n]*\];",new_required,t,count=1)
 if n!=1:
-    raise SystemExit('Stage 01 locality required1 structural anchor missing')
+    raise SystemExit('Stage 01 required1 declaration missing after locality materialization')
 v.write_text(t)
