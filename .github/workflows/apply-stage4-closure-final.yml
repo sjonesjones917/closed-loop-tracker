@@ -1,88 +1,53 @@
 name: Apply Stage 01 and Stage 04 accounting closure
 on:
   push:
-    branches:
-      - implementation/closed-loop-v3
+    branches: [implementation/closed-loop-v3]
 permissions:
   contents: write
 jobs:
   repair:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: implementation/closed-loop-v3
-          fetch-depth: 0
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
       - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Apply accounting closure
+        with: {node-version: '22'}
+      - name: Enforce durable project memory in every prompt
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('finalize-v3-accounting.mjs')
-          s=p.read_text()
-          s=s.replace("if(next===text)throw new Error(`Patch anchor not found: ${label}`);","if(next===text){console.warn(`Patch anchor not found: ${label}`);return text;}")
-          old="if(!text.includes(\"const INTAKE_MANIFEST_SCHEMA='closed-loop-intake-manifest/1'\"))text=replaceOnce(text,'function executionHandoff(project,{stage,operation,testIds=null,runIds=null}={}){',accountingCode+'\\nfunction executionHandoff(project,{stage,operation,testIds=null,runIds=null}={}){','accounting helper insertion');"
-          new="if(!text.includes(\"const INTAKE_MANIFEST_SCHEMA='closed-loop-intake-manifest/1'\"))text=replaceOnce(text,/function executionHandoff\\(/,accountingCode+'\\nfunction executionHandoff(','accounting helper insertion');"
-          s=s.replace(old,new)
-          p.write_text(s)
-          PY
-          node finalize-v3-accounting.mjs
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('workflow-engine.js')
-          s=p.read_text()
-          marker='function intakeCoverageManifest(project){'
-          if marker not in s: raise SystemExit('intake manifest anchor missing')
-          if 'function suppliedMaterialReferences(project){' not in s:
-              helper="""function suppliedMaterialReferences(project){
-  const raw=project&&project.job?project.job.SUPPLIED_MATERIALS_INVENTORY:null;
-  if(raw===undefined||raw===null||String(raw).trim()==='')return [];
-  const out=[];
-  const push=value=>{const label=String(value===undefined?'':value).trim();if(label)out.push({label,type:'SUPPLIED_MATERIAL',transferMode:'REFERENCE'});};
-  const ingest=value=>{
-    if(value===undefined||value===null)return;
-    if(Array.isArray(value)){value.forEach(ingest);return;}
-    if(typeof value==='object'){
-      const label=value.exactNameOrReference||value.filename||value.name||value.label||value.reference||value.path;
-      if(label!==undefined)push(label);else Object.values(value).forEach(ingest);
-      return;
-    }
-    const text=String(value).trim();
-    if(!text)return;
-    try{const parsed=JSON.parse(text);if(typeof parsed!=='string'){ingest(parsed);return;}}catch(error){}
-    text.split(/\\r?\\n|;/).map(line=>line.trim()).filter(Boolean).forEach(push);
-  };
-  ingest(raw);
-  const seen=new Set();
-  return out.filter(item=>{const key=item.label.toLowerCase();if(seen.has(key))return false;seen.add(key);return true;});
-}
-"""
-              s=s.replace(marker,helper+marker,1)
-          p.write_text(s)
-          PY
-      - name: Focused proof
-        shell: bash
+          node <<'NODE'
+          const fs=require('fs');const must=(x,m)=>{if(!x)throw new Error(m)};let p=fs.readFileSync('prompt-engine.js','utf8');
+          p=p.replace(/const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine\/\d+';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/28';");
+          const old="If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials. Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows, detailed disclosure chronology, reference lists, or other internal packet inventory in Stage 01. This limited intake inspection is Stage 01 job-definition work; Stage 02 does not own supplied-project-material inventory; later stages inspect supplied project materials only when they need those materials for their substantive work.";
+          const replacement="If their actual contents are available in the current executing context, inspect them deeply enough to capture every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome. Do not ask the human to re-enter facts already present in those materials. Do not turn this inspection into external research, source-authority analysis, atomic requirement derivation, test design, production work, or an internal packet/file inventory. Stage 01 must preserve the substantive human-authority meaning needed by later stages in canonical Stage 01 output so later stages can use it without asking the human to supply the same information or intent material again.";
+          if(p.includes(old))p=p.replace(old,replacement);else must(p.includes('inspect them deeply enough to capture every human-supplied fact'),'Stage 01 capture repair anchor missing');
+          p=p.replace("Supplied project materials remain project input and are inspected later only when the stage performing substantive work actually needs them.","Once Stage 01 has captured the relevant human-authority meaning from supplied project material, later stages consume that canonical capture. A later stage may require direct bytes only when its proposition genuinely depends on those bytes; verified application-held bytes must be reused rather than asking the human to resupply them.");
+          const old4="4:'Compile atomic requirement proposals for this current job from the complete current application-supplied obligation inputs: current User Job Input, the accepted Stage 01 job definition, and legitimately applicable current Stage 03 source research and candidate obligations. The application has already captured and versioned the human-authority information supplied earlier; do not ask the human to reattach, retype, summarize, or restate an original intent file merely because its filename remains in the supplied-material inventory. A filename or material reference is metadata, not a standing attachment requirement. Use the canonical human input and accepted Stage 01/03 context included in this prompt. Request an external artifact only when the application explicitly identifies a specific unresolved byte-dependent input that is not already represented in current canonical input; never infer such a need from a filename alone.";
+          const new4="4:'Compile atomic requirement proposals for this current job from the complete current application-supplied obligation universe: current User Job Input, the accepted Stage 01 job definition, every human-origin obligation captured in the Stage 01 intake accounting, every applicable obligation captured from supplied project material, accepted Stage 03 source research, candidate external-source obligations, and applicable provenance/evidence. The application has already captured and versioned the human-authority information supplied earlier. Use that project memory. DO NOT ask the human to attach, reattach, resend, retype, restate, summarize, reconstruct, or otherwise supply again the original intent file or any project fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, or material-derived human-authority statement already present in canonical context. A filename or material reference is metadata, not a standing attachment requirement. Stage 04 is not allowed to rediscover an unspecified input universe. For every application-enumerated obligation, return one or more atomic requirements, retained nonnormative context, explicit inapplicability with reason, or a blocker with reason; no obligation may disappear. If information previously supplied by the human is missing from the canonical Stage 04 projection, return BLOCKED with INADEQUATE_PRIOR_OUTPUT or MISSING_APPLICATION_CONTEXT and identify the earliest responsible prior stage. Never make the human repair application memory by supplying the same information again. Request an external artifact only when the application explicitly identifies a genuinely unresolved byte-dependent input and verified application custody cannot provide it; never infer such a need from a filename alone.";
+          if(p.includes(old4))p=p.replace(old4,new4);else must(p.includes('DO NOT ask the human to attach, reattach, resend'),'Stage 04 single-supply repair anchor missing');
+          p=p.replace(/For PATENT \/ REGULATED FILING jobs,[\s\S]*?Do not turn researchable legal strategy into a human question\.\n/,'');
+          const anchor='MANDATORY RESPONSE RULES\n';
+          const policy="PROJECT MEMORY / SINGLE-SUPPLY INVARIANT — MANDATORY FOR EVERY STAGE\n- Treat all relevant current canonical human input and accepted prior-stage project information in this prompt as durable project memory. A stage boundary does not erase project information.\n- If the human has already supplied a project fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material, or material-derived human-authority statement and it is available in current authorized context, use it. Never ask the human to repeat, retype, restate, summarize, reconstruct, reattach, or resend it.\n- Never ask the human for information reliably obtainable from current canonical state, accepted prior-stage output, verified application-held artifacts, supplied materials already available to the executing context, or authorized research/tools.\n- If previously supplied information should be present but is absent from the current canonical projection, fail closed as MISSING_APPLICATION_CONTEXT or INADEQUATE_PRIOR_OUTPUT and identify the earliest responsible stage. Do not transfer an application capture/context defect back to the human.\n- A filename is not semantic content and is not file bytes. Semantic work uses the captured canonical meaning. Byte-dependent work uses verified application custody when available. Only a genuine byte-custody gap may create an explicit file-transfer action.\n- Preserve every compatible user-supplied requirement and prohibition relevant to this stage. Do not silently narrow, reinterpret away, or omit project authority merely because the current operation is narrower.\n\n";
+          if(!p.includes('PROJECT MEMORY / SINGLE-SUPPLY INVARIANT')){must(p.includes(anchor),'mandatory response anchor missing');p=p.replace(anchor,policy+anchor);}
+          fs.writeFileSync('prompt-engine.js',p);
+          const h=fs.readFileSync('index.html','utf8');must(h.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;'),'Prompt box visual baseline changed');must(h.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt expansion visual baseline changed');
+          fs.writeFileSync('verify-single-supply-prompts.mjs',`import fs from 'node:fs';\nconst p=fs.readFileSync('prompt-engine.js','utf8'),h=fs.readFileSync('index.html','utf8');const fail=m=>{throw new Error(m)};for(const x of ['PROJECT MEMORY / SINGLE-SUPPLY INVARIANT','Never ask the human to repeat, retype, restate, summarize, reconstruct, reattach, or resend it.','DO NOT ask the human to attach, reattach, resend, retype, restate, summarize, reconstruct','inspect them deeply enough to capture every human-supplied fact'])if(!p.includes(x))fail('missing prompt contract: '+x);if(/read only the minimum portions needed/.test(p))fail('Stage 01 still under-captures supplied material');if(/PATENT \\/ REGULATED FILING/.test(p))fail('subject-specific prompt branch remains');if(!h.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;'))fail('prompt box visual changed');if(!h.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'))fail('prompt expansion visual changed');console.log('single-supply prompt contract: PASS');\n`);
+          let y=fs.readFileSync('.github/workflows/pages.yml','utf8');if(!y.includes('verify-single-supply-prompts.mjs')){y=y.replace('node --check verify-v3-bundle.mjs','node --check verify-v3-bundle.mjs\n          node --check verify-single-supply-prompts.mjs');y=y.replace('run: node verify-v3-bundle.mjs','run: |\n          node verify-v3-bundle.mjs\n          node verify-single-supply-prompts.mjs');y=y.replace('node verify-v3-bundle.mjs &&','node verify-v3-bundle.mjs && node verify-single-supply-prompts.mjs &&');}fs.writeFileSync('.github/workflows/pages.yml',y);
+          NODE
+      - name: Prove repaired prompt behavior
         run: |
-          for file in *.js *.mjs; do node --check "$file"; done
-          node build-test-project.mjs
-          node verify-intake-obligation-accounting.mjs
-          node verify.mjs
-      - name: Commit verified accounting implementation
-        shell: bash
+          node --check prompt-engine.js
+          node --check verify-single-supply-prompts.mjs
+          node verify-single-supply-prompts.mjs
+          node verify-prompt-semantics.mjs
+          node verify-v3-bundle.mjs
+      - name: Commit and remove all one-time repair workflows
         run: |
-          rm -f stage4-*.log stage4-diagnostic-summary.txt
-          rm -f finalize-v3-accounting.mjs
-          rm -f .github/workflows/apply-stage4-closure.yml
-          rm -f .github/workflows/apply-stage4-closure-final.yml
-          rm -f .github/workflows/z-finalize-v3-accounting.yml
-          rm -f .github/workflows/z-finalize-v3-accounting-retry.yml
-          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
-          test -f .github/workflows/pages.yml
-          git config user.name "closed-loop-accounting-finalizer"
-          git config user.email "closed-loop-accounting-finalizer@users.noreply.github.com"
+          rm -f .github/workflows/apply-stage4-closure.yml .github/workflows/apply-stage4-closure-final.yml .github/workflows/z-finalize-v3-accounting.yml .github/workflows/z-finalize-v3-accounting-retry.yml .github/workflows/apply-single-supply-prompt-contract.yml
+          rm -f finalize-v3-accounting.mjs stage4-*.log stage4-diagnostic-summary.txt
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
           git add -A
-          git commit -m "Close Stage 01 intake and Stage 04 obligation accounting"
+          git commit -m "Make every stage reuse captured project authority"
           git push origin HEAD:implementation/closed-loop-v3
