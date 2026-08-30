@@ -53,5 +53,8 @@ const token='runtime-'+createHash('sha256').update(manifest).digest('hex').slice
 s=fs.readFileSync('index.html','utf8');
 s=s.replace(/\?v=runtime-[a-f0-9]{16}/g,'?v='+token);
 fs.writeFileSync('index.html',s);
+s=fs.readFileSync('.github/workflows/pages.yml','utf8');
+if(!s.includes('Verify exact deployed bytes'))throw new Error('deployed-byte proof label missing');
+fs.writeFileSync('.github/workflows/pages.yml',s.replace('Verify exact deployed bytes','Verify exact deployed source identity'));
 fs.rmSync('.patch-stage1.mjs');
 fs.rmSync('.github/workflows/browser-proof-once.yml');
