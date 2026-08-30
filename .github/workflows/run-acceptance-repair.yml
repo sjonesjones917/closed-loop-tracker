@@ -1,4 +1,4 @@
-name: Run acceptance contract repair
+name: Run complete 30-stage prompt repair
 on:
   push:
     branches:
@@ -15,16 +15,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: python3 repair-all-stage-prompts.py
       - run: python3 repair-acceptance.py
+      - run: node --check prompt-engine.js
       - run: node --check verify-prompt-semantics.mjs
+      - run: node verify-all-stage-prompts-v3.mjs
       - run: node verify-prompt-semantics.mjs
       - run: node verify-intake-obligation-accounting.mjs
       - run: node verify-ingestion.mjs
-      - name: Commit acceptance repair
+      - name: Verify visual CSS baseline unchanged
+        run: |
+          git fetch origin main --depth=1
+          git diff --unified=0 origin/main -- index.html > /tmp/index.diff || true
+          if grep -E '^[+-][^+-].*(style=|<style|\.prompt|textarea|height:|min-height:|max-height:|width:|font-size:|padding:|margin:)' /tmp/index.diff; then
+            echo 'Unauthorized visual/CSS change detected in index.html'
+            cat /tmp/index.diff
+            exit 1
+          fi
+      - name: Commit complete prompt repair
         run: |
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git add verify-prompt-semantics.mjs .github/workflows/pages.yml
+          git add prompt-engine.js verify-prompt-semantics.mjs .github/workflows/pages.yml
           git diff --cached --quiet && exit 0
-          git commit -m "Align prompt acceptance with subject-neutral intake contract"
+          git commit -m "Make every stage prompt complete and context-bound"
           git push origin HEAD:fix/final-controlling-v3-20260830
