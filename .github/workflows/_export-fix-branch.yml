@@ -1,0 +1,18 @@
+name: Export fix branch snapshot
+on:
+  push:
+    branches: [fix/stage01-stage04-intake-custody]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package repository snapshot
+        run: tar --exclude=.git -czf /tmp/closed-loop-repo.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-repo-snapshot
+          path: /tmp/closed-loop-repo.tgz
+          retention-days: 1
