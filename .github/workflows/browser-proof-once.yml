@@ -1,5 +1,5 @@
 name: Repair Stage 01 migration and prove exact app once
-# trigger: all-response-fixtures-v3
+# trigger: source-only-proven-commit
 on:
   push:
     branches: [implementation/closed-loop-v3]
