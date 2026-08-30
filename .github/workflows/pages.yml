@@ -24,13 +24,12 @@ jobs:
           start=source.index(marker)+len(marker)
           end=source.index("      - name: Syntax and focused conformance proof",start)
           body='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())+'\n'
-          # The source materializer's Pages-edit section assumes the old workflow is present.
-          # This PR workflow is intentionally temporary, so strip that section and restore/patch pages.yml below.
           a=body.index('          // Pages CI must execute') if '          // Pages CI must execute' in body else body.index('// Pages CI must execute')
           b=body.index('          // The materializer must not survive',a) if '          // The materializer must not survive' in body else body.index('// The materializer must not survive',a)
           body=body[:a]+body[b:]
           pathlib.Path('/tmp/materialize.sh').write_text(body)
           subprocess.run(['bash','/tmp/materialize.sh'],check=True)
+          subprocess.run(['node','.github/spec-postfix.cjs'],check=True)
       - name: Restore and update the one Pages workflow
         shell: bash
         run: |
@@ -44,7 +43,7 @@ jobs:
           s=s.replace("projectSchema:'closed-loop-project/2'","projectSchema:'closed-loop-project/3'").replace("responseSchema:'closed-loop-stage-response/2'","responseSchema:'closed-loop-stage-response/3'").replace("nativeTestRuntimeVersion:'closed-loop-test-runtime/1'","nativeTestRuntimeVersion:'closed-loop-test-runtime/2'");
           fs.writeFileSync('.github/workflows/pages.yml',s);
           NODE
-          rm -f .github/workflows/spec-conformance-materializer.yml .github/workflows/spec-conformance-runner.yml
+          rm -f .github/workflows/spec-conformance-materializer.yml .github/workflows/spec-conformance-runner.yml .github/spec-postfix.cjs
       - name: Focused conformance proof before commit
         run: |
           node --check workbook.js
