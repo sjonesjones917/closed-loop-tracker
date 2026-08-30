@@ -1,0 +1,36 @@
+name: Diagnose Stage 4 repair
+on:
+  push:
+    branches: [fix/stage4-durable-intent-final-20260830]
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    if: github.event.head_commit.message != 'Record Stage 4 repair diagnostics'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-durable-intent-final-20260830
+      - name: Record deterministic marker diagnostics
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          e=Path('workflow-engine.js').read_text(); p=Path('prompt-engine.js').read_text(); y=Path('.github/workflows/pages.yml').read_text()
+          checks={
+            'register_marker': "  if(!config)return null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')" in e,
+            'handoff_function': 'function executionHandoff(' in e,
+            'handoff_stage4': '  if(stage===4){' in e[e.index('function executionHandoff('):],
+            'next_action_exact': "if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}" in e,
+            'prompt_stage4_start': "\n4:'" in p,
+            'prompt_stage5_start': "\n5:'" in p,
+            'prompt_version24': "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';" in p,
+            'ci_marker': '      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n' in y,
+          }
+          Path('stage4-repair-diagnostic.txt').write_text('\n'.join(f'{k}={v}' for k,v in checks.items())+'\n')
+          PY
+          git config user.name 'closed-loop-repair'
+          git config user.email 'actions@users.noreply.github.com'
+          git add stage4-repair-diagnostic.txt
+          git commit -m 'Record Stage 4 repair diagnostics'
+          git push origin HEAD:fix/stage4-durable-intent-final-20260830
