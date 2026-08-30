@@ -1,0 +1,86 @@
+name: Materialize final Stage 04 persistence repair
+
+on:
+  push:
+    branches: [automation/stage4-final-materialize-20260830]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage4-final-materialize-20260830
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact repair and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+
+          node <<'NODE'
+          const fs = require('fs');
+          const {createHash} = require('crypto');
+
+          let prompt = fs.readFileSync('prompt-engine.js', 'utf8');
+          const oldVersion = "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';";
+          const newVersion = "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';";
+          if (!prompt.includes(oldVersion)) throw new Error('Expected prompt-engine/25 boundary was not found.');
+          if (!prompt.includes("handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff")) throw new Error('Current main Stage 04 handoff suppression is missing.');
+          prompt = prompt.replace(oldVersion, newVersion);
+          fs.writeFileSync('prompt-engine.js', prompt);
+
+          let semantic = fs.readFileSync('verify-prompt-semantics.mjs', 'utf8');
+          const semanticMarker = "console.log(JSON.stringify({stage04CanonicalInputReuse:true}));";
+          const semanticReplacement = "if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');\nconsole.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));";
+          if (!semantic.includes(semanticMarker)) throw new Error('Stage 04 canonical-input regression marker was not found.');
+          semantic = semantic.replace(semanticMarker, semanticReplacement);
+          fs.writeFileSync('verify-prompt-semantics.mjs', semantic);
+
+          let pages = fs.readFileSync('.github/workflows/pages.yml', 'utf8');
+          const materializer = /\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/;
+          if (!materializer.test(pages)) throw new Error('Obsolete Stage 04 materializer block was not found.');
+          pages = pages.replace(materializer, '');
+          if (pages.includes('materialize-stage4-intent-reuse:')) throw new Error('Obsolete Stage 04 materializer remains.');
+          fs.writeFileSync('.github/workflows/pages.yml', pages);
+
+          fs.unlinkSync('.github/workflows/stage4-final-materialize.yml');
+
+          const runtimeFiles = ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha = file => {
+            const bytes = fs.readFileSync(file);
+            return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+          };
+          const manifest = runtimeFiles.map(file => `${file}:${gitBlobSha(file)}\n`).join('');
+          const runtimeIdentity = `runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html = fs.readFileSync('index.html', 'utf8');
+          let changed = 0;
+          html = html.replace(/(<script defer src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("><\/script>)/g, (_match, prefix, suffix) => {
+            changed += 1;
+            return prefix + runtimeIdentity + suffix;
+          });
+          if (changed !== runtimeFiles.length) throw new Error(`Expected ${runtimeFiles.length} runtime script identities; changed ${changed}.`);
+          fs.writeFileSync('index.html', html);
+          console.log(JSON.stringify({runtimeIdentity, updatedScripts: changed, promptEngineVersion: 'closed-loop-prompt-engine/26'}));
+          NODE
+
+          node --check prompt-engine.js
+          node verify-hash.mjs
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          git diff --check
+          git add -A
+          git diff --cached --check
+          git commit -m "Finalize Stage 04 persisted input reuse"
+          git push origin "HEAD:${{ github.ref_name }}"
