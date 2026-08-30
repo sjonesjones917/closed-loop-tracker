@@ -1,0 +1,37 @@
+name: advance-final-proof
+on:
+  push:
+    branches: ['fix/final-zero-loss-v3-20260830']
+    paths: ['.github/workflows/advance-final-proof.yml']
+permissions:
+  contents: write
+jobs:
+  advance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-zero-loss-v3-20260830
+          fetch-depth: 0
+      - name: Repair stale Stage 01 smart-quote fixture and trigger full proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs'); t=p.read_text()
+          old="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
+          new="  const intake=engine.stage1IntakeManifest(p);e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:JSON.stringify({coverage:intake.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',reason:''}))})};"
+          if old not in t: raise SystemExit('stale smart-quote Stage 01 fixture not found')
+          p.write_text(t.replace(old,new,1))
+          PY
+          node --check verify-ingestion.mjs
+          git add verify-ingestion.mjs
+          git commit -m 'Make smart-quote regression obey exhaustive Stage 1 accounting'
+          git push origin HEAD:fix/final-zero-loss-v3-20260830
+          printf '\n# proof-trigger: %s\n' "$(date -u +%Y%m%dT%H%M%SZ)" >> .github/workflows/final-v3-proof.yml
+          git add .github/workflows/final-v3-proof.yml
+          git commit -m 'Run full isolated conformance proof'
+          git push origin HEAD:fix/final-zero-loss-v3-20260830
