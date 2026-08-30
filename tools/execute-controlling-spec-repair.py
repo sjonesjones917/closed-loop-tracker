@@ -5,7 +5,7 @@ repair=root/'tools/apply-controlling-spec-fix.py'
 src=repair.read_text(encoding='utf-8')
 
 strict="s = replace_regex(s, r\"const APPLICATION_TEST_EXECUTORS=Object\\.freeze\\(\\{\\}\\);\\nfunction applicationTestCapabilities\\(\\)\\{return Object\\.freeze\\(Object\\.keys\\(APPLICATION_TEST_EXECUTORS\\)\\);\\}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 'native capability authority')"
-adapted="""runtime_caps=\"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\"\nhardcoded_caps=\"function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}\"\nif hardcoded_caps in s:\n    s=s.replace(hardcoded_caps,runtime_caps,1)\nelif runtime_caps in s:\n    pass\nelse:\n    legacy=r\"const APPLICATION_TEST_EXECUTORS=Object\\.freeze\\(\\{\\}\\);\\nfunction applicationTestCapabilities\\(\\)\\{return Object\\.freeze\\(Object\\.keys\\(APPLICATION_TEST_EXECUTORS\\)\\);\\}\"\n    updated,count=re.subn(legacy,runtime_caps,s,count=1)\n    if count:\n        s=updated\n"""
+adapted="s = s.replace(\"function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 1)"
 if strict not in src:
     raise SystemExit('native capability repair anchor missing')
 src=src.replace(strict,adapted,1)
