@@ -83,6 +83,11 @@ new_ownership = """ const ownershipStages=[1,10,18,20,21,27,28,29,30];
 """
 if old_ownership not in text: raise SystemExit('Expected obsolete exact-phrase ownership fixture not found.')
 text = text.replace(old_ownership,new_ownership,1)
+old_residual = " if(!q.includes('EXACT_DELIVERABLE_REQUESTED')||!/human intent confirmation/i.test(q))throw new Error('Stage 01 does not establish a confirmable feasible substitute deliverable.');"
+new_residual = " if(!q.includes('EXACT_DELIVERABLE_REQUESTED')||!q.includes('objective/deliverable defined')||!q.includes('Ask BLOCKING_NOW and ASK_NOW_NONBLOCKING questions in normal chat before the final machine response.'))throw new Error('Stage 01 does not establish a complete, human-authority-defined deliverable before final submission.');"
+if old_residual not in text: raise SystemExit('Expected obsolete feasible-substitute Stage 01 assertion not found.')
+text = text.replace(old_residual,new_residual,1)
+text = text.replace("specialistDomains:['patent','software-multifile','building-aec','physical-engineering-cad-cam-cnc-additive']","subjectNeutralIntake:true")
 p.write_text(text)
 
 pages = Path('.github/workflows/pages.yml')
