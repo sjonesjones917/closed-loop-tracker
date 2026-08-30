@@ -20,6 +20,17 @@ elif new not in s:
     raise SystemExit('prompt-engine invalidation verifier anchor missing')
 p.write_text(s)
 
+# Definition-of-done must prove the controlling /3 identities, not the obsolete /2 contracts.
+p=Path('verify-definition-of-done.mjs')
+s=p.read_text()
+old="assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');"
+new="assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Schema identity changed.');"
+if old in s:
+    s=s.replace(old,new,1)
+elif new not in s:
+    raise SystemExit('definition-of-done schema identity verifier anchor missing')
+p.write_text(s)
+
 direct=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
 graph=direct+['test-worker.js']
 rows=[]
