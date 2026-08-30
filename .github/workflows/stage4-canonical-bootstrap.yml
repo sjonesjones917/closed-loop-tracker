@@ -19,6 +19,25 @@ jobs:
       - name: Run proof against final repository shape
         shell: bash
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.stage4-bootstrap.sh')
+          text=p.read_text()
+          replacements={
+            "'OBJECTIVE','REQUIREMENT','MUST'":"'REQUIREMENT','REQUIREMENT','MUST'",
+            "'OUTPUT_CONSTRAINT','REQUIREMENT','MUST'":"'CONSTRAINT','REQUIREMENT','MUST'",
+            "'TEMPORAL_CONSTRAINT','REQUIREMENT','MUST'":"'CONSTRAINT','REQUIREMENT','MUST'",
+            "'SOURCE_CONSTRAINT','REQUIREMENT','MUST'":"'CONSTRAINT','REQUIREMENT','MUST'",
+            "'AUTHORITY_CONTEXT','CONTEXT','CONTEXT'":"'REFERENCE','CONTEXT_ONLY','FACTUAL'",
+            "'CAPABILITY_CONTEXT','CONTEXT','CONTEXT'":"'FACT','CONTEXT_ONLY','FACTUAL'",
+            "'SUPPLIED_MATERIAL','CONTEXT','CONTEXT'":"'REFERENCE','CONTEXT_ONLY','FACTUAL'",
+          }
+          for old,new in replacements.items():
+              if text.count(old)!=1:
+                  raise SystemExit(f'bootstrap enum mapping anchor mismatch: {old} -> {text.count(old)}')
+              text=text.replace(old,new)
+          p.write_text(text)
+          PY
           rm -f .github/workflows/stage4-canonical-bootstrap.yml
           sed -i "s#^rm \.github/workflows/stage4-canonical-bootstrap\.yml \.stage4-bootstrap\.sh#rm -f .github/workflows/stage4-canonical-bootstrap.yml .stage4-bootstrap.sh#" .stage4-bootstrap.sh
           bash .stage4-bootstrap.sh
