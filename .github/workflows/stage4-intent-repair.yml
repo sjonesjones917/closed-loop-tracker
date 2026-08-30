@@ -40,7 +40,6 @@ jobs:
           if oldout not in s: raise SystemExit('Stage 01 output anchor not found')
           s=s.replace(oldout,newout)
           p.write_text(s)
-
           p=Path('app-core.js'); s=p.read_text()
           anchor="  const later={\n    10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',"
           replacement="  if(n===4)return 'Do not reattach the original intent or disclosure files when their human-authority content was already captured and accepted in Stage 01. Stage 04 consumes that canonical capture; original bytes are needed only for a proposition that genuinely depends on the bytes themselves or for content Stage 01 explicitly could not capture.';\n  const later={\n    10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',"
@@ -63,3 +62,4 @@ jobs:
           git add prompt-engine.js app-core.js verify-stage4-intent-capture.mjs
           git commit -m "Fix Stage 4 canonical intent carry-forward"
           git push origin HEAD:fix/stage4-canonical-intent
+# trigger
