@@ -18,3 +18,4 @@ jobs:
           git add index.html
           git commit -m "Restore responsive prompt surface"
           git push origin HEAD:restore-prompt-surface-20260830
+# trigger
