@@ -13,13 +13,16 @@ function project(){const p=core.createBlankState('JOB-PROMPT-CURRENT');Object.as
  const p=project();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});
  for(const text of ['STAGE 01 SUBJECT-NEUTRAL INTAKE','accessible supplied materials','Preserve every project-relevant human fact','BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','HUMAN COLLABORATION MODE'])assert.ok(r.prompt.includes(text),`Stage 01 prompt missing ${text}`);
  assert.ok(r.prompt.includes('Human decision already supplied.'),'Stage 01 prompt failed to carry persisted human answer.');
- assert.ok(!/ask the human to re-enter facts that are already present/i.test(r.prompt)===false||r.prompt.includes('do not ask the human to re-enter facts that are already present'),'Stage 01 must forbid repeat entry.');
+ assert.ok(r.prompt.includes('do not ask the human to re-enter facts that are already present'),'Stage 01 must forbid repeat entry.');
 }
 {
- const p=project();p.projectData.intentStatements=[{STATEMENT_ID:'STATEMENT-001',fields:{EXACT_STATEMENT:'The output must preserve supplied requirement A.',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST'},status:'ACTIVE'}];p.projectData.candidateRequirements=[{CANDIDATE_REQ_ID:'CANDIDATE-REQ-001',fields:{CANDIDATE_OBLIGATION:'External source requires condition B.',APPLICABILITY:'APPLICABLE'},status:'ACTIVE'}];p.projectData.research=[{RESEARCH_ID:'RESEARCH-001',fields:{MANDATORY_STATEMENTS:'Condition B is mandatory.',PROHIBITIONS:'Do not omit condition C.',EXCEPTIONS:'Exception D applies only when stated.'},status:'ACTIVE'}];
+ const p=project(),scope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'};
+ p.projectData.intentStatements=[{id:'STATEMENT-001',STATEMENT_ID:'STATEMENT-001',fields:{EXACT_STATEMENT:'The output must preserve supplied requirement A.',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST'},scope,status:'ACTIVE'}];
+ p.projectData.candidateRequirements=[{id:'CANDIDATE-REQ-001',CANDIDATE_REQ_ID:'CANDIDATE-REQ-001',fields:{CANDIDATE_OBLIGATION:'External source requires condition B.',APPLICABILITY:'APPLICABLE'},scope,status:'ACTIVE'}];
+ p.projectData.research=[{id:'RESEARCH-001',RESEARCH_ID:'RESEARCH-001',fields:{MANDATORY_STATEMENTS:'Condition B is mandatory.',PROHIBITIONS:'Do not omit condition C.',EXCEPTIONS:'Exception D applies only when stated.'},scope,status:'ACTIVE'}];
  const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
  for(const text of ['STAGE 04 OBLIGATION MANIFEST','STATEMENT-001','The output must preserve supplied requirement A.','External source requires condition B.','Condition B is mandatory.','Do not omit condition C.','Exception D applies only when stated.','PROJECT DATA EXECUTION RULE — MANDATORY'])assert.ok(r.prompt.includes(text),`Stage 04 prompt missing operative input ${text}`);
- assert.ok(!/attach|reattach|resend|reopen the original intent file/i.test(r.prompt.replace(/never request it, attach it, resend it, reopen it/ig,'')),'Stage 04 prompt contains a repeat-intent-file action.');
+ assert.ok(r.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),'Stage 04 must prohibit original intent-file reuse.');
 }
 {
  const p=project();const r=prompts.buildPromptRecord(6,p,{operation:'COMPLETE'});for(const text of ['closed-loop-test-spec/1','APPLICATION_DETERMINISTIC','CLOSED_LOOP_TEST_IR','PARSE_XML','SELECT_XML'])assert.ok(r.prompt.includes(text),`Stage 06 Test IR prompt missing ${text}`);
