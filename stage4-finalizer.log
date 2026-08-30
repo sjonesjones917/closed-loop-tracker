@@ -1,0 +1,17 @@
+Patch anchor not found: remove Stage 04 repeated file handoff
+Patch anchor not found: replace Stage 04 next action
+Patch anchor not found: replace obsolete Stage 04 handoff test
+{
+  "patched": true,
+  "files": [
+    "workflow-schema.js",
+    "workflow-engine.js",
+    "prompt-engine.js",
+    "response-ingestion.js",
+    "app-core.js",
+    "verify-complete.mjs",
+    "verify-intake-obligation-accounting.mjs",
+    "verify-v3-definition-of-done.mjs",
+    ".github/workflows/pages.yml"
+  ]
+}
