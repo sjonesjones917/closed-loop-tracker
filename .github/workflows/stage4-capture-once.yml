@@ -1,0 +1,60 @@
+name: Materialize Stage 04 capture-once repair
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  materialize:
+    if: contains(github.event.head_commit.message, 'Install one-time Stage 04 capture-once materializer')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize capture-once runtime and remove one-time infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin fix/stage04-capture-once-20260830
+          git show origin/fix/stage04-capture-once-20260830:prompt-engine.js > prompt-engine.js
+          node <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const workflowPath='.github/workflows/pages.yml';
+          let workflow=fs.readFileSync(workflowPath,'utf8');
+          workflow=workflow.replace(/\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/,'');
+          fs.writeFileSync(workflowPath,workflow);
+          fs.rmSync('.github/workflows/stage4-capture-once.yml');
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const identity=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/runtime-[a-f0-9]{16}/g,identity);
+          fs.writeFileSync('index.html',html);
+          console.log(JSON.stringify({runtimeBuildIdentity:identity,promptEngine:'closed-loop-prompt-engine/26'}));
+          NODE
+          node --check prompt-engine.js
+          node verify-hash.mjs
+          node verify-test-runtime.mjs
+          node verify-prompt-semantics.mjs
+      - name: Open protected-branch repair pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=fix/stage04-capture-once-materialized
+          git config user.name closed-loop-materializer
+          git config user.email actions@users.noreply.github.com
+          git checkout -b "$BRANCH"
+          git add prompt-engine.js index.html .github/workflows/pages.yml
+          git add -u .github/workflows/stage4-capture-once.yml
+          git diff --cached --check
+          git commit -m "Enforce capture-once project context in Stage 04"
+          git push -u origin "$BRANCH"
+          gh pr create --base main --head "$BRANCH" --title "Enforce capture-once project context in Stage 04" --body "Project information supplied by the human is carried forward by the application. Stage 04 receives the persisted project information inside its generated instruction and may not request a repeat attachment, retype, summary, or other resupply. Saved /25 prompts are superseded by prompt-engine/26. The runtime cache identity is recalculated from the exact changed runtime bytes. One-time materializer infrastructure removes itself in this PR."
