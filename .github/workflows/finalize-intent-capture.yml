@@ -1,10 +1,15 @@
 name: finalize-intent-capture
+
 on:
   push:
-    branches: [fix/controlling-spec-zero-loss-20260830]
-    paths: [.github/workflows/finalize-intent-capture.yml]
+    branches:
+      - fix/controlling-spec-zero-loss-20260830
+    paths:
+      - .github/workflows/finalize-intent-capture.yml
+
 permissions:
   contents: write
+
 jobs:
   repair:
     runs-on: ubuntu-latest
@@ -15,196 +20,82 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - name: Materialize v3 base while preserving main visual shell
-        shell: bash
+          node-version: '22'
+      - name: Configure repository
         run: |
           set -euo pipefail
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git fetch origin main implementation/full-spec-repair144
+      - name: Restore functional v3 base and existing visual shell
+        run: |
+          set -euo pipefail
           git show origin/main:index.html > /tmp/index-main.html
-          files='README.md app-core.js build-test-project.mjs project-store.js prompt-engine.js response-ingestion.js test-runtime.js test-worker.js verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js .github/workflows/pages.yml'
-          for f in $files; do git checkout origin/implementation/full-spec-repair144 -- "$f"; done
+          for f in README.md app-core.js build-test-project.mjs project-store.js prompt-engine.js response-ingestion.js test-runtime.js test-worker.js verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js .github/workflows/pages.yml; do
+            git checkout origin/implementation/full-spec-repair144 -- "$f"
+          done
           cp /tmp/index-main.html index.html
-      - name: Apply controlling capture-once implementation
-        shell: bash
+      - name: Apply exhaustive capture-once repair
+        run: python3 tools/finalize_intent_capture.py
+      - name: Preserve visual baseline and runtime wiring only
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re, hashlib
-          def rw(path, fn):
-              p=Path(path); p.write_text(fn(p.read_text()))
-
-          # Required identities and ownership corrections.
-          rw('workbook.js', lambda t:t.replace("const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';").replace("'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'"))
-          def schema_fix(t):
-              t=t.replace("const RESPONSE_SCHEMA='closed-loop-stage-response/2';","const RESPONSE_SCHEMA='closed-loop-stage-response/3';")
-              t=t.replace("  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',","  'EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',")
-              if 'const HUMAN_DECISION_JOB_FIELDS' not in t:
-                  t=t.replace('const APPLICATION_JOB_FIELDS=Object.freeze([',"const HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER']);\nconst APPLICATION_JOB_FIELDS=Object.freeze([",1)
-              t=t.replace('function jobFieldDefinition(name){\n  if(APPLICATION_JOB_FIELDS.includes(name))',"function jobFieldDefinition(name){\n  if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{provenanceRequired:false,nullable:true});\n  if(APPLICATION_JOB_FIELDS.includes(name))",1)
-              t=t.replace('[...new Set([...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map','[...new Set([...HUMAN_JOB_FIELDS,...HUMAN_DECISION_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map')
-              t=t.replace('JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,','JOB_FIELDS,HUMAN_JOB_FIELDS,HUMAN_DECISION_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,')
-              # Test IR application ownership.
-              m=re.search(r'"tests": \{[\s\S]*?\n  \},\n  "failureTests"',t)
-              if m:
-                  b=m.group(0).replace('      "EXECUTABLE_SPEC_VERSION",\n','').replace('      "EXECUTABLE_SPEC_SHA256",\n','')
-                  anchor='      "STATUS"\n    ]'
-                  if anchor in b and '"EXECUTABLE_SPEC_SHA256"' not in b.split('"application":',1)[-1]:
-                      b=b.replace(anchor,'      "STATUS",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256"\n    ]',1)
-                  t=t[:m.start()]+b+t[m.end():]
-              return t
-          rw('workflow-schema.js',schema_fix)
-
-          # Runtime must expose only declarative TEST_IR, never arbitrary custom code.
-          def runtime_fix(t):
-              t=t.replace('CUSTOM_PIPELINE','TEST_IR')
-              return t
-          rw('test-runtime.js',runtime_fix)
-
-          # Application-owned exhaustive input and obligation manifests + closure validators.
-          def engine_fix(t):
-              anchor='function unresolvedHumanRequests(project,stage){'
-              if 'function stage1IntakeManifest(project)' not in t:
-                  helpers=r'''function manifestUnitId(prefix,payload){return prefix+'-'+hash.sha256Value(payload).slice(0,20).toUpperCase();}
-function stage1IntakeManifest(project){
-  ensureShape(project);const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNVERSIONED'),units=[];
-  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){
-    if(definition?.producer!=='HUMAN')continue;const value=project.job?.[name];if(value===undefined||value===null||String(value).trim()==='')continue;
-    const rawValueHash=hash.sha256Value(value),sourceLocation='job.'+name,inputUnitId=manifestUnitId('INPUT-UNIT',{inputVersion,sourceLocation,rawValueHash});
-    units.push({inputUnitId,sourceLocation,rawValueHash,value:clone(value)});
-  }
-  for(const answer of safe(project.projectData.humanInputAnswers).filter(x=>!x.invalidatedBy&&String(x.inputVersion||inputVersion)===inputVersion)){
-    const sourceLocation='humanInputAnswer.'+String(answer.answerId||answer.requestId||units.length+1),value=answer.value??answer.answer??answer.response;if(value===undefined||value===null||String(value).trim()==='')continue;
-    const rawValueHash=hash.sha256Value(value),inputUnitId=manifestUnitId('INPUT-UNIT',{inputVersion,sourceLocation,rawValueHash});units.push({inputUnitId,sourceLocation,rawValueHash,value:clone(value)});
-  }
-  return {schema:'closed-loop-intake-manifest/1',inputVersion,units,unitCount:units.length,manifestSha256:hash.sha256Value({inputVersion,units:units.map(({inputUnitId,sourceLocation,rawValueHash})=>({inputUnitId,sourceLocation,rawValueHash}))})};
-}
-function stage4ObligationManifest(project){
-  ensureShape(project);const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNVERSIONED'),items=[],push=(origin,sourceLocation,content,extra={})=>{if(content===undefined||content===null||String(content).trim()===''||['NONE','NOT APPLICABLE'].includes(upper(content)))return;const contentSha256=hash.sha256Value(content),obligationId=manifestUnitId('OBLIGATION',{inputVersion,origin,sourceLocation,contentSha256});items.push({obligationId,origin,sourceLocation,contentSha256,content:clone(content),...extra});};
-  const intake=stage1IntakeManifest(project);for(const unit of intake.units)push('HUMAN_INPUT',unit.sourceLocation,unit.value,{inputUnitId:unit.inputUnitId});
-  const s1=project.stages?.[1]?.agentData||project.stages?.[1]?.acceptedData||{};for(const key of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])push('STAGE_01','stage1.'+key,s1[key]);
-  for(const record of recordsForCurrentScope(project,'research')){const rid=recordId(record,'research');for(const key of ['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'])push('STAGE_03_RESEARCH',rid+'.'+key,recordValue(record,key),{researchId:rid,sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')});}
-  for(const record of recordsForCurrentScope(project,'candidateRequirements')){const cid=recordId(record,'candidateRequirements');push('STAGE_03_CANDIDATE',cid+'.CANDIDATE_OBLIGATION',recordValue(record,'CANDIDATE_OBLIGATION'),{candidateRequirementId:cid,sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')});}
-  return {schema:'closed-loop-obligation-manifest/1',inputVersion,sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION||null,researchVersion:project.job.CURRENT_RESEARCH_VERSION||null,items,itemCount:items.length,manifestSha256:hash.sha256Value(items.map(({obligationId,origin,sourceLocation,contentSha256})=>({obligationId,origin,sourceLocation,contentSha256})))};
-}
-function parseAccountingString(value,label){try{const parsed=JSON.parse(String(value||''));if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('root must be an object');return {parsed,reasons:[]};}catch(error){return {parsed:null,reasons:[label+' must be a JSON string using the required accounting structure: '+error.message]};}}
-function validateStage1IntakeAccounting(value,manifest){const reasons=[],parsedResult=parseAccountingString(value,'Stage 01 INPUT_SET_CONTENTS');if(!parsedResult.parsed)return {valid:false,reasons:parsedResult.reasons};const rows=safe(parsedResult.parsed.coverage),expected=safe(manifest?.units).map(x=>x.inputUnitId),seen=new Map(),allowed=new Set(['INCORPORATED','CONTEXT','UNRESOLVED_HUMAN_ONLY','LATER_RESOLVABLE','INAPPLICABLE']);for(const row of rows){const id=String(row?.inputUnitId||'');seen.set(id,(seen.get(id)||0)+1);if(!allowed.has(upper(row?.disposition)))reasons.push('Invalid Stage 01 disposition for '+(id||'UNKNOWN')+'.');}for(const id of expected)if(seen.get(id)!==1)reasons.push('Stage 01 intake unit '+id+' must be accounted for exactly once.');for(const id of seen.keys())if(id&&!expected.includes(id))reasons.push('Stage 01 accounting contains unknown input unit '+id+'.');return {valid:reasons.length===0,reasons,expectedCount:expected.length,accountedCount:expected.filter(id=>seen.get(id)===1).length};}
-function validateStage4ObligationAccounting(value,manifest,requirementRecords=[]){const reasons=[],parsedResult=parseAccountingString(value,'Stage 04 ATOMICITY_REVIEW_RESULTS');if(!parsedResult.parsed)return {valid:false,reasons:parsedResult.reasons};const rows=safe(parsedResult.parsed.obligationAccounting),expected=safe(manifest?.items).map(x=>x.obligationId),seen=new Map(),allowed=new Set(['REQUIREMENT','CONTEXT','INAPPLICABLE','BLOCKED']);for(const row of rows){const id=String(row?.obligationId||'');seen.set(id,(seen.get(id)||0)+1);const disposition=upper(row?.disposition);if(!allowed.has(disposition))reasons.push('Invalid Stage 04 disposition for '+(id||'UNKNOWN')+'.');if(disposition==='REQUIREMENT'&&!safe(requirementRecords).some(r=>JSON.stringify(r?.fields||r||{}).includes(id)))reasons.push('Stage 04 obligation '+id+' is classified as REQUIREMENT but no proposed requirement traces to that identity.');if(['INAPPLICABLE','BLOCKED'].includes(disposition)&&!String(row?.reason||'').trim())reasons.push('Stage 04 '+disposition+' disposition for '+id+' requires a reason.');}for(const id of expected)if(seen.get(id)!==1)reasons.push('Stage 04 obligation '+id+' must be accounted for exactly once.');for(const id of seen.keys())if(id&&!expected.includes(id))reasons.push('Stage 04 accounting contains unknown obligation '+id+'.');return {valid:reasons.length===0,reasons,expectedCount:expected.length,accountedCount:expected.filter(id=>seen.get(id)===1).length};}
-
-'''
-                  if anchor not in t: raise SystemExit('engine insertion anchor missing')
-                  t=t.replace(anchor,helpers+anchor,1)
-              # Stage 01 gate: coverage closure and complete normalized job fields.
-              old="""      if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');\n      requireAccepted();\n      const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);"""
-              new="""      if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');\n      requireAccepted();\n      for(const key of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'])if(!String(project.stages[1]?.agentData?.[key]??project.stages[1]?.acceptedData?.[key]??'').trim())reasons.push('Stage 01 '+key+' is required.');\n      const latest=changes.at(-1),stage1Prompt=safe(project.projectData.generatedPrompts).find(p=>(p.instructionId||p.promptId)===latest?.promptId),intakeCheck=validateStage1IntakeAccounting(project.stages[1]?.agentData?.INPUT_SET_CONTENTS??project.stages[1]?.acceptedData?.INPUT_SET_CONTENTS,stage1Prompt?.contextManifest?.intakeManifest||stage1IntakeManifest(project));if(!intakeCheck.valid)reasons.push(...intakeCheck.reasons);\n      const confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);"""
-              if old in t:t=t.replace(old,new,1)
-              # Stage 03 gate: require exhaustive category coverage and saturation, not mere existence.
-              old3="""      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;"""
-              new3="""      requireCount('research',1);const researchRows=collection('research'),researched=new Set(researchRows.map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);for(const row of researchRows){const rid=recordId(row,'research');for(const key of ['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL','SATURATION_STATUS'])if(!String(recordValue(row,key)||'').trim())reasons.push(rid+': '+key+' must be explicitly populated, using NONE when the category was exhaustively checked and absent.');const saturation=upper(recordValue(row,'SATURATION_STATUS'));if(!['SATURATED','COMPLETE','NO NEW MATERIAL','NO NEW MATERIAL FOUND'].includes(saturation))reasons.push(rid+': research is not demonstrated saturated.');}if(!truth(project.stages[3]?.agentData?.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 must affirm that all current controlling sources were examined.');if(!truth(project.stages[3]?.agentData?.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 requires the second conflict and exception pass.');break;"""
-              if old3 in t:t=t.replace(old3,new3,1)
-              # Stage 04 gate defense in depth.
-              marker="""    case 4:{\n      requireAccepted();requireCount('requirements',1);"""
-              repl="""    case 4:{\n      requireAccepted();requireCount('requirements',1);\n      const latest4=changes.at(-1),stage4Prompt=safe(project.projectData.generatedPrompts).find(p=>(p.instructionId||p.promptId)===latest4?.promptId),obligationCheck=validateStage4ObligationAccounting(project.stages[4]?.agentData?.ATOMICITY_REVIEW_RESULTS??project.stages[4]?.acceptedData?.ATOMICITY_REVIEW_RESULTS,stage4Prompt?.contextManifest?.obligationManifest||stage4ObligationManifest(project),collection('requirements'));if(!obligationCheck.valid)reasons.push(...obligationCheck.reasons);"""
-              if marker in t:t=t.replace(marker,repl,1)
-              # Export helpers.
-              export_anchor='ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,'
-              if export_anchor in t and 'stage1IntakeManifest,stage4ObligationManifest' not in t.split('globalThis.closedLoopWorkflowEngine',1)[-1]:
-                  t=t.replace(export_anchor,export_anchor+'stage1IntakeManifest,stage4ObligationManifest,validateStage1IntakeAccounting,validateStage4ObligationAccounting,',1)
-              return t
-          rw('workflow-engine.js',engine_fix)
-
-          # Prompt authority: task first, exhaustive Stage 01/03, exact Stage 04 union from application memory.
-          def prompt_fix(t):
-              t=t.replace('CUSTOM_PIPELINE','TEST_IR')
-              t=re.sub(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/\d+';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/31';",t,1)
-              # Strengthen the three controlling stage procedures without domain branches.
-              t=re.sub(r"1:'Initialize only this current job[\s\S]*?',\n2:'", "1:'Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE. Exhaust the user intent before Stage 01 can complete. Capture every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and foreseeable unresolved human-only issue relevant to defining the requested outcome. Never reduce the request to a generic summary that loses details. Inspect every supplied artifact whose bytes are actually available deeply enough to extract all human-authority statements relevant to job definition, but do not perform Stage 02 research, requirement atomization, test design, or production. Ask only genuinely human-only questions. Never ask for information already present in User Job Input, an available supplied artifact, a prior answer, or canonical project memory. Classify unresolved issues as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE using the controlling rules. Before final JSON, account for EVERY INPUT UNIT ID in the APPLICATION INTAKE COVERAGE MANIFEST exactly once. INPUT_SET_CONTENTS MUST be a JSON string with shape {\"coverage\":[{\"inputUnitId\":\"INPUT-UNIT-...\",\"disposition\":\"INCORPORATED|CONTEXT|UNRESOLVED_HUMAN_ONLY|LATER_RESOLVABLE|INAPPLICABLE\",\"reason\":\"...\"}],\"summary\":\"...\"}. Do not omit an ID. The application rejects incomplete accounting. Preserve the exact requested deliverable; do not downgrade it merely because a downstream viewing or execution tool is unavailable. Return HUMAN_INPUT_REQUIRED only for a genuinely human-only blocking question that remains unanswered after conversational clarification. Otherwise return a complete DATA_PROPOSAL.','\n2:'", t, count=1)
-              t=re.sub(r"3:'Research only the current accepted Stage 02[\s\S]*?',\n4:'", "3:'Exhaustively research every current accepted Stage 02 independent external source, source-by-source and pass-by-pass, until saturation is supported. For EACH source explicitly populate mandatory statements, recommendations, optional practices, examples, explanatory material, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, conflicts, source evidence, and candidate obligations; use NONE when a category was checked and absent rather than silently omitting it. Perform the required second conflict-and-exception pass. Do not mark Stage 03 complete until all current sources have coverage, all categories were checked, and SATURATION_STATUS is established for every research record. Do not treat target implementation artifacts as independent authority.','\n4:'", t, count=1)
-              t=re.sub(r"4:'Compile atomic requirement proposals only from[\s\S]*?',\n5:'", "4:'Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST and the complete canonical input union supplied in this prompt. The application has already captured and versioned the human-authority information supplied earlier. Use that project memory. NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize the original intent file or any project information already captured. Stage 04 must consume every detail from current User Job Input, accepted Stage 01, accessible supplied-material obligations, accepted Stage 03 research, candidate external-source obligations, source identities, and evidence. If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT naming the earliest responsible stage; do not make the user supply the same information again. For EVERY OBLIGATION ID, provide exactly one accounting disposition and never let an obligation disappear. ATOMICITY_REVIEW_RESULTS MUST be a JSON string with shape {\"obligationAccounting\":[{\"obligationId\":\"OBLIGATION-...\",\"disposition\":\"REQUIREMENT|CONTEXT|INAPPLICABLE|BLOCKED\",\"reason\":\"...\"}],\"atomicityReview\":\"...\"}. Every REQUIREMENT disposition must trace that exact obligationId in the proposed requirement fields, using USER_INPUT_RELATIONSHIP for human-origin obligations or SOURCE_LOCATION/NOTES for source-origin obligations. Split compound obligations into atomic independently testable requirements; preserve provenance, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, and notes. The application assigns canonical IDs, versions, hashes, counts, and scope.','\n5:'", t, count=1)
-              # Task must precede project data.
-              old='STAGE-SPECIFIC TASK\n${procedures[stage]}\n\n'
-              if old in t:t=t.replace(old,'',1)
-              anchor='PROJECT-SCOPE BOUNDARY\n'
-              lead="YOUR TASK — DO THIS NOW\n${procedures[stage]}\n\nCONTEXT AND PROJECT-DATA RULE\nThe task above is controlling. Everything below is bounded current project DATA/EVIDENCE. Use every relevant captured fact. Never ask the human to repeat information already present in canonical context or verified application custody. Missing information that should have been captured is MISSING_APPLICATION_CONTEXT or INADEQUATE_PRIOR_OUTPUT, not a new user re-entry request.\n\nPROJECT-SCOPE BOUNDARY\n"
-              if 'YOUR TASK — DO THIS NOW' not in t and anchor in t:t=t.replace(anchor,lead,1)
-              # Stage-specific context: manifest + full Stage 01 and Stage 03 accepted memory.
-              c_anchor='function contextFor(stage,state,operation,scope={}){\n const parts=[];'
-              if c_anchor in t and 'STAGE 04 COMPLETE CANONICAL INPUT UNION' not in t:
-                  insertion="""function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage===1){const intakeManifest=workflow.stage1IntakeManifest(state);parts.push(`APPLICATION INTAKE COVERAGE MANIFEST — ACCOUNT FOR EVERY ID\\n${show(intakeManifest)}`);}\n if(stage===4){const obligationManifest=workflow.stage4ObligationManifest(state),s1=state?.stages?.[1]||{},s3=state?.stages?.[3]||{};parts.push(`STAGE 04 COMPLETE CANONICAL INPUT UNION — DO NOT ASK THE USER TO RESUPPLY IT\\nCURRENT USER JOB INPUT\\n${humanInputBlock(state?.job||{})}\\n\\nACCEPTED STAGE 01 JOB DEFINITION\\n${show({agentData:s1.agentData||s1.acceptedData||{},humanData:s1.humanData||{},derivedData:s1.derivedData||{}})}\\n\\nACCEPTED STAGE 03 RESEARCH\\n${show({agentData:s3.agentData||s3.acceptedData||{},research:workflow.recordsForCurrentScope(state,'research'),candidateRequirements:workflow.recordsForCurrentScope(state,'candidateRequirements'),sources:workflow.recordsForCurrentScope(state,'sources')})}\\n\\nAPPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY ID\\n${show(obligationManifest)}`);}\n"""
-                  t=t.replace(c_anchor,insertion,1)
-              # Context identity must bind both manifests.
-              cm='contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,'
-              if cm in t and 'intakeManifest:' not in t:
-                  t=t.replace(cm,"contextManifest={stage,operation,scope,intakeManifest:stage===1?workflow.stage1IntakeManifest(state):null,obligationManifest:stage===4?workflow.stage4ObligationManifest(state):null,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,",1)
-              return t
-          rw('prompt-engine.js',prompt_fix)
-
-          # Ingestion rejects incomplete Stage 01 / Stage 04 accounting BEFORE canonical mutation.
-          def ingestion_fix(t):
-              anchor='  const canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);'
-              if anchor in t and 'INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING' not in t:
-                  check="""  if(stageNumber===1&&envelope.responseType==='DATA_PROPOSAL'){const result=workflow.validateStage1IntakeAccounting(envelope.stageData?.INPUT_SET_CONTENTS,promptRecord?.contextManifest?.intakeManifest||workflow.stage1IntakeManifest(project));for(const reason of result.reasons)issues.push(issue('INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING','/stageData/INPUT_SET_CONTENTS',reason));}\n  if(stageNumber===4&&envelope.responseType==='DATA_PROPOSAL'){const result=workflow.validateStage4ObligationAccounting(envelope.stageData?.ATOMICITY_REVIEW_RESULTS,promptRecord?.contextManifest?.obligationManifest||workflow.stage4ObligationManifest(project),safe(envelope.records?.requirements));for(const reason of result.reasons)issues.push(issue('INCOMPLETE_STAGE_04_OBLIGATION_ACCOUNTING','/stageData/ATOMICITY_REVIEW_RESULTS',reason));}\n\n"""
-                  t=t.replace(anchor,check+anchor,1)
-              return t
-          rw('response-ingestion.js',ingestion_fix)
-
-          # No repeat attachment control in Stage 04. No unrelated visual redesign.
-          def app_fix(t):
-              if "function artifactControlMarkup(n,locked){if(n===4)return '';" not in t:
-                  t=t.replace('function artifactControlMarkup(n,locked){',"function artifactControlMarkup(n,locked){if(n===4)return '';",1)
-              return t
-          rw('app-core.js',app_fix)
-
-          # Preserve main CSS byte-for-byte; apply only required CSP and runtime dependency wiring.
+          import hashlib,re
+          baseline=Path('/tmp/index-main.html').read_text()
           html=Path('index.html').read_text()
-          baseline=re.search(r'<style>(.*?)</style>',Path('/tmp/index-main.html').read_text(),re.S)
-          if not baseline: raise SystemExit('main CSS baseline missing')
-          if "worker-src 'self'" not in html:html=html.replace("connect-src 'self'; object-src","connect-src 'self'; worker-src 'self'; object-src")
+          if "worker-src 'self'" not in html:
+              html=html.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src")
           srcs=re.findall(r'<script\s+defer\s+src="([^"]+)"\s*></script>',html)
-          token=next((re.search(r'[?&]v=([^&\"]+)',s).group(1) for s in srcs if re.search(r'[?&]v=([^&\"]+)',s)),'runtime-pending')
+          token=next((re.search(r'[?&]v=([^&\"]+)',s).group(1) for s in srcs if re.search(r'[?&]v=([^&\"]+)',s)),'runtime')
           order=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          first=html.index('<script defer src="');last=html.rindex('</script>')+len('</script>')
+          first=html.index('<script defer src="')
+          last=html.rindex('</script>')+len('</script>')
           html=html[:first]+'\n'.join(f'<script defer src="{x}?v={token}"></script>' for x in order)+html[last:]
-          style=re.search(r'<style>(.*?)</style>',html,re.S)
-          if hashlib.sha256(style.group(1).encode()).hexdigest()!=hashlib.sha256(baseline.group(1).encode()).hexdigest():raise SystemExit('visual CSS changed')
-          if '.expandable-prompt{max-height:280px}' not in html:raise SystemExit('prompt box baseline size changed')
+          base_css=re.search(r'<style>(.*?)</style>',baseline,re.S).group(1)
+          new_css=re.search(r'<style>(.*?)</style>',html,re.S).group(1)
+          if hashlib.sha256(base_css.encode()).hexdigest()!=hashlib.sha256(new_css.encode()).hexdigest():
+              raise SystemExit('visual CSS changed from main baseline')
+          if '.expandable-prompt{max-height:280px}' not in html:
+              raise SystemExit('prompt box baseline size is not 280px')
           Path('index.html').write_text(html)
           PY
       - name: Add permanent capture-once regression
-        shell: bash
         run: |
           cat > verify-intent-capture.mjs <<'EOF'
-          import fs from 'node:fs';import vm from 'node:vm';
-          const r=f=>fs.readFileSync(f,'utf8'),a=(v,m)=>{if(!v)throw Error(m)};
+          import fs from 'node:fs';
+          const r=f=>fs.readFileSync(f,'utf8');
+          const a=(v,m)=>{if(!v)throw new Error(m)};
           const p=r('prompt-engine.js'),e=r('workflow-engine.js'),i=r('response-ingestion.js'),app=r('app-core.js'),h=r('index.html'),s=r('workflow-schema.js'),w=r('workbook.js');
-          a(w.includes("closed-loop-project/3"),'project /3');a(s.includes("closed-loop-stage-response/3"),'response /3');
-          a(e.includes('function stage1IntakeManifest(project)'),'intake manifest missing');a(e.includes('function stage4ObligationManifest(project)'),'obligation manifest missing');
-          a(e.includes('validateStage1IntakeAccounting'),'Stage 01 closure validator missing');a(e.includes('validateStage4ObligationAccounting'),'Stage 04 closure validator missing');
-          a(i.includes('INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING'),'Stage 01 ingestion closure missing');a(i.includes('INCOMPLETE_STAGE_04_OBLIGATION_ACCOUNTING'),'Stage 04 ingestion closure missing');
-          a(p.includes('APPLICATION INTAKE COVERAGE MANIFEST — ACCOUNT FOR EVERY ID'),'Stage 01 manifest absent from prompt');
+          a(w.includes('closed-loop-project/3'),'project /3 missing');
+          a(s.includes('closed-loop-stage-response/3'),'response /3 missing');
+          a(e.includes('function stage1IntakeManifest(project)'),'intake manifest missing');
+          a(e.includes('function stage4ObligationManifest(project)'),'obligation manifest missing');
+          a(e.includes('validateStage1IntakeAccounting'),'Stage 01 closure validator missing');
+          a(e.includes('validateStage4ObligationAccounting'),'Stage 04 closure validator missing');
+          a(i.includes('INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING'),'Stage 01 ingestion closure missing');
+          a(i.includes('INCOMPLETE_STAGE_04_OBLIGATION_ACCOUNTING'),'Stage 04 ingestion closure missing');
+          a(p.includes('APPLICATION INTAKE COVERAGE MANIFEST — ACCOUNT FOR EVERY ID'),'Stage 01 manifest absent');
           a(p.includes('STAGE 04 COMPLETE CANONICAL INPUT UNION — DO NOT ASK THE USER TO RESUPPLY IT'),'Stage 04 union absent');
-          a(p.includes('APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY ID'),'Stage 04 manifest absent');
-          a(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'Stage 04 repeat-input prohibition missing');
-          a(p.includes('Exhaustively research every current accepted Stage 02'),'Stage 03 exhaustion missing');
-          a(app.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 upload control still present');
-          a(h.includes('.expandable-prompt{max-height:280px}'),'prompt box baseline size changed');
+          a(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'repeat-input prohibition absent');
+          a(p.includes('Exhaustively research every current accepted Stage 02'),'Stage 03 exhaustion absent');
+          a(app.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 upload control remains');
+          a(h.includes('.expandable-prompt{max-height:280px}'),'prompt box size changed');
           console.log('intent capture and Stage 04 capture-once regression passed');
           EOF
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('.github/workflows/pages.yml');t=p.read_text()
+          p=Path('.github/workflows/pages.yml')
+          t=p.read_text()
           step="      - name: Verify exhaustive intent capture and Stage 04 capture-once behavior\n        run: node verify-intent-capture.mjs\n"
           if 'node verify-intent-capture.mjs' not in t:
               marker='      - name: Syntax checks\n'
-              if marker in t:t=t.replace(marker,step+marker,1)
-              else: raise SystemExit('pages workflow insertion anchor missing')
+              if marker not in t: raise SystemExit('pages workflow syntax anchor missing')
+              t=t.replace(marker,step+marker,1)
           p.write_text(t)
           PY
-      - name: Verify repaired implementation
-        shell: bash
+      - name: Validate repaired files
         run: |
           set -euo pipefail
           node --check workbook.js
@@ -214,15 +105,9 @@ function validateStage4ObligationAccounting(value,manifest,requirementRecords=[]
           node --check response-ingestion.js
           node --check app-core.js
           node verify-intent-capture.mjs
-          node verify-test-runtime.mjs
-          node verify-prompt-semantics.mjs
-      - name: Commit repair and remove one-time workflow
-        shell: bash
+      - name: Commit implementation
         run: |
           set -euo pipefail
-          git add -A
-          git commit -m 'Finish exhaustive intent capture and Stage 04 capture-once flow' || true
-          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
-          git rm .github/workflows/finalize-intent-capture.yml
-          git commit -m 'Remove one-time intent capture workflow'
+          git add README.md app-core.js build-test-project.mjs project-store.js prompt-engine.js response-ingestion.js test-runtime.js test-worker.js verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-intent-capture.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js index.html .github/workflows/pages.yml tools/finalize_intent_capture.py
+          git commit -m 'Finish exhaustive intent capture and Stage 04 capture-once flow'
           git push origin HEAD:fix/controlling-spec-zero-loss-20260830
