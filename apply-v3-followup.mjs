@@ -26,22 +26,19 @@ import fs from 'node:fs';
 {
   const path='verify-prompt-semantics.mjs';
   let s=fs.readFileSync(path,'utf8');
-  const replacements=[
-    ["prompts.version!=='closed-loop-prompt-engine/26'","prompts.version!=='closed-loop-prompt-engine/27'"],
-  ];
-  let changed=false;
-  for(const [a,b] of replacements){if(s.includes(a)){s=s.replace(a,b);changed=true;}else if(!s.includes(b)){} }
-  if(changed){fs.writeFileSync(path,s);console.log('aligned prompt engine regression version');}else console.log('prompt engine regression version already aligned');
+  if(s.includes("prompts.version!=='closed-loop-prompt-engine/26'")){
+    s=s.replace("prompts.version!=='closed-loop-prompt-engine/26'","prompts.version!=='closed-loop-prompt-engine/27'");
+    fs.writeFileSync(path,s);
+    console.log('aligned prompt engine regression version');
+  }else console.log('prompt engine regression version already aligned');
 }
 {
   const path='verify-ingestion.mjs';
   let s=fs.readFileSync(path,'utf8');
-  const old="  if(stage===1)records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];";
-  const replacement="  if(stage===1){const manifest=engine.stage01IntakeManifest(p);stageData.INTAKE_ACCOUNTING=manifest.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:'INCORPORATED',normalizedMeaning:String(unit.rawValue||unit.value||unit.text||'Preserved controlled human input'),reason:''}));records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];}";
-  if(!s.includes(replacement)){
-    if(!s.includes(old))throw new Error('Stage 01 ingestion fixture anchor not found.');
-    s=s.replace(old,replacement);
-    fs.writeFileSync(path,s);
-    console.log('migrated Stage 01 ingestion valid fixture to exhaustive /3 accounting');
-  }else console.log('Stage 01 ingestion fixture already migrated');
+  const legacy="  if(stage===1)records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];";
+  const migrated="  if(stage===1){const manifest=engine.stage01IntakeManifest(p);stageData.INTAKE_ACCOUNTING=manifest.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:engine.INTAKE_DISPOSITIONS[0],normalizedMeaning:String(unit.rawValue||unit.value||unit.text||'Preserved controlled human input'),reason:''}));records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];}";
+  if(s.includes(legacy))s=s.replace(legacy,migrated);
+  s=s.replaceAll("disposition:'INCORPORATED',normalizedMeaning:","disposition:engine.INTAKE_DISPOSITIONS[0],normalizedMeaning:");
+  fs.writeFileSync(path,s);
+  console.log('aligned Stage 01 ingestion fixture to application-owned disposition enum');
 }
