@@ -30,6 +30,11 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
+          old_phrase='Research only the current accepted Stage 02 independent external source set'
+          new_phrase='Exhaustively research every current accepted Stage 02 independent external source'
+          for test in Path('.').glob('*.mjs'):
+              text=test.read_text()
+              if old_phrase in text:test.write_text(text.replace(old_phrase,new_phrase))
           p=Path('workflow-schema.js'); t=p.read_text()
           t=t.replace("if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);","if(get('EXECUTABLE_SPEC')?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);",1)
           old="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
@@ -85,6 +90,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add workflow-schema.js response-ingestion.js test-runtime.js verify-ingestion.mjs
+          git add workflow-schema.js response-ingestion.js test-runtime.js *.mjs
           git diff --cached --check
           if ! git diff --cached --quiet; then git commit -m 'Complete Test IR authority and exhaustive Stage 1-4 proof fixtures'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
