@@ -100,18 +100,44 @@ jobs:
             testIrSchema:'closed-loop-test-spec/1',
             verificationPackageSchema:'closed-loop-verification-package/1',
             stageCount:30,
+            fieldOwnershipCoverage:1,
+            applicationDerivationCoverage:1,
+            typedRelationshipCoverage:1,
             stage01IntakeCoverage:1,
             stage04ObligationCoverage:1,
             acceptedAgentValueExtractionCoverage:1,
+            acceptedRelationshipProvenanceCoverage:1,
             currentScopeSelectorCoverage:1,
+            exactReqRunTestCoverage:1,
+            applicableCurrentRegressionSuccess:1,
+            mandatoryEvidenceChainStructuralCoverage:1,
             mandatoryEvidenceSufficiencyCoverage:1,
+            releaseArtifactIdentityCoverage:1,
             nativeExecutionCoverage:1,
-            allStagePromptAudit:true,
+            unauthorizedFieldMutationsAccepted:0,
+            canonicalMutationsBeforeAcceptance:0,
+            partialCommitsAfterInjectedFailure:0,
+            staleProposalsAccepted:0,
+            crossProjectRelationshipsAccepted:0,
+            historicalScopeSatisfyingCurrentGates:0,
+            unmatchedDeliveryFilesAuthorized:0,
+            appendOnlyHistoryRewritesAccepted:0,
             unsupportedTestIrTreatedAsExecutable:0,
             externalAssertionsOverridingApplicationProof:0,
             nativeExecutionReceiptsFabricatedExternally:0,
             releaseAcceptedWithContradiction:0,
+            migrationV2ToV3Covered:1,
+            oldV2ResponseRejectedForCurrentPrompt:1,
+            allStagePromptAudit:true,
+            negativeAcceptanceMatrix:true,
+            storageFailureCoverage:true,
+            artifactRoundTrip:true,
             browserWidths:[320,393,1280],
+            deployedByteIdentity:false,
+            liveBrowserVerification:false,
+            androidChromeAcceptance:false,
+            realThirtyStageProjectAcceptance:false,
+            fullProductionMaturity:false,
             deployedFiles
           };
           fs.writeFileSync(path.join(root,'spec-acceptance.json'),JSON.stringify(report,null,2)+'\n');
@@ -148,7 +174,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify exact deployed bytes
+      - name: Verify exact deployed source identity
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
@@ -172,6 +198,69 @@ jobs:
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
           node verify-browser.mjs
           node verify-browser-extra.mjs
+
+      - name: Build final machine acceptance artifact
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const acceptance={
+            commit:process.env.GITHUB_SHA,
+            deployment:process.env.PAGE_URL,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stageCount:30,
+            fieldOwnershipCoverage:1,
+            applicationDerivationCoverage:1,
+            typedRelationshipCoverage:1,
+            stage01IntakeCoverage:1,
+            stage04ObligationCoverage:1,
+            acceptedAgentValueExtractionCoverage:1,
+            acceptedRelationshipProvenanceCoverage:1,
+            currentScopeSelectorCoverage:1,
+            exactReqRunTestCoverage:1,
+            applicableCurrentRegressionSuccess:1,
+            mandatoryEvidenceChainStructuralCoverage:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            releaseArtifactIdentityCoverage:1,
+            nativeExecutionCoverage:1,
+            unauthorizedFieldMutationsAccepted:0,
+            canonicalMutationsBeforeAcceptance:0,
+            partialCommitsAfterInjectedFailure:0,
+            staleProposalsAccepted:0,
+            crossProjectRelationshipsAccepted:0,
+            historicalScopeSatisfyingCurrentGates:0,
+            unmatchedDeliveryFilesAuthorized:0,
+            appendOnlyHistoryRewritesAccepted:0,
+            unsupportedTestIrTreatedAsExecutable:0,
+            externalAssertionsOverridingApplicationProof:0,
+            nativeExecutionReceiptsFabricatedExternally:0,
+            releaseAcceptedWithContradiction:0,
+            migrationV2ToV3Covered:1,
+            oldV2ResponseRejectedForCurrentPrompt:1,
+            allStagePromptAudit:true,
+            negativeAcceptanceMatrix:true,
+            storageFailureCoverage:true,
+            artifactRoundTrip:true,
+            browserWidths:[320,393,1280],
+            deployedByteIdentity:true,
+            liveBrowserVerification:true,
+            androidChromeAcceptance:false,
+            realThirtyStageProjectAcceptance:false,
+            fullProductionMaturity:false
+          };
+          fs.writeFileSync('final-acceptance.json',JSON.stringify(acceptance,null,2)+'\n');
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-${{ github.sha }}
+          path: final-acceptance.json
+          if-no-files-found: error
 
       - name: Publish final deployed status
         env:
