@@ -80,5 +80,6 @@ s=s.replace("'index.html','app-core.js','hash.js','workflow-schema.js','workflow
 s=s.replace("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']")
 s=s.replace("orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']","orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']")
 s=s.replace("'Revise the Responsible Layer'","'CORRECT THE ROOT CAUSE'")
+s=s.replace("'closed-loop-stage-response/2'","'closed-loop-stage-response/3'")
 s=s.replace("for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);","for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file)&&file!=='.repair-project-memory.py')throw new Error(`Unexpected repair scaffolding remains: ${file}`);")
 p.write_text(s)
