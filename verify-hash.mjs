@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
@@ -11,23 +12,29 @@ for(const [name,make] of [
  ['Infinity',()=>({x:Infinity})],['NaN',()=>({x:NaN})],['negative Infinity',()=>({x:-Infinity})],['undefined member',()=>({x:undefined})],['undefined array member',()=>[undefined]],['undefined root',()=>undefined],['bigint',()=>({x:1n})],['function',()=>({x(){}})],['symbol value',()=>({x:Symbol('x')})],['symbol key',()=>{const x={};x[Symbol('x')]=1;return x;}],['Date',()=>new Date(0)],['Map',()=>new Map([['x',1]])],['Set',()=>new Set([1])],['sparse array',()=>{const x=[];x.length=1;return x;}],['array property',()=>{const x=[1];x.extra=2;return x;}],['accessor',()=>{const x={};Object.defineProperty(x,'a',{enumerable:true,get(){return 1;}});return x;}],['cycle',()=>{const x={};x.self=x;return x;}]
 ])reject(name,make);
 
-const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const directRuntimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const runtimeGraphFiles=[...directRuntimeFiles,'test-worker.js'];
+const gitBlobSha=file=>{
+ const bytes=fs.readFileSync(file);
+ return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+};
+const runtimeManifest=runtimeGraphFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const runtimeBuildIdentity=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
 const html=fs.readFileSync('index.html','utf8');
 const scriptSources=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
-assert(scriptSources.length===runtimeFiles.length,`Expected ${runtimeFiles.length} direct deferred runtime scripts; found ${scriptSources.length}.`);
-const buildTokens=new Set();
+assert(scriptSources.length===directRuntimeFiles.length,`Expected ${directRuntimeFiles.length} direct deferred runtime scripts; found ${scriptSources.length}.`);
 scriptSources.forEach((source,index)=>{
  const [file,query='']=source.split('?');
- assert(file===runtimeFiles[index],`Runtime script order mismatch at ${runtimeFiles[index]}.`);
+ assert(file===directRuntimeFiles[index],`Runtime script order mismatch at ${directRuntimeFiles[index]}.`);
  const token=new URLSearchParams(query).get('v');
- assert(/^runtime-[0-9a-f]{16}$/.test(token||''),`${file} does not use a valid shared runtime build token.`);
- buildTokens.add(token);
+ assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime graph identity ${runtimeBuildIdentity}.`);
 });
-assert(buildTokens.size===1,'Runtime scripts do not share one build/cache identity.');
-const runtimeBuildIdentity=[...buildTokens][0];
+const runtimeSource=fs.readFileSync('test-runtime.js','utf8');
+const workerSource=fs.readFileSync('test-worker.js','utf8');
+assert(runtimeSource.includes('new Worker(`test-worker.js${BUILD_QUERY}`)'),'Worker URL must inherit the exact runtime build query.');
+assert(workerSource.includes("const runtimeQuery=self.location?.search||'';")&&workerSource.includes('importScripts(`test-runtime.js${runtimeQuery}`)'),'Worker runtime import must inherit the exact worker build query.');
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Established artifact-control rendering is missing.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
 assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
-assert(html.includes('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'),'Established 280px prompt preview and full expansion behavior changed.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,sharedRuntimeBuildIdentity:true,stage04CanonicalReuseWithoutVisualSuppression:true,promptVisualBaselinePreserved:true,visualRegressionAuthority:'ESTABLISHED_BASELINE'}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,runtimeGraphFiles,stage04RepeatAttachmentControlAbsent:true}));

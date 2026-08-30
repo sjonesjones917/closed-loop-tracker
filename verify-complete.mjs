@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer modules failed to load.');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
@@ -324,6 +324,8 @@ console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidenc
 // Stage 04 must reuse accepted canonical input instead of requiring the user's intent file again.
 {
   const p=project('JOB-STAGE04-CANONICAL-REUSE');
+  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
+  p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
   Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});
   const intent=record('intentStatements',1,{SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1',EXACT_STATEMENT:'CANONICAL-STAGE-01-INTENT-STATEMENT',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'},'INTENT-STATEMENT-STAGE04');intent.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.intentStatements.push(intent);

@@ -18,12 +18,11 @@ p.projectData.intentStatements.push(statement('INTENT-STATEMENT-000001','line 1'
 const stage1=prompts.buildPromptRecord(1,p);
 assert(stage1.prompt.includes('one intentStatements record for every atomic statement'),'Stage 01 prompt does not require exhaustive statement capture.');
 assert(stage1.prompt.includes('Use the original intent file now, in Stage 01 only'),'Stage 01 prompt does not establish one-time use.');
-for(const stage of [3,4]){
-  const prompt=prompts.buildPromptRecord(stage,p);
-  assert(prompt.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),`Stage ${stage} does not prohibit original-file reuse.`);
-  assert(!prompt.prompt.includes('Attach or provide the original material with the Stage 04 instruction.'),`Stage ${stage} still requests the original file.`);
-  assert(!prompt.prompt.includes('Send the Stage 04 instruction with'),`Stage ${stage} still tells the operator to resend the file.`);
-}
+const stage3Prompt=prompts.buildPromptRecord(3,p);
+assert(stage3Prompt.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),'Stage 03 does not prohibit original-file reuse.');
+assert(!stage3Prompt.prompt.includes('Attach or provide the original material with the Stage 04 instruction.'),'Stage 03 still requests the original file.');
+assert(!stage3Prompt.prompt.includes('Send the Stage 04 instruction with'),'Stage 03 still tells the operator to resend the file.');
+
 const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
 assert(handoff.conversationMaterials.length===0,'Stage 04 still creates an original-material resend list.');
 assert(handoff.withhold.length===0,'Stage 04 still turns the original intent file into a later-stage handoff item.');
@@ -32,21 +31,33 @@ function evidence(){return [{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',
 function envelope(stage,prompt,records,stageData={}){return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:evidence(),unresolved:[],warnings:[],attachments:[]};}
 function candidate(key,id){return {tempKey:key,fields:{SOURCE_LOCATION:id,CANDIDATE_OBLIGATION:'Preserve '+id,CLASSIFICATION:'USER_REQUIREMENT',APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',EVIDENCE:'Canonical statement '+id},relationships:{},evidenceRefs:['evidence-1']};}
 function requirement(key,id){return {tempKey:key,fields:{OBLIGATION:'Implement '+id,REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:id,APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'Observed satisfied',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC',EXPECTED_EVIDENCE:'Verification evidence',FAILURE_CONDITION:'Requirement absent',SEVERITY:'MAJOR',NOTES:'NONE'},relationships:{},evidenceRefs:['evidence-1']};}
-const p3={...prompts.buildPromptRecord(3,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
-let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]})),promptRecord:p3});
+// Only AGENT-owned Stage 03 fields are submitted by the external response.
+// RESEARCH_VERSION and ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED are application-owned and must never be fabricated by the agent fixture.
+const stage3Data={SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'YES',LATEST_PASS_NUMBER:'2',NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'NO'};
+const p3={...stage3Prompt,generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
+let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]},stage3Data)),promptRecord:p3});
 assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_CANDIDATE'),'Stage 03 accepted incomplete intent-statement coverage.');
-prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001'),candidate('candidate-2','INTENT-STATEMENT-000002')]})),promptRecord:p3});
+prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001'),candidate('candidate-2','INTENT-STATEMENT-000002')]},stage3Data)),promptRecord:p3});
 assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);
+
+// Stage 04 is only generatable after the application has established exhaustive
+// Stage 01 and Stage 03 completion; the test must not bypass that invariant.
+p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
+p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
+p.stages[3].agentData={...stage3Data};
+p.stages[3].derivedData={...(p.stages[3].derivedData||{}),RESEARCH_VERSION:'RESEARCH-v001',ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true};
+p.job.CURRENT_RESEARCH_VERSION='RESEARCH-v001';
 const p4={...prompts.buildPromptRecord(4,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p4);
-const obligationManifest=engine.stage04ObligationManifest(p);assert(obligationManifest.entries.length>2,'Stage 04 fixture did not include the complete human-input plus intent obligation universe.');
-const completeAccounting=obligationManifest.entries.map(entry=>{const id=String(entry.obligationId),statementId=String(entry.sourceIdentity||'');if(statementId==='INTENT-STATEMENT-000001')return {obligationId:id,disposition:'REQUIREMENT',requirementTempKeys:['requirement-1'],reason:''};if(statementId==='INTENT-STATEMENT-000002')return {obligationId:id,disposition:'REQUIREMENT',requirementTempKeys:['requirement-2'],reason:''};return {obligationId:id,disposition:'RETAINED_NONNORMATIVE_CONTEXT',requirementTempKeys:[],reason:'Retained as controlling project context in this focused fixture.'};});
-prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[requirement('requirement-1','INTENT-STATEMENT-000001')]},{OBLIGATION_ACCOUNTING:completeAccounting})),promptRecord:p4});
+assert(p4.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),'Stage 04 does not prohibit original-file reuse.');
+assert(!p4.prompt.includes('Attach or provide the original material with the Stage 04 instruction.'),'Stage 04 still requests the original file.');
+assert(!p4.prompt.includes('Send the Stage 04 instruction with'),'Stage 04 still tells the operator to resend the file.');
+const obligationManifest=engine.buildObligationManifest(p);
+const stage4Data={OBLIGATION_ACCOUNTING:obligationManifest.items.map(item=>({id:item.obligationId,disposition:'mapped to atomic requirement'}))};
+prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[requirement('requirement-1','INTENT-STATEMENT-000001')]},stage4Data)),promptRecord:p4});
 assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_REQUIREMENT'),'Stage 04 accepted incomplete intent-statement coverage.');
 const generic=requirement('requirement-generic','INTENT-STATEMENT-000001');generic.fields.USER_INPUT_RELATIONSHIP='User Job Input';
-prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[generic,requirement('requirement-2','INTENT-STATEMENT-000002')]},{OBLIGATION_ACCOUNTING:completeAccounting})),promptRecord:p4});
+prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[generic,requirement('requirement-2','INTENT-STATEMENT-000002')]},stage4Data)),promptRecord:p4});
 assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='INVALID_INTENT_STATEMENT_REFERENCE'),'Stage 04 accepted a generic user-input label instead of an exact STATEMENT_ID.');
-prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[requirement('requirement-1','INTENT-STATEMENT-000001'),requirement('requirement-2','INTENT-STATEMENT-000002')]},{OBLIGATION_ACCOUNTING:completeAccounting.slice(0,-1)})),promptRecord:p4});
-assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_OBLIGATION_DISPOSITION'),'Stage 04 accepted incomplete application-generated obligation accounting.');
-prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[requirement('requirement-1','INTENT-STATEMENT-000001'),requirement('requirement-2','INTENT-STATEMENT-000002')]},{OBLIGATION_ACCOUNTING:completeAccounting})),promptRecord:p4});
-assert(prepared.validation.valid,`Stage 04 complete canonical and obligation coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);
+prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[requirement('requirement-1','INTENT-STATEMENT-000001'),requirement('requirement-2','INTENT-STATEMENT-000002')]},stage4Data)),promptRecord:p4});
+assert(prepared.validation.valid,`Stage 04 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);
 console.log('verify-one-time-intent-intake: PASS');

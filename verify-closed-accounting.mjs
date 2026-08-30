@@ -1,0 +1,6 @@
+import fs from 'node:fs';
+const p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),i=fs.readFileSync('response-ingestion.js','utf8'),w=fs.readFileSync('workbook.js','utf8');
+const must=(x,m)=>{if(!x)throw new Error(m)};
+for(const token of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])must(!p.includes(token),'hard-coded subject branch remains: '+token);
+for(const token of ['buildIntakeCoverageManifest','buildObligationManifest','validateAccountingClosure'])must(e.includes(token),'missing application accounting helper '+token);
+must(i.includes('INCOMPLETE_INTAKE_ACCOUNTING'),'Stage 01 omission rejection missing');must(i.includes('INCOMPLETE_OBLIGATION_ACCOUNTING'),'Stage 04 omission rejection missing');must(p.includes('APPLICATION-ENUMERATED INTAKE COVERAGE MANIFEST'),'Stage 01 manifest not published');must(p.includes('APPLICATION-ENUMERATED STAGE 04 OBLIGATION MANIFEST'),'Stage 04 manifest not published');must(w.includes('INTAKE_ACCOUNTING')&&w.includes('OBLIGATION_ACCOUNTING'),'accounting fields absent');console.log('verify-closed-accounting: PASS');
