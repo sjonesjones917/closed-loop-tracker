@@ -1,0 +1,65 @@
+name: Stage 4 intent repair
+on:
+  push:
+    branches: [fix/stage4-canonical-intent]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-canonical-intent
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch canonical intent carry-forward
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';")
+          old="If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials. Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows, detailed disclosure chronology, reference lists, or other internal packet inventory in Stage 01. This limited intake inspection is Stage 01 job-definition work; Stage 02 does not own supplied-project-material inventory; later stages inspect supplied project materials only when they need those materials for their substantive work."
+          new="If their actual contents are available in the current executing context, inspect them deeply enough during Stage 01 to capture every human-authority fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome. Preserve those captured statements durably in INPUT_SET_CONTENTS with their source material/location so later stages consume canonical captured human authority instead of requiring the human to attach the same intent material again. Do not ask the human to re-enter facts already present in those materials. Do not perform external-source authority analysis, requirement atomization, verification design, or production work here. Stage 02 owns independent external-source discovery and assessment."
+          if old not in s: raise SystemExit('Stage 01 source text not found')
+          s=s.replace(old,new)
+          start="4:'Compile atomic requirement proposals for this current job from authorized User Job Input, supplied project materials sent with this Stage 04 instruction and actually readable in the executing context, and legitimately applicable Stage 03 external-source research, preserving provenance for each obligation. A supplied project material is human-authority input, not automatically independent external authority. Do not assume access to any file, link, package, or conversation used for an earlier stage. When a listed non-inline material is needed for Stage 04, the operator must attach or provide it with this Stage 04 instruction in the agent conversation where this stage is run. If a required material is not actually available, ask the human conversationally to attach or provide the original before final JSON. Do not ask the human to retype or summarize material merely because you cannot access it, and never infer substantive contents from a filename, path, link label, claimed hash, or metadata. If a required material remains inaccessible, return BLOCKED with the exact MISSING_ARTIFACT or MISSING_INPUT reason rather than fabricating a complete requirement set."
+          repl="4:'Compile atomic requirement proposals for this current job from the complete application-supplied obligation universe: current authorized User Job Input, the accepted Stage 01 job definition and captured human-authority intake, human-origin obligations preserved from supplied project materials, and legitimately applicable Stage 03 external-source research. Treat the accepted Stage 01 capture as the durable semantic authority for human intent already supplied. Never require the operator to reattach, re-upload, retype, or resummarize an original intent/disclosure/source file merely to recover human-authority information that Stage 01 already captured. Original bytes are required again only when the current proposition genuinely depends on inspecting those bytes themselves or when Stage 01 explicitly recorded that required substantive content could not be captured. Preserve provenance for every obligation and fail closed if the application-provided obligation universe is incomplete; do not rediscover an unspecified input universe. A supplied project material is human-authority input, not automatically independent external authority."
+          if start not in s: raise SystemExit('Stage 04 source text not found')
+          s=s.replace(start,repl)
+          oldctx="function contextFor(stage,state,operation,scope={}){\n const parts=[];"
+          newctx="function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage===4){const stageOne=state?.stages?.[1];const captured=stageOne?{agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:stageOne.derivedData||{}}:'NONE';parts.push(`STAGE 01 CAPTURED HUMAN-AUTHORITY INTAKE\\n${show(captured)}`);}"
+          if oldctx not in s: raise SystemExit('contextFor anchor not found')
+          s=s.replace(oldctx,newctx)
+          oldout="INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts."
+          newout="CAPTURE SUPPLIED HUMAN AUTHORITY ONCE: INPUT_SET_CONTENTS is the durable semantic carrier for human authority already supplied to Stage 01. When supplied material bytes are available, capture every material human-authority statement relevant to defining the requested outcome, including its source material and location, so later stages do not need the same intent file attached again. Keep this concise and semantic rather than reproducing entire files or archive inventories. INPUT_SET_CONTENTS should also identify the top-level supplied human inputs and materials. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts."
+          if oldout not in s: raise SystemExit('Stage 01 output anchor not found')
+          s=s.replace(oldout,newout)
+          p.write_text(s)
+
+          p=Path('app-core.js'); s=p.read_text()
+          anchor="  const later={\n    10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',"
+          replacement="  if(n===4)return 'Do not reattach the original intent or disclosure files when their human-authority content was already captured and accepted in Stage 01. Stage 04 consumes that canonical capture; original bytes are needed only for a proposition that genuinely depends on the bytes themselves or for content Stage 01 explicitly could not capture.';\n  const later={\n    10:'Include the exact candidate component files selected for the freeze if this operation must inspect their bytes.',"
+          if anchor not in s: raise SystemExit('app-core Stage 4 help anchor not found')
+          s=s.replace(anchor,replacement)
+          p.write_text(s)
+          PY
+      - name: Run Stage 4 regression
+        run: node verify-stage4-intent-capture.mjs
+      - name: Run prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Run complete verification
+        run: node verify-complete.mjs
+      - name: Commit repair and remove one-shot workflow
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/stage4-intent-repair.yml
+          git add prompt-engine.js app-core.js verify-stage4-intent-capture.mjs
+          git commit -m "Fix Stage 4 canonical intent carry-forward"
+          git push origin HEAD:fix/stage4-canonical-intent
