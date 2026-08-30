@@ -10,6 +10,16 @@ if old_schema not in dod_text and new_schema not in dod_text:
     raise SystemExit('definition-of-done schema identity anchor missing')
 dod.write_text(dod_text.replace(old_schema,new_schema,1))
 
+# The v3 evidence proof must verify the application-owned evidence evaluator itself.
+# Do not infer evidence sufficiency from incidental words appearing in a separate verifier.
+v3dod=Path('verify-v3-definition-of-done.mjs')
+v3dod_text=v3dod.read_text()
+old_evidence="assert.match(engine,/intakeCoverageManifest/);assert.match(engine,/evaluateIntakeCoverage/);assert.match(engine,/obligationManifest/);assert.match(engine,/evaluateObligationAccounting/);assert.match(accountingTests,/INCOMPLETE_INTAKE_ACCOUNTING/);assert.match(accountingTests,/INCOMPLETE_OBLIGATION_ACCOUNTING/);assert.match(engine,/evaluateEvidenceSufficiency/);assert.match(semanticTests,/byte/i);assert.match(semanticTests,/meaning/i);assert.match(semanticTests,/human/i);assert.match(completeTests,/evidence/i);"
+new_evidence="assert.match(engine,/intakeCoverageManifest/);assert.match(engine,/evaluateIntakeCoverage/);assert.match(engine,/obligationManifest/);assert.match(engine,/evaluateObligationAccounting/);assert.match(accountingTests,/INCOMPLETE_INTAKE_ACCOUNTING/);assert.match(accountingTests,/INCOMPLETE_OBLIGATION_ACCOUNTING/);assert.match(engine,/function evaluateEvidenceSufficiency\\s*\\(/);assert.match(engine,/APPLICATION_VERIFIED_BYTES/);assert.match(engine,/BYTES_PERSISTED_AND_VERIFIED/);assert.match(engine,/Byte-identity evidence requires application-verified artifact bytes and SHA-256/);assert.match(engine,/meaningResults/);assert.match(engine,/OBSERVED_MEANING/);assert.match(engine,/EVIDENCE_BASED_COMPARISON/);assert.match(engine,/HUMAN_INSPECTION/);assert.match(engine,/human-owned observation/i);assert.match(completeTests,/evidence/i);"
+if old_evidence not in v3dod_text and new_evidence not in v3dod_text:
+    raise SystemExit('v3 evidence-sufficiency proof anchor missing')
+v3dod.write_text(v3dod_text.replace(old_evidence,new_evidence,1))
+
 p=Path('.github/workflows/pages.yml')
 text=p.read_text()
 
