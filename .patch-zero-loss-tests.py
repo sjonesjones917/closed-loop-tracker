@@ -50,10 +50,6 @@ replacements=[
 ]
 for old,new in replacements:
     if old in s:s=s.replace(old,new)
-
-# Replace every remaining Stage-01 prompt-token test that hard-codes a project subject
-# with the controlling subject-neutral intake invariants. The patent scenario remains a
-# fixture input, but patent-specific wording is not required in the generated prompt.
 old_block=""" const required=[
   'do not ask the human to re-enter facts that are already present in those materials',
   'Do not block Stage 01 merely because information will be needed by a later',
@@ -89,7 +85,8 @@ new_block=""" const required=[
   'Do not invent requestKey, required, whyNeeded, expectedAnswer'
  ];"""
 if old_block in s:s=s.replace(old_block,new_block)
-
+# v27 is required because Stage 01/03/04 prompt semantics and context hashing changed.
+s=s.replace("if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');","if(prompts.version!=='closed-loop-prompt-engine/27')throw new Error('Persisted prompts were not invalidated after the zero-loss Stage 01/03/04 prompt repair.');")
 lines=[]
 for line in s.splitlines():
     if "Stage 01 specialist intake adaptation is missing." in line:
