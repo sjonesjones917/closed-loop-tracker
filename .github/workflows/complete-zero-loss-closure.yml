@@ -20,6 +20,7 @@ jobs:
           python3 finalize-zero-loss.py
           python3 patch-browser-extra-v3.py
           python3 patch-all-stage-audit-v2.py
+          python3 patch-stage01-operator.py
       - name: Prove source syntax
         run: |
           git diff --check
@@ -61,7 +62,7 @@ jobs:
         run: |
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git rm repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py patch-all-stage-audit-v2.py .github/workflows/complete-zero-loss-closure.yml
+          git rm repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-stage01-operator.py .github/workflows/complete-zero-loss-closure.yml
           git rm -f zero-loss-failure.log || true
           git add workflow-engine.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-browser-extra.mjs verify-zero-loss-accounting.mjs verify-all-stage-prompts.mjs
           git commit -m "Make all 30 stage prompts explicit and context-complete [zero-loss-closure-applied]"
