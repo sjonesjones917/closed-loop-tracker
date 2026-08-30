@@ -23,18 +23,26 @@ jobs:
         run: |
           python3 .repair-controlling-spec.py
           python3 .repair-post.py
-      - name: Syntax proof
-        run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node --check verify-controlling-spec.mjs
+      - name: Syntax workbook
+        run: node --check workbook.js
+      - name: Syntax schema
+        run: node --check workflow-schema.js
+      - name: Syntax runtime
+        run: node --check test-runtime.js
+      - name: Syntax worker
+        run: node --check test-worker.js
+      - name: Syntax engine
+        run: node --check workflow-engine.js
+      - name: Syntax prompt
+        run: node --check prompt-engine.js
+      - name: Syntax ingestion
+        run: node --check response-ingestion.js
+      - name: Syntax store
+        run: node --check project-store.js
+      - name: Syntax app
+        run: node --check app-core.js
+      - name: Syntax controlling verifier
+        run: node --check verify-controlling-spec.mjs
       - name: Focused controlling-spec proof
         run: node verify-controlling-spec.mjs
       - name: Existing architecture/runtime proof
