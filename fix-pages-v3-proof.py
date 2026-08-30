@@ -25,6 +25,7 @@ if 'node --check verify-v3-contract.mjs' not in text:
 
 # Required proof order: schema/ownership -> migration/accounting -> Test IR validation/security/runtime -> ingestion/gates/prompts/full cycle.
 runtime_anchor="      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n"
+fallback_anchor="      - name: Verify canonical serialization and SHA-256\n"
 runtime_block="""      - name: Verify v3 schema, ownership, and accounting contracts
         run: |
           node verify-v3-contract.mjs
@@ -39,8 +40,12 @@ runtime_block="""      - name: Verify v3 schema, ownership, and accounting contr
           node verify-test-runtime-limits.mjs
 """
 if 'Verify v3 schema, ownership, and accounting contracts' not in text:
-    if runtime_anchor not in text: raise SystemExit('runtime proof insertion anchor missing')
-    text=text.replace(runtime_anchor,runtime_block,1)
+    if runtime_anchor in text:
+        text=text.replace(runtime_anchor,runtime_block,1)
+    elif fallback_anchor in text:
+        text=text.replace(fallback_anchor,runtime_block+fallback_anchor,1)
+    else:
+        raise SystemExit('runtime proof insertion anchor missing')
 
 # Definition-of-done proof must include the v3-specific reduction.
 dod_anchor="      - name: Derive definition-of-done coverage metrics\n        run: node verify-definition-of-done.mjs\n"
