@@ -10,6 +10,10 @@ needle='Process every obligationId exactly once. Map each obligation to one or m
 replacement='Process every obligationId exactly once. No obligation may disappear. Map each obligation to one or more atomic independently testable requirements, or explicitly dispose it as retained nonnormative context, inapplicable with reason, or blocked with reason.'
 if needle not in t: raise SystemExit('Expected Stage 04 obligation procedure text not found')
 t=t.replace(needle,replacement,1)
+needle='Do not ask the user to attach, restate, summarize, retype, or otherwise resupply any project information already captured.'
+replacement='Do not ask the user to attach, restate, summarize, retype, or otherwise resupply any project information already captured. Do not attach or resend the original intent file.'
+if needle not in t: raise SystemExit('Expected Stage 04 no-repeat procedure text not found')
+t=t.replace(needle,replacement,1)
 p.write_text(t)
 
 # The all-stage audit must prove complete required context without demanding unrelated raw history in blind stages.
