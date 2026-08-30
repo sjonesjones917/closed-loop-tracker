@@ -1,7 +1,8 @@
 name: Apply zero-loss project-memory repair
 on:
   push:
-    branches: [fix/spec-conformance-zero-loss-clean]
+    branches:
+      - fix/spec-conformance-zero-loss-clean
 permissions:
   contents: write
 jobs:
@@ -12,48 +13,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Align repair script to current prompt template
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('.repair-project-memory.py'); s=p.read_text()
-          old="    needle='${humanInputBlock(j)}\\n\\nCURRENT AGENT-NORMALIZED DELIVERABLE'; replacement='${humanInputBlock(j)}\\n\\nDURABLE PROJECT MEMORY — ALREADY SUPPLIED; NEVER ASK THE HUMAN TO REPEAT IT\\nBefore asking any human question, search this durable project memory and the current canonical context. If a project fact, decision, constraint, requirement, material reference, or substantive material content is already present, USE IT. Do not ask the human to reconfirm, retype, restate, resend, re-upload, or reattach it merely because this is a later stage or a fresh external conversation. Ask only genuinely new human-only information that is absent here and cannot be established from authorized materials or research.\\n\\n${durableProjectMemoryBlock(state)}\\n\\nCURRENT AGENT-NORMALIZED DELIVERABLE'"
-          new="    needle='${humanInputBlock(j)}\\n\\nCURRENT AGENT-NORMALIZED DELIVERABLE'; replacement='${humanInputBlock(j)}\\n\\nDURABLE PROJECT MEMORY — ALREADY SUPPLIED; NEVER ASK THE HUMAN TO REPEAT IT\\nBefore asking any human question, search this durable project memory and the current canonical context. If a project fact, decision, constraint, requirement, material reference, or substantive material content is already present, USE IT. Do not ask the human to reconfirm, retype, restate, resend, re-upload, or reattach it merely because this is a later stage or a fresh external conversation. Ask only genuinely new human-only information that is absent here and cannot be established from authorized materials or research.\\n\\n${durableProjectMemoryBlock(state)}\\n\\n${obligationManifest?`STAGE 04 APPLICATION-ENUMERATED OBLIGATION MANIFEST — COMPLETE INPUT UNIVERSE\\\\nAccount for every obligationId below. The application already selected and preserved these inputs. Do not ask the human to supply any item represented here.\\\\n\\\\n${show(obligationManifest)}`:String()}\\n\\nCURRENT AGENT-NORMALIZED DELIVERABLE'"
-          if old not in s: raise SystemExit('memory replacement line not found')
-          s=s.replace(old,new)
-          lines=s.splitlines(); lines=[line for line in lines if not line.lstrip().startswith('display_anchor=') and not line.lstrip().startswith('display_new=') and 'prompt stage4 display anchor not found' not in line and 's=s.replace(display_anchor,display_new)' not in line]
-          p.write_text('\n'.join(lines)+'\n')
-          PY
-      - name: Apply repair
+      - name: Apply source repair
         run: python3 .repair-project-memory.py
-      - name: Align regressions with controlling subject-neutral contract
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify-project-memory.mjs'); s=p.read_text(); old="const ctx={console,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone};ctx.globalThis=ctx;"; new="const Event=globalThis.Event||class Event{constructor(type){this.type=type;}};const ctx={console,TextEncoder,TextDecoder,crypto:globalThis.crypto,structuredClone,Event,dispatchEvent:()=>true,addEventListener:()=>{}};ctx.globalThis=ctx;"
-          if old not in s: raise SystemExit('regression VM context anchor not found')
-          p.write_text(s.replace(old,new))
-
-          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
-          obsolete="""  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');
-  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');
-  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');
-  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');
-"""
-          neutral="""  for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(record.prompt.includes(forbidden))issues.push(`HARDCODED_DOMAIN_BRANCH_${forbidden}`);
-"""
-          if obsolete not in s: raise SystemExit('obsolete domain assertions not found')
-          s=s.replace(obsolete,neutral)
-          old="    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');"
-          new="    if(!record.prompt.includes('STAGE 01 CLARIFICATION EXPERIENCE')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_INTAKE_BOUNDARY_MISSING');"
-          if old not in s: raise SystemExit('obsolete Stage01 domain boundary assertion not found')
-          s=s.replace(old,new)
-          old="    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
-          new="    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('derive subject-specific human-authority questions')||!record.prompt.includes('Never ask the human to repeat information available in supplied materials'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
-          if old not in s: raise SystemExit('obsolete patent-fixture assertion not found')
-          s=s.replace(old,new)
-          p.write_text(s)
-          PY
+      - name: Align controlling regressions
+        run: python3 .patch-zero-loss-tests.py
       - name: Syntax and regression proof
         run: |
           node --check workflow-schema.js
@@ -66,17 +29,11 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-ingestion.mjs
           node verify.mjs
-          python3 - <<'PY'
-          import re,subprocess,pathlib
-          base=subprocess.check_output(['git','show','7a8b4e88962a01fdd3e2245879fa6adbc3e97469:index.html'],text=True); now=pathlib.Path('index.html').read_text()
-          assert re.search(r'<style>(.*?)</style>',base,re.S).group(1)==re.search(r'<style>(.*?)</style>',now,re.S).group(1)
-          assert "worker-src 'self'" in now and 'test-runtime.js?' in now
-          print('visual baseline CSS: PASS')
-          PY
+          python3 -c "import re,subprocess,pathlib; b=subprocess.check_output(['git','show','7a8b4e88962a01fdd3e2245879fa6adbc3e97469:index.html'],text=True); n=pathlib.Path('index.html').read_text(); assert re.search(r'<style>(.*?)</style>',b,re.S).group(1)==re.search(r'<style>(.*?)</style>',n,re.S).group(1); assert \"worker-src 'self'\" in n and 'test-runtime.js?' in n; print('visual baseline CSS: PASS')"
           ! grep -q 'CUSTOM_PIPELINE' prompt-engine.js
       - name: Commit proven repair
         run: |
-          git rm .repair-project-memory.py .github/workflows/materialize-clean-conformance.yml
+          git rm .repair-project-memory.py .patch-zero-loss-tests.py .github/workflows/materialize-clean-conformance.yml
           git config user.name closed-loop-spec-repair
           git config user.email actions@users.noreply.github.com
           git add index.html workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js verify-project-memory.mjs verify-prompt-semantics.mjs
