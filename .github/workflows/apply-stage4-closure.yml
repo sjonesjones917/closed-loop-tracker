@@ -39,6 +39,18 @@ jobs:
           if marker not in s: raise SystemExit('intake manifest anchor missing')
           if 'function suppliedMaterialReferences(project){' not in s: s=s.replace(marker,helper+marker,1)
           p.write_text(s)
+
+          test=Path('verify-intake-obligation-accounting.mjs')
+          t=test.read_text()
+          old1="const prompt1=prompts.buildPromptRecord(1,p),envelope=(capture)=>"
+          new1="const prompt1=prompts.buildPromptRecord(1,p);p.projectData.generatedPrompts.push({...prompt1,generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'});const envelope=(capture)=>"
+          if old1 not in t: raise SystemExit('Stage 01 focused-test prompt anchor missing')
+          t=t.replace(old1,new1,1)
+          old4="const obligations=engine.obligationManifest(p);assert(obligations.obligationCount>=4,'Stage 04 did not build the complete obligation universe.');const prompt4=prompts.buildPromptRecord(4,p);"
+          new4="const obligations=engine.obligationManifest(p);assert(obligations.obligationCount>=4,'Stage 04 did not build the complete obligation universe.');const prompt4=prompts.buildPromptRecord(4,p);p.projectData.generatedPrompts.push({...prompt4,generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'});"
+          if old4 not in t: raise SystemExit('Stage 04 focused-test prompt anchor missing')
+          t=t.replace(old4,new4,1)
+          test.write_text(t)
           PY
           for f in *.js *.mjs; do node --check "$f"; done
           node build-test-project.mjs
