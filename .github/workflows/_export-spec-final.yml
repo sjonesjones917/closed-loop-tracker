@@ -1,0 +1,17 @@
+name: Export spec final snapshot
+on:
+  push:
+    branches: [tmp-export-spec-final]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: tar --exclude=.git -czf /tmp/repo.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spec-final-snapshot
+          path: /tmp/repo.tgz
+          retention-days: 1
