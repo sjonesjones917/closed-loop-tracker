@@ -6,6 +6,7 @@ on:
       - implementation/closed-loop-v3
     paths:
       - .github/workflows/v3-accounting-finalize-direct.yml
+      - run-v3-accounting-finalize.mjs
   workflow_dispatch: {}
 
 permissions:
