@@ -356,7 +356,7 @@ import fsStageBoundary from 'node:fs';
  const s2=capture(2,3);
  const forbidden1=[/supplied-material inventory/i,/inspection state/i,/build .*source inventory/i,/discover independent external sources/i,/establish source identity/i,/authority hierarchy/i,/source conflicts/i,/research requirements/i];
  for(const re of forbidden1)if(re.test(s1))throw new Error('Stage 01 leaks Stage 02/03 work: '+re);
- const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
+ const required1=[/job definition and clarification only/i,/authorized human job input/i,/complete meaning-preserving intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
  for(const re of required1)if(!re.test(s1))throw new Error('Stage 01 missing locality boundary: '+re);
  const required2=[/Stage 02 is not a supplied-project-material inventory stage/i,/Missing project-material bytes do not by themselves block Stage 02/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
  for(const re of required2)if(!re.test(s2))throw new Error('Stage 02 missing ownership boundary: '+re);
@@ -422,26 +422,22 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
 
 
-// Stage 04 canonical-input reuse regression: a filename in Stage 01 inventory must never create a repeated attachment request.
+// stage04-canonical-intake-only-regression
 {
   const p=baseProject();
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  p.job.EXACT_DELIVERABLE_REQUESTED='CANONICAL-STAGE-01-DELIVERABLE';
-  p.job.ASSUMPTIONS='CANONICAL-STAGE-01-ASSUMPTION';
-  p.job.UNKNOWN_INFORMATION='CANONICAL-STAGE-01-UNKNOWN';
-  p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE';
-  p.projectData.candidateRequirements.push({id:'CANDIDATE-REQ-STAGE04',stage:3,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-STAGE04',SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},relationships:{},evidenceRefs:['EVIDENCE-STAGE-03']});
+  p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Canonical deliverable sentinel',ASSUMPTIONS:'Canonical assumptions sentinel',UNKNOWN_INFORMATION:'Canonical unknown sentinel',INPUT_SET_CONTENTS:'Canonical intake content sentinel'};
+  p.stages[1].acceptedData={...p.stages[1].agentData};
+  const scope={inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION};
+  p.projectData.sources.push({id:'SOURCE-STAGE04',stage:2,active:true,scope,fields:{SOURCE_ID:'SOURCE-STAGE04',TITLE:'Controlling source'}});
+  p.projectData.research.push({id:'RESEARCH-STAGE04',stage:3,active:true,scope,fields:{RESEARCH_ID:'RESEARCH-STAGE04',SOURCE_ID:'SOURCE-STAGE04',MANDATORY_STATEMENTS:'Stage 03 research sentinel',FINDING_CLASSIFICATION:'MANDATORY',SOURCE_EVIDENCE:'evidence'}});
+  p.projectData.candidateRequirements.push({id:'CANDIDATE-STAGE04',stage:3,active:true,scope,fields:{CANDIDATE_REQ_ID:'CANDIDATE-STAGE04',SOURCE_ID:'SOURCE-STAGE04',CANDIDATE_OBLIGATION:'Stage 03 obligation sentinel',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'evidence',STATUS:'ACTIVE'}});
   const record=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  if(handoff.send.length||handoff.withhold.length||handoff.expectBack.length||handoff.conversationMaterials.length||handoff.optionalApplicationCopies.length)throw new Error('Stage 04 converted previously supplied intent material into a new file handoff.');
-  for(const token of ['CANONICAL-STAGE-01-DELIVERABLE','CANONICAL-STAGE-01-ASSUMPTION','CANONICAL-STAGE-01-UNKNOWN','CANONICAL-STAGE-01-INTENT-CAPTURE','CANONICAL-STAGE-03-OBLIGATION'])if(!record.prompt.includes(token))throw new Error('Stage 04 omitted canonical prior-stage input: '+token);
-  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','These materials are not embedded in the prompt','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation','attach or provide the original before final JSON'])if(record.prompt.includes(prohibited))throw new Error('Stage 04 still requests repeated intent-material transfer: '+prohibited);
-  if(record.contextManifest.executionHandoff?.conversationMaterials)throw new Error('Obsolete Stage 04 conversation-material state remains in prompt identity.');
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
-  const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
+  for(const token of ['ACCEPTED STAGE 01 CANONICAL INTAKE — ORIGINAL MATERIAL IS NOT REUSED','Canonical intake content sentinel','Stage 03 research sentinel','Stage 03 obligation sentinel','The original human-supplied intent file or other intake material must not be requested, consumed, attached, sent, reselected, reopened, or reused'])if(!record.prompt.includes(token))throw new Error('Stage 04 canonical intake context missing: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','These materials are not embedded in the prompt','Attach or provide them in the agent conversation','ask the human to attach or provide the original','design-input.pdf'])if(record.prompt.includes(prohibited))throw new Error('Stage 04 still requests or exposes original-file reuse: '+prohibited);
+  if(record.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 original material is still bound as a conversation handoff.');
 }
-console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
+console.log(JSON.stringify({stage04CanonicalIntakeOnly:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
   const p=baseProject();
