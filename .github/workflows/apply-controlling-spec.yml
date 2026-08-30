@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply verified conformance patches
+      - name: Apply verified conformance patches including runtime semantics
         run: |
           python3 .github/apply_controlling_spec.py
           node --check workbook.js
@@ -27,12 +27,13 @@ jobs:
           node --check test-runtime.js
           node --check verify-controlling-spec.mjs
           node verify-controlling-spec.mjs
+          node verify-test-runtime.mjs
       - name: Commit conformance product changes
         run: |
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
           git restore .github/workflows/pages.yml
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js index.html verify-controlling-spec.mjs
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js index.html verify-controlling-spec.mjs verify-test-runtime.mjs
           git diff --cached --quiet && { echo 'No source changes to commit'; exit 0; }
-          git commit -m "Align prompts and capture-once workflow with controlling specification"
+          git commit -m "Complete Test IR and durable Stage 01-04 accounting"
           git push origin HEAD:controlling-spec-conformance
