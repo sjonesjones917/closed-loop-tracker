@@ -18,6 +18,10 @@ if(result.status!==0)process.exit(result.status??1);
 
 const enginePath='workflow-engine.js';
 let engine=fs.readFileSync(enginePath,'utf8');
+const versionNeedle="  1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],";
+const versionReplacement="  2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],";
+if(!engine.includes(versionNeedle))throw new Error('Stage 01 version-authority anchor missing.');
+engine=engine.replace(versionNeedle,versionReplacement);
 const marker='function intakeCoverageManifest(project){';
 if(!engine.includes(marker))throw new Error('intake manifest anchor missing after finalization');
 if(!engine.includes('function suppliedMaterialReferences(project){')){
@@ -45,8 +49,8 @@ if(!engine.includes('function suppliedMaterialReferences(project){')){
 }
 `;
   engine=engine.replace(marker,helper+marker);
-  fs.writeFileSync(enginePath,engine);
 }
+fs.writeFileSync(enginePath,engine);
 
 const focusedPath='verify-intake-obligation-accounting.mjs';
 let focused=fs.readFileSync(focusedPath,'utf8');
