@@ -21,7 +21,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          node repair-controlling-bundle-v2.mjs > repair.log 2>&1
+          node repair-runner.mjs > repair.log 2>&1
           code=$?
           cat repair.log
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
