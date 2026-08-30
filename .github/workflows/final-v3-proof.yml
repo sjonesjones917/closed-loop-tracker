@@ -4,43 +4,88 @@ on:
     branches: ['fix/final-zero-loss-v3-20260830']
     paths: ['.github/workflows/final-v3-proof.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
   proof:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: fix/final-zero-loss-v3-20260830
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Syntax and controlling prompt invariants
+      - name: Repair Stage 1 durable snapshot initialization
         shell: bash
         run: |
           set -euo pipefail
-          for f in *.js *.mjs; do node --check "$f"; done
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); t=p.read_text()
+          bad="'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures,'intakeArtifactSnapshots'"
+          good="'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeArtifactSnapshots'"
+          if bad in t: t=t.replace(bad,good,1)
+          if good not in t: raise SystemExit('Stage 1 infrastructure collection partition is not valid')
+          p.write_text(t)
+          PY
+      - name: Prove visual baseline and controlling prompt invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,re,hashlib
+          candidate=Path('index.html').read_text()
+          main=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
+          cs=re.search(r'<style>(.*?)</style>',candidate,re.S); ms=re.search(r'<style>(.*?)</style>',main,re.S)
+          if not cs or not ms: raise SystemExit('style baseline missing')
+          ch=hashlib.sha256(cs.group(1).encode()).hexdigest(); mh=hashlib.sha256(ms.group(1).encode()).hexdigest()
+          print('candidate-style',ch); print('main-style',mh)
+          if ch!=mh: raise SystemExit('VISUAL REGRESSION: candidate CSS differs from current main')
+          if '.expandable-prompt{max-height:280px}' not in candidate: raise SystemExit('prompt preview baseline size changed')
+          PY
           node - <<'NODE'
-          const fs=require('fs');const p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),a=fs.readFileSync('app-core.js','utf8'),h=fs.readFileSync('index.html','utf8');const q=(v,m)=>{if(!v)throw Error(m)};
+          const fs=require('fs');const p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),a=fs.readFileSync('app-core.js','utf8'),s=fs.readFileSync('workflow-schema.js','utf8'),rt=fs.readFileSync('test-runtime.js','utf8'),h=fs.readFileSync('index.html','utf8');const q=(v,m)=>{if(!v)throw Error(m)};
           q(p.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE'),'Stage 01 exhaustive intake instruction missing');
+          q(p.includes('Exhaust the user intent before Stage 01 can complete'),'Stage 01 intent exhaustion missing');
+          q(p.includes('account for EVERY INPUT UNIT ID'),'Stage 01 complete identity accounting missing');
           q(p.includes('Exhaustively research every current accepted Stage 02 independent external source'),'Stage 03 exhaustive research instruction missing');
+          q(p.includes('Do not mark Stage 03 complete until all current sources have coverage'),'Stage 03 completion prohibition missing');
           q(p.includes('Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST'),'Stage 04 complete-union instruction missing');
           q(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'Stage 04 repeat-supply prohibition missing');
           q(p.includes('If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT'),'Stage 04 prior-stage fail-closed rule missing');
           q(p.indexOf('YOUR TASK — DO THIS NOW')<p.indexOf('JOB CONTROL'),'action is not before project data');
           for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])q(!p.includes(x),'hard-coded project-subject branch remains: '+x);
+          q(e.includes("'executionFailures','intakeArtifactSnapshots'"),'Stage 1 snapshot collection is not initialized');
           q(e.includes('function stage1IntakeManifest(project)'),'Stage 01 intake manifest missing');
           q(e.includes('function stage4ObligationManifest(project)'),'Stage 04 obligation manifest missing');
           q(e.includes('validateStage1IntakeAccounting'),'Stage 01 accounting gate missing');
           q(e.includes('validateStage4ObligationAccounting'),'Stage 04 accounting gate missing');
           q(e.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED'),'Stage 03 second-pass gate missing');
           q(e.includes('SATURATION_STATUS'),'Stage 03 saturation gate missing');
+          q(e.includes('registerIntakeArtifactSnapshot'),'Stage 01 intake byte snapshot command missing');
           q(a.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 still exposes attachment control');
-          q(a.includes('registerIntakeArtifactSnapshot'),'Stage 01 artifact text is not captured into canonical intake evidence');
-          q(h.includes('.expandable-prompt{max-height:280px}'),'prompt preview baseline size changed');
+          q(a.includes('registerIntakeArtifactSnapshot'),'Stage 01 file bytes are not captured into intake snapshot');
+          q(s.includes("closed-loop-stage-response/3"),'response schema is not /3');
+          q(rt.includes('closed-loop-test-spec/1'),'Test IR schema missing');
+          q(!p.includes('CUSTOM_PIPELINE')&&!rt.includes('CUSTOM_PIPELINE'),'CUSTOM_PIPELINE remains in active prompt/runtime');
           console.log('controlling-stage134-invariants: PASS');
           NODE
-      - name: Repository verification suite
+      - name: Syntax and complete deterministic suite
         shell: bash
         run: |
           set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
           node build-test-project.mjs
           for t in verify.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-single-supply-prompts.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do echo "=== $t ==="; node "$t"; done
+      - name: Commit only the proven Stage 1 persistence repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add workflow-engine.js
+          git diff --cached --check
+          if ! git diff --cached --quiet; then git commit -m 'Fix durable Stage 1 intent snapshot initialization'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
