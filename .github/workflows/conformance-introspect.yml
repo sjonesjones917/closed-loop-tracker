@@ -10,6 +10,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Print exact accounting/schema anchors
         run: |
-          sed -n '760,970p' workflow-schema.js
-          sed -n '1110,1175p' workflow-schema.js
-          grep -n -E "function gate|case 1:|case 3:|case 4:|stage===1|stage===3|stage===4|intakeCoverage|obligationManifest" workflow-engine.js | head -n 220
+          sed -n '115,155p' workflow-engine.js
+          sed -n '300,350p' workflow-engine.js
+          sed -n '350,380p' workflow-engine.js
