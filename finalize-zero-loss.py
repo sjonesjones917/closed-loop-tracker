@@ -22,7 +22,13 @@ old = "Compile atomic requirement proposals from the complete APPLICATION OBLIGA
 new = "Compile atomic requirement proposals from the complete APPLICATION OBLIGATION MANIFEST. The current User Job Input, accepted Stage 01 job definition, and accepted Stage 03 findings are supplied to Stage 04 from canonical project state and are controlling input to this compilation. Stage 04 receives the complete exhausted Stage 01 capture and complete exhausted Stage 03 research directly from canonical project state. Use all of it. Do not attach or resend the original intent file."
 if old not in t:
     raise SystemExit('Expected Stage 04 instruction text not found')
-p.write_text(t.replace(old, new, 1))
+t = t.replace(old, new, 1)
+old = 'HUMAN COLLABORATION MODE\\\nAsk genuinely human-only questions conversationally in plain language before final JSON.'
+new = 'HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE\\\nAsk genuinely human-only questions conversationally in plain language before final JSON.'
+if old not in t:
+    raise SystemExit('Expected shared human-collaboration contract not found')
+t = t.replace(old, new, 1)
+p.write_text(t)
 
 # 4. Update browser acceptance so it proves native /3 intake and the exact generated Stage 04 prompt.
 p = Path('verify-browser.mjs')
