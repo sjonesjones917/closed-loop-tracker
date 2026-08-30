@@ -1,0 +1,25 @@
+name: Restore Stage 04 established artifact controls
+on:
+  push:
+    branches: [fix/real-pages-gates-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js'); s=p.read_text()
+          old="  if([2,3,4].includes(n))return files.length?`<div class=\"panel\"><h2 class=\"section-title\">Previously returned stage files</h2><p class=\"section-intro\">These bytes were already captured for this stage. No project-intent file should be attached or resent here.</p>${details('Verified artifact bytes',files,true)}</div>`:'';\n"
+          if old not in s: raise SystemExit('artifact suppression anchor not found')
+          p.write_text(s.replace(old,'',1))
+          PY
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add app-core.js
+          git commit -m "Restore established artifact controls without repeat intent intake"
+          git push
