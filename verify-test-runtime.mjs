@@ -1,5 +1,5 @@
-import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
-const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {webcrypto} from 'node:crypto';
+const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:webcrypto};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
 assert.equal(runtime.CAPABILITY,'CLOSED_LOOP_TEST_IR');
 assert.equal(runtime.SPEC_VERSION,'closed-loop-test-spec/1');
 assert.ok(runtime.OPS.includes('BYTE_COMPARE'));
@@ -9,7 +9,7 @@ assert.equal(invalid.valid,false);
 const test={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.records'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}]}};
 assert.equal(runtime.supports(test),true);
 const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));
-const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);
+const digest=await webcrypto.subtle.digest('SHA-256',bytes);
 const bytesSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
 const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});
 assert.equal(result.determination,'SATISFIED');
