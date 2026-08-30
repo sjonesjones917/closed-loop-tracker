@@ -29,4 +29,14 @@ new="""  if(stage===1){
 if old not in s:
     raise SystemExit('General ingestion Stage 01 fixture anchor not found.')
 s=s.replace(old,new,1)
+old="""  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"""
+new="""  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip',INTAKE_ACCOUNTING:e.stageData.INTAKE_ACCOUNTING};"""
+if old not in s:
+    raise SystemExit('Smart quote Stage 01 stageData fixture anchor not found.')
+s=s.replace(old,new,1)
+old="""  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');"""
+new="""  if(stageEntries.length!==5||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');"""
+if old not in s:
+    raise SystemExit('Smart quote stageData provenance count anchor not found.')
+s=s.replace(old,new,1)
 p.write_text(s)
