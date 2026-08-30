@@ -27,13 +27,7 @@ jobs:
           git config user.email actions@users.noreply.github.com
           git fetch origin fix/full-controlling-bundle-20260830
           git merge --no-ff -X ours origin/fix/full-controlling-bundle-20260830 -m "Integrate controlling bundle v3 onto current main"
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('prompt-engine.js')
-          t=p.read_text()
-          t=t.replace('PERSISTED PROJECT INPUT\nEXACT_DELIVERABLE_REQUESTED:', 'ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT\nEXACT_DELIVERABLE_REQUESTED:')
-          p.write_text(t)
-          PY
+          python .github/integration_patch.py
       - name: Verify current-main intent and v3 contracts together
         run: |
           set -o pipefail
@@ -63,6 +57,6 @@ jobs:
       - name: Commit integrated application
         run: |
           git add -A
-          git reset -- .github/workflows/integrate-v3.yml .github/integration-v3-failure.log .github/workflows/pages.yml || true
+          git reset -- .github/workflows/integrate-v3.yml .github/integration_patch.py .github/integration-trigger.txt .github/integration-v3-failure.log .github/workflows/pages.yml || true
           git commit -m "Integrate exhaustive intent capture with controlling v3 contracts" || true
           git push origin HEAD:integration/closed-loop-v3-exhaustive-intent
