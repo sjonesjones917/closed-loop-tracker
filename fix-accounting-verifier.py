@@ -54,6 +54,10 @@ old = "    evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',descrip
 new = "    evidence:(()=>{const list=[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}];if(stage===4){for(const [index,item] of engine.obligationManifest(p).items.entries())list.push({temporaryKey:`obligation-disposition-${index+1}`,kind:'OBLIGATION_DISPOSITION',description:'Controlled obligation accounting fixture',location:'verification fixture',content:JSON.stringify({obligationId:item.obligationId,disposition:'RETAINED_NONNORMATIVE_CONTEXT',reason:'Synthetic all-stage ingestion fixture; obligation closure is the proposition under test.'})});}return list;})(),"
 if old not in text: raise SystemExit('verify-ingestion evidence fixture anchor missing')
 text = text.replace(old, new, 1)
+old = "  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
+new = "  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:e.stageData.INPUT_SET_CONTENTS};"
+if old not in text: raise SystemExit('Smart-quote Stage 01 obsolete fixture anchor missing')
+text = text.replace(old, new, 1)
 p.write_text(text)
 
 # The full lifecycle must use the same Stage 01 capture and Stage 04 obligation identities as production.
