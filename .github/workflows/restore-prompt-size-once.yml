@@ -1,0 +1,43 @@
+name: Restore prompt size once
+on:
+  push:
+    branches: [fix/restore-prompt-size-final-20260830]
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-prompt-size-final-20260830
+      - name: Restore remaining prompt dimension override
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='.expandable-prompt{max-height:80vh}.expandable-prompt.expanded{max-height:none}'
+          new='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          if s.count(old)!=1:
+              raise SystemExit(f'Expected exactly one remaining changed prompt-size rule, found {s.count(old)}.')
+          s=s.replace(old,new,1).replace('runtime-20260830-live-operator-41','runtime-20260830-live-operator-42')
+          p.write_text(s)
+          p=Path('app-core.js')
+          s=p.read_text()
+          old_id="const RUNTIME_BUILD_ID='runtime-20260830-live-operator-41';"
+          new_id="const RUNTIME_BUILD_ID='runtime-20260830-live-operator-42';"
+          if s.count(old_id)!=1:
+              raise SystemExit('Expected current runtime build identity was not found exactly once.')
+          p.write_text(s.replace(old_id,new_id,1))
+          PY
+          rm .github/workflows/restore-prompt-size-once.yml
+      - name: Commit the narrow repair
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html app-core.js .github/workflows/restore-prompt-size-once.yml
+          git commit -m 'Restore remaining original prompt dimension override'
+          git push origin HEAD:fix/restore-prompt-size-final-20260830
