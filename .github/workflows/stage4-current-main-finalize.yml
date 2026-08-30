@@ -36,63 +36,35 @@ jobs:
             verify-ingestion.mjs \
             verify-prompt-semantics.mjs \
             verify.mjs
-
           python3 - <<'PY'
           from pathlib import Path
           import hashlib, re
-
-          p = Path('prompt-engine.js')
-          text = p.read_text()
-          text, count = re.subn(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';", text, count=1)
-          if count != 1:
-              raise SystemExit(f'prompt-engine.js: expected donor /25 version once, found {count}')
+          p=Path('prompt-engine.js')
+          text=p.read_text()
+          text,count=re.subn(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';",text,count=1)
+          if count!=1: raise SystemExit(f'prompt version source mismatch: {count}')
           p.write_text(text)
-
-          p = Path('verify-prompt-semantics.mjs')
-          p.write_text(p.read_text().replace("closed-loop-prompt-engine/26", "closed-loop-prompt-engine/27"))
-
-          pages_path = Path('.github/workflows/pages.yml')
-          pages = pages_path.read_text()
-          if 'verify-one-time-intent-intake.mjs' not in pages:
-              anchor = '          node --check verify-test-runtime.mjs\n'
-              if anchor in pages:
-                  pages = pages.replace(anchor, anchor + '          node --check verify-one-time-intent-intake.mjs\n', 1)
-              anchor = '          node verify-complete.mjs\n'
-              if anchor in pages:
-                  pages = pages.replace(anchor, anchor + '          node verify-one-time-intent-intake.mjs\n', 1)
-              pages = pages.replace(
-                  'node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs',
-                  'node verify-ingestion.mjs && node verify-complete.mjs && node verify-one-time-intent-intake.mjs && node verify-full-cycle.mjs'
-              )
-          pages_path.write_text(pages)
-
-          # Match verify-hash.mjs exactly: 8 direct deferred runtime scripts, git blob SHA manifest.
-          runtime = ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          manifest = ''
+          p=Path('verify-prompt-semantics.mjs')
+          p.write_text(p.read_text().replace("closed-loop-prompt-engine/26","closed-loop-prompt-engine/27"))
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
           for filename in runtime:
-              data = Path(filename).read_bytes()
-              blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
-              manifest += f'{filename}:{blob}\n'
-          token = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
-          index_path = Path('index.html')
-          index = index_path.read_text()
-          index, count = re.subn(r'runtime-[0-9a-f]{16}', token, index)
-          if count != 8:
-              raise SystemExit(f'index.html: expected 8 shared runtime tokens, found {count}')
-          index_path.write_text(index)
-          print('runtime token', token)
-
-          Path('.github/workflows/stage4-current-main-finalize.yml').unlink()
+              data=Path(filename).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              manifest+=f'{filename}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          p=Path('index.html')
+          text,count=re.subn(r'runtime-[0-9a-f]{16}',token,p.read_text())
+          if count!=8: raise SystemExit(f'runtime token occurrence mismatch: {count}')
+          p.write_text(text)
+          print(token)
           PY
-
-      - name: Prove capture once, automatic Stage 04 reuse, and no visual-file change
+      - name: Prove capture once and automatic Stage 04 reuse
         shell: bash
         run: |
           set -euo pipefail
           test "$(git diff --name-only 4acd4ad9795b053fed6952fbd8e95cda9912b08c -- app-core.js | wc -l)" -eq 0
-          for file in workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs; do
-            node --check "$file"
-          done
+          for file in workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs; do node --check "$file"; done
           node build-test-project.mjs
           node verify-one-time-intent-intake.mjs
           node verify-test-runtime.mjs
@@ -106,15 +78,13 @@ jobs:
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
           git diff --check
-
-      - name: Commit permanent implementation only
+      - name: Commit proven code
         shell: bash
         run: |
           set -euo pipefail
-          test ! -e .github/workflows/stage4-current-main-finalize.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add -A
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js build-test-project.mjs verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs index.html
           git diff --cached --check
           git commit -m 'Capture project intent once and reuse it in Stage 04'
           git push origin HEAD:fix/stage4-durable-accounting-current-main-20260830
