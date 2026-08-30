@@ -43,9 +43,9 @@ jobs:
           for p in Path('.').glob('verify*.mjs'):
               if p.name=='verify-spec3-contract.mjs': continue
               s=p.read_text().replace('closed-loop-stage-response/2','closed-loop-stage-response/3').replace('closed-loop-project/2','closed-loop-project/3').replace("EXECUTABLE_KIND:'CUSTOM_PIPELINE'", "EXECUTABLE_KIND:'TEST_IR'").replace('EXECUTABLE_KIND:"CUSTOM_PIPELINE"','EXECUTABLE_KIND:"TEST_IR"')
+              s=s.replace("'workflow-schema.js','workflow-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js'")
+              s=s.replace("'workflow-schema.js','workflow-engine.js','prompt-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'")
               if p.name=='verify.mjs':
-                  s=s.replace("'workflow-schema.js','workflow-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js'")
-                  s=s.replace("'workflow-schema.js','workflow-engine.js','prompt-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'")
                   s=s.replace("'Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer'", "'Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause'")
                   s=s.replace("const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');", "")
               p.write_text(s)
