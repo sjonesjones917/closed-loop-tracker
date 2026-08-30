@@ -79,12 +79,12 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-ingestion.mjs
           node verify-full-cycle.mjs
-      - name: Commit only the repair and its permanent regression
+      - name: Commit only the tested source repair
         shell: bash
         run: |
-          git rm .github/workflows/stage4-capture-once-minimal.yml
+          git checkout -- .github/workflows/pages.yml
           git config user.name 'closed-loop-reliability-bot'
           git config user.email 'actions@users.noreply.github.com'
-          git add prompt-engine.js index.html verify-stage4-capture-once.mjs verify-prompt-semantics.mjs .github/workflows/pages.yml
+          git add prompt-engine.js index.html verify-stage4-capture-once.mjs verify-prompt-semantics.mjs
           git commit -m 'Capture intent once for Stage 4 canonical reuse'
           git push origin HEAD:fix/stage4-capture-once-minimal-20260830
