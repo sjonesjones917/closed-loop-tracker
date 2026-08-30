@@ -4,7 +4,7 @@
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
-if(!core||!schema||!hash)throw new Error('workbook.js, hash.js, and workflow-schema.js must load before workflow-engine.js.');
+if(!core||!schema||!hash)throw new Error('workbook.js, hash.js, and workflow-schema.js, test-runtime.js must load before workflow-engine.js.');
 
 const STAGE_STATES=Object.freeze(['NOT STARTED','IN PROGRESS','BLOCKED','READY','COMPLETE']);
 const FORMAL_STATES=Object.freeze(['UNKNOWN','NONE','NOT APPLICABLE','TRUE','FALSE','SATISFIED','VIOLATED','UNDETERMINED','ACCEPTED','REJECTED','BLOCKED']);
@@ -59,7 +59,7 @@ function ensureShape(project){
 }
 
 const APPLICATION_INITIAL_FIELDS=Object.freeze({
-  intentStatements:Object.freeze({STATUS:'ACTIVE'}),requirements:Object.freeze({STATUS:'ACTIVE'}),candidateRequirements:Object.freeze({STATUS:'ACTIVE'}),requirementResolutions:Object.freeze({STATUS:'RESOLVED'}),tests:Object.freeze({STATUS:'READY'}),instructions:Object.freeze({STATUS:'CURRENT'}),instructionTraces:Object.freeze({STATUS:'COMPLETE'}),preflightRecords:Object.freeze({STATUS:'COMPLETE'}),iterations:Object.freeze({STATUS:'FROZEN'}),candidateFreezes:Object.freeze({STATUS:'FROZEN'}),defects:Object.freeze({STATUS:'CONFIRMED'}),regressions:Object.freeze({ACTIVE_RETIRED_STATE:'ACTIVE'}),baselines:Object.freeze({STATUS:'FROZEN'}),products:Object.freeze({STATUS:'RESERVED'}),blockers:Object.freeze({STATUS:'OPEN'}),evidenceRecords:Object.freeze({STATUS:'PRESERVED'})
+  requirements:Object.freeze({STATUS:'ACTIVE'}),candidateRequirements:Object.freeze({STATUS:'ACTIVE'}),requirementResolutions:Object.freeze({STATUS:'RESOLVED'}),tests:Object.freeze({STATUS:'READY'}),instructions:Object.freeze({STATUS:'CURRENT'}),instructionTraces:Object.freeze({STATUS:'COMPLETE'}),preflightRecords:Object.freeze({STATUS:'COMPLETE'}),iterations:Object.freeze({STATUS:'FROZEN'}),candidateFreezes:Object.freeze({STATUS:'FROZEN'}),defects:Object.freeze({STATUS:'CONFIRMED'}),regressions:Object.freeze({ACTIVE_RETIRED_STATE:'ACTIVE'}),baselines:Object.freeze({STATUS:'FROZEN'}),products:Object.freeze({STATUS:'RESERVED'}),blockers:Object.freeze({STATUS:'OPEN'}),evidenceRecords:Object.freeze({STATUS:'PRESERVED'})
 });
 function applicationInitialFields(collection){return clone(APPLICATION_INITIAL_FIELDS[collection]||{});}
 
@@ -100,13 +100,16 @@ function nextVersion(current,prefix){
   const number=match?Number(match[1])+1:1;
   return `${prefix}-v${String(number).padStart(3,'0')}`;
 }
+// CURRENT_INPUT_VERSION is versioned only by application-controlled human-input mutation paths.
+// Accepting the Stage 01 agent interpretation must not create a new User Job Input version,
+// otherwise the accepted intake manifest instantly becomes stale and the user is asked to repeat information.
 const VERSION_BY_STAGE=Object.freeze({
   2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
   4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });
 function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}
-const VERSION_SCOPE_KEY_BY_STAGE=Object.freeze({1:'inputVersion',2:'sourceSetVersion',4:'requirementsVersion',5:'requirementsVersion',6:'testSuiteVersion',8:'instructionVersion'});
+const VERSION_SCOPE_KEY_BY_STAGE=Object.freeze({2:'sourceSetVersion',4:'requirementsVersion',5:'requirementsVersion',6:'testSuiteVersion',8:'instructionVersion'});
 function stampCurrentVersionMembership(project,stage,version){const key=VERSION_SCOPE_KEY_BY_STAGE[stage];if(!key||!version)return;const collections=stage===5?[...new Set(['requirements',...versionCollections(stage)])]:versionCollections(stage);for(const collection of collections)for(const record of records(project,collection)){record.scope={...(record.scope||{}),[key]:version};refreshRecordHashes(record,collection);}}
 function registerStageVersion(project,stage,acceptedChangeId){
   ensureShape(project);
@@ -159,8 +162,6 @@ function mandatoryRequirements(project,scopeRule=null){
     return value!=='OPTIONAL'&&value!=='FALSE'&&value!=='NO';
   });
 }
-function currentIntentStatements(project){return recordsForCurrentScope(project,'intentStatements');}
-function intentStatementRequiresRequirement(record){return upper(recordValue(record,'REQUIREMENT_RELEVANCE'))==='REQUIREMENT';}
 function confirmedDefects(project){
   return records(project,'defects').filter(record=>{
     const status=upper(recordValue(record,'STATUS')||'CONFIRMED');
@@ -315,10 +316,6 @@ function gate(stage,project){
     case 1:{
       if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');
       requireAccepted();
-      {const intakeManifest=stage01IntakeManifest(project),accounting=safe(project.stages[1]?.agentData?.INTAKE_ACCOUNTING),seen=new Set(accounting.map(entry=>String(entry?.inputId||'')).filter(Boolean)),missing=safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(id=>id&&!seen.has(id)),preservedCompletedStage01=project.stages[1]?.status==='COMPLETE'&&acceptedChanges(project,1).length>0&&currentIntentStatements(project).length>0&&safe(project.projectData?.migrationArchives).length>0;if(missing.length&&!preservedCompletedStage01)reasons.push(`Stage 01 intake accounting is missing application-generated input unit(s): ${missing.join(', ')}.`);}
-      const statements=currentIntentStatements(project);
-      if(!statements.length)reasons.push('Stage 01 requires a canonical intent-statement ledger; the original intent file may not be deferred to a later stage.');
-      for(const statement of statements)for(const name of ['SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE'])if(!String(recordValue(statement,name)||'').trim())reasons.push(`${recordId(statement,'intentStatements')}: ${name} is missing.`);
       const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);
       if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');
       break;
@@ -332,24 +329,25 @@ function gate(stage,project){
       break;
     }
     case 3:{
-      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
-      if(!sourceIds.length&&!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');
-      if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);}
-      const requiredStatements=currentIntentStatements(project).filter(intentStatementRequiresRequirement),candidateLocations=new Set(collection('candidateRequirements').map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim())),missingStatements=requiredStatements.map(record=>recordId(record,'intentStatements')).filter(id=>!candidateLocations.has(id));
-      if(missingStatements.length)reasons.push(`Candidate requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
+      requireAccepted();const sourceIds=recordsForCurrentScope(project,'sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
+      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}
+      requireCount('research',1);const researched=new Set(recordsForCurrentScope(project,'research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);
+      const researchData=project.stages[3]?.agentData||{};
+      if(!truth(researchData.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');
+      if(!truth(researchData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 second conflict and exception pass is incomplete.');
+      if(numeric(researchData.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires a completed second conflict and exception pass.');
+      if(!falsey(researchData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 is not exhausted because the latest pass still found new material.');
       break;
     }
     case 4:{
+      if(project.stages?.[1]?.status!=='COMPLETE')reasons.push('Stage 04 requires exhausted Stage 01 human-authority intake.');
+      if(project.stages?.[3]?.status!=='COMPLETE')reasons.push('Stage 04 requires exhausted Stage 03 source research.');
       requireAccepted();requireCount('requirements',1);
-      const statements=currentIntentStatements(project),statementIds=new Set(statements.map(record=>recordId(record,'intentStatements'))),requiredStatementIds=statements.filter(intentStatementRequiresRequirement).map(record=>recordId(record,'intentStatements')),coveredIntentStatements=new Set();
       for(const req of collection('requirements')){
         for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: ${name} is missing.`);
         const sourceId=String(recordValue(req,'SOURCE_ID')||req.relationships?.SOURCE_ID||'').trim(),userRelationship=String(recordValue(req,'USER_INPUT_RELATIONSHIP')||'').trim();
-        if(userRelationship){if(!statementIds.has(userRelationship))reasons.push(`${recordId(req,'requirements')}: USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID, not a generic User Job Input label.`);else coveredIntentStatements.add(userRelationship);}
-        if(!sourceId&&!userRelationship)reasons.push(`${recordId(req,'requirements')}: requirement lacks source provenance or an exact canonical intent STATEMENT_ID.`);
+        if(!sourceId&&!userRelationship)reasons.push(`${recordId(req,'requirements')}: requirement lacks source provenance or an explicit User Job Input relationship.`);
       }
-      const missingStatements=requiredStatementIds.filter(id=>!coveredIntentStatements.has(id));if(missingStatements.length)reasons.push(`Requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
-      const obligationManifest=stage04ObligationManifest(project),accounting=safe(project.stages[4]?.agentData?.OBLIGATION_ACCOUNTING),accountedIds=new Set(accounting.map(entry=>String(entry?.obligationId||'')).filter(Boolean)),missingObligations=safe(obligationManifest?.entries).map(entry=>String(entry.obligationId||'')).filter(id=>id&&!accountedIds.has(id));if(missingObligations.length)reasons.push(`Stage 04 obligation accounting is missing application-generated obligation(s): ${missingObligations.join(', ')}.`);
       break;
     }
     case 5:
@@ -448,10 +446,70 @@ function gate(stage,project){
   return {stage,complete:reasons.length===0,blocked,reasons,acceptedResponseCount:changes.length,checkedAt:now(),priorReasonCount:previousReasons};
 }
 
+
+const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);
+const INTAKE_STATEMENT_CLASSES=Object.freeze(['FACT','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY','CONTEXT']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['retained nonnormative context','inapplicable','blocked']);
+function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersion,extra={}}={}){
+  if(value===undefined||value===null)return;
+  if(typeof value==='string'){
+    const normalized=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n'),lines=normalized.split('\n');let emitted=0;
+    lines.forEach((rawLine,index)=>{if(!rawLine.trim())return;const location=lines.length>1?`${sourceLocation}#line=${index+1}`:sourceLocation,rawValueSha256=hash.sha256Value(rawLine),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation:location,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation:location,label:lines.length>1?`${label} line ${index+1}`:label,rawValueSha256,rawValueText:rawLine,...clone(extra)});emitted++;});
+    if(!emitted&&value.length){const rawValueSha256=hash.sha256Value(value),unitId=`INPUT-UNIT-${hash.sha256Value({inputVersion,kind,sourceLocation,rawValueSha256}).slice(0,20).toUpperCase()}`;units.push({unitId,kind,sourceLocation,label,rawValueSha256,rawValueText:value,...clone(extra)});}
+    return;
+  }
+  if(Array.isArray(value)){value.forEach((item,index)=>enumerateInputLeaves(item,`${sourceLocation}[${index}]`,kind,`${label}[${index}]`,units,{inputVersion,extra}));return;}
+  if(typeof value==='object'){for(const key of Object.keys(value).sort())enumerateInputLeaves(value[key],`${sourceLocation}.${key}`,kind,`${label}.${key}`,units,{inputVersion,extra});return;}
+  enumerateInputLeaves(String(value),sourceLocation,kind,label,units,{inputVersion,extra});
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
+  for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){if(!['HUMAN','HUMAN_DECISION'].includes(definition?.producer))continue;enumerateInputLeaves(project.job[name],`job.${name}`,definition.producer==='HUMAN'?'JOB_FIELD':'HUMAN_DECISION',name,units,{inputVersion});}
+  enumerateInputLeaves(project.projectData.userEntered,'projectData.userEntered','ORIGINAL_USER_INPUT','Original user input',units,{inputVersion});
+  for(const answer of safe(project.projectData.humanInputAnswers).filter(item=>!item.invalidatedBy)){const answerId=String(answer.answerId||answer.requestId||'UNKNOWN');enumerateInputLeaves(answer.answer,`projectData.humanInputAnswers.${answerId}.answer`,'HUMAN_ANSWER',`Human answer ${answerId}`,units,{inputVersion,extra:{answerId}});}
+  const seen=new Set(),deduped=[];for(const unit of units){const key=`${unit.sourceLocation}|${unit.rawValueSha256}`;if(seen.has(key))continue;seen.add(key);deduped.push(unit);}const base={schema:'closed-loop-intake-manifest/1',inputVersion,units:deduped,unitCount:deduped.length};return {...base,manifestSha256:hash.sha256Value(base)};
+}
+function parseCapturedInputSet(stageOrProject){const stageOne=stageOrProject?.stages?.[1]||stageOrProject||{},raw=stageOne?.agentData?.INPUT_SET_CONTENTS??stageOne?.acceptedData?.INPUT_SET_CONTENTS??'';if(!String(raw||'').trim())return {format:'EMPTY',units:[],raw:''};try{const parsed=JSON.parse(String(raw));if(parsed&&typeof parsed==='object'&&Array.isArray(parsed.units))return {format:'STRUCTURED',...parsed,raw:String(raw)};}catch{}return {format:'LEGACY_TEXT',units:[],raw:String(raw)};}
+function evaluateIntakeAccounting(project,{capture}={}){
+  ensureShape(project);const manifest=intakeCoverageManifest(project),parsed=capture===undefined?parseCapturedInputSet(project):(()=>{try{const value=typeof capture==='string'?JSON.parse(capture):capture;return value&&typeof value==='object'&&Array.isArray(value.units)?{format:'STRUCTURED',...value}:{format:'INVALID',units:[]};}catch{return {format:'INVALID',units:[]};}})(),reasons=[];
+  if(parsed.format!=='STRUCTURED')reasons.push('Stage 01 INPUT_SET_CONTENTS must be the structured current intake accounting capture.');
+  if(String(parsed.inputVersion||'')!==String(manifest.inputVersion))reasons.push('Stage 01 intake accounting is not bound to the current input version.');
+  if(String(parsed.manifestSha256||'')!==String(manifest.manifestSha256))reasons.push('Stage 01 intake accounting is not bound to the current application intake manifest.');
+  const expected=new Map(manifest.units.map(unit=>[unit.unitId,unit])),counts=new Map(),accounted=new Set();
+  for(const [index,unit] of safe(parsed.units).entries()){
+    const id=String(unit?.sourceUnitId||'').trim();if(!id){reasons.push(`Stage 01 intake unit ${index+1} has no sourceUnitId.`);continue;}counts.set(id,(counts.get(id)||0)+1);const source=expected.get(id);if(!source){reasons.push(`Stage 01 intake accounting contains unknown unit ${id}.`);continue;}
+    const hashMatches=String(unit?.sourceRawValueSha256||'')===String(source.rawValueSha256);if(!hashMatches)reasons.push(`Stage 01 intake unit ${id} is not bound to the exact source raw-value hash.`);
+    const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);
+    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;
+    for(const statement of statements){const key=String(statement?.statementKey||'').trim(),text=String(statement?.text||'').trim(),classification=String(statement?.statementClass||'').trim().toUpperCase();if(!key||statementKeys.has(key)){reasons.push(`Stage 01 intake unit ${id} has a missing or duplicate statementKey.`);statementsValid=false;}statementKeys.add(key);if(!text){reasons.push(`Stage 01 intake unit ${id} contains an empty extracted statement.`);statementsValid=false;}if(!INTAKE_STATEMENT_CLASSES.includes(classification)){reasons.push(`Stage 01 intake unit ${id} has an invalid statementClass.`);statementsValid=false;}}
+    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);
+  }
+  for(const [id,count] of counts)if(count!==1)reasons.push(`Stage 01 intake unit ${id} is accounted ${count} times; exactly one accounting entry is required.`);for(const id of expected.keys())if(!counts.has(id))reasons.push(`Stage 01 intake accounting omitted controlled input unit ${id}.`);const coverage=manifest.unitCount?accounted.size/manifest.unitCount:1;return {complete:reasons.length===0,coverage,reasons,manifest,parsed,expectedUnitCount:manifest.unitCount,accountedUnitCount:accounted.size};
+}
+function semanticLeaves(value,emit,path='value'){if(value===undefined||value===null)return;if(typeof value==='string'){const lines=value.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');for(const [index,line] of lines.entries())if(line.trim())emit(line,lines.length>1?`${path}#line=${index+1}`:path);return;}if(Array.isArray(value)){value.forEach((item,index)=>semanticLeaves(item,emit,`${path}[${index}]`));return;}if(typeof value==='object'){for(const key of Object.keys(value).sort())semanticLeaves(value[key],emit,`${path}.${key}`);return;}emit(String(value),path);}
+function obligationManifest(project){
+  ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',sourceSetVersion=project.job.CURRENT_SOURCE_SET_VERSION||null,items=[];const add=(text,origin,provenance,sourceIdentity=null,evidenceRefs=[],classification='UNCLASSIFIED')=>{const value=String(text??'');if(!value.trim())return;const obligationId=`OBLIGATION-${hash.sha256Value({origin,provenance,text:value}).slice(0,20).toUpperCase()}`;items.push({obligationId,text:value,origin,classification,provenance:clone(provenance),sourceIdentity:sourceIdentity||null,evidenceRefs:[...new Set(safe(evidenceRefs).map(String))]});};
+  const capture=parseCapturedInputSet(project);for(const unit of safe(capture.units))for(const [index,statement] of safe(unit?.extractedStatements).entries())add(statement?.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{sourceUnitId:String(unit?.sourceUnitId||'UNKNOWN'),statementKey:String(statement?.statementKey||index+1),inputVersion},null,[],String(statement?.statementClass||'UNCLASSIFIED').toUpperCase());
+  const stageOne=project.stages?.[1]?.agentData||project.stages?.[1]?.acceptedData||{};for(const field of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])semanticLeaves(stageOne[field],(text,location)=>add(text,'STAGE01_ACCEPTED_JOB_DEFINITION',{field,location,inputVersion}),null,[],'STAGE01_JOB_DEFINITION');
+  const stageThree=project.stages?.[3]?.agentData||project.stages?.[3]?.acceptedData||{};for(const field of ['EXCEPTIONS_AND_EDGE_CONDITIONS','CONFLICTING_OR_INVALIDATING_MATERIAL','RESEARCH_GAPS_AND_BLOCKERS'])semanticLeaves(stageThree[field],(text,location)=>add(text,'STAGE03_ACCEPTED_RESEARCH_SUMMARY',{field,location,sourceSetVersion}),null,[],'STAGE03_RESEARCH_SUMMARY');
+  const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];for(const record of recordsForCurrentScope(project,'research')){const researchId=recordId(record,'research'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;for(const field of researchFields)semanticLeaves(recordValue(record,field),(text,location)=>add(text,'STAGE03_SOURCE_RESEARCH',{researchId,field,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,field));}
+  for(const record of recordsForCurrentScope(project,'candidateRequirements')){const candidateRequirementId=recordId(record,'candidateRequirements'),sourceId=String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')||null;semanticLeaves(recordValue(record,'CANDIDATE_OBLIGATION'),(text,location)=>add(text,'STAGE03_CANDIDATE_REQUIREMENT',{candidateRequirementId,location,sourceId,sourceSetVersion},sourceId,record.evidenceRefs,'CANDIDATE_OBLIGATION'));}
+  const unique=[],seen=new Set();for(const item of items){if(seen.has(item.obligationId))continue;seen.add(item.obligationId);unique.push(item);}const sourceContext=recordsForCurrentScope(project,'sources').map(record=>({sourceId:recordId(record,'sources'),contentSha256:record.contentSha256||record.sha256||hash.sha256Value(recordFields(record)),fields:recordFields(record)})),evidenceContext=recordsForCurrentScope(project,'evidenceRecords').filter(record=>[2,3].includes(Number(record.stage))).map(record=>({evidenceId:recordId(record,'evidenceRecords'),sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''),sha256:record.sha256||recordValue(record,'SHA256')||hash.sha256Value(recordFields(record))}));const base={schema:'closed-loop-obligation-manifest/1',inputVersion,sourceSetVersion,items:unique,obligationCount:unique.length,sourceContext,evidenceContext};return {...base,manifestSha256:hash.sha256Value(base)};
+}
+function obligationIdsFromRelationship(value){return [...new Set(String(value??'').match(/OBLIGATION-[A-F0-9]{20}/g)||[])];}
+function evaluateObligationAccounting(project,{envelope}={}){
+  ensureShape(project);const manifest=obligationManifest(project),expected=new Map(manifest.items.map(item=>[item.obligationId,item])),mapped=new Map(),dispositions=new Map(),reasons=[];const requirements=envelope?safe(envelope.records?.requirements):recordsForCurrentScope(project,'requirements'),evidence=envelope?safe(envelope.evidence):recordsForCurrentScope(project,'evidenceRecords').filter(record=>Number(record.stage)===4);
+  for(const requirement of requirements){const fields=envelope?(requirement?.fields||{}):recordFields(requirement),refs=obligationIdsFromRelationship(fields.USER_INPUT_RELATIONSHIP);for(const id of refs){if(!expected.has(id))reasons.push(`Stage 04 requirement accounting references unknown obligation ${id}.`);else{const list=mapped.get(id)||[];list.push(envelope?(requirement.tempKey||requirement.targetId||'response-requirement'):recordId(requirement,'requirements'));mapped.set(id,list);}}}
+  for(const item of evidence){const kind=String(envelope?item?.kind:recordValue(item,'KIND')||'').trim().toUpperCase();if(kind!=='OBLIGATION_DISPOSITION')continue;const raw=String(envelope?item?.content:recordValue(item,'CONTENT')||'');let parsed;try{parsed=JSON.parse(raw);}catch{reasons.push('Stage 04 OBLIGATION_DISPOSITION evidence contains invalid JSON.');continue;}const id=String(parsed?.obligationId||'').trim(),disposition=String(parsed?.disposition||'').trim().toLowerCase(),reason=String(parsed?.reason||'').trim();if(!expected.has(id)){reasons.push(`Stage 04 disposition references unknown obligation ${id||'MISSING'}.`);continue;}if(!OBLIGATION_DISPOSITIONS.includes(disposition))reasons.push(`Stage 04 obligation ${id} has an invalid non-requirement disposition.`);if(!reason)reasons.push(`Stage 04 obligation ${id} non-requirement disposition requires a reason.`);const list=dispositions.get(id)||[];list.push({disposition,reason});dispositions.set(id,list);}
+  let accounted=0;for(const id of expected.keys()){const mappings=mapped.get(id)||[],choices=dispositions.get(id)||[];if(!mappings.length&&!choices.length)reasons.push(`Stage 04 obligation accounting omitted ${id}.`);if(mappings.length&&choices.length)reasons.push(`Stage 04 obligation ${id} is both mapped to requirement(s) and given a non-requirement disposition.`);if(choices.length>1)reasons.push(`Stage 04 obligation ${id} has duplicate non-requirement dispositions.`);const validChoice=choices.length===1&&OBLIGATION_DISPOSITIONS.includes(choices[0].disposition)&&Boolean(choices[0].reason);if((mappings.length>0&&!choices.length)||(!mappings.length&&validChoice))accounted++;}const coverage=manifest.obligationCount?accounted/manifest.obligationCount:1;return {complete:reasons.length===0,coverage,reasons,manifest,expectedObligationCount:manifest.obligationCount,accountedObligationCount:accounted,mapped,dispositions};
+}
+
 const applicationadjudicationGate=gate;
 gate=function adjudicationGate(stage,project){
   const adjudicated=adjudicatedClone(project),base=applicationadjudicationGate(stage,adjudicated),reasons=[...base.reasons];
   const add=x=>{for(const r of safe(x))if(r&&!reasons.includes(r))reasons.push(r);};
+  if(stage===1){const accounting=evaluateIntakeAccounting(project);if(!accounting.complete)add(accounting.reasons);}
+  if(stage===4){const accounting=evaluateObligationAccounting(project);if(!accounting.complete)add(accounting.reasons);}
   if(stage===7){for(const mutation of recordsForCurrentScope(project,'failureTests')){const explicitOutcome=upper(recordValue(mutation,'EXECUTION_OUTCOME')),legacyActual=upper(recordValue(mutation,'ACTUAL_RESULT')),expected=upper(recordValue(mutation,'EXPECTED_REJECTION')),legacyOutcome=!explicitOutcome&&expected.includes('REJECT')&&['REJECTED','REJECT','DENIED','BLOCKED'].includes(legacyActual)?'REJECTED_INVALID':!explicitOutcome&&expected.includes('REJECT')&&['ACCEPTED','PASS','PASSED','SUCCESS','SUCCEEDED'].includes(legacyActual)?'ACCEPTED_INVALID':'',outcome=explicitOutcome||legacyOutcome;if(!['REJECTED_INVALID','ACCEPTED_INVALID','UNDETERMINED','NOT_RUN'].includes(outcome))add([recordId(mutation,'failureTests')+': controlled EXECUTION_OUTCOME is required (REJECTED_INVALID/ACCEPTED_INVALID/UNDETERMINED/NOT_RUN); only the finite legacy rejection/acceptance vocabulary is migrated.']);if(outcome==='ACCEPTED_INVALID'&&!String(recordValue(mutation,'VALIDATOR_DEFECT_ID')||mutation.relationships?.VALIDATOR_DEFECT_ID||'').trim())add(['A known-invalid fixture was accepted without a linked validator defect.']);if(['UNDETERMINED','NOT_RUN'].includes(outcome))add([recordId(mutation,'failureTests')+': failure test is not conclusively executed.']);}}
   if(stage===9)for(const r of recordsForCurrentScope(project,'preflightRecords')){const e=evaluateResultConsistency('preflightRecords',r,null,project);if(e.determination!=='SATISFIED')add(e.reasons.length?e.reasons:['Preflight is not application-derived SATISFIED.']);}
   if(stage===13){const iteration=latestIteration(project,[10,17,19]),iterationId=recordId(iteration,'iterations');for(const req of mandatoryRequirements(project,scopeForIteration(project,iterationId))){const facts=comparisonFacts(project,requirementId(req),iterationId),rows=recordsForIteration(project,'comparisons',iterationId).filter(r=>String(recordValue(r,'REQ_ID')||r.relationships?.REQ_ID||'')===requirementId(req));if(rows.length!==1)add(['Exactly one comparison record is required for '+requirementId(req)+'.']);if(!facts.allSatisfied&&facts.anyViolation)add(['Derived comparison contains a violation for '+requirementId(req)+'.']);if(facts.anyUndetermined)add(['Derived comparison contains an undetermined result for '+requirementId(req)+'.']);}}
@@ -469,9 +527,10 @@ function deriveStageData(project,stage){ensureShape(project);const derived={};co
 
 function recalculate(project){
   ensureShape(project);
+  project.job.INPUT_SET_HASH_OR_MANIFEST=intakeCoverageManifest(project).manifestSha256;
   let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
-    const state=project.stages[stage];
+    let state=project.stages[stage];
     if(!previousComplete){
       const prerequisite=`Stage ${String(stage-1).padStart(2,'0')} is not complete.`;
       state.status='NOT STARTED';
@@ -482,6 +541,8 @@ function recalculate(project){
       continue;
     }
     const wasComplete=state.status==='COMPLETE',result=gate(stage,project);
+    // gate() normalizes project shape and may replace stage objects; always mutate the current canonical object.
+    state=project.stages[stage];
     state.gate=result;
     if(result.blocked){state.status='BLOCKED';}
     else if(result.complete){state.status='COMPLETE';}
@@ -497,9 +558,9 @@ function recalculate(project){
   const current=project.stages[currentStage];
   project.activeStage=Math.max(1,Math.min(30,Number(project.activeStage||currentStage)));
   project.job.CURRENT_STAGE=`STAGE ${String(currentStage).padStart(2,'0')}`;
-  project.job.CURRENT_STATE=completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';
-  project.job.CURRENT_BLOCKERS=openBlockers(project).length?openBlockers(project).map(record=>recordId(record,'blockers')).join(', '):'NONE';
-  project.job.NEXT_REQUIRED_ACTION=completed===30?'Preserve the completed workflow and exact release evidence.':operationalNextAction(project,currentStage);
+  const projectOpenBlockers=openBlockers(project);project.job.CURRENT_STATE=projectOpenBlockers.length?'BLOCKED':completed===30?'COMPLETE':current.status==='BLOCKED'?'BLOCKED':current.status==='IN PROGRESS'?'IN PROGRESS':'READY';
+  project.job.CURRENT_BLOCKERS=projectOpenBlockers.length?projectOpenBlockers.map(record=>recordId(record,'blockers')).join(', '):'NONE';
+  project.job.NEXT_REQUIRED_ACTION=completed===30?actionEnvelope(project,currentStage,{actionType:'COMPLETE',heading:'Workflow complete',explanation:'Preserve the completed workflow and exact release evidence.',primaryButton:null}):operationalNextAction(project,currentStage);
   project.job.LATEST_EVIDENCE_REFERENCE=safe(project.projectData.acceptedChanges).at(-1)?.changeId||project.job.LATEST_EVIDENCE_REFERENCE||'NONE';
   project.job.JOB_RECORD_STATUS=project.stages[1].status==='COMPLETE'?'READY':'NOT READY';
   project.job.STATUS_EVIDENCE=project.stages[1].gate?.reasons?.join('; ')||'Stage 01 canonical evidence is complete.';
@@ -692,44 +753,8 @@ function executionStability(project,iterationId){
   const defects=recordsForIteration(project,'defects',iterationId),patterns=new Map(),newDefectsByRun={};for(const d of defects){const key=hash.sha256Value([recordValue(d,'OBSERVED_FAILURE'),recordValue(d,'EXPECTED_CONDITION')]);patterns.set(key,(patterns.get(key)||0)+1);const run=String(recordValue(d,'RUN_ID')||d.relationships?.RUN_ID||'UNASSIGNED');newDefectsByRun[run]=(newDefectsByRun[run]||0)+1;}
   return {runCount:matrix.runs.length,requirementStability:byReq,testStability:byTest,totalDistinctDefects:defects.length,repeatedDefectCount:[...patterns.values()].filter(n=>n>1).reduce((a,n)=>a+n,0),uniqueDefectCount:[...patterns.values()].filter(n=>n===1).length,newDefectsByRun,unexplainedVarianceCount:recordsForIteration(project,'comparisons',iterationId).filter(r=>truth(recordValue(r,'CORRECTNESS_AFFECTING_VARIANCE'))&&!truth(recordValue(r,'AUTHORIZED_VARIANCE'))).length};
 }
-function suppliedMaterialReferences(project){
-  const raw=String(project?.job?.SUPPLIED_MATERIALS_INVENTORY||'').trim();
-  if(!raw||/^(?:UNKNOWN|NONE|NOT APPLICABLE|NULL|\[\]|\{\}|NONE SUPPLIED|NO MATERIALS?(?: SUPPLIED)?)$/i.test(raw))return [];
-  const references=[],seen=new Set();
-  const transferMode=(type,label)=>{
-    const declared=upper(type),value=String(label||'').trim();
-    if(/MESSAGE|INLINE|TEXT|NOTE|CHAT/.test(declared))return 'INLINE_JOB_INPUT';
-    if(/URL|URI|LINK|WEB|REFERENCE/.test(declared)||/^https?:\/\//i.test(value))return 'AUTHORIZED_REFERENCE';
-    if(/FILE|ATTACH|DOCUMENT|ARCHIVE|FOLDER|DIRECTORY|IMAGE|DRAWING|MODEL|SPREADSHEET|REPOSITORY|PACKAGE/.test(declared)||/\.[A-Za-z0-9]{1,12}(?:$|[?#])/.test(value))return 'ORIGINAL_ATTACHMENT';
-    return 'ORIGINAL_MATERIAL';
-  };
-  const add=(label,type='SUPPLIED_PROJECT_INPUT')=>{
-    const clean=String(label||'').trim();
-    if(!clean||/^(?:UNKNOWN|NONE|NOT APPLICABLE)$/i.test(clean))return;
-    const key=clean.toLowerCase();
-    if(seen.has(key))return;
-    seen.add(key);
-    references.push({label:clean,type:String(type||'SUPPLIED_PROJECT_INPUT').trim()||'SUPPLIED_PROJECT_INPUT',transferMode:transferMode(type,clean)});
-  };
-  const walk=(value,depth=0)=>{
-    if(depth>4||value===null||value===undefined)return;
-    if(Array.isArray(value)){for(const item of value)walk(item,depth+1);return;}
-    if(typeof value==='string'){add(value);return;}
-    if(typeof value!=='object')return;
-    const label=value.exactNameOrReference??value.filename??value.fileName??value.name??value.title??value.reference??value.path??value.url;
-    const type=value.type??value.materialType??value.kind??value.role??'SUPPLIED_PROJECT_INPUT';
-    if(label!==undefined&&label!==null&&String(label).trim()){add(label,type);return;}
-    for(const key of ['files','materials','items','attachments','references','suppliedMaterials','inventory'])if(Object.prototype.hasOwnProperty.call(value,key))walk(value[key],depth+1);
-  };
-  try{walk(JSON.parse(raw));}
-  catch{
-    const parts=raw.split(/\r?\n|;/).map(value=>value.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean);
-    for(const part of parts.length?parts:[raw])add(part);
-  }
-  return references;
-}
 function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){
-  const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map(),withhold=new Map(),expectBack=new Map(),artifacts=recordsForCurrentScope(project,'artifacts'),artifactsById=new Map(artifacts.map(a=>[recordId(a,'artifacts'),a])),conversationMaterials=[],optionalApplicationCopies=new Map();
+  const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map(),withhold=new Map(),expectBack=new Map(),artifacts=recordsForCurrentScope(project,'artifacts'),artifactsById=new Map(artifacts.map(a=>[recordId(a,'artifacts'),a]));
   const exactArtifact=a=>{if(!a||upper(recordValue(a,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED')return null;const id=recordId(a,'artifacts');return {artifactId:id,filename:String(recordValue(a,'FILENAME')||id),byteSize:Number(recordValue(a,'BYTE_SIZE')||0),sha256:String(recordValue(a,'SHA256')||'UNKNOWN'),role:String(recordValue(a,'ROLE')||'AUTHORIZED_INPUT')};};
   const addArtifact=a=>{const exact=exactArtifact(a);if(!exact)return false;send.set(exact.artifactId,exact);return true;};
   const addReferenced=value=>{for(const id of new Set((JSON.stringify(value||'').match(/ARTIFACT-[A-Za-z0-9-]+/g)||[])))addArtifact(artifactsById.get(id));};
@@ -741,7 +766,7 @@ function executionHandoff(project,{stage=Number(project.activeStage||0),operatio
   if(stage===12){const wanted=runIds?new Set(runIds.map(String)):null;for(const run of recordsForCurrentScope(project,'runs'))if(!wanted||wanted.has(recordId(run,'runs')))addReferenced(recordValue(run,'OUTPUT_ARTIFACT_IDENTITIES'));}
   const stageWithhold={11:['outputs from other runs','reviewer feedback','failure explanations','proposed corrections'],12:['other verifiers’ determinations','Stage 13 comparison findings','root-cause analysis','correction proposals'],23:['Stage 21 generator correctness claims','unneeded deterministic pass conclusions','adversarial findings'],24:['generator reasoning or self-evaluation','prior reviewer conclusions that tell the adversarial reviewer what to find']};for(const label of stageWithhold[stage]||[])withhold.set(label,{artifactIdOrCategory:label,reason:'Withheld to preserve information isolation and reduce verification bias.'});
   const externalWork=[11,12,17,19,21,23,24,25].includes(stage);if(externalWork)expectBack.set('STRUCTURED_RESPONSE|final strict JSON response',{kind:'STRUCTURED_RESPONSE',filenameOrPattern:'final strict JSON response',required:true});
-  return {send:[...send.values()],withhold:[...withhold.values()],expectBack:[...expectBack.values()],conversationMaterials,optionalApplicationCopies:[...optionalApplicationCopies.values()]};
+  return {send:[...send.values()],withhold:[...withhold.values()],expectBack:[...expectBack.values()]};
 }
 function evidenceChainExplanation(project,chain){const req=String(recordValue(chain,'REQ_ID')||chain.relationships?.REQ_ID||''),requirement=recordsForCurrentScope(project,'requirements').find(r=>requirementId(r)===req)||records(project,'requirements').find(r=>requirementId(r)===req)||null,tests=safe(recordValue(chain,'TEST_ID')),results=safe(recordValue(chain,'TEST_RESULT_ID')),evidence=safe(recordValue(chain,'EVIDENCE_ID')),identities=safe(recordValue(chain,'ARTIFACT_HASH_IDENTITY')),support=[],unresolved=[...safe(recordValue(chain,'MISSING_LINKS'))],resultCollections=['verification','deterministicResults','meaningResults','adversarialResults'];for(const t of tests)support.push(t+' applies to '+req);for(const id of results){let hit=null;for(const collection of resultCollections){const record=recordsForCurrentScope(project,collection).find(r=>recordId(r,collection)===String(id));if(record){hit={collection,record};break;}}if(!hit){unresolved.push('CURRENT_RESULT:'+id);continue;}const test=testForResult(project,hit.record),effective=effectiveDetermination(hit.collection,hit.record,test,project),contract=evaluateEvidenceContract(test,hit.record,null,project),sufficiency=evaluateEvidenceSufficiency(project,{requirement,test,result:hit.record});support.push('Effective determination for '+id+' is '+effective);if(contract.sufficient&&sufficiency.sufficient)support.push((contract.evidenceIds||sufficiency.presentEvidenceIds||[]).join(', ')+' satisfies the structural evidence contract and is capable of proving the proposition for '+id);else unresolved.push('INSUFFICIENT_EVIDENCE:'+id);if(effective!=='SATISFIED')unresolved.push('NON_SATISFIED_EFFECTIVE_RESULT:'+id);}for(const e of evidence)support.push(e+' is canonical evidence linked to the current proposition');for(const id of identities){const record=recordsForCurrentScope(project,'artifactIdentities').find(x=>recordId(x,'artifactIdentities')===id);if(record&&upper(recordValue(record,'AUTHORIZATION'))==='AUTHORIZED'&&truth(recordValue(record,'EXACT_HASH_MATCH'))&&truth(recordValue(record,'EXACT_SIZE_MATCH')))support.push(id+' proves audited delivery bytes match: '+String(recordValue(record,'PRE_DELIVERY_SHA256')||'UNKNOWN'));else unresolved.push('UNAUTHORIZED_ARTIFACT_IDENTITY:'+id);}return {proposition:'Delivered artifact satisfies '+req,support,unresolved:[...new Set(unresolved)]};}
 
@@ -753,11 +778,49 @@ function stage16CorrectionPlan(project){
   const executionOnly=items.filter(x=>x.actionType==='NO_SPECIFICATION_CHANGE').length,human=items.filter(x=>x.actionType==='HUMAN_AUTHORITY').length,controlled=items.filter(x=>x.actionType==='CONTROLLED_CORRECTION').length,heading=controlled||human?'Correct the established root cause'+(items.length===1?'':'s'):'No specification correction required',explanation=(controlled?controlled+' controlled correction'+(controlled===1?'':'s')+' required. ':'')+(human?human+' human-authority correction'+(human===1?'':'s')+' required. ':'')+(executionOnly?executionOnly+' execution-only defect'+(executionOnly===1?' requires':'s require')+' no specification edit. ':'')+'The application preserves prior versions and determines downstream invalidation and rerun scope.';
   return {actionType:controlled?'CONTROLLED_CORRECTION':human?'HUMAN_AUTHORITY':'NO_SPECIFICATION_CHANGE',heading,explanation,items};
 }
-function operationalNextAction(project,currentStage){const stage=Number(currentStage||1),requests=unresolvedHumanRequests(project,stage);if(requests.length)return 'Answer the current human-only question(s). Saving the answer will invalidate the old instruction and generate a replacement for this same stage.';if(stage===16){const correction=stage16CorrectionPlan(project);return correction.heading+'. '+correction.explanation;}if(stage===3||stage===4)return 'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. It consumes the canonical Stage 01 intent-statement ledger. Do not attach, resend, reopen, or otherwise reuse the original intent file.';if([23,24].includes(stage)){const reviewer=records(project,'freshContexts').filter(r=>isActiveRecord(r)&&Number(r.stage)===stage).at(-1);if(!reviewer)return 'Open a fresh independent reviewer context and register its identifier in this stage. The application will bind that identity into the controlling prompt before you send any product or review material.';}const plan=testExecutionPlan(project),relevant=[12,22,23,24].includes(stage)?plan.items:[];const blocked=relevant.find(i=>!i.executableNow);if(blocked)return 'Blocked: '+blocked.testId+' requires '+(blocked.requiredCapability||'a valid execution capability')+'. '+(blocked.blockingReason||'Required execution evidence is not currently obtainable.');const item=relevant.find(i=>i.operatorAction!=='NO_ACTION');if(item){const files=item.requiredArtifactNames.length?' Send '+item.requiredArtifactIds.map((id,n)=>id+' ('+(item.requiredArtifactNames[n]||'file')+')').join(', ')+'.':'';const withheld=item.handoff.withhold.length?' Do not send '+item.handoff.withhold.map(x=>x.artifactIdOrCategory).join(', ')+'.':'';const back=item.handoff.expectBack.length?' Return '+item.handoff.expectBack.map(x=>x.filenameOrPattern||x.kind).join(', ')+'.':'';if(item.operatorAction==='SEND_TO_INDEPENDENT_REVIEWER')return 'Open a fresh independent reviewer context and use the current verifier instruction.'+files+withheld+back;if(item.operatorAction==='SEND_TO_TOOL_AGENT')return 'Run the current instruction in an environment with '+item.requiredCapability+'.'+files+withheld+back;if(item.operatorAction==='HUMAN_INSPECTION')return 'Human inspection required: perform the current inspection checklist and preserve the requested observation evidence.';if(item.operatorAction==='USE_EXTERNAL_SYSTEM')return 'Use the required external system ('+item.requiredCapability+') and return its exact result/evidence.';}
-  if(relevant.length&&relevant.every(i=>i.operatorAction==='NO_ACTION'))return 'No external action required. The application can perform the current deterministic verification route.';return 'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Return only its final structured JSON (and any required returned files) when the external work or conversation is complete.';}
+const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);
+function actionReceiptState(project,stage){
+  const latestReceipt=safe(project?.projectData?.outputReceipts).filter(item=>Number(item.stage)===Number(stage)).at(-1)||null;
+  const latestAccepted=acceptedChanges(project,stage).at(-1)||null;
+  return {
+    canonicalStateChanged:latestReceipt?.canonicalStateChanged===true||Boolean(latestAccepted&&latestReceipt?.canonicalStateChanged!==false),
+    acceptedChange:latestReceipt?.acceptedChange||latestReceipt?.changeId||latestAccepted?.changeId||null,
+    downstreamInvalidated:safe(latestReceipt?.downstreamInvalidated||latestReceipt?.invalidatedStages),
+    newPromptRequired:Boolean(latestReceipt?.newPromptRequired)
+  };
+}
+function actionEnvelope(project,stage,values={}){
+  const receipt=actionReceiptState(project,stage);
+  const action={
+    actionType:'PASTE_FINAL_JSON',heading:'Complete the current stage',explanation:'Return the current final structured response and any required returned files.',primaryButton:null,secondaryAction:null,
+    filesToSend:[],filesToWithhold:[],expectedReturnFiles:[],blockingReason:null,
+    ...receipt,...values
+  };
+  if(!ACTION_TYPES.includes(action.actionType))throw new Error('Unknown operational action type: '+action.actionType+'.');
+  action.filesToSend=safe(action.filesToSend);action.filesToWithhold=safe(action.filesToWithhold);action.expectedReturnFiles=safe(action.expectedReturnFiles);action.downstreamInvalidated=safe(action.downstreamInvalidated);
+  return action;
+}
+function operationalNextAction(project,currentStage){
+  const stage=Number(currentStage||1),requests=unresolvedHumanRequests(project,stage);
+  const proposals=safe(project?.projectData?.responseProposals).filter(item=>Number(item.stage)===stage&&!item.invalidatedBy&&['PENDING','PENDING_OPERATOR_REVIEW'].includes(upper(item.status||item.state)));
+  if(proposals.length)return actionEnvelope(project,stage,{actionType:'REVIEW_PROPOSAL',heading:'Review the proposed canonical change',explanation:'Validation succeeded. Review the current value beside the proposed value, provenance, and validation result before accepting or rejecting this proposal.',primaryButton:'Review proposal'});
+  if(requests.length)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Answer the current human-only question',explanation:'Continue the human conversation. Saving an answer creates a new User Job Input version, invalidates the old prompt and proposal, and requires a replacement prompt for this same stage.',primaryButton:'Continue conversation',newPromptRequired:true});
+  if(stage===16){const correction=stage16CorrectionPlan(project);if(correction.actionType==='BLOCKED')return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:correction.heading,explanation:correction.explanation,blockingReason:correction.explanation});if(correction.actionType==='HUMAN_AUTHORITY')return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:correction.heading,explanation:correction.explanation,primaryButton:'Provide human authority'});return actionEnvelope(project,stage,{actionType:'REVIEW_PROPOSAL',heading:correction.heading,explanation:correction.explanation,primaryButton:'Review correction'});}
 
-function applicationTestCapabilities(){const rt=globalThis.closedLoopTestRuntime;return Object.freeze(rt?.capabilities?rt.capabilities():[]);}
-function applicationTestSupported(test){const rt=globalThis.closedLoopTestRuntime;return Boolean(rt?.supports&&rt.supports(test)&&schema.validateTestIRTest(test).valid);}
+  if([23,24].includes(stage)){const reviewer=records(project,'freshContexts').filter(r=>isActiveRecord(r)&&Number(r.stage)===stage).at(-1);if(!reviewer){const handoff=executionHandoff(project,{stage,operation:'COMPLETE'});return actionEnvelope(project,stage,{actionType:'AI_REVIEW',heading:'Open a fresh independent reviewer context',explanation:'Use a reviewer context that did not generate the product. Register its external context identifier before sending any product or review material so the application can bind and evaluate independence.',primaryButton:'Register reviewer context',filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack});}}
+  const plan=testExecutionPlan(project),relevant=[12,22,23,24].includes(stage)?plan.items:[];
+  const blocked=relevant.find(item=>!item.executableNow);
+  if(blocked){const missingBytes=!blocked.artifactReady||/artifact|bytes?|file/i.test(String(blocked.blockingReason||'')),handoff=blocked.handoff||{send:[],withhold:[],expectBack:[]};return actionEnvelope(project,stage,{actionType:missingBytes?'ATTACH_REQUIRED_FILES':'BLOCKED',heading:missingBytes?'Attach the exact required files':'Verification is blocked',explanation:blocked.blockingReason||'The declared verification route is not executable with the current capability and artifact state.',primaryButton:missingBytes?'Attach required files':null,filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack,blockingReason:blocked.blockingReason||'Required execution evidence is not currently obtainable.'});}
+  const native=relevant.find(item=>item.executionMode==='APPLICATION_DETERMINISTIC'&&item.executableNow&&(item.operatorAction==='RUN_IN_APP'||item.operatorAction==='NO_ACTION'));
+  if(native){const handoff=native.handoff||{send:[],withhold:[],expectBack:[]};return actionEnvelope(project,stage,{actionType:'RUN_APP_TESTS',heading:'Run application verification',explanation:'No external action is required for the current supported deterministic test. The application will execute the registered Test IR against the exact verified inputs and record an application-owned result.',primaryButton:'Run tests',filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack});}
+  const item=relevant.find(item=>item.operatorAction!=='NO_ACTION');
+  if(item){const handoff=item.handoff||{send:[],withhold:[],expectBack:[]},common={filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack};if(item.operatorAction==='SEND_TO_INDEPENDENT_REVIEWER')return actionEnvelope(project,stage,{...common,actionType:'AI_REVIEW',heading:'Send to a fresh independent reviewer',explanation:'Prepare the exact bounded verification package, send only the listed material, withhold the listed context, and return the contracted structured result and evidence.',primaryButton:'Prepare verification package'});if(item.operatorAction==='SEND_TO_TOOL_AGENT')return actionEnvelope(project,stage,{...common,actionType:'EXTERNAL_AGENT_TOOL',heading:'Run verification with the required external tool capability',explanation:'Use an external tool-capable environment that actually provides '+(item.requiredCapability||'the declared capability')+'. Send the exact listed files and return the contracted evidence.',primaryButton:'Prepare verification package'});if(item.operatorAction==='HUMAN_INSPECTION')return actionEnvelope(project,stage,{...common,actionType:'HUMAN_INSPECTION',heading:'Human inspection is required',explanation:'Perform the exact inspection and preserve an explicit human-owned observation. An AI assertion that a human inspected the product is insufficient.',primaryButton:'Open inspection instructions'});if(item.operatorAction==='USE_EXTERNAL_SYSTEM')return actionEnvelope(project,stage,{...common,actionType:'EXTERNAL_SYSTEM',heading:'Use the required external system',explanation:'Perform the declared operation in '+(item.requiredCapability||'the required external system')+' and return evidence attributable to that system.',primaryButton:'Prepare external-system package'});}
+  if(stage===1)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Continue Stage 01 intake with the agent',explanation:'Talk with the agent until every human-only question that must be asked now is answered or explicitly deferred. Paste final JSON only after the conversation is complete.',primaryButton:'Continue conversation'});
+  return actionEnvelope(project,stage,{actionType:'PASTE_FINAL_JSON',heading:'Return the final structured response',explanation:'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Continue the external work or conversation until the executor is ready to return one final strict JSON response and any required files.',primaryButton:'Paste final JSON'});
+}
+
+function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}
+function applicationTestSupported(test){return schema.validateTestIRTest(test).valid;}
 const TEST_EXECUTION_ACTIONS=Object.freeze({
   APPLICATION_DETERMINISTIC:'No operator execution is required only when the exact REQUIRED_CAPABILITY names a registered application-native test executor. Otherwise request a corrected test definition; the browser must not pretend it can run the test.',
   EXTERNAL_AGENT_TOOL:'Use the generated verification instruction in an external agent/tool environment that actually has the declared capability and exact required artifacts, then ingest its structured result and evidence.',
@@ -793,24 +856,6 @@ function recordApplicationDeterministicResult(project,{testId,productId,runtimeR
   const evidence=commandRecord(project,'evidenceRecords',{APPLICATION_EVIDENCE_KIND:'APPLICATION_DETERMINISTIC_EXECUTION',APPLICATION_EVIDENCE_DESCRIPTION:`Application-native deterministic execution evidence for ${tid}.`,APPLICATION_EVIDENCE_CONTENT:JSON.stringify(evidencePayload),SHA256:identityHash,STATUS:'CURRENT'},{stage:22,source:'APPLICATION_TEST_RUNTIME'});
   const result=commandRecord(project,'deterministicResults',{PRODUCT_ID:pid,PRODUCT_SHA256:hash.sha256Value(artifactIdentities),TEST_ID:tid,APPLICATION_DETERMINATION:determination,RUNTIME_VERSION:evidencePayload.runtimeVersion,TEST_SPEC_SHA256:specSha256,INPUT_ARTIFACT_IDENTITIES:JSON.stringify(artifactIdentities),RUNTIME_OBSERVATIONS:JSON.stringify(safe(runtimeResult?.observations))},{stage:22,source:'APPLICATION_TEST_RUNTIME'});result.relationships={...(result.relationships||{}),PRODUCT_ID:pid,TEST_ID:tid};result.evidenceRefs=[recordId(evidence,'evidenceRecords')];result.nativeExecutionIdentitySha256=identityHash;refreshRecordHashes(result,'deterministicResults');addHistory(project,'APPLICATION_TEST_EXECUTED',{stage:22,recordId:recordId(result,'deterministicResults'),testId:tid,productId:pid,determination,evidenceId:recordId(evidence,'evidenceRecords'),testSpecSha256:specSha256,inputArtifactIds:artifactIdentities.map(x=>x.artifactId)});recalculate(project);return result;
 }
-
-function stage01IntakeManifest(project){
-  ensureShape(project);const inputVersion=String(project.job?.CURRENT_INPUT_VERSION||'UNKNOWN'),entries=[],seen=new Set();
-  const add=(sourceKind,sourceIdentity,location,value)=>{if(value===undefined||value===null||String(value).trim()==='')return;const rawValueHash=hash.sha256Value(value),inputId='INPUT-'+hash.sha256Value({inputVersion,sourceKind,sourceIdentity,location,rawValueHash}).slice(0,20).toUpperCase();if(seen.has(inputId))return;seen.add(inputId);entries.push({inputId,sourceKind,sourceIdentity,location,rawValueHash,value:clone(value)});};
-  for(const [fieldName,definition] of Object.entries(schema.JOB_FIELDS||{}))if([schema.PRODUCER.HUMAN,schema.PRODUCER.HUMAN_DECISION].includes(definition.producer))add('JOB_FIELD',fieldName,fieldName,project.job?.[fieldName]);
-  for(const [i,answer] of safe(project.projectData?.humanInputAnswers).entries())add('HUMAN_ANSWER',String(answer.answerId||answer.requestId||i+1),String(answer.requestId||i+1),answer.answer??answer.value??answer.response??'');
-  for(const artifact of records(project,'artifacts').filter(record=>Number(record.stage)===1)){const artifactId=recordId(artifact,'artifacts'),filename=String(recordValue(artifact,'FILENAME')||artifactId),identity={artifactId,filename,sha256:String(recordValue(artifact,'SHA256')||''),byteSize:Number(recordValue(artifact,'BYTE_SIZE')||0),role:String(recordValue(artifact,'ROLE')||'STAGE_ARTIFACT'),availability:String(recordValue(artifact,'AVAILABILITY')||'UNKNOWN')};add('SUPPLIED_ARTIFACT',artifactId,filename,identity);}
-  return {schema:'closed-loop-intake-manifest/1',jobId:String(project.job?.JOB_ID||''),inputVersion,entries,coverageDenominator:entries.length,manifestSha256:hash.sha256Value(entries.map(x=>({inputId:x.inputId,rawValueHash:x.rawValueHash})))};
-}
-function stage04ObligationManifest(project){
-  ensureShape(project);const scope=currentScope(project),entries=[],seen=new Set();const add=(sourceKind,sourceIdentity,location,value)=>{if(value===undefined||value===null)return;const text=typeof value==='string'?value.trim():JSON.stringify(value);if(!text||['NONE','UNKNOWN','NOT APPLICABLE','N/A'].includes(text.toUpperCase()))return;const rawValueHash=hash.sha256Value(value),obligationId='OBL-'+hash.sha256Value({sourceKind,sourceIdentity,location,rawValueHash,inputVersion:scope.inputVersion,sourceSetVersion:scope.sourceSetVersion}).slice(0,20).toUpperCase();if(seen.has(obligationId))return;seen.add(obligationId);entries.push({obligationId,sourceKind,sourceIdentity,location,rawValueHash,value:clone(value)});};
-  for(const item of stage01IntakeManifest(project).entries)add('HUMAN_INPUT',item.inputId,item.location,item.value);
-  for(const fieldName of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'])add('STAGE01_JOB_DEFINITION','STAGE-01',fieldName,project.job?.[fieldName]);
-  for(const record of recordsForCurrentScope(project,'intentStatements'))if(upper(recordValue(record,'REQUIREMENT_RELEVANCE'))==='REQUIREMENT')add('STAGE01_INTENT',recordId(record,'intentStatements'),'EXACT_STATEMENT',recordValue(record,'EXACT_STATEMENT'));
-  for(const record of recordsForCurrentScope(project,'research'))for(const fieldName of ['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'])add('STAGE03_RESEARCH',recordId(record,'research'),fieldName,recordValue(record,fieldName));
-  for(const record of recordsForCurrentScope(project,'candidateRequirements'))add('STAGE03_CANDIDATE_OBLIGATION',recordId(record,'candidateRequirements'),'CANDIDATE_OBLIGATION',recordValue(record,'CANDIDATE_OBLIGATION'));
-  return {schema:'closed-loop-obligation-manifest/1',jobId:String(project.job?.JOB_ID||''),scope,entries,obligationCount:entries.length,manifestSha256:hash.sha256Value(entries.map(x=>({obligationId:x.obligationId,rawValueHash:x.rawValueHash})))};
-}
 function operationalMetrics(project){
   ensureShape(project);const history=safe(project.projectData.history),validations=safe(project.projectData.responseValidations),proposals=safe(project.projectData.responseProposals),releases=safe(project.projectData.releaseRecords),accepted=safe(project.projectData.acceptedChanges).length,rejected=safe(project.projectData.rejectedResponses).length,stale=proposals.filter(x=>x.status==='STALE'||x.invalidatedBy).length,defects=confirmedDefects(project),baselineEvent=history.find(x=>x.type==='BASELINE_FROZEN')?.eventSequence||Infinity,identityMismatches=records(project,'artifactIdentities',{active:false}).filter(r=>!truth(recordValue(r,'EXACT_HASH_MATCH'))||!truth(recordValue(r,'EXACT_SIZE_MATCH'))).length,regressionRecurrences=records(project,'regressionExecutions',{active:false}).filter(r=>upper(recordValue(r,'PHASE'))!=='PRE_CORRECTION'&&['VIOLATED','FAILED','FAIL'].includes(upper(recordValue(r,'RESULT')))).length;
   const activeRuns=records(project,'runs'),iterationIds=[...new Set(activeRuns.map(r=>String(recordValue(r,'ITERATION_ID')||r.scope?.iterationId||'')).filter(Boolean))],establishedIterations=new Set(iterationIds.filter(iterationId=>evaluateContextIndependence(project,{role:'RUN_BATCH',iterationId}).determination==='APPLICATION_ESTABLISHED')),completedRuns=activeRuns.filter(r=>establishedIterations.has(String(recordValue(r,'ITERATION_ID')||r.scope?.iterationId||''))&&['COMPLETED','SATISFIED','SUCCESS','PASSED'].includes(upper(recordValue(r,'EXECUTION_STATUS')||r.completionState||r.status||''))).length,independentVerifications=records(project,'verification').filter(r=>releaseVerificationTrust(project,r).determination==='APPLICATION_ESTABLISHED').length,independentOps=completedRuns+independentVerifications,silentFailures=defects.filter(d=>Number(d.eventSequence||Infinity)>baselineEvent).length;
@@ -818,11 +863,11 @@ function operationalMetrics(project){
 }
 
 globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
-  version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,
+  version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,
   clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,reconcileArtifactCustodyVerification,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,recordApplicationDeterministicResult,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
-  unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,currentIntentStatements,intentStatementRequiresRequirement,confirmedDefects,unresolvedMaterialDefects,
-  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,stage01IntakeManifest,stage04ObligationManifest,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
+  unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
+  currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,intakeCoverageManifest,parseCapturedInputSet,evaluateIntakeAccounting,obligationManifest,evaluateObligationAccounting,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
   recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
 })();

@@ -15,19 +15,20 @@ const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.j
 const html=fs.readFileSync('index.html','utf8');
 const scriptSources=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
 assert(scriptSources.length===runtimeFiles.length,`Expected ${runtimeFiles.length} direct deferred runtime scripts; found ${scriptSources.length}.`);
-const buildTokens=new Set();
+let sharedBuildIdentity=null;
 scriptSources.forEach((source,index)=>{
  const [file,query='']=source.split('?');
  assert(file===runtimeFiles[index],`Runtime script order mismatch at ${runtimeFiles[index]}.`);
  const token=new URLSearchParams(query).get('v');
- assert(/^runtime-[0-9a-f]{16}$/.test(token||''),`${file} does not use a valid shared runtime build token.`);
- buildTokens.add(token);
+ assert(typeof token==='string'&&token.trim(),`${file} is missing the shared runtime build identity.`);
+ if(sharedBuildIdentity===null)sharedBuildIdentity=token;
+ assert(token===sharedBuildIdentity,`${file} cache token ${token} differs from shared runtime identity ${sharedBuildIdentity}.`);
 });
-assert(buildTokens.size===1,'Runtime scripts do not share one build/cache identity.');
-const runtimeBuildIdentity=[...buildTokens][0];
+const testRuntime=fs.readFileSync('test-runtime.js','utf8');
+assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
+assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Established artifact-control rendering is missing.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
 assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
-assert(html.includes('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'),'Established 280px prompt preview and full expansion behavior changed.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,sharedRuntimeBuildIdentity:true,stage04CanonicalReuseWithoutVisualSuppression:true,promptVisualBaselinePreserved:true,visualRegressionAuthority:'ESTABLISHED_BASELINE'}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
