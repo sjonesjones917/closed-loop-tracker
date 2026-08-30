@@ -44,7 +44,7 @@ jobs:
           replace_once(
               'workflow-engine.js',
               "if(stage===4)return 'Use the current Stage 04 instruction. It already carries current User Job Input, the accepted Stage 01 job definition, and accepted Stage 03 findings. Do not attach or resend the original intent file. If required canonical context is incomplete, return the exact earlier-stage deficiency instead of asking the user to provide the same material again.';",
-              "if(stage===4)return 'Use the current Stage 04 instruction. The application supplies the accepted canonical Stage 01 intake and current Stage 03 research; no original intake file is required or used. When the agent finishes, paste its final JSON response here.';"
+              "if(stage===4)return 'Use the current Stage 04 instruction. The application supplies current User Job Input, the accepted canonical Stage 01 intake, and current Stage 03 research; no original intake file is required or used. When the agent finishes, paste its final JSON response here.';"
           )
 
           index = Path('index.html')
