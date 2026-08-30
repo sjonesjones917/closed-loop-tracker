@@ -32,6 +32,10 @@ old="    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!re
 new="    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('Never ask the human to repeat information available in supplied materials'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
 if old not in s: raise SystemExit('obsolete patent-fixture assertion not found')
 s=s.replace(old,new)
+old="  if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');"
+new="  if(!r.prompt.includes('STAGE 01 CLARIFICATION EXPERIENCE')||!r.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!r.prompt.includes('Never ask the human to repeat information available in supplied materials')||!r.prompt.includes('do not atomize requirements or perform later-stage work'))throw new Error('Stage 01 exhaustive subject-neutral intake behavior is missing.');"
+if old not in s: raise SystemExit('obsolete Stage01 specialist fixture assertion not found')
+s=s.replace(old,new)
 old="""  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},
   {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},
   {...original,prompt:original.prompt.replace('PATENT / REGULATED FILING','GENERAL DOCUMENT')},
