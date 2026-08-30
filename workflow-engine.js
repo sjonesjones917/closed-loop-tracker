@@ -326,11 +326,19 @@ function gate(stage,project){
       break;
     }
     case 3:{
-      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
+      requireAccepted();const sourceIds=recordsForCurrentScope(project,'sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
       if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}
-      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;
+      requireCount('research',1);const researched=new Set(recordsForCurrentScope(project,'research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);
+      const researchData=project.stages[3]?.agentData||{};
+      if(!truth(researchData.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');
+      if(!truth(researchData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 second conflict and exception pass is incomplete.');
+      if(numeric(researchData.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires a completed second conflict and exception pass.');
+      if(!falsey(researchData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 is not exhausted because the latest pass still found new material.');
+      break;
     }
     case 4:{
+      if(project.stages?.[1]?.status!=='COMPLETE')reasons.push('Stage 04 requires exhausted Stage 01 human-authority intake.');
+      if(project.stages?.[3]?.status!=='COMPLETE')reasons.push('Stage 04 requires exhausted Stage 03 source research.');
       requireAccepted();requireCount('requirements',1);
       for(const req of collection('requirements')){
         for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: ${name} is missing.`);
