@@ -63,6 +63,8 @@ jobs:
           const stage1="Perform complete human-authority intake only.";
           if(!s.includes(stage1))throw new Error('Stage 01 directive anchor missing.');
           s=s.replace(stage1,stage1+" The user supplies project information once. Capture every materially relevant project statement that is actually available now so later stages can reuse it without asking the user to resupply it. The durable intake manifest and structured INPUT_SET_CONTENTS are the downstream memory boundary.");
+          if(!s.includes('FILES OR CONTEXT YOU MUST NOT RECEIVE'))throw new Error('Prompt handoff withheld-material heading anchor missing.');
+          s=s.replace('FILES OR CONTEXT YOU MUST NOT RECEIVE','FILES YOU MUST NOT RECEIVE');
           fs.writeFileSync('prompt-engine.js',s);
           NODE
           node <<'NODE'
