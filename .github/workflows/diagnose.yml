@@ -1,0 +1,11 @@
+name: Identify failing Test IR contract command
+on:
+  push:
+    branches: [fix/final-runtime-authority-20260830]
+jobs:
+  contract: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-v3-contract.mjs}]}
+  migration: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-v3-migration.mjs}]}
+  runtime: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-test-runtime.mjs}]}
+  runtime-v3: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-test-runtime-v3.mjs}]}
+  runtime-limits: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-test-runtime-limits.mjs}]}
+  hash: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-hash.mjs}]}
