@@ -29,7 +29,7 @@ scriptSources.forEach((source,index)=>{
  assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime bundle identity ${runtimeBuildIdentity}.`);
 });
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
-assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4){const intake=engine.currentIntakeCoverageManifest(current),obligations=engine.currentObligationManifest(current);"),'Stage 04 must render the captured canonical intake/obligation state instead of a generic repeat-attachment control.');
+assert(appCore.includes('Do not reattach or re-enter the original intent file.'),'Stage 04 must explicitly tell the operator that captured intent is reused without reattachment.');
 
 console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));
