@@ -11,10 +11,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: independent-review-contexts-current-main
-          fetch-depth: 0
+      - run: python repair-current-independent-review.py
       - run: |
-          git fetch origin bind-independent-review-contexts-20260830
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git cherry-pick 9c4e74de096c5b9206e4fd7068f819032f180263
+          git add workflow-schema.js workflow-engine.js prompt-engine.js app-core.js
+          git commit -m "Bind independent verification to reviewer contexts"
           git push origin HEAD:independent-review-contexts-current-main
