@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply second-pass conformance corrections
+      - name: Apply controlling conformance corrections
         run: |
           node spec-v3-followup-fix.mjs
           node spec-v3-followup.mjs
@@ -33,7 +33,9 @@ jobs:
           node --check project-store.js
           node --check app-core.js
           node --check verify-spec-v3.mjs
+          node --check verify-intent-exhaustion.mjs
           node verify-spec-v3.mjs
+          node verify-intent-exhaustion.mjs
           node verify-test-runtime.mjs
       - name: Upload patched source for independent audit
         if: always()
@@ -45,12 +47,12 @@ jobs:
             *.mjs
             *.html
             .github/workflows/pages.yml
-      - name: Commit second-pass implementation
+      - name: Commit verified implementation
         if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm -f spec-v3-followup.mjs spec-v3-followup-fix.mjs
+          git rm -f spec-v3-followup.mjs spec-v3-followup-fix.mjs spec-v3-followup-2.mjs spec-v3-followup-3.mjs
           git add -A
-          git commit -m "Complete v3 ownership action and runtime boundaries"
+          git commit -m "Exhaust intent and research before Stage 4"
           git push origin HEAD:spec-v3-controlling-bundle
