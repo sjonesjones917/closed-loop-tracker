@@ -28,8 +28,10 @@ jobs:
           git fetch origin main
           git merge --no-edit -X ours origin/main
           rm -f .stage4-ci-trigger
-          rm -f .github/workflows/stage4-rebase-and-prove.yml
-          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort | tr '\n' ' ')" = "pages.yml "
+          find .github/workflows -maxdepth 1 -type f ! -name pages.yml -print -delete
+          printf 'Permanent workflows after cleanup:\n'
+          find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort)" = "pages.yml"
       - name: Refresh the shared runtime identity from exact runtime bytes
         shell: bash
         run: |
@@ -77,7 +79,7 @@ jobs:
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
           ! grep -R "materialize-stage4-intent-reuse\|stage4-rebase-and-prove" .github/workflows/pages.yml
-          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort | tr '\n' ' ')" = "pages.yml "
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort)" = "pages.yml"
       - name: Commit the conflict-resolved permanent tree
         shell: bash
         run: |
