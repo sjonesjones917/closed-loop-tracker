@@ -11,14 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 3
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Apply complete stage prompt/context repair
         run: |
           python3 .repair-all-stage-prompts.py
-          git show HEAD^:.github/workflows/pages.yml > /tmp/pages.final.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace('Research the complete current accepted Stage 02 source set exhaustively and do not atomize requirements yet.','Research only the complete current accepted Stage 02 independent external source set exhaustively and do not atomize requirements yet.')
+          p.write_text(s)
+          PY
+          git show c534b690d800e9f079f12ed068217f05263fdc26:.github/workflows/pages.yml > /tmp/pages.final.yml
           python3 - <<'PY'
           from pathlib import Path
           p=Path('/tmp/pages.final.yml'); s=p.read_text()
@@ -33,6 +39,16 @@ jobs:
           PY
           mv /tmp/pages.final.yml .github/workflows/pages.yml
           rm .repair-all-stage-prompts.py
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=file=>{const b=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(file=>`${file}:${blob(file)}\n`).join('');
+          const id='runtime-'+crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16);
+          let html=fs.readFileSync('index.html','utf8');
+          html=html.replace(/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]{16}("\s*><\/script>)/g,`$1${id}$2`);
+          fs.writeFileSync('index.html',html);
+          NODE
       - name: Prove syntax, schema, prompts, runtime, ingestion, workflow, and lifecycle
         run: |
           for file in *.js *.mjs; do node --check "$file"; done
