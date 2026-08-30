@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
 {
   const path='prompt-engine.js';
   let s=fs.readFileSync(path,'utf8');
@@ -63,4 +64,16 @@ import fs from 'node:fs';
     fs.writeFileSync(path,s);
     console.log('patched Stage 04 to include current User Job Input directly in the obligation universe');
   }else console.log('Stage 04 current User Job Input union already patched');
+}
+{
+  const path='verify.mjs';
+  const baseCommit='f81c10a3bea0e558edf226a1a26cc720551b6503';
+  let s=execFileSync('git',['show',`${baseCommit}:${path}`],{encoding:'utf8'});
+  s=s.replace("const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];","const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','test-runtime.js','test-worker.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];");
+  s=s.replace("for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});","for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});");
+  s=s.replace("const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;","const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,runtime=globalThis.closedLoopTestRuntime,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;");
+  s=s.replace("if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');","if(!core||!schema||!runtime||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer runtime failed to load.');");
+  s=s.replace("orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']","orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']");
+  fs.writeFileSync(path,s);
+  console.log('restored complete core verifier and migrated runtime graph to Test IR order');
 }
