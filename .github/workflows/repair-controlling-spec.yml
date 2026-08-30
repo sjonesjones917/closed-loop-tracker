@@ -1,5 +1,7 @@
 name: One-time controlling specification materializer
 on:
+  push:
+    branches: [fix/controlling-spec-final-20260830]
   pull_request:
     branches: [main]
   workflow_dispatch:
