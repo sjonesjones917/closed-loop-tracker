@@ -1,8 +1,13 @@
 import fs from 'node:fs';
 const path='verify-browser.mjs';
 let s=fs.readFileSync(path,'utf8');
-const old="retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02'";
-const neu="retained.stages['1'].status==='COMPLETE'&&Number(String(retained.job.CURRENT_STAGE).replace(/\\D/g,''))===2";
-if(!s.includes(old))throw new Error('retained Stage 02 browser assertion anchor missing');
-fs.writeFileSync(path,s.replace(old,neu));
+const oldStage="retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02'";
+const newStage="retained.stages['1'].status==='COMPLETE'&&Number(String(retained.job.CURRENT_STAGE).replace(/\\D/g,''))===2";
+if(!s.includes(oldStage))throw new Error('retained Stage 02 browser assertion anchor missing');
+s=s.replace(oldStage,newStage);
+const oldSchema="'closed-loop-stage-response/2'";
+const newSchema="'closed-loop-stage-response/3'";
+if(!s.includes(oldSchema))throw new Error('browser response schema assertion anchor missing');
+s=s.replace(oldSchema,newSchema);
+fs.writeFileSync(path,s);
 fs.rmSync('.patch-browser-test.mjs');
