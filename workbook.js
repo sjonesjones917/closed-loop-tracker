@@ -762,6 +762,21 @@ function migrateState(p){
     if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
     return migrated;
   }
+  if(p.schema==='closed-loop-project/2'&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
+    const migrated=JSON.parse(JSON.stringify(p));
+    const original=JSON.parse(JSON.stringify(p));
+    migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;
+    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
+    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
+    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
+    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),payload:original});
+    if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:'closed-loop-project/2',records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}
+    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
+    for(const prompt of Array.isArray(migrated.projectData.generatedPrompts)?migrated.projectData.generatedPrompts:[])if(!prompt.invalidatedBy)prompt.invalidatedBy='PROJECT_SCHEMA_MIGRATED_TO_V3';
+    for(const proposal of Array.isArray(migrated.projectData.responseProposals)?migrated.projectData.responseProposals:[])if(!proposal.invalidatedBy&&String(proposal.status||'').startsWith('PENDING')){proposal.invalidatedBy='PROJECT_SCHEMA_MIGRATED_TO_V3';proposal.status='STALE';}
+    if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Project /2 to /3 migration requires exactly 30 stages.');
+    return migrated;
+  }
   if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
   const migrated=JSON.parse(JSON.stringify(p));
   const original=JSON.parse(JSON.stringify(p));
