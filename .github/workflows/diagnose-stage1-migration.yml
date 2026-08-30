@@ -1,0 +1,43 @@
+name: Diagnose retained Stage 1 migration
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+    paths: [.github/workflows/diagnose-stage1-migration.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Print authoritative migration state
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const legacy=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
+          const p=globalThis.closedLoopCore.migrateState(legacy);
+          const stage1=p.stages?.[1]||p.stages?.['1']||{};
+          const prompt=globalThis.closedLoopPromptEngine.buildPromptRecord(1,p);
+          const stage4=globalThis.closedLoopPromptEngine.buildPromptRecord(4,{...p,stages:{...p.stages,3:{...(p.stages?.[3]||{}),status:'COMPLETE',gate:{complete:true,blocked:false,reasons:[]},agentData:{ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'}}}},{scope:{sourceSetVersion:p.job?.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',requirementsVersion:p.job?.CURRENT_REQUIREMENTS_VERSION||'NOT APPLICABLE'}});
+          console.log(JSON.stringify({
+            schema:p.schema,
+            jobId:p.job?.JOB_ID,
+            inputVersion:p.job?.CURRENT_INPUT_VERSION,
+            jobObjective:p.job?.EXACT_USER_OBJECTIVE_VERBATIM,
+            jobExplicitRequirements:p.job?.EXPLICIT_USER_REQUIREMENTS,
+            stage1Status:stage1.status,
+            stage1AgentData:stage1.agentData,
+            stage1AcceptedData:stage1.acceptedData,
+            stage1HumanData:stage1.humanData,
+            stage1Manifest:prompt.contextManifest?.intakeCoverageManifest,
+            stage4Manifest:stage4.contextManifest?.obligationManifest,
+            archives:(p.projectData?.nonOperationalImportedPayloads||[]).map(x=>({operational:x.operational,schema:x.payload?.schema,hasUserJobInput:Boolean(x.payload?.userJobInput),hasAuthorizedOperation01:Boolean(x.payload?.userJobInput?.authorizedOperation01)}))
+          },null,2));
+          NODE
