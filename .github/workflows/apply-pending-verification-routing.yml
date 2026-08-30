@@ -1,0 +1,31 @@
+name: Apply pending verification routing repair
+on:
+  push:
+    branches: [fix/pending-verification-routing-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="const plan=testExecutionPlan(project),relevant=stage===12?plan.items:stage===22?plan.items.filter(item=>item.testType==='DETERMINISTIC'):stage===23?plan.items.filter(item=>item.testType==='MEANING'):stage===24?plan.items.filter(item=>item.testType==='ADVERSARIAL'):[];"
+          new="const plan=testExecutionPlan(project),allRelevant=stage===12?plan.items:stage===22?plan.items.filter(item=>item.testType==='DETERMINISTIC'):stage===23?plan.items.filter(item=>item.testType==='MEANING'):stage===24?plan.items.filter(item=>item.testType==='ADVERSARIAL'):[],resultCollection=stage===22?'deterministicResults':stage===23?'meaningResults':stage===24?'adversarialResults':null,completedTestIds=resultCollection?new Set(recordsForCurrentScope(project,resultCollection).map(record=>String(recordValue(record,'TEST_ID')||record.relationships?.TEST_ID||'')).filter(Boolean)):new Set(),relevant=resultCollection?allRelevant.filter(item=>!completedTestIds.has(String(item.testId))):allRelevant;"
+          if old not in s: raise SystemExit('verification relevant anchor not found')
+          s=s.replace(old,new,1)
+          marker="  const blocked=relevant.find(item=>!item.executableNow);"
+          insertion="  if(resultCollection&&allRelevant.length&&!relevant.length){const currentResults=recordsForCurrentScope(project,resultCollection),problems=currentResults.map(result=>evaluateResultConsistency(resultCollection,result,testForResult(project,result),project)).filter(item=>item.determination!=='SATISFIED');if(problems.length)return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:'Current verification found a failure',explanation:'Every applicable '+(stage===22?'deterministic':stage===23?'meaning-based':'adversarial')+' test has a current result, but at least one result is violated, undetermined, contradictory, or insufficiently evidenced. Do not rerun or overwrite the current result to make it disappear. Preserve it as failure evidence and return through root-cause and controlled correction before repeating the affected verification.',blockingReason:problems.flatMap(item=>item.reasons||[]).join('; ')||'Current verification is not fully satisfied.'});}\n"
+          if marker not in s: raise SystemExit('blocked routing anchor not found')
+          s=s.replace(marker,insertion+marker,1)
+          p.write_text(s)
+          PY
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add workflow-engine.js
+          git commit -m "Route only verification tests still missing a current result"
+          git push
