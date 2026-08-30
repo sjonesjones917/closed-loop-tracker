@@ -1,0 +1,25 @@
+name: Apply contextual file controls
+
+on:
+  push:
+    branches:
+      - fix/contextual-file-controls-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/contextual-file-controls-20260830
+      - run: python apply-contextual-file-controls.py
+      - run: |
+          rm -f .github/workflows/apply-contextual-file-controls.yml apply-contextual-file-controls.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Show file controls only when the current stage needs files"
+          git push origin HEAD:fix/contextual-file-controls-20260830
