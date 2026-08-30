@@ -73,7 +73,7 @@ jobs:
           const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
           if(style!==fs.readFileSync('/tmp/visual-style-baseline.txt','utf8'))throw new Error('Visual stylesheet changed.');
           NODE
-          rm .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml
+          rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml
           node --check workbook.js
           node --check app-core.js
           node --check workflow-schema.js
