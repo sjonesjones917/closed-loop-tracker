@@ -70,6 +70,8 @@ console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
 console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
             p.write_text(s[:start]+replacement+s[end:])
           PY
+      - name: Remove temporary workflow before proof
+        run: rm -f .github/workflows/repair-stage4-durable-intent.yml .github/workflows/repair-stage4-minimal-final.yml .github/workflows/diagnose-stage4-repair.yml .github/workflows/diagnose-stage4-tests.yml
       - name: Run complete existing proof
         run: |
           node build-test-project.mjs
@@ -90,7 +92,6 @@ console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
         run: node verify-browser.mjs
       - name: Commit proven repair only
         run: |
-          rm -f .github/workflows/repair-stage4-durable-intent.yml .github/workflows/repair-stage4-minimal-final.yml .github/workflows/diagnose-stage4-repair.yml .github/workflows/diagnose-stage4-tests.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
