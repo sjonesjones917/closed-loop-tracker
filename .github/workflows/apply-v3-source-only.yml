@@ -23,10 +23,11 @@ jobs:
           node upgrade-v3-domain-neutral.mjs
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('verify-test-runtime.mjs'); s=p.read_text().replace("const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:'x'.repeat(64),bytes}}});", "const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);const bytesSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});").replace("sha256:'x'.repeat(64),bytes","sha256:bytesSha256,bytes"); p.write_text(s)
           p=Path('verify-test-runtime-limits.mjs'); p.write_text(p.read_text().replace("assert.deepEqual(timeout.observations,[]);","assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);"))
           p=Path('verify-test-runtime-v3.mjs'); p.write_text(p.read_text().replace('/tolerance/','/tolerance/i'))
-          p=Path('prompt-engine.js'); p.write_text(p.read_text().replace(/[ \t]+$/gm,''))
+          p=Path('prompt-engine.js'); p.write_text(re.sub(r'[ \t]+$', '', p.read_text(), flags=re.M))
           PY
           rm -f upgrade-v3*.mjs v3-upgrade-report.json v3-upgrade-base.log
           git config user.name closed-loop-finalizer
