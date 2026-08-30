@@ -984,9 +984,13 @@ function stageFieldDefinition(stage,name){
   const producer=stageFieldProducer(stage,name),type=STAGE_FIELD_TYPE_OVERRIDES[String(stage)]?.[name]||EXPLICIT_STAGE_FIELD_TYPES[String(stage)]?.[name];if(!type)throw new Error(`Stage ${stage} field ${name} has no explicit type metadata.`);
   return field(name,producer,{requiredAtStage:stage,valueType:type.valueType,enumValues:type.enumValues,nullable:type.nullable,normalizerKey:type.normalizerKey,closedProperties:type.closedProperties,derivationKey:producer===PRODUCER.APPLICATION?`stage${String(stage).padStart(2,'0')}.${name}`:null,responsePath:producer===PRODUCER.AGENT?`/stageData/${name}`:null,help:producer===PRODUCER.APPLICATION?'Read-only; recalculated by the application.':''});
 }
+const ACCOUNTING_STAGE_FIELD_DEFINITIONS=Object.freeze({
+  1:Object.freeze({INTAKE_ACCOUNTING:field('INTAKE_ACCOUNTING',PRODUCER.AGENT,{requiredAtStage:1,valueType:'OBJECT_ARRAY',closedProperties:['unitId','disposition','reason'],help:'Classify every application-enumerated intake unit exactly once.'})}),
+  4:Object.freeze({OBLIGATION_ACCOUNTING:field('OBLIGATION_ACCOUNTING',PRODUCER.AGENT,{requiredAtStage:4,valueType:'OBJECT_ARRAY',closedProperties:['obligationId','disposition','requirementTempKeys','reason'],help:'Account for every application-enumerated obligation exactly once.'})})
+});
 const STAGE_FIELDS=Object.freeze(Object.fromEntries(core.STAGES.map(stage=>[
   stage.number,
-  Object.freeze(Object.fromEntries(stage.fields.map(name=>[name,stageFieldDefinition(stage.number,name)])))
+  Object.freeze({...Object.fromEntries(stage.fields.map(name=>[name,stageFieldDefinition(stage.number,name)])),...(ACCOUNTING_STAGE_FIELD_DEFINITIONS[stage.number]||{})})
 ])));
 
 function recordSchema({title,idField,prefix,stage,fields,required=[],relationships={},provenanceRequired=true,appendOnly=true,ownership,commitPolicy=COLLECTION_POLICIES.APPEND_SCOPED}){
