@@ -1,0 +1,42 @@
+>>> python3 .github/apply_controlling_spec.py
+/home/runner/work/closed-loop-tracker/closed-loop-tracker/.github/apply_controlling_spec.py:17: SyntaxWarning: invalid escape sequence '\s'
+  s=s.replace("  return rows;\n}\nfunction selectJsonPath", "  if(!header)return rows;if(!rows.length)return [];const names=rows.shift();if(new Set(names).size!==names.length)throw new Error('CSV header contains duplicate names.');return rows.map(values=>Object.fromEntries(names.map((name,index)=>[name,values[index]??''])));\n}\nfunction parsedDepth(value,depth=0){if(depth>LIMITS.maxParsedDepth)throw new Error('Parsed structure exceeds deterministic runtime depth limit.');if(value&&typeof value==='object')for(const child of Array.isArray(value)?value:Object.values(value))parsedDepth(child,depth+1);return value;}\nfunction xmlDecode(text){return String(text).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'\"').replace(/&apos;/g,\"'\").replace(/&amp;/g,'&');}\nfunction parseXml(text){const source=String(text);if(/<!DOCTYPE|<!ENTITY/i.test(source))throw new Error('XML DTD/entity declarations are not supported.');const tokenRe=/<\\/?[A-Za-z_][A-Za-z0-9_.:-]*(?:\\s+[A-Za-z_][A-Za-z0-9_.:-]*\\s*=\\s*(?:\"[^\"]*\"|'[^']*'))*\\s*\\/?\s*>|<\\?[^?]*\\?>|<!--[^]*?-->|[^<]+/g;const root={name:'#document',attributes:{},children:[],text:''},stack=[root];let match;while((match=tokenRe.exec(source))){const token=match[0];if(token.startsWith('<?')||token.startsWith('<!--'))continue;if(token.startsWith('</')){const name=token.slice(2,-1).trim();const node=stack.pop();if(!node||node.name!==name)throw new Error('Malformed XML closing tag.');continue;}if(token.startsWith('<')){const selfClosing=/\\/\\s*>$/.test(token),m=token.match(/^<([A-Za-z_][A-Za-z0-9_.:-]*)([^>]*)\\/?\s*>$/);if(!m)throw new Error('Unsupported XML tag syntax.');const attrs={};for(const a of m[2].matchAll(/([A-Za-z_][A-Za-z0-9_.:-]*)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')/g)){if(Object.hasOwn(attrs,a[1]))throw new Error('Duplicate XML attribute.');attrs[a[1]]=xmlDecode(a[2]??a[3]??'');}const node={name:m[1],attributes:attrs,children:[],text:''};stack.at(-1).children.push(node);if(!selfClosing){if(stack.length>LIMITS.maxParsedDepth)throw new Error('XML exceeds deterministic runtime depth limit.');stack.push(node);}continue;}stack.at(-1).text+=xmlDecode(token);}if(stack.length!==1)throw new Error('Malformed XML: unclosed element.');const elements=root.children.filter(x=>x.name!=='#text');if(elements.length!==1)throw new Error('XML requires exactly one document element.');return elements[0];}\nfunction selectXml(value,selector){const text=String(selector||'').trim();if(!/^\\/[A-Za-z_][A-Za-z0-9_.:-]*(?:\\/[A-Za-z_][A-Za-z0-9_.:-]*(?:\\[\\d+\\])?)*(?:\\/@[A-Za-z_][A-Za-z0-9_.:-]*|\\/text\\(\\))?$/.test(text))throw new Error('SELECT_XML supports only absolute element paths, optional one-based [n], terminal @attribute, or terminal text().');const parts=text.slice(1).split('/');if(parts.length>LIMITS.maxSelectorDepth)throw new Error('XML selector exceeds deterministic runtime depth limit.');let node=value;const first=parts.shift();if(node?.name!==first)throw new Error('XML selector root does not match document element.');for(const part of parts){if(part==='text()')return String(node.text||'').trim();if(part.startsWith('@')){const key=part.slice(1);if(!Object.hasOwn(node.attributes||{},key))throw new Error('XML attribute does not exist.');return node.attributes[key];}const m=part.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)(?:\\[(\\d+)\\])?$/);if(!m)throw new Error('Unsupported XML selector token.');const matches=(node.children||[]).filter(x=>x.name===m[1]);const index=m[2]?Number(m[2])-1:0;if(index<0||index>=matches.length)throw new Error('XML selector does not exist.');node=matches[index];}return node;}\nfunction selectJsonPath",1)
+exit=0
+>>> node --check workbook.js
+exit=0
+>>> node --check workflow-schema.js
+exit=0
+>>> node --check workflow-engine.js
+exit=0
+>>> node --check prompt-engine.js
+exit=0
+>>> node --check response-ingestion.js
+exit=0
+>>> node --check test-runtime.js
+exit=0
+>>> node --check verify-controlling-spec.mjs
+exit=0
+>>> node --check verify-test-runtime.mjs
+exit=0
+>>> node verify-controlling-spec.mjs
+verify-controlling-spec: PASS
+exit=0
+>>> node verify-test-runtime.mjs
+workflow-schema.js:981
+  const producer=stageFieldProducer(stage,name),type=STAGE_FIELD_TYPE_OVERRIDES[String(stage)]?.[name]||EXPLICIT_STAGE_FIELD_TYPES[String(stage)]?.[name];if(!type)throw new Error(`Stage ${stage} field ${name} has no explicit type metadata.`);
+                                                                                                                                                                   ^
+
+Error: Stage 1 field INTAKE_ACCOUNTING has no explicit type metadata.
+    at stageFieldDefinition (workflow-schema.js:981:170)
+    at workflow-schema.js:986:65
+    at Array.map (<anonymous>)
+    at workflow-schema.js:986:49
+    at Array.map (<anonymous>)
+    at workflow-schema.js:984:65
+    at workflow-schema.js:1231:3
+    at Script.runInContext (node:vm:149:12)
+    at Object.runInContext (node:vm:301:6)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-test-runtime.mjs:19:127
+
+Node.js v22.23.2
+exit=1
