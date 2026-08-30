@@ -1,0 +1,66 @@
+name: Apply verification independence ownership
+on:
+  push:
+    branches: [fix/verification-independence-owner-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply source correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          schema = Path('workflow-schema.js')
+          text = schema.read_text()
+
+          old_agent = '''      "VERIFIER",
+      "VERIFIER_CONTEXT_ID",
+      "INDEPENDENCE_STATUS",
+      "INPUTS",'''
+          new_agent = '''      "VERIFIER",
+      "VERIFIER_CONTEXT_ID",
+      "INPUTS",'''
+          if old_agent in text:
+              text = text.replace(old_agent, new_agent, 1)
+          elif new_agent not in text:
+              raise SystemExit('verification agent ownership block not found')
+
+          old_app = '''      "VERIFICATION_ID",
+      "REQ_ID",
+      "RUN_ID",
+      "TEST_ID",
+      "DEFECT_ID"
+    ]
+  },
+  "comparisons":'''
+          new_app = '''      "VERIFICATION_ID",
+      "REQ_ID",
+      "RUN_ID",
+      "TEST_ID",
+      "DEFECT_ID",
+      "INDEPENDENCE_STATUS"
+    ]
+  },
+  "comparisons":'''
+          if old_app in text:
+              text = text.replace(old_app, new_app, 1)
+          elif new_app not in text:
+              raise SystemExit('verification application ownership block not found')
+
+          schema.write_text(text)
+          PY
+          rm -f .github/workflows/apply-preflight-independence-ownership.yml
+          rm -f .github/workflows/apply-verification-independence-owner.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js .github/workflows
+          git commit -m "Make verification independence application-owned"
+          git push origin HEAD:fix/verification-independence-owner-20260830
