@@ -1,0 +1,66 @@
+name: One-time live operator-flow repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-live-operator-flow.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Integrate remaining operator-flow corrections
+        shell: python
+        run: |
+          from pathlib import Path
+
+          app = Path('app-core.js')
+          text = app.read_text()
+
+          old = "const applicable=[1,10,17,20,21,25].includes(n),productReady=n!==21||Boolean(currentStageProduct()),fileLocked=locked||!productReady;"
+          new = "const applicable=[1,10,17,20,21,25].includes(n),productReady=n!==21||Boolean(currentStageProduct()),fileLocked=locked||!productReady||(n===1&&current.stages[1].status==='COMPLETE');"
+          if old not in text:
+              raise SystemExit('Stage 01 one-time file-lock source pattern not found')
+          text = text.replace(old, new, 1)
+
+          old = "const intro=n===1?'Attach the original intent file and any other supplied project files here once for Stage 01 intake. After Stage 01 acceptance, later stages consume the canonical captured project data; do not attach or resend these files again.':'Use this control only when the current stage explicitly requires an exact artifact or the agent actually returned a file required by its response contract. Do not reattach, resend, or substitute the original Stage 01 intent file. Actual selected bytes are stored in IndexedDB, hashed by the application, read back, and rehashed before becoming canonical artifact identities. A filename, hash claim, or code block is not file possession.';"
+          new = "const intro=n===1?(String(current.job.SUPPLIED_MATERIALS_INVENTORY||'').trim()?'Attach only the project files or intent material the user actually supplied, and attach each supplied Stage 01 input only once. After Stage 01 acceptance, later stages consume the canonical captured project data; do not attach or resend those original Stage 01 files again.':'No separate intent file is required because none is currently recorded as supplied project material. Attach a file here only if it is genuinely part of the user-supplied Stage 01 project input; do not create or request a duplicate intent file.'): 'Use this control only when the current stage explicitly requires an exact artifact or the agent actually returned a file required by its response contract. Do not reattach, resend, or substitute the original Stage 01 intent file. Actual selected bytes are stored in IndexedDB, hashed by the application, read back, and rehashed before becoming canonical artifact identities. A filename, hash claim, or code block is not file possession.';"
+          if old not in text:
+              raise SystemExit('Stage 01 file-help source pattern not found')
+          text = text.replace(old, new, 1)
+
+          marker = "if(requests.length||n===1&&!current.stages[1].responseDraft)return `<div class=\"notice\"><strong>Continue the external conversation.</strong><br>Do not paste the conversation into the application. Continue until you receive one final strict JSON response.</div>`;"
+          guard = "if([23,24].includes(Number(n))&&!currentReviewerContext(n))return `<div class=\"notice warn\"><strong>Open a fresh independent reviewer context first.</strong><br>Do not paste final JSON yet. Register the new reviewer context on this stage; only then can the application bind and expose the controlling reviewer instruction.</div>`;"
+          if guard not in text:
+              if marker not in text:
+                  raise SystemExit('Reviewer-context interaction marker not found')
+              text = text.replace(marker, guard + marker, 1)
+
+          app.write_text(text)
+
+          index = Path('index.html')
+          html = index.read_text()
+          old = '.expandable-prompt{max-height:80vh}.expandable-prompt.expanded{max-height:none}'
+          new = '.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          if old not in html:
+              raise SystemExit('Prompt geometry source pattern not found')
+          html = html.replace(old, new, 1)
+          index.write_text(html)
+
+          Path('.github/workflows/repair-live-operator-flow.yml').unlink()
+      - name: Commit integrated application behavior
+        run: |
+          git config user.name "closed-loop-repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add app-core.js index.html .github/workflows/repair-live-operator-flow.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Integrate remaining live operator flow"
+          git push origin HEAD:main
