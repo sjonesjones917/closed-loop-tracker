@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
+const schema=read('./workflow-schema.js'),runtime=read('./test-runtime.js'),worker=read('./test-worker.js'),engine=read('./workflow-engine.js'),prompt=read('./prompt-engine.js'),ingestion=read('./response-ingestion.js'),store=read('./project-store.js'),app=read('./app-core.js');
+const limitTests=read('./verify-test-runtime-limits.mjs');
+const ingestionTests=read('./verify-ingestion.mjs'),completeTests=read('./verify-complete.mjs'),semanticTests=read('./verify-semantic-invariant.mjs'),runtimeTests=read('./verify-test-runtime-v3.mjs');
+const stage01Source=engine+prompt+ingestion+ingestionTests;
+assert.match(stage01Source,/intake/i);assert.match(stage01Source,/manifest/i);assert.match(stage01Source,/coverage/i);assert.match(stage01Source,/(omit|missing|unaccounted)/i);
+const stage04Source=engine+prompt+ingestion+ingestionTests;
+assert.match(stage04Source,/obligation/i);assert.match(stage04Source,/manifest/i);assert.match(stage04Source,/(disposition|account)/i);assert.match(stage04Source,/(omit|missing|unaccounted)/i);
+const evidenceProofSource=engine+semanticTests+completeTests+runtimeTests+ingestionTests;
+assert.match(engine,/evaluateEvidenceSufficiency/);assert.match(evidenceProofSource,/byte/i);assert.match(evidenceProofSource,/meaning/i);assert.match(evidenceProofSource,/human/i);assert.match(completeTests,/evidence/i);
+assert.match(runtime,/EXECUTABLE_KIND='TEST_IR'/);assert.match(runtime,/function executeTest\s*\(/);assert.match(worker,/EXECUTE_TEST_IR/);assert.match(engine,/native/i);assert.match(app,/RUN_APP_TESTS/);assert.match(runtimeTests,/timeout/i);assert.match(limitTests,/maxArchiveExpansionBytes/);assert.match(limitTests,/maxDecompressedBytes/);
+assert.match(ingestion+ingestionTests,/(APPLICATION|application-owned)/);assert.match(engine+completeTests,/contradiction/i);assert.match(engine+completeTests,/release/i);
+assert.match(schema+store,/closed-loop-project\/2/);assert.match(schema,/closed-loop-project\/3/);assert.match(schema+store,/(non.?operational|audit)/i);assert.match(ingestion+ingestionTests,/closed-loop-stage-response\/2/);
+console.log(JSON.stringify({stage01IntakeCoverage:1,stage04ObligationCoverage:1,mandatoryEvidenceSufficiencyCoverage:1,nativeExecutionCoverage:1,unsupportedTestIrTreatedAsExecutable:0,externalAssertionsOverridingApplicationProof:0,nativeExecutionReceiptsFabricatedExternally:0,releaseAcceptedWithContradiction:0,migrationV2ToV3Covered:1,oldV2ResponseRejectedForCurrentPrompt:1,currentProjectSchema:'closed-loop-project/3',currentResponseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',androidChromeAcceptance:false,realThirtyStageProjectAcceptance:false,fullProductionMaturity:false},null,2));

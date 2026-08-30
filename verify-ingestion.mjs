@@ -14,6 +14,14 @@ const ingestion=globalThis.closedLoopResponseIngestion;
 if(!core||!schema||!engine||!prompts||!ingestion)throw new Error('Runtime modules failed to load.');
 if(core.STAGES.length!==30)throw new Error(`Expected 30 stages; found ${core.STAGES.length}.`);
 
+function prepareStage4Upstream(p){
+  const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
+  p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
+  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
+  p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
+  p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};
+  return p;
+}
 function project(jobId='JOB-INGESTION-TEST'){
   const p=core.createBlankState(jobId);
   p.job.JOB_ID=jobId;
@@ -25,6 +33,7 @@ function project(jobId='JOB-INGESTION-TEST'){
   return p;
 }
 function savePrompt(p,stage){
+  if(stage===4)prepareStage4Upstream(p);
   const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
   const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
@@ -51,13 +60,9 @@ function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
   const records={};
-  if(stage===1){
-  const intakeManifest=engine.stage01IntakeManifest(p),entries=intakeManifest.entries||[];
-  records.intentStatements=entries.map((entry,index)=>({tempKey:`intent-statement-${index+1}`,fields:{SOURCE_MATERIAL:String(entry.sourceIdentity||entry.sourceKind||'authorized human job input'),SOURCE_LOCATION:String(entry.location||entry.inputId||'controlled input'),EXACT_STATEMENT:typeof entry.value==='string'?entry.value:JSON.stringify(entry.value),STATEMENT_KIND:'OTHER',REQUIREMENT_RELEVANCE:'CONTEXT_ONLY',NORMATIVE_FORCE:'FACTUAL',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}));
-  stageData.INTAKE_ACCOUNTING=entries.map((entry,index)=>({inputId:String(entry.inputId||''),disposition:'RETAINED_AS_CONTEXT',statementTempKeys:[`intent-statement-${index+1}`],reason:''}));
-}
-  if(!Object.keys(stageData).length&&stage!==1){
+  if(!Object.keys(stageData).length||stage===4){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
@@ -65,10 +70,7 @@ function validEnvelope(p,stage,promptRecord){
     for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
-  }
-  if(stage===4){
-    const obligationManifest=engine.stage04ObligationManifest(p);
-    stageData.OBLIGATION_ACCOUNTING=(obligationManifest.entries||[]).map(entry=>({obligationId:String(entry.obligationId||''),disposition:'RETAINED_NONNORMATIVE_CONTEXT',requirementTempKeys:[],reason:'Synthetic ingestion fixture retains this application-enumerated obligation as controlling context.'}));
+    if(stage===4&&collection==='requirements'){const obligationManifest=promptRecord.contextManifest.obligationManifest;records.requirements=(obligationManifest.items||[]).map((item,index)=>{const requirementFields={};for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)requirementFields[name]=safeValue(name);}requirementFields.USER_INPUT_RELATIONSHIP=item.obligationId;return {tempKey:'requirement-'+String(index+1),fields:requirementFields,relationships:{},evidenceRefs:['evidence-1']};});}
   }
   return {
     schema:schema.RESPONSE_SCHEMA,
@@ -109,7 +111,7 @@ for(let stage=1;stage<=30;stage++){
   if(receipt.acceptedCanonicalChangeId==='NONE'||receipt.extractionManifestId==='NONE')throw new Error(`Stage ${stage} receipt was not linked through canonical acceptance.`);
   const serialized=JSON.stringify(p); const reloaded=JSON.parse(serialized); engine.ensureShape(reloaded);
   if(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse!==JSON.stringify(envelope))throw new Error(`Stage ${stage} raw response did not survive reload.`);
-  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
+  if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
@@ -151,7 +153,7 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 }
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
-negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/3"','TRUNCATED_RESPONSE');
+negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
 negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
@@ -452,14 +454,14 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 // demonstrated-smart-quote-and-stageData-provenance-regression-v1
 {
   let p=project('JOB-SMART-JSON-RECOVERY'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
-  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};
+  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts'};
   const standard=JSON.stringify(e);const smart=standard.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”');
   const prepared=ingestion.prepare(p,{stage:1,text:smart,promptRecord:pr});
   if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
   if(!prepared.validation.issues.some(x=>x.code==='JSON_TYPOGRAPHY_NORMALIZED'&&x.severity==='WARNING'))throw new Error('Smart-quote recovery was not auditable.');
   if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote recovery changed the preserved raw response.');
   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
-  if(stageEntries.length!==5||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence, including Stage 01 intake accounting.');
+  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
 }
 
 
