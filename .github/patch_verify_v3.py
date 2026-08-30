@@ -47,14 +47,25 @@ elif new not in s:
 s=s.replace("'{\"schema\":\"closed-loop-stage-response/2\"'","'{\"schema\":\"closed-loop-stage-response/3\"'")
 
 # The generic next-stage assertion must respect the Stage 04 hard prerequisite.
-# First prove an incomplete Stage 01/03 state is rejected; only then create the
-# complete synthetic upstream state used to verify the Stage 04 prompt body.
 old="  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
 new="  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{};let promptState=reloaded;if(nextStage===4){let blocked=false;try{prompts.buildPromptRecord(4,promptState,nextOptions);}catch(error){blocked=/Stage 04 prompt generation blocked: current Stage 01|Stage 04 prompt generation blocked: current Stage 03/.test(String(error?.message||error));}if(!blocked)throw new Error('Stage 04 next-prompt verifier accepted incomplete upstream state.');promptState=JSON.parse(JSON.stringify(reloaded));engine.ensureShape(promptState);promptState.stages[1].status='COMPLETE';promptState.stages[1].gate={...(promptState.stages[1].gate||{}),complete:true};promptState.stages[3].status='COMPLETE';promptState.stages[3].gate={...(promptState.stages[3].gate||{}),complete:true};}const nextPrompt=prompts.buildPromptRecord(nextStage,promptState,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
 if old in s:
     s=s.replace(old,new,1)
 elif "Stage 04 next-prompt verifier accepted incomplete upstream state." not in s:
     raise SystemExit('next-stage prompt anchor missing')
+
+# Keep the Stage 01 smart-quote regression semantically complete: the test may
+# replace ordinary stage data, but it must not discard application-enumerated
+# intake accounting merely to exercise JSON typography normalization.
+old="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
+new="  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
+if old in s:
+    s=s.replace(old,new,1)
+elif new not in s:
+    raise SystemExit('smart-quote Stage 01 fixture anchor missing')
+# The provenance count now includes INTAKE_ACCOUNTING in addition to the four
+# prior substantive fields; require all returned stageData values to have evidence.
+s=s.replace("if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))","if(stageEntries.length!==5||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))")
 
 anchor="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');"
 extra="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');\nnegativeAt('incomplete Stage 01 intake accounting',1,(e)=>{e.stageData.INTAKE_ACCOUNTING=e.stageData.INTAKE_ACCOUNTING.slice(1);},'INCOMPLETE_INTAKE_ACCOUNTING');"
