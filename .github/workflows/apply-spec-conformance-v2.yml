@@ -1,0 +1,36 @@
+name: Apply source-only conformance repair
+on: [push]
+permissions: {contents: write}
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Repair source without workflow mutation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          base=subprocess.check_output(['git','show','7db322163404461bc1bded245f9ec8b8d9af6985:index.html'],text=True); cur=Path('index.html').read_text(); css=re.search(r'<style>(.*?)</style>',base,re.S).group(1); cur=re.sub(r'<style>.*?</style>',lambda m:'<style>'+css+'</style>',cur,count=1,flags=re.S)
+          if 'worker-src' not in cur: cur=cur.replace("object-src 'none'; base-uri 'none'","object-src 'none'; base-uri 'none'; worker-src 'self'")
+          cur=re.sub(r'<script defer src="test-runtime\.js\?[^\"]+"></script>\n?','',cur); m=re.search(r'(<script defer src="workflow-schema\.js\?[^\"]+"></script>)',cur); cur=cur.replace(m.group(1),m.group(1)+'\n<script defer src="test-runtime.js?v=runtime-spec3"></script>',1) if m else cur; cur=re.sub(r'(src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+',r'\1runtime-spec3',cur); Path('index.html').write_text(cur)
+          p=Path('workbook.js'); s=p.read_text().replace("const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';").replace("'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'"); p.write_text(s)
+          p=Path('workflow-schema.js'); p.write_text(p.read_text().replace("const RESPONSE_SCHEMA='closed-loop-stage-response/2';","const RESPONSE_SCHEMA='closed-loop-stage-response/3';"))
+          p=Path('prompt-engine.js'); s=p.read_text(); a=s.find("${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION"); b=s.find("\n\n${stage===1?`STAGE 01 CLARIFICATION EXPERIENCE",a)
+          if a!=-1 and b!=-1: s=s[:a]+"${stage===1?`STAGE 01 SUBJECT-NEUTRAL INTAKE\\nDerive human-authority questions from the actual user request, accessible supplied materials, and current canonical context. Extract every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome. Inspect accessible supplied artifacts deeply enough to capture those statements. Ask only genuinely human-only questions; never ask for facts already supplied or reliably obtainable from authorized materials, research, or tools. Preserve every compatible statement without silent loss. Do not perform later-stage work.\\n`:`SUBJECT-NEUTRAL STAGE EXECUTION\\nUse the current stage contract, application-selected current canonical context, and authorized evidence. Apply domain knowledge only as needed. Do not introduce hard-coded subject modes or project-subject assumptions.\\n`}"+s[b:]
+          ps=s.find('For PATENT / REGULATED FILING jobs, when not already known'); pe=s.find('Before Stage 01 submission verify:',ps) if ps!=-1 else -1
+          if ps!=-1 and pe!=-1:s=s[:ps]+s[pe:]
+          s=s.replace("4:'Compile atomic requirement proposals only from the complete current canonical input union selected by the application:","4:'Compile atomic requirement proposals only from the complete current canonical input union selected by the application. The human supplies project information once. If the human already supplied information in accepted current project input or Stage 01 intake, use the canonical captured value and never ask the human to attach, resend, retype, restate, or summarize it again. The Stage 04 prompt must carry the complete application-selected obligation universe and accepted Stage 01 job definition needed for this task. Missing prior-stage content is an earlier capture defect: return BLOCKED and identify that earlier stage; never convert it into another human data request. Continue with the complete current canonical input union:"); p.write_text(s)
+          PY
+          node --check workbook.js && node --check workflow-schema.js && node --check prompt-engine.js
+          node - <<'NODE'
+          const fs=require('fs'),h=fs.readFileSync('index.html','utf8'),p=fs.readFileSync('prompt-engine.js','utf8'),w=fs.readFileSync('workbook.js','utf8'),s=fs.readFileSync('workflow-schema.js','utf8'); if(!w.includes("closed-loop-project/3")||!s.includes("closed-loop-stage-response/3"))throw Error('v3 missing'); for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(p.includes(x))throw Error('domain branch '+x); const a=[...h.matchAll(/<script\s+defer\s+src="([^"]+)/g)].map(x=>x[1].split('?')[0]),e=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']; if(JSON.stringify(a)!==JSON.stringify(e))throw Error('script order'); console.log('source conformance PASS');
+          NODE
+      - name: Commit source only
+        run: |
+          git config user.name closed-loop-spec-repair
+          git config user.email actions@users.noreply.github.com
+          git add index.html workbook.js workflow-schema.js prompt-engine.js
+          git commit -m 'Restore visuals and align core prompt contracts with /3 specification'
+          git push origin HEAD:fix/spec-conformance-zero-loss
