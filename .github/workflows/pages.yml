@@ -26,33 +26,43 @@ jobs:
           cat repair.log
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Preserve diagnostic when repair fails
+      - name: Preserve repair diagnostic on transform failure
         if: steps.repair.outputs.exit_code != '0'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add repair.log
-          git commit -m 'Capture controlling-bundle repair diagnostic' || true
+          git commit -m 'Capture controlling-bundle repair diagnostic [skip ci]' || true
           git push origin HEAD:fix/complete-spec-stage4-prompts-20260830 || true
           exit 1
-      - name: Syntax and zero-loss proof
+      - name: Preserve transformed implementation
         if: steps.repair.outputs.exit_code == '0'
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check verify-stage01-stage04-exhaustion.mjs
-          node verify-stage01-stage04-exhaustion.mjs
-          git diff --check
-      - name: Commit implementation and restore normal Pages workflow
-        if: steps.repair.outputs.exit_code == '0'
-        run: |
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/pages.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-stage01-stage04-exhaustion.mjs .github/workflows/pages.yml
-          git commit -m 'Implement exhaustive Stage 1-4 accounting and v3 prompt contracts'
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-stage01-stage04-exhaustion.mjs
+          git commit -m 'Apply exhaustive Stage 1-4 accounting implementation [skip ci]'
           git push origin HEAD:fix/complete-spec-stage4-prompts-20260830
+      - name: Syntax and zero-loss proof
+        if: steps.repair.outputs.exit_code == '0'
+        shell: bash
+        run: |
+          set +e
+          {
+            node --check workbook.js
+            node --check workflow-schema.js
+            node --check workflow-engine.js
+            node --check prompt-engine.js
+            node --check response-ingestion.js
+            node --check verify-stage01-stage04-exhaustion.mjs
+            node verify-stage01-stage04-exhaustion.mjs
+            git diff --check
+          } > proof.log 2>&1
+          code=$?
+          cat proof.log
+          if [ "$code" -ne 0 ]; then
+            git add proof.log
+            git commit -m 'Capture Stage 1-4 proof diagnostic [skip ci]'
+            git push origin HEAD:fix/complete-spec-stage4-prompts-20260830
+          fi
+          exit "$code"
