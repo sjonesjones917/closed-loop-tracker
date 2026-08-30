@@ -1,0 +1,31 @@
+name: Temporary full-spec structural audit
+on:
+  push:
+    branches: [fix/full-spec-conformance]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/full-spec-conformance
+      - name: Locate controlling implementation surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '\n=== schemas / stage 16 ===\n'
+          grep -nE "PROJECT_SCHEMA=|RESPONSE_SCHEMA=|REVISE THE RESPONSIBLE LAYER|CORRECT THE ROOT CAUSE" workbook.js workflow-schema.js || true
+          printf '\n=== next action ===\n'
+          grep -nE "operationalNextAction|NEXT_REQUIRED_ACTION" workflow-engine.js app-core.js workflow-schema.js | head -120 || true
+          printf '\n=== prompt domain branches / stage task / handoff ===\n'
+          grep -nE "DOMAIN INTAKE|DOMAIN / DELIVERABLE|PATENT / REGULATED|STAGE-SPECIFIC TASK|conversationMaterials|MATERIALS TO SEND WITH THIS STAGE 04|CUSTOM_PIPELINE|TEST_IR" prompt-engine.js workflow-engine.js workflow-schema.js test-runtime.js | head -220 || true
+          printf '\n=== runtime / worker / CSP ===\n'
+          grep -nE "test-runtime|test-worker|worker-src|Content-Security-Policy|const OPS|const LIMITS|PARSE_XML|SELECT_XML|parseCsv|supports\(" index.html test-runtime.js test-worker.js workflow-schema.js | head -220 || true
+          printf '\n=== migration / package ===\n'
+          grep -nE "migrateState|closed-loop-project/2|closed-loop-project/3|createExecutionPackage|verification-package" workbook.js project-store.js verify*.mjs | head -240 || true
+          printf '\n=== prompt visual CSS ===\n'
+          grep -nE "\.prompt\{|expandable-prompt|stage-output" index.html | head -80 || true
+          printf '\n=== workflow inventory ===\n'
+          find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort
