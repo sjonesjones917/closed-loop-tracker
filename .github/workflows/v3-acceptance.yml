@@ -4,13 +4,13 @@ on:
     branches: [fix/closed-loop-v3-current-20260830]
     paths: [.github/workflows/v3-acceptance.yml, verify-v3-intake-obligation.mjs, verify-one-time-intent-intake.mjs, verify-prompt-semantics.mjs, verify-ingestion.mjs, verify-test-runtime.mjs, verify.mjs, verify-complete.mjs, workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, test-runtime.js, test-worker.js, project-store.js, app-core.js, index.html]
   workflow_dispatch:
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
   acceptance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {ref: fix/closed-loop-v3-current-20260830}
+        with: {ref: fix/closed-loop-v3-current-20260830, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Syntax
@@ -28,7 +28,19 @@ jobs:
       - name: Existing one-time intent regression
         run: node verify-one-time-intent-intake.mjs
       - name: Prompt semantics
-        run: node verify-prompt-semantics.mjs
+        id: prompt_semantics
+        continue-on-error: true
+        run: node verify-prompt-semantics.mjs > v3-prompt-semantics.log 2>&1
+      - name: Preserve prompt semantic diagnostic
+        if: steps.prompt_semantics.outcome == 'failure'
+        run: |
+          cat v3-prompt-semantics.log
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add v3-prompt-semantics.log
+          git commit -m 'Capture v3 prompt semantic diagnostic [skip ci]' || true
+          git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
+          exit 1
       - name: Ingestion
         run: node verify-ingestion.mjs
       - name: Test runtime
