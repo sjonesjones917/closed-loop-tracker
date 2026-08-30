@@ -9,11 +9,13 @@ on:
       - upgrade-v3-corrections.mjs
       - upgrade-v3-final.mjs
       - upgrade-v3-actions.mjs
+      - upgrade-v3-domain-neutral.mjs
       - build-test-project.mjs
       - verify-v3-migration.mjs
       - verify-v3-contract.mjs
       - verify-test-runtime-v3.mjs
       - verify-test-runtime-limits.mjs
+      - verify-prompt-semantics.mjs
   workflow_dispatch:
 permissions:
   contents: write
@@ -54,6 +56,8 @@ jobs:
         run: node upgrade-v3-final.mjs
       - name: Apply structured operator-action transformation
         run: node upgrade-v3-actions.mjs
+      - name: Remove prohibited project-subject prompt branches
+        run: node upgrade-v3-domain-neutral.mjs
       - name: Syntax
         run: for file in *.js *.mjs; do node --check "$file"; done
       - name: Schema and ownership architecture
@@ -75,7 +79,7 @@ jobs:
         run: |
           node verify-complete.mjs
           node verify-full-cycle.mjs
-      - name: Prompt contradictions, leakage, and semantic false acceptance
+      - name: Prompt contradictions, leakage, subject neutrality, and semantic false acceptance
         run: |
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
@@ -97,7 +101,7 @@ jobs:
           trap - EXIT
       - name: Remove all temporary implementation machinery and commit proven source
         run: |
-          rm -f upgrade-v3.mjs upgrade-v3-compat.mjs upgrade-v3-corrections.mjs upgrade-v3-final.mjs upgrade-v3-actions.mjs v3-upgrade-report.json v3-upgrade-base.log
+          rm -f upgrade-v3.mjs upgrade-v3-compat.mjs upgrade-v3-corrections.mjs upgrade-v3-final.mjs upgrade-v3-actions.mjs upgrade-v3-domain-neutral.mjs v3-upgrade-report.json v3-upgrade-base.log
           rm -f .github/workflows/v3-upgrade.yml .github/workflows/v3-upgrade-compat.yml .github/workflows/v3-upgrade-corrections.yml .github/workflows/v3-upgrade-final.yml .github/workflows/v3-upgrade-authoritative.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
