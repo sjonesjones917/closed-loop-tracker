@@ -17,43 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Correct current Stage 03 gate anchor in one-time script
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('.repair-exhaustive-intake.py'); s=p.read_text()
-          old='''replace_once('workflow-engine.js',"      if(sourceIds.length&&!sourceIds.every(id=>researchedSourceIds.has(id)))reasons.push('Every current accepted Stage 02 source must have current Stage 03 research coverage.');","      if(sourceIds.length&&!sourceIds.every(id=>researchedSourceIds.has(id)))reasons.push('Every current accepted Stage 02 source must have current Stage 03 research coverage.');\\n      const researchManifest=stage03ResearchManifest(project),researchAccounting=safe(project.stages[3]?.agentData?.RESEARCH_ACCOUNTING),researchSeen=new Set();for(const entry of researchAccounting){const id=String(entry?.researchUnitId||'');if(id)researchSeen.add(id);}const missingResearch=safe(researchManifest.entries).map(x=>String(x.researchUnitId||'')).filter(id=>id&&!researchSeen.has(id));if(missingResearch.length)reasons.push(`Stage 03 research accounting is missing application-enumerated research unit(s): ${missingResearch.join(', ')}.`);")'''
-          new='''replace_once('workflow-engine.js',"      if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);}","      if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);}\\n      const researchManifest=stage03ResearchManifest(project),researchAccounting=safe(project.stages[3]?.agentData?.RESEARCH_ACCOUNTING),researchSeen=new Set();for(const entry of researchAccounting){const id=String(entry?.researchUnitId||'');if(id)researchSeen.add(id);}const missingResearch=safe(researchManifest.entries).map(x=>String(x.researchUnitId||'')).filter(id=>id&&!researchSeen.has(id));if(missingResearch.length)reasons.push(`Stage 03 research accounting is missing application-enumerated research unit(s): ${missingResearch.join(', ')}.`);")'''
-          if old not in s: raise SystemExit('Old Stage 03 repair anchor line not found.')
-          p.write_text(s.replace(old,new,1))
-          PY
-      - name: Apply repair
-        run: python3 .repair-exhaustive-intake.py
-      - name: Update regressions for the stricter Stage 03 contract
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify-one-time-intent-intake.mjs'); s=p.read_text()
-          old="""const p3={...prompts.buildPromptRecord(3,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
-let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]})),promptRecord:p3});
-assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_CANDIDATE'),'Stage 03 accepted incomplete intent-statement coverage.');
-prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001'),candidate('candidate-2','INTENT-STATEMENT-000002')]})),promptRecord:p3});
-assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);"""
-          new="""const p3={...prompts.buildPromptRecord(3,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
-const researchManifest=engine.stage03ResearchManifest(p),incompleteResearchAccounting=researchManifest.entries.map((entry,index)=>index===0?{researchUnitId:entry.researchUnitId,disposition:'CAPTURED',researchTempKeys:[],candidateTempKeys:['candidate-1'],reason:''}:{researchUnitId:entry.researchUnitId,disposition:'BLOCKED',researchTempKeys:[],candidateTempKeys:[],reason:'Deliberately blocked fixture to preserve the missing-candidate negative test.'}),completeResearchAccounting=researchManifest.entries.map((entry,index)=>({researchUnitId:entry.researchUnitId,disposition:'CAPTURED',researchTempKeys:[],candidateTempKeys:[`candidate-${index+1}`],reason:''}));
-let prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001')]},{RESEARCH_ACCOUNTING:incompleteResearchAccounting})),promptRecord:p3});
-assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='MISSING_INTENT_STATEMENT_CANDIDATE'),'Stage 03 accepted incomplete intent-statement coverage.');
-prepared=ingestion.prepare(p,{stage:3,text:JSON.stringify(envelope(3,p3,{candidateRequirements:[candidate('candidate-1','INTENT-STATEMENT-000001'),candidate('candidate-2','INTENT-STATEMENT-000002')]},{RESEARCH_ACCOUNTING:completeResearchAccounting})),promptRecord:p3});
-assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);"""
-          if old not in s: raise SystemExit('Legacy Stage 03 fixture anchor not found.')
-          p.write_text(s.replace(old,new,1))
-          p=Path('verify-intake-closure.mjs'); s=p.read_text().replace('researchManifest.entries.entries()','researchManifest.entries.entries()')
-          # Correct Array iteration typo explicitly; the source text is researchManifest.entries.entries().
-          s=s.replace('researchManifest.entries.entries()','researchManifest.entries.entries()')
-          # JS Array .entries() is invoked on researchManifest.entries; normalize accidental duplicate token if present.
-          s=s.replace('researchManifest.entries.entries())','researchManifest.entries.entries())')
-          p.write_text(s)
-          PY
+      - name: Apply integrated repair
+        run: python3 .repair-orchestrate.py
       - name: Syntax and focused deterministic proof
         run: |
           node --check workbook.js
@@ -77,7 +42,7 @@ assert(prepared.validation.valid,`Stage 03 complete canonical coverage was rejec
         run: |
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
-          git rm .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py
+          git rm .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py .repair-orchestrate.py
           git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs verify-one-time-intent-intake.mjs .github/workflows/pages.yml
           git commit -m 'Close Stage 01 and Stage 03 accounting before Stage 04'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
