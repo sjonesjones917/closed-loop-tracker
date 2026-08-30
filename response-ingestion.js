@@ -127,6 +127,9 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     }
   }
 
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){const evaluation=workflow.evaluateIntakeAccounting(project,envelope.stageData?.INTAKE_ACCOUNTING);for(const message of evaluation.issues)issues.push(issue('INCOMPLETE_INTAKE_ACCOUNTING','/stageData/INTAKE_ACCOUNTING',message));}
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===4){const requirementTempKeys=safe(envelope.records?.requirements).map(record=>record?.tempKey).filter(Boolean),evaluation=workflow.evaluateObligationAccounting(project,envelope.stageData?.OBLIGATION_ACCOUNTING,{requirementTempKeys});for(const message of evaluation.issues)issues.push(issue('INCOMPLETE_OBLIGATION_ACCOUNTING','/stageData/OBLIGATION_ACCOUNTING',message));}
+
   const allowedCollections=new Set(operationContract?.agentWritableCollections||contract?.agentWritableCollections||contract?.allowedCollections||[]);
   for(const [collection,list] of Object.entries(envelope.records||{}))if(Array.isArray(list)&&list.length>(contract?.resourceLimits?.maxRecordsPerCollection||250))issues.push(issue('RESOURCE_LIMIT_EXCEEDED',`/records/${pointerEscape(collection)}`,'Too many records in collection.'));
   if(safe(envelope.evidence).length>(contract?.resourceLimits?.maxEvidenceRecords||500))issues.push(issue('RESOURCE_LIMIT_EXCEEDED','/evidence','Too many evidence records.'));if(safe(envelope.attachments).length>(contract?.resourceLimits?.maxAttachments||25))issues.push(issue('RESOURCE_LIMIT_EXCEEDED','/attachments','Too many attachments.'));
