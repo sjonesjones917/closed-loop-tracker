@@ -1,4 +1,4 @@
-name: Inspect exact schema prompt context source blocks
+name: Inspect native worker integration before prompt repair
 on:
   push:
     branches: [fix/complete-stage-prompts-20260830]
@@ -9,32 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Print schema blocks and populated manifest behavior
+      - name: Trace application-native execution and worker loading
         run: |
-          python3 <<'PY'
-          from pathlib import Path
-          for filename,needles in {
-            'workflow-schema.js':['readCollections','operationContract','OPERATION','STAGE_CONTRACTS'],
-            'prompt-engine.js':['const fields=','CLOSED LOOP TEST IR — APPLICATION-OWNED DETERMINISTIC LANGUAGE','CUSTOM_PIPELINE','NEXT_REQUIRED_ACTION:']
-          }.items():
-            lines=Path(filename).read_text().splitlines()
-            print('\n===== '+filename+' matching source lines =====')
-            seen=set()
-            for i,line in enumerate(lines):
-              if any(n in line for n in needles):
-                for j in range(max(0,i-2),min(len(lines),i+3)):
-                  if j not in seen:
-                    print(f'{j+1}: {lines[j]}'); seen.add(j)
-          PY
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';import vm from 'node:vm';
-          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-          const core=closedLoopCore,engine=closedLoopWorkflowEngine;
-          const p=core.createBlankState('PROMPT-CONTEXT-PROBE');
-          Object.assign(p.job,{JOB_ID:'PROMPT-CONTEXT-PROBE',EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product once.',EXPLICIT_USER_REQUIREMENTS:'Never ask the user to supply the same project information twice. Preserve every requirement. Use exact verified bytes.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',KNOWN_AUTHORITATIVE_SOURCES:'Official standard named by the user',AVAILABLE_TOOLS:'Browser and external agent',PROHIBITED_ACTIONS:'Do not omit requirements',EXACT_DELIVERABLE_REQUESTED:'A complete verified finished product',ASSUMPTIONS:'None',UNKNOWN_INFORMATION:'None',INPUT_SET_CONTENTS:'Human request and intent.txt'});
-          engine.ensureShape(p);engine.recalculate(p);
-          p.projectData.humanInputAnswers=[{answerId:'ANSWER-1',stage:1,question:'Required human choice',answer:'The supplied choice applies.',inputVersion:p.job.CURRENT_INPUT_VERSION}];
-          console.log('\n===== POPULATED INTAKE MANIFEST =====\n'+JSON.stringify(engine.stage01IntakeManifest(p),null,2));
-          console.log('\n===== POPULATED OBLIGATION MANIFEST =====\n'+JSON.stringify(engine.stage04ObligationManifest(p),null,2));
-          NODE
+          echo '=== native runtime references ==='
+          grep -R -n -E 'test-worker|new[[:space:]]+Worker|globalThis\.Worker|closedLoopTestRuntime|APPLICATION_TEST_RUNTIME|runNative|native.*test|executeTest' -- app-core.js workflow-engine.js test-runtime.js test-worker.js project-store.js response-ingestion.js || true
+          echo '=== stage action references ==='
+          grep -R -n -E 'RUN_APP_TESTS|RUN_IN_APP|Run tests|Run verification|APPLICATION_DETERMINISTIC' -- app-core.js workflow-engine.js workbook.js || true
