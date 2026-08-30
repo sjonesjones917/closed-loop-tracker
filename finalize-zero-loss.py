@@ -23,11 +23,10 @@ new = "Compile atomic requirement proposals from the complete APPLICATION OBLIGA
 if old not in t:
     raise SystemExit('Expected Stage 04 instruction text not found')
 t = t.replace(old, new, 1)
-old = 'HUMAN COLLABORATION MODE\\\nAsk genuinely human-only questions conversationally in plain language before final JSON.'
-new = 'HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE\\\nAsk genuinely human-only questions conversationally in plain language before final JSON.'
-if old not in t:
-    raise SystemExit('Expected shared human-collaboration contract not found')
-t = t.replace(old, new, 1)
+if 'HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE' not in t:
+    if 'HUMAN COLLABORATION MODE' not in t:
+        raise SystemExit('Expected shared human-collaboration header not found')
+    t = t.replace('HUMAN COLLABORATION MODE', 'HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE', 1)
 p.write_text(t)
 
 # 4. Update browser acceptance so it proves native /3 intake and the exact generated Stage 04 prompt.
