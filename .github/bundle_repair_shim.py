@@ -1,89 +1,47 @@
 from pathlib import Path
-import re
-p=Path('.github/bundle_repair.py')
-t=p.read_text()
-old="""    if count is not None and found!=count:\n        raise SystemExit(f'guard failed: {path}: expected {count} occurrences, found {found}: {old[:120]!r}')\n    text=text.replace(old,new)\n"""
-new="""    if count is not None and found<count:\n        raise SystemExit(f'guard failed: {path}: expected at least {count} occurrences, found {found}: {old[:120]!r}')\n    text=text.replace(old,new,count if count is not None else -1)\n"""
-if old not in t: raise SystemExit('repair helper guard source not found')
-t=t.replace(old,new,1)
-t=t.replace("${show(j.EXACT_DELIVERABLE_REQUESTED)}\\n\\n${stage>1?`PERSISTED PROJECT INPUT", "${show(j.EXACT_DELIVERABLE_REQUESTED)}\\n\\n${stage>1?`ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT")
-pattern=r"# Call closure validator before result returned; anchor on warning count near end of validateEnvelope\.\nreplace\('response-ingestion\.js',[\s\S]*?,1\)\n\n# 8\. Execution package"
-replacement="# Call closure validator before result returned; inserted by bundle_repair_shim.py after the base transform.\n\n# 8. Execution package"
-t,n=re.subn(pattern,replacement,t,count=1)
-if n!=1: raise SystemExit(f'ingestion obsolete-anchor removal mismatch: {n}')
-p.write_text(t)
-exec(compile(t,str(p),'exec'),{'__file__':str(p),'__name__':'__main__'})
 
-wp=Path('workbook.js');w=wp.read_text()
-old_stage1="'INPUT_SET_VERSION','INPUT_SET_CONTENTS','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE']"
-new_stage1="'INPUT_SET_VERSION','INPUT_SET_CONTENTS','INTAKE_ACCOUNTING','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE']"
-if w.count(old_stage1)!=1: raise SystemExit(f'Stage 1 field inventory guard mismatch: {w.count(old_stage1)}')
-w=w.replace(old_stage1,new_stage1,1)
-old_stage4="'OPTIONAL_REQUIREMENTS','BLOCKED_REQUIREMENTS','STAGE_DECISION','DECISION_EVIDENCE']"
-new_stage4="'OPTIONAL_REQUIREMENTS','BLOCKED_REQUIREMENTS','OBLIGATION_ACCOUNTING','STAGE_DECISION','DECISION_EVIDENCE']"
-if w.count(old_stage4)!=1: raise SystemExit(f'Stage 4 field inventory guard mismatch: {w.count(old_stage4)}')
-w=w.replace(old_stage4,new_stage4,1)
-wp.write_text(w)
+def patch(path, old, new, count=1):
+    p=Path(path); t=p.read_text(); n=t.count(old)
+    if n!=count: raise SystemExit(f'{path}: expected {count} matches, found {n}: {old[:100]!r}')
+    p.write_text(t.replace(old,new,count))
 
-sp=Path('workflow-schema.js');s=sp.read_text()
-old_overrides="""const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
-  '1':Object.freeze({DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null})}),
-  '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})})
-});"""
-new_overrides="""const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
-  '1':Object.freeze({
-    DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null}),
-    INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['items'])})
-  }),
-  '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})}),
-  '4':Object.freeze({
-    OBLIGATION_ACCOUNTING:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['items'])})
-  })
-});"""
-if s.count(old_overrides)!=1: raise SystemExit(f'accounting type override guard mismatch: {s.count(old_overrides)}')
-s=s.replace(old_overrides,new_overrides,1)
-sp.write_text(s)
+# Every human-supplied unit identity binds source location, kind, and value hash.
+old="const rawValueSha256=hash.sha256Value(line),unitId=`UNIT-${rawValueSha256.slice(0,20).toUpperCase()}`;values.push({unitId,sourceKind,sourcePath:`${path}${lines.length>1?`#line-${i+1}`:''}`,rawValue:line,rawValueSha256});"
+new="const rawValueSha256=hash.sha256Value(line),resolvedPath=`${path}${lines.length>1?`#line-${i+1}`:''}`,unitId=`UNIT-${hash.sha256Value({sourceKind,sourcePath:resolvedPath,rawValueSha256}).slice(0,20).toUpperCase()}`;values.push({unitId,sourceKind,sourcePath:resolvedPath,rawValue:line,rawValueSha256});"
+patch('workflow-engine.js',old,new)
 
-rp=Path('response-ingestion.js');r=rp.read_text()
-anchor="  return {valid:issues.every(item=>item.severity!=='ERROR'),issues,errorCount:issues.filter(item=>item.severity==='ERROR').length,warningCount:issues.filter(item=>item.severity==='WARNING').length,checkedAt:now(),responseSchema:envelope.schema,responseType:envelope.responseType,temporaryRecordIndex:responseRecordIndex,temporaryEvidenceIndex:evidenceIndex,temporaryAttachmentIndex:attachmentIndex,canonicalEnvelopeSha256};"
-replacement="  validateAccountingClosure(project,envelope,stageNumber,issues);\n"+anchor
-if r.count(anchor)!=1: raise SystemExit(f'validateEnvelope accounting insertion anchor mismatch: {r.count(anchor)}')
-rp.write_text(r.replace(anchor,replacement,1))
+# Stage 03 cannot complete on one shallow coverage pass. It must cover every current source,
+# perform the explicit second conflict/exception pass, and finish with no new material category.
+old="requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;"
+new="requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);const s3=project.stages?.[3]?.agentData||{};if(!truth(s3.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 second conflict and exception pass is not complete.');if(truth(s3.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 latest pass found a new material category; research must continue until a complete pass finds none.');if(numeric(s3.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires at least two documented research passes before saturation can be established.');break;"
+patch('workflow-engine.js',old,new)
 
-wp=Path('test-worker.js')
-w=wp.read_text();bad="\\'use strict\\';"
-if w.startswith(bad): w="'use strict';"+w[len(bad):]
-elif not w.startswith("'use strict';"): raise SystemExit('generated test-worker.js has an unexpected opener')
-wp.write_text(w)
+# Strengthen Stage 04 with explicit upstream completeness checks. A prior-stage defect blocks Stage 04;
+# it never turns into another human attachment request.
+old="case 4:{const obligationManifest=currentObligationManifest(project);if(!obligationManifest.complete)reasons.push(`Stage 04 obligation accounting is incomplete: ${obligationManifest.classified}/${obligationManifest.total} obligations dispositioned.`);"
+new="case 4:{const intakeManifest=currentIntakeCoverageManifest(project),obligationManifest=currentObligationManifest(project);if(!intakeManifest.complete)reasons.push(`Stage 04 is blocked because Stage 01 controlled-input accounting is incomplete: ${intakeManifest.classified}/${intakeManifest.total}. Return to Stage 01; do not ask the human to resend existing project input.`);const stage3Gate=project.stages?.[3]?.gate;if(stage3Gate&&!stage3Gate.complete)reasons.push('Stage 04 is blocked because current Stage 03 research is not complete. Return to Stage 03; do not ask the human to resupply captured intent.');if(!obligationManifest.complete)reasons.push(`Stage 04 obligation accounting is incomplete: ${obligationManifest.classified}/${obligationManifest.total} obligations dispositioned.`);"
+patch('workflow-engine.js',old,new)
 
-sp=Path('project-store.js');s=sp.read_text()
-old_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');const engine=globalThis.closedLoopWorkflowEngine,jobId=projectIdentity(project),ids="
-new_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');jobId=jobId||projectIdentity(project);const engine=globalThis.closedLoopWorkflowEngine,ids="
-if s.count(old_decl)!=1: raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
-sp.write_text(s.replace(old_decl,new_decl,1))
+# Add regression proof for duplicate text at distinct source locations and the explicit Stage 03 saturation guard.
+p=Path('verify-bundle-v3.mjs'); t=p.read_text()
+needle="console.log('bundle-v3 acceptance: PASS');"
+addition="""
+{
+  const p=core.createBlankProject({jobId:'JOB-INTAKE-IDENTITY'});
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='same statement';
+  p.job.EXPLICIT_USER_REQUIREMENTS='same statement';
+  p.job.CURRENT_INPUT_VERSION='INPUT-v001';
+  p.projectData.inputVersions=[{version:'INPUT-v001',payload:{EXACT_USER_OBJECTIVE_VERBATIM:'same statement',EXPLICIT_USER_REQUIREMENTS:'same statement'}}];
+  const m=engine.currentIntakeCoverageManifest(p);
+  assert.equal(m.units.length,2,'Identical text at two source locations must remain two controlled input units.');
+  assert.notEqual(m.units[0].unitId,m.units[1].unitId,'Controlled input identities must include source location.');
+}
+{
+  const src=fs.readFileSync('workflow-engine.js','utf8');
+  for(const text of ['Stage 03 second conflict and exception pass is not complete.','Stage 03 latest pass found a new material category','Stage 03 requires at least two documented research passes'])assert.ok(src.includes(text),`Missing Stage 03 exhaustion gate: ${text}`);
+}
+"""
+if t.count(needle)!=1: raise SystemExit('verify-bundle-v3 insertion anchor mismatch')
+p.write_text(t.replace(needle,addition+needle,1))
 
-pp=Path('prompt-engine.js');ps=pp.read_text()
-if '${accountingPromptBlock(stage,project)}' not in ps: raise SystemExit('prompt accounting state binding anchor missing')
-pp.write_text(ps.replace('${accountingPromptBlock(stage,project)}','${accountingPromptBlock(stage,state)}',1))
-
-vp=Path('verify-bundle-v3.mjs');v=vp.read_text();old_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].name,'CORRECT THE ROOT CAUSE');";new_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].title,'CORRECT THE ROOT CAUSE');"
-if old_assert not in v: raise SystemExit('v3 stage-title proof anchor missing')
-vp.write_text(v.replace(old_assert,new_assert,1))
-for name in ['verify.mjs','verify-complete.mjs','verify-definition-of-done.mjs','verify-prompt-semantics.mjs','verify-ingestion.mjs']:
-    fp=Path(name)
-    if fp.exists(): fp.write_text(fp.read_text().replace('Revise the Responsible Layer','Correct the Root Cause').replace('REVISE THE RESPONSIBLE LAYER','CORRECT THE ROOT CAUSE'))
-
-ip=Path('verify-ingestion.mjs');iv=ip.read_text()
-anchor="  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  const records={};"
-replacement="  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const m=engine.currentIntakeCoverageManifest(p);stageData.INTAKE_ACCOUNTING={items:m.units.map(u=>({unitId:u.unitId,disposition:'INCORPORATED'}))};}\n  if(stage===4){const m=engine.currentObligationManifest(p);stageData.OBLIGATION_ACCOUNTING={items:m.items.map(o=>({obligationId:o.obligationId,disposition:'RETAINED_CONTEXT'}))};}\n  const records={};"
-if iv.count(anchor)!=1: raise SystemExit(f'ingestion fixture accounting anchor mismatch: {iv.count(anchor)}')
-iv=iv.replace(anchor,replacement,1)
-smart_old="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};"
-smart_new="  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip',INTAKE_ACCOUNTING:{items:engine.currentIntakeCoverageManifest(p).units.map(u=>({unitId:u.unitId,disposition:'INCORPORATED'}))}};"
-if iv.count(smart_old)!=1: raise SystemExit(f'smart-quote intake accounting fixture mismatch: {iv.count(smart_old)}')
-iv=iv.replace(smart_old,smart_new,1)
-old_count="  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');"
-new_count="  if(stageEntries.length!==5||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');"
-if iv.count(old_count)!=1: raise SystemExit(f'smart-quote provenance count fixture mismatch: {iv.count(old_count)}')
-iv=iv.replace(old_count,new_count,1)
-ip.write_text(iv)
+print('Stage 1 identity and Stage 3/4 exhaustion patch complete')
