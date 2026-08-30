@@ -17,11 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply integrated repair and all-stage prompt repair
-        run: |
-          python3 .repair-orchestrate.py
-          python3 .repair-fixture.py
-          python3 .repair-all-prompts.py
+      - name: Apply all-stage prompt repair
+        run: python3 .repair-all-prompts.py
       - name: Print exact stage context contracts
         run: node .print-stage-contracts.mjs
       - name: Syntax and deterministic proof
@@ -50,6 +47,6 @@ jobs:
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
           git checkout -- .github/workflows/pages.yml .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py .repair-all-prompts.py .print-stage-contracts.mjs
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs verify-one-time-intent-intake.mjs verify-ingestion.mjs verify-full-cycle.mjs
+          git add prompt-engine.js
           git commit -m 'Make every stage prompt enforce its complete stage contract'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
