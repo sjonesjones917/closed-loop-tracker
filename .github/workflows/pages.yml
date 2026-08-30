@@ -17,7 +17,54 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "application deployment ready"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and architecture
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-hash.mjs
+          node verify-spec3-contract.mjs
+          node verify-v3-migration.mjs
+      - name: Test IR and deterministic runtime
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+      - name: Ingestion, workflow, prompts, and complete lifecycle
+        run: |
+          node verify-ingestion.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-semantic-invariant.mjs
+          node verify-project-lifecycle.mjs
+          node verify-full-cycle.mjs
+          node verify-complete.mjs
+          node verify-definition-of-done.mjs
+      - name: Local Chromium operator acceptance
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid 2>/dev/null || true' EXIT
+          for i in {1..50}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.1; done
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-mobile-stage-action.mjs
+          node verify-human-stage-walkthrough.mjs
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
@@ -25,6 +72,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Build static application
@@ -39,3 +88,21 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+  live-verify:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Exact deployed byte identity
+        run: node verify-live.mjs
+      - name: Deployed Chromium operator acceptance
+        run: |
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-mobile-stage-action.mjs
