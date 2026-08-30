@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+const file='apply-stage-input-once.mjs';
+let source=fs.readFileSync(file,'utf8');
+const old="  source = replaceRegex(source, /runtime-bec66cf2784e2a2b/g, 'runtime-stage-input-once-20260830a', 'shared runtime build token');";
+const replacement="  const buildTokenMatches=source.split('runtime-bec66cf2784e2a2b').length-1;\n  if(buildTokenMatches!==8)throw new Error(`shared runtime build token: expected 8 matches, found ${buildTokenMatches}`);\n  source=source.replaceAll('runtime-bec66cf2784e2a2b','runtime-stage-input-once-20260830a');";
+if(source.split(old).length-1!==1)throw new Error('Unable to locate runtime-token applicator line.');
+source=source.replace(old,replacement);
+fs.writeFileSync(file,source);
