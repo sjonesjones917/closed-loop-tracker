@@ -4,6 +4,7 @@ let s=fs.readFileSync('workflow-engine.js','utf8');
 const anchor='function obligationFragments(value){';
 const insert=`function migrateLegacyStage01Accounting(project){
   ensureShape(project);
+  project.projectData.intakeCoverageManifests=safe(project.projectData.intakeCoverageManifests);
   const stage=project.stages?.[1],existing=stage?.agentData?.INPUT_SET_CONTENTS??stage?.acceptedData?.INPUT_SET_CONTENTS;
   if(parseIntakeCaptureValue(existing))return {migrated:false,reason:'CURRENT_CAPTURE_EXISTS'};
   const imported=safe(project.projectData?.nonOperationalImportedPayloads).length>0||safe(stage?.acceptedDataChangeIds).some(id=>String(id).startsWith('IMPORTED-'))||safe(stage?.acceptedResponseIds).some(id=>String(id).startsWith('IMPORTED-'));
