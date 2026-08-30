@@ -63,6 +63,6 @@ jobs:
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git add -A
-          git reset -- .github/workflows/bundle-repair.yml .github/bundle_repair.py .github/bundle_repair_shim.py .github/bundle-repair-failure.log .github/bundle-verification-failure.log || true
+          git reset -- .github/workflows/bundle-repair.yml .github/workflows/pages.yml .github/bundle_repair.py .github/bundle_repair_shim.py .github/bundle-repair-failure.log .github/bundle-verification-failure.log || true
           git commit -m "Implement controlling bundle v3 contracts"
           git push origin HEAD:fix/full-controlling-bundle-20260830
