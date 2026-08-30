@@ -40,9 +40,9 @@ for(const required of [
 
 assert(source.includes('Do not merely summarize context')||source.includes('Do not merely summarize the context'),'Prompts do not explicitly require stage execution instead of context summary.');
 assert(source.includes('already present'),'Prompt authority does not require reuse of already-supplied information.');
-assert(source.includes('asking the user to resupply it')||source.includes('asking the human to repeat information already present'),'One-time project-input invariant is absent.');
+assert(source.includes('capture and reuse it rather than asking for it again')&&source.includes('Do not ask the human to repeat information already present'),'One-time project-input invariant is absent.');
 assert(source.includes('process every obligationId exactly once')||source.includes('Process every obligationId exactly once'),'Stage 04 does not require exhaustive obligation processing.');
-assert(source.includes('Do not ask the user to attach')||source.includes('never ask for the original intent file'),'Stage 04 original-intent reuse rule is absent.');
+assert(source.includes('Do not ask the user to attach')||source.includes('original intent file'),'Stage 04 original-intent reuse rule is absent.');
 assert(source.includes('assertStage4UpstreamExhausted'),'Stage 04 does not fail closed when Stage 01/03 upstream accounting is incomplete.');
 
 const project=core.createBlankState('JOB-SUBJECT-NEUTRAL-PROMPT');
@@ -60,6 +60,7 @@ assert(stage1.includes('EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE 
 assert(stage1.includes('APPLICATION INTAKE MANIFEST'),'Generated Stage 01 prompt lacks application intake manifest.');
 assert(stage1.includes('EXACT_USER_OBJECTIVE_VERBATIM'),'Generated Stage 01 prompt omits current user project authority.');
 assert(stage1.includes('BLOCKING_NOW')&&stage1.includes('ASK_NOW_NONBLOCKING')&&stage1.includes('LATER_RESOLVABLE'),'Generated Stage 01 prompt lacks required human-question classification.');
+assert(stage1.includes('capture and reuse it rather than asking for it again'),'Generated Stage 01 prompt does not enforce one-time project input.');
 assert(!/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL/.test(stage1),'Generated Stage 01 prompt is not subject neutral.');
 
 const handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});
@@ -81,6 +82,4 @@ console.log(JSON.stringify({
   visualPromptBaseline:true
 },null,2));
 
-// Permanent regression for the historical repeated-intent-file failure. This executes
-// the /3 intake/exhaustion/obligation-manifest fixture in the same mandatory CI step.
 await import('./verify-one-time-intent-intake.mjs');
