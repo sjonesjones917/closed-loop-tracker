@@ -29,12 +29,13 @@ jobs:
           import re
           p=Path('tools/apply-controlling-spec-fix.py')
           s=p.read_text(encoding='utf-8')
-          pattern=r'''s = replace_regex\(s, r"const APPLICATION_TEST_EXECUTORS=.*?'native capability authority'\)'''
-          replacement='''s = replace_exact(s, "function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}", "function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}", 'native capability authority')'''
-          s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
-          if n!=1:
-              raise SystemExit(f'native capability repair anchor patch count={n}')
-          p.write_text(s2,encoding='utf-8')
+          old="s = replace_regex(s, r\"const APPLICATION_TEST_EXECUTORS=Object\\.freeze\\(\\{\\}\\);\\nfunction applicationTestCapabilities\\(\\)\\{return Object\\.freeze\\(Object\\.keys\\(APPLICATION_TEST_EXECUTORS\\)\\);\\}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 'native capability authority')"
+          new="s = replace_exact(s, \"function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 'native capability authority')"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('native capability anchor unavailable')
+          p.write_text(s,encoding='utf-8')
           PY
       - name: Apply repair and preserve diagnostics on failure
         shell: bash
@@ -44,27 +45,40 @@ jobs:
           rc=$?
           cat repair-diagnostic.log
           if [ "$rc" -ne 0 ]; then
+            git checkout HEAD -- tools/apply-controlling-spec-fix.py .github/workflows/apply-controlling-spec-fix.yml
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add tools/apply-controlling-spec-fix.py repair-diagnostic.log
+            git add repair-diagnostic.log
             git commit -m "Record controlling-spec repair failure" || true
             git push origin HEAD:${GITHUB_REF_NAME}
             exit "$rc"
           fi
           rm -f repair-diagnostic.log
       - name: Syntax and capture-once proof
+        shell: bash
         run: |
-          set -euo pipefail
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node verify-capture-once.mjs
+          set +e
+          : > verification-diagnostic.log
+          rc=0
+          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs; do
+            echo "===== node --check $f =====" >> verification-diagnostic.log
+            node --check "$f" >> verification-diagnostic.log 2>&1 || rc=$?
+          done
+          if [ "$rc" -eq 0 ]; then
+            echo "===== node verify-capture-once.mjs =====" >> verification-diagnostic.log
+            node verify-capture-once.mjs >> verification-diagnostic.log 2>&1 || rc=$?
+          fi
+          cat verification-diagnostic.log
+          if [ "$rc" -ne 0 ]; then
+            git checkout HEAD -- tools/apply-controlling-spec-fix.py .github/workflows/apply-controlling-spec-fix.yml
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add verification-diagnostic.log
+            git commit -m "Record controlling-spec verification failure" || true
+            git push origin HEAD:${GITHUB_REF_NAME}
+            exit "$rc"
+          fi
+          rm -f verification-diagnostic.log
       - name: Commit repaired tree
         shell: bash
         run: |
