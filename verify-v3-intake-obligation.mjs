@@ -17,16 +17,21 @@ assert(engine.includes("inputUnitId:'INTAKE-'"),'Stage 01 stable application inp
 assert(engine.includes('rawValueSha256'),'Stage 01 raw-value hashing is missing.');
 assert(engine.includes('coverage:normalized.length?accounted/normalized.length:1'),'Stage 01 application coverage calculation is missing.');
 assert(engine.includes('complete:accounted===normalized.length'),'Stage 01 zero-loss completion calculation is missing.');
-assert(prompts.includes('STAGE 01 COMPLETE HUMAN-AUTHORITY INTAKE'),'Prompt 1 does not explicitly command complete human-authority intake.');
-assert(prompts.includes('Every application-enumerated intake unit above must receive a semantic disposition'),'Prompt 1 does not require exhaustive identity accounting.');
-assert(prompts.includes('Do not silently omit, compress away, or postpone any human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, or unresolved human-only issue'),'Prompt 1 does not explicitly prohibit semantic loss.');
+assert(prompts.includes('STAGE 01 SUBJECT-NEUTRAL ZERO-LOSS INTAKE'),'Prompt 1 does not explicitly command zero-loss human-authority intake.');
+assert(prompts.includes('Enumerate and preserve every meaning-bearing human unit.'),'Prompt 1 does not require exhaustive human-input enumeration.');
+assert(prompts.includes('For every inputUnitId in the application intake manifest'),'Prompt 1 does not require exhaustive identity accounting.');
+assert(prompts.includes('Never omit a unit because it is repetitive, non-normative, explanatory, inconvenient, or already represented elsewhere; preserve traceability.'),'Prompt 1 does not explicitly prohibit semantic loss.');
+assert(prompts.includes('Split compound statements rather than compressing them.'),'Prompt 1 does not require compound human intent to be separated rather than lost.');
 
 assert(engine.includes('function stage03ResearchCoverage(project)'),'Stage 03 exhaustive research evaluator is missing.');
 assert(engine.includes('unsaturatedSourceIds'),'Stage 03 saturation check is missing.');
 assert(engine.includes('secondConflictAndExceptionPassCompleted'),'Stage 03 second-pass check is missing.');
 assert(engine.includes('latestPassFoundNoNewMaterialCategory'),'Stage 03 no-new-material saturation check is missing.');
-assert(prompts.includes('STAGE 03 EXHAUSTIVE SOURCE RESEARCH'),'Prompt 3 does not explicitly command exhaustive research.');
-assert(prompts.includes('Do not stop at a first pass'),'Prompt 3 does not require exhaustive passes.');
+assert(prompts.includes('Research external sources source-by-source and pass-by-pass.'),'Prompt 3 does not command source-by-source/pass-by-pass research.');
+assert(prompts.includes('Repeat discovery passes until saturation is actually supported by the evidence.'),'Prompt 3 does not require saturation.');
+assert(prompts.includes('Do not stop at a first pass.'),'Prompt 3 does not explicitly prohibit premature completion.');
+assert(prompts.includes('a second conflict-and-exception pass must be complete'),'Prompt 3 does not require the second conflict/exception pass.');
+assert(prompts.includes('the latest complete pass must find no new material category'),'Prompt 3 does not require a no-new-material saturation pass.');
 
 assert(engine.includes('function stage04ObligationManifest(project)'),'Stage 04 application obligation manifest is missing.');
 for(const required of ['HUMAN_INTENT','STAGE01_ACCEPTED','STAGE03_RESEARCH','STAGE03_CANDIDATE','SOURCE_IDENTITY'])assert(engine.includes("origin:'"+required+"'"),'Stage 04 obligation universe omits '+required+'.');
