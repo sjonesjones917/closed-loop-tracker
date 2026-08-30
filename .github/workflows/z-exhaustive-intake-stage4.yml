@@ -30,11 +30,11 @@ jobs:
               text=text.replace(anchor,patch+anchor,1)
           p.write_text(text)
           PY
+          python3 fix-stage4-accounting-contract.py
           python3 exhaustive-bootstrap.py
           python3 fix-accounting-verifier.py
           python3 fix-stage1-input-version.py
           python3 fix-stage3-prompt.py
-          python3 fix-stage4-accounting-contract.py
       - name: Align acceptance report with controlling schemas and metrics
         shell: bash
         run: |
