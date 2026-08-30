@@ -1,13 +1,11 @@
 name: Controlling specification reconciliation
 on:
   push:
-    branches:
-      - fix/full-spec-reconcile-20260830
+    branches: [fix/full-spec-reconcile-20260830]
 permissions:
   contents: write
 jobs:
   reconcile:
-    if: github.event.head_commit.message == 'Run full controlling-spec reconciliation'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,319 +15,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Reconcile implementation to controlling specification
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re, hashlib, json
-
-          def read(path): return Path(path).read_text()
-          def write(path, text): Path(path).write_text(text)
-          def once(text, old, new, label):
-              n=text.count(old)
-              if n!=1: raise SystemExit(f'{label}: expected exactly one anchor, found {n}')
-              return text.replace(old,new,1)
-
-          # Visual baseline is immutable in this repair.
-          index_before=read('index.html')
-          style_before=re.search(r'<style>(.*?)</style>',index_before,re.S).group(1)
-
-          # 1) Workflow/project identity and visible Stage 16 wording.
-          p='workbook.js'; s=read(p)
-          s=once(s,"const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';",'project schema')
-          s=once(s,"'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'",'Stage 16 visible label')
-          write(p,s)
-
-          # 2) Response contract /3 and exact Job ownership.
-          p='workflow-schema.js'; s=read(p)
-          s=once(s,"const RESPONSE_SCHEMA='closed-loop-stage-response/2';","const RESPONSE_SCHEMA='closed-loop-stage-response/3';",'response schema')
-          old="const HUMAN_JOB_FIELDS=Object.freeze([\n  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',\n  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES',\n  'AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'\n]);"
-          new="const HUMAN_JOB_FIELDS=Object.freeze([\n  'EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',\n  'REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES',\n  'AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'\n]);\nconst HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER']);"
-          s=once(s,old,new,'Job ownership partition')
-          old="function jobFieldDefinition(name){\n  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});\n  if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});"
-          new="function jobFieldDefinition(name){\n  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});\n  if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{requiredAtStage:null,provenanceRequired:false,valueType:'STRING',nullable:true});\n  if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});"
-          s=once(s,old,new,'Job field producer dispatch')
-          old="const JOB_FIELDS=Object.freeze(Object.fromEntries([...new Set([...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map(name=>[name,jobFieldDefinition(name)])));"
-          new="const JOB_FIELDS=Object.freeze(Object.fromEntries([...new Set([...HUMAN_JOB_FIELDS,...HUMAN_DECISION_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map(name=>[name,jobFieldDefinition(name)])));"
-          s=once(s,old,new,'Job field complete set')
-          s=s.replace("'CUSTOM_PIPELINE'","'TEST_IR'")
-          s=s.replace('CUSTOM_PIPELINE','TEST_IR')
-          write(p,s)
-
-          # 3) Test IR canonical name in runtime/tests/source. Exact runtime overhaul follows below.
-          for p in ['prompt-engine.js','workflow-engine.js','response-ingestion.js','verify-test-runtime.mjs','verify-complete.mjs','verify-prompt-semantics.mjs','verify-definition-of-done.mjs','verify-full-cycle.mjs','verify.mjs']:
-              if Path(p).exists():
-                  t=read(p).replace('CUSTOM_PIPELINE','TEST_IR')
-                  write(p,t)
-
-          # 4) Remove prohibited project-subject branches from prompt authority and make the task precede project context.
-          p='prompt-engine.js'; s=read(p)
-          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';")
-          start=s.find("${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY")
-          end=s.find("${stage===1?`STAGE 01 CLARIFICATION EXPERIENCE",start)
-          if start<0 or end<0: raise SystemExit('domain-specific prompt block anchors not found')
-          generic="${stage===1?`STAGE 01 SUBJECT-NEUTRAL INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY\nDerive the project-specific human-authority questions from the actual request, accessible supplied materials, and current canonical context. Ask only genuinely human-only facts or decisions. Do not encode or assume a project subject, profession, industry, jurisdiction, artifact family, toolchain, or regulatory domain in application prompt logic. Do not perform later-stage work.\n`:`SUBJECT-NEUTRAL STAGE ADAPTATION\nDerive only the domain semantics required by the current project from the accepted project request, current canonical records, supplied evidence, and current stage contract. Do not use hard-coded project-subject branches or catalogues. Do not force irrelevant fields.\n`}\n\n"
-          s=s[:start]+generic+s[end:]
-          # Patent acceptance fixture must stay in tests, never runtime prompt.
-          patent_start=s.find('For PATENT / REGULATED FILING jobs,')
-          if patent_start>=0:
-              patent_end=s.find('Before Stage 01 submission verify:',patent_start)
-              if patent_end<0: raise SystemExit('patent fixture prompt end not found')
-              s=s[:patent_start]+s[patent_end:]
-          # Put the actual stage task before bounded project context. Remove later duplicate task heading.
-          marker='AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE\n${contextFor(stage,state,operation,scope)}'
-          if marker not in s: raise SystemExit('bounded-context marker not found')
-          s=s.replace(marker,'STAGE-SPECIFIC TASK — DO THIS NOW\n${procedures[stage]}\n\n'+marker,1)
-          later="})()}STAGE-SPECIFIC TASK\n${procedures[stage]}\n\nPERMITTED AGENT-OWNED STAGE DATA"
-          if later not in s: raise SystemExit('later stage-task duplicate anchor not found')
-          s=s.replace(later,"})()}PERMITTED AGENT-OWNED STAGE DATA",1)
-          # Stage 4 must use canonical retained intent and never turn missing prior capture into repeat user input.
-          if 'Do not ask the human to attach, resend, retype, or summarize the original intent file' not in s:
-              raise SystemExit('Stage 4 no-repeat-input instruction missing')
-          write(p,s)
-
-          # 5) Canonical Test IR runtime: exact required primitive set, explicit limits, worker coordination.
-          runtime=r'''(()=>{
-'use strict';
-const VERSION='closed-loop-test-runtime/2';
-const SPEC_VERSION='closed-loop-test-spec/1';
-const CAPABILITY='CLOSED_LOOP_TEST_IR';
-const OPS=Object.freeze([
-  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',
-  'COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE',
-  'ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'
-]);
-const LIMITS=Object.freeze({
-  maxInputBytes:16*1024*1024,
-  maxDecompressedBytes:16*1024*1024,
-  maxSteps:64,
-  maxSelectorDepth:32,
-  maxParsedDepth:64,
-  maxCollectionItems:100000,
-  maxRegexLength:2000,
-  maxRegexInputLength:2*1024*1024,
-  maxWorkerMs:5000,
-  maxArchiveExpansionBytes:16*1024*1024,
-  maxCsvCells:250000
-});
-const FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script','import','network','url']);
-const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
-const field=(test,key)=>test?.fields?.[key]??test?.[key];
-const stable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b))):v);
-const isInteger=value=>typeof value==='number'&&Number.isSafeInteger(value);
-function parsedDepth(value,depth=0){if(depth>LIMITS.maxParsedDepth)throw new Error('Parsed structure exceeds deterministic runtime depth limit.');if(value&&typeof value==='object')for(const item of Array.isArray(value)?value:Object.values(value))parsedDepth(item,depth+1);return value;}
-async function sha256(bytes){const data=bytesOf(bytes);if(!data)throw new Error('HASH_SHA256 requires bytes.');if(data.byteLength>LIMITS.maxInputBytes)throw new Error('Input exceeds deterministic runtime byte limit.');const digest=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');}
-function parseCsv(text,config){
-  const delimiter=String(config?.delimiter??'');if(delimiter.length!==1)throw new Error('PARSE_CSV requires an explicit one-character delimiter.');
-  if(typeof config?.header!=='boolean')throw new Error('PARSE_CSV requires explicit header boolean.');
-  if(config?.quoting!=='RFC4180')throw new Error('PARSE_CSV requires quoting = RFC4180.');
-  if(!['LF','CRLF','AUTO'].includes(config?.newline))throw new Error('PARSE_CSV requires newline = LF, CRLF, or AUTO.');
-  if(config?.encoding!=='UTF-8')throw new Error('PARSE_CSV requires encoding = UTF-8.');
-  const rows=[];let row=[],cell='',quoted=false,cells=0;
-  for(let i=0;i<text.length;i++){
-    const ch=text[i];
-    if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++;}else if(ch==='"')quoted=false;else cell+=ch;continue;}
-    if(ch==='"'){if(cell.length)throw new Error('Malformed CSV: quote begins inside an unquoted field.');quoted=true;continue;}
-    if(ch===delimiter){row.push(cell);cell='';cells++;}
-    else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';cells++;}
-    else if(ch==='\r'){if(text[i+1]==='\n')continue;row.push(cell);rows.push(row);row=[];cell='';cells++;}
-    else cell+=ch;
-    if(cells>LIMITS.maxCsvCells)throw new Error('CSV exceeds deterministic runtime cell limit.');
-  }
-  if(quoted)throw new Error('Malformed CSV: unterminated quoted field.');
-  if(cell.length||row.length){row.push(cell);rows.push(row);}
-  if(rows.length>LIMITS.maxCollectionItems)throw new Error('CSV exceeds deterministic runtime row limit.');
-  if(!config.header)return rows;
-  const headers=rows.shift()||[];return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??''])));
-}
-function parseXml(text){
-  if(typeof DOMParser==='function'){
-    const doc=new DOMParser().parseFromString(String(text),'application/xml');
-    if(doc.querySelector('parsererror'))throw new Error('Malformed XML.');return doc;
-  }
-  const src=String(text).trim();if(!src.startsWith('<')||!src.endsWith('>'))throw new Error('Malformed XML.');return Object.freeze({__closedLoopXml:src});
-}
-function selectJsonPath(value,path){
-  const text=String(path||'').trim();if(text==='$')return value;if(!text.startsWith('$.'))throw new Error('SELECT_JSON_PATH supports only deterministic root paths beginning with $.');
-  const raw=text.slice(2).split('.');if(raw.length>LIMITS.maxSelectorDepth)throw new Error('JSON selector exceeds depth limit.');
-  const parts=[];for(const token of raw){const m=token.match(/^([^\[\]]+)(?:\[(\d+)\])?$/);if(!m)throw new Error('Unsupported JSON path token: '+token);parts.push(m[1]);if(m[2]!==undefined)parts.push(Number(m[2]));}
-  let out=value;for(const part of parts){if(out===null||out===undefined||!(part in Object(out)))throw new Error('JSON path does not exist: '+text);out=out[part];}return out;
-}
-function selectXml(value,path){
-  const text=String(path||'').trim();if(!/^\/?[A-Za-z_][\w.-]*(?:\/[A-Za-z_][\w.-]*)*$/.test(text))throw new Error('SELECT_XML supports only absolute/simple element-name paths.');
-  const parts=text.replace(/^\//,'').split('/');if(parts.length>LIMITS.maxSelectorDepth)throw new Error('XML selector exceeds depth limit.');
-  if(value?.querySelector){let node=value.documentElement;if(!node||node.tagName!==parts[0])throw new Error('XML selector root does not match.');for(const name of parts.slice(1)){node=[...node.children].find(x=>x.tagName===name);if(!node)throw new Error('XML selector does not exist.');}return node.textContent;}
-  const src=value?.__closedLoopXml;if(!src)throw new Error('SELECT_XML requires parsed XML.');let segment=src;for(const name of parts){const m=segment.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`));if(!m)throw new Error('XML selector does not exist.');segment=m[1];}return segment.replace(/<[^>]+>/g,'').trim();
-}
-function assertResult(ok,expected,actual,message){return {determination:ok?'SATISFIED':'VIOLATED',expected,actual,message:message||null};}
-function numericCompare(actual,expected,op,step){
-  if(!Number.isFinite(actual)||!Number.isFinite(expected))throw new Error(`${op} requires finite numeric values.`);
-  if(op==='ASSERT_EQ'&&!isInteger(actual)&&!isInteger(expected)){
-    const abs=step.absoluteTolerance,rel=step.relativeTolerance;if(abs===undefined&&rel===undefined)throw new Error('Precision-sensitive numeric equality requires explicit absoluteTolerance or relativeTolerance.');
-    const diff=Math.abs(actual-expected),limit=Math.max(abs===undefined?0:Number(abs),rel===undefined?0:Number(rel)*Math.max(Math.abs(actual),Math.abs(expected)));return diff<=limit;
-  }
-  return ({ASSERT_EQ:actual===expected,ASSERT_GT:actual>expected,ASSERT_GTE:actual>=expected,ASSERT_LT:actual<expected,ASSERT_LTE:actual<=expected})[op];
-}
-function validateSpec(spec){
-  const issues=[];
-  if(!spec||typeof spec!=='object'||Array.isArray(spec))issues.push('Test IR must be an object.');
-  if(spec?.version!==SPEC_VERSION)issues.push('Unsupported Test IR version.');
-  if(!Array.isArray(spec?.steps)||!spec.steps.length)issues.push('Test IR requires at least one step.');
-  if((spec?.steps?.length||0)>LIMITS.maxSteps)issues.push('Test IR exceeds maximum step count.');
-  const rootAllowed=new Set(['version','steps']);for(const key of Object.keys(spec||{}))if(!rootAllowed.has(key))issues.push(`Unsupported Test IR root property ${key}.`);
-  for(const [index,step] of (spec?.steps||[]).entries()){
-    if(!step||typeof step!=='object'||Array.isArray(step)){issues.push(`Step ${index} is not an object.`);continue;}
-    if(!OPS.includes(step.op))issues.push(`Step ${index} uses unsupported operation ${String(step.op)}.`);
-    for(const key of FORBIDDEN_STEP_KEYS)if(Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} contains forbidden executable field ${key}.`);
-    if(step.op==='LOAD_ARTIFACT'&&!step.binding)issues.push(`Step ${index} LOAD_ARTIFACT requires binding.`);
-    if(step.op==='SELECT_JSON_PATH'&&!step.path)issues.push(`Step ${index} SELECT_JSON_PATH requires path.`);
-    if(step.op==='SELECT_XML'&&!step.path)issues.push(`Step ${index} SELECT_XML requires path.`);
-    if(step.op==='PARSE_CSV')for(const key of ['delimiter','header','quoting','newline','encoding'])if(!Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} PARSE_CSV requires ${key}.`);
-    if(step.op==='REGEX'||step.op==='ASSERT_MATCH')if(String(step.pattern??step.value??'').length>LIMITS.maxRegexLength)issues.push(`Step ${index} regex exceeds maximum length.`);
-  }
-  return {valid:issues.length===0,issues};
-}
-function validateBindings(bindings){
-  const issues=[];if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))return {valid:false,issues:['EXECUTABLE_INPUT_BINDINGS must be an object.']};
-  for(const [name,binding] of Object.entries(bindings)){if(!/^[A-Z][A-Z0-9_]{0,63}$/.test(name))issues.push(`Invalid Test IR binding name ${name}.`);if(typeof binding==='string')continue;if(!binding||typeof binding!=='object'||Array.isArray(binding)){issues.push(`Binding ${name} must be an artifact ID string or a closed binding object.`);continue;}const allowed=new Set(['artifactId','source','artifactRole','filename']);for(const key of Object.keys(binding))if(!allowed.has(key))issues.push(`Binding ${name} contains unsupported key ${key}.`);if(binding.source&&binding.source!=='CURRENT_PRODUCT'&&binding.source!=='CURRENT_SCOPE')issues.push(`Binding ${name} has unsupported source ${binding.source}.`);if(!binding.artifactId&&!binding.artifactRole&&!binding.filename)issues.push(`Binding ${name} does not identify an artifact.`);}
-  return {valid:issues.length===0,issues};
-}
-function supports(test){
-  if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
-  if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')return false;
-  if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
-  return validateSpec(field(test,'EXECUTABLE_SPEC')).valid&&validateBindings(field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
-}
-async function executeCore({spec,artifacts}){
-  const check=validateSpec(spec);if(!check.valid)throw new Error(check.issues.join(' '));
-  const source=artifacts&&typeof artifacts==='object'?artifacts:{};let value=null,currentArtifact=null,lastRegex=null,assertion=null;const observations=[];
-  for(const [index,step] of spec.steps.entries()){
-    switch(step.op){
-      case 'LOAD_ARTIFACT':{const a=source[step.binding];if(!a)throw new Error(`Artifact binding ${step.binding} is unavailable.`);const bytes=bytesOf(a.bytes);if(bytes&&bytes.byteLength>LIMITS.maxInputBytes)throw new Error('Input exceeds deterministic runtime byte limit.');currentArtifact=a;value=a;observations.push({step:index,op:step.op,binding:step.binding,artifactId:a.artifactId||null,filename:a.filename||null,sha256:a.sha256||null});break;}
-      case 'READ_BYTES':{const bytes=bytesOf(currentArtifact?.bytes??value?.bytes??value);if(!bytes)throw new Error('READ_BYTES requires artifact bytes.');if(bytes.byteLength>LIMITS.maxInputBytes)throw new Error('Input exceeds deterministic runtime byte limit.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
-      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)throw new Error('DECODE_UTF8 requires bytes.');value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);break;}
-      case 'PARSE_JSON':value=parsedDepth(JSON.parse(String(value)));break;
-      case 'PARSE_CSV':value=parsedDepth(parseCsv(String(value),step));break;
-      case 'PARSE_XML':value=parseXml(String(value));break;
-      case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;
-      case 'SELECT_XML':value=selectXml(value,step.path);break;
-      case 'COUNT':{if(value==null||typeof value.length!=='number')throw new Error('COUNT requires an array, string, or array-like value.');if(value.length>LIMITS.maxCollectionItems)throw new Error('COUNT input exceeds collection limit.');value=value.length;break;}
-      case 'SUM':case 'MIN':case 'MAX':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error(`${step.op} requires a bounded array.`);const nums=value.map(Number);if(nums.some(x=>!Number.isFinite(x)))throw new Error(`${step.op} requires finite numeric values.`);value=step.op==='SUM'?nums.reduce((a,b)=>a+b,0):step.op==='MIN'?Math.min(...nums):Math.max(...nums);break;}
-      case 'SORT':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error('SORT requires a bounded array.');value=[...value].sort((a,b)=>stable(a).localeCompare(stable(b)));break;}
-      case 'UNIQUE':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error('UNIQUE requires a bounded array.');const seen=new Set();value=value.filter(v=>{const k=stable(v);if(seen.has(k))return false;seen.add(k);return true;});break;}
-      case 'HASH_SHA256':value=await sha256(value);break;
-      case 'REGEX':{const input=String(value);if(input.length>LIMITS.maxRegexInputLength)throw new Error('Regex input exceeds deterministic runtime limit.');const r=new RegExp(String(step.pattern||''),String(step.flags||''));lastRegex=r;value=r.test(input);break;}
-      case 'COMPARE':{const other=Object.prototype.hasOwnProperty.call(step,'value')?step.value:source[step.binding]?.value;value=stable(value)===stable(other);break;}
-      case 'BYTE_COMPARE':{const left=bytesOf(value),other=bytesOf(source[step.binding]?.bytes);if(!left||!other)throw new Error('BYTE_COMPARE requires byte-backed current value and target binding.');let equal=left.byteLength===other.byteLength;if(equal)for(let i=0;i<left.byteLength;i++)if(left[i]!==other[i]){equal=false;break;}value=equal;break;}
-      case 'ASSERT_EQ':{const expected=step.value,ok=(typeof value==='number'&&typeof expected==='number')?numericCompare(value,expected,step.op,step):stable(value)===stable(expected);assertion=assertResult(ok,expected,value,step.message);break;}
-      case 'ASSERT_GT':case 'ASSERT_GTE':case 'ASSERT_LT':case 'ASSERT_LTE':{assertion=assertResult(numericCompare(Number(value),Number(step.value),step.op,step),`${step.op} ${step.value}`,value,step.message);break;}
-      case 'ASSERT_MATCH':{const input=String(value);if(input.length>LIMITS.maxRegexInputLength)throw new Error('Regex input exceeds deterministic runtime limit.');const r=lastRegex||new RegExp(String(step.pattern??step.value??''),String(step.flags||''));assertion=assertResult(r.test(input),String(r),value,step.message);break;}
-      case 'ASSERT_CONTAINS':{const ok=Array.isArray(value)?value.some(v=>stable(v)===stable(step.value)):String(value).includes(String(step.value));assertion=assertResult(ok,`contains ${stable(step.value)}`,value,step.message);break;}
-      case 'ASSERT_NOT_CONTAINS':{const ok=Array.isArray(value)?!value.some(v=>stable(v)===stable(step.value)):!String(value).includes(String(step.value));assertion=assertResult(ok,`does not contain ${stable(step.value)}`,value,step.message);break;}
-      case 'ASSERT_SET_EQUAL':{if(!Array.isArray(value)||!Array.isArray(step.value))throw new Error('ASSERT_SET_EQUAL requires arrays.');const a=[...new Set(value.map(stable))].sort(),b=[...new Set(step.value.map(stable))].sort();assertion=assertResult(stable(a)===stable(b),step.value,value,step.message);break;}
-      default:throw new Error(`Unsupported Test IR operation ${step.op}.`);
-    }
-    if(assertion){observations.push({step:index,op:step.op,...assertion});if(assertion.determination==='VIOLATED')return {status:'COMPLETE',determination:'VIOLATED',expected:assertion.expected,actual:assertion.actual,observations,executorVersion:VERSION,runtimeVersion:VERSION,specVersion:SPEC_VERSION};assertion=null;}
-  }
-  const finalAssertion=[...observations].reverse().find(x=>x.determination);return {status:'COMPLETE',determination:finalAssertion?.determination||'UNDETERMINED',expected:finalAssertion?.expected??null,actual:finalAssertion?.actual??value,observations,executorVersion:VERSION,runtimeVersion:VERSION,specVersion:SPEC_VERSION};
-}
-function workerToken(){try{const script=[...document.scripts].find(x=>/test-runtime\.js(?:\?|$)/.test(x.src));return new URL(script.src).searchParams.get('v')||'';}catch{return '';}}
-async function execute(args){
-  const inWorker=typeof WorkerGlobalScope!=='undefined'&&self instanceof WorkerGlobalScope;
-  if(inWorker||typeof document==='undefined'||typeof Worker==='undefined')return executeCore(args);
-  const token=workerToken(),url='test-worker.js'+(token?'?v='+encodeURIComponent(token):'');
-  return new Promise((resolve,reject)=>{const worker=new Worker(url);const requestId='TIR-'+crypto.randomUUID();const timer=setTimeout(()=>{worker.terminate();const e=new Error('Deterministic Test IR worker timeout.');e.code='TEST_IR_TIMEOUT';reject(e);},LIMITS.maxWorkerMs);worker.onmessage=event=>{if(event.data?.requestId!==requestId)return;clearTimeout(timer);worker.terminate();const result=event.data?.result;if(result?.status==='EXECUTION_FAILED'){const e=new Error(result.error||'Test IR worker execution failed.');e.code='TEST_IR_EXECUTION_FAILED';reject(e);}else resolve(result);};worker.onerror=event=>{clearTimeout(timer);worker.terminate();reject(new Error(event.message||'Test IR worker failed.'));};worker.postMessage({requestId,spec:args.spec,artifacts:args.artifacts});});
-}
-const executeTest=(test,artifacts)=>execute({spec:field(test,'EXECUTABLE_SPEC'),artifacts});
-globalThis.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,CAPABILITY,OPS,LIMITS,validateSpec,validateBindings,supports,execute,executeCore,executeTest,capabilities:()=>Object.freeze([CAPABILITY])});
-})();'''
-          write('test-runtime.js',runtime)
-          worker="""'use strict';\nconst token=new URL(self.location.href).searchParams.get('v')||'';\nimportScripts('test-runtime.js'+(token?'?v='+encodeURIComponent(token):''));\nself.onmessage=async event=>{\n  const {requestId,spec,artifacts}=event.data||{};\n  try{const result=await self.closedLoopTestRuntime.executeCore({spec,artifacts});self.postMessage({requestId,result});}\n  catch(error){self.postMessage({requestId,result:{status:'EXECUTION_FAILED',determination:'UNDETERMINED',error:String(error?.message||error),runtimeVersion:self.closedLoopTestRuntime?.VERSION||'UNKNOWN'}});}\n};\n"""
-          write('test-worker.js',worker)
-
-          # 6) Runtime graph: add test-runtime in the required order and explicit same-origin worker CSP. Preserve all CSS/visual markup.
-          p='index.html'; s=read(p)
-          s=once(s,"object-src 'none'; base-uri 'none'","object-src 'none'; worker-src 'self'; base-uri 'none'",'worker CSP')
-          anchor='<script defer src="workflow-schema.js?v='
-          pos=s.find(anchor)
-          if pos<0: raise SystemExit('workflow-schema script anchor missing')
-          end_tag=s.find('</script>',pos)+9
-          schema_tag=s[pos:end_tag]
-          token=re.search(r'\?v=([^"]+)',schema_tag).group(1)
-          if 'test-runtime.js?v=' not in s:
-              s=s[:end_tag]+f'\n<script defer src="test-runtime.js?v={token}"></script>'+s[end_tag:]
-          write(p,s)
-
-          # 7) Current /3 migration contract while retaining historical /2 recognition.
-          # Existing migrateState is kept; changing PROJECT_SCHEMA makes legacy projects normalize to /3.
-          # Preserve original imported payload as non-operational audit evidence when migration changes schema.
-          p='workbook.js'; s=read(p)
-          migrate_anchor='function migrateState('
-          if migrate_anchor not in s: raise SystemExit('migrateState missing')
-          write(p,s)
-
-          # 8) Current tests and acceptance descriptors must target /3; explicit legacy fixtures keep /2 only where testing migration/history.
-          for p in ['README.md','verify.mjs','verify-complete.mjs','verify-definition-of-done.mjs','verify-full-cycle.mjs','verify-ingestion.mjs','verify-project-lifecycle.mjs','verify-browser.mjs','verify-browser-extra.mjs','.github/workflows/pages.yml']:
-              if not Path(p).exists(): continue
-              t=read(p)
-              t=t.replace("responseSchema: 'closed-loop-stage-response/2'","responseSchema: 'closed-loop-stage-response/3'")
-              t=t.replace('responseSchema":"closed-loop-stage-response/2','responseSchema":"closed-loop-stage-response/3')
-              t=t.replace("RESPONSE_SCHEMA==='closed-loop-stage-response/2'","RESPONSE_SCHEMA==='closed-loop-stage-response/3'")
-              t=t.replace("PROJECT_SCHEMA==='closed-loop-project/2'","PROJECT_SCHEMA==='closed-loop-project/3'")
-              t=t.replace('projectSchema: core.PROJECT_SCHEMA','projectSchema: core.PROJECT_SCHEMA')
-              write(p,t)
-
-          # 9) Exact shared runtime/cache identity includes the worker and all nine main-thread modules.
-          runtime_files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','test-worker.js']
-          manifest=''
-          for name in runtime_files:
-              data=Path(name).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest();manifest+=f'{name}:{blob}\n'
-          build='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
-          p='index.html'; s=read(p); s=re.sub(r'v=runtime-[A-Za-z0-9-]+',f'v={build}',s);write(p,s)
-          # Ensure worker will receive that same query identity at runtime.
-
-          # 10) Permanent specification-conformance regression. It deliberately focuses on explicit supplied invariants,
-          # not current implementation claims.
-          audit=r'''import fs from 'node:fs';
-const assert=(ok,msg)=>{if(!ok)throw new Error(msg)};
-const read=p=>fs.readFileSync(p,'utf8');
-const workbook=read('workbook.js'),schema=read('workflow-schema.js'),prompt=read('prompt-engine.js'),runtime=read('test-runtime.js'),worker=read('test-worker.js'),html=read('index.html');
-assert(workbook.includes("const PROJECT_SCHEMA='closed-loop-project/3';"),'project schema must be /3');
-assert(schema.includes("const RESPONSE_SCHEMA='closed-loop-stage-response/3';"),'response schema must be /3');
-assert(workbook.includes("'CORRECT THE ROOT CAUSE'"),'Stage 16 visible label is wrong');
-assert(!prompt.includes('PATENT / REGULATED FILING'),'prompt-engine contains patent branch');
-assert(!prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'),'prompt-engine contains software branch');
-assert(!prompt.includes('BUILDING / ARCHITECTURE / AEC'),'prompt-engine contains AEC branch');
-assert(!prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'),'prompt-engine contains mechanical branch');
-assert(!prompt.includes('CUSTOM_PIPELINE'),'prompt-engine contains prohibited CUSTOM_PIPELINE');
-assert(runtime.includes("'TEST_IR'"),'runtime does not require TEST_IR');
-for(const op of ['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'])assert(runtime.includes(`'${op}'`),`missing Test IR primitive ${op}`);
-for(const bad of ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE'])assert(!runtime.includes(`'${bad}'`),`undeclared Test IR primitive remains: ${bad}`);
-for(const limit of ['maxInputBytes','maxDecompressedBytes','maxSteps','maxSelectorDepth','maxParsedDepth','maxCollectionItems','maxRegexLength','maxRegexInputLength','maxWorkerMs','maxArchiveExpansionBytes'])assert(runtime.includes(limit),`missing centralized resource limit ${limit}`);
-assert(worker.includes('executeCore'),'worker must execute isolated runtime core');
-assert(html.includes("worker-src 'self'"),'CSP must explicitly restrict workers to same origin');
-const scripts=[...html.matchAll(/<script defer src="([^"]+)"/g)].map(x=>x[1].split('?')[0]);
-assert(JSON.stringify(scripts)===JSON.stringify(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']),'runtime script order is wrong');
-assert(prompt.indexOf('STAGE-SPECIFIC TASK — DO THIS NOW')<prompt.indexOf('AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE'),'stage task must precede project context');
-assert(prompt.includes('Do not ask the human to attach, resend, retype, or summarize the original intent file'),'Stage 4 repeat-input prohibition missing');
-assert(schema.includes("const HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER'])"),'JOB_TITLE/JOB_OWNER must be HUMAN_DECISION');
-assert(html.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh')&&html.includes('.expandable-prompt{max-height:280px}'),'prompt box visual baseline changed');
-console.log(JSON.stringify({projectSchema3:true,responseSchema3:true,subjectNeutralPrompts:true,testIrContract:true,workerIsolation:true,stage4CaptureOnce:true,visualBaselinePreserved:true}));'''
-          write('verify-controlling-spec.mjs',audit)
-
-          # Assert no CSS changed at all.
-          index_after=read('index.html')
-          style_after=re.search(r'<style>(.*?)</style>',index_after,re.S).group(1)
-          if style_before!=style_after: raise SystemExit('Visual CSS changed during controlling-spec repair.')
-          print(json.dumps({'runtimeBuildIdentity':build,'cssUnchanged':True}))
-          PY
-      - name: Remove temporary reconciliation workflow before proof
-        run: rm .github/workflows/spec-reconcile.yml
-      - name: Syntax and controlling-spec proof
+      - name: Apply reconciliation
+        run: python3 .github/spec-reconcile.py
+      - name: Remove temporary repair files
+        run: rm .github/workflows/spec-reconcile.yml .github/spec-reconcile.py
+      - name: Verify source and controlling invariants
         run: |
           node --check workbook.js
-          node --check hash.js
           node --check workflow-schema.js
           node --check test-runtime.js
           node --check test-worker.js
@@ -340,11 +32,20 @@ console.log(JSON.stringify({projectSchema3:true,responseSchema3:true,subjectNeut
           node --check app-core.js
           node --check verify-controlling-spec.mjs
           node verify-controlling-spec.mjs
-      - name: Complete repository proof
+      - name: Run complete existing proof
         run: |
           node build-test-project.mjs
-          for f in verify-test-runtime.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs; do node "$f"; done
-      - name: Browser acceptance with unchanged visual baseline
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Run browser acceptance
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -353,7 +54,7 @@ console.log(JSON.stringify({projectSchema3:true,responseSchema3:true,subjectNeut
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-browser.mjs
           node verify-browser-extra.mjs
-      - name: Commit proven reconciliation only
+      - name: Commit proven changes
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
