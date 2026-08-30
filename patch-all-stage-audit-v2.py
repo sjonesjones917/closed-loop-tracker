@@ -36,3 +36,11 @@ if insert.strip() not in t:
     if anchor not in t: raise SystemExit('Stage 04 audit anchor not found')
     t=t.replace(anchor,insert+"\n"+anchor,1)
 p.write_text(t)
+
+# Modernize the older user-prompt fixture so it obeys the current /3 Stage 01 accounting contract.
+p=Path('verify-user-prompt-invariants.mjs')
+t=p.read_text()
+old="function closeStage1(p){const r1=prompts.buildPromptRecord(1,p);const units=r1.contextManifest.intakeCoverageManifest.units;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({units:units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'S'+String(i+1),text:i===0?'CAPTURED-STAGE1-SENTINEL '+u.label:'CAPTURED '+u.label,statementClass:i===0?'REQUIREMENT':'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};return r1;}"
+new="function closeStage1(p){const r1=prompts.buildPromptRecord(1,p);const m=r1.contextManifest.intakeCoverageManifest;p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'PROMPT-INVARIANT-DELIVERABLE',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:i===0?'CAPTURED-STAGE1-SENTINEL '+u.label:'CAPTURED '+u.label,statementClass:i===0?'REQUIREMENT':'FACT'}]}))})};p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};return r1;}"
+if old not in t: raise SystemExit('Expected legacy closeStage1 fixture not found')
+p.write_text(t.replace(old,new,1))
