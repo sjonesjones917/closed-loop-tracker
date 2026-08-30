@@ -17,10 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply stage context repair
+      - name: Apply stage context and permanent-regression repairs
         run: |
           python3 .repair-context-contracts.py
-          sed -i "s/PERSISTED HUMAN ANSWERS — OPERATIVE CANONICAL USER INPUT/PERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN/" verify-all-stage-prompts.mjs
+          python3 .repair-all-stage-regression.py
       - name: Syntax and exhaustive prompt/context proof
         run: |
           node --check workflow-schema.js
@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
-          git checkout -- .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-context-contracts.py .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py .repair-all-prompts.py .print-stage-contracts.mjs
+          git checkout -- .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-context-contracts.py .repair-all-stage-regression.py .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py .repair-all-prompts.py .print-stage-contracts.mjs
           git add workflow-schema.js verify-all-stage-prompts.mjs
           git commit -m 'Supply every stage prompt the canonical context it needs'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
