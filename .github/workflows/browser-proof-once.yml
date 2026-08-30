@@ -1,4 +1,4 @@
-name: Diagnose retained browser state once
+name: Locate Stage 01 migration implementation once
 on:
   push:
     branches: [implementation/closed-loop-v3]
@@ -6,26 +6,10 @@ on:
 permissions:
   contents: read
 jobs:
-  browser:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Print exact retained state
+      - name: Locate accounting and migration code
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify-browser.mjs')
-          s=p.read_text()
-          old="let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Retained Stage 01/02 state is wrong.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');"
-          new="let retained=await activeProject(cdp);console.log('RETAINED_DIAGNOSTIC='+JSON.stringify({job:retained.job,stage1:retained.stages['1'],intakeManifest:retained.intakeCoverageManifest||retained.projectData?.intakeCoverageManifest||null}));process.exit(0);"
-          if old not in s: raise SystemExit('diagnostic target not found')
-          p.write_text(s.replace(old,new,1))
-          PY
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/http.log 2>&1 &
-          PID=$!
-          trap 'kill "$PID" 2>/dev/null || true' EXIT
-          node verify-browser.mjs
+          grep -n "INPUT_SET_CONTENTS\|intakeCoverageManifest\|buildIntake\|migrate" workflow-engine.js project-store.js workflow-schema.js | head -200
