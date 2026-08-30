@@ -1,0 +1,32 @@
+name: Run exact zero-loss repair
+on:
+  push:
+    branches:
+      - fix/final-controlling-v3-20260830
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-controlling-v3-20260830
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 repair-stage01-stage04.py
+      - run: node --check workflow-engine.js
+      - run: node verify-intake-obligation-accounting.mjs
+      - run: node verify-one-time-intent-intake.mjs
+      - run: node verify-single-supply-prompts.mjs
+      - run: node verify-prompt-semantics.mjs
+      - run: node verify-ingestion.mjs
+      - name: Commit source repair
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add workflow-engine.js verify-intake-obligation-accounting.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Preserve human input identity and Stage 04 zero-loss accounting"
+          git push origin HEAD:fix/final-controlling-v3-20260830
