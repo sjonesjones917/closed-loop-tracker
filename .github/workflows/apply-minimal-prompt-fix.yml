@@ -45,6 +45,6 @@ jobs:
           git config user.email actions@users.noreply.github.com
           git add prompt-engine.js index.html .github/workflows/apply-minimal-prompt-fix.yml
           git diff --cached --name-only
-          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "index.html prompt-engine.js "
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/apply-minimal-prompt-fix.yml index.html prompt-engine.js "
           git commit -m "Fix Stage 4 prompt handoff and restore prompt box [prompt-fix-applied]"
           git push origin HEAD:fix-prompt-only-stage4
