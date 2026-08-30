@@ -24,7 +24,7 @@ jobs:
           node verify-stage1-stage3-stage4.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm repair-exhaustive-stage1-stage3-stage4.mjs fix-repair-exhaustive-stage134.mjs
+          git rm -f repair-exhaustive-stage1-stage3-stage4.mjs fix-repair-exhaustive-stage134.mjs
           git add workflow-engine.js prompt-engine.js response-ingestion.js verify-stage1-stage3-stage4.mjs
           git commit -m "Enforce exhaustive intake and research before Stage 4"
           git push origin HEAD:spec-v3-zero-loss-20260830
