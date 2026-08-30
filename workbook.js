@@ -87,6 +87,7 @@ const STAGE_OWNERSHIP=Object.freeze({
     "human": [],
     "humanDecision": [],
     "agent": [
+      "ATOMICITY_REVIEW_RESULTS",
       "DEFINED_TERM_GAPS",
       "CONDITIONAL_REQUIREMENTS",
       "OPTIONAL_REQUIREMENTS",
@@ -95,7 +96,6 @@ const STAGE_OWNERSHIP=Object.freeze({
     "application": [
       "REQUIREMENTS_VERSION",
       "REQUIREMENT_RECORDS",
-      "ATOMICITY_REVIEW_RESULTS",
       "TOTAL_REQUIREMENTS",
       "MANDATORY_REQUIREMENTS",
       "STAGE_DECISION",
