@@ -27,7 +27,7 @@ jobs:
         run: sed -i 's/SOURCE_MATERIAL must equal the exact INPUT-UNIT ID/SOURCE_MATERIAL must be the exact INPUT-UNIT ID/' .github/scripts/materialize_stage4_v2.py
       - name: Materialize current-main repair
         run: python3 .github/scripts/materialize_stage4_v2.py
-      - name: Make prior intent canonical state only, never a Stage 4 handoff
+      - name: Finalize current-main Stage 4 invariants
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -49,6 +49,14 @@ jobs:
           if old not in r:
               raise SystemExit('expected Stage 04 handoff regression assertion was not found')
           regression.write_text(r.replace(old,new,1))
+
+          semantics=Path('verify-prompt-semantics.mjs')
+          s=semantics.read_text()
+          old="if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');"
+          new="if(prompts.version!=='closed-loop-prompt-engine/27')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical obligation-accounting repair.');"
+          if old not in s:
+              raise SystemExit('expected /26 persisted-prompt regression was not found')
+          semantics.write_text(s.replace(old,new,1))
 
           runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest=''
