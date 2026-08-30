@@ -16,23 +16,63 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Repair candidate and stale regression assertions in runner
+      - name: Repair controlling candidate in runner
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
+          # Stage 1 durable snapshot collection initialization.
           p=Path('workflow-engine.js'); t=p.read_text()
-          bad="'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures,'intakeArtifactSnapshots'"
-          good="'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeArtifactSnapshots'"
-          if bad in t: t=t.replace(bad,good,1)
-          if good not in t: raise SystemExit('Stage 1 infrastructure collection partition is not valid')
+          t=t.replace("'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures,'intakeArtifactSnapshots'","'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeArtifactSnapshots'",1)
+          if "'executionFailures','intakeArtifactSnapshots'" not in t: raise SystemExit('Stage 1 infrastructure collection partition invalid')
           p.write_text(t)
-          p=Path('build-test-project.mjs'); t=p.read_text()
-          old='Research only the current accepted Stage 02 independent external source set'
-          new='Exhaustively research every current accepted Stage 02 independent external source'
+
+          # Test schema ownership is exhaustive/disjoint and the normalized spec hash is canonical APPLICATION state.
+          p=Path('workflow-schema.js'); t=p.read_text()
+          t=t.replace("if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);","if(get('EXECUTABLE_SPEC')?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);",1)
+          old="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
+          new="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
           if old in t: t=t.replace(old,new,1)
-          if new not in t: raise SystemExit('Stage 3 semantic regression assertion missing')
+          fields="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
+          fields2="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','EXECUTABLE_SPEC_SHA256','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
+          if fields in t: t=t.replace(fields,fields2,1)
+          if 'EXECUTABLE_SPEC_SHA256' not in t: raise SystemExit('canonical Test IR hash field missing')
+          p.write_text(t)
+
+          # Application derives Test IR identity/hash during proposal canonicalization; external output cannot set them.
+          p=Path('response-ingestion.js'); t=p.read_text()
+          anchor="const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      fields[definition.idField]=id;"
+          insert="const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      if(collection==='tests'){const kind=String(fields.EXECUTABLE_KIND||'NONE').toUpperCase();if(kind==='TEST_IR'){const runtime=globalThis.closedLoopTestRuntime;if(!runtime)throw new Error('Test IR runtime is unavailable during canonicalization.');const normalized=runtime.normalizeSpec(fields.EXECUTABLE_SPEC);fields.EXECUTABLE_SPEC_VERSION=runtime.SPEC_VERSION;fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized);}else{fields.EXECUTABLE_SPEC_VERSION=null;fields.EXECUTABLE_SPEC_SHA256=null;}}\n      fields[definition.idField]=id;"
+          if anchor in t: t=t.replace(anchor,insert,1)
+          if "fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized)" not in t: raise SystemExit('Test IR canonical hash derivation missing')
+          changes_anchor="for(const [collection,list] of Object.entries(canonicalRecords))list.forEach((record,index)=>{const proposed=safe(envelope.records?.[collection])[index];const def=schema.RECORD_SCHEMAS[collection];changes.push({origin:record.updateTargetId?'APPLICATION_RELATIONSHIP_RESOLUTION':'APPLICATION_ID_ALLOCATION'"
+          if changes_anchor not in t: raise SystemExit('extraction manifest loop anchor missing')
+          # Record dynamic Test IR derived fields in extraction provenance immediately before per-agent-field extraction.
+          marker="for(const [name,value] of Object.entries(proposed?.fields||{}))changes.push({origin:'AGENT_VALUE'"
+          dyn="if(collection==='tests'&&String(record.fields?.EXECUTABLE_KIND||record.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR')for(const name of ['EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256'])changes.push({origin:'APPLICATION_DERIVATION',jsonPointer:null,rawValueHash:null,normalizerUsed:null,canonicalCollection:collection,canonicalRecordType:collection,canonicalRecordId:record.id,canonicalField:name,relationshipTargetId:null,evidenceIds:record.evidenceRefs||[],normalizedValue:clone(record.fields?.[name]??record[name]),temporaryResponseKey:record.temporaryKey,derivationKey:`${collection}.testIr.${name}`});"
+          if dyn not in t:
+              if marker not in t: raise SystemExit('agent extraction marker missing')
+              t=t.replace(marker,dyn+marker,1)
+          p.write_text(t)
+
+          # V1 runtime uses exactly the controlling registered primitive set; no unapproved alternate assertion language.
+          p=Path('test-runtime.js'); t=p.read_text()
+          for op in ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']:
+              t=re.sub(rf'^\s*{op}:\{{[^\n]*\}},\n','',t,count=1,flags=re.M)
+          t=t.replace("const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ'","const ASSERTION_OPS=new Set(['ASSERT_EQ'",1)
+          t=re.sub(r"\n\s*case 'ASSERT_EXISTS':[^\n]*",'',t,count=1)
+          t=re.sub(r"\n\s*case 'ASSERT_TYPE':\{[^\n]*",'',t,count=1)
+          t=re.sub(r"\n\s*case 'ASSERT_NE':[^\n]*",'',t,count=1)
+          for op in ['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']:
+              if re.search(rf'^\s*{op}:\{{',t,re.M): raise SystemExit('unapproved V1 primitive remains: '+op)
+          p.write_text(t)
+
+          # Replace stale wording-only Stage 3 test with the stronger controlling semantic invariant.
+          p=Path('build-test-project.mjs'); t=p.read_text()
+          t=t.replace('Research only the current accepted Stage 02 independent external source set','Exhaustively research every current accepted Stage 02 independent external source',1)
+          if 'Exhaustively research every current accepted Stage 02 independent external source' not in t: raise SystemExit('Stage 3 semantic assertion missing')
           p.write_text(t)
           PY
           git fetch origin main
@@ -47,7 +87,7 @@ jobs:
           if '.expandable-prompt{max-height:280px}' not in candidate: raise SystemExit('prompt preview size changed')
           PY
           node - <<'NODE'
-          const fs=require('fs'),p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),a=fs.readFileSync('app-core.js','utf8');const q=(v,m)=>{if(!v)throw Error(m)};
+          const fs=require('fs'),p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),a=fs.readFileSync('app-core.js','utf8'),s=fs.readFileSync('workflow-schema.js','utf8'),r=fs.readFileSync('test-runtime.js','utf8'),i=fs.readFileSync('response-ingestion.js','utf8');const q=(v,m)=>{if(!v)throw Error(m)};
           q(p.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE')&&p.includes('account for EVERY INPUT UNIT ID'),'Stage 01 exhaustive intake/accounting missing');
           q(p.includes('Exhaustively research every current accepted Stage 02 independent external source')&&p.includes('Do not mark Stage 03 complete until all current sources have coverage'),'Stage 03 exhaustive research missing');
           q(p.includes('Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST')&&p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'Stage 04 closed union/single-supply missing');
@@ -60,6 +100,8 @@ jobs:
           q(e.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED')&&e.includes('SATURATION_STATUS'),'Stage 3 exhaustive gate missing');
           q(a.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 4 upload control remains');
           q(a.includes('registerIntakeArtifactSnapshot'),'Stage 1 bytes are not snapshot-captured');
+          q(s.includes('"EXECUTABLE_SPEC_SHA256"')&&i.includes('fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(normalized)'),'application Test IR hash derivation missing');
+          for(const x of ['ASSERT_EXISTS:{','ASSERT_TYPE:{','ASSERT_NE:{'])q(!r.includes(x),'unapproved V1 primitive remains '+x);
           console.log('preconditions: PASS');
           NODE
       - name: Run every deterministic proof and capture first failure
@@ -91,6 +133,6 @@ jobs:
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git rm -f final-proof.log 2>/dev/null || true
-          git add workflow-engine.js build-test-project.mjs
+          git add workflow-engine.js workflow-schema.js response-ingestion.js test-runtime.js build-test-project.mjs
           git diff --cached --check
-          if ! git diff --cached --quiet; then git commit -m 'Fix Stage 1 snapshot persistence and exhaustive Stage 3 regression'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
+          if ! git diff --cached --quiet; then git commit -m 'Fix Stage 1 persistence and exact Test IR authority contract'; git push origin HEAD:fix/final-zero-loss-v3-20260830; fi
