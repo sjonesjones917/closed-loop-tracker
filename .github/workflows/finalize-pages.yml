@@ -1,0 +1,119 @@
+name: Finalize single Pages verification workflow
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+permissions:
+  contents: write
+concurrency:
+  group: finalize-pages-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore real Pages workflow and extend current proofs
+        run: |
+          git show origin/main:.github/workflows/pages.yml > .github/workflows/pages.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          t=p.read_text()
+          syntax_anchor="""          node --check verify-test-runtime.mjs
+"""
+          syntax_insert="""          node --check verify-test-runtime.mjs
+          node --check verify-test-runtime-v3.mjs
+          node --check verify-test-runtime-limits.mjs
+          node --check verify-v3-contract.mjs
+          node --check verify-v3-migration.mjs
+          node --check verify-v3-definition-of-done.mjs
+          node --check verify-zero-loss-accounting.mjs
+          node --check verify-all-stage-prompts.mjs
+          node --check verify-user-prompt-invariants.mjs
+"""
+          if syntax_anchor not in t: raise SystemExit('syntax anchor missing')
+          t=t.replace(syntax_anchor,syntax_insert,1)
+          runtime_anchor="""      - name: Verify generic deterministic Test IR runtime
+        run: node verify-test-runtime.mjs
+"""
+          runtime_insert="""      - name: Verify generic deterministic Test IR runtime
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+      - name: Verify /3 contracts, migration, zero-loss accounting, and all stage prompts
+        run: |
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-v3-definition-of-done.mjs
+"""
+          if runtime_anchor not in t: raise SystemExit('runtime anchor missing')
+          t=t.replace(runtime_anchor,runtime_insert,1)
+          deploy_anchor="""      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+"""
+          deploy_insert="""      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-test-runtime-v3.mjs && node verify-test-runtime-limits.mjs && node verify-v3-contract.mjs && node verify-v3-migration.mjs && node verify-zero-loss-accounting.mjs && node verify-all-stage-prompts.mjs && node verify-user-prompt-invariants.mjs && node verify-v3-definition-of-done.mjs && node verify-one-time-intent-intake.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+"""
+          if deploy_anchor not in t: raise SystemExit('deploy proof anchor missing')
+          t=t.replace(deploy_anchor,deploy_insert,1)
+          p.write_text(t)
+          PY
+      - name: Prove final workflow and application
+        run: |
+          git diff --check
+          ruby -e "require 'yaml'; YAML.load_file('.github/workflows/pages.yml')"
+          grep -F "name: Verify and deploy the single reliability app" .github/workflows/pages.yml
+          grep -F "push: {branches: [main]}" .github/workflows/pages.yml
+          grep -F "pull_request: {branches: [main]}" .github/workflows/pages.yml
+          ! grep -F "Apply integrated zero-loss accounting repair" .github/workflows/pages.yml
+          test "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' ! -name 'finalize-pages.yml' | wc -l)" -eq 0
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Prove final local browser behavior
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/final-pages-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit final Pages workflow and remove finalizer
+        run: |
+          git fetch origin fix/closed-loop-v3-final-20260830
+          REMOTE_HEAD="$(git rev-parse origin/fix/closed-loop-v3-final-20260830)"
+          test "$REMOTE_HEAD" = "$GITHUB_SHA" || { echo "Remote branch advanced during proof: $REMOTE_HEAD != $GITHUB_SHA"; exit 1; }
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git rm .github/workflows/finalize-pages.yml
+          git add .github/workflows/pages.yml
+          git commit -m "Restore final test deploy and live verification workflow"
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
