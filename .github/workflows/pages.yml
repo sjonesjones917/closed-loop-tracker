@@ -1,41 +1,107 @@
-name: Deploy application
+name: Temporary final operator-flow repair
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
+  push:
+    branches: [repair/final-operator-flow-v36]
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  contents: write
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "application deployment ready"
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - uses: actions/checkout@v4
-      - name: Build static application
-        run: |
-          rm -rf _site
-          mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-      - name: Deploy application
-        id: deployment
-        uses: actions/deploy-pages@v4
+          ref: repair/final-operator-flow-v36
+          fetch-depth: 0
+      - name: Apply exact corrections and restore deployment workflow
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          app = Path('app-core.js')
+          s = app.read_text()
+          if "const RUNTIME_BUILD_ID=" not in s:
+              s = s.replace("(()=>{'use strict';\nconst $=", "(()=>{'use strict';\nconst RUNTIME_BUILD_ID='runtime-20260830-operator-flow-36';\nconst $=", 1)
+          old = "new Worker('test-worker.js')"
+          if old not in s:
+              raise SystemExit('Worker construction target not found')
+          s = s.replace(old, "new Worker(`test-worker.js?v=${RUNTIME_BUILD_ID}`)", 1)
+
+          old = "const intro=n===1?'Attach the original intent file and any other supplied project files here once for Stage 01 intake. After Stage 01 acceptance, later stages consume the canonical captured project data; do not attach or resend these files again.':'Use this control only when the current stage explicitly requires an exact artifact or the agent actually returned a file required by its response contract. Do not reattach, resend, or substitute the original Stage 01 intent file. Actual selected bytes are stored in IndexedDB, hashed by the application, read back, and rehashed before becoming canonical artifact identities. A filename, hash claim, or code block is not file possession.';"
+          new = "const intro=n===1?(String(current.job.SUPPLIED_MATERIALS_INVENTORY||'').trim()?'Attach only the project files or intent material the user actually supplied, and attach each supplied Stage 01 input only once. After Stage 01 acceptance, later stages consume the canonical captured project data; do not attach or resend those original Stage 01 files again.':'No separate intent file is required because none is currently recorded as supplied project material. Attach a file here only if it is genuinely part of the user-supplied Stage 01 project input; do not create or request a duplicate intent file.'): 'Use this control only when the current stage explicitly requires an exact artifact or the agent actually returned a file required by its response contract. Do not reattach, resend, or substitute the original Stage 01 intent file. Actual selected bytes are stored in IndexedDB, hashed by the application, read back, and rehashed before becoming canonical artifact identities. A filename, hash claim, or code block is not file possession.';"
+          if old not in s:
+              raise SystemExit('Stage 01 artifact guidance target not found')
+          s = s.replace(old, new, 1)
+
+          old = "if(lockReason)return `<div class=\"notice warn\"><strong>No external response is expected yet.</strong><br>${esc(lockReason)} Complete the prerequisite stages in order before sending a prompt or pasting final JSON for this stage.</div>`;if(requests.length||n===1&&!current.stages[1].responseDraft)"
+          new = "if(lockReason)return `<div class=\"notice warn\"><strong>No external response is expected yet.</strong><br>${esc(lockReason)} Complete the prerequisite stages in order before sending a prompt or pasting final JSON for this stage.</div>`;if([23,24].includes(Number(n))&&!currentReviewerContext(n))return `<div class=\"notice warn\"><strong>Open a fresh independent reviewer context first.</strong><br>Do not paste final JSON yet. Register the new reviewer context on this stage; only then can the application bind and expose the controlling reviewer instruction.</div>`;if(requests.length||n===1&&!current.stages[1].responseDraft)"
+          if old not in s:
+              raise SystemExit('Reviewer interaction mode target not found')
+          s = s.replace(old, new, 1)
+          app.write_text(s)
+
+          index = Path('index.html')
+          html = index.read_text()
+          old = '.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'
+          new = '.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          if old not in html:
+              raise SystemExit('Prompt box baseline target not found')
+          html = html.replace(old, new, 1)
+          html = re.sub(r'runtime-20260830-prompt-authority-35', 'runtime-20260830-operator-flow-36', html)
+          index.write_text(html)
+          PY
+
+          cat > .github/workflows/pages.yml <<'YAML'
+          name: Deploy application
+          on:
+            push:
+              branches: [main]
+            pull_request:
+              branches: [main]
+            workflow_dispatch:
+          permissions:
+            contents: read
+            pages: write
+            id-token: write
+          concurrency:
+            group: pages-${{ github.ref }}
+            cancel-in-progress: false
+          jobs:
+            test:
+              name: test
+              runs-on: ubuntu-latest
+              steps:
+                - run: echo "application deployment ready"
+            deploy:
+              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              needs: test
+              runs-on: ubuntu-latest
+              environment:
+                name: github-pages
+                url: ${{ steps.deployment.outputs.page_url }}
+              steps:
+                - uses: actions/checkout@v4
+                - name: Build static application
+                  run: |
+                    rm -rf _site
+                    mkdir _site
+                    cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
+                - uses: actions/configure-pages@v5
+                - uses: actions/upload-pages-artifact@v3
+                  with:
+                    path: _site
+                - name: Deploy application
+                  id: deployment
+                  uses: actions/deploy-pages@v4
+          YAML
+
+          git config user.name 'closed-loop-repair'
+          git config user.email 'actions@users.noreply.github.com'
+          git add app-core.js index.html .github/workflows/pages.yml
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Finish operator flow without changing visual design'
+          git push origin HEAD:repair/final-operator-flow-v36
