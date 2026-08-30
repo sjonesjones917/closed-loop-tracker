@@ -55,6 +55,10 @@ const mutants=[
 """
 if old_mutants not in text: raise SystemExit('Expected obsolete semantic mutant set not found.')
 text = text.replace(old_mutants,new_mutants,1)
+old_contract = " if(descriptor.contractVersion!=='closed-loop-response-contract/2.4')throw new Error('Versioned response-contract descriptor is missing.');"
+new_contract = " if(descriptor.contractVersion!=='closed-loop-response-contract/3.1')throw new Error('Current /3 versioned response-contract descriptor is missing.');"
+if old_contract not in text: raise SystemExit('Expected obsolete response-contract version assertion not found.')
+text = text.replace(old_contract,new_contract,1)
 p.write_text(text)
 
 pages = Path('.github/workflows/pages.yml')
