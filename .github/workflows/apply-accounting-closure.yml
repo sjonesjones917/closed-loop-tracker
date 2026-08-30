@@ -16,8 +16,10 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           p=Path('.repair-accounting-closure.py'); s=p.read_text()
-          s=s.replace("  'INTENT-STATEMENT':Object.freeze({\n    INPUT_UNIT_ID:","  'INTENT-STATEMENT':Object.freeze({\n    INTENT_STATEMENT_ID:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    INPUT_UNIT_ID:",1)
-          s=s.replace("  'OBLIGATION-DISPOSITION':Object.freeze({\n    OBLIGATION_ID:","  'OBLIGATION-DISPOSITION':Object.freeze({\n    DISPOSITION_ID:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    OBLIGATION_ID:",1)
+          s=s.replace("  'INTENT-STATEMENT':Object.freeze({\n    INPUT_UNIT_ID:","  'INTENT-STATEMENT':Object.freeze({\n    INTENT_STATEMENT_ID:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    INPUT_UNIT_ID:",1)
+          s=s.replace("  'OBLIGATION-DISPOSITION':Object.freeze({\n    OBLIGATION_ID:","  'OBLIGATION-DISPOSITION':Object.freeze({\n    DISPOSITION_ID:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    OBLIGATION_ID:",1)
+          for token in ['STRING_ARRAY','STRING']:
+              s=s.replace(f'VALUE_TYPES.{token}',repr(token))
           p.write_text(s)
           PY
       - name: Apply accounting repair
