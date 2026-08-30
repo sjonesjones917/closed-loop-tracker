@@ -1,0 +1,23 @@
+name: Apply runtime authority current
+on:
+  push:
+    branches: [fix/runtime-authority-current-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply runtime authority diff
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git diff 403ffa79215d0a9177a4453c2d4cf4eb9e01ad53 9cc93c444c9142f385c436fd411ef5632c0c64eb -- app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js > /tmp/runtime.patch
+          git apply --3way /tmp/runtime.patch
+          git add app-core.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js
+          git commit -m "Use Test IR runtime as native execution authority" || exit 0
+          git push
