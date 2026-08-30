@@ -2,7 +2,7 @@ name: V3 behavioral acceptance
 on:
   push:
     branches: [fix/closed-loop-v3-current-20260830]
-    paths: [.github/workflows/v3-acceptance.yml, verify-v3-intake-obligation.mjs, verify-one-time-intent-intake.mjs, verify-prompt-semantics.mjs, workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, test-runtime.js, test-worker.js, project-store.js, app-core.js, index.html]
+    paths: [.github/workflows/v3-acceptance.yml, verify-v3-intake-obligation.mjs, verify-one-time-intent-intake.mjs, verify-prompt-semantics.mjs, verify-ingestion.mjs, verify-test-runtime.mjs, verify.mjs, verify-complete.mjs, workbook.js, workflow-schema.js, workflow-engine.js, prompt-engine.js, response-ingestion.js, test-runtime.js, test-worker.js, project-store.js, app-core.js, index.html]
   workflow_dispatch:
 permissions: {contents: read}
 jobs:
