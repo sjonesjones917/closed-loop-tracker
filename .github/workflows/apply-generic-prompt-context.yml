@@ -1,30 +1,28 @@
 name: Apply generic prompt context repair
-on:
-  push:
-    branches: [fix/real-pages-gates-20260830]
+on: [push]
 permissions:
   contents: write
 jobs:
   apply:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/real-pages-gates-20260830
       - name: Apply subject-neutral prompt context repair
+        shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('prompt-engine.js')
-          s=p.read_text()
-          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/39';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/40';")
-          needle="function contextFor(stage,state,operation,scope={}){const parts=[];"
-          replacement="""function projectAuthorityBasis(state,stage,operation,scope={}){const job=state?.job||{},humanAuthority=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>[name,job?.[name]??null])),stageOne=state?.stages?.[1]||{},sources=workflow.recordsForCurrentScope(state,'sources').filter(record=>workflow.isActiveRecord(record)).map(record=>({sourceId:recordId(record,'sources'),title:recordValue(record,'TITLE')||null,authorityLevel:recordValue(record,'AUTHORITY_LEVEL')||null,authorityRole:recordValue(record,'AUTHORITY_ROLE')||null,controllingState:recordValue(record,'CONTROLLING_STATE')||null})),requirements=workflow.recordsForCurrentScope(state,'requirements').filter(record=>workflow.isActiveRecord(record)).map(record=>({requirementId:recordId(record,'requirements'),obligation:recordValue(record,'OBLIGATION')||null,mandatoryOptionalStatus:recordValue(record,'MANDATORY_OPTIONAL_STATUS')||null,applicability:recordValue(record,'APPLICABILITY')||null,status:recordValue(record,'STATUS')||null}));return {rule:'This is the same project authority basis used by every stage. Do not ask the human to repeat or reattach information already captured here. Use only the stage/operation-authorized detailed records below; this basis preserves project meaning and current authority identities without authorizing later-stage work.',humanAuthority,acceptedStage01:{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1)},currentAuthoritySummary:{sources,requirements},currentVersions:{inputVersion:job.CURRENT_INPUT_VERSION||null,sourceSetVersion:job.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:job.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:job.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:job.CURRENT_INSTRUCTION_VERSION||null},stage,operation,scope};}
+          p = Path('prompt-engine.js')
+          s = p.read_text()
+          s = s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/39';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/40';")
+          needle = "function contextFor(stage,state,operation,scope={}){const parts=[];"
+          replacement = """function projectAuthorityBasis(state,stage,operation,scope={}){const job=state?.job||{},humanAuthority=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>[name,job?.[name]??null])),stageOne=state?.stages?.[1]||{},sources=workflow.recordsForCurrentScope(state,'sources').filter(record=>workflow.isActiveRecord(record)).map(record=>({sourceId:recordId(record,'sources'),title:recordValue(record,'TITLE')||null,authorityLevel:recordValue(record,'AUTHORITY_LEVEL')||null,authorityRole:recordValue(record,'AUTHORITY_ROLE')||null,controllingState:recordValue(record,'CONTROLLING_STATE')||null})),requirements=workflow.recordsForCurrentScope(state,'requirements').filter(record=>workflow.isActiveRecord(record)).map(record=>({requirementId:recordId(record,'requirements'),obligation:recordValue(record,'OBLIGATION')||null,mandatoryOptionalStatus:recordValue(record,'MANDATORY_OPTIONAL_STATUS')||null,applicability:recordValue(record,'APPLICABILITY')||null,status:recordValue(record,'STATUS')||null}));return {rule:'This is the same project authority basis used by every stage. Do not ask the human to repeat or reattach information already captured here. Use only the stage/operation-authorized detailed records below; this basis preserves project meaning and current authority identities without authorizing later-stage work.',humanAuthority,acceptedStage01:{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1)},currentAuthoritySummary:{sources,requirements},currentVersions:{inputVersion:job.CURRENT_INPUT_VERSION||null,sourceSetVersion:job.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:job.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:job.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:job.CURRENT_INSTRUCTION_VERSION||null},stage,operation,scope};}
 function contextFor(stage,state,operation,scope={}){const parts=[];if(stage>1)parts.push(`PROJECT AUTHORITY BASIS — PRESERVE HUMAN INTENT AND CURRENT EXTERNAL REQUIREMENTS\\n${show(projectAuthorityBasis(state,stage,operation,scope))}`);"""
           if needle not in s:
               raise SystemExit('contextFor insertion point not found')
-          s=s.replace(needle,replacement,1)
+          s = s.replace(needle, replacement, 1)
           p.write_text(s)
           PY
           git rm .github/workflows/apply-generic-prompt-context.yml
