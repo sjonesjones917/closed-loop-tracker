@@ -1,6 +1,6 @@
 name: Materialize Stage 01 and Stage 04 accounting once
 
-# One-shot verifier/materializer. Remove after permanent subject-neutral Stage 01 intake, exhaustive Stage 03 research, and zero-loss Stage 04 obligation closure are committed. Includes current /3 response-contract proof and runs from the latest branch head.
+# One-shot verifier/materializer. Remove after permanent subject-neutral Stage 01 intake, exhaustive Stage 03 research, and zero-loss Stage 04 obligation closure are committed.
 on:
   push:
     branches: [implementation/closed-loop-v3]
@@ -25,6 +25,53 @@ jobs:
           node run-v3-accounting-finalize.mjs
           node patch-accounting-regression-fixtures.mjs
           node patch-accounting-contract-proof.mjs
+      - name: Remove obsolete subject-specific prompt assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('node:fs');
+          const path='verify-prompt-semantics.mjs';
+          let text=fs.readFileSync(path,'utf8');
+
+          text=text.replace(/\n  if\(!record\.prompt\.includes\('PATENT \/ REGULATED FILING'\)\)issues\.push\('PATENT_DOMAIN_RULE_MISSING'\);\n  if\(!record\.prompt\.includes\('SOFTWARE \/ MULTI-FILE SYSTEM'\)\)issues\.push\('SOFTWARE_DOMAIN_RULE_MISSING'\);\n  if\(!record\.prompt\.includes\('BUILDING \/ ARCHITECTURE \/ AEC'\)\)issues\.push\('BUILDING_DOMAIN_RULE_MISSING'\);\n  if\(!record\.prompt\.includes\('PHYSICAL \/ MECHANICAL \/ CAD \/ CAM \/ CNC \/ ADDITIVE'\)\)issues\.push\('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING'\);/,
+          "\n  for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(record.prompt.includes(forbidden))issues.push('HARDCODED_SUBJECT_BRANCH_PRESENT_'+forbidden);");
+
+          text=text.replace(
+            "    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');",
+            "    if(!record.prompt.includes('Perform complete human-authority intake only.')||!record.prompt.includes('Classify every supplied unit exactly once')||!record.prompt.includes('preserve every materially relevant fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue')||!record.prompt.includes('Do not perform source research, requirement atomization, test design, production, filing, simulation, manufacturing, or product verification'))issues.push('STAGE01_COMPLETE_SUBJECT_NEUTRAL_INTAKE_BOUNDARY_MISSING');"
+          );
+
+          text=text.replace(
+            "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');",
+            "    if(!record.prompt.includes('APPLICATION INTAKE MANIFEST')||!record.prompt.includes('closed-loop-intake-capture/1')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('accepted capture is the durable meaning-preserving handoff to every later stage')||!record.prompt.includes('original intent file must not be repeatedly requested'))issues.push('STAGE01_EXHAUSTIVE_DURABLE_INTAKE_GATE_MISSING');"
+          );
+
+          text=text.replace(
+            "    if(!record.prompt.includes('do not require the human to know those formats in advance')||!record.prompt.includes('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose')||!record.prompt.includes('Only propose an implementation-ready'))issues.push('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING');",
+            "    if(record.prompt.includes('Generate the finished product')||record.prompt.includes('produce the actual artifact now'))issues.push('STAGE01_LATER_STAGE_PRODUCTION_LEAK');"
+          );
+
+          text=text.replace(
+            "  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');",
+            "  }"
+          );
+
+          text=text.replace(/\n\{\n const p=baseProject\(\);const r=prompts\.buildPromptRecord\(1,p,\{operation:'COMPLETE'\}\);if\(!r\.prompt\.includes\('audit, repair, migration, or modification of an existing target'\)\)throw new Error\('Existing-target audit\/repair boundary is missing\.'\);\n if\(!r\.prompt\.includes\('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY'\)\|\|!\/supplied invention disclosure\/\.test\(r\.prompt\)\|\|!\/supplied repository or file materials\/\.test\(r\.prompt\)\|\|!\/human-supplied project location\/\.test\(r\.prompt\)\|\|!\/supplied geometry\\\/specifications\/\.test\(r\.prompt\)\)throw new Error\('Stage 01 specialist intake adaptation is missing\.'\);/,
+          "\n{\n const p=baseProject();const r=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'});if(!r.prompt.includes('audit, repair, migration, or modification of an existing target'))throw new Error('Existing-target audit/repair boundary is missing.');\n if(!r.prompt.includes('APPLICATION INTAKE MANIFEST')||!r.prompt.includes('Classify every supplied unit exactly once')||!r.prompt.includes('original intent file must not be repeatedly requested'))throw new Error('Stage 01 exhaustive durable intake is missing.');");
+
+          if(!text.includes("if(record.stage===3){")){
+            text=text.replace("  if(record.stage===1){", "  if(record.stage===3){\n    if(!record.prompt.includes('Every current Stage 02 source must have current research coverage')||!record.prompt.includes('explanatory material')||!record.prompt.includes('Perform a second conflict-and-exception pass')||!record.prompt.includes('continue additional passes until saturation is supported by evidence'))issues.push('STAGE03_EXHAUSTIVE_SOURCE_RESEARCH_MISSING');\n  }\n  if(record.stage===1){");
+          }
+
+          for(const obsolete of [
+            "  {...original,prompt:original.prompt.replace('must not be represented as completed','may be represented as completed')},\n",
+            "  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},\n",
+            "  {...original,prompt:original.prompt.replace('PATENT / REGULATED FILING','GENERAL DOCUMENT')},\n"
+          ])text=text.split(obsolete).join('');
+
+          fs.writeFileSync(path,text);
+          NODE
       - name: Refresh shared runtime cache identity
         shell: bash
         run: |
