@@ -1,0 +1,31 @@
+name: Run controlling specification transformation
+on:
+  push:
+    branches: [fix/controlling-spec-zero-loss-final-20260830-0235]
+    paths: [apply-controlling-spec.mjs, .github/workflows/run-controlling-spec.yml]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply controlling specification changes
+        shell: bash
+        run: |
+          node apply-controlling-spec.mjs
+          for f in workbook.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js test-worker.js verify-controlling-spec.mjs; do node --check "$f"; done
+          node verify-controlling-spec.mjs
+          git diff --check
+      - name: Commit application changes
+        shell: bash
+        run: |
+          git config user.name closed-loop-spec-repair
+          git config user.email actions@users.noreply.github.com
+          git add workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-*.mjs test-fixtures.mjs README.md
+          git diff --cached --check
+          git commit -m "Implement controlling /3 zero-loss reliability contract"
+          git push origin HEAD
