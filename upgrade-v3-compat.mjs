@@ -22,12 +22,18 @@ const write=(file,text)=>fs.writeFileSync(path.join(root,file),text);
   write('workflow-schema.js',text);
 }
 
-/* Every architecture proof must recognize the one required main-thread runtime tag. */
+/* Every architecture proof must recognize the one required main-thread runtime tag.
+   This transform is deliberately idempotent because the base transformer may already
+   have upgraded a verifier before this compatibility pass executes. */
 for(const file of fs.readdirSync(root).filter(file=>fs.statSync(path.join(root,file)).isFile()&&/\.(?:js|mjs|html|md)$/.test(file))){
   let text=read(file);
-  text=text.replaceAll("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'");
-  text=text.replaceAll('["workbook.js","hash.js","workflow-schema.js","workflow-engine.js"','["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js"');
-  text=text.replace(/(workbook\.js[^\n]{0,120}hash\.js[^\n]{0,120}workflow-schema\.js)([^\n]{0,120}workflow-engine\.js)/g,(match,left,right)=>left.includes('test-runtime.js')?match:`${left}, test-runtime.js${right}`);
+  if(!text.includes("['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")){
+    text=text.replaceAll("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'");
+  }
+  if(!text.includes('["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js"')){
+    text=text.replaceAll('["workbook.js","hash.js","workflow-schema.js","workflow-engine.js"','["workbook.js","hash.js","workflow-schema.js","test-runtime.js","workflow-engine.js"');
+  }
+  text=text.replace(/(workbook\.js[^\n]{0,120}hash\.js[^\n]{0,120}workflow-schema\.js)([^\n]{0,120}workflow-engine\.js)/g,(match,left,right)=>match.includes('test-runtime.js')?match:`${left}, test-runtime.js${right}`);
   write(file,text);
 }
 
@@ -42,7 +48,7 @@ for(const file of fs.readdirSync(root).filter(file=>fs.statSync(path.join(root,f
    schema boundary. Existing load/import paths continue to use the shared schema. */
 {
   let text=read('project-store.js');
-  if(!text.includes('CLOSED_LOOP_V3_STORE_MIGRATION_EXPORT'))text+=`\n;(()=>{\n'use strict';\nconst CLOSED_LOOP_V3_STORE_MIGRATION_EXPORT=true;\nconst store=globalThis.closedLoopProjectStore;\nconst schema=globalThis.closedLoopSchema;\nif(store&&schema&&typeof schema.migrateProjectToCurrent==='function'&&typeof store.migrateProjectToCurrent!=='function')globalThis.closedLoopProjectStore=Object.freeze({...store,migrateProjectToCurrent:project=>schema.migrateProjectToCurrent(project)});\n})();\n`;
+  if(!text.includes('CLOSED_LOOP_V3_STORE_MIGRATION_EXPORT'))text+=`\n;(()=>{\n'use strict';\nconst CLOSED_LOOP_V3_STORE_MIGRATION_EXPORT=true;\nconst store=globalThis.closedLoopProjectStore;\nconst schema=globalThis.closedLoopWorkflowSchema;\nif(store&&schema&&typeof schema.migrateProjectToCurrent==='function'&&typeof store.migrateProjectToCurrent!=='function')globalThis.closedLoopProjectStore=Object.freeze({...store,migrateProjectToCurrent:project=>schema.migrateProjectToCurrent(project)});\n})();\n`;
   write('project-store.js',text);
 }
 
