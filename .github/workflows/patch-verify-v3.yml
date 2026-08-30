@@ -17,6 +17,8 @@ jobs:
           node --check verify.mjs
           node build-test-project.mjs
           node verify.mjs
+          node verify-stage01-stage03-stage04-closure.mjs
+          node verify-closed-accounting.mjs
       - run: |
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
