@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply integrated repair and current-scope proof fixture
+      - name: Apply integrated repair and closure-aware proof fixtures
         run: |
           python3 .repair-orchestrate.py
           python3 .repair-fixture.py
@@ -31,6 +31,7 @@ jobs:
           node --check app-core.js
           node --check verify-intake-closure.mjs
           node --check verify-one-time-intent-intake.mjs
+          node --check verify-ingestion.mjs
           node verify-hash.mjs
           node verify-test-runtime.mjs
           node verify-intake-closure.mjs
@@ -45,6 +46,6 @@ jobs:
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
           git rm .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py
-          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs verify-one-time-intent-intake.mjs .github/workflows/pages.yml
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js app-core.js index.html verify-intake-closure.mjs verify-one-time-intent-intake.mjs verify-ingestion.mjs .github/workflows/pages.yml
           git commit -m 'Close Stage 01 and Stage 03 accounting before Stage 04'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
