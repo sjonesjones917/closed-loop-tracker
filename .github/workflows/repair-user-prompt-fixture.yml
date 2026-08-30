@@ -1,0 +1,37 @@
+name: Repair user prompt fixture and self-remove
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.event.head_commit.message == 'Run one-time user prompt fixture repair'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+          fetch-depth: 0
+      - name: Bind prompt-invariant fixtures to current Stage 01 manifest
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-user-prompt-invariants.mjs')
+          t=p.read_text()
+          old="function closeStage1(p){const r1=prompts.buildPromptRecord(1,p);const units=r1.contextManifest.intakeCoverageManifest.units;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({units:units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'S'+String(i+1),text:i===0?'CAPTURED-STAGE1-SENTINEL '+u.label:'CAPTURED '+u.label,statementClass:i===0?'REQUIREMENT':'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};return r1;}"
+          new="function closeStage1(p){const r1=prompts.buildPromptRecord(1,p);const manifest=r1.contextManifest.intakeCoverageManifest,units=manifest.units;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:'S'+String(i+1),text:i===0?'CAPTURED-STAGE1-SENTINEL '+(u.rawValueText||u.label):'CAPTURED '+(u.rawValueText||u.label),statementClass:i===0?'REQUIREMENT':'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};return r1;}"
+          if old in t:
+              t=t.replace(old,new,1)
+          elif new not in t:
+              raise SystemExit('closeStage1 fixture anchor not found')
+          p.write_text(t)
+          PY
+          node --check verify-user-prompt-invariants.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-user-prompt-invariants.mjs
+          git rm .github/workflows/repair-user-prompt-fixture.yml
+          git commit -m "Bind prompt invariant fixtures to the current intake manifest"
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
