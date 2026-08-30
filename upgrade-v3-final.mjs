@@ -28,6 +28,14 @@ const root=process.cwd();const read=file=>fs.readFileSync(path.join(root,file),'
   write('verify-v3-definition-of-done.mjs',text);
 }
 
+/* The prompt and UI consume the same engine-derived handoff. Keep the operator/executor headings exact. */
+{
+  let text=read('prompt-engine.js');
+  text=text.replaceAll('FILES / CONTEXT YOU MUST NOT RECEIVE','FILES YOU MUST NOT RECEIVE');
+  text=text.replaceAll('FILES / EVIDENCE YOU MUST RETURN','FILES OR EVIDENCE YOU MUST RETURN');
+  write('prompt-engine.js',text);
+}
+
 /* Normalize the permanent Pages workflow around the controlling proof order. */
 {
   const file='.github/workflows/pages.yml';let text=read(file);
@@ -48,4 +56,4 @@ const root=process.cwd();const read=file=>fs.readFileSync(path.join(root,file),'
 
 for(const file of fs.readdirSync(root).filter(file=>fs.statSync(path.join(root,file)).isFile()&&/\.(?:js|mjs|md)$/.test(file))){let text=read(file);text=text.replaceAll("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'");write(file,text);}
 execFileSync(process.execPath,['build-test-project.mjs'],{cwd:root,stdio:'inherit'});
-console.log(JSON.stringify({resourceEnvelope:true,allArtifactInputsHashed:true,limitProofs:true,ciProofOrder:true,acceptanceMetadata:true}));
+console.log(JSON.stringify({resourceEnvelope:true,allArtifactInputsHashed:true,limitProofs:true,ciProofOrder:true,acceptanceMetadata:true,promptHandoffHeadings:true}));
