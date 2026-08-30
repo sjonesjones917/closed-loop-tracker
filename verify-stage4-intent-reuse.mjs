@@ -1,3 +1,4 @@
+// Permanent regression: project intent is supplied once, captured in Stage 01, and reused canonically by Stage 04.
 import fs from 'node:fs';
 import vm from 'node:vm';
 
