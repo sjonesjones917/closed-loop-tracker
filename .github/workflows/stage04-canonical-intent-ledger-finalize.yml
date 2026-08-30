@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Port deterministic one-time capture onto current main
+      - name: Port canonical capture from verified source branch
         shell: bash
         run: |
           git fetch origin fix/stage4-intent-reuse-current-main
@@ -34,71 +34,66 @@ jobs:
             workflow-schema.js
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib, re
+          import hashlib,re
 
-          def replace_exact(path, old, new):
+          def replace_if_present(path,old,new):
               p=Path(path); text=p.read_text()
               count=text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{path}: expected exactly one match, found {count}')
-              p.write_text(text.replace(old,new))
+              if count>1: raise SystemExit(f'{path}: ambiguous replacement count {count}')
+              if count==1:
+                  p.write_text(text.replace(old,new))
+                  return True
+              return False
 
-          # The original intent file is not a synthetic later-stage handoff item.
-          replace_exact('workflow-engine.js',
-            "  if(stage>1)withhold.set('original Stage 01 intent file',{artifactIdOrCategory:'original Stage 01 intent file',reason:'One-time intake only. Later stages use the canonical intentStatements ledger and must not request, attach, resend, reopen, or rely on the original file.'});\n",
-            '')
+          # Remove the obsolete synthetic later-stage intent-file handoff if an older source revision still has it.
+          replace_if_present('workflow-engine.js',
+            "  if(stage>1)withhold.set('original Stage 01 intent file',{artifactIdOrCategory:'original Stage 01 intent file',reason:'One-time intake only. Later stages use the canonical intentStatements ledger and must not request, attach, resend, reopen, or rely on the original file.'});\n",'')
 
-          # Stage 01 must capture all available project-relevant human authority once.
-          replace_exact('prompt-engine.js',
+          # Resolve the old contradictory Stage 01 minimum-read sentence if present.
+          replace_if_present('prompt-engine.js',
             'If their actual contents are available in the current executing context, read only the minimum portions needed to identify the requested objective or deliverable or to resolve a genuinely Stage-01-blocking ambiguity; do not ask the human to re-enter facts that are already present in those materials.',
             'If their actual contents are available in the current executing context, inspect them deeply enough to capture every human-authority statement relevant to defining the job while staying inside the Stage 01 boundary; do not atomize requirements or perform later-stage work, and do not ask the human to re-enter facts that are already present in those materials.')
 
-          # Later stages consume canonical capture. They never turn missing executor custody into a request for the human to repeat information.
-          replace_exact('prompt-engine.js',
+          # The invariant is one-time human supply, not a false claim that already-stored bytes cease to exist.
+          replace_if_present('prompt-engine.js',
             "${stage===1?`ONE-TIME INTENT FILE RULE\\n- Use the original intent file now, in Stage 01 only, to create the complete canonical intentStatements ledger.\\n- Stage 01 may not complete without that ledger.\\n- Acceptance of the Stage 01 ledger ends authorization to use the original file.`:`ONE-TIME INTENT FILE RULE\\n- The original Stage 01 intent file is prohibited input for this stage.\\n- Never request, attach, resend, reopen, quote from, or depend on that file or an earlier conversation containing it.\\n- Use only the current canonical intentStatements records and their preserved source locations.`}",
-            "${stage===1?`ONE-TIME HUMAN SUPPLY RULE\\n- Use the original intent material now to create the complete canonical intentStatements ledger.\\n- Stage 01 may not complete without the required canonical capture.\\n- After acceptance, the human must not be asked to repeat, retype, summarize, or reattach information already captured.`:`ONE-TIME HUMAN SUPPLY RULE\\n- Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.\\n- Use the current canonical intentStatements ledger and accepted Stage 01 job definition for semantic intent.\\n- If this stage genuinely requires exact bytes already in application custody, use only the application-derived artifact handoff; missing executor custody never authorizes asking the human to repeat project information.`}")
+            "${stage===1?`ONE-TIME HUMAN SUPPLY RULE\\n- Use the original intent material now to create the complete canonical intentStatements ledger.\\n- Stage 01 may not complete without the required canonical capture.\\n- After acceptance, the human must not be asked to repeat, retype, summarize, or reattach information already captured.`:`ONE-TIME HUMAN SUPPLY RULE\\n- Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.\\n- Use the current canonical intentStatements ledger and accepted Stage 01 job definition for semantic intent.\\n- If exact bytes already in application custody are genuinely required by an application-derived handoff, use those canonical bytes; missing executor custody never authorizes asking the human to repeat project information.`}")
 
-          # Stage 04 receives the full accepted Stage 01 job definition in addition to the canonical statement ledger.
-          replace_exact('prompt-engine.js',
+          # Stage 04 must receive the complete current canonical semantic union and must fail upstream rather than ask again.
+          replace_if_present('prompt-engine.js',
+            "4:'Compile atomic requirement proposals only from the canonical Stage 01 intentStatements ledger, Stage 03 candidateRequirements, and legitimately applicable Stage 03 external-source research. The original Stage 01 intent file is prohibited input: never request it, attach it, resend it, reopen it, or rely on an earlier conversation that contains it.",
+            "4:'Compile atomic requirement proposals only from the complete current canonical input union: current User Job Input, the accepted Stage 01 job definition, the canonical Stage 01 intentStatements ledger, Stage 03 candidateRequirements, and legitimately applicable Stage 03 external-source research. Do not ask the human to resend, reattach, retype, or summarize original Stage 01 intent material; use the canonical capture. If required prior-stage semantic content is missing, return BLOCKED with the exact missing canonical context and responsible earlier stage instead of turning an earlier capture defect into another user-supply request.")
+          replace_if_present('prompt-engine.js',
+            "3:'Research the current accepted Stage 02 independent external source set and the canonical Stage 01 intentStatements ledger, source-by-source and statement-by-statement. The original Stage 01 intent file is not an authorized input to this or any later stage and must never be requested, attached, resent, reopened, or relied on.",
+            "3:'Research the current accepted Stage 02 independent external source set and the canonical Stage 01 intentStatements ledger, source-by-source and statement-by-statement. Do not ask the human to resend, reattach, retype, or summarize original Stage 01 intent material; use the canonical ledger.")
+
+          # If the accepted Stage 01 block was not already materialized, add it now.
+          replace_if_present('prompt-engine.js',
             "CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\n${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY",
             "CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\n${stage===4?`ACCEPTED STAGE 01 JOB DEFINITION — CURRENT CANONICAL VALUES\nASSUMPTIONS:\n${show(j.ASSUMPTIONS)}\n\nUNKNOWN_INFORMATION:\n${show(j.UNKNOWN_INFORMATION)}\n\nINPUT_SET_CONTENTS:\n${show(j.INPUT_SET_CONTENTS)}`:''}\n\n${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY")
 
-          # Stage 03/04 wording: canonical reuse, never user resupply.
-          replace_exact('prompt-engine.js',
-            "3:'Research the current accepted Stage 02 independent external source set and the canonical Stage 01 intentStatements ledger, source-by-source and statement-by-statement. The original Stage 01 intent file is not an authorized input to this or any later stage and must never be requested, attached, resent, reopened, or relied on.",
-            "3:'Research the current accepted Stage 02 independent external source set and the canonical Stage 01 intentStatements ledger, source-by-source and statement-by-statement. Do not ask the human to resend, reattach, retype, or summarize original Stage 01 intent material; use the canonical ledger.")
-          replace_exact('prompt-engine.js',
-            "4:'Compile atomic requirement proposals only from the canonical Stage 01 intentStatements ledger, Stage 03 candidateRequirements, and legitimately applicable Stage 03 external-source research. The original Stage 01 intent file is prohibited input: never request it, attach it, resend it, reopen it, or rely on an earlier conversation that contains it.",
-            "4:'Compile atomic requirement proposals only from the complete current canonical input union: current User Job Input, the accepted Stage 01 job definition, the canonical Stage 01 intentStatements ledger, Stage 03 candidateRequirements, and legitimately applicable Stage 03 external-source research. Do not ask the human to resend, reattach, retype, or summarize original Stage 01 intent material; use the canonical capture. If required prior-stage semantic content is missing, return BLOCKED with the exact missing canonical context and responsible earlier stage instead of turning an earlier capture defect into another user-supply request.")
-
-          # Handoff regressions: Stage 04 should have no synthetic send/withhold item for the original intent file.
-          replace_exact('verify-test-runtime.mjs',
+          # Update regressions from blanket raw-file prohibition to one-time human-supply semantics.
+          replace_if_present('verify-one-time-intent-intake.mjs',
+            "  assert(prompt.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),`Stage ${stage} does not prohibit original-file reuse.`);",
+            "  assert(prompt.prompt.includes('Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.'),`Stage ${stage} does not enforce one-time human supply.`);")
+          replace_if_present('verify-test-runtime.mjs',
             "assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,1);assert.equal(stage4Handoff.withhold[0]?.artifactIdOrCategory,'original Stage 01 intent file');assert.equal(stage4Handoff.expectBack.length,0);",
             "assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,0,'Stage 04 must not turn the original intent file into another handoff item.');assert.equal(stage4Handoff.expectBack.length,0);")
-          replace_exact('verify-one-time-intent-intake.mjs',
-            "assert(handoff.withhold.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'),'Stage 04 does not explicitly withhold the original intent file.');",
-            "assert(handoff.withhold.length===0,'Stage 04 still turns the original intent file into a later-stage handoff item.');")
-          replace_exact('verify-prompt-semantics.mjs',
+          replace_if_present('verify-prompt-semantics.mjs',
             "if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');",
             "if((handoff?.withhold||[]).some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 still turns the original intent file into a later-stage handoff item.');")
 
-          # Focused intake test should assert the no-repeat rule without requiring the obsolete blanket-prohibition sentence.
-          replace_exact('verify-one-time-intent-intake.mjs',
-            "  assert(prompt.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),`Stage ${stage} does not prohibit original-file reuse.`);",
-            "  assert(prompt.prompt.includes('Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.'),`Stage ${stage} does not enforce canonical no-repeat intake reuse.`);")
-
-          # Existing complete-suite fixture must include the canonical Stage 01 ledger and current next-action language.
+          # Current complete-suite Stage 04 fixture must carry the ledger or it should fail by design.
           vc=Path('verify-complete.mjs'); text=vc.read_text()
           old="  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});\n  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');"
           new="  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});\n  const intent=record('intentStatements',1,{SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1',EXACT_STATEMENT:'CANONICAL-STAGE-01-INTENT-STATEMENT',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'},'INTENT-STATEMENT-STAGE04');intent.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.intentStatements.push(intent);\n  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'INTENT-STATEMENT-STAGE04',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');"
-          if text.count(old)!=1: raise SystemExit('verify-complete: canonical Stage 04 fixture anchor mismatch')
-          text=text.replace(old,new)
+          if old in text: text=text.replace(old,new)
           old2="  assert(next.includes('accepted Stage 01 job definition')&&next.includes('accepted Stage 03 findings'),'Stage 04 next action does not identify the canonical input sources it reuses.');"
           new2="  assert(next.includes('canonical Stage 01 intent-statement ledger')&&next.includes('Do not attach, resend, reopen, or otherwise reuse the original intent file.'),'Stage 04 next action does not identify canonical intent reuse.');"
-          if text.count(old2)!=1: raise SystemExit('verify-complete: next-action anchor mismatch')
-          vc.write_text(text.replace(old2,new2))
+          if old2 in text: text=text.replace(old2,new2)
+          vc.write_text(text)
 
-          # Add the permanent one-time intake regression to the normal CI/deploy proof and remove obsolete self-materializer job.
+          # Integrate the focused regression permanently and remove the obsolete main-branch self-materializer.
           wf=Path('.github/workflows/pages.yml'); workflow=wf.read_text()
           workflow=re.sub(r'\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)', '', workflow)
           if 'node --check verify-one-time-intent-intake.mjs' not in workflow:
@@ -108,21 +103,33 @@ jobs:
           workflow=workflow.replace('node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs','node verify-ingestion.mjs && node verify-complete.mjs && node verify-one-time-intent-intake.mjs && node verify-full-cycle.mjs')
           wf.write_text(workflow)
 
-          # Runtime files changed; refresh the one shared cache/build identity without altering the verified Stage 04 UI fix.
+          # Final semantic assertions before any tests run.
+          engine=Path('workflow-engine.js').read_text(); prompt=Path('prompt-engine.js').read_text(); one=Path('verify-one-time-intent-intake.mjs').read_text(); sem=Path('verify-prompt-semantics.mjs').read_text()
+          required=[
+            ('workflow-schema.js','intentStatements'),
+            ('response-ingestion.js','MISSING_INTENT_STATEMENT_REQUIREMENT'),
+            ('response-ingestion.js','INVALID_INTENT_STATEMENT_REFERENCE'),
+            ('prompt-engine.js','ACCEPTED STAGE 01 JOB DEFINITION — CURRENT CANONICAL VALUES'),
+            ('prompt-engine.js','complete current canonical input union'),
+            ('prompt-engine.js','Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.'),
+            ('verify-one-time-intent-intake.mjs','MISSING_INTENT_STATEMENT_REQUIREMENT')]
+          for f,s in required:
+              if s not in Path(f).read_text(): raise SystemExit(f'{f}: required final semantic anchor missing: {s}')
+          if "withhold.set('original Stage 01 intent file'" in engine: raise SystemExit('workflow-engine.js still creates synthetic Stage 01-file withhold handoff')
+          if 'read only the minimum portions needed' in prompt: raise SystemExit('prompt-engine.js still contains contradictory minimum-read Stage 01 rule')
+          if 'Stage 04 does not explicitly withhold the original intent file' in sem: raise SystemExit('prompt semantic regression still requires synthetic withhold')
+
+          # Runtime identity must track the changed runtime graph while preserving current app-core Stage 04 UI behavior.
           runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest=''
           for f in runtime:
-              b=Path(f).read_bytes()
-              blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
-              manifest += f'{f}:{blob}\n'
+              b=Path(f).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(); manifest+=f'{f}:{blob}\n'
           token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
-          idx=Path('index.html'); html=idx.read_text()
-          html,n=re.subn(r'runtime-[0-9a-f]{16}',token,html)
+          idx=Path('index.html'); html=idx.read_text(); html,n=re.subn(r'runtime-[0-9a-f]{16}',token,html)
           if n!=8: raise SystemExit(f'index.html: expected 8 runtime tokens, replaced {n}')
-          idx.write_text(html)
-          print(token)
+          idx.write_text(html); print(token)
           PY
-      - name: Prove deterministic capture, closure, full lifecycle, and browser behavior
+      - name: Prove closure and no-repeat behavior
         shell: bash
         run: |
           node --check app-core.js
@@ -160,23 +167,7 @@ jobs:
           rm .github/workflows/stage04-canonical-intent-ledger-finalize.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add \
-            .github/workflows/pages.yml \
-            build-test-project.mjs \
-            index.html \
-            prompt-engine.js \
-            response-ingestion.js \
-            verify-complete.mjs \
-            verify-full-cycle.mjs \
-            verify-ingestion.mjs \
-            verify-one-time-intent-intake.mjs \
-            verify-prompt-semantics.mjs \
-            verify-test-runtime.mjs \
-            verify.mjs \
-            workbook.js \
-            workflow-engine.js \
-            workflow-schema.js \
-            .github/workflows/stage04-canonical-intent-ledger-finalize.yml
+          git add -A
           git diff --cached --check
           git commit -m 'Make Stage 04 reuse canonical intent without repeated supply'
           git push origin HEAD:fix/stage04-canonical-intent-ledger-final
