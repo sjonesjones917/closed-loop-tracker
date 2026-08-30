@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 
+# Rerun marker: corrected structured Stage 04 action removal.
 # workflow-engine.js: Stage 04 must not derive a recurring transfer demand from a filename.
 p=Path('workflow-engine.js')
 s=p.read_text()
