@@ -90,6 +90,7 @@ jobs:
           for start, end, label in [
               ("function gate(stage,project){", "\n\nconst applicationadjudicationGate=gate;", 'base gate'),
               ("function evaluateContextIndependence(project,", "\nfunction detectCurrentContradictions", 'independence evaluator'),
+              ("function capabilityAffirmativelyAvailable(project,", "\nfunction testExecutionPlan", 'capability availability evaluator'),
               ("function testExecutionPlan(project){", "\nfunction recordApplicationDeterministicResult", 'test execution plan'),
               ("function operationalMetrics(project){", "\n\nglobalThis.closedLoopWorkflowEngine", 'operational metrics'),
           ]:
