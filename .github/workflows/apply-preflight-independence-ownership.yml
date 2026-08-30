@@ -1,0 +1,51 @@
+name: Apply preflight independence ownership fixes
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply source corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          schema = Path('workflow-schema.js')
+          text = schema.read_text()
+          old = '"VERIFIER_CONTEXT_ID",\n      "INDEPENDENCE_STATUS",\n      "INPUTS",'
+          new = '"VERIFIER_CONTEXT_ID",\n      "INPUTS",'
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit('verification agent ownership target not found')
+          old = '"VERIFICATION_ID",\n      "REQ_ID",\n      "RUN_ID",\n      "TEST_ID",\n      "DEFECT_ID"'
+          new = '"VERIFICATION_ID",\n      "REQ_ID",\n      "RUN_ID",\n      "TEST_ID",\n      "DEFECT_ID",\n      "INDEPENDENCE_STATUS"'
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              raise SystemExit('verification application ownership target not found')
+          schema.write_text(text)
+
+          engine = Path('workflow-engine.js')
+          text = engine.read_text()
+          old = "case 9:\n      requireAccepted();requireCount('preflightRecords',1);\n      if(collection('preflightRecords').some(record=>['VIOLATED','UNDETERMINED','BLOCKED','REJECTED'].includes(upper(recordValue(record,'DETERMINATION')))))reasons.push('Instruction preflight contains an unresolved material finding.');\n      break;"
+          new = "case 9:{\n      requireAccepted();requireCount('preflightRecords',1);\n      const currentPrompt=safe(project?.projectData?.generatedPrompts).filter(p=>Number(p?.stage)===9&&!p?.invalidatedBy).at(-1),contextId=String(currentPrompt?.scope?.contextId||'').trim(),context=records(project,'freshContexts').find(record=>isActiveRecord(record)&&recordId(record,'freshContexts')===contextId),externalId=String(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim();\n      if(!contextId||!context||!externalId)reasons.push('Independent preflight requires one current application-bound reviewer context with a supplied external context identifier.');\n      if(collection('preflightRecords').some(record=>['VIOLATED','UNDETERMINED','BLOCKED','REJECTED'].includes(upper(recordValue(record,'DETERMINATION')))))reasons.push('Instruction preflight contains an unresolved material finding.');\n      break;}"
+          if old not in text:
+              raise SystemExit('Stage 09 gate target not found')
+          text = text.replace(old, new, 1)
+          engine.write_text(text)
+          PY
+          rm .github/workflows/apply-preflight-independence-ownership.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-schema.js workflow-engine.js .github/workflows/apply-preflight-independence-ownership.yml
+          git commit -m "Enforce preflight reviewer context and application independence ownership"
+          git push -f origin HEAD:refs/heads/automation/preflight-independence-ownership-result
