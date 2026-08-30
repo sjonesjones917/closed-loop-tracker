@@ -22,7 +22,7 @@ jobs:
           set +e
           git merge --no-commit --no-ff origin/main
           set -e
-          for f in .github/workflows/pages.yml app-core.js build-test-project.mjs index.html project-store.js prompt-engine.js response-ingestion.js test-runtime.js verify-browser.mjs verify-complete.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify-test-runtime.mjs verify.mjs workflow-engine.js workflow-schema.js; do
+          for f in .github/workflows/pages.yml app-core.js build-test-project.mjs index.html project-store.js prompt-engine.js response-ingestion.js test-runtime.js verify-browser.mjs verify-complete.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js; do
             git checkout "$BEFORE" -- "$f"
             git add "$f"
           done
