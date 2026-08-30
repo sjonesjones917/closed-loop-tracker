@@ -1,4 +1,4 @@
-# proof-trigger-stage01-practical-20260830
+# proof-trigger-runtime-refresh-20260830
 name: Apply complete 30-stage prompt audit repair
 on:
   push:
@@ -22,6 +22,7 @@ jobs:
           python3 .repair-prompt-compat.py
           python3 .repair-stage-boundary-test.py
           python3 .repair-stage01-practical-regressions.py
+          python3 .refresh-runtime-token.py
           git fetch origin f91db9249878f5e2cb21facd401f5f5616458693 --depth=1
           git show f91db9249878f5e2cb21facd401f5f5616458693:.github/workflows/pages.yml > /tmp/pages.final.yml
           python3 - <<'PY'
@@ -35,7 +36,7 @@ jobs:
           p.write_text(s)
           PY
           mv /tmp/pages.final.yml .github/workflows/pages.yml
-          rm .repair-all-stage-prompts.py .repair-prompt-compat.py .repair-stage-boundary-test.py .repair-stage01-practical-regressions.py
+          rm .repair-all-stage-prompts.py .repair-prompt-compat.py .repair-stage-boundary-test.py .repair-stage01-practical-regressions.py .refresh-runtime-token.py
       - name: Prove syntax, schema, prompts, runtime, ingestion, workflow, and lifecycle
         run: |
           for file in *.js *.mjs; do node --check "$file"; done
