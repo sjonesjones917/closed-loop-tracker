@@ -54,6 +54,15 @@ if (!verify.includes('function prepareStage4(p)')) {
 fs.writeFileSync('verify.mjs', verify);
 patchStage4Fixture('verify-ingestion.mjs');
 
+let fullCycle=fs.readFileSync('verify-full-cycle.mjs','utf8');
+if(!fullCycle.includes('function completeStage1InputSetContents(){')){
+  const ridAnchor="function rid(c){return engine.recordId(engine.recordsForCurrentScope(p,c).at(-1),c)}\n";
+  const helper="function completeStage1InputSetContents(){const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;return JSON.stringify({units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'S'+String(i+1),text:'Captured '+u.label,statementClass:i===0?'REQUIREMENT':'FACT'}]}))});}\n";
+  fullCycle=requireReplace(fullCycle,ridAnchor,ridAnchor+helper,'full-cycle Stage 1 accounting helper');
+  fullCycle=requireReplace(fullCycle,"INPUT_SET_CONTENTS:'Verbatim job input plus clarification.'","INPUT_SET_CONTENTS:completeStage1InputSetContents()",'full-cycle Stage 1 INPUT_SET_CONTENTS');
+}
+fs.writeFileSync('verify-full-cycle.mjs',fullCycle);
+
 fs.writeFileSync('verify-user-prompt-invariants.mjs', `import fs from 'node:fs';
 import vm from 'node:vm';
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
