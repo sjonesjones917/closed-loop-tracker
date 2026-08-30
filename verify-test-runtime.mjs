@@ -1,9 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import crypto from 'node:crypto';
 
-globalThis.crypto=globalThis.crypto||crypto.webcrypto;
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 vm.runInThisContext(fs.readFileSync('test-runtime.js','utf8'),{filename:'test-runtime.js'});
