@@ -24,6 +24,7 @@ jobs:
           run(){ echo ">>> $*" >> repair-diagnostics.txt; "$@" >> repair-diagnostics.txt 2>&1; c=$?; echo "exit=$c" >> repair-diagnostics.txt; [ $c -eq 0 ] || failed=1; }
           run python3 .github/apply_controlling_spec.py
           run python3 .github/apply_controlling_spec2.py
+          run python3 .github/apply_controlling_spec3.py
           for f in workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js verify-controlling-spec.mjs verify-test-runtime.mjs; do run node --check "$f"; done
           run node verify-controlling-spec.mjs
           run node verify-test-runtime.mjs
