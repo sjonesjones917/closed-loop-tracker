@@ -1,0 +1,30 @@
+name: Temporary repository audit export
+
+on:
+  push:
+    branches:
+      - repair/intent-exhaustion-stage4-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record exact checkout
+        run: |
+          git rev-parse HEAD > AUDIT_CHECKOUT_SHA.txt
+          git status --short > AUDIT_GIT_STATUS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repository-audit-source
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
