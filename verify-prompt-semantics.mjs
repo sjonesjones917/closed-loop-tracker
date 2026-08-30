@@ -432,7 +432,7 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   const handoff=withoutAppCopy.contextManifest.executionHandoff;
   if(handoff?.conversationMaterials?.length)throw new Error('Stage 04 still creates an original-file resend list.');
   if(handoff?.send?.length)throw new Error('Stage 04 still transfers the original intent file as a required artifact.');
-  if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');
+  if((handoff?.withhold||[]).some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 still turns the original intent file into a later-stage handoff item.');
   for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','Send the Stage 04 instruction with'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 still instructs original-file reuse: '+prohibited);
   p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-PROHIBITED',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-PROHIBITED',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
   const withStoredCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
