@@ -15,18 +15,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply and integrate deterministic zero-loss repair
+      - name: Apply complete prompt and accounting repair
         run: |
           python3 finalize-zero-loss.py
           python3 patch-browser-extra-v3.py
+          python3 patch-all-stage-audit-v2.py
       - name: Prove source syntax
         run: |
           git diff --check
           node --check workflow-engine.js
+          node --check workflow-schema.js
           node --check prompt-engine.js
           node --check response-ingestion.js
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
+          node --check verify-all-stage-prompts.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
       - name: Prove established prompt dimensions
@@ -36,6 +39,8 @@ jobs:
           ! grep -F "#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}" index.html
       - name: Prove zero-loss Stage 01 and Stage 04 semantics
         run: node verify-zero-loss-accounting.mjs
+      - name: Prove all 30 stage and operation prompts
+        run: node verify-all-stage-prompts.mjs
       - name: Prove full synthetic lifecycle
         run: node build-test-project.mjs
       - name: Prove browser behavior
@@ -53,8 +58,8 @@ jobs:
         run: |
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git rm repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py .github/workflows/complete-zero-loss-closure.yml
+          git rm repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py patch-all-stage-audit-v2.py .github/workflows/complete-zero-loss-closure.yml
           git rm -f zero-loss-failure.log || true
-          git add workflow-engine.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-browser-extra.mjs verify-zero-loss-accounting.mjs
-          git commit -m "Enforce zero-loss Stage 01 and Stage 04 accounting [zero-loss-closure-applied]"
+          git add workflow-engine.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-browser-extra.mjs verify-zero-loss-accounting.mjs verify-all-stage-prompts.mjs
+          git commit -m "Make all 30 stage prompts explicit and context-complete [zero-loss-closure-applied]"
           git push origin HEAD:fix/closed-loop-v3-final-20260830
