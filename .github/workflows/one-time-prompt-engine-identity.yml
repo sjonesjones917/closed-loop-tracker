@@ -1,0 +1,23 @@
+name: One-time prompt engine identity repair
+on:
+  push:
+    branches: ["fix/prompt-engine-identity-38"]
+    paths: [".github/workflows/one-time-prompt-engine-identity.yml"]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "fix/prompt-engine-identity-38"
+          fetch-depth: 0
+      - run: python3 repair_prompt_engine_identity.py
+      - run: |
+          rm .github/workflows/one-time-prompt-engine-identity.yml repair_prompt_engine_identity.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js .github/workflows/one-time-prompt-engine-identity.yml repair_prompt_engine_identity.py
+          git commit -m "Invalidate stale prompts after context repair"
+          git push origin HEAD:fix/prompt-engine-identity-38
