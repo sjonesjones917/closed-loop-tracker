@@ -1,0 +1,75 @@
+name: v3-browser-proof
+on:
+  push:
+    branches: ['fix/final-zero-loss-v3-20260830']
+    paths:
+      - '.github/workflows/v3-browser-proof.yml'
+      - 'verify-v3-browser.mjs'
+      - 'deterministic-proof-status.json'
+permissions:
+  contents: write
+jobs:
+  browser-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-zero-loss-v3-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require complete deterministic proof
+        run: |
+          set -euo pipefail
+          test -f deterministic-proof-status.json
+          node -e "const s=require('./deterministic-proof-status.json');if(s.status!=='PASSED'||s.workflow!=='mobile-closed-loop/30'||s.projectSchema!=='closed-loop-project/3'||s.responseSchema!=='closed-loop-stage-response/3'||s.testIrSchema!=='closed-loop-test-spec/1')throw Error('Deterministic proof status is not current and complete.')"
+      - name: Start static application
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/closed-loop-http.log 2>&1 &
+          echo $! > /tmp/closed-loop-http.pid
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && exit 0; sleep .2; done
+          cat /tmp/closed-loop-http.log
+          exit 1
+      - name: Run Chromium at 320px, 393px, and desktop
+        id: browser
+        shell: bash
+        run: |
+          set +e
+          CHROME_BIN="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_BIN" ]; then
+            sudo apt-get update -y >/tmp/chrome-install.log 2>&1
+            sudo apt-get install -y chromium >>/tmp/chrome-install.log 2>&1
+            CHROME_BIN="$(command -v chromium)"
+          fi
+          export CHROME_BIN APP_URL=http://127.0.0.1:4173/
+          node verify-v3-browser.mjs > browser-proof.log 2>&1
+          rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          cat browser-proof.log
+          exit 0
+      - name: Persist browser proof result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          if [ '${{ steps.browser.outputs.rc }}' = '0' ]; then
+            cat > browser-proof-status.json <<JSON
+          {"status":"PASSED","engine":"REAL_CHROMIUM_CDP","widths":[320,393,1280],"noHorizontalOverflow":true,"promptPreviewMaxHeight":"280px","stage1Exhaustive":true,"stage3Exhaustive":true,"stage4ClosedSingleSupply":true}
+          JSON
+            git rm -f browser-proof-failure.log 2>/dev/null || true
+            git add browser-proof-status.json
+            message='Record real Chromium v3 browser proof success'
+          else
+            cp browser-proof.log browser-proof-failure.log
+            git add browser-proof-failure.log
+            message='Record v3 browser proof failure'
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "$message"
+            git push origin HEAD:fix/final-zero-loss-v3-20260830
+          fi
+      - name: Fail on browser proof failure
+        if: steps.browser.outputs.rc != '0'
+        run: exit 1
