@@ -18,18 +18,24 @@ jobs:
           const fs=require('fs');
           const file='prompt-engine.js';
           let s=fs.readFileSync(file,'utf8');
-          const old='The user supplies project information once; if information is already present, capture and reuse it rather than asking for it again.';
-          const next='The user supplies project information once; if information is already present, capture and reuse it rather than asking for it again or asking the user to resupply it. This one-time project-input invariant applies throughout the workflow: project-relevant information already captured in canonical state must be reused by later stages instead of being requested again.';
+          const oneTimeOld='The user supplies project information once; if information is already present, capture and reuse it rather than asking for it again.';
+          const oneTimeNew='The user supplies project information once; if information is already present, capture and reuse it rather than asking for it again or asking the user to resupply it. This one-time project-input invariant applies throughout the workflow: project-relevant information already captured in canonical state must be reused by later stages instead of being requested again.';
           if(!s.includes('asking the user to resupply it')){
-            if(!s.includes(old))throw new Error('Stage 01 one-time input anchor missing');
-            s=s.replace(old,next);
-            fs.writeFileSync(file,s);
+            if(!s.includes(oneTimeOld))throw new Error('Stage 01 one-time input anchor missing');
+            s=s.replace(oneTimeOld,oneTimeNew);
           }
+          const stage6Old='Build the complete verification suite before production instructions. For every mandatory requirement analyze how a defective product could falsely appear compliant, including boundary, partial-success, stale-state, malformed-input, incorrect-authority, wrong-artifact, and capability-substitution cases. Use application deterministic execution only when the proposition is faithfully expressible in the registered Closed Loop Test IR; otherwise route to the exact external executor.';
+          const stage6New='Build the complete verification suite before production instructions. The controlling Test IR schema is closed-loop-test-spec/1. Publish and use the application-owned registered Test IR operations, exact operation argument contracts, available immutable bindings, current centralized authoring limits, and prohibited constructs for this operation. For every mandatory requirement analyze how a defective product could falsely appear compliant, including boundary, partial-success, stale-state, malformed-input, incorrect-authority, wrong-artifact, and capability-substitution cases. Use APPLICATION_DETERMINISTIC and valid closed-loop-test-spec/1 Test IR whenever the proposition is faithfully expressible in the currently registered primitives without substantive meaning loss; otherwise route to the exact non-native executor. Never invent runtime semantics or mark an unsupported operation executable.';
+          if(!s.includes('closed-loop-test-spec/1')){
+            if(!s.includes(stage6Old))throw new Error('Stage 06 Test IR anchor missing');
+            s=s.replace(stage6Old,stage6New);
+          }
+          fs.writeFileSync(file,s);
           NODE
           node verify-prompt-semantics.mjs
           git add prompt-engine.js
           git diff --cached --quiet && exit 0
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git commit -m 'Enforce one-time project input reuse in prompt authority'
+          git commit -m 'Enforce exhaustive reusable prompt authority'
           git push origin HEAD:fix/controlling-spec-final-20260830
