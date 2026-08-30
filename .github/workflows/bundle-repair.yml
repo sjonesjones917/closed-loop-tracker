@@ -24,7 +24,7 @@ jobs:
         run: |
           set -o pipefail
           python .github/bundle_repair_shim.py 2>&1 | tee .github/bundle-repair-failure.log
-      - name: Preserve failure diagnostic only
+      - name: Preserve transform failure diagnostic
         if: failure()
         run: |
           git config user.name closed-loop-repair
@@ -34,22 +34,33 @@ jobs:
           git push origin HEAD:fix/full-controlling-bundle-20260830
       - name: Verify syntax and controlling contracts
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node verify-bundle-v3.mjs
-          node verify-test-runtime.mjs
-          node verify-prompt-semantics.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
+          set -o pipefail
+          {
+            node --check workbook.js
+            node --check workflow-schema.js
+            node --check test-runtime.js
+            node --check test-worker.js
+            node --check workflow-engine.js
+            node --check prompt-engine.js
+            node --check response-ingestion.js
+            node --check project-store.js
+            node verify-bundle-v3.mjs
+            node verify-test-runtime.mjs
+            node verify-prompt-semantics.mjs
+            node verify-ingestion.mjs
+            node verify-complete.mjs
+          } 2>&1 | tee .github/bundle-verification-failure.log
+      - name: Preserve verification failure diagnostic
+        if: failure()
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add .github/bundle-repair-failure.log .github/bundle-verification-failure.log
+          git commit -m "Record bundle verification failure diagnostic" || true
+          git push origin HEAD:fix/full-controlling-bundle-20260830
       - name: Remove one-time repair infrastructure
         run: |
-          rm -f .github/bundle-repair-failure.log
+          rm -f .github/bundle-repair-failure.log .github/bundle-verification-failure.log
           rm .github/bundle_repair.py
           rm .github/bundle_repair_shim.py
           rm .github/workflows/bundle-repair.yml
