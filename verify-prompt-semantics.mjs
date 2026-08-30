@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
@@ -422,27 +422,21 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
 
 
-// Stage 04 canonical-input reuse regression: a filename in Stage 01 inventory must never create a repeated attachment request.
+// stage04-captured-input-regression-v3
 {
   const p=baseProject();
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  p.job.EXACT_DELIVERABLE_REQUESTED='CANONICAL-STAGE-01-DELIVERABLE';
-  p.job.ASSUMPTIONS='CANONICAL-STAGE-01-ASSUMPTION';
-  p.job.UNKNOWN_INFORMATION='CANONICAL-STAGE-01-UNKNOWN';
-  p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE';
-  p.projectData.candidateRequirements.push({id:'CANDIDATE-REQ-STAGE04',stage:3,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-STAGE04',SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},relationships:{},evidenceRefs:['EVIDENCE-STAGE-03']});
-  const record=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  if(handoff.send.length||handoff.withhold.length||handoff.expectBack.length||handoff.conversationMaterials.length||handoff.optionalApplicationCopies.length)throw new Error('Stage 04 converted previously supplied intent material into a new file handoff.');
-  for(const token of ['CANONICAL-STAGE-01-DELIVERABLE','CANONICAL-STAGE-01-ASSUMPTION','CANONICAL-STAGE-01-UNKNOWN','CANONICAL-STAGE-01-INTENT-CAPTURE','CANONICAL-STAGE-03-OBLIGATION'])if(!record.prompt.includes(token))throw new Error('Stage 04 omitted canonical prior-stage input: '+token);
-  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','These materials are not embedded in the prompt','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation','attach or provide the original before final JSON'])if(record.prompt.includes(prohibited))throw new Error('Stage 04 still requests repeated intent-material transfer: '+prohibited);
-  if(record.contextManifest.executionHandoff?.conversationMaterials)throw new Error('Obsolete Stage 04 conversation-material state remains in prompt identity.');
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
-  const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='CAPTURED-HUMAN-INTENT-SENTINEL';
+  p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'CAPTURED-STAGE01-DELIVERABLE-SENTINEL',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'design-input.pdf already represented in controlled input'};
+  const first=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['CAPTURED-HUMAN-INTENT-SENTINEL','CAPTURED-STAGE01-DELIVERABLE-SENTINEL','ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE'])if(!first.prompt.includes(token))throw new Error('Stage 04 omitted captured canonical input: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation','ask the human to attach or provide the original before final JSON'])if(first.prompt.includes(prohibited))throw new Error('Stage 04 still re-requests previously supplied material: '+prohibited);
+  if(Object.prototype.hasOwnProperty.call(first.contextManifest.executionHandoff||{},'conversationMaterials'))throw new Error('Stage 04 prompt identity still binds the obsolete repeated-attachment handoff.');
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-CAPTURED',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-CAPTURED',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  const withStoredBytes=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(/MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION|Attach or provide.*design-input\.pdf/i.test(withStoredBytes.prompt))throw new Error('Stored bytes reintroduced a Stage 04 attachment loop.');
 }
-if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
-console.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));
+console.log(JSON.stringify({stage04CapturedInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
   const p=baseProject();

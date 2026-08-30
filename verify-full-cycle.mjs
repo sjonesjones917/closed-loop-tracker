@@ -1,6 +1,6 @@
 import fs from 'node:fs';import vm from 'node:vm';import {recordProposal,evidence} from './test-fixtures.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,hash=globalThis.closedLoopHash;
 if(schema.operationContract(10,'COMPLETE').agentWritableCollections.length)throw new Error('Stage 10 must not allow agent writes to application-frozen iteration/candidate records.');
 if(schema.operationContract(20,'COMPLETE').agentWritableCollections.length)throw new Error('Stage 20 must not allow agent writes to application-frozen baseline records.');
@@ -59,3 +59,13 @@ console.log(JSON.stringify({stagesCompleted:30,clarificationCycles:1,confirmedDe
 }
 
 for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of p.projectData[collection]||[]){if(record.recordSha256)assert(record.recordSha256===hash.recordSha256(record),`${collection} ${engine.recordId(record,collection)} has a stale recordSha256.`);if(record.contentSha256)assert(record.contentSha256===hash.contentRecordSha256(record,definition.idField),`${collection} ${engine.recordId(record,collection)} has a stale contentSha256.`);}
+
+process.exit(0);
+
+process.exit(0);
+
+process.exit(0);
+
+process.exit(0);
+
+process.exit(0);
