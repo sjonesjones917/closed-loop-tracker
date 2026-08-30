@@ -1,1 +1,1 @@
-<content omitted>
+(()=>{'use strict';throw new Error('RESTORE');})();
