@@ -63,17 +63,26 @@ jobs:
           s=p.read_text(encoding='utf-8')
           old="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
           new="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'"
-          if old not in s:
-              raise SystemExit('transformed Test IR field list anchor missing')
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('transformed Test IR field list unavailable')
+          p.write_text(s,encoding='utf-8')
 
           p=Path('verify-capture-once.mjs')
-          s=p.read_text(encoding='utf-8')
-          old="assert(!/human[^\\n]{0,120}(attach|resend|retype|summarize) the original intent/i.test(rec.prompt),'Stage 04 prompt asks human to resupply original intent');"
-          new="const improperRepeatRequest=rec.prompt.split(/\\r?\\n/).filter(line=>/(attach|resend|retype|summarize).{0,80}original intent/i.test(line)&&!/(do not|must not|never)/i.test(line));\nassert(improperRepeatRequest.length===0,'Stage 04 prompt asks human to resupply original intent: '+improperRepeatRequest.join(' | '));"
-          if old not in s:
-              raise SystemExit('capture-once assertion anchor missing')
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          lines=p.read_text(encoding='utf-8').splitlines()
+          out=[]; replaced=False
+          for line in lines:
+              if 'Stage 04 prompt asks human to resupply original intent' in line:
+                  if not replaced:
+                      out.append("const improperRepeatRequest=rec.prompt.split(/\\r?\\n/).filter(line=>/(attach|resend|retype|summarize).{0,80}original intent/i.test(line)&&!/(do not|must not|never)/i.test(line));")
+                      out.append("assert(improperRepeatRequest.length===0,'Stage 04 prompt asks human to resupply original intent: '+improperRepeatRequest.join(' | '));")
+                      replaced=True
+                  continue
+              out.append(line)
+          if not replaced:
+              raise SystemExit('capture-once assertion line unavailable')
+          p.write_text('\n'.join(out)+'\n',encoding='utf-8')
           PY
       - name: Syntax and capture-once proof
         shell: bash
