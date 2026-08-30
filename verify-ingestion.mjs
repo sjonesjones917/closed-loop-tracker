@@ -61,6 +61,13 @@ function validEnvelope(p,stage,promptRecord){
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
   }
+  if(stage===1){
+    const manifest=promptRecord.contextManifest?.intakeCoverageManifest||engine.currentIntakeCoverageManifest(p);records.intentStatements=(manifest.units||[]).map((u,i)=>({tempKey:`intent-${i+1}`,fields:{INPUT_UNIT_ID:u.unitId,DISPOSITION:'INCORPORATED_JOB_DEFINITION',CAPTURED_MEANING:u.rawValue,REASON:'Captured from the exact controlled input unit.'},relationships:{},evidenceRefs:['evidence-1']}));
+  }
+  if(stage===4){
+    const manifest=promptRecord.contextManifest?.obligationManifest||engine.buildObligationManifest(p),ids=(manifest.obligations||[]).map(x=>x.obligationId);records.obligationDispositions=ids.map((id,i)=>({tempKey:`disp-${i+1}`,fields:{OBLIGATION_ID:id,DISPOSITION:'REQUIREMENT',REASON:'The obligation is normative and is compiled into the atomic requirement set.'},relationships:{},evidenceRefs:['evidence-1']}));
+    const def=schema.RECORD_SCHEMAS.requirements,fields={OBLIGATION_IDS:ids,USER_INPUT_RELATIONSHIP:'Application-owned Stage 04 obligation manifest'};for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT&&fields[name]===undefined)fields[name]=safeValue(name);records.requirements=[{tempKey:'requirement-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
+  }
   return {
     schema:schema.RESPONSE_SCHEMA,
     jobId:p.job.JOB_ID,
@@ -118,6 +125,16 @@ function negativeAt(name,stage,mutate,expectedCode){
 }
 function scopeNegative(name,stage,key){const p=project(`JOB-SCOPE-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`),pr=savePrompt(p,stage),e=blockedEnvelope(p,stage,pr);e.scope[key]=`STALE-${key}`;const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_SCOPE'&&i.path===`/scope/${key}`))throw new Error(`${name}: stale ${key} was not rejected.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: stale scope mutated canonical state.`);negativeCount++;}
 const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode);
+
+
+negativeAt('stage1 omitted input identity',1,(e)=>{e.records.intentStatements.pop();},'INCOMPLETE_INTAKE_ACCOUNTING');
+negativeAt('stage1 duplicate input identity',1,(e)=>{e.records.intentStatements.push(JSON.parse(JSON.stringify(e.records.intentStatements[0])));e.records.intentStatements.at(-1).tempKey='intent-duplicate';},'DUPLICATE_INTAKE_ACCOUNTING');
+negativeAt('stage1 unknown input identity',1,(e)=>{e.records.intentStatements[0].fields.INPUT_UNIT_ID='INPUT-UNIT-UNKNOWN';},'UNKNOWN_INTAKE_IDENTITY');
+negativeAt('stage4 omitted obligation disposition',4,(e)=>{e.records.obligationDispositions.pop();},'INCOMPLETE_OBLIGATION_ACCOUNTING');
+negativeAt('stage4 duplicate obligation disposition',4,(e)=>{e.records.obligationDispositions.push(JSON.parse(JSON.stringify(e.records.obligationDispositions[0])));e.records.obligationDispositions.at(-1).tempKey='disp-duplicate';},'DUPLICATE_OBLIGATION_ACCOUNTING');
+negativeAt('stage4 unknown obligation identity',4,(e)=>{e.records.obligationDispositions[0].fields.OBLIGATION_ID='OBL-UNKNOWN';},'UNKNOWN_OBLIGATION_IDENTITY');
+negativeAt('stage4 unknown requirement obligation trace',4,(e)=>{e.records.requirements[0].fields.OBLIGATION_IDS=['OBL-UNKNOWN'];},'UNKNOWN_OBLIGATION_TRACE');
+negativeAt('stage4 requirement disposition not mapped',4,(e)=>{e.records.requirements[0].fields.OBLIGATION_IDS=e.records.requirements[0].fields.OBLIGATION_IDS.slice(1);},'UNMAPPED_REQUIREMENT_OBLIGATION');
 
 // Mobile/chat smart punctuation is normalized while the exact raw response remains preserved for audit.
 {
