@@ -1,0 +1,45 @@
+name: V3 conformance audit
+on:
+  push:
+    branches:
+      - fix/closed-loop-v3-controlling-spec
+    paths:
+      - .github/workflows/v3-audit.yml
+      - '*.js'
+      - '*.mjs'
+      - index.html
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run source verification matrix
+        shell: bash
+        run: |
+          set +e
+          failed=0
+          for cmd in \
+            "node build-test-project.mjs" \
+            "node verify-test-runtime.mjs" \
+            "node verify-hash.mjs" \
+            "node verify.mjs" \
+            "node verify-ingestion.mjs" \
+            "node verify-complete.mjs" \
+            "node verify-full-cycle.mjs" \
+            "node verify-prompt-semantics.mjs" \
+            "node verify-semantic-invariant.mjs" \
+            "node verify-definition-of-done.mjs" \
+            "node verify-project-lifecycle.mjs" \
+            "node --input-type=module -e \"globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')\""
+          do
+            echo "===== $cmd ====="
+            bash -lc "$cmd"
+            rc=$?
+            if [ "$rc" -ne 0 ]; then echo "FAILED[$rc]: $cmd"; failed=1; fi
+          done
+          exit "$failed"
