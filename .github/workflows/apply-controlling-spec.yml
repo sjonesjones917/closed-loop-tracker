@@ -27,11 +27,10 @@ jobs:
           node --check test-runtime.js
           node --check verify-controlling-spec.mjs
           node verify-controlling-spec.mjs
-      - name: Commit changes and remove one-time repair files
+      - name: Commit product changes
         run: |
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
-          git rm .github/workflows/apply-controlling-spec.yml .github/apply_controlling_spec.py
           git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js index.html .github/workflows/pages.yml verify-controlling-spec.mjs
           git commit -m "Align prompts and capture-once workflow with controlling specification"
           git push origin HEAD:controlling-spec-conformance
