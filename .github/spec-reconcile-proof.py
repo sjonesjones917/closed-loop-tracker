@@ -17,6 +17,11 @@ t=t.replace("const files=['index.html','app-core.js','hash.js','workflow-schema.
 t=t.replace("for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])","for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])")
 t=t.replace("orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']","orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']")
 t=t.replace("'Revise the Responsible Layer'","'Correct the Root Cause'")
+t=t.replace("'closed-loop-stage-response/2'","'closed-loop-stage-response/3'")
+t=t.replace("core.PROJECT_SCHEMA==='closed-loop-project/2'","core.PROJECT_SCHEMA==='closed-loop-project/3'")
+t=t.replace("schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2'","schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3'")
+t=t.replace("assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema /2 is required.');","assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema /3 is required.');")
+t=t.replace("const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');\n","")
 write(p,t)
 
 p='verify-hash.mjs'; t=read(p)
