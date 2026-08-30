@@ -1,0 +1,59 @@
+name: Finalize subject-neutral prompt acceptance
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths: [.github/workflows/z-v3-semantic-finalize.yml]
+  workflow_dispatch:
+permissions: {contents: write}
+concurrency: {group: closed-loop-v3-semantic-finalize, cancel-in-progress: false}
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Patch stale subject-specific verifier assertions
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          let p=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
+          for(const line of [
+            "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');\n"
+          ])p=p.replace(line,'');
+          p=p.replace("    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');",
+            "    if(!record.prompt.includes('STAGE 01 SUBJECT-NEUTRAL INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Derive the human-authority questions from this job')||!record.prompt.includes('Do not use a hard-coded catalogue of project subjects or domain labels')||!record.prompt.includes('Do not perform source discovery, external-authority analysis, requirement atomization, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_SUBJECT_NEUTRAL_INTAKE_BOUNDARY_MISSING');");
+          p=p.replace("  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');",
+            "  }else if(!record.prompt.includes('SUBJECT-NEUTRAL DELIVERABLE ADAPTATION')||!record.prompt.includes('Do not use or infer a hard-coded project-subject mode.')||!record.prompt.includes('never claim downstream import, compilation, simulation, manufacturing, filing, deployment, physical performance, or other execution unless it actually occurred and is evidenced'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');");
+          p=p.replace("    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');",
+            "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('Ask BLOCKING_NOW and ASK_NOW_NONBLOCKING questions in normal chat before the final machine response'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');");
+          p=p.replace("  {...original,prompt:original.prompt.replace('must not be represented as completed','may be represented as completed')},",
+            "  {...original,prompt:original.prompt.replace('never claim downstream import, compilation, simulation, manufacturing, filing, deployment, physical performance, or other execution unless it actually occurred and is evidenced','claim downstream execution even when it did not occur')},");
+          p=p.replace("  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},\n  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},\n  {...original,prompt:original.prompt.replace('PATENT / REGULATED FILING','GENERAL DOCUMENT')},",
+            "  {...original,prompt:original.prompt.replace('SUBJECT-NEUTRAL DELIVERABLE ADAPTATION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},\n  {...original,prompt:original.prompt.replace('Do not use or infer a hard-coded project-subject mode.','Infer a project-subject mode from keywords.')},\n  {...original,prompt:original.prompt.replace('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','HUMAN COLLABORATION DISABLED')},");
+          p=p.replace(" if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');",
+            " if(!r.prompt.includes('STAGE 01 SUBJECT-NEUTRAL INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!r.prompt.includes('Derive the human-authority questions from this job')||!r.prompt.includes('Do not use a hard-coded catalogue of project subjects or domain labels'))throw new Error('Stage 01 subject-neutral intake adaptation is missing.');");
+          p=p.replace("specialistDomains:['patent','software-multifile','building-aec','physical-engineering-cad-cam-cnc-additive']","subjectNeutralPromptRuntime:true");
+          p=p.replace('Residual recovery invariants after specialist-domain prompt hardening.','Residual recovery invariants after subject-neutral prompt hardening.');
+          fs.writeFileSync('verify-prompt-semantics.mjs',p);
+          const source=fs.readFileSync('prompt-engine.js','utf8');
+          for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(source.includes(forbidden))throw new Error('Runtime subject branch remains: '+forbidden);
+          NODE
+      - name: Prove prompt semantics
+        run: |
+          node --check verify-prompt-semantics.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+      - name: Commit accepted verifier and cleanup one-time semantic workflows
+        run: |
+          rm -f .github/workflows/z-v3-semantic-finalize.yml .github/workflows/fix-final-source.yml .github/workflows/diag-gates.yml .github/workflows/diag-ingestion.yml .diag-trigger diag-gates-trigger.txt
+          git config user.name closed-loop-finalizer
+          git config user.email closed-loop-finalizer@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Align prompt acceptance with subject-neutral controlling contract'
+          git push origin HEAD:implementation/closed-loop-v3
