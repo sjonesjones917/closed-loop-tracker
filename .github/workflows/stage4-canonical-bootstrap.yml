@@ -1,0 +1,125 @@
+name: Bootstrap isolated Stage 04 canonical reuse repair
+on:
+  push:
+    branches: [fix/stage4-canonical-reuse-proofed]
+permissions:
+  contents: write
+concurrency:
+  group: stage4-canonical-bootstrap
+  cancel-in-progress: false
+jobs:
+  build-and-prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-canonical-reuse-proofed
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Merge the proven permanent canonical reuse implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git fetch origin e7e72ccd309e9a609eb489e353d5e246d505acb8
+          git merge --no-ff --no-commit -X ours e7e72ccd309e9a609eb489e353d5e246d505acb8
+          test -z "$(git diff --name-only --diff-filter=U)"
+      - name: Preserve legacy supplied intent in the canonical Stage 01 ledger
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+
+          p=Path('app-core.js')
+          text=p.read_text()
+          anchor='function importSeed(raw){if(![core.SCHEMA,\'human-project/30\'].includes(raw?.schema))throw new Error(\'Bundled project must use a supported 30-stage project schema.\');'
+          helper="""function migrateLegacyIntentStatements(p,raw){
+  if(safe(p?.projectData?.intentStatements).length)return;
+  const input=raw?.userJobInput&&typeof raw.userJobInput==='object'?raw.userJobInput:{},units=[],legacyUnknown='UNKNOWN - legacy input did not encode this semantic classification.';
+  const add=(location,value,statementKind,requirementRelevance,normativeForce)=>{const values=Array.isArray(value)?value:[value];values.forEach((item,index)=>{const exact=typeof item==='string'?item.trim():item===undefined||item===null?'':JSON.stringify(item);if(!exact)return;units.push({location:Array.isArray(value)?`${location}/${index}`:location,exact,statementKind,requirementRelevance,normativeForce});});};
+  add('/userJobInput/objective',input.objective,'OBJECTIVE','REQUIREMENT','MUST');
+  add('/userJobInput/deliverable',input.deliverable,'DELIVERABLE','REQUIREMENT','MUST');
+  add('/userJobInput/requiredOutputFormat',input.requiredOutputFormat,'OUTPUT_CONSTRAINT','REQUIREMENT','MUST');
+  add('/userJobInput/deadlineOrTemporalScope',input.deadlineOrTemporalScope,'TEMPORAL_CONSTRAINT','REQUIREMENT','MUST');
+  add('/userJobInput/desiredSourceCount',input.desiredSourceCount,'SOURCE_CONSTRAINT','REQUIREMENT','MUST');
+  add('/userJobInput/knownAuthorities',input.knownAuthorities,'AUTHORITY_CONTEXT','CONTEXT','CONTEXT');
+  add('/userJobInput/availableTools',input.availableTools,'CAPABILITY_CONTEXT','CONTEXT','CONTEXT');
+  add('/userJobInput/prohibitedActions',input.prohibitedActions,'PROHIBITION','REQUIREMENT','MUST_NOT');
+  add('/userJobInput/explicitRequirements',input.explicitRequirements,'REQUIREMENT','REQUIREMENT','MUST');
+  add('/suppliedMaterials',raw?.suppliedMaterials,'SUPPLIED_MATERIAL','CONTEXT','CONTEXT');
+  const createdAt=String(raw?.dateOpened||p?.job?.DATE_OPENED||'MIGRATED_LEGACY_INPUT');
+  for(const unit of units){const id=engine.allocateId(p,'intentStatements'),fields={...engine.applicationInitialFields('intentStatements'),STATEMENT_ID:id,SOURCE_MATERIAL:'legacy human-project/30 import',SOURCE_LOCATION:unit.location,EXACT_STATEMENT:unit.exact,STATEMENT_KIND:unit.statementKind,REQUIREMENT_RELEVANCE:unit.requirementRelevance,NORMATIVE_FORCE:unit.normativeForce,DEPENDENCIES:legacyUnknown,EXCEPTIONS:legacyUnknown,CONFLICTS:legacyUnknown,NOTES:'Deterministically migrated from exact legacy human-authority input; no missing file contents or new substantive facts were inferred.'};const record={id,stage:1,createdAt,active:true,scope:{inputVersion:String(p.job.CURRENT_INPUT_VERSION||'')},fields,...fields,relationships:{},evidenceRefs:[],notes:'Deterministic legacy intent migration',sourceProposalId:null,rawResponseId:'MIGRATION-ARCHIVE'};engine.refreshRecordHashes(record,'intentStatements');p.projectData.intentStatements.push(record);}
+}
+"""
+          if text.count(anchor)!=1:
+              raise SystemExit(f'app-core importSeed anchor count={text.count(anchor)}')
+          text=text.replace(anchor,helper+anchor)
+          old="if(String(importedStageOne.status||'').toUpperCase()==='COMPLETE'){engine.ensureShape(p);const acceptedChangeId="
+          new="if(String(importedStageOne.status||'').toUpperCase()==='COMPLETE'){engine.ensureShape(p);migrateLegacyIntentStatements(p,raw);const acceptedChangeId="
+          if text.count(old)!=1:
+              raise SystemExit(f'app-core Stage 01 legacy anchor count={text.count(old)}')
+          text=text.replace(old,new)
+          p.write_text(text)
+
+          b=Path('verify-browser.mjs')
+          browser=b.read_text()
+          old="let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Retained Stage 01/02 state is wrong.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');"
+          new="let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Retained Stage 01/02 state is wrong.');const migratedIntent=retained.projectData.intentStatements||[];assert(migratedIntent.length>0,'Legacy Stage 01 human authority was not migrated into the canonical intent ledger.');assert(migratedIntent.every(r=>r.scope?.inputVersion===retained.job.CURRENT_INPUT_VERSION),'Migrated intent statement scope does not match the current input version.');assert(migratedIntent.some(r=>(r.fields?.EXACT_STATEMENT||r.EXACT_STATEMENT)===retained.job.EXACT_USER_OBJECTIVE_VERBATIM),'Exact legacy user objective is missing from the canonical intent ledger.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');"
+          if browser.count(old)!=1:
+              raise SystemExit(f'verify-browser retained-state anchor count={browser.count(old)}')
+          b.write_text(browser.replace(old,new))
+
+          runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''
+          for filename in runtime:
+              data=Path(filename).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(); manifest+=f'{filename}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          idx=Path('index.html'); html=idx.read_text(); html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
+          if count!=8: raise SystemExit(f'index.html runtime token count={count}')
+          idx.write_text(html)
+          print(token)
+          PY
+      - name: Prove the exact repaired tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-one-time-intent-intake.mjs; do node --check "$f"; done
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          ! grep -R "document.write\|MutationObserver" --include='*.js' --include='*.html' .
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier(){ script="$1"; for attempt in 1 2 3; do log="/tmp/${script}.${attempt}.log"; if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi; cat "$log"; if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi; test "$attempt" -lt 3 || return 1; done; }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only the permanent repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/stage4-canonical-bootstrap.yml
+          git add -A
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort | tr '\n' ' ')" = "pages.yml "
+          git diff --cached --check
+          git commit -m "Fix Stage 04 canonical intent reuse across reloads"
+          git push origin HEAD:fix/stage4-canonical-reuse-proofed
