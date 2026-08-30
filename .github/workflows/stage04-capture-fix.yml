@@ -32,10 +32,30 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-prompt-semantics.mjs
           node --check verify-browser.mjs
-      - name: Prove Stage 04 engine and prompt regressions
+      - name: Prove Stage 04 captured input reuse
         run: |
           node verify-complete.mjs
-          node verify-prompt-semantics.mjs
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const ctx={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true};
+          ctx.globalThis=ctx;vm.createContext(ctx);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInContext(fs.readFileSync(file,'utf8'),ctx,{filename:file});
+          const core=ctx.closedLoopCore,engine=ctx.closedLoopWorkflowEngine,prompts=ctx.closedLoopPromptEngine;
+          const p=core.createBlankState('JOB-STAGE04-CAPTURED');engine.ensureShape(p);
+          Object.assign(p.job,{JOB_ID:'JOB-STAGE04-CAPTURED',EXACT_USER_OBJECTIVE_VERBATIM:'CAPTURED-HUMAN-INTENT-SENTINEL',SUPPLIED_MATERIALS_INVENTORY:'design-input.pdf',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'NOT APPLICABLE',CURRENT_TEST_SUITE_VERSION:'NOT APPLICABLE',CURRENT_INSTRUCTION_VERSION:'NOT APPLICABLE',CURRENT_STAGE:'STAGE 04',CURRENT_STATE:'IN PROGRESS'});p.activeStage=4;
+          p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'CAPTURED-STAGE01-DELIVERABLE-SENTINEL',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'design-input.pdf already captured'};
+          const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+          assert.equal(Object.prototype.hasOwnProperty.call(handoff,'conversationMaterials'),false);
+          assert.equal(handoff.send.length,0);
+          const action=engine.operationalNextAction(p,4);
+          const actionText=JSON.stringify(action);
+          assert(!/design-input\.pdf|attach|provide the original|send the stage 04 instruction with/i.test(actionText),actionText);
+          const rec=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+          for(const token of ['CAPTURED-HUMAN-INTENT-SENTINEL','CAPTURED-STAGE01-DELIVERABLE-SENTINEL','ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE'])assert(rec.prompt.includes(token),token);
+          for(const bad of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation','ask the human to attach or provide the original before final JSON'])assert(!rec.prompt.includes(bad),bad);
+          assert.equal(Object.prototype.hasOwnProperty.call(rec.contextManifest.executionHandoff||{},'conversationMaterials'),false);
+          console.log('stage04-targeted-prompt: PASS');
+          NODE
           ! grep -R "Send the Stage 04 instruction with the required material" workflow-engine.js prompt-engine.js app-core.js
           ! grep -R "MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION" workflow-engine.js prompt-engine.js app-core.js
           ! grep -R "conversationMaterials" workflow-engine.js prompt-engine.js app-core.js
