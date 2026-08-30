@@ -1,0 +1,55 @@
+name: Synchronize Stage 04 repair with current main
+on:
+  push:
+    branches: [fix/stage4-canonical-intent-capture]
+permissions:
+  contents: write
+jobs:
+  sync:
+    if: "!contains(github.event.head_commit.message, 'Merge current main into Stage 04 canonical accounting repair')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-canonical-intent-capture
+      - name: Merge current main without losing Stage 04 accounting
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          set +e
+          git merge --no-commit --no-ff origin/main
+          MERGE_STATUS=$?
+          set -e
+          if [ "$MERGE_STATUS" -ne 0 ]; then
+            CONFLICTS="$(git diff --name-only --diff-filter=U)"
+            printf '%s\n' "$CONFLICTS"
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              case "$f" in
+                prompt-engine.js|.github/workflows/pages.yml)
+                  git checkout --ours -- "$f"
+                  git add "$f"
+                  ;;
+                *)
+                  echo "Unexpected merge conflict: $f" >&2
+                  exit 1
+                  ;;
+              esac
+            done <<< "$CONFLICTS"
+          fi
+          rm -f .github/workflows/stage4-sync-main.yml
+          git add -A
+          git diff --cached --check
+          git commit -m "Merge current main into Stage 04 canonical accounting repair"
+          git push origin HEAD:fix/stage4-canonical-intent-capture
+      - name: Verify branch synchronization
+        run: |
+          git merge-base --is-ancestor origin/main HEAD
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node verify-stage4-intent-reuse.mjs
