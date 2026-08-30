@@ -4,7 +4,7 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/29';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/30';
 if(!core||!schema||!hash||!workflow)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=v=>{if(v===undefined||v===null||v==='')return 'UNKNOWN';if(Array.isArray(v)&&!v.length)return 'NONE';if(typeof v==='object')return JSON.stringify(v,null,2);return String(v)};
 function persistedHumanAnswersBlock(state){const answers=state?.projectData?.humanInputAnswers||[];return answers.length?answers.map((x,i)=>`${x.answerId||x.requestId||`ANSWER-${String(i+1).padStart(3,'0')}`}:\n${show(x.answer??x.value??x.response??'')}`).join('\n\n'):'NONE';}
@@ -240,7 +240,7 @@ Version: ${schema.TEST_IR.version}
 Registered capability: ${schema.TEST_IR.capability}
 Supported operations: ${schema.TEST_IR.operations.join(', ')}
 
-For every proposed test, first decide whether the proposition can be represented exactly and safely using only this grammar. If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = TEST_IR, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS. The executable specification is a test definition, not proof that execution occurred. Do not invent operations, parsers, code, shell commands, JavaScript, Python, a CUSTOM_PIPELINE escape hatch, or hidden executable behavior. If the proposition cannot be faithfully reduced to this language, set EXECUTABLE_KIND = NONE and route it to the correct independent agent, human, or external system. Subject/domain meaning belongs in the requirement/test design; the runtime remains domain-blind.
+For every proposed test, first decide whether the proposition can be represented exactly and safely using only this grammar. If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = TEST_IR, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS. The application, not you, assigns EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version} and the canonical executable-spec SHA-256 after validation. The executable specification is a test definition, not proof that execution occurred. Do not invent operations, parsers, code, shell commands, JavaScript, Python, a CUSTOM_PIPELINE escape hatch, or hidden executable behavior. If the proposition cannot be faithfully reduced to this language, set EXECUTABLE_KIND = NONE and route it to the correct independent agent, human, or external system. Subject/domain meaning belongs in the requirement/test design; the runtime remains domain-blind.
 
 EXECUTABLE_SPEC shape:
 {"version":"${schema.TEST_IR.version}","steps":[{"op":"<one supported operation>","...":"operation parameters"}]}
