@@ -1,0 +1,48 @@
+name: Apply Stage 20 and action type corrections
+on:
+  push:
+    branches: [fix/authoritative-next-actions-and-review-lanes-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
+          new="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS','FREEZE_CANDIDATE','RESERVE_RUN_BATCH','REGISTER_FRESH_CONTEXT','REGISTER_REVIEWER_CONTEXT','BEGIN_UNCHANGED_CONFIRMATION','FREEZE_BASELINE','RESERVE_PRODUCT_EXECUTION','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
+          if old not in s: raise SystemExit('ACTION_TYPES correction anchor not found')
+          s=s.replace(old,new,1)
+          old="case 20:{requireAccepted();const confirmations="
+          new="case 20:{const confirmations="
+          if old not in s: raise SystemExit('Stage 20 requireAccepted anchor not found')
+          s=s.replace(old,new,1)
+          s=s.replace("primaryButton:'Go to baseline control'","primaryButton:'Authorize and freeze baseline'",1)
+          p.write_text(s)
+
+          p=Path('app-core.js'); s=p.read_text()
+          # Stage 20 reuses the exact unchanged-confirmed candidate; no file reattachment or manual file re-selection.
+          anchor="function artifactControlMarkup(n,locked){"
+          idx=s.index(anchor)
+          insert_at=s.index("  const files=safe(current.stages[n].authorizedFiles);",idx)
+          special="  if(n===20){const confirmation=engine.recordsForCurrentScope(current,'confirmationRecords').find(record=>String(engine.recordValue(record,'DETERMINATION')||'').toUpperCase()==='SATISFIED'),iteration=engine.recordsForCurrentScope(current,'iterations').filter(record=>Number(record.stage)===19).at(-1),candidateId=iteration?String(engine.recordValue(iteration,'CANDIDATE_ID')||iteration.relationships?.CANDIDATE_ID||''):'';return `<div class=\"panel\"><h2 class=\"section-title\">Production baseline</h2><p class=\"section-intro\">The application will freeze the exact unchanged-confirmed candidate already held in canonical artifact custody. Do not attach, reattach, upload, or manually reselect those files. Your only input here is the genuine baseline authorization decision; the application preserves the existing candidate identities, verifies their stored bytes, and calculates the hashes.</p><div class=\"notice\"><strong>Candidate to freeze</strong><br>${esc(candidateId||'Current unchanged-confirmed candidate')} · Confirmation ${esc(confirmation?engine.recordId(confirmation,'confirmationRecords'):'current confirmation')}</div><div class=\"button-row\"><button id=\"freeze-baseline\"${locked?' disabled':''}>Authorize and freeze unchanged-confirmed candidate</button></div></div>`;}\n"
+          if special not in s:s=s[:insert_at]+special+s[insert_at:]
+          old="action.actionType==='RESERVE_RUN_BATCH'?`<button class=\"primary\" id=\"next-reserve-run-batch\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='BEGIN_UNCHANGED_CONFIRMATION'?`<button class=\"primary\" id=\"next-begin-unchanged-confirmation\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='RESERVE_PRODUCT_EXECUTION'?`<button class=\"primary\" id=\"next-reserve-product-execution\" type=\"button\">${esc(action.primaryButton)}</button>`:['FREEZE_CANDIDATE','FREEZE_BASELINE'].includes(action.actionType)?`<button class=\"primary\" id=\"focus-artifact-control\" type=\"button\">${esc(action.primaryButton)}</button>`"
+          new="action.actionType==='RESERVE_RUN_BATCH'?`<button class=\"primary\" id=\"next-reserve-run-batch\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='BEGIN_UNCHANGED_CONFIRMATION'?`<button class=\"primary\" id=\"next-begin-unchanged-confirmation\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='RESERVE_PRODUCT_EXECUTION'?`<button class=\"primary\" id=\"next-reserve-product-execution\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='FREEZE_BASELINE'?`<button class=\"primary\" id=\"next-freeze-baseline\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='FREEZE_CANDIDATE'?`<button class=\"primary\" id=\"focus-artifact-control\" type=\"button\">${esc(action.primaryButton)}</button>`"
+          if old not in s: raise SystemExit('Stage20 action button anchor not found')
+          s=s.replace(old,new,1)
+          wire="if($('#next-reserve-run-batch'))$('#next-reserve-run-batch').onclick=reserveRunBatch;"
+          if wire not in s: raise SystemExit('Stage20 wire anchor not found')
+          s=s.replace(wire,"if($('#next-freeze-baseline'))$('#next-freeze-baseline').onclick=()=>$('#freeze-baseline')?.click();"+wire,1)
+          p.write_text(s)
+          PY
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add workflow-engine.js app-core.js
+          git commit -m "Fix application action types and reuse candidate bytes for baseline"
+          git push
