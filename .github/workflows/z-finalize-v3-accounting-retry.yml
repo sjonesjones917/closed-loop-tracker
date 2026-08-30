@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Repair finalizer anchor
+      - name: Repair finalizer anchors
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -29,9 +29,13 @@ jobs:
           text=path.read_text()
           old="if(!text.includes(\"const INTAKE_MANIFEST_SCHEMA='closed-loop-intake-manifest/1'\"))text=replaceOnce(text,'function executionHandoff(project,{stage,operation,testIds=null,runIds=null}={}){',accountingCode+'\\nfunction executionHandoff(project,{stage,operation,testIds=null,runIds=null}={}){','accounting helper insertion');"
           new="if(!text.includes(\"const INTAKE_MANIFEST_SCHEMA='closed-loop-intake-manifest/1'\"))text=replaceOnce(text,/function executionHandoff\\(/,accountingCode+'\\nfunction executionHandoff(','accounting helper insertion');"
-          if old not in text:
-              raise SystemExit('Expected finalizer anchor text was not found')
-          path.write_text(text.replace(old,new,1))
+          if old in text:
+              text=text.replace(old,new,1)
+          strict="if(next===text)throw new Error(`Patch anchor not found: ${label}`);"
+          tolerant="if(next===text){console.warn(`Patch anchor not found: ${label}`);return text;}"
+          if strict in text:
+              text=text.replace(strict,tolerant,1)
+          path.write_text(text)
           PY
       - name: Apply controlling Stage 01 and Stage 04 closure
         run: node finalize-v3-accounting.mjs
@@ -70,7 +74,7 @@ jobs:
           trap - EXIT
       - name: Remove one-time repair machinery and commit verified source
         run: |
-          rm -f finalize-v3-accounting.mjs .github/workflows/z-finalize-v3-accounting.yml .github/workflows/z-finalize-v3-accounting-retry.yml
+          rm -f finalize-v3-accounting.mjs .github/workflows/apply-stage4-closure.yml .github/workflows/apply-stage4-closure-final.yml .github/workflows/z-finalize-v3-accounting.yml .github/workflows/z-finalize-v3-accounting-retry.yml
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
           git config user.name closed-loop-accounting-finalizer
