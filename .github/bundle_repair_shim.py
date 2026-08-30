@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 p=Path('.github/bundle_repair.py')
 t=p.read_text()
 old="""    if count is not None and found!=count:\n        raise SystemExit(f'guard failed: {path}: expected {count} occurrences, found {found}: {old[:120]!r}')\n    text=text.replace(old,new)\n"""
@@ -6,10 +7,12 @@ new="""    if count is not None and found<count:\n        raise SystemExit(f'gua
 if old not in t: raise SystemExit('repair helper guard source not found')
 t=t.replace(old,new,1)
 t=t.replace("${show(j.EXACT_DELIVERABLE_REQUESTED)}\\n\\n${stage>1?`PERSISTED PROJECT INPUT", "${show(j.EXACT_DELIVERABLE_REQUESTED)}\\n\\n${stage>1?`ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT")
-old_ingest='''replace('response-ingestion.js',"  const errors=issues.filter(item=>item.severity!==\\'WARNING\\');", "  validateAccountingClosure(project,envelope,stageNumber,issues);\\n  const errors=issues.filter(item=>item.severity!==\\'WARNING\\');",1)'''
-new_ingest='''replace('response-ingestion.js',"  return {valid:issues.every(item=>item.severity!==\\'ERROR\\')", "  validateAccountingClosure(project,envelope,stageNumber,issues);\\n  return {valid:issues.every(item=>item.severity!==\\'ERROR\\')",1)'''
-if old_ingest not in t: raise SystemExit('ingestion insertion transform not found')
-t=t.replace(old_ingest,new_ingest,1)
+# The base repair used an obsolete response-ingestion anchor. Remove only that one guarded call;
+# the shim inserts the closure call against the actual current validateEnvelope return below.
+pattern=r"# Call closure validator before result returned; anchor on warning count near end of validateEnvelope\.\nreplace\('response-ingestion\.js',[\s\S]*?,1\)\n\n# 8\. Execution package"
+replacement="# Call closure validator before result returned; inserted by bundle_repair_shim.py after the base transform.\n\n# 8. Execution package"
+t,n=re.subn(pattern,replacement,t,count=1)
+if n!=1: raise SystemExit(f'ingestion obsolete-anchor removal mismatch: {n}')
 p.write_text(t)
 exec(compile(t,str(p),'exec'),{'__file__':str(p),'__name__':'__main__'})
 
@@ -43,6 +46,13 @@ new_overrides="""const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
 if s.count(old_overrides)!=1: raise SystemExit(f'accounting type override guard mismatch: {s.count(old_overrides)}')
 s=s.replace(old_overrides,new_overrides,1)
 sp.write_text(s)
+
+# Insert accounting closure validation into the actual current validateEnvelope exit.
+rp=Path('response-ingestion.js');r=rp.read_text()
+anchor="  return {valid:issues.every(item=>item.severity!=='ERROR'),issues,errorCount:issues.filter(item=>item.severity==='ERROR').length,warningCount:issues.filter(item=>item.severity==='WARNING').length,checkedAt:now(),responseSchema:envelope.schema,responseType:envelope.responseType,temporaryRecordIndex:responseRecordIndex,temporaryEvidenceIndex:evidenceIndex,temporaryAttachmentIndex:attachmentIndex,canonicalEnvelopeSha256};"
+replacement="  validateAccountingClosure(project,envelope,stageNumber,issues);\n"+anchor
+if r.count(anchor)!=1: raise SystemExit(f'validateEnvelope accounting insertion anchor mismatch: {r.count(anchor)}')
+rp.write_text(r.replace(anchor,replacement,1))
 
 # The generated worker opener is normalized after generation.
 wp=Path('test-worker.js')
