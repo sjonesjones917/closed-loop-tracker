@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: independent-review-contexts-current-main
-      - run: python repair-current-independent-review.py
+      - run: python repair-current-independent-review-v2.py
       - run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
