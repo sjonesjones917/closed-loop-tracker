@@ -31,12 +31,21 @@ jobs:
           p.write_text(s)
           h=Path('index.html'); x=h.read_text()
           x=x.replace('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}','')
-          if "worker-src 'self'" not in x:
-              x=x.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src")
+          if "worker-src 'self'" not in x:x=x.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src")
           h.write_text(x)
           PY
       - name: Apply controlling specification repair
         run: node spec3-repair.mjs
+      - name: Align legacy proof harness with required runtime graph
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs'); s=p.read_text()
+          s=s.replace("'workflow-schema.js','workflow-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js'")
+          s=s.replace("'workflow-schema.js','workflow-engine.js','prompt-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'")
+          s=s.replace("'Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer'", "'Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause'")
+          p.write_text(s)
+          PY
       - name: Syntax proof
         run: |
           node --check workbook.js
