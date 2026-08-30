@@ -6,4 +6,3 @@ prompt_stage4_start=True
 prompt_stage5_start=True
 prompt_version24=True
 ci_marker=True
-patched_test_diagnostic_trigger=True
