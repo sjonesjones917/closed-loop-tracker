@@ -26,7 +26,6 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('tools/apply-controlling-spec-fix.py')
           s=p.read_text(encoding='utf-8')
           old="s = replace_regex(s, r\"const APPLICATION_TEST_EXECUTORS=Object\\.freeze\\(\\{\\}\\);\\nfunction applicationTestCapabilities\\(\\)\\{return Object\\.freeze\\(Object\\.keys\\(APPLICATION_TEST_EXECUTORS\\)\\);\\}\", \"function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}\", 'native capability authority')"
@@ -65,8 +64,8 @@ jobs:
             node --check "$f" >> verification-diagnostic.log 2>&1 || rc=$?
           done
           if [ "$rc" -eq 0 ]; then
-            echo "===== node verify-capture-once.mjs =====" >> verification-diagnostic.log
-            node verify-capture-once.mjs >> verification-diagnostic.log 2>&1 || rc=$?
+            echo "===== capture-once regression =====" >> verification-diagnostic.log
+            node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')" >> verification-diagnostic.log 2>&1 || rc=$?
           fi
           cat verification-diagnostic.log
           if [ "$rc" -ne 0 ]; then
