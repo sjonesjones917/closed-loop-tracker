@@ -1,0 +1,57 @@
+name: Correct application-owned stage interaction modes
+on:
+  push:
+    branches: [fix/application-owned-stage-modes-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('app-core.js')
+          text=p.read_text()
+          old="applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28||displayedStageAction(n).actionType==='CALCULATE_RELEASE'"
+          new="applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28||['CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS'].includes(displayedStageAction(n).actionType)"
+          if old not in text: raise SystemExit('applicationOnlyInteraction marker not found')
+          text=text.replace(old,new,1)
+
+          old_intro="applicationOnlyInteraction?(n===28?'No external instruction is used at Stage 28. Use Release control for the application-owned byte comparison.':'The application must run the pending native deterministic verification before any external handoff. No agent prompt or final JSON is required for the pending native work.')"
+          new_intro="applicationOnlyInteraction?(n===28?'No external instruction is used at Stage 28. Use Release control for the application-owned byte comparison.':displayedStageAction(n).actionType==='BUILD_EVIDENCE_CHAINS'?'No external instruction is used while the application constructs the current canonical evidence chains. Build the chains first; only unresolved missing evidence may later require an agent investigation.':displayedStageAction(n).actionType==='CALCULATE_RELEASE'?'No external instruction is used while the application calculates the release determination from current evidence. No agent or human may select the release state.':'The application must run the pending native deterministic verification before any external handoff. No agent prompt or final JSON is required for the pending native work.')"
+          if old_intro not in text: raise SystemExit('prompt intro application-only marker not found')
+          text=text.replace(old_intro,new_intro,1)
+
+          old_response="applicationOnlyInteraction?(n===28?'No agent response belongs to Stage 28. Complete the byte-identity comparison in Release control.':'No agent response belongs to the pending application-native verification. Run the application verification first.')"
+          new_response="applicationOnlyInteraction?(n===28?'No agent response belongs to Stage 28. Complete the byte-identity comparison in Release control.':displayedStageAction(n).actionType==='BUILD_EVIDENCE_CHAINS'?'No agent response belongs to the application-owned evidence-chain construction step. Build the canonical chains first; if the application then identifies a missing link, use the new current Stage 29 investigation instruction for only that missing evidence.':displayedStageAction(n).actionType==='CALCULATE_RELEASE'?'No agent response belongs to the application-owned release calculation step. Calculate the release determination first.':'No agent response belongs to the pending application-native verification. Run the application verification first.')"
+          if old_response not in text: raise SystemExit('response application-only marker not found')
+          text=text.replace(old_response,new_response,1)
+
+          prefix="function interactionModeMarkup(n){const pending=pendingProposal(),latestValidation="
+          if prefix not in text: raise SystemExit('interactionModeMarkup prefix not found')
+          text=text.replace(prefix,"function interactionModeMarkup(n){const action=currentNextAction(),pending=pendingProposal(),latestValidation=",1)
+          anchor="if(lockReason)return `<div class=\"notice warn\"><strong>No external response is expected yet.</strong><br>${esc(lockReason)} Complete the prerequisite stages in order before sending a prompt or pasting final JSON for this stage.</div>`;if(reviewerOperation(n)&&!currentReviewerContext(n))"
+          replacement="if(lockReason)return `<div class=\"notice warn\"><strong>No external response is expected yet.</strong><br>${esc(lockReason)} Complete the prerequisite stages in order before sending a prompt or pasting final JSON for this stage.</div>`;if(['RUN_APP_TESTS','CALCULATE_RELEASE','BUILD_EVIDENCE_CHAINS'].includes(action.actionType))return `<div class=\"notice\"><strong>The application acts now.</strong><br>${esc(action.explanation||action.heading)} Do not send an agent prompt or paste final JSON until the application shows a new current action.</div>`;if(action.actionType==='ATTACH_REQUIRED_FILES')return `<div class=\"notice warn\"><strong>The required files must be supplied first.</strong><br>${esc(action.explanation||action.blockingReason||'Attach the exact files listed by the application.')} Do not paste final JSON until this file step is complete.</div>`;if(action.actionType==='HUMAN_INSPECTION')return `<div class=\"notice\"><strong>Perform the human inspection now.</strong><br>${esc(action.explanation||action.heading)} Record the actual human observation in the application before any structured result is accepted.</div>`;if(reviewerOperation(n)&&!currentReviewerContext(n))"
+          if anchor not in text: raise SystemExit('interaction mode insertion anchor not found')
+          text=text.replace(anchor,replacement,1)
+          p.write_text(text)
+
+          token='runtime-20260830-live-operator-49'
+          idx=Path('index.html'); html=idx.read_text(); html=re.sub(r'runtime-20260830-live-operator-\d+',token,html); idx.write_text(html)
+          for filename in ('app-core.js','test-runtime.js'):
+              f=Path(filename); s=f.read_text(); s=re.sub(r'runtime-20260830-live-operator-\d+',token,s); f.write_text(s)
+          PY
+          rm -f .github/workflows/materialize-application-owned-modes.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Correct application-owned stage interaction modes"
+          git push origin HEAD:fix/application-owned-stage-modes-20260830
