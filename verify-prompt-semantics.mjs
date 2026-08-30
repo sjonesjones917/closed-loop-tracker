@@ -23,7 +23,6 @@ for(const forbidden of [
   'PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE',
   'STAGE 01 DOMAIN INTAKE ADAPTATION'
 ])assert(!source.includes(forbidden),`Hard-coded project-domain prompt branch remains: ${forbidden}`);
-
 for(const required of [
   'EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW',
   'APPLICATION INTAKE MANIFEST',
@@ -37,7 +36,6 @@ for(const required of [
   'FILES YOU MUST NOT RECEIVE',
   'FILES OR EVIDENCE YOU MUST RETURN'
 ])assert(source.includes(required),`Prompt authority missing required behavior: ${required}`);
-
 assert(source.includes('Do not merely summarize context')||source.includes('Do not merely summarize the context'),'Prompts do not explicitly require stage execution instead of context summary.');
 assert(source.includes('already present'),'Prompt authority does not require reuse of already-supplied information.');
 assert(source.includes('capture and reuse it rather than asking for it again')&&source.includes('Do not ask the human to repeat information already present'),'One-time project-input invariant is absent.');
@@ -52,13 +50,15 @@ Object.assign(project.job,{
   SUPPLIED_MATERIALS_INVENTORY:'NONE',
   CURRENT_INPUT_VERSION:'INPUT-v001'
 });
-engine.ensureShape(project);
-engine.recalculate(project);
-
-const stage1=prompts.buildPromptRecord(1,project,'COMPLETE').prompt;
+engine.ensureShape(project);engine.recalculate(project);
+const intake=engine.buildIntakeCoverageManifest(project);
+const objectiveUnit=intake.units.find(unit=>unit.label==='EXACT_USER_OBJECTIVE_VERBATIM');
+assert(objectiveUnit,'Stage 01 intake manifest omitted the user objective.');
+const stage1=prompts.buildPromptRecord(1,project,{operation:'COMPLETE'}).prompt;
 assert(stage1.includes('EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW'),'Generated Stage 01 prompt lacks explicit execution directive.');
 assert(stage1.includes('APPLICATION INTAKE MANIFEST'),'Generated Stage 01 prompt lacks application intake manifest.');
-assert(stage1.includes('EXACT_USER_OBJECTIVE_VERBATIM'),'Generated Stage 01 prompt omits current user project authority.');
+assert(stage1.includes(project.job.EXACT_USER_OBJECTIVE_VERBATIM),'Generated Stage 01 prompt omits the actual current user objective.');
+assert(stage1.includes(objectiveUnit.unitId),'Generated Stage 01 prompt omits the application-owned objective intake identity.');
 assert(stage1.includes('BLOCKING_NOW')&&stage1.includes('ASK_NOW_NONBLOCKING')&&stage1.includes('LATER_RESOLVABLE'),'Generated Stage 01 prompt lacks required human-question classification.');
 assert(stage1.includes('capture and reuse it rather than asking for it again'),'Generated Stage 01 prompt does not enforce one-time project input.');
 assert(!/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL/.test(stage1),'Generated Stage 01 prompt is not subject neutral.');
@@ -66,20 +66,9 @@ assert(!/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ AR
 const handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});
 assert((handoff.send||[]).length===0,'Stage 04 creates a repeated file-send obligation from project-material metadata.');
 assert((handoff.conversationMaterials||[]).length===0,'Stage 04 creates a repeated conversation-material transfer.');
-
 const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('height:clamp(260px,45vh,520px)'),'Prompt box height changed.');
 assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt preview/collapse sizing changed.');
 assert(!html.includes('#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}'),'Obsolete 88px prompt-size override returned.');
-
-console.log(JSON.stringify({
-  subjectNeutralPrompts:true,
-  explicitStageExecution:true,
-  stage01CompleteHumanAuthorityIntake:true,
-  stage04ClosedObligationAccounting:true,
-  oneTimeProjectInput:true,
-  stage04NoRepeatHandoff:true,
-  visualPromptBaseline:true
-},null,2));
-
+console.log(JSON.stringify({subjectNeutralPrompts:true,explicitStageExecution:true,stage01CompleteHumanAuthorityIntake:true,stage04ClosedObligationAccounting:true,oneTimeProjectInput:true,stage04NoRepeatHandoff:true,visualPromptBaseline:true},null,2));
 await import('./verify-one-time-intent-intake.mjs');
