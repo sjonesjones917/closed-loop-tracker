@@ -9,4 +9,5 @@ const old3="data(3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING
 if(!s.includes(old3))throw new Error('Stage 3 full-cycle fixture anchor missing');
 s=s.replace(old3,"data(3,{stageData:{EXCEPTIONS_AND_EDGE_CONDITIONS:'NONE',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE',RESEARCH_GAPS_AND_BLOCKERS:'NONE'}});complete(3);");
 fs.writeFileSync(f,s);
+fs.unlinkSync(new URL(import.meta.url));
 console.log('Full-cycle fixtures aligned.');
