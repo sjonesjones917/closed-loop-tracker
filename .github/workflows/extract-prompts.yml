@@ -1,0 +1,21 @@
+name: Extract prompt stages
+on:
+  push:
+    branches: [inspect/prompt-stages-21-30-20260830]
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: inspect/prompt-stages-21-30-20260830
+      - run: |
+          python .github/repair/extract-prompts.py
+          rm .github/repair/extract-prompts.py .github/workflows/extract-prompts.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Extract Stage 21-30 prompt bodies' || exit 0
+          git push
