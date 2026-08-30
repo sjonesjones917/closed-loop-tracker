@@ -4,9 +4,10 @@ on:
     branches:
       - fix/exhaustive-intent-obligation-closure
 permissions:
-  contents: read
+  contents: write
 jobs:
   audit:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,3 +17,12 @@ jobs:
         with:
           node-version: '22'
       - run: node agent-audit.mjs
+      - run: node extract-donor.mjs
+      - name: Commit audit export without retriggering workflows
+        run: |
+          git config user.name "closed-loop-audit"
+          git config user.email "actions@users.noreply.github.com"
+          git add donor-snippets.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Export donor snippets for verified integration [skip ci]"
+          git push origin HEAD:fix/exhaustive-intent-obligation-closure
