@@ -17,7 +17,49 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "application deployment ready"
+      - uses: actions/checkout@v4
+      - name: Syntax and runtime graph
+        run: |
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+      - name: Schema migration and ownership
+        run: |
+          node verify-spec3-contract.mjs
+          node verify-v3-contract.mjs
+          node verify-definition-of-done.mjs
+      - name: Test IR security and deterministic runtime
+        run: |
+          node verify-hash.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+      - name: Ingestion workflow and prompt closure
+        run: |
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Local application interaction
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-human-stage-walkthrough.mjs
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
@@ -39,3 +81,13 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify exact deployed bytes
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node verify-live.mjs
+      - name: Verify deployed application interaction
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
