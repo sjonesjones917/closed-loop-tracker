@@ -1,0 +1,55 @@
+name: Apply controlling specification repair
+on:
+  push:
+    branches: [fix/controlling-spec-20260830-0716]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: apply-controlling-spec-repair
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec-20260830-0716
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply exact repair
+        run: python3 .repair-controlling-spec.py
+      - name: Syntax proof
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-controlling-spec.mjs
+      - name: Focused controlling-spec proof
+        run: node verify-controlling-spec.mjs
+      - name: Existing architecture/runtime proof
+        run: |
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+      - name: Remove one-time repair machinery
+        run: rm -f .repair-controlling-spec.py .github/workflows/_apply-controlling-spec.yml
+      - name: Commit verified repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --exit-code && exit 0
+          git commit -m "Implement controlling /3 reliability specification"
+          git push origin HEAD:fix/controlling-spec-20260830-0716
