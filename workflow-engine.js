@@ -100,8 +100,11 @@ function nextVersion(current,prefix){
   const number=match?Number(match[1])+1:1;
   return `${prefix}-v${String(number).padStart(3,'0')}`;
 }
+// CURRENT_INPUT_VERSION is versioned only by application-controlled human-input mutation paths.
+// Accepting the Stage 01 agent interpretation must not create a new User Job Input version,
+// otherwise the accepted intake manifest instantly becomes stale and the user is asked to repeat information.
 const VERSION_BY_STAGE=Object.freeze({
-  1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
+  2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
   4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });

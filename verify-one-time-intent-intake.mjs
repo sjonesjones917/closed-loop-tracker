@@ -60,6 +60,9 @@ assert(engine.evaluateIntakeAccounting(project,{capture:JSON.stringify(capture)}
 const incompleteCapture=structuredClone(capture);
 incompleteCapture.units.pop();
 assert(!engine.evaluateIntakeAccounting(project,{capture:JSON.stringify(incompleteCapture)}).complete,'Stage 01 accepted an intake capture that forgot supplied project information.');
+const inputVersionBeforeStage1Acceptance=project.job.CURRENT_INPUT_VERSION;
+assert(engine.registerStageVersion(project,1,'CHANGE-STAGE1-INTERPRETATION')===null,'Stage 01 agent acceptance created a second input-version artifact.');
+assert(project.job.CURRENT_INPUT_VERSION===inputVersionBeforeStage1Acceptance,'Stage 01 agent acceptance changed the User Job Input version and invalidated the one-time intake capture.');
 
 project.stages[1].agentData={
   EXACT_DELIVERABLE_REQUESTED:'A working application conforming to every captured project requirement.',
