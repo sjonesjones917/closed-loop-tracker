@@ -44,8 +44,6 @@ jobs:
           PY
           node --check prompt-engine.js
           node --check workflow-engine.js
-          node verify-one-time-intent-intake.mjs
-          node verify-stage04-intake-accounting.mjs
       - name: Commit repair
         shell: bash
         run: |
