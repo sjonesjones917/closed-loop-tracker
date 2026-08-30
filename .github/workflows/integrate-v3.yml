@@ -1,0 +1,68 @@
+name: Guarded v3 integration
+
+on:
+  push:
+    branches:
+      - integration/closed-loop-v3-exhaustive-intent
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/closed-loop-v3-exhaustive-intent
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Merge repair without discarding current-main intent capture
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-integration
+          git config user.email actions@users.noreply.github.com
+          git fetch origin fix/full-controlling-bundle-20260830
+          git merge --no-ff -X ours origin/fix/full-controlling-bundle-20260830 -m "Integrate controlling bundle v3 onto current main"
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          t=p.read_text()
+          t=t.replace('PERSISTED PROJECT INPUT\nEXACT_DELIVERABLE_REQUESTED:', 'ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT\nEXACT_DELIVERABLE_REQUESTED:')
+          p.write_text(t)
+          PY
+      - name: Verify current-main intent and v3 contracts together
+        run: |
+          set -o pipefail
+          {
+            node --check workbook.js
+            node --check workflow-schema.js
+            node --check test-runtime.js
+            node --check test-worker.js
+            node --check workflow-engine.js
+            node --check prompt-engine.js
+            node --check response-ingestion.js
+            node --check project-store.js
+            node verify-one-time-intent-intake.mjs
+            node verify-bundle-v3.mjs
+            node verify-test-runtime.mjs
+            node verify-prompt-semantics.mjs
+            node verify-ingestion.mjs
+            node verify-complete.mjs
+            node verify-definition-of-done.mjs
+          } 2>&1 | tee .github/integration-v3-failure.log
+      - name: Preserve verification diagnostic
+        if: failure()
+        run: |
+          git add .github/integration-v3-failure.log
+          git commit -m "Record v3 integration verification diagnostic" || true
+          git push origin HEAD:integration/closed-loop-v3-exhaustive-intent
+      - name: Commit integrated application
+        run: |
+          git add -A
+          git reset -- .github/workflows/integrate-v3.yml .github/integration-v3-failure.log .github/workflows/pages.yml || true
+          git commit -m "Integrate exhaustive intent capture with controlling v3 contracts" || true
+          git push origin HEAD:integration/closed-loop-v3-exhaustive-intent
