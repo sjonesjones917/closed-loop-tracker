@@ -36,6 +36,7 @@ jobs:
           node verify-spec-v3.mjs
           node verify-test-runtime.mjs
       - name: Upload patched source for independent audit
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: spec-v3-patched-source
@@ -45,6 +46,7 @@ jobs:
             *.html
             .github/workflows/pages.yml
       - name: Commit second-pass implementation
+        if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
