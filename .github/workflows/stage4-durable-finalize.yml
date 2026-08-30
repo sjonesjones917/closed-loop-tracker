@@ -6,6 +6,7 @@ permissions:
   contents: write
 jobs:
   finalize:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -148,7 +149,7 @@ jobs:
           print(token)
           PY
 
-          # The temporary finalizer is not part of the delivered workflow set.
+          # The temporary finalizer is not part of the delivered workflow set while proof runs.
           rm .github/workflows/stage4-durable-finalize.yml
 
       - name: Prove the repaired one-time intake and Stage 04 path
@@ -173,15 +174,16 @@ jobs:
           git diff --check
           test "$(grep -R --include='*.yml' --include='*.yaml' -l 'materialize-stage4-intent-reuse:' .github/workflows 2>/dev/null | wc -l)" -eq 0
 
-      - name: Commit only permanent implementation and regression files
+      - name: Commit only permanent runtime and regression files
         shell: bash
         run: |
           set -euo pipefail
-          test ! -e .github/workflows/stage4-durable-finalize.yml
+          # Restore workflow files so the Actions token pushes no workflow mutation.
+          git restore .github/workflows/pages.yml .github/workflows/stage4-durable-finalize.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git add -A
           git diff --cached --check
-          test "$(git diff --cached --name-only | grep -Ec '^\.github/workflows/stage4-durable-finalize\.yml$')" -eq 1
+          test -z "$(git diff --cached --name-only -- .github/workflows)"
           git commit -m 'Persist Stage 01 intent and enforce Stage 04 reuse'
           git push origin HEAD:fix/stage4-durable-accounting-final-20260830
