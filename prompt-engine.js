@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/42';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/43';
 if(!core||!schema||!hash||!workflow||!testRuntime)throw new Error('workbook.js, hash.js, workflow-schema.js, test-runtime.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=value=>{if(value===undefined||value===null||value==='')return 'UNKNOWN';if(Array.isArray(value)&&!value.length)return 'NONE';if(typeof value==='object')return JSON.stringify(value,null,2);return String(value);};
 const safe=value=>Array.isArray(value)?value:[];
@@ -16,7 +16,7 @@ const recordFields=record=>record?.fields&&typeof record.fields==='object'?recor
 const recordValue=(record,key)=>recordFields(record)?.[key]??record?.[key];
 const recordId=(record,collection)=>String(record?.id||record?.recordId||record?.[schema.RECORD_SCHEMAS?.[collection]?.idField]||record?.fields?.[schema.RECORD_SCHEMAS?.[collection]?.idField]||'UNKNOWN');
 const stableId=(prefix,payload)=>`${prefix}-${hash.sha256Value(payload).slice(0,20).toUpperCase()}`;
-function humanInputBlock(job){const names=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>definition?.producer==='HUMAN').map(([name])=>name);return names.length?names.map(name=>`${name}:\n${show(job?.[name])}`).join('\n\n'):'NONE';}
+function humanInputBlock(job){const names=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name);return names.length?names.map(name=>`${name}:\n${show(job?.[name])}`).join('\n\n'):'NONE';}
 function parseSuppliedMaterials(raw){const text=clean(raw);if(!text||/^(?:UNKNOWN|NONE|NOT APPLICABLE|NULL|\[\]|\{\}|NONE SUPPLIED|NO MATERIALS?(?: SUPPLIED)?)$/i.test(text))return [];const out=[],seen=new Set();const add=(label,type='SUPPLIED_PROJECT_INPUT')=>{const value=clean(label);if(!value)return;const key=value.toLowerCase();if(seen.has(key))return;seen.add(key);out.push({label:value,type:clean(type)||'SUPPLIED_PROJECT_INPUT'});};const walk=(value,depth=0)=>{if(depth>5||value===null||value===undefined)return;if(Array.isArray(value)){value.forEach(item=>walk(item,depth+1));return;}if(typeof value==='string'){add(value);return;}if(typeof value!=='object')return;const label=value.exactNameOrReference??value.filename??value.fileName??value.name??value.title??value.reference??value.path??value.url;const type=value.type??value.materialType??value.kind??value.role??'SUPPLIED_PROJECT_INPUT';if(label!==undefined&&clean(label)){add(label,type);return;}for(const key of ['files','materials','items','attachments','references','suppliedMaterials','inventory'])if(Object.prototype.hasOwnProperty.call(value,key))walk(value[key],depth+1);};try{walk(JSON.parse(text));}catch{for(const part of text.split(/\r?\n|;/).map(value=>value.replace(/^\s*(?:[-*•]|\d+[.)])\s*/,'').trim()).filter(Boolean))add(part);}return out;}
 function intakeCoverageManifest(state){return workflow.intakeCoverageManifest(state);}
 function parseCapturedInputSet(stageOne){return workflow.parseCapturedInputSet(stageOne);}
