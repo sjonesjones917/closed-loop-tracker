@@ -30,4 +30,4 @@ assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'
 assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
 assert(html.includes('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'),'Established 280px prompt preview and full expansion behavior changed.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,sharedRuntimeBuildIdentity:true,stage04CanonicalReuseWithoutVisualSuppression:true,promptVisualBaselinePreserved:true}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,sharedRuntimeBuildIdentity:true,stage04CanonicalReuseWithoutVisualSuppression:true,promptVisualBaselinePreserved:true,visualRegressionAuthority:'ESTABLISHED_BASELINE'}));
