@@ -1,0 +1,34 @@
+name: Repair full-cycle Stage 06 coverage fixture
+on:
+  push:
+    branches:
+      - finish/closed-loop-live-20260830
+    paths:
+      - .github/workflows/repair-full-cycle-stage6.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/closed-loop-live-20260830
+      - name: Preserve all Stage 04 obligations without fabricating mandatory scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:item.obligationId"
+          new="MANDATORY_OPTIONAL_STATUS:i===0?'MANDATORY':'OPTIONAL',USER_INPUT_RELATIONSHIP:item.obligationId"
+          if s.count(old)!=1:
+              raise SystemExit(f'expected one full-cycle Stage 04 mandatory marker, got {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/repair-full-cycle-stage6.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-full-cycle.mjs .github/workflows/repair-full-cycle-stage6.yml
+          git commit -m "Keep full-cycle nonprimary obligations nonmandatory"
+          git push origin HEAD:finish/closed-loop-live-20260830
