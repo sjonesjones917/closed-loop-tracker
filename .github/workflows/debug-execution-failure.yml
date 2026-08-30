@@ -1,0 +1,31 @@
+name: Trace execution failure state derivation
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+permissions:
+  contents: read
+jobs:
+  trace:
+    if: github.event.head_commit.message == 'Trace execution failure state derivation'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Trace one accepted EXECUTION_FAILED event
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const core=closedLoopCore,engine=closedLoopWorkflowEngine,prompts=closedLoopPromptEngine,ingestion=closedLoopResponseIngestion,schema=closedLoopWorkflowSchema;
+          let p=core.createBlankState('JOB-TRACE-EXECFAIL');p.job.EXACT_USER_OBJECTIVE_VERBATIM='Trace execution failure';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);
+          const pr={...prompts.buildPromptRecord(1,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
+          const fail={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'EXECUTION_FAILED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'failure-1',kind:'TOOL_FAILURE',description:'Required tool failed.',whyBlocking:'The operation could not be executed.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
+          let prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(fail),promptRecord:pr});console.log('prepared',prepared.validation.valid,prepared.proposal?.responseType,prepared.proposal?.status);
+          const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'TRACE'});p=committed.project;
+          console.log('executionFailures',JSON.stringify(p.projectData.executionFailures));console.log('stageStatus',p.stages[1].status);console.log('storedGate',JSON.stringify(p.stages[1].gate));console.log('freshGate',JSON.stringify(engine.gate(1,p)));
+          NODE
