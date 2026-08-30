@@ -34,6 +34,9 @@ legacy="if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND
 neutral="if(!/human-authority/i.test(r.prompt)||!r.prompt.includes('BLOCKING_NOW')||!r.prompt.includes('ASK_NOW_NONBLOCKING')||!r.prompt.includes('LATER_RESOLVABLE')||!/enumerated every current controlled human-input unit/i.test(r.prompt)||!/classify every supplied unit exactly once/i.test(r.prompt)||!/durable meaning-preserving handoff to every later stage/i.test(r.prompt)||!/original intent file must not be repeatedly requested/i.test(r.prompt))throw new Error('Stage 01 subject-neutral exhaustive intake behavior is missing.');"
 if legacy in text:text=text.replace(legacy,neutral,1)
 elif "Stage 01 specialist intake adaptation is missing." in text:raise SystemExit('legacy specialist assertion shape changed')
+# Stage 1 ownership is enforced by the generic canonical-ID prohibition and the closed writable contract,
+# not by a historical prose sentence naming JOB_ID specifically.
+text=text.replace("[1,'The application already owns JOB_ID']","[1,'Never assign canonical application IDs']")
 # Replace legacy mutations that targeted deleted domain headings / deleted environment heading with
 # mutations of current controlling prompt invariants. Every mutant must still prove the semantic checker fails.
 text=text.replace("  {...original,prompt:original.prompt.replace('must not be represented as completed','may be represented as completed')},","  {...original,prompt:original.prompt.replace('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','HUMAN COLLABORATION MODE REMOVED')},")
