@@ -24,6 +24,33 @@ old = "    if(!record.prompt.includes('do not require the human to know those fo
 new = "    if(!record.prompt.includes('If a material is named in SUPPLIED_MATERIALS_INVENTORY but its bytes are not available')||!record.prompt.includes('Do not ask the human to describe or re-enter its contents during Stage 01')||!record.prompt.includes('never infer substantive facts merely from the filename'))issues.push('STAGE01_ARTIFACT_BOUNDARY_MISSING');"
 if old not in text: raise SystemExit('Expected obsolete Stage 01 artifact-generation assertion not found.')
 text = text.replace(old,new,1)
+old_mutants = """const mutants=[
+  {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
+  {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
+  {...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},
+  {...original,prompt:original.prompt.replace('must not be represented as completed','may be represented as completed')},
+  {...original,promptEngineVersion:'closed-loop-prompt-engine/obsolete'},
+  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},
+  {...original,prompt:original.prompt.replace('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},
+  {...original,prompt:original.prompt.replace('PATENT / REGULATED FILING','GENERAL DOCUMENT')},
+  {...original,prompt:original.prompt.replace('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred','Assume external actions occurred when useful')}
+];
+"""
+new_mutants = """const stage1Mutation=prompts.buildPromptRecord(1,baseProject(),{operation:'COMPLETE'});
+const stage4Mutation=prompts.buildPromptRecord(4,baseProject(),{operation:'COMPLETE'});
+const mutants=[
+  {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
+  {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
+  {...original,prompt:original.prompt.replace('rejected data is not canonical','rejected data may be reused')},
+  {...original,promptEngineVersion:'closed-loop-prompt-engine/obsolete'},
+  {...stage1Mutation,prompt:stage1Mutation.prompt.replace('MANDATORY STAGE 01 HUMAN-INTAKE GATE','STAGE 01 OPTIONAL INTAKE')},
+  {...stage1Mutation,prompt:stage1Mutation.prompt.replace('The accepted capture is the durable meaning-preserving handoff to every later stage','The accepted capture may be discarded after this stage')},
+  {...stage4Mutation,prompt:stage4Mutation.prompt.replace('No obligation may disappear.','Obligations may be omitted when inconvenient.')},
+  {...original,prompt:original.prompt.replace('Never claim that a web search, repository edit, build, test, CAD operation, simulation, CNC post-processing step, physical measurement, fabrication, filing, submission, or other external action occurred unless it actually occurred','Assume external actions occurred when useful')}
+];
+"""
+if old_mutants not in text: raise SystemExit('Expected obsolete semantic mutant set not found.')
+text = text.replace(old_mutants,new_mutants,1)
 p.write_text(text)
 
 pages = Path('.github/workflows/pages.yml')
