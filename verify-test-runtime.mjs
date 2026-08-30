@@ -43,6 +43,7 @@ assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing by
 const stage4Prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'}).prompt;
 assert.ok(stage4Prompt.includes('APPLICATION-OWNED STAGE 04 OBLIGATION INPUT MANIFEST'));
 assert.ok(stage4Prompt.includes(obligation.OBLIGATION_ID));
-assert.ok(stage4Prompt.includes('Do not ask the human to attach, resend, retype, summarize, or reconstruct an earlier supplied intent file'));
+assert.ok(stage4Prompt.includes('Never ask the user to repeat or reattach project information already represented in current canonical context.'),'Stage 04 prompt does not prohibit repeated user transcription/reattachment.');
+for(const prohibited of ['REQUIRED INPUT FILES NOT READY','The operator must attach every file listed above','Add and verify the exact supplied project file before copying','Attach or provide them in the agent conversation'])assert.ok(!stage4Prompt.includes(prohibited),`Stage 04 reintroduced a repeated-input instruction: ${prohibited}`);
 console.log(JSON.stringify({genericTestIr:true,stage03ExternalSourceBoundary:true,stage04CanonicalObligationReuse:true},null,2));
 console.log('verify-test-runtime: PASS');
