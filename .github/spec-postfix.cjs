@@ -28,6 +28,31 @@ t=t.replace(/\s*else if\(!record\.prompt\.includes\('ARTIFACT GENERATION VS DOWN
 const obsoleteSpecialist=" if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');";
 must(t.includes(obsoleteSpecialist),'Obsolete Stage 01 specialist assertion not found.');
 t=t.replace(obsoleteSpecialist," if(!r.prompt.includes('PROJECT-SUBJECT-NEUTRAL INTAKE SEMANTICS'))throw new Error('Stage 01 project-subject-neutral intake algorithm is missing.');\n for(const prohibited of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(r.prompt.includes(prohibited))throw new Error('Stage 01 runtime prompt contains prohibited subject branch: '+prohibited);");
+const practicalStart=t.indexOf('// stage01-practical-intake-regression-v1');
+const practicalEnd=t.indexOf('// demonstrated-stage01-output-contract-regression-v2',practicalStart);
+must(practicalStart>=0&&practicalEnd>practicalStart,'Stage 01 practical fixture block not found.');
+const practical=`// stage01-practical-intake-regression-v2 — project-specific facts are fixture data, never runtime branches.
+{
+ const p=baseProject();
+ p.job.EXACT_USER_OBJECTIVE_VERBATIM='I need a patent application for my project';
+ p.job.SUPPLIED_MATERIALS_INVENTORY='MAINFRAME_INVENTION_DISCLOSURE.zip';
+ const r=prompts.buildPromptRecord(1,p);
+ const required=[
+  'PROJECT-SUBJECT-NEUTRAL INTAKE SEMANTICS',
+  'do not ask the human to re-enter facts that are already present in those materials',
+  'Do not block Stage 01 merely because information will be needed by a later',
+  'Stage 01 does not require every fact needed to execute later stages',
+  'Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome',
+  'humanInputRequestContract','temporaryKey','whyRequired','affectedStageFields','answerType','allowedValues','Do not invent requestKey, required, whyNeeded, expectedAnswer',
+  'I need a patent application for my project','MAINFRAME_INVENTION_DISCLOSURE.zip'
+ ];
+ for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 neutral intake/clarification contract missing: '+token);
+ for(const prohibited of ['PATENT / REGULATED FILING','intended jurisdiction(s); filing-route/application-type preference','supplied invention disclosure'])if(r.prompt.includes(prohibited))throw new Error('Acceptance fixture leaked into runtime prompt: '+prohibited);
+ if(r.prompt.includes('Treat any human-supplied files, links, references, records, or other materials as opaque authorized inputs'))throw new Error('Stage 01 still treats supplied human material as opaque instead of usable intake.');
+}
+
+`;
+t=t.slice(0,practicalStart)+practical+t.slice(practicalEnd);
 const mutantBlock=/const mutants=\[[\s\S]*?\n\];\nfor\(const \[index,mutant\] of mutants\.entries\(\)\)\{const issues=semanticIssues\(mutant\);if\(!issues\.length\)throw new Error\(`Semantic contradiction mutation \$\{index\+1\} escaped detection\.`\);\}/;
 must(mutantBlock.test(t),'Prompt semantic mutation block not found.');
 t=t.replace(mutantBlock,`const mutants=[
