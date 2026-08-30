@@ -2,7 +2,12 @@ name: advance-final-proof
 on:
   push:
     branches: ['fix/final-zero-loss-v3-20260830']
-    paths: ['.github/workflows/advance-final-proof.yml']
+    paths:
+      - '.github/workflows/advance-final-proof.yml'
+      - '*.js'
+      - '*.mjs'
+      - 'index.html'
+      - 'TEST_PROJECT.json'
 permissions:
   contents: write
 jobs:
