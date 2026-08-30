@@ -17,30 +17,26 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           schema = Path('workflow-schema.js')
           text = schema.read_text()
-          old = '"VERIFIER_CONTEXT_ID",\n      "INDEPENDENCE_STATUS",\n      "INPUTS",'
-          new = '"VERIFIER_CONTEXT_ID",\n      "INPUTS",'
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
+          text, n1 = re.subn(r'("VERIFIER_CONTEXT_ID",\s*)"INDEPENDENCE_STATUS",\s*("INPUTS",)', r'\1\2', text, count=1)
+          if n1 != 1 and '"VERIFIER_CONTEXT_ID",\n      "INPUTS",' not in text:
               raise SystemExit('verification agent ownership target not found')
-          old = '"VERIFICATION_ID",\n      "REQ_ID",\n      "RUN_ID",\n      "TEST_ID",\n      "DEFECT_ID"'
-          new = '"VERIFICATION_ID",\n      "REQ_ID",\n      "RUN_ID",\n      "TEST_ID",\n      "DEFECT_ID",\n      "INDEPENDENCE_STATUS"'
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif new not in text:
+          text, n2 = re.subn(r'("VERIFICATION_ID",\s*"REQ_ID",\s*"RUN_ID",\s*"TEST_ID",\s*"DEFECT_ID")', r'\1,\n      "INDEPENDENCE_STATUS"', text, count=1)
+          if n2 != 1 and '"DEFECT_ID",\n      "INDEPENDENCE_STATUS"' not in text:
               raise SystemExit('verification application ownership target not found')
           schema.write_text(text)
 
           engine = Path('workflow-engine.js')
           text = engine.read_text()
-          old = "case 9:\n      requireAccepted();requireCount('preflightRecords',1);\n      if(collection('preflightRecords').some(record=>['VIOLATED','UNDETERMINED','BLOCKED','REJECTED'].includes(upper(recordValue(record,'DETERMINATION')))))reasons.push('Instruction preflight contains an unresolved material finding.');\n      break;"
-          new = "case 9:{\n      requireAccepted();requireCount('preflightRecords',1);\n      const currentPrompt=safe(project?.projectData?.generatedPrompts).filter(p=>Number(p?.stage)===9&&!p?.invalidatedBy).at(-1),contextId=String(currentPrompt?.scope?.contextId||'').trim(),context=records(project,'freshContexts').find(record=>isActiveRecord(record)&&recordId(record,'freshContexts')===contextId),externalId=String(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim();\n      if(!contextId||!context||!externalId)reasons.push('Independent preflight requires one current application-bound reviewer context with a supplied external context identifier.');\n      if(collection('preflightRecords').some(record=>['VIOLATED','UNDETERMINED','BLOCKED','REJECTED'].includes(upper(recordValue(record,'DETERMINATION')))))reasons.push('Instruction preflight contains an unresolved material finding.');\n      break;}"
-          if old not in text:
-              raise SystemExit('Stage 09 gate target not found')
-          text = text.replace(old, new, 1)
+          check = "if(true){const currentPrompt=safe(project?.projectData?.generatedPrompts).filter(p=>Number(p?.stage)===9&&!p?.invalidatedBy).at(-1),contextId=String(currentPrompt?.scope?.contextId||'').trim(),context=records(project,'freshContexts').find(record=>isActiveRecord(record)&&recordId(record,'freshContexts')===contextId),externalId=String(recordValue(context,'EXTERNAL_CONTEXT_IDENTIFIER')||'').trim();if(!contextId||!context||!externalId)reasons.push('Independent preflight requires one current application-bound reviewer context with a supplied external context identifier.');}"
+          if check not in text:
+              pattern = r"(case 9:\s*requireAccepted\(\);requireCount\('preflightRecords',1\);)"
+              text, n3 = re.subn(pattern, r"\1" + check, text, count=1)
+              if n3 != 1:
+                  raise SystemExit('Stage 09 gate insertion target not found')
           engine.write_text(text)
           PY
           rm .github/workflows/apply-preflight-independence-ownership.yml
