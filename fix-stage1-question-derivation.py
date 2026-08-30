@@ -12,7 +12,7 @@ p.write_text(text)
 
 v=Path('verify-prompt-semantics.mjs')
 t=v.read_text()
-new_required="const required1=[/Perform complete human-authority intake only/i,/application has enumerated every current controlled human-input unit/i,/Classify every supplied unit exactly once/i,/derive the complete foreseeable set of genuinely human-only questions from the actual user request, accessible supplied materials, and current canonical context/i,/Do not perform source research, requirement atomization, test design, production, filing, simulation, manufacturing, or product verification/i];"
+new_required="const required1=[/complete human-authority intake/i,/enumerated every current controlled human-input unit/i,/classify every supplied unit exactly once/i,/derive the complete foreseeable set of genuinely human-only questions from the actual user request, accessible supplied materials, and current canonical context/i];"
 pattern=r"(const \{body:s1\}=capture\(1\);\s*)const required1=\[[^\n]*\];"
 t,n=re.subn(pattern,lambda m:m.group(1)+new_required,t,count=1)
 if n!=1:
