@@ -32,7 +32,6 @@ jobs:
           from pathlib import Path
           import hashlib,re,subprocess
 
-          # Restore the exact current main stylesheet. Functional HTML/script changes remain intact.
           p=Path('index.html'); current=p.read_text(); main_index=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
           current_style=re.search(r'<style>(.*?)</style>',current,re.S); main_style=re.search(r'<style>(.*?)</style>',main_index,re.S)
           if not current_style or not main_style:
@@ -47,7 +46,6 @@ jobs:
               if old_phrase in text:
                   test.write_text(text.replace(old_phrase,new_phrase))
 
-          # The controlling specification expressly prohibits project-subject branches in prompt-engine.js.
           p=Path('verify-prompt-semantics.mjs'); t=p.read_text()
           obsolete=[
               "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
@@ -57,7 +55,8 @@ jobs:
               "    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');\n",
               "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');\n",
               "    if(!record.prompt.includes('do not require the human to know those formats in advance')||!record.prompt.includes('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose')||!record.prompt.includes('Only propose an implementation-ready'))issues.push('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING');\n",
-              "    if(!record.prompt.includes('Do not perform source research')||!record.prompt.includes('requirement atomization')||!record.prompt.includes('test design'))issues.push('STAGE01_LATER_WORK_BOUNDARY_MISSING');\n"
+              "    if(!record.prompt.includes('Do not perform source research')||!record.prompt.includes('requirement atomization')||!record.prompt.includes('test design'))issues.push('STAGE01_LATER_WORK_BOUNDARY_MISSING');\n",
+              "  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');\n"
           ]
           for s in obsolete:
               t=t.replace(s,'')
