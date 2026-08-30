@@ -16,6 +16,19 @@ if needle not in t: raise SystemExit('Expected Stage 04 no-repeat procedure text
 t=t.replace(needle,replacement,1)
 p.write_text(t)
 
+# Keep external-agent behavior authority in prompt-engine. UI text tells the human operator what to do, not the agent how to reason or respond.
+p=Path('app-core.js')
+t=p.read_text()
+old='Stage 01 is an intake conversation. Save any facts you already know here, then send the generated instruction to ChatGPT. The agent should use supplied files and ask only the remaining human-only questions in normal chat. Stay in ChatGPT until it returns the final JSON. HUMAN_INPUT_REQUIRED in this app is only a fallback when a required answer remains unavailable or deferred, or interactive conversation was unavailable.'
+new='Stage 01 is an intake conversation. Save any facts you already know here, then send the generated instruction and only the files listed for that instruction. Continue the same external conversation until you receive the final JSON. HUMAN_INPUT_REQUIRED in this app is only a fallback when a required answer remains unavailable or deferred, or interactive conversation was unavailable.'
+if old not in t: raise SystemExit('Expected Stage 01 UI agent-instruction copy not found')
+t=t.replace(old,new,1)
+old="if(requests.length||n===1&&!current.stages[1].responseDraft)return `<div class=\"notice\"><strong>Continue talking to the agent.</strong><br>Do not paste the conversation into the application. When the agent has enough information, it should return one final strict JSON response.</div>`;return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>Paste only that final JSON below. If the response declares returned files, attach those exact files before parsing.</div>`;"
+new="if(requests.length||n===1&&!current.stages[1].responseDraft)return `<div class=\"notice\"><strong>Continue the external conversation.</strong><br>Do not paste the conversation into the application. Continue until you receive one final strict JSON response.</div>`;return `<div class=\"notice\"><strong>Obtain the final JSON response for this current instruction.</strong><br>Paste only that final JSON below. If the response declares returned files, attach those exact files before parsing.</div>`;"
+if old not in t: raise SystemExit('Expected interaction-mode agent-instruction copy not found')
+t=t.replace(old,new,1)
+p.write_text(t)
+
 # The all-stage audit must prove complete required context without demanding unrelated raw history in blind stages.
 p=Path('verify-all-stage-prompts.mjs')
 t=p.read_text()
@@ -40,6 +53,12 @@ anchor="const s4=prompts.buildPromptRecord(4,state,{operation:'COMPLETE'}).promp
 if insert.strip() not in t:
     if anchor not in t: raise SystemExit('Stage 04 audit anchor not found')
     t=t.replace(anchor,insert+"\n"+anchor,1)
+# Permanent regression: UI may instruct the operator, but must not author external-agent behavior outside prompt-engine.
+marker="const src=fs.readFileSync('prompt-engine.js','utf8');"
+agent_audit="const uiSrc=fs.readFileSync('app-core.js','utf8');assert(!/The agent should|agent should use|agent must /i.test(uiSrc),'External-agent behavioral instruction exists outside prompt-engine.js.');\n"
+if agent_audit.strip() not in t:
+    if marker not in t: raise SystemExit('Prompt source audit anchor not found')
+    t=t.replace(marker,agent_audit+marker,1)
 p.write_text(t)
 
 # Modernize the older user-prompt fixture so it obeys the current /3 Stage 01 accounting contract.
