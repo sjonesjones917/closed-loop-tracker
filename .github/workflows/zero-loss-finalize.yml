@@ -19,19 +19,36 @@ jobs:
       - name: Apply zero-loss patch
         run: python3 tools/zero_loss_finalize.py
       - name: Run focused and existing regressions
+        id: tests
+        shell: bash
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node verify-zero-loss-final.mjs
-          node verify-capture-once.mjs
-          node verify-followup-spec.mjs
-          node verify-test-runtime.mjs
-          node verify-ingestion.mjs
-          node verify-prompt-semantics.mjs
+          set +e
+          {
+            node --check workbook.js &&
+            node --check workflow-schema.js &&
+            node --check workflow-engine.js &&
+            node --check prompt-engine.js &&
+            node --check response-ingestion.js &&
+            node verify-zero-loss-final.mjs &&
+            node verify-capture-once.mjs &&
+            node verify-followup-spec.mjs &&
+            node verify-test-runtime.mjs &&
+            node verify-ingestion.mjs &&
+            node verify-prompt-semantics.mjs
+          } 2>&1 | tee zero-loss-test-output.txt
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zero-loss-test-output
+          path: zero-loss-test-output.txt
+      - name: Fail on regression failure
+        if: steps.tests.outputs.status != '0'
+        run: exit 1
       - name: Commit integrated implementation and remove temporary repair files
+        if: steps.tests.outputs.status == '0'
         run: |
           git config user.name "closed-loop-zero-loss"
           git config user.email "actions@users.noreply.github.com"
