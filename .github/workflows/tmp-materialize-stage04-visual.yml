@@ -58,7 +58,8 @@ jobs:
           const promptEngine=fs.readFileSync('prompt-engine.js','utf8');
           assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not be visually special-cased or hidden.');
           assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 must retain the standard authorized-file controls used by applicable stages.');
-          assert(html.includes('.expandable-prompt{height:280px;max-height:80vh}'),'The generated-instruction preview must retain the established 280px collapsed height.');
+          assert(html.includes('.prompt{height:clamp(260px,45vh,520px);max-height:80vh'),'The generated-instruction control must retain its established responsive height.');
+          assert(html.includes('.expandable-prompt{max-height:280px}'),'The generated-instruction preview must retain the established 280px collapsed limit.');
           assert(promptEngine.includes("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';"),'Saved pre-repair Stage 04 prompts must be invalidated.');
           assert((promptEngine.match(/handoff=stage===4\\?\\{\\.\\.\\.rawHandoff,send:\\[\\]\\}:rawHandoff/g)||[]).length===2,'Stage 04 file-send suppression must govern both prompt text and the persisted context manifest.');
           assert(promptEngine.includes('ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT'),'Stage 04 must receive accepted Stage 01 project meaning through the generated instruction.');
