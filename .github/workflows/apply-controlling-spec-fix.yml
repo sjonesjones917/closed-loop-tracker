@@ -1,4 +1,4 @@
-# temporary one-shot repair; removed by successful repair
+# temporary one-shot repair; removed after successful source commit
 name: Apply controlling spec fix
 
 on:
@@ -37,23 +37,15 @@ jobs:
               raise SystemExit('native capability anchor unavailable')
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Apply repair and preserve diagnostics on failure
+      - name: Apply repair
         shell: bash
         run: |
-          set +e
-          python3 tools/apply-controlling-spec-fix.py > repair-diagnostic.log 2>&1
-          rc=$?
-          cat repair-diagnostic.log
-          if [ "$rc" -ne 0 ]; then
-            git checkout HEAD -- tools/apply-controlling-spec-fix.py .github/workflows/apply-controlling-spec-fix.yml
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add repair-diagnostic.log
-            git commit -m "Record controlling-spec repair failure" || true
-            git push origin HEAD:${GITHUB_REF_NAME}
-            exit "$rc"
-          fi
-          rm -f repair-diagnostic.log
+          set -euo pipefail
+          python3 tools/apply-controlling-spec-fix.py
+          # The repair script removes its one-shot files by design. Restore them only
+          # for this branch commit so the Actions token does not need to update a
+          # workflow file. They are deleted separately after this source commit lands.
+          git checkout HEAD -- tools/apply-controlling-spec-fix.py .github/workflows/apply-controlling-spec-fix.yml
       - name: Complete transformed contract details
         shell: bash
         run: |
@@ -87,29 +79,12 @@ jobs:
       - name: Syntax and capture-once proof
         shell: bash
         run: |
-          set +e
-          : > verification-diagnostic.log
-          rc=0
+          set -euo pipefail
           for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs; do
-            echo "===== node --check $f =====" >> verification-diagnostic.log
-            node --check "$f" >> verification-diagnostic.log 2>&1 || rc=$?
+            node --check "$f"
           done
-          if [ "$rc" -eq 0 ]; then
-            echo "===== capture-once regression =====" >> verification-diagnostic.log
-            node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')" >> verification-diagnostic.log 2>&1 || rc=$?
-          fi
-          cat verification-diagnostic.log
-          if [ "$rc" -ne 0 ]; then
-            git checkout HEAD -- tools/apply-controlling-spec-fix.py .github/workflows/apply-controlling-spec-fix.yml
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add verification-diagnostic.log
-            git commit -m "Record controlling-spec verification failure" || true
-            git push origin HEAD:${GITHUB_REF_NAME}
-            exit "$rc"
-          fi
-          rm -f verification-diagnostic.log
-      - name: Commit repaired tree
+          node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')"
+      - name: Commit repaired source tree
         shell: bash
         run: |
           set -euo pipefail
