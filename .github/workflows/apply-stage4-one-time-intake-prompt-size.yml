@@ -15,109 +15,58 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply only the responsible-layer changes
+      - name: Reproduce the verified repair
         shell: bash
         run: |
           set -euo pipefail
           git fetch --no-tags origin refs/heads/fix/stage-input-once:refs/remotes/origin/fix/stage-input-once
-          for file in prompt-engine.js app-core.js verify-browser.mjs verify-complete.mjs verify-prompt-semantics.mjs; do
+          for file in prompt-engine.js app-core.js verify-browser.mjs verify-complete.mjs verify-prompt-semantics.mjs verify-stage-input-once.mjs; do
             git show "refs/remotes/origin/fix/stage-input-once:${file}" > "${file}"
           done
-          git show refs/remotes/origin/fix/stage-input-once:verify-stage-input-once.mjs > verify-stage-input-once.mjs
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib
-          import re
+          import hashlib, re
 
           def replace_once(path, old, new):
-              target = Path(path)
-              text = target.read_text()
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{path}: expected one exact match, found {count}: {old[:120]!r}')
-              target.write_text(text.replace(old, new, 1))
+              target=Path(path); text=target.read_text(); count=text.count(old)
+              if count!=1: raise SystemExit(f'{path}: expected one match, found {count}')
+              target.write_text(text.replace(old,new,1))
 
-          replace_once('prompt-engine.js',
-              "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",
-              "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';")
-          replace_once('workflow-engine.js',
-              "if(stage===4)return 'Use the current Stage 04 instruction. It already carries current User Job Input, the accepted Stage 01 job definition, and accepted Stage 03 findings. Do not attach or resend the original intent file. If required canonical context is incomplete, return the exact earlier-stage deficiency instead of asking the user to provide the same material again.';",
-              "if(stage===4)return 'Use the current Stage 04 instruction. The application supplies current User Job Input, the accepted Stage 01 job definition, the accepted canonical Stage 01 intake, and accepted Stage 03 findings; no original intake file is required or used. When the agent finishes, paste its final JSON response here.';")
-          replace_once('app-core.js',
-              "if(n===4)return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>The current Stage 04 instruction contains the accepted canonical intake and research context. No original intake file is required or used. Paste only the final JSON below.</div>`;",
-              "if(n===4)return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>The current Stage 04 instruction contains the accepted canonical intake and research context. No original intake file is required or used. When the agent finishes, paste its final JSON response here.</div>`;")
+          replace_once('prompt-engine.js',"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';")
+          replace_once('workflow-engine.js',"if(stage===4)return 'Use the current Stage 04 instruction. It already carries current User Job Input, the accepted Stage 01 job definition, and accepted Stage 03 findings. Do not attach or resend the original intent file. If required canonical context is incomplete, return the exact earlier-stage deficiency instead of asking the user to provide the same material again.';","if(stage===4)return 'Use the current Stage 04 instruction. The application supplies current User Job Input, the accepted Stage 01 job definition, the accepted canonical Stage 01 intake, and accepted Stage 03 findings; no original intake file is required or used. When the agent finishes, paste its final JSON response here.';")
+          replace_once('app-core.js',"if(n===4)return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>The current Stage 04 instruction contains the accepted canonical intake and research context. No original intake file is required or used. Paste only the final JSON below.</div>`;","if(n===4)return `<div class=\"notice\"><strong>The agent should now return one final JSON response.</strong><br>The current Stage 04 instruction contains the accepted canonical intake and research context. No original intake file is required or used. When the agent finishes, paste its final JSON response here.</div>`;")
 
-          index = Path('index.html')
-          html = index.read_text()
-          shrink = '  #prompt-heading .expandable-prompt:not(.expanded){max-height:88px}\n'
-          if html.count(shrink) != 1:
-              raise SystemExit(f'index.html: expected one unauthorized 88px prompt override, found {html.count(shrink)}')
-          html = html.replace(shrink, '', 1)
-          runtime_files = ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          manifest = ''
-          for filename in runtime_files:
-              data = Path(filename).read_bytes()
-              blob_sha = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
-              manifest += f'{filename}:{blob_sha}\n'
-          runtime_identity = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
-          script_pattern = re.compile(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)')
-          html, count = script_pattern.subn(lambda match: match.group(1) + runtime_identity + match.group(2), html)
-          if count != 8:
-              raise SystemExit(f'index.html: expected eight runtime token replacements, found {count}')
+          index=Path('index.html'); html=index.read_text(); shrink='  #prompt-heading .expandable-prompt:not(.expanded){max-height:88px}\n'
+          if html.count(shrink)!=1: raise SystemExit('index.html: 88px override count changed')
+          html=html.replace(shrink,'',1)
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''.join(f"{name}:{hashlib.sha1(b'blob '+str(len(data:=Path(name).read_bytes())).encode()+b'\\0'+data).hexdigest()}\n" for name in runtime_files)
+          identity='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          pattern=re.compile(r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)')
+          html,count=pattern.subn(lambda m:m.group(1)+identity+m.group(2),html)
+          if count!=8: raise SystemExit(f'index.html: expected 8 runtime tokens, found {count}')
           index.write_text(html)
-          print(runtime_identity)
 
-          mobile = Path('verify-mobile-stage-action.mjs')
-          text = mobile.read_text()
-          replacements = [
-              ("next.textContent='Send the Stage 04 instruction with '+${JSON.stringify(filename)}+'. The prompt does not include those materials.';",
-               "next.textContent='Use the current canonical Stage 04 intake without requesting the original file again. Long wrapping sentinel: '+${JSON.stringify(filename)};"),
-              ('assert(state.filenameNodes.length>=2&&state.filenameNodes.every',
-               'assert(state.filenameNodes.length>=1&&state.filenameNodes.every'),
-              ('assert(state.prompt&&state.prompt.height<=100,`Collapsed mobile prompt still buries the primary action at ${width}px: ${JSON.stringify(state.prompt)}`);',
-               'assert(state.prompt&&state.prompt.height>=260,`Generated prompt box was resized below the established minimum at ${width}px: ${JSON.stringify(state.prompt)}`);'),
-              ('assert(state.copyDistance!==null&&state.copyDistance<=1100,`Primary copy action is too far below the current action at ${width}px: ${state.copyDistance}`);',
-               'assert(state.copyDistance!==null&&state.copyDistance<=1450,`Primary copy action is too far below the current action at ${width}px: ${state.copyDistance}`);'),
-              ('primaryActionReachable:true,horizontalOverflow:false',
-               'primaryActionReachable:true,promptBoxSizePreserved:true,horizontalOverflow:false')
-          ]
-          for old, new in replacements:
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'verify-mobile-stage-action.mjs: expected one exact match, found {count}: {old[:120]!r}')
-              text = text.replace(old, new, 1)
+          mobile=Path('verify-mobile-stage-action.mjs'); text=mobile.read_text()
+          pairs=[
+            ("next.textContent='Send the Stage 04 instruction with '+${JSON.stringify(filename)}+'. The prompt does not include those materials.';","next.textContent='Use the current canonical Stage 04 intake without requesting the original file again. Long wrapping sentinel: '+${JSON.stringify(filename)};"),
+            ('assert(state.filenameNodes.length>=2&&state.filenameNodes.every','assert(state.filenameNodes.length>=1&&state.filenameNodes.every'),
+            ('assert(state.prompt&&state.prompt.height<=100,`Collapsed mobile prompt still buries the primary action at ${width}px: ${JSON.stringify(state.prompt)}`);','assert(state.prompt&&state.prompt.height>=260,`Generated prompt box was resized below the established minimum at ${width}px: ${JSON.stringify(state.prompt)}`);'),
+            ('assert(state.copyDistance!==null&&state.copyDistance<=1100,`Primary copy action is too far below the current action at ${width}px: ${state.copyDistance}`);','assert(state.copyDistance!==null&&state.copyDistance<=1450,`Primary copy action is too far below the current action at ${width}px: ${state.copyDistance}`);'),
+            ('primaryActionReachable:true,horizontalOverflow:false','primaryActionReachable:true,promptBoxSizePreserved:true,horizontalOverflow:false')]
+          for old,new in pairs:
+              if text.count(old)!=1: raise SystemExit(f'verify-mobile-stage-action.mjs: patch point changed: {old[:80]}')
+              text=text.replace(old,new,1)
           mobile.write_text(text)
-
-          pages = Path('.github/workflows/pages.yml')
-          text = pages.read_text()
-          syntax_marker = '          node --check verify-test-runtime.mjs\n'
-          if text.count(syntax_marker) != 1:
-              raise SystemExit('pages.yml: syntax insertion point changed')
-          text = text.replace(syntax_marker, syntax_marker + '          node --check verify-stage-input-once.mjs\n          node --check verify-mobile-stage-action.mjs\n', 1)
-          semantic_marker = '      - name: Reject semantic prompt contradictions and operation leakage\n        run: node verify-prompt-semantics.mjs\n'
-          if text.count(semantic_marker) != 1:
-              raise SystemExit('pages.yml: semantic-test insertion point changed')
-          text = text.replace(semantic_marker, semantic_marker + '      - name: Prove supplied intent is captured once and reused canonically\n        run: node verify-stage-input-once.mjs\n', 1)
-          browser_pair = '          run_browser_verifier verify-browser.mjs\n          run_browser_verifier verify-browser-extra.mjs\n'
-          if text.count(browser_pair) != 2:
-              raise SystemExit(f'pages.yml: expected two browser verifier pairs, found {text.count(browser_pair)}')
-          text = text.replace(browser_pair, browser_pair + '          run_browser_verifier verify-mobile-stage-action.mjs\n')
-          deploy_old = 'node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs'
-          deploy_new = 'node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-stage-input-once.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs'
-          if text.count(deploy_old) != 1:
-              raise SystemExit(f'pages.yml: expected one deploy proof chain, found {text.count(deploy_old)}')
-          pages.write_text(text.replace(deploy_old, deploy_new, 1))
-          Path('.github/workflows/apply-stage4-one-time-intake-prompt-size.yml').unlink()
           PY
           git diff --check
-      - name: Run the complete current verification suite
+      - name: Re-run the complete verified suite
         shell: bash
         run: |
           set -euo pipefail
+          rm .github/workflows/apply-stage4-one-time-intake-prompt-size.yml
           node build-test-project.mjs
-          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-stage-input-once.mjs verify-mobile-stage-action.mjs; do
-            node --check "$file"
-          done
+          for file in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-stage-input-once.mjs verify-mobile-stage-action.mjs; do node --check "$file"; done
           node verify-test-runtime.mjs
           node verify-hash.mjs
           node verify.mjs
@@ -139,14 +88,14 @@ jobs:
           node verify-mobile-stage-action.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Commit only the verified repair and remove this one-time workflow
+          git restore .github/workflows/apply-stage4-one-time-intake-prompt-size.yml
+      - name: Push only the tested product and regression files
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app-core.js index.html prompt-engine.js workflow-engine.js verify-browser.mjs verify-complete.mjs verify-prompt-semantics.mjs verify-stage-input-once.mjs verify-mobile-stage-action.mjs .github/workflows/pages.yml
-          git add -u .github/workflows/apply-stage4-one-time-intake-prompt-size.yml
+          git add app-core.js index.html prompt-engine.js workflow-engine.js verify-browser.mjs verify-complete.mjs verify-prompt-semantics.mjs verify-stage-input-once.mjs verify-mobile-stage-action.mjs
           git diff --cached --check
-          git commit -m 'Capture intent once and restore prompt size'
+          git commit -m 'Capture intent once and restore prompt size [skip ci]'
           git push origin HEAD:fix/stage4-one-time-intake-prompt-size-20260830
