@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Complete ingestion fixtures for zero-loss Stage 01 and 04'
+    if: github.event.head_commit.message == 'Fix Stage 04 complete-obligation ingestion fixture'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,17 +23,16 @@ jobs:
           t=p.read_text()
           old="p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'S'+String(i+1),text:'Captured '+u.label,statementClass:'FACT'}]}))});"
           new="p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});"
-          if old in t:t=t.replace(old,new,1)
+          if old not in t: raise SystemExit('Stage 01 upstream fixture anchor missing')
+          t=t.replace(old,new,1)
           needle="if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
           repl="if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}"
-          if repl not in t:
-              if needle not in t: raise SystemExit('validEnvelope stageData anchor not found')
-              t=t.replace(needle,repl,1)
-          anchor="records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
-          replacement="records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];\n    if(stage===4&&collection==='requirements'){const obligationManifest=promptRecord.contextManifest.obligationManifest;records.requirements=(obligationManifest.items||[]).map((item,index)=>{const requirementFields={};for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)requirementFields[name]=safeValue(name);}requirementFields.USER_INPUT_RELATIONSHIP=item.obligationId;return {tempKey:'requirement-'+String(index+1),fields:requirementFields,relationships:{},evidenceRefs:['evidence-1']};});}"
-          if replacement not in t:
-              if anchor not in t: raise SystemExit('record fixture anchor not found')
-              t=t.replace(anchor,replacement,1)
+          if needle not in t: raise SystemExit('Stage 01 valid-envelope anchor missing')
+          t=t.replace(needle,repl,1)
+          anchor="  }\n  return {\n    schema:schema.RESPONSE_SCHEMA,"
+          inject="  }\n  if(stage===4){const def=schema.RECORD_SCHEMAS.requirements,manifest=promptRecord.contextManifest.obligationManifest;records.requirements=(manifest.items||[]).map((item,index)=>{const fields={};for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}fields.USER_INPUT_RELATIONSHIP=item.obligationId;return {tempKey:'requirement-'+String(index+1),fields,relationships:{},evidenceRefs:['evidence-1']};});}\n  return {\n    schema:schema.RESPONSE_SCHEMA,"
+          if anchor not in t: raise SystemExit('Stage 04 valid-envelope insertion anchor missing')
+          t=t.replace(anchor,inject,1)
           p.write_text(t)
           PY
           node --check verify-ingestion.mjs
