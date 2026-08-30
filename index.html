@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'sha256-YgkAI8+6MdirEbh6wT7XpR2zE/QVMj5bMSNrm4/WvUc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'sha256-YgkAI8+6MdirEbh6wT7XpR2zE/QVMj5bMSNrm4/WvUc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; worker-src 'self'">
 <meta name="theme-color" content="#f4f5f3">
 <link rel="icon" href="data:,">
 <title>Mobile Closed-Loop Reliability Workbook</title>
@@ -67,7 +67,7 @@ button:not(:disabled):active{transform:translateY(1px)}
 .stage-card.current{box-shadow:inset 3px 0 0 var(--accent),var(--shadow)}.workflow-button:focus-visible .stage-card{border-color:var(--accent);box-shadow:var(--focus-ring)}
 .record-card>summary{position:relative;padding-right:30px}.record-card>summary:after,.project-field-group>summary:after,.workflow-disclosure>summary:after{content:'›';font-size:17px;line-height:1;color:var(--muted);transition:transform .15s ease}.record-card[open]>summary:after,.project-field-group[open]>summary:after,.workflow-disclosure[open]>summary:after{transform:rotate(90deg)}
 .record-card>summary,.project-field-group>summary,.workflow-disclosure>summary{align-items:center}.record-card>summary:hover,.project-field-group>summary:hover{background:#fafcfb}
-.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}
+.expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}.expandable-prompt.expanded{height:auto;max-height:none}
 .prompt{line-height:1.55;background:#f7f9f7;border-color:#cfd6d1;padding:11px;scrollbar-gutter:stable}.stage-output{min-height:clamp(240px,38vh,460px);line-height:1.55}.code-text{tab-size:2}
 #proposal-heading{border-color:#b9d2cb;box-shadow:0 0 0 1px rgba(22,79,69,.035),var(--shadow)}#validation-report{scroll-margin-top:150px}
 .empty-state{background:#fbfcfb}.notice{line-height:1.5}.button-row{align-items:center}.button-row .primary{box-shadow:0 1px 2px rgba(22,79,69,.12)}
@@ -86,24 +86,6 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,textar
 
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .app-help{max-width:1180px;margin:8px auto 0;padding:0 10px}.app-help details{border:1px solid var(--line);border-radius:10px;background:#fff}.app-help summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 10px;font-weight:800;font-size:12px}.app-help summary::-webkit-details-marker{display:none}.app-help summary b{display:grid;place-items:center;width:24px;height:24px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}.app-help .help-body{padding:0 10px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.app-help ol{margin:8px 0 0;padding-left:20px}.app-help li+li{margin-top:5px}.app-help strong{color:var(--ink)}
-
-
-/* Permanent regression repair: contain the complete mobile operator surface. */
-.app-header,.header-main,.header-actions,.project-action-menu,.project-select,.view-tabs,main,.screen,.screen>*{min-width:0;max-width:100%}
-.stage-hero>.stage-action-strip{display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:start;gap:6px;width:100%;min-width:0;max-width:100%}
-.stage-hero>.stage-action-strip>span{display:block;width:100%;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
-.stage-hero>.stage-action-strip>span:first-child::before{content:'Current state: ';font-weight:850;color:var(--ink)}
-.stage-hero>.stage-action-strip>span:last-child::before{content:'Next: ';font-weight:850;color:var(--ink)}
-.notice,.section-intro,.record-value,.prompt-meta,.field .help{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
-input[type="file"],#stage-files,#stage-directory{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
-@media(max-width:620px){
-  .stage-hero>.stage-action-strip{grid-template-columns:minmax(0,1fr)}
-  .stage-hero>.stage-action-strip>span:first-child{white-space:normal}
-  .header-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;overflow:hidden}
-  .header-actions>button,.header-actions>.project-action-menu{width:100%;min-width:0;max-width:100%}
-  .header-actions button,.project-action-menu>summary,.file-button,.button-row button{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
-  .project-action-menu>summary{width:100%;justify-content:center;text-align:center}
-}
 </style>
 </head>
 <body>
@@ -116,13 +98,14 @@ input[type="file"],#stage-files,#stage-directory{display:block;width:100%;min-wi
 <main><section class="screen" id="screen"><div class="panel"><h2 class="section-title">Loading the workflow…</h2></div></section></main>
 </div>
 <script>(()=>{const sync=()=>{const select=document.getElementById('stage-picker');if(!select)return;let shell=select.closest('.stage-picker-shell');if(!shell){shell=document.createElement('div');shell.className='stage-picker-shell';select.before(shell);shell.append(select);const display=document.createElement('span');display.className='stage-picker-display';display.setAttribute('aria-hidden','true');shell.append(display);}const display=shell.querySelector('.stage-picker-display');if(display)display.textContent=select.selectedOptions[0]?.textContent||'';};document.addEventListener('closed-loop-rendered',sync);document.addEventListener('change',event=>{if(event.target?.id==='stage-picker')sync();});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});else sync();})();</script>
-<script defer src="workbook.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="hash.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="workflow-schema.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="workflow-engine.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="prompt-engine.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="response-ingestion.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="project-store.js?v=runtime-09e60bd87cea10f0"></script>
-<script defer src="app-core.js?v=runtime-09e60bd87cea10f0"></script>
+<script defer src="workbook.js?v=runtime-spec3"></script>
+<script defer src="hash.js?v=runtime-spec3"></script>
+<script defer src="workflow-schema.js?v=runtime-spec3"></script>
+<script defer src="test-runtime.js?v=runtime-spec3"></script>
+<script defer src="workflow-engine.js?v=runtime-spec3"></script>
+<script defer src="prompt-engine.js?v=runtime-spec3"></script>
+<script defer src="response-ingestion.js?v=runtime-spec3"></script>
+<script defer src="project-store.js?v=runtime-spec3"></script>
+<script defer src="app-core.js?v=runtime-spec3"></script>
 </body>
 </html>
