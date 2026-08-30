@@ -146,6 +146,9 @@ The following values are preserved human input for JOB_ID ${j.JOB_ID||'UNKNOWN'}
 
 ${humanInputBlock(j)}
 
+PERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN
+${persistedHumanAnswersBlock(state)}
+
 CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):
 ${show(j.EXACT_DELIVERABLE_REQUESTED)}
 
