@@ -1,0 +1,44 @@
+name: Bootstrap closed accounting
+on:
+  push:
+    branches: [fix/controlling-spec-exact-20260830b]
+permissions:
+  contents: write
+jobs:
+  bootstrap:
+    if: github.event.head_commit.message == 'Bootstrap closed Stage 01 and Stage 04 accounting'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec-exact-20260830b
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply closed accounting first
+        run: |
+          git show HEAD^:index.html > /tmp/index-before.html
+          git fetch origin refs/pull/453/head:refs/heads/accounting-reference
+          git show accounting-reference:finalize-v3-accounting.mjs >/tmp/finalize-v3-accounting.mjs
+          node /tmp/finalize-v3-accounting.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          before=Path('/tmp/index-before.html').read_text(); after=Path('index.html').read_text()
+          a=re.search(r'<style>(.*?)</style>',before,re.S).group(1); b=re.search(r'<style>(.*?)</style>',after,re.S).group(1)
+          if a!=b: raise SystemExit('Closed-accounting bootstrap changed visual CSS.')
+          PY
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node verify-v3-accounting.mjs
+          rm .github/workflows/accounting-bootstrap.yml
+      - name: Commit bootstrap
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Install closed Stage 01 and Stage 04 accounting'
+          git push origin HEAD:fix/controlling-spec-exact-20260830b
