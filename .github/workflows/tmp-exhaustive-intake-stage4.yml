@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply integrated repair and all closure-aware proof fixtures
+      - name: Apply integrated repair and prompt-bound closure fixtures
         run: |
           python3 .repair-orchestrate.py
           python3 .repair-fixture.py
