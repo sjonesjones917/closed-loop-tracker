@@ -14,17 +14,55 @@ jobs:
           ref: fix/exhaustive-intake-stage3-stage4-20260830
           fetch-depth: 0
       - name: Apply implementation repairs
-        run: python3 fix-all-stage-prompts.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 fix-all-stage-prompts.py
+          python3 <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          s=p.read_text()
+          established='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          current='.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'
+          if established not in s:
+              if current not in s:
+                  raise SystemExit('Established prompt preview anchor not found; refusing unrelated visual change.')
+              s=s.replace(current,established,1)
+              p.write_text(s)
+
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          anchor="  const current=currentScope(project),runExecution=stage===11||(stage===17&&op==='EXECUTE_RUN')||(stage===19&&op==='EXECUTE_RUN');\n"
+          addition="  if(stage===1){for(const ref of safe(project?.stages?.[1]?.authorizedFiles)){const id=String(ref?.artifactId||ref?.id||'');if(id)addArtifact(artifactsById.get(id));}}\n"
+          if addition not in s:
+              if anchor not in s:
+                  raise SystemExit('Stage 01 handoff anchor not found.')
+              s=s.replace(anchor,anchor+addition,1)
+          old="  const externalWork=[11,12,17,19,21,23,24,25].includes(stage);if(externalWork)expectBack.set('STRUCTURED_RESPONSE|final strict JSON response',{kind:'STRUCTURED_RESPONSE',filenameOrPattern:'final strict JSON response',required:true});"
+          new="  const externalWork=[1,11,12,17,19,21,23,24,25].includes(stage);if(externalWork)expectBack.set('STRUCTURED_RESPONSE|final strict JSON response',{kind:'STRUCTURED_RESPONSE',filenameOrPattern:'final strict JSON response',required:true});"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('External-work handoff anchor not found.')
+          old_action="  if(stage===1)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Continue Stage 01 intake with the agent',explanation:'Talk with the agent until every human-only question that must be asked now is answered or explicitly deferred. Paste final JSON only after the conversation is complete.',primaryButton:'Continue conversation'});"
+          new_action="  if(stage===1){const handoff=executionHandoff(project,{stage:1,operation:'COMPLETE'});return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Continue Stage 01 intake with the agent',explanation:'Send the listed supplied project files once to the Stage 01 agent, then continue the conversation until every human-only question that must be asked now is answered or explicitly deferred. The accepted Stage 01 semantic capture becomes durable project memory; later stages must not ask you to resupply these files merely to recover already-captured project information. Paste final JSON only after the conversation is complete.',primaryButton:'Continue conversation',filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack});}"
+          if old_action in s:
+              s=s.replace(old_action,new_action,1)
+          elif new_action not in s:
+              raise SystemExit('Stage 01 next-action anchor not found.')
+          p.write_text(s)
+          PY
       - name: Commit implementation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add prompt-engine.js workbook.js
+          git add prompt-engine.js workbook.js workflow-engine.js index.html
           if git diff --cached --quiet; then
             echo 'No implementation changes to commit.'
             exit 0
           fi
-          git commit -m 'Complete all 30 stage prompt behavior and durable project memory'
+          git commit -m 'Complete one-time intake handoff and restore established prompt preview'
           git push origin HEAD:fix/exhaustive-intake-stage3-stage4-20260830
