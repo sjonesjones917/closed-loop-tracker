@@ -1,0 +1,137 @@
+name: Apply one-time intent-file non-reuse correction
+
+on:
+  push:
+    branches: [fix/intent-file-one-time-intake-8]
+    paths: [.github/workflows/intent-nonreuse-once.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/intent-file-one-time-intake-8
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply source correction
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const read=path=>fs.readFileSync(path,'utf8');
+          const write=(path,text)=>fs.writeFileSync(path,text);
+          function exact(text,from,to,label){if(!text.includes(from))throw new Error(`Missing exact source for ${label}`);return text.replace(from,to);}
+          function regex(text,pattern,to,label){const next=text.replace(pattern,to);if(next===text)throw new Error(`Missing regex source for ${label}`);return next;}
+
+          let prompt=read('prompt-engine.js');
+          prompt=exact(prompt,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",'prompt version');
+
+          const humanBlock=[
+            'function humanInputBlock(job,stage=1){',
+            ' const definitions=schema.JOB_FIELDS||{};',
+            " const names=Object.entries(definitions).filter(([name,definition])=>definition?.producer==='HUMAN'&&(Number(stage)===1||name!=='SUPPLIED_MATERIALS_INVENTORY')).map(([name])=>name);",
+            " return names.length?names.map(name=>`${name}:\\n${show(job?.[name])}`).join('\\n\\n'):'NONE';",
+            '}'
+          ].join('\n');
+          prompt=regex(prompt,/function humanInputBlock\(job\)\{[\s\S]*?\n\}/,humanBlock,'post-intake human-input projection');
+          prompt=exact(prompt,'${humanInputBlock(j)}','${humanInputBlock(j,stage)}','stage-aware human input block');
+
+          const stage1=`Initialize only this current job from this current job's exact human-authority input. Stage 01 is complete, one-time intake. Preserve the verbatim objective, intended deliverable, requested formats, temporal and geographic scope, supplied authority, tools, prohibitions, explicit requirements, assumptions, unresolved human-only issues, acceptance conditions, and every material reference. Inspect every accessible supplied file deeply enough to extract every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome. INPUT_SET_CONTENTS must be a complete lossless semantic register of those units, not a filename list, summary, selected excerpt, or minimum-reading packet. Preserve source location for each extracted unit. Ask only genuinely human-only questions; do not ask the human to repeat information present in the request or accessible supplied material. Classify unresolved issues as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE and follow the existing conversation-first rules. If material bytes are unavailable, preserve the named material without inferring contents; block only when the objective or deliverable cannot be identified without those bytes. After Stage 01 acceptance, the original supplied intake file is closed input: no later stage may request, attach, resend, reselect, reopen, or reuse it. Later stages must use the accepted canonical Stage 01 intake. Do not perform source research, requirement atomization, test design, production, or verification in Stage 01.`;
+          const stage3=`Research only the current accepted Stage 02 independent external source set. For every current source, inspect every applicable portion and extract every material fact, mandatory statement, recommendation, optional practice, example, explanation, prohibition, exception, dependency, applicability fact, restriction, invalidating material, conflict, supersession fact, candidate obligation, and evidentiary constraint. Preserve exact source identity and location for every extracted item. Perform repeated conflict, exception, and saturation passes until the latest complete pass produces no new material category. A source is not covered merely because one research record exists. Stage 03 must not request, receive, reopen, or reuse the original human intent file; it operates on accepted Stage 02 external sources and canonical Stage 01 intake only.`;
+          const stage4=`Compile the complete requirement specification from the union of current human Job Input, the accepted canonical Stage 01 intake in INPUT_SET_CONTENTS, accepted Stage 01 deliverable/assumptions/unknowns, and accepted Stage 03 source research and candidate obligations. The original human intent file is not an input to Stage 04 and must never be requested, attached, resent, reselected, reopened, or reused. Do not infer from a filename and do not ask the human to provide the file again. If canonical Stage 01 intake is materially incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT and identify Stage 01 for correction. Before returning final JSON, account for every obligation in the available canonical union: map it to one or more atomic independently testable requirements, retain it as nonnormative context, mark it inapplicable with a reason, or block it with a reason. No obligation may disappear. Preserve provenance, source location, authority, applicability, dependencies, prohibitions, defined terms, observable satisfaction, verification method, expected evidence, failure condition, severity, and notes. The application assigns canonical requirement identities and versions.`;
+          prompt=regex(prompt,/1:'Initialize only this current job[\s\S]*?',\s*2:/,`1:${JSON.stringify(stage1)},\n2:`,'Stage 01 complete intake procedure');
+          prompt=regex(prompt,/3:'Research only the current accepted Stage 02[\s\S]*?',\s*4:/,`3:${JSON.stringify(stage3)},\n4:`,'Stage 03 complete research procedure');
+          prompt=regex(prompt,/4:'Compile atomic requirement proposals[\s\S]*?',\s*5:/,`4:${JSON.stringify(stage4)},\n5:`,'Stage 04 canonical-only procedure');
+
+          const normalizedAnchor=[
+            'CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):',
+            '${show(j.EXACT_DELIVERABLE_REQUESTED)}',
+            '${stage===1?`'
+          ].join('\n');
+          const normalizedReplacement=[
+            'CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):',
+            '${show(j.EXACT_DELIVERABLE_REQUESTED)}',
+            '${stage>1?`CANONICAL STAGE 01 HUMAN-AUTHORITY INTAKE — ORIGINAL INTAKE FILES ARE NOT INPUTS TO THIS STAGE',
+            'EXACT_DELIVERABLE_REQUESTED:',
+            '${show(j.EXACT_DELIVERABLE_REQUESTED)}',
+            'INPUT_SET_CONTENTS:',
+            '${show(j.INPUT_SET_CONTENTS)}',
+            'ASSUMPTIONS:',
+            '${show(j.ASSUMPTIONS)}',
+            'UNKNOWN_INFORMATION:',
+            '${show(j.UNKNOWN_INFORMATION)}',
+            'Use these accepted canonical values. Do not request, attach, resend, reselect, reopen, or reuse the original user-supplied intake file.`:\'\'}',
+            '${stage===1?`'
+          ].join('\n');
+          prompt=exact(prompt,normalizedAnchor,normalizedReplacement,'canonical Stage 01 context for later stages');
+
+          prompt=exact(prompt,'INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.','INPUT_SET_CONTENTS must contain a complete, lossless, numbered semantic register of every material human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue extracted from the current request and every accessible supplied file. Preserve a source location for every unit. Do not collapse the intake into filenames, a summary, selected excerpts, or a partial inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed human-authority facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.','Stage 01 output completeness');
+
+          const handoff='${(()=>{const plan=verificationBatchPlan(stage,state,operation,scope),ids=plan?.triples?.map(x=>x.testId),runIds=plan?.triples?.map(x=>x.runId),handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds}),send=stage===4?[]:(handoff.send||[]),withhold=handoff.withhold||[],expectBack=handoff.expectBack||[];if(!send.length&&!withhold.length&&!expectBack.length)return \'\';const lines=[\'EXECUTION / ARTIFACT HANDOFF — APPLICATION DERIVED\'];if(send.length){lines.push(\'FILES YOU MUST RECEIVE\');for(const x of send)lines.push(\'- \'+x.artifactId+\' — \'+x.filename+\' — SHA-256 \'+x.sha256);}if(withhold.length){lines.push(\'FILES / CONTEXT YOU MUST NOT RECEIVE\');for(const x of withhold)lines.push(\'- \'+x.artifactIdOrCategory+\' — \'+x.reason);}if(expectBack.length){lines.push(\'FILES / EVIDENCE YOU MUST RETURN\');for(const x of expectBack)lines.push(\'- \'+(x.filenameOrPattern||x.kind)+(x.required?\' — REQUIRED\':\'\'));}if(send.length)lines.push(\'Browser-local custody does not mean these bytes were transferred automatically.\\nThe executing environment must actually receive every required file.\');return lines.join(\'\\n\')+\'\\n\\n\';})()}STAGE-SPECIFIC TASK';
+          prompt=regex(prompt,/\$\{\(\(\)=>\{const plan=verificationBatchPlan\(stage,state,operation,scope\)[\s\S]*?\}\)\(\)\}STAGE-SPECIFIC TASK/,handoff,'remove Stage 04 original-material handoff');
+          prompt=regex(prompt,/promptHandoff=\{send:handoff\.send,withhold:handoff\.withhold,expectBack:handoff\.expectBack,conversationMaterials:handoff\.conversationMaterials\}/,"promptHandoff={send:stage===4?[]:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}",'remove conversationMaterials from prompt identity');
+
+          prompt=exact(prompt,'- Use only DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as responseType.','- Use only DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as responseType.\n${stage>1?\'- Original user-supplied intake files are closed after Stage 01. Never request, attach, resend, reselect, reopen, or reuse them. Use the accepted canonical Stage 01 intake. If it is inadequate, return BLOCKED with INADEQUATE_PRIOR_OUTPUT and identify Stage 01 for correction.\\n\':\'\'}','post-intake non-reuse response rule');
+          prompt=exact(prompt,'prior accepted output, evidence, supplied artifacts, and actually available tools','prior accepted output, evidence, canonical inputs selected for this stage, and actually available tools','no generic supplied-file dependency');
+
+          for(const forbidden of [
+            'MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION',
+            'These materials are not embedded in the prompt.',
+            'Attach or provide them in the agent conversation where this Stage 04 instruction is run.',
+            'supplied project materials sent with this Stage 04 instruction',
+            'ask the human conversationally to attach or provide the original'
+          ])if(prompt.includes(forbidden))throw new Error(`Forbidden Stage 04 reuse instruction remains: ${forbidden}`);
+          write('prompt-engine.js',prompt);
+
+          let engine=read('workflow-engine.js');
+          engine=regex(engine,/(function operationalNextAction\(project,currentStage\)\{[\s\S]*?same stage\.';)(const plan=testExecutionPlan\(project\))/,"$1if(stage===4)return 'Use the complete canonical Stage 01 intake and accepted Stage 03 research. Do not attach, resend, reselect, reopen, or reuse the original intent file. Return only the final Stage 04 JSON when requirement compilation is complete.';$2",'Stage 04 operator action');
+          engine=exact(engine,"version:'closed-loop-workflow-engine/1'","version:'closed-loop-workflow-engine/2'",'workflow engine version');
+          write('workflow-engine.js',engine);
+
+          let app=read('app-core.js');
+          app=exact(app,'  const later={',"  if(n===4)return 'Stage 04 uses the complete canonical Stage 01 intake and accepted Stage 03 research. Do not attach, resend, reselect, reopen, or reuse the original intent file.';\n  const later={",'Stage 04 help text');
+          app=exact(app,"  row.innerHTML=text?`<strong>Include required artifact(s) when needed.</strong> ${esc(text)}`:'';","  row.innerHTML=text?`${Number(current?.activeStage||1)===4?'<strong>No original-file handoff.</strong> ':'<strong>Include required artifact(s) when needed.</strong> '}${esc(text)}`:'';",'Stage 04 help heading');
+          write('app-core.js',app);
+
+          let html=read('index.html');
+          const beforeTokens=[...html.matchAll(/\?v=([^\"']+)/g)].map(m=>m[1]);
+          if(!beforeTokens.length)throw new Error('No runtime build token found.');
+          html=html.replace(/\?v=[^\"']+/g,'?v=runtime-intake-nonreuse-20260830-1');
+          write('index.html',html);
+
+          const test=`import fs from 'node:fs';\nimport vm from 'node:vm';\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;\nconst assert=(value,message)=>{if(!value)throw new Error(message);};\nconst p=core.createBlankState('JOB-INTENT-NONREUSE');\nObject.assign(p.job,{JOB_ID:'JOB-INTENT-NONREUSE',JOB_TITLE:'Intent non-reuse fixture',EXACT_USER_OBJECTIVE_VERBATIM:'Create the requested deliverable.',SUPPLIED_MATERIALS_INVENTORY:'[{"type":"FILE","filename":"INTENT_SENTINEL_DO_NOT_REUSE.pdf"}]',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'NOT APPLICABLE',EXACT_DELIVERABLE_REQUESTED:'Complete requested deliverable',INPUT_SET_CONTENTS:'UNIT-001: CANONICAL_INTAKE_FACT. UNIT-002: CANONICAL_INTAKE_REQUIREMENT.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'});\nengine.ensureShape(p);\np.stages[1].status='COMPLETE';p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:p.job.EXACT_DELIVERABLE_REQUESTED,INPUT_SET_CONTENTS:p.job.INPUT_SET_CONTENTS,ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'};p.stages[1].acceptedData={...p.stages[1].agentData};\np.stages[2].status='COMPLETE';p.stages[3].status='COMPLETE';p.stages[3].agentData={RESEARCH_VERSION:'RESEARCH-v001',STAGE_DECISION:'READY TO PROCEED'};p.stages[3].acceptedData={...p.stages[3].agentData};\nconst record=prompts.buildPromptRecord(4,p);\nconst text=record.prompt;\nassert(text.includes('CANONICAL STAGE 01 HUMAN-AUTHORITY INTAKE'),'Stage 04 lacks canonical Stage 01 intake.');\nassert(text.includes('CANONICAL_INTAKE_REQUIREMENT'),'Stage 04 omitted captured Stage 01 content.');\nassert(!text.includes('INTENT_SENTINEL_DO_NOT_REUSE.pdf'),'Stage 04 leaked the original intent-file inventory.');\nfor(const forbidden of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','These materials are not embedded in the prompt.','Attach or provide them','attach or provide the original','supplied project materials sent with this Stage 04 instruction'])assert(!text.includes(forbidden),\`Stage 04 still requests original-file reuse: \${forbidden}\`);\nassert(text.includes('The original human intent file is not an input to Stage 04'),'Stage 04 non-reuse rule is missing.');\nconst action=engine.operationalNextAction(p,4);\nassert(!action.includes('INTENT_SENTINEL_DO_NOT_REUSE.pdf'),'Stage 04 action names the original file.');\nassert(/Do not attach, resend, reselect, reopen, or reuse/i.test(action),'Stage 04 action does not prohibit original-file reuse.');\nconst app=fs.readFileSync('app-core.js','utf8');\nassert(app.includes('No original-file handoff.'),'Stage 04 UI lacks no-handoff notice.');\nassert(app.includes('Do not attach, resend, reselect, reopen, or reuse the original intent file.'),'Stage 04 UI lacks non-reuse instruction.');\nconst source=fs.readFileSync('prompt-engine.js','utf8');\nassert(!source.includes('MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION'),'Removed Stage 04 handoff text remains in source.');\nconsole.log(JSON.stringify({stage1CompleteIntake:true,stage3CompleteResearch:true,stage4CanonicalOnly:true,originalIntentFileReused:false,originalIntentFileRequestedAfterIntake:false},null,2));\n`;
+          write('verify-intent-file-nonreuse.mjs',test);
+
+          let workflow=read('.github/workflows/pages.yml');
+          const anchor='      - name: Enforce one application shell and responsible layers';
+          if(!workflow.includes('Verify one-time intent intake and Stage 04 non-reuse'))workflow=exact(workflow,anchor,"      - name: Verify one-time intent intake and Stage 04 non-reuse\n        run: node verify-intent-file-nonreuse.mjs\n"+anchor,'CI regression step');
+          write('.github/workflows/pages.yml',workflow);
+          NODE
+      - name: Run focused and existing verification
+        run: |
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify-intent-file-nonreuse.mjs
+          node verify-intent-file-nonreuse.mjs
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+      - name: Commit tested correction
+        shell: bash
+        run: |
+          rm .github/workflows/intent-nonreuse-once.yml
+          git config user.name 'closed-loop-correction'
+          git config user.email 'actions@users.noreply.github.com'
+          git add prompt-engine.js workflow-engine.js app-core.js index.html verify-intent-file-nonreuse.mjs .github/workflows/pages.yml .github/workflows/intent-nonreuse-once.yml
+          git commit -m 'Fix one-time intent intake and prohibit Stage 04 file reuse'
+          git push origin HEAD:fix/intent-file-one-time-intake-8
