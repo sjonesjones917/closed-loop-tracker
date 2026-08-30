@@ -29,15 +29,11 @@ import fs from 'node:fs';
 }
 
 {
-  const path='verify-intake-obligation-accounting.mjs';
+  const path='verify-v3-contract.mjs';
   let text=fs.readFileSync(path,'utf8');
-  const marker="assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema is not /3.');";
-  const assertion="assert(schema.JOB_FIELDS.INPUT_SET_CONTENTS.valueType==='STRING','INPUT_SET_CONTENTS must remain the Stage 01 agent-owned string capture contract.');";
+  const marker="assert.match(schema,/closed-loop-verification-package\\/1/,'verification-package schema /1 is required');";
+  const assertion="assert.match(schema,/if\\(AGENT_JOB_FIELDS\\.includes\\(name\\)\\)return field\\(name,PRODUCER\\.AGENT,\\{requiredAtStage:1,valueType:'STRING'\\}\\);/,'Stage 01 agent job fields, including INPUT_SET_CONTENTS, must remain string-valued');";
   if(text.includes(marker)&&!text.includes(assertion))text=text.replace(marker,marker+'\n'+assertion);
-  if(!text.includes(assertion)){
-    const insertion="\nif(schema.JOB_FIELDS.INPUT_SET_CONTENTS.valueType!=='STRING')throw new Error('INPUT_SET_CONTENTS must remain the Stage 01 agent-owned string capture contract.');\n";
-    const firstImportEnd=text.indexOf('\n\n');
-    text=text.slice(0,firstImportEnd+2)+insertion+text.slice(firstImportEnd+2);
-  }
+  if(!text.includes(assertion))throw new Error('Could not install permanent INPUT_SET_CONTENTS string-contract regression.');
   fs.writeFileSync(path,text);
 }
