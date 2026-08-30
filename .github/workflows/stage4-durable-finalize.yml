@@ -48,6 +48,13 @@ jobs:
                   raise SystemExit(f'{path}: expected exactly one match, found {count}')
               p.write_text(text.replace(old, new))
 
+          # Preserve current main's Stage 04 no-upload control while retaining the durable ledger UI.
+          replace_once(
+              'app-core.js',
+              "function artifactControlMarkup(n,locked){if(n===1)return ",
+              "function artifactControlMarkup(n,locked){if(n===4)return '';if(n===1)return "
+          )
+
           # The original intake file is not a later-stage handoff item. Later stages consume canonical state.
           replace_once(
               'workflow-engine.js',
