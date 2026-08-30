@@ -20,3 +20,11 @@ if w.startswith(bad):
 elif not w.startswith("'use strict';"):
     raise SystemExit('generated test-worker.js has an unexpected opener')
 wp.write_text(w)
+sp=Path('project-store.js')
+s=sp.read_text()
+old_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');const engine=globalThis.closedLoopWorkflowEngine,jobId=projectIdentity(project),ids="
+new_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');jobId=jobId||projectIdentity(project);const engine=globalThis.closedLoopWorkflowEngine,ids="
+if s.count(old_decl)!=1:
+    raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
+s=s.replace(old_decl,new_decl,1)
+sp.write_text(s)
