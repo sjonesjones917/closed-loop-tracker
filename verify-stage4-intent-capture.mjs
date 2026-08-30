@@ -23,3 +23,4 @@ const stage1=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;
 if(!stage1.includes('CAPTURE SUPPLIED HUMAN AUTHORITY ONCE'))throw new Error('Stage 01 does not require durable one-time capture of supplied human authority.');
 if(!stage1.includes('INPUT_SET_CONTENTS'))throw new Error('Stage 01 capture has no durable canonical carrier.');
 console.log('Stage 04 canonical intent carry-forward regression passed.');
+// permanent regression: supplied intent is captured once and reused canonically.
