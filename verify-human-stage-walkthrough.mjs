@@ -46,10 +46,12 @@ try{
       if(!text.includes('STRICT RESPONSE CONTRACT'))throw new Error('Stage '+stage+' '+operation+' omitted its response contract.');
       checked.push(stage+':'+operation);
     }
-    const picker=document.querySelector('#stage-picker');if(!picker)throw new Error('Stage picker is missing.');
-    const reached=[];for(let stage=1;stage<=30;stage++){picker.value=String(stage);picker.dispatchEvent(new Event('change',{bubbles:true}));reached.push(Number(picker.value));}
+    const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await new Promise(r=>setTimeout(r,100));
+    const picker=document.querySelector('#stage-picker');if(!picker)throw new Error('Stage picker is missing after opening Workflow.');
+    const reached=[];for(let stage=1;stage<=30;stage++){picker.value=String(stage);picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,15));reached.push(Number(picker.value));}
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker cannot traverse all 30 stages in order.');
-    const promptElement=document.querySelector('.prompt');if(!promptElement)throw new Error('Prompt display is missing.');
+    picker.value='2';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,100));
+    const promptElement=document.querySelector('.prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
     const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\\n');
     const compact=css.replace(/\\s+/g,' ');
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
