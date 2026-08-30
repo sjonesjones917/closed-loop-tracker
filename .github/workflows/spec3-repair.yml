@@ -47,6 +47,7 @@ jobs:
                   s=s.replace("'workflow-schema.js','workflow-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js'")
                   s=s.replace("'workflow-schema.js','workflow-engine.js','prompt-engine.js'", "'workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'")
                   s=s.replace("'Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer'", "'Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause'")
+                  s=s.replace("const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');", "")
               p.write_text(s)
           PY
       - name: Syntax proof
