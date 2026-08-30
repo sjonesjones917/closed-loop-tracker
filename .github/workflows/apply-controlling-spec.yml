@@ -13,132 +13,12 @@ jobs:
         with:
           fetch-depth: 0
           ref: controlling-spec-conformance
-      - name: Patch verified specification mismatches
-        shell: bash
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply verified conformance patches
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          def read(path): return Path(path).read_text()
-          def write(path,text): Path(path).write_text(text)
-          def rep(text,old,new,label):
-              if old not in text: raise SystemExit(f'missing patch anchor: {label}')
-              return text.replace(old,new,1)
-
-          p='workbook.js';s=read(p)
-          s=rep(s,"const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';",'project schema')
-          s=rep(s,"'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'",'stage 16 title')
-          s=rep(s,"'INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE'],2:","'INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE','INTAKE_ACCOUNTING'],2:",'stage1 accounting field')
-          s=rep(s,"'BLOCKED_REQUIREMENTS','STAGE_DECISION','DECISION_EVIDENCE'],5:","'BLOCKED_REQUIREMENTS','STAGE_DECISION','DECISION_EVIDENCE','OBLIGATION_ACCOUNTING'],5:",'stage4 accounting field')
-          s=rep(s,'"INPUT_SET_CONTENTS"\n    ],\n    "application": [','"INPUT_SET_CONTENTS",\n      "INTAKE_ACCOUNTING"\n    ],\n    "application": [','stage1 ownership')
-          s=rep(s,'"BLOCKED_REQUIREMENTS"\n    ],\n    "application": [','"BLOCKED_REQUIREMENTS",\n      "OBLIGATION_ACCOUNTING"\n    ],\n    "application": [','stage4 ownership')
-          s=rep(s,'generatedPrompts:[],generatedOutputs:[],outputReceipts:[],freshContexts:[],','generatedPrompts:[],generatedOutputs:[],outputReceipts:[],intakeCoverageManifests:[],obligationManifests:[],freshContexts:[],','manifest stores')
-          anchor="  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);"
-          branch="""  if(p.schema==='closed-loop-project/2'&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
-    const migrated=JSON.parse(JSON.stringify(p)),original=JSON.parse(JSON.stringify(p));
-    migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;
-    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
-    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
-    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
-    migrated.projectData.intakeCoverageManifests=Array.isArray(migrated.projectData.intakeCoverageManifests)?migrated.projectData.intakeCoverageManifests:[];
-    migrated.projectData.obligationManifests=Array.isArray(migrated.projectData.obligationManifests)?migrated.projectData.obligationManifests:[];
-    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),payload:original});
-    for(const prompt of Array.isArray(migrated.projectData.generatedPrompts)?migrated.projectData.generatedPrompts:[])if(!prompt.invalidatedBy)prompt.invalidatedBy='PROJECT_SCHEMA_MIGRATED_TO_V3';
-    for(const proposal of Array.isArray(migrated.projectData.responseProposals)?migrated.projectData.responseProposals:[])if(!proposal.invalidatedBy&&String(proposal.status||'').startsWith('PENDING')){proposal.invalidatedBy='PROJECT_SCHEMA_MIGRATED_TO_V3';proposal.status='STALE';}
-    if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Project /2 to /3 migration requires exactly 30 stages.');
-    return migrated;
-  }
-"""+anchor
-          s=rep(s,anchor,branch,'migration')
-          write(p,s)
-
-          p='workflow-schema.js';s=read(p)
-          s=rep(s,"const RESPONSE_SCHEMA='closed-loop-stage-response/2';","const RESPONSE_SCHEMA='closed-loop-stage-response/3';",'response schema')
-          s=rep(s,'"EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC",','"EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC",','test spec version agent ownership')
-          s=rep(s,'"TEST_ID",\n      "REQ_ID",\n      "STATUS"\n    ]\n  },\n  "failureTests"','"TEST_ID",\n      "REQ_ID",\n      "STATUS",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256"\n    ]\n  },\n  "failureTests"','test spec identity application ownership')
-          write(p,s)
-
-          p='workflow-engine.js';s=read(p)
-          s=rep(s,"'humanInputRequests','humanInputAnswers','stageConfirmations','artifactVersions','generatedPrompts','generatedOutputs','outputReceipts',","'humanInputRequests','humanInputAnswers','stageConfirmations','artifactVersions','generatedPrompts','generatedOutputs','outputReceipts','intakeCoverageManifests','obligationManifests',",'infra manifests')
-          marker="function recordStageConfirmation(project,stage,confirmed,statement,operatorLabel='HUMAN_OPERATOR',options={}){"
-          helpers=r'''function statementUnits(value){if(value===null||value===undefined)return [];if(Array.isArray(value))return value.flatMap(statementUnits);if(typeof value==='object')return Object.entries(value).flatMap(([key,item])=>statementUnits(item).map(text=>`${key}: ${text}`));const text=String(value).trim();if(!text)return [];const lines=text.split(/\r?\n+/).map(x=>x.trim()).filter(Boolean);return lines.length?lines:[text];}
-function buildIntakeCoverageManifest(project){ensureShape(project);const version=String(project.job.CURRENT_INPUT_VERSION||'UNKNOWN'),latest=safe(project.projectData.inputVersions).filter(x=>String(x.version||'')===version).at(-1),payload=latest?.payload||Object.fromEntries(schema.HUMAN_INTAKE_FIELDS.map(name=>[name,project.job[name]??''])),units=[];for(const name of schema.HUMAN_INTAKE_FIELDS)statementUnits(payload?.[name]).forEach((text,index)=>{const rawValueSha256=hash.sha256Value(text),unitId=`INPUT-UNIT-${hash.sha256Value({version,name,index,text}).slice(0,20)}`;units.push({unitId,inputVersion:version,sourceLocation:`JOB.${name}[${index}]`,sourceField:name,rawValueSha256,text});});for(const [index,item] of safe(payload?.clarifications).entries()){const text=typeof item==='string'?item:JSON.stringify(item);if(!text.trim())continue;units.push({unitId:`INPUT-UNIT-${hash.sha256Value({version,clarification:index,text}).slice(0,20)}`,inputVersion:version,sourceLocation:`clarifications[${index}]`,sourceField:'CLARIFICATION',rawValueSha256:hash.sha256Value(text),text});}const manifestSha256=hash.sha256Value({version,units:units.map(({text,...u})=>({...u,textSha256:hash.sha256Value(text)}))}),existing=safe(project.projectData.intakeCoverageManifests).find(x=>x.manifestSha256===manifestSha256);if(existing)return existing;const manifest={manifestId:allocateInfrastructureId(project,'INTAKE-MANIFEST','intakeCoverageManifests'),inputVersion:version,manifestSha256,units,coverage:0,classifications:{},createdAt:now(),source:'APPLICATION'};project.projectData.intakeCoverageManifests.push(manifest);return manifest;}
-function currentIntakeCoverageManifest(project){return buildIntakeCoverageManifest(project);}
-function buildObligationManifest(project){ensureShape(project);const intake=buildIntakeCoverageManifest(project),scope=currentScope(project),items=[];const add=(origin,originId,location,text,extra={})=>{for(const [index,unit] of statementUnits(text).entries()){const obligationId=`OBLIGATION-${hash.sha256Value({inputVersion:scope.inputVersion,origin,originId,location,index,unit}).slice(0,20)}`;items.push({obligationId,origin,originId:String(originId||''),sourceLocation:`${location}[${index}]`,rawValueSha256:hash.sha256Value(unit),text:unit,...extra});}};for(const unit of intake.units)add('HUMAN_INPUT',unit.unitId,unit.sourceLocation,unit.text,{intakeUnitId:unit.unitId});for(const name of ['EXACT_DELIVERABLE_REQUESTED','INPUT_SET_CONTENTS'])add('STAGE_01_JOB_DEFINITION','STAGE-01',`stage01.${name}`,project.stages?.[1]?.agentData?.[name]??project.job?.[name]);for(const record of recordsForCurrentScope(project,'candidateRequirements'))add('EXTERNAL_SOURCE_OBLIGATION',recordId(record,'candidateRequirements'),String(recordValue(record,'SOURCE_LOCATION')||'candidateRequirements'),recordValue(record,'CANDIDATE_OBLIGATION'),{sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')});for(const record of recordsForCurrentScope(project,'research'))for(const key of ['MANDATORY_STATEMENTS','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','RESTRICTIONS','INVALIDATING_MATERIAL'])add('STAGE_03_RESEARCH',recordId(record,'research'),`research.${key}`,recordValue(record,key),{sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')});const unique=[...new Map(items.map(x=>[x.obligationId,x])).values()],manifestSha256=hash.sha256Value({scope,items:unique.map(({text,...x})=>({...x,textSha256:hash.sha256Value(text)}))}),existing=safe(project.projectData.obligationManifests).find(x=>x.manifestSha256===manifestSha256);if(existing)return existing;const manifest={manifestId:allocateInfrastructureId(project,'OBLIGATION-MANIFEST','obligationManifests'),inputVersion:scope.inputVersion,sourceSetVersion:scope.sourceSetVersion,manifestSha256,items:unique,coverage:0,dispositions:{},createdAt:now(),source:'APPLICATION'};project.projectData.obligationManifests.push(manifest);return manifest;}
-function currentObligationManifest(project){return buildObligationManifest(project);}
-function parseAccounting(value){if(Array.isArray(value))return value;if(typeof value==='string'){try{const parsed=JSON.parse(value);return Array.isArray(parsed)?parsed:[];}catch{return [];}}return [];}
-function validateAccountingClosure(project,stage,stageData){const number=Number(stage),kind=number===1?'intake':number===4?'obligation':null;if(!kind)return {valid:true,missing:[],unknown:[],duplicates:[]};const manifest=kind==='intake'?buildIntakeCoverageManifest(project):buildObligationManifest(project),expected=new Set((kind==='intake'?manifest.units:manifest.items).map(x=>kind==='intake'?x.unitId:x.obligationId)),field=kind==='intake'?'INTAKE_ACCOUNTING':'OBLIGATION_ACCOUNTING',rows=parseAccounting(stageData?.[field]),seen=new Set(),unknown=[],duplicates=[];for(const row of rows){const id=String(row?.id||row?.unitId||row?.obligationId||'');if(!id||!expected.has(id)){if(id)unknown.push(id);continue;}if(seen.has(id))duplicates.push(id);seen.add(id);}const missing=[...expected].filter(id=>!seen.has(id));return {valid:missing.length===0&&unknown.length===0&&duplicates.length===0,missing,unknown,duplicates,manifestId:manifest.manifestId,manifestSha256:manifest.manifestSha256,coverage:expected.size?seen.size/expected.size:1,rows};}
-
-'''
-          if marker not in s: raise SystemExit('missing engine insertion marker')
-          s=s.replace(marker,helpers+marker,1)
-          s=rep(s,'recordHumanInputVersion,recordStageConfirmation,','recordHumanInputVersion,buildIntakeCoverageManifest,currentIntakeCoverageManifest,buildObligationManifest,currentObligationManifest,validateAccountingClosure,recordStageConfirmation,','engine exports')
-          write(p,s)
-
-          p='response-ingestion.js';s=read(p)
-          marker='  const canonicalEnvelopeSha256=hash.canonicalEnvelopeSha256(envelope);'
-          insert="""  if(envelope.responseType==='DATA_PROPOSAL'&&(stageNumber===1||stageNumber===4)){const accounting=workflow.validateAccountingClosure(project,stageNumber,envelope.stageData||{});if(!accounting.valid){for(const id of accounting.missing)issues.push(issue(stageNumber===1?'INCOMPLETE_INTAKE_ACCOUNTING':'INCOMPLETE_OBLIGATION_ACCOUNTING',`/stageData/${stageNumber===1?'INTAKE_ACCOUNTING':'OBLIGATION_ACCOUNTING'}`,`Missing required application-enumerated identity ${id}.`));for(const id of accounting.unknown)issues.push(issue('UNKNOWN_ACCOUNTING_ID',`/stageData/${stageNumber===1?'INTAKE_ACCOUNTING':'OBLIGATION_ACCOUNTING'}`,`Unknown accounting identity ${id}.`));for(const id of accounting.duplicates)issues.push(issue('DUPLICATE_ACCOUNTING_ID',`/stageData/${stageNumber===1?'INTAKE_ACCOUNTING':'OBLIGATION_ACCOUNTING'}`,`Duplicate accounting identity ${id}.`));}}
-
-"""+marker
-          s=rep(s,marker,insert,'ingestion accounting')
-          write(p,s)
-
-          p='prompt-engine.js';s=read(p)
-          s=re.sub(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/\d+';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';",s,count=1)
-          start=s.find("${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION")
-          end=s.find("${stage===1?`STAGE 01 CLARIFICATION EXPERIENCE",start)
-          if start<0 or end<0: raise SystemExit('missing domain block')
-          generic="""${stage===1?`STAGE 01 SUBJECT-NEUTRAL INTAKE ALGORITHM
-Derive the human-authority questions required for this actual project from the user's request, accessible supplied materials, and current canonical context. Do not use a hard-coded project-subject checklist. Identify only facts, requirements, constraints, decisions, prohibitions, requested outputs, acceptance conditions, material references, and genuinely human-only unresolved issues needed to define the job. Do not perform later-stage research, requirement atomization, test design, production design, artifact generation, filing, simulation, manufacturing, or product verification.
-`:`SUBJECT-NEUTRAL EXECUTION RULE
-Apply domain knowledge only through the actual current project context, accepted requirements, governing sources, available capabilities, and requested deliverable. Do not select behavior from hard-coded project-subject labels. Generate real artifacts only when the current stage authorizes production and the required representation can be produced faithfully; never claim a downstream operation occurred without execution evidence.
-`}
-
-"""
-          s=s[:start]+generic+s[end:]
-          s=re.sub(r"For PATENT / REGULATED FILING jobs,[\s\S]*?Do not turn researchable legal strategy into a human question\.\n",'',s,count=1)
-          s=s.replace('EXECUTABLE_KIND = CUSTOM_PIPELINE','EXECUTABLE_KIND = TEST_IR')
-          anchor='AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE\n${contextFor(stage,state,operation,scope)}'
-          replacement="""EXECUTION DIRECTIVE — PROJECT DATA IS INPUT, NOT THE TASK
-Execute the STAGE-SPECIFIC TASK below using the authorized project data and canonical records. Do not merely summarize, restate, audit, or echo the context. A value already present anywhere in the authorized current project context is already supplied: never ask the human to retype it, re-explain it, resend it, or re-attach the same material. Ask only genuinely human-only information that is still absent and cannot be obtained from accessible supplied material or authorized research. If required canonical context should have been captured by an earlier stage but is absent, fail closed as MISSING_APPLICATION_CONTEXT or INADEQUATE_PRIOR_OUTPUT; do not convert an application-state defect into repeat human data entry.
-
-${stage===1?`APPLICATION-ENUMERATED INTAKE COVERAGE MANIFEST
-${JSON.stringify(workflow.currentIntakeCoverageManifest(state),null,2)}
-For final DATA_PROPOSAL output, INTAKE_ACCOUNTING must be a JSON array encoded as the Stage 01 field value. Include exactly one entry for every unitId above. Each entry must contain id and disposition. Allowed dispositions: INCORPORATED, RETAINED_CONTEXT, UNRESOLVED_HUMAN_ONLY, LATER_RESOLVABLE, INAPPLICABLE. INAPPLICABLE must include a reason. No identity may be omitted.
-
-`:''}${stage===4?`APPLICATION-ENUMERATED STAGE 04 OBLIGATION MANIFEST
-${JSON.stringify(workflow.currentObligationManifest(state),null,2)}
-This manifest is the complete Stage 04 input universe selected by the application. Do not rediscover the input universe and do not ask the human for anything already represented here. For final DATA_PROPOSAL output, OBLIGATION_ACCOUNTING must be a JSON array encoded as the Stage 04 field value. Include exactly one entry for every obligationId above. Each entry must contain id and disposition. Allowed dispositions: REQUIREMENT, RETAINED_NONNORMATIVE_CONTEXT, INAPPLICABLE, BLOCKED. REQUIREMENT entries must name one or more proposed requirement tempKeys. INAPPLICABLE and BLOCKED must include a reason. No obligation may disappear.
-
-`:''}AUTHORIZED BOUNDED CONTEXT FOR THIS STAGE
-${contextFor(stage,state,operation,scope)}"""
-          s=rep(s,anchor,replacement,'prompt execution directive')
-          write(p,s)
-
-          p='test-runtime.js';s=read(p)
-          s=rep(s,"'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH',","'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',",'XML operation registry')
-          write(p,s)
-
-          p='index.html';s=read(p)
-          s=rep(s,"connect-src 'self'; object-src 'none'","connect-src 'self'; worker-src 'self'; object-src 'none'",'worker CSP')
-          m=re.search(r'<script defer src="workflow-schema\.js\?v=([^"]+)"></script>',s)
-          if not m: raise SystemExit('missing schema script')
-          token=m.group(1);tag=f'<script defer src="workflow-schema.js?v={token}"></script>'
-          if 'test-runtime.js?v=' not in s:s=s.replace(tag,tag+f'\n<script defer src="test-runtime.js?v={token}"></script>',1)
-          write(p,s)
-
-          p='.github/workflows/pages.yml';s=read(p)
-          s=rep(s,"const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];",'CI dependency order')
-          write(p,s)
-
-          verify=r'''import fs from 'node:fs';const assert=(v,m)=>{if(!v)throw new Error(m)};const wb=fs.readFileSync('workbook.js','utf8'),schema=fs.readFileSync('workflow-schema.js','utf8'),prompt=fs.readFileSync('prompt-engine.js','utf8'),engine=fs.readFileSync('workflow-engine.js','utf8'),ingest=fs.readFileSync('response-ingestion.js','utf8'),html=fs.readFileSync('index.html','utf8');assert(wb.includes("PROJECT_SCHEMA='closed-loop-project/3'"),'project schema');assert(schema.includes("RESPONSE_SCHEMA='closed-loop-stage-response/3'"),'response schema');assert(wb.includes("p.schema==='closed-loop-project/2'"),'migration');assert(wb.includes("'CORRECT THE ROOT CAUSE'"),'stage16 title');assert(!/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL/.test(prompt),'hard-coded subject branch');assert(prompt.includes('PROJECT DATA IS INPUT, NOT THE TASK'),'task directive');assert(prompt.includes('never ask the human to retype it, re-explain it, resend it, or re-attach the same material'),'capture once');assert(prompt.includes('APPLICATION-ENUMERATED STAGE 04 OBLIGATION MANIFEST'),'stage4 manifest prompt');assert(prompt.includes('APPLICATION-ENUMERATED INTAKE COVERAGE MANIFEST'),'stage1 manifest prompt');assert(!prompt.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'custom pipeline');assert(prompt.includes('EXECUTABLE_KIND = TEST_IR'),'test ir');assert(engine.includes('function buildIntakeCoverageManifest'),'intake manifest');assert(engine.includes('function buildObligationManifest'),'obligation manifest');assert(ingest.includes('INCOMPLETE_INTAKE_ACCOUNTING'),'intake closure');assert(ingest.includes('INCOMPLETE_OBLIGATION_ACCOUNTING'),'obligation closure');assert(html.includes("worker-src 'self'"),'worker csp');const scripts=[...html.matchAll(/<script\s+defer\s+src="([^"?]+)\?v=[^"]+"\s*><\/script>/g)].map(m=>m[1]);assert(JSON.stringify(scripts)===JSON.stringify(['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']),'script order');assert(html.includes('.expandable-prompt{max-height:280px}'),'280px prompt preview changed');assert(!/\.expandable-prompt\{max-height:88px\}/.test(html),'88px prompt override');console.log('verify-controlling-spec: PASS');'''
-          write('verify-controlling-spec.mjs',verify)
-          s=read('.github/workflows/pages.yml')
-          s=rep(s,'node --check verify-test-runtime.mjs','node --check verify-test-runtime.mjs\n          node --check verify-controlling-spec.mjs','syntax regression')
-          s=rep(s,'- name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs','- name: Verify controlling prompt, capture-once, schema, and visual invariants\n        run: node verify-controlling-spec.mjs\n      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs','run regression')
-          write('.github/workflows/pages.yml',s)
-          PY
+          python3 .github/apply_controlling_spec.py
           node --check workbook.js
           node --check workflow-schema.js
           node --check workflow-engine.js
@@ -147,13 +27,11 @@ ${contextFor(stage,state,operation,scope)}"""
           node --check test-runtime.js
           node --check verify-controlling-spec.mjs
           node verify-controlling-spec.mjs
-      - name: Commit repair and remove one-time workflow
-        shell: bash
+      - name: Commit changes and remove one-time repair files
         run: |
-          set -euo pipefail
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
-          git rm .github/workflows/apply-controlling-spec.yml
+          git rm .github/workflows/apply-controlling-spec.yml .github/apply_controlling_spec.py
           git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js index.html .github/workflows/pages.yml verify-controlling-spec.mjs
           git commit -m "Align prompts and capture-once workflow with controlling specification"
           git push origin HEAD:controlling-spec-conformance
