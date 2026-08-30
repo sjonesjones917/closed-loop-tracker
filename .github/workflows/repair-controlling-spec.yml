@@ -1,4 +1,4 @@
-# rerun-after-stage4-fixture-repair
+# rerun-after-stage4-current-input-fixture-repair
 name: One-time controlling specification materializer
 on:
   push:
@@ -100,6 +100,7 @@ jobs:
           fs.writeFileSync('verify-definition-of-done.mjs',proof);
           NODE
           node .tmp-stage4-exhaustive-patch.mjs
+          node .tmp-fullcycle-stage4-refresh.mjs
           node <<'NODE'
           const fs=require('fs');
           let html=fs.readFileSync('index.html','utf8');
@@ -110,7 +111,7 @@ jobs:
           const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
           if(style!==fs.readFileSync('/tmp/visual-style-baseline.txt','utf8'))throw new Error('Visual stylesheet changed.');
           NODE
-          rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml .tmp-stage4-exhaustive-patch.mjs
+          rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml .tmp-stage4-exhaustive-patch.mjs .tmp-fullcycle-stage4-refresh.mjs
           node --check workbook.js
           node --check app-core.js
           node --check workflow-schema.js
