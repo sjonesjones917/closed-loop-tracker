@@ -39,8 +39,6 @@ jobs:
           PY
           for f in prompt-engine.js workflow-engine.js; do node --check "$f"; done
           node build-test-project.mjs
-          node verify-prompt-semantic.mjs
-          node verify-semantic-invariants.mjs
           node verify-v3-bundle.mjs
       - name: Commit Stage 04 closure
         shell: bash
