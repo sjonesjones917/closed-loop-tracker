@@ -1,0 +1,40 @@
+name: materialize-capture-once-v2
+
+on:
+  push:
+    branches:
+      - fix/controlling-spec-zero-loss-20260830
+    paths:
+      - .github/workflows/materialize-capture-once-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-spec-zero-loss-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply and capture result
+        run: |
+          set +e
+          python3 tools/materialize_remaining.py > materialize-capture-once.log 2>&1
+          status=$?
+          cat materialize-capture-once.log
+          echo "$status" > materialize-capture-once.status
+          exit 0
+      - name: Commit diagnostic or repaired files
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          status="$(cat materialize-capture-once.status)"
+          git add materialize-capture-once.log materialize-capture-once.status workflow-schema.js workflow-engine.js app-core.js verify-intent-capture.mjs .github/workflows/pages.yml
+          git commit -m "Capture-once materialization status ${status}" || true
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
