@@ -264,6 +264,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     if(safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MIXED_RESPONSE_TYPE','/unresolved','HUMAN_INPUT_REQUIRED must use humanInputRequests, not a second blocking unresolved channel.'));
   }
   if(envelope.responseType==='DATA_PROPOSAL'){
+    for(const accountingIssue of workflow.validateStageAccounting(project,envelope))issues.push(issue(accountingIssue.code,accountingIssue.path,accountingIssue.message));
     if(safe(envelope.humanInputRequests).some(request=>request.blocking!==false))issues.push(issue('MIXED_RESPONSE_TYPE','/humanInputRequests','A DATA_PROPOSAL cannot contain blocking human-input requests.'));
     if(safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MIXED_RESPONSE_TYPE','/unresolved','A DATA_PROPOSAL cannot contain blocking unresolved items. Use BLOCKED instead.'));
     const hasData=Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length);
