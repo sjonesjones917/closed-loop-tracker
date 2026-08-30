@@ -1,0 +1,23 @@
+name: Export final working source
+on:
+  push:
+    branches:
+      - finish/final-live-stage-walkthrough-20260830
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage exact source
+        shell: bash
+        run: |
+          mkdir -p /tmp/closed-loop-final-source
+          rsync -a --exclude='.git' ./ /tmp/closed-loop-final-source/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-final-source
+          path: /tmp/closed-loop-final-source
+          include-hidden-files: true
+          retention-days: 1
