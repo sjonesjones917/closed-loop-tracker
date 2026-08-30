@@ -29,7 +29,8 @@ scriptSources.forEach((source,index)=>{
  assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime bundle identity ${runtimeBuildIdentity}.`);
 });
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Established artifact-control rendering is missing.');
 assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
+assert(!html.includes('.expandable-prompt{height:280px;max-height:280px}'),'Prompt box must not be forced to the unauthorized 280px size.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04CanonicalReuseWithoutVisualSuppression:true,promptBoxUnauthorizedResizeAbsent:true}));
