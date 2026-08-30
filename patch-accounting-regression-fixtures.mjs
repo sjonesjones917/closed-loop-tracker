@@ -1,6 +1,30 @@
 import fs from 'node:fs';
 
 {
+  const path='workflow-engine.js';
+  let text=fs.readFileSync(path,'utf8');
+  const oldClasses="const obligationClasses=new Set(['FACT_AFFECTING_REQUIREMENTS','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','UNRESOLVED_HUMAN_ONLY']);";
+  const newClasses="const obligationClasses=new Set(['FACT','FACT_AFFECTING_REQUIREMENTS','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','MATERIAL_REFERENCE','UNRESOLVED_HUMAN_ONLY']);";
+  if(text.includes(oldClasses))text=text.replace(oldClasses,newClasses);
+  else if(!text.includes(newClasses))throw new Error('Stage 01 complete statement-union anchor missing.');
+  const oldResearch="const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];";
+  const newResearch="const researchFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];";
+  if(text.includes(oldResearch))text=text.replace(oldResearch,newResearch);
+  else if(!text.includes(newResearch))throw new Error('Stage 03 complete research-union anchor missing.');
+  fs.writeFileSync(path,text);
+}
+
+{
+  const path='build-test-project.mjs';
+  let text=fs.readFileSync(path,'utf8');
+  const oldToken="'Research only the current accepted Stage 02 independent external source set'";
+  const newToken="'Research only the complete current accepted Stage 02 independent external source set'";
+  if(text.includes(oldToken))text=text.replace(oldToken,newToken);
+  else if(!text.includes(newToken))throw new Error('Stage 03 build proof anchor missing.');
+  fs.writeFileSync(path,text);
+}
+
+{
   const path='verify-ingestion.mjs';
   let text=fs.readFileSync(path,'utf8');
   const from="INPUT_SET_CONTENTS:'Human request and invention-packet.zip'";
