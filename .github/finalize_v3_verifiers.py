@@ -35,7 +35,6 @@ for old in [
 "  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');\n",
 "  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');\n",
 "  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');\n"]:s=s.replace(old,'')
-
 boundary_candidates=[
 "    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');",
 "    if(!record.prompt.includes('EXHAUSTIVE HUMAN-AUTHORITY INTAKE IS REQUIRED')||!record.prompt.includes('derive subject-specific human-authority questions from the user’s actual request')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_SUBJECT_NEUTRAL_INTAKE_BOUNDARY_MISSING');"]
@@ -44,7 +43,6 @@ if neutral_boundary not in s:
     for old in boundary_candidates:
         if old in s:s=s.replace(old,neutral_boundary,1);break
     else:raise SystemExit('Stage 01 prompt-boundary verifier anchor missing')
-
 intake_candidates=[
 "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');",
 "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('nonblocking never means the question may be skipped')||!record.prompt.includes('every foreseeable genuinely human-only fact or decision relevant to the requested outcome')||!record.prompt.includes('accessible supplied material, authorized research, or a later deterministic stage without human authority'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"]
@@ -53,35 +51,29 @@ if neutral_intake not in s:
     for old in intake_candidates:
         if old in s:s=s.replace(old,neutral_intake,1);break
     else:raise SystemExit('Stage 01 proactive-intake verifier anchor missing')
-
 old_environment="  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
 if old_environment in s:s=s.replace(old_environment,'  }',1)
 elif 'CAPABILITY_HONESTY_RULE_MISSING' in s:
     start=s.index("  }else if(!record.prompt.includes('EXTERNAL ACTION / CAPABILITY HONESTY')");end=s.index("\n",start);s=s[:start]+'  }'+s[end:]
-
 marker="function semanticIssues(record){"
 subject_guard="const promptSource=fs.readFileSync('prompt-engine.js','utf8');\nfor(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(promptSource.includes(forbidden))throw new Error('Subject-specific runtime prompt branch remains: '+forbidden);\n"
 if subject_guard not in s:
     if marker not in s:raise SystemExit('semanticIssues marker missing')
     s=s.replace(marker,subject_guard+marker,1)
-
 loop_anchor="    const p=baseProject();\n    const op=schema.operationContract(stage,operation);"
 loop_replacement="    const p=baseProject();\n    if(stage===4){p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};}\n    const op=schema.operationContract(stage,operation);"
 if loop_anchor in s:s=s.replace(loop_anchor,loop_replacement,1)
 elif loop_replacement not in s:raise SystemExit('Stage 04 prompt-semantics fixture anchor missing')
-
 stage4_contract_anchor=" const p=baseProject();const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});"
 stage4_contract_replacement=" const p=baseProject();p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};const r=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});"
 if stage4_contract_anchor in s:s=s.replace(stage4_contract_anchor,stage4_contract_replacement,1)
 elif stage4_contract_replacement not in s:raise SystemExit('Stage 04 response-contract fixture anchor missing')
-
 stale_specialist=" if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');"
 prior_neutral_specialist=" if(!r.prompt.includes('derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context')||!r.prompt.includes('Do not use a hard-coded domain checklist'))throw new Error('Stage 01 subject-neutral intake derivation rule is missing.');"
 neutral_specialist=" if(!r.prompt.includes('Stage 01 also owns proactive human intake')||!r.prompt.includes('collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome')||!r.prompt.includes('Ask only for facts or choices that must come from the human')||!r.prompt.includes('do not ask the human for common domain knowledge, facts available in supplied materials, or facts the agent can obtain from authorized research/tools'))throw new Error('Stage 01 subject-neutral intake derivation rule is missing.');"
 if stale_specialist in s:s=s.replace(stale_specialist,neutral_specialist,1)
 elif prior_neutral_specialist in s:s=s.replace(prior_neutral_specialist,neutral_specialist,1)
 elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier anchor missing')
-
 replacements={
 "Ask only what must come from the human":"Ask only for facts or choices that must come from the human",
 "Do not block Stage 01 merely because information will be needed by a later":"Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority",
@@ -91,9 +83,12 @@ replacements={
 for old,new in replacements.items():s=s.replace(old,new)
 for old in replacements:
     if old in s:raise SystemExit('stale Stage 01 practical verifier wording remains: '+old)
-# The patent scenario belongs in behavior fixtures, not as required generic prompt text.
 s='\n'.join(line for line in s.splitlines() if 'sufficient to define a patent-application drafting job at Stage 01' not in line)+'\n'
-
+# Every one-time-intent Stage 04 fixture must satisfy the real Stage 01/03 prerequisite.
+one_time="  const p=baseProject();\n  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);"
+one_time_ready="  const p=baseProject();\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};\n  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);"
+if one_time in s:s=s.replace(one_time,one_time_ready,1)
+elif one_time_ready not in s:raise SystemExit('one-time Stage 04 fixture anchor missing')
 old_mutants="""const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
   {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
@@ -127,6 +122,4 @@ for name in graph:
 identity='runtime-'+hashlib.sha256(''.join(rows).encode()).hexdigest()[:16]
 p=Path('index.html');html=p.read_text()
 for name in direct:
-    pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[0-9a-f]+)?("\s*></script>)';html,n=re.subn(pattern,rf'\1?v={identity}\2',html,count=1)
-    if n!=1:raise SystemExit(f'Runtime script tag missing for {name}')
-p.write_text(html);print(identity)
+    pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[
