@@ -45,7 +45,6 @@ new="""    case 3:{
       const requiredStatements=currentIntentStatements(project).filter(intentStatementRequiresRequirement),candidateLocations=new Set(collection('candidateRequirements').map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim())),missingStatements=requiredStatements.map(record=>recordId(record,'intentStatements')).filter(id=>!candidateLocations.has(id));
       if(missingStatements.length)reasons.push(`Candidate requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
       const stage3Data=project.stages?.[3]?.agentData||{};
-      if(!truth(stage3Data.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');
       if(!truth(stage3Data.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 requires the second conflict and exception pass to be complete.');
       if(numeric(stage3Data.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires at least two completed research passes before saturation can be established.');
       const latestNew=stage3Data.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS;
@@ -54,7 +53,41 @@ new="""    case 3:{
       break;
     }"""
 if old in s: s=s.replace(old,new,1)
-elif new not in s: raise SystemExit('Stage 03 gate anchor missing')
+elif new not in s:
+    # Repair the earlier intermediate gate which incorrectly read an application-owned field from agentData.
+    bad="      if(!truth(stage3Data.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');\n"
+    if bad in s:s=s.replace(bad,'',1)
+    elif 'Stage 03 requires the second conflict and exception pass to be complete.' not in s: raise SystemExit('Stage 03 gate anchor missing')
+
+# Stage 03 application-owned completeness fields are derived from current records, never agent assertions.
+old_case="case 2:Object.assign(derived,{SOURCE_SET_VERSION:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',SOURCE_RECORDS:ids('sources'),SOURCE_CONFLICT_RECORDS:ids('sourceConflicts')});break;case 4:"
+new_case="case 2:Object.assign(derived,{SOURCE_SET_VERSION:project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE',SOURCE_RECORDS:ids('sources'),SOURCE_CONFLICT_RECORDS:ids('sourceConflicts')});break;case 3:{const sourceIds=recordsForCurrentScope(project,'sources').map(record=>recordId(record,'sources')),researched=new Set(recordsForCurrentScope(project,'research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE',allExamined=noSource||(sourceIds.length>0&&sourceIds.every(id=>researched.has(id)));Object.assign(derived,{RESEARCH_VERSION:project.job.CURRENT_RESEARCH_VERSION||'NOT APPLICABLE',SOURCE_RESEARCH_RECORDS:recordsForCurrentScope(project,'research').length,CANDIDATE_REQUIREMENT_RECORDS:recordsForCurrentScope(project,'candidateRequirements').length,ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:allExamined});break;}case 4:"
+if old_case in s:s=s.replace(old_case,new_case,1)
+elif new_case not in s: raise SystemExit('Stage 03 derivation anchor missing')
+
+# Canonical Test IR contract: TEST_IR is the only executable declarative kind and
+# the application owns the schema version written into accepted test records.
+p_schema=Path('workflow-schema.js'); ws=p_schema.read_text()
+ws=ws.replace("executableKinds:Object.freeze(['NONE','CUSTOM_PIPELINE'])","executableKinds:Object.freeze(['NONE','TEST_IR'])")
+old_owner="""      \"EXECUTABLE_KIND\",\n      \"EXECUTABLE_SPEC_VERSION\",\n      \"EXECUTABLE_SPEC\",\n      \"EXECUTABLE_INPUT_BINDINGS\"\n    ],\n    \"application\": [\n      \"TEST_ID\",\n      \"REQ_ID\",\n      \"STATUS\""" 
+new_owner="""      \"EXECUTABLE_KIND\",\n      \"EXECUTABLE_SPEC\",\n      \"EXECUTABLE_INPUT_BINDINGS\"\n    ],\n    \"application\": [\n      \"TEST_ID\",\n      \"REQ_ID\",\n      \"STATUS\",\n      \"EXECUTABLE_SPEC_VERSION\""" 
+if old_owner in ws:ws=ws.replace(old_owner,new_owner,1)
+elif new_owner not in ws:raise SystemExit('Test IR ownership anchor missing')
+p_schema.write_text(ws)
+
+# Application initializes the immutable current Test IR version on canonical TEST records.
+old_init="tests:Object.freeze({STATUS:'READY'})"
+new_init="tests:Object.freeze({STATUS:'READY',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1'})"
+if old_init in s:s=s.replace(old_init,new_init,1)
+elif new_init not in s:raise SystemExit('TEST application initialization anchor missing')
+p.write_text(s)
+
+# Stage 06 tells the agent which version it targets, but does not tell it to write an application-owned field.
+p=Path('prompt-engine.js'); s=p.read_text()
+old_instr='If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = TEST_IR, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS.'
+new_instr='If yes, you MUST use EXECUTION_MODE = APPLICATION_DETERMINISTIC, REQUIRED_CAPABILITY = ${schema.TEST_IR.capability}, EXECUTABLE_KIND = TEST_IR, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS targeting Test IR version ${schema.TEST_IR.version}. The application owns EXECUTABLE_SPEC_VERSION and will stamp that version after validation; do not write or override it.'
+if old_instr in s:s=s.replace(old_instr,new_instr,1)
+elif new_instr not in s:raise SystemExit('Stage 06 Test IR ownership wording anchor missing')
 p.write_text(s)
 
 # Restore the complete CSS from the known pre-regression visual baseline. Keep current markup/runtime/CSP.
@@ -67,7 +100,7 @@ Path('index.html').write_text(current)
 if '.expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}' not in current: raise SystemExit('pre-regression prompt visual baseline not restored')
 if '.expandable-prompt{height:280px;max-height:280px}' in current: raise SystemExit('fixed prompt-height regression remains')
 
-# Permanent regression: assert source semantics, engine saturation, closed Stage 04, and exact visual rollback.
+# Permanent regression: assert source semantics, engine saturation, closed Stage 04, exact Test IR ownership, and exact visual rollback.
 Path('verify-stage01-stage03-stage04-closure.mjs').write_text(r'''import fs from 'node:fs';
 const must=(c,m)=>{if(!c)throw new Error(m)};
 const w=fs.readFileSync('workbook.js','utf8');
@@ -83,14 +116,18 @@ for(const token of ['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','non
 must(!p.includes('Stage 01 does not require every fact needed to execute later stages.'),'Stage 01 still permits human-authority escape');
 must(!p.includes('Record such later-needed information in UNKNOWN_INFORMATION and let the earliest stage that actually requires it resolve it.'),'Stage 01 still silently defers foreseeable human-only information');
 must(p.includes('EXHAUSTIVE STAGE 03 RESEARCH IS REQUIRED'),'Stage 03 is not explicitly exhaustive');
-for(const token of ['ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED','SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','LATEST_PASS_NUMBER','NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS','Stage 03 is not saturated because the latest pass found a new material category.'])must(e.includes(token),`Stage 03 gate missing ${token}`);
+for(const token of ['SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','LATEST_PASS_NUMBER','NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS','Stage 03 is not saturated because the latest pass found a new material category.','ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:allExamined'])must(e.includes(token),`Stage 03 gate/derivation missing ${token}`);
+must(!e.includes("truth(stage3Data.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)"),'Stage 03 still trusts agent assertion for application-owned source completeness');
 must(p.includes('STAGE 04 IS A CLOSED COMPILATION STEP'),'Stage 04 is not closed over upstream state');
 must(p.includes('Stage 04 prompt generation blocked: current Stage 01'),'Stage 04 does not hard-block incomplete Stage 01');
 must(p.includes('Stage 04 prompt generation blocked: current Stage 03'),'Stage 04 does not hard-block incomplete Stage 03');
 must(p.includes('Never ask the human to retype it, re-explain it, resend it, or re-attach'),'no-repeat rule missing');
 must(e.includes('CURRENT_USER_JOB_INPUT')&&e.includes('STAGE_01_JOB_DEFINITION')&&e.includes('STAGE_03_ACCEPTED_DATA'),'Stage 04 obligation universe omits required upstream classes');
-must(!p.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'CUSTOM_PIPELINE still exposed');
+must(!p.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'CUSTOM_PIPELINE still exposed in prompt');
+must(!s.includes("executableKinds:Object.freeze(['NONE','CUSTOM_PIPELINE'])"),'CUSTOM_PIPELINE still exposed in schema');
+must(s.includes("executableKinds:Object.freeze(['NONE','TEST_IR'])"),'TEST_IR canonical kind missing');
 must(p.includes('EXECUTABLE_KIND = TEST_IR'),'TEST_IR authoring instruction missing');
+must(p.includes('application owns EXECUTABLE_SPEC_VERSION'),'Stage 06 does not identify application-owned Test IR version');
 const order=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
 const src=[...h.matchAll(/<script\s+defer\s+src="([^\"]+)"/g)].map(x=>x[1].split('?')[0]);
 must(order.every((x,i)=>src[i]===x),'runtime script order is not controlling order');
@@ -100,4 +137,4 @@ must(!/stage-output\{[^}]*min-height:88px/.test(h),'prohibited 88px mobile promp
 console.log('verify-stage01-stage03-stage04-closure: PASS');
 ''')
 
-print('final semantic/visual patch materialized')
+print('final semantic/visual/authority patch materialized')
