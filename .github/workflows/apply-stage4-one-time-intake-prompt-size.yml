@@ -109,6 +109,7 @@ jobs:
           if text.count(deploy_old) != 1:
               raise SystemExit(f'pages.yml: expected one deploy proof chain, found {text.count(deploy_old)}')
           workflow.write_text(text.replace(deploy_old, deploy_new, 1))
+          Path('.github/workflows/apply-stage4-one-time-intake-prompt-size.yml').unlink()
           PY
           git diff --check
       - name: Run the complete current verification suite
@@ -146,8 +147,8 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/apply-stage4-one-time-intake-prompt-size.yml
           git add app-core.js index.html prompt-engine.js workflow-engine.js verify-browser.mjs verify-complete.mjs verify-prompt-semantics.mjs verify-stage-input-once.mjs verify-mobile-stage-action.mjs .github/workflows/pages.yml
+          git add -u .github/workflows/apply-stage4-one-time-intake-prompt-size.yml
           git diff --cached --check
           git commit -m 'Capture intent once and restore prompt size'
           git push origin HEAD:fix/stage4-one-time-intake-prompt-size-20260830
