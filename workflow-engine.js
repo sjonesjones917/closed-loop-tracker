@@ -11,7 +11,7 @@ const FORMAL_STATES=Object.freeze(['UNKNOWN','NONE','NOT APPLICABLE','TRUE','FAL
 const INFRA_COLLECTIONS=Object.freeze([
   'inputVersions','rawResponses','responseProposals','responseValidations','acceptedChanges','rejectedResponses','extractionManifests',
   'humanInputRequests','humanInputAnswers','stageConfirmations','artifactVersions','generatedPrompts','generatedOutputs','outputReceipts',
-  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures'
+  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'
 ]);
 const ALL_COLLECTIONS=Object.freeze([...new Set([...Object.keys(schema.RECORD_SCHEMAS),...INFRA_COLLECTIONS])]);
 
@@ -521,9 +521,45 @@ function recordHumanInputVersion(project,changedFields,operator='HUMAN_OPERATOR'
   project.job.INPUT_SET_HASH_OR_MANIFEST=sha256;
   project.projectData.userEntered={...project.projectData.userEntered,...payload};
   addHistory(project,'USER_JOB_INPUT_VERSIONED',{recordId:record.inputVersionId,version,changedFields:[...changedFields],sha256});
+  buildIntakeCoverageManifest(project);
   return record;
 }
 
+
+const INTAKE_DISPOSITIONS=Object.freeze(['INCORPORATED','RETAINED_CONTEXT','UNRESOLVED_HUMAN_ONLY','LATER_RESOLVABLE','INAPPLICABLE']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['REQUIREMENT','RETAINED_NONNORMATIVE_CONTEXT','INAPPLICABLE','BLOCKED']);
+function splitControlledUnits(value){
+  if(value===undefined||value===null)return [];
+  if(Array.isArray(value))return value.flatMap(splitControlledUnits);
+  if(typeof value==='object')return Object.entries(value).flatMap(([k,v])=>splitControlledUnits(`${k}: ${typeof v==='string'?v:JSON.stringify(v)}`));
+  const text=String(value).replace(/\r\n?/g,'\n').trim();if(!text)return [];
+  const lines=text.split(/\n+/).map(x=>x.trim()).filter(Boolean);return lines.length?lines:[text];
+}
+function buildIntakeCoverageManifest(project){
+  ensureShape(project);const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNKNOWN'),latest=safe(project.projectData.inputVersions).filter(x=>String(x.version)===inputVersion).at(-1),units=[];
+  const push=(sourceLocation,rawValue,kind='HUMAN_INPUT')=>{for(const [index,value] of splitControlledUnits(rawValue).entries()){const rawValueHash=hash.sha256Value(value),unitId='INPUT-UNIT-'+hash.sha256Value({inputVersion,sourceLocation,index,rawValueHash}).slice(0,20).toUpperCase();units.push({unitId,sourceLocation,index,kind,rawValueHash,rawValue:value});}};
+  for(const name of schema.HUMAN_INTAKE_FIELDS||[])push(`JOB.${name}`,project.job[name]);
+  for(const [index,item] of safe(latest?.payload?.clarifications||project.projectData.userEntered?.clarifications).entries())push(`CLARIFICATION.${index}`,item,'HUMAN_CLARIFICATION');
+  const inputSha256=latest?.sha256||hash.sha256Value(units.map(x=>[x.unitId,x.rawValueHash]));const manifestId='INTAKE-MANIFEST-'+hash.sha256Value({inputVersion,inputSha256,units:units.map(x=>x.unitId)}).slice(0,20).toUpperCase();
+  const manifest={manifestId,inputVersion,inputSha256,units,requiredUnitIds:units.map(x=>x.unitId),createdAt:now(),applicationOwned:true};const prior=safe(project.projectData.intakeCoverageManifests).find(x=>x.manifestId===manifestId);if(prior)return prior;project.projectData.intakeCoverageManifests.push(manifest);return manifest;
+}
+function currentIntakeCoverageManifest(project){ensureShape(project);return buildIntakeCoverageManifest(project);}
+function buildObligationManifest(project){
+  ensureShape(project);const scope=currentScope(project),intake=buildIntakeCoverageManifest(project),obligations=[],seen=new Set();
+  const push=(originType,originId,sourceLocation,rawValue,provenance={})=>{for(const [index,value] of splitControlledUnits(rawValue).entries()){const rawValueHash=hash.sha256Value(value),obligationId='OBLIGATION-'+hash.sha256Value({scope,originType,originId,sourceLocation,index,rawValueHash}).slice(0,20).toUpperCase();if(seen.has(obligationId))continue;seen.add(obligationId);obligations.push({obligationId,originType,originId,sourceLocation,index,rawValueHash,rawValue:value,provenance});}};
+  for(const unit of intake.units)push('HUMAN_INPUT',unit.unitId,unit.sourceLocation,unit.rawValue,{inputVersion:intake.inputVersion,inputManifestId:intake.manifestId});
+  for(const name of ['EXACT_DELIVERABLE_REQUESTED','INPUT_SET_CONTENTS','ASSUMPTIONS','UNKNOWN_INFORMATION'])push('STAGE_01',`STAGE01.${name}`,name,project.job[name],{inputVersion:project.job.CURRENT_INPUT_VERSION||null,acceptedChangeId:acceptedChanges(project,1).at(-1)?.changeId||null});
+  for(const record of recordsForCurrentScope(project,'candidateRequirements'))push('EXTERNAL_SOURCE',recordId(record,'candidateRequirements'),String(recordValue(record,'SOURCE_LOCATION')||'CANDIDATE_REQUIREMENT'),recordValue(record,'CANDIDATE_OBLIGATION'),{sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''),researchVersion:project.job.CURRENT_RESEARCH_VERSION||null});
+  for(const record of recordsForCurrentScope(project,'research'))for(const fieldName of ['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'])push('SOURCE_RESEARCH',recordId(record,'research'),fieldName,recordValue(record,fieldName),{sourceId:String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||'')});
+  const manifestId='OBLIGATION-MANIFEST-'+hash.sha256Value({scope,obligations:obligations.map(x=>[x.obligationId,x.rawValueHash])}).slice(0,20).toUpperCase();const manifest={manifestId,scope:clone(scope),inputManifestId:intake.manifestId,obligations,requiredObligationIds:obligations.map(x=>x.obligationId),createdAt:now(),applicationOwned:true};const prior=safe(project.projectData.obligationManifests).find(x=>x.manifestId===manifestId);if(prior)return prior;project.projectData.obligationManifests.push(manifest);return manifest;
+}
+function currentObligationManifest(project){ensureShape(project);return buildObligationManifest(project);}
+function validateStageAccounting(project,envelope){
+  const stage=Number(envelope?.stage),issues=[];if(envelope?.responseType!=='DATA_PROPOSAL')return issues;
+  if(stage===1){const manifest=buildIntakeCoverageManifest(project),text=String(envelope?.stageData?.INPUT_SET_CONTENTS||'');for(const id of manifest.requiredUnitIds){const line=text.split(/\r?\n/).find(x=>x.includes(id))||'';if(!line)issues.push({code:'INCOMPLETE_INTAKE_ACCOUNTING',path:'/stageData/INPUT_SET_CONTENTS',message:`Stage 01 omitted controlled input unit ${id}.`});else if(!INTAKE_DISPOSITIONS.some(d=>line.includes(d)))issues.push({code:'INVALID_INTAKE_DISPOSITION',path:'/stageData/INPUT_SET_CONTENTS',message:`Stage 01 unit ${id} lacks a controlled semantic disposition.`});}}
+  if(stage===4){const manifest=buildObligationManifest(project),requirements=safe(envelope?.records?.requirements),mapped=new Set(requirements.flatMap(r=>safe(r?.fields?.OBLIGATION_TRACE).map(String))),fallback=String(envelope?.stageData?.ATOMICITY_REVIEW_RESULTS||'')+'\n'+String(envelope?.stageData?.DEFINED_TERM_GAPS||'');for(const id of manifest.requiredObligationIds){if(mapped.has(id))continue;const line=fallback.split(/\r?\n/).find(x=>x.includes(id))||'';if(!line)issues.push({code:'INCOMPLETE_OBLIGATION_ACCOUNTING',path:'/records/requirements',message:`Stage 04 omitted obligation ${id}.`});else if(!OBLIGATION_DISPOSITIONS.slice(1).some(d=>line.includes(d)))issues.push({code:'INVALID_OBLIGATION_DISPOSITION',path:'/stageData/ATOMICITY_REVIEW_RESULTS',message:`Stage 04 obligation ${id} lacks a valid non-requirement disposition.`});}}
+  return issues;
+}
 function recordStageConfirmation(project,stage,confirmed,statement,operatorLabel='HUMAN_OPERATOR',options={}){
   ensureShape(project);const number=Number(stage);const latest=acceptedChanges(project,number).at(-1);if(number===1&&!latest)throw new Error('Stage 01 confirmation requires a current accepted DATA_PROPOSAL.');
   for(const prior of safe(project.projectData.stageConfirmations).filter(x=>Number(x.stage)===number&&!x.invalidatedBy))prior.invalidatedBy=options.invalidatedBy||'SUPERSEDED_CONFIRMATION';
@@ -754,7 +790,7 @@ function stage16CorrectionPlan(project){
 function operationalNextAction(project,currentStage){const stage=Number(currentStage||1),requests=unresolvedHumanRequests(project,stage);if(requests.length)return 'Answer the current human-only question(s). Saving the answer will invalidate the old instruction and generate a replacement for this same stage.';if(stage===16){const correction=stage16CorrectionPlan(project);return correction.heading+'. '+correction.explanation;}if(stage===3||stage===4)return 'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. It consumes the canonical Stage 01 intent-statement ledger. Do not attach, resend, reopen, or otherwise reuse the original intent file.';if([23,24].includes(stage)){const reviewer=records(project,'freshContexts').filter(r=>isActiveRecord(r)&&Number(r.stage)===stage).at(-1);if(!reviewer)return 'Open a fresh independent reviewer context and register its identifier in this stage. The application will bind that identity into the controlling prompt before you send any product or review material.';}const plan=testExecutionPlan(project),relevant=[12,22,23,24].includes(stage)?plan.items:[];const blocked=relevant.find(i=>!i.executableNow);if(blocked)return 'Blocked: '+blocked.testId+' requires '+(blocked.requiredCapability||'a valid execution capability')+'. '+(blocked.blockingReason||'Required execution evidence is not currently obtainable.');const item=relevant.find(i=>i.operatorAction!=='NO_ACTION');if(item){const files=item.requiredArtifactNames.length?' Send '+item.requiredArtifactIds.map((id,n)=>id+' ('+(item.requiredArtifactNames[n]||'file')+')').join(', ')+'.':'';const withheld=item.handoff.withhold.length?' Do not send '+item.handoff.withhold.map(x=>x.artifactIdOrCategory).join(', ')+'.':'';const back=item.handoff.expectBack.length?' Return '+item.handoff.expectBack.map(x=>x.filenameOrPattern||x.kind).join(', ')+'.':'';if(item.operatorAction==='SEND_TO_INDEPENDENT_REVIEWER')return 'Open a fresh independent reviewer context and use the current verifier instruction.'+files+withheld+back;if(item.operatorAction==='SEND_TO_TOOL_AGENT')return 'Run the current instruction in an environment with '+item.requiredCapability+'.'+files+withheld+back;if(item.operatorAction==='HUMAN_INSPECTION')return 'Human inspection required: perform the current inspection checklist and preserve the requested observation evidence.';if(item.operatorAction==='USE_EXTERNAL_SYSTEM')return 'Use the required external system ('+item.requiredCapability+') and return its exact result/evidence.';}
   if(relevant.length&&relevant.every(i=>i.operatorAction==='NO_ACTION'))return 'No external action required. The application can perform the current deterministic verification route.';return 'Use the current Stage '+String(stage).padStart(2,'0')+' instruction. Return only its final structured JSON (and any required returned files) when the external work or conversation is complete.';}
 
-function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}
+function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}
 function applicationTestSupported(test){return schema.validateTestIRTest(test).valid;}
 const TEST_EXECUTION_ACTIONS=Object.freeze({
   APPLICATION_DETERMINISTIC:'No operator execution is required only when the exact REQUIRED_CAPABILITY names a registered application-native test executor. Otherwise request a corrected test definition; the browser must not pretend it can run the test.',
@@ -803,6 +839,6 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
   unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,currentIntentStatements,intentStatementRequiresRequirement,confirmedDefects,unresolvedMaterialDefects,
   currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
-  recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
+  recordHumanInputVersion,buildIntakeCoverageManifest,currentIntakeCoverageManifest,buildObligationManifest,currentObligationManifest,validateStageAccounting,INTAKE_DISPOSITIONS,OBLIGATION_DISPOSITIONS,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
 })();
