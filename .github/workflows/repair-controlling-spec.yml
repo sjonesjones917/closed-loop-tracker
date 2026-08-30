@@ -50,7 +50,7 @@ jobs:
           s=s.replace(anchor,directive);
           const stage4="Compile atomic requirement proposals from the complete APPLICATION OBLIGATION MANIFEST.";
           if(!s.includes(stage4))throw new Error('Stage 04 directive anchor missing.');
-          s=s.replace(stage4,stage4+" You MUST process every manifest obligationId exactly once before final JSON. The prompt already carries forward the user's captured project intent and obligation universe; never ask for the original intent file, a re-summary, a re-description, or a second copy of any project fact already captured. Schema-valid output with an omitted obligation is invalid and must not be returned.");
+          s=s.replace(stage4,stage4+" You MUST process every manifest obligationId exactly once before final JSON. The prompt already carries forward the captured project intent and obligation universe; never ask for the original intent file, a re-summary, a re-description, or a second copy of any project fact already captured. Schema-valid output with an omitted obligation is invalid and must not be returned.");
           const stage1="Perform complete human-authority intake only.";
           if(!s.includes(stage1))throw new Error('Stage 01 directive anchor missing.');
           s=s.replace(stage1,stage1+" The user supplies project information once. Capture every materially relevant project statement that is actually available now so later stages can reuse it without asking the user to resupply it. The durable intake manifest and structured INPUT_SET_CONTENTS are the downstream memory boundary.");
