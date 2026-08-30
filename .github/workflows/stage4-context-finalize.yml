@@ -22,14 +22,15 @@ jobs:
               anchor='          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.'
               if anchor not in s:
                   raise SystemExit('Stage 4 repair insertion anchor missing')
-              insertion='''          old="contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
-          new="contextManifest={stage,operation,scope,humanInputSha256:hash.sha256Value(Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,d])=>d?.producer==='HUMAN').map(([name])=>[name,state?.job?.[name]??null]))),verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
-          if old not in s: raise SystemExit('context manifest marker missing')
-          s=s.replace(old,new,1)
-          p.write_text(s)
-
-'''
-              s=s.replace(anchor,insertion+anchor,1)
+              lines=[
+                  '          old="contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"',
+                  '          new="contextManifest={stage,operation,scope,humanInputSha256:hash.sha256Value(Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,d])=>d?.producer===\'HUMAN\').map(([name])=>[name,state?.job?.[name]??null]))),verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"',
+                  "          if old not in s: raise SystemExit('context manifest marker missing')",
+                  '          s=s.replace(old,new,1)',
+                  '          p.write_text(s)',
+                  '',
+              ]
+              s=s.replace(anchor,'\n'.join(lines)+anchor,1)
               p.write_text(s)
           PY
       - name: Commit only the missing context-binding correction
