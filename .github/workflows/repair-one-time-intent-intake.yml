@@ -32,6 +32,12 @@ jobs:
           good='Stage 01 is an intake conversation and the one-time intent-file intake.'
           if s.count(bad)!=1: raise SystemExit('Stage 01 UI wording target not found exactly once')
           p.write_text(s.replace(bad,good,1))
+          p=Path('verify-prompt-semantics.mjs')
+          s=p.read_text()
+          bad="descriptor.contractVersion!=='closed-loop-response-contract/2.4'"
+          good="descriptor.contractVersion!=='closed-loop-response-contract/2.5'"
+          if s.count(bad)!=1: raise SystemExit('response contract test expectation not found exactly once')
+          p.write_text(s.replace(bad,good,1))
           PY
           node --check workflow-schema.js
           node --check workflow-engine.js
