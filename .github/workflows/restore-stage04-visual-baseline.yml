@@ -1,0 +1,76 @@
+name: Restore Stage 04 visual baseline without changing layout
+on:
+  push:
+    branches:
+      - fix/restore-stage04-visual-baseline-current
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Remove only the unauthorized Stage 04 UI suppression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp index.html /tmp/index-before.html
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+          app=Path('app-core.js').read_text()
+          old="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"
+          new="function artifactControlMarkup(n,locked){if(n===19)"
+          if app.count(old)!=1: raise SystemExit(f'expected one Stage 04 suppression anchor, found {app.count(old)}')
+          Path('app-core.js').write_text(app.replace(old,new,1))
+          vh=Path('verify-hash.mjs').read_text()
+          old_assert='assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return \'\';if(n===19)"),\'Stage 04 must not render the generic artifact upload control after canonical intent capture.\');'
+          new_assert='assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),\'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.\');\nassert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return \'\';"),\'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.\');'
+          if vh.count(old_assert)!=1: raise SystemExit('verify-hash Stage 04 visual assertion anchor missing')
+          Path('verify-hash.mjs').write_text(vh.replace(old_assert,new_assert,1))
+          PY
+
+          node <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+          const token=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html=fs.readFileSync('index.html','utf8');
+          let count=0;
+          html=html.replace(/(<script\s+defer\s+src="[^"?]+)\?v=[^"]+("\s*><\/script>)/g,(_,a,b)=>{count++;return `${a}?v=${token}${b}`;});
+          if(count!==runtimeFiles.length)throw new Error(`Expected ${runtimeFiles.length} runtime cache tokens; updated ${count}`);
+          fs.writeFileSync('index.html',html);
+          console.log(token);
+          NODE
+
+          python3 <<'PY'
+          from pathlib import Path
+          import re,hashlib
+          before=Path('/tmp/index-before.html').read_text(); after=Path('index.html').read_text()
+          style=lambda s: re.search(r'<style>([\s\S]*?)</style>',s).group(1)
+          if style(before)!=style(after): raise SystemExit('VISUAL REGRESSION: CSS changed')
+          if re.sub(r'\?v=[^"\s]+','?v=BUILD_TOKEN',before)!=re.sub(r'\?v=[^"\s]+','?v=BUILD_TOKEN',after): raise SystemExit('VISUAL REGRESSION: index.html changed beyond cache tokens')
+          print('visual-css-sha256',hashlib.sha256(style(after).encode()).hexdigest())
+          PY
+
+          node --check app-core.js
+          node --check verify-hash.mjs
+          node verify-hash.mjs
+          node verify-complete.mjs
+      - name: Commit exact visual restoration and remove temporary runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/restore-stage04-visual-baseline.yml
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Restore Stage 04 visual baseline"
+          git push origin HEAD:fix/restore-stage04-visual-baseline-current
