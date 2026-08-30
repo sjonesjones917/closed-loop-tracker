@@ -16,6 +16,9 @@ exec_text=exec_text[:stage4_start]+exec_text[stage4_end:]
 exec_text=exec_text.replace(',conversationMaterials,optionalApplicationCopies:[...optionalApplicationCopies.values()]', '')
 exec_text=re.sub(r"if\(stage===4\)\{const handoff=executionHandoff\(project,\{stage:4,operation:'COMPLETE'\}\),materials=handoff\.conversationMaterials\.map\(item=>item\.label\);if\(materials\.length\)return 'Send the Stage 04 instruction with '\+materials\.join\(', '\)\+'\. The prompt does not include those materials\. When the agent finishes, paste its final JSON response here\.';\}", '', exec_text)
 s=s[:start]+exec_text+s[end:]
+structured="if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return actionEnvelope(project,stage,{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Continue requirement compilation with the agent',explanation:'Send the current Stage 04 instruction with '+materials.join(', ')+'. The application does not imply those materials were transferred automatically. When the agent finishes, return its final JSON.',primaryButton:'Continue conversation',filesToSend:handoff.send,filesToWithhold:handoff.withhold,expectedReturnFiles:handoff.expectBack});}"
+if s.count(structured)!=1: raise SystemExit(f'Expected one structured Stage 04 attachment action; found {s.count(structured)}')
+s=s.replace(structured,'')
 p.write_text(s)
 
 # prompt-engine.js: consume captured canonical input and accepted Stage 01 data instead of re-requesting original material.
