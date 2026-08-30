@@ -1,0 +1,1 @@
+Permanent regression: load the actual app in Chromium and generate every declared Stage 01-30 operation prompt in stage order. Reject repeated project-data requests, original-intent reattachment after Stage 01, missing response contracts, and missing prompt rendering.
