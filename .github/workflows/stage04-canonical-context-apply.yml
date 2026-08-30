@@ -26,6 +26,39 @@ jobs:
           start = source.index(start_marker) + len(start_marker)
           end = source.index(end_marker, start)
           code = '\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines()) + '\n'
+
+          # Replace the two fragile exact-source edits in the prepared script with
+          # equivalent boundary-based edits. The application source is deliberately
+          # compact, so full escaped HTML/JS fragments are not a stable edit key.
+          lines = code.splitlines()
+          response_start = next((i for i, line in enumerate(lines) if line.startswith('old_response_intro = ')), -1)
+          response_end = next((i for i, line in enumerate(lines) if i >= response_start and 'replace_once(text, old_response_intro, new_response_intro' in line), -1)
+          if response_start < 0 or response_end < response_start:
+              raise SystemExit('prepared updater: response-help edit boundary not found')
+          response_replacement = [
+              'generic_response_help = "Paste only the final strict JSON from ChatGPT after the conversation is complete. If ChatGPT is still asking you questions, answer them there instead of pasting that conversation here. Parse / validate preserves the raw response first, then validates it without changing canonical project records. If the final response declares returned files, attach those exact files in Authorized files for this stage before parsing."',
+              'stage4_response_help = "${n===4?\'Paste only the final strict JSON from ChatGPT after it finishes Stage 04. The instruction already contains the accepted Stage 03 findings and current User Job Input. Parse / validate preserves the raw response first and does not change canonical project records until acceptance.\':\'" + generic_response_help + "\'}"',
+              "text = replace_once(text, generic_response_help, stage4_response_help, 'app-core.js Stage 04 response guidance')",
+          ]
+          lines[response_start:response_end + 1] = response_replacement
+
+          browser_start_line = next((i for i, line in enumerate(lines) if line.startswith('browser_start = ')), -1)
+          browser_end_line = next((i for i, line in enumerate(lines) if i > browser_start_line and line.startswith('browser_end = ')), -1)
+          browser_apply_line = next((i for i, line in enumerate(lines) if i > browser_end_line and "replace_section(text, browser_start, browser_end, browser_replacement" in line), -1)
+          if browser_start_line < 0 or browser_end_line < 0 or browser_apply_line < 0:
+              raise SystemExit('prepared updater: browser edit boundary not found')
+          browser_boundary_replacement = [
+              'browser_unique = "await fill(cdp,\'[data-job=\\\"SUPPLIED_MATERIALS_INVENTORY\\\"]\',JSON.stringify([{type:\'FILE\',exactNameOrReference:\'design-input.pdf\'}]))"',
+              'browser_point = text.find(browser_unique)',
+              'browser_start_index = text.rfind(" await click(cdp,\'[data-view=\\\"Project\\\"]\');", 0, browser_point)',
+              "browser_end_index = text.find('await setWidth(cdp,393);', browser_point)",
+              "if browser_point < 0 or browser_start_index < 0 or browser_end_index < 0: raise SystemExit('verify-browser Stage 04 section boundary not found')",
+              "browser_end_index += len('await setWidth(cdp,393);')",
+          ]
+          lines[browser_start_line:browser_end_line + 1] = browser_boundary_replacement
+          browser_apply_line += len(browser_boundary_replacement) - 2
+          lines[browser_apply_line] = 'text = text[:browser_start_index] + browser_replacement + text[browser_end_index:]'
+          code = '\n'.join(lines) + '\n'
           exec(compile(code, 'stage04-update.py', 'exec'))
           PYRUN
       - name: Rebuild retained fixture and run deterministic proofs
