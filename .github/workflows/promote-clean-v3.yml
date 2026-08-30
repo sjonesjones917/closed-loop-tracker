@@ -1,0 +1,122 @@
+name: promote-clean-v3
+on:
+  push:
+    branches: ['fix/final-zero-loss-v3-20260830']
+    paths:
+      - '.github/workflows/promote-clean-v3.yml'
+      - 'deterministic-proof-status.json'
+      - 'browser-proof-status.json'
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-zero-loss-v3-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require current deterministic and browser proof
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const file of ['deterministic-proof-status.json','browser-proof-status.json'])if(!fs.existsSync(file))throw Error(file+' is missing.');
+          const d=require('./deterministic-proof-status.json'),b=require('./browser-proof-status.json');
+          if(d.status!=='PASSED'||d.workflow!=='mobile-closed-loop/30'||d.projectSchema!=='closed-loop-project/3'||d.responseSchema!=='closed-loop-stage-response/3'||d.testIrSchema!=='closed-loop-test-spec/1')throw Error('Deterministic proof is incomplete or stale.');
+          if(b.status!=='PASSED'||b.engine!=='REAL_CHROMIUM_CDP'||JSON.stringify(b.widths)!=='[320,393,1280]'||b.promptPreviewMaxHeight!=='280px'||!b.stage1Exhaustive||!b.stage3Exhaustive||!b.stage4ClosedSingleSupply)throw Error('Browser proof is incomplete or stale.');
+          NODE
+      - name: Construct clean source branch from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPAIR_SHA="$(git rev-parse HEAD)"
+          git fetch origin main
+          git checkout -B fix/closed-loop-v3-ready origin/main
+          REPAIR_SHA="$REPAIR_SHA" python3 - <<'PY'
+          import os,subprocess
+          repair=os.environ['REPAIR_SHA']
+          raw=subprocess.check_output(['git','diff','--name-status','-z','origin/main',repair])
+          parts=raw.split(b'\0');i=0
+          excluded={
+            'deterministic-proof-status.json','browser-proof-status.json','browser-proof-failure.log',
+            'isolated-conformance-failure.log','final-proof.log','proof-failure-summary.txt'
+          }
+          copied=[]
+          while i<len(parts) and parts[i]:
+            status=parts[i].decode();i+=1
+            if status.startswith('R') or status.startswith('C'):
+              old=parts[i].decode();new=parts[i+1].decode();i+=2;path=new
+            else:
+              path=parts[i].decode();i+=1
+            if path.startswith('.github/workflows/') or path in excluded or path.endswith('.log'):
+              continue
+            if status.startswith('D'):
+              subprocess.run(['git','rm','-f','--ignore-unmatch','--',path],check=True)
+            else:
+              subprocess.run(['git','checkout',repair,'--',path],check=True)
+            copied.append((status,path))
+          if not copied: raise SystemExit('No non-workflow v3 changes were selected for clean promotion.')
+          print('\n'.join(f'{s} {p}' for s,p in copied))
+          PY
+          if git status --short | grep -E '^.. \.github/workflows/(advance-final-proof|materialize-v3-source|v3-browser-proof|promote-clean-v3|final-v3-proof|authority-contract-patch)\.yml$'; then
+            echo 'Temporary repair workflow entered the clean branch.' >&2
+            exit 1
+          fi
+      - name: Run complete deterministic proof on clean branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          for t in verify.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-single-supply-prompts.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do
+            if [ -f "$t" ]; then echo "=== $t ==="; node "$t"; fi
+          done
+      - name: Verify unchanged visual baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,re,hashlib
+          candidate=Path('index.html').read_text(); main=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
+          cs=re.search(r'<style>(.*?)</style>',candidate,re.S); ms=re.search(r'<style>(.*?)</style>',main,re.S)
+          if not cs or not ms: raise SystemExit('style baseline missing')
+          if hashlib.sha256(cs.group(1).encode()).hexdigest()!=hashlib.sha256(ms.group(1).encode()).hexdigest(): raise SystemExit('VISUAL REGRESSION: CSS differs from current main')
+          if '.expandable-prompt{max-height:280px}' not in candidate: raise SystemExit('PROMPT BOX SIZE CHANGED')
+          PY
+      - name: Run real Chromium proof on clean branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .2; done
+          CHROME_BIN="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_BIN" ]; then sudo apt-get update -y >/dev/null; sudo apt-get install -y chromium >/dev/null; CHROME_BIN="$(command -v chromium)"; fi
+          CHROME_BIN="$CHROME_BIN" APP_URL=http://127.0.0.1:4173/ node verify-v3-browser.mjs
+      - name: Commit clean branch and open or update PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then echo 'Clean branch has no changes.' >&2; exit 1; fi
+          git commit -m 'Implement closed-loop project v3 exhaustive reliability controller'
+          git push --force-with-lease origin HEAD:fix/closed-loop-v3-ready
+          if gh pr view fix/closed-loop-v3-ready --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh pr edit fix/closed-loop-v3-ready --repo "$GITHUB_REPOSITORY" --title 'Implement closed-loop project v3 exhaustive reliability controller' --body-file - <<'BODY'
+          Implements the controlling closed-loop project/3 bundle on a clean branch built from main. The promotion excludes temporary repair workflows and diagnostics, reruns the complete deterministic suite, preserves the exact main CSS and 280px prompt preview, and runs real Chromium acceptance at 320px, 393px, and desktop widths before updating this PR.
+          BODY
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base main --head fix/closed-loop-v3-ready --title 'Implement closed-loop project v3 exhaustive reliability controller' --body-file - <<'BODY'
+          Implements the controlling closed-loop project/3 bundle on a clean branch built from main. The promotion excludes temporary repair workflows and diagnostics, reruns the complete deterministic suite, preserves the exact main CSS and 280px prompt preview, and runs real Chromium acceptance at 320px, 393px, and desktop widths before opening this PR.
+          BODY
+          fi
