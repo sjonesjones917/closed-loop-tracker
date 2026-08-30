@@ -1,0 +1,209 @@
+name: Apply Stage 04 canonical context v2
+on:
+  push:
+    branches:
+      - fix-stage04-canonical-context
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix-stage04-canonical-context
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the minimal Stage 04 correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def read(path):
+              return Path(path).read_text(encoding='utf-8')
+
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return text.replace(old, new, 1)
+
+          def replace_section(text, start_marker, end_marker, replacement, label):
+              start = text.find(start_marker)
+              if start < 0:
+                  raise SystemExit(f'{label}: start marker not found')
+              end = text.find(end_marker, start)
+              if end < 0:
+                  raise SystemExit(f'{label}: end marker not found')
+              end += len(end_marker)
+              return text[:start] + replacement + text[end:]
+
+          # Stage 04 consumes accepted canonical Stage 03 output. It is not a second file-transfer lane.
+          path = 'workflow-engine.js'
+          text = read(path)
+          function_start = text.find('function executionHandoff')
+          handoff_start = text.find('  if(stage===4){', function_start)
+          handoff_end = text.find('  for(const item of items)', handoff_start)
+          if function_start < 0 or handoff_start < 0 or handoff_end < 0:
+              raise SystemExit('workflow-engine.js: Stage 04 handoff block boundary not found')
+          text = text[:handoff_start] + text[handoff_end:]
+          old_next = "if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}"
+          new_next = "if(stage===4)return 'Use the current Stage 04 instruction. It already contains the accepted Stage 03 findings and current User Job Input needed for this stage. When the agent finishes, paste only its final JSON response here.';"
+          text = replace_once(text, old_next, new_next, 'workflow-engine.js Stage 04 next action')
+          write(path, text)
+
+          # Bind the Stage 04 prompt to accepted canonical inputs and fail back to Stage 03 if they are inadequate.
+          path = 'prompt-engine.js'
+          text = read(path)
+          text = replace_once(text, "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';", 'prompt engine version')
+          stage4_start = text.find("\n4:'")
+          stage5_start = text.find("\n5:'", stage4_start)
+          if stage4_start < 0 or stage5_start < 0:
+              raise SystemExit('prompt-engine.js: Stage 04 procedure boundary not found')
+          stage4 = "\n4:'Compile atomic requirement proposals for this current job from authorized User Job Input and the current accepted Stage 03 candidate obligations, research findings, source evidence, exceptions, conflicts, and unresolved gaps embedded in AUTHORIZED BOUNDED CONTEXT. Stage 04 is a compilation stage, not a second source-inspection or file-handoff stage. Do not request or re-inspect original project files merely because they appear in SUPPLIED_MATERIALS_INVENTORY, and do not assume continuity with any earlier external conversation. If the accepted Stage 03 canonical output omits a material obligation or lacks enough provenance to compile a complete requirement set, return BLOCKED with INADEQUATE_PRIOR_OUTPUT and identify the exact Stage 03 result that must be refined; do not bypass the canonical workflow by asking the human to resend the source packet. Ask the human conversationally only when a genuinely human-only fact or decision discovered at Stage 04 is required and is not already present in User Job Input or canonical context. Never infer substantive contents from a filename, path, link label, claimed hash, or metadata. Each proposed requirement should express one independently testable obligation where possible and record type, mandatory/optional status, governing source or user-input relationship, exact source location when applicable, authority, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, and notes. The application assigns REQ_ID and controlled requirement-set identity after validated ingestion. Do not derive requirements from the target product or an existing implementation merely because that implementation contains a behavior.',"
+          text = text[:stage4_start] + stage4 + text[stage5_start:]
+          write(path, text)
+
+          # Give the Stage 04 operator one truthful action and remove unrelated file controls from this stage.
+          path = 'app-core.js'
+          text = read(path)
+          text = replace_once(
+              text,
+              "4:'The agent compiles the requirement specification from current human input, actually accessible supplied materials, and accepted external-source research. Keep the work in the external conversation that has the original material; no duplicate upload into this application is required.'",
+              "4:'The agent converts the accepted Stage 03 findings and current User Job Input into atomic, independently testable requirements.'",
+              'app-core.js Stage 04 purpose'
+          )
+          old_interaction = "if(n===4){const materials=safe(engine.executionHandoff(current,{stage:4,operation:selectedOperation(4)}).conversationMaterials).map(item=>String(item.label||'').trim()).filter(Boolean);if(materials.length)return `<div class=\"notice\"><strong>Send the Stage 04 instruction with the required material.</strong><br>Attach or provide with the instruction: ${esc(materials.join(', '))}. The prompt does not include those materials. When the agent finishes, paste only its final JSON response here.</div>`;}"
+          new_interaction = "if(n===4)return `<div class=\"notice\"><strong>Use the Stage 04 instruction as shown.</strong><br>It already contains the accepted Stage 03 findings and current User Job Input needed for this stage. When the agent finishes, paste only its final JSON response here.</div>`;"
+          text = replace_once(text, old_interaction, new_interaction, 'app-core.js Stage 04 interaction mode')
+          text = replace_once(text, "function artifactControlMarkup(n,locked){if(n===19)", "function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)", 'app-core.js Stage 04 artifact controls')
+          generic_response_help = "Paste only the final strict JSON from ChatGPT after the conversation is complete. If ChatGPT is still asking you questions, answer them there instead of pasting that conversation here. Parse / validate preserves the raw response first, then validates it without changing canonical project records. If the final response declares returned files, attach those exact files in Authorized files for this stage before parsing."
+          stage4_response_help = "${n===4?'Paste only the final strict JSON from ChatGPT after it finishes Stage 04. The instruction already contains the accepted Stage 03 findings and current User Job Input. Parse / validate preserves the raw response first and does not change canonical project records until acceptance.':'" + generic_response_help + "'}"
+          text = replace_once(text, generic_response_help, stage4_response_help, 'app-core.js Stage 04 response guidance')
+          write(path, text)
+
+          # Deterministic regression: Stage 04 cannot become an original-material handoff lane.
+          path = 'verify-complete.mjs'
+          text = read(path)
+          complete_replacement = r'''// stage04-canonical-context-regression-v4
+{
+  const p=project('JOB-STAGE04-CANONICAL-CONTEXT');
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  assert(handoff.conversationMaterials.length===0,'Stage 04 incorrectly created an original-material conversation handoff.');
+  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 incorrectly became a file-transfer or returned-file contract.');
+  const next=engine.operationalNextAction(p,4);
+  assert(next.includes('It already contains the accepted Stage 03 findings and current User Job Input'),'Stage 04 next action does not explain its canonical input boundary.');
+  assert(!next.includes('design-input.pdf')&&!/attach|provide with the instruction|prompt does not include those materials/i.test(next),'Stage 04 next action still tells the operator to transport original project files.');
+  const appSource=fs.readFileSync('app-core.js','utf8');
+  assert(appSource.includes('The agent converts the accepted Stage 03 findings and current User Job Input into atomic, independently testable requirements.'),'Stage 04 purpose does not describe canonical compilation.');
+  assert(appSource.includes('Use the Stage 04 instruction as shown.'),'Stage 04 does not provide the concise current operator action.');
+  assert(appSource.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 still renders unrelated application file controls.');
+  for(const prohibited of ['Send the Stage 04 instruction with the required material.','Attach or provide with the instruction:','The prompt does not include those materials.'])assert(!appSource.includes(prohibited),'Stage 04 retained obsolete file-handoff UI: '+prohibited);
+}
+console.log(JSON.stringify({stage04CanonicalContextOnly:true}));'''
+          text = replace_section(text, '// stage04-stage-prompt-material-regression-v3', "console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));", complete_replacement, 'verify-complete Stage 04 regression')
+          write(path, text)
+
+          # Prompt regression: accepted Stage 03 records are present; original-file transfer directions are absent.
+          path = 'verify-prompt-semantics.mjs'
+          text = read(path)
+          semantic_marker = "  if(record.stage===6){\n"
+          semantic_check = "  if(record.stage===4){\n    if(!record.prompt.includes('Stage 04 is a compilation stage, not a second source-inspection or file-handoff stage')||!record.prompt.includes('return BLOCKED with INADEQUATE_PRIOR_OUTPUT'))issues.push('STAGE04_CANONICAL_COMPILATION_BOUNDARY_MISSING');\n    for(const leaked of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','The prompt does not include those materials'])if(record.prompt.includes(leaked))issues.push('STAGE04_ORIGINAL_MATERIAL_HANDOFF_LEAK');\n  }\n"
+          text = replace_once(text, semantic_marker, semantic_check + semantic_marker, 'verify-prompt-semantics Stage 04 semantic check')
+          prompt_replacement = r'''// stage04-canonical-context-regression-v4
+{
+  const p=baseProject();
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  const sourceScope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'};
+  const source={id:'SOURCE-STAGE04-CANONICAL',stage:2,active:true,scope:{...sourceScope},fields:{SOURCE_ID:'SOURCE-STAGE04-CANONICAL',TITLE:'CANONICAL-SOURCE-MARKER'}};
+  const research={id:'RESEARCH-STAGE04-CANONICAL',stage:3,active:true,scope:{...sourceScope},fields:{RESEARCH_ID:'RESEARCH-STAGE04-CANONICAL',SOURCE_ID:'SOURCE-STAGE04-CANONICAL',SOURCE_EVIDENCE:'CANONICAL-RESEARCH-MARKER'},relationships:{SOURCE_ID:'SOURCE-STAGE04-CANONICAL'}};
+  const candidate={id:'CANDIDATE-REQ-STAGE04-CANONICAL',stage:3,active:true,scope:{...sourceScope},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-STAGE04-CANONICAL',SOURCE_ID:'SOURCE-STAGE04-CANONICAL',CANDIDATE_OBLIGATION:'CANONICAL-CANDIDATE-MARKER'},relationships:{SOURCE_ID:'SOURCE-STAGE04-CANONICAL'}};
+  p.projectData.sources.push(source);p.projectData.research.push(research);p.projectData.candidateRequirements.push(candidate);
+  const record=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['CANONICAL-SOURCE-MARKER','CANONICAL-RESEARCH-MARKER','CANONICAL-CANDIDATE-MARKER','Stage 04 is a compilation stage, not a second source-inspection or file-handoff stage','Do not request or re-inspect original project files merely because they appear in SUPPLIED_MATERIALS_INVENTORY','return BLOCKED with INADEQUATE_PRIOR_OUTPUT'])if(!record.prompt.includes(token))throw new Error('Stage 04 canonical-context prompt missing: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','The prompt does not include those materials','operator must attach or provide'])if(record.prompt.includes(prohibited))throw new Error('Stage 04 prompt still instructs original-material transport: '+prohibited);
+  if(record.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 original materials remain bound as a prompt handoff.');
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-OPTIONAL',stage:1,active:true,scope:{inputVersion:'INPUT-v001'},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-OPTIONAL',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  const withOptionalAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(withOptionalAppCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withOptionalAppCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Optional browser custody became a Stage 04 handoff requirement.');
+  const before=withOptionalAppCopy.contextSignature;
+  candidate.fields.CANDIDATE_OBLIGATION='CANONICAL-CANDIDATE-MARKER-REVISED';
+  const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(revised.contextSignature===before||!revised.prompt.includes('CANONICAL-CANDIDATE-MARKER-REVISED'))throw new Error('A changed accepted Stage 03 candidate obligation did not change Stage 04 prompt identity/context.');
+}
+console.log(JSON.stringify({stage04CanonicalContext:true}));'''
+          text = replace_section(text, '// stage04-stage-prompt-material-regression-v3', "console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));", prompt_replacement, 'verify-prompt-semantics Stage 04 regression')
+          write(path, text)
+
+          # Phone acceptance: one concise action, no Stage 04 file controls or transfer demand.
+          path = 'verify-browser.mjs'
+          text = read(path)
+          unique = "await fill(cdp,'[data-job=\"SUPPLIED_MATERIALS_INVENTORY\"]',JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]))"
+          point = text.find(unique)
+          if point < 0:
+              raise SystemExit('verify-browser Stage 04 setup marker not found')
+          browser_start = text.rfind(" await click(cdp,'[data-view=\"Project\"]');", 0, point)
+          browser_end = text.find('await setWidth(cdp,393);', point)
+          if browser_start < 0 or browser_end < 0:
+              raise SystemExit('verify-browser Stage 04 section boundary not found')
+          browser_end += len('await setWidth(cdp,393);')
+          browser_replacement = r''' await click(cdp,'[data-view="Project"]');await fill(cdp,'[data-job="SUPPLIED_MATERIALS_INVENTORY"]',JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]));await click(cdp,'#save-job');await waitExpr(cdp,`(async()=>{const p=await globalThis.closedLoopProjectStore.readAll();return p.some(x=>x.job?.JOB_ID==='${newest.job.JOB_ID}'&&String(x.job?.SUPPLIED_MATERIALS_INVENTORY||'').includes('design-input.pdf'));})()`,12000);await openStage(cdp,4);await setWidth(cdp,320);const stage04Snapshot=await snapshot(cdp);for(const token of ['The agent converts the accepted Stage 03 findings and current User Job Input into atomic, independently testable requirements.','Use the Stage 04 instruction as shown.','It already contains the accepted Stage 03 findings and current User Job Input needed for this stage.','When the agent finishes, paste only its final JSON response here.','Stage 04 is a compilation stage, not a second source-inspection or file-handoff stage.'])assert(stage04Snapshot.text.includes(token),`Stage 04 canonical-context UX missing ${token}.`);for(const prohibited of ['Send the Stage 04 instruction with the required material.','Attach or provide with the instruction: design-input.pdf.','The prompt does not include those materials.','MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Authorized files for this stage','Select exact files','Select structured package folder'])assert(!stage04Snapshot.text.includes(prohibited),`Stage 04 still shows an original-material or application-file handoff: ${prohibited}`);const stage04Layout=await evalValue(cdp,`(()=>({stageFiles:Boolean(document.querySelector('#stage-files')),stageDirectory:Boolean(document.querySelector('#stage-directory')),artifactPanel:[...document.querySelectorAll('h2.section-title')].some(x=>x.textContent.includes('Authorized files for this stage')),overflow:document.documentElement.scrollWidth>innerWidth+1}))()`);assert(stage04Layout&&!stage04Layout.stageFiles&&!stage04Layout.stageDirectory&&!stage04Layout.artifactPanel&&!stage04Layout.overflow,`Stage 04 canonical-context UI is ambiguous or overflows at 320px: ${JSON.stringify(stage04Layout)}`);await setWidth(cdp,393);'''
+          text = text[:browser_start] + browser_replacement + text[browser_end:]
+          write(path, text)
+
+          # Advance the shared runtime cache identity for the complete responsible module graph.
+          path = 'index.html'
+          text = read(path)
+          old_token = 'runtime-bec66cf2784e2a2b'
+          if text.count(old_token) != 8:
+              raise SystemExit(f'index.html: expected 8 shared runtime tokens, found {text.count(old_token)}')
+          text = text.replace(old_token, 'runtime-9e3db4a52d0f7c18')
+          write(path, text)
+          PY
+      - name: Rebuild retained fixture and run deterministic proofs
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Exercise the repaired operator path in Chromium
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-stage04-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit the tested minimal change
+        run: |
+          rm .github/workflows/apply-stage04-canonical-context.yml
+          rm .github/workflows/stage04-canonical-context-apply.yml
+          rm .github/workflows/stage04-canonical-context-apply-v2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Make Stage 04 use canonical context only [stage04-applied]"
+          git push origin HEAD:fix-stage04-canonical-context
