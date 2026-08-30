@@ -50,10 +50,11 @@ try{
     const reached=[];for(let stage=1;stage<=30;stage++){picker.value=String(stage);picker.dispatchEvent(new Event('change',{bubbles:true}));reached.push(Number(picker.value));}
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker cannot traverse all 30 stages in order.');
     const promptElement=document.querySelector('.prompt');if(!promptElement)throw new Error('Prompt display is missing.');
-    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\n');
-    if(!/\.prompt\s*\{[^}]*height:\s*clamp\(260px,\s*45vh,\s*520px\)/i.test(css))throw new Error('Prompt box base height changed from the restored baseline.');
-    if(!/\.expandable-prompt\s*\{[^}]*max-height:\s*280px/i.test(css))throw new Error('Prompt preview height changed from the restored baseline.');
-    if(/\.expandable-prompt\s*\{[^}]*max-height:\s*88px/i.test(css))throw new Error('Obsolete 88px prompt height returned.');
+    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\\n');
+    const compact=css.replace(/\\s+/g,' ');
+    if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
+    if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
+    if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
     return {stages:30,prompts:checked.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true};
   })()`);
   if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<30||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true)throw new Error('Sequential browser walkthrough did not establish the complete operator path.');
