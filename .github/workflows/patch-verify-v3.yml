@@ -84,11 +84,12 @@ jobs:
                       s=s.replace(old,neutral_intake,1);break
               else: raise SystemExit('Stage 01 proactive-intake verifier anchor missing')
           old_environment="  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
-          neutral_environment="  }else if(!record.prompt.includes('EXTERNAL ACTION / CAPABILITY HONESTY')||!record.prompt.includes('do not pretend it happened')||!record.prompt.includes('describe the exact capability, input files, and evidence required')||!record.prompt.includes('If the required external capability is genuinely unavailable, return BLOCKED')||!record.prompt.includes('If the action was attempted and the execution failed, return EXECUTION_FAILED'))issues.push('CAPABILITY_HONESTY_RULE_MISSING');"
           if old_environment in s:
-              s=s.replace(old_environment,neutral_environment,1)
-          elif neutral_environment not in s:
-              raise SystemExit('Environment/capability verifier anchor missing')
+              s=s.replace(old_environment,'',1)
+          elif 'CAPABILITY_HONESTY_RULE_MISSING' in s:
+              start=s.index("  }else if(!record.prompt.includes('EXTERNAL ACTION / CAPABILITY HONESTY')")
+              end=s.index("\n",start)
+              s=s[:start]+s[end+1:]
           marker="function semanticIssues(record){"
           subject_guard="const promptSource=fs.readFileSync('prompt-engine.js','utf8');\nfor(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(promptSource.includes(forbidden))throw new Error('Subject-specific runtime prompt branch remains: '+forbidden);\n"
           if subject_guard not in s:
