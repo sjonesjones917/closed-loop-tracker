@@ -63,7 +63,9 @@ try{
   console.log(JSON.stringify({humanStageWalkthrough:true,...result}));
 }finally{
   try{ws?.close();}catch{}
+  const exited=new Promise(resolve=>child.once('exit',resolve));
   child.kill('SIGKILL');
+  await Promise.race([exited,sleep(1200)]);
   await new Promise(r=>server.close(r));
-  fs.rmSync(profile,{recursive:true,force:true});
+  try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:100});}catch{}
 }
