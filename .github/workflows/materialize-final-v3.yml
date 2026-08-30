@@ -29,7 +29,8 @@ jobs:
         run: |
           set -euo pipefail
           SOURCE=371ea9e9fd53586f78aa838217cdd97a7c442d76
-          git fetch origin "$SOURCE"
+          git fetch origin fix/controlling-spec-final-20260830
+          git cat-file -e "$SOURCE^{commit}"
 
           node - <<'NODE'
           const fs=require('fs');
@@ -69,7 +70,6 @@ jobs:
           )
           git checkout "$SOURCE" -- "${files[@]}"
 
-          # The one-time workflow must not exist in the acceptance workspace or final production commit.
           rm -f .github/workflows/materialize-final-v3.yml
           rm -f .tmp-lifecycle-proof-refresh.mjs .tmp-*.mjs
 
@@ -100,7 +100,6 @@ jobs:
           node verify-full-cycle.mjs
           node build-test-project.mjs
 
-          # Restore the workflow in the index/working tree so this commit never attempts a workflow-token change.
           git checkout HEAD -- .github/workflows/materialize-final-v3.yml
           git add "${files[@]}"
           git status --short
