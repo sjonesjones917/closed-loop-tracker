@@ -27,10 +27,12 @@ p=Path('verify-bundle-v3.mjs'); t=p.read_text()
 needle="console.log('bundle-v3 acceptance: PASS');"
 addition="""
 {
-  const p=core.createBlankProject({jobId:'JOB-INTAKE-IDENTITY'});
+  const p=core.createBlankState();
+  p.job.JOB_ID='JOB-INTAKE-IDENTITY';
   p.job.EXACT_USER_OBJECTIVE_VERBATIM='same statement';
   p.job.EXPLICIT_USER_REQUIREMENTS='same statement';
   p.job.CURRENT_INPUT_VERSION='INPUT-v001';
+  engine.ensureShape(p);
   p.projectData.inputVersions=[{version:'INPUT-v001',payload:{EXACT_USER_OBJECTIVE_VERBATIM:'same statement',EXPLICIT_USER_REQUIREMENTS:'same statement'}}];
   const m=engine.currentIntakeCoverageManifest(p);
   assert.equal(m.units.length,2,'Identical text at two source locations must remain two controlled input units.');
