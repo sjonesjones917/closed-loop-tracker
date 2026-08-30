@@ -1,0 +1,34 @@
+name: Repair required status check name
+on:
+  push:
+    branches:
+      - finish/closed-loop-live-20260830
+    paths:
+      - .github/workflows/repair-required-check.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/closed-loop-live-20260830
+      - name: Align PR job with protected main required check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml')
+          s=p.read_text()
+          old='  verify:\n    name: verify\n'
+          new='  verify:\n    name: test\n'
+          if old not in s:
+              raise SystemExit('verify job name marker not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/repair-required-check.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add .github/workflows/pages.yml .github/workflows/repair-required-check.yml
+          git commit -m "Align Pages verification job with required test check"
+          git push origin HEAD:finish/closed-loop-live-20260830
