@@ -527,7 +527,7 @@ function recalculate(project){
   project.job.INPUT_SET_HASH_OR_MANIFEST=intakeCoverageManifest(project).manifestSha256;
   let previousComplete=true;
   for(let stage=1;stage<=30;stage++){
-    const state=project.stages[stage];
+    let state=project.stages[stage];
     if(!previousComplete){
       const prerequisite=`Stage ${String(stage-1).padStart(2,'0')} is not complete.`;
       state.status='NOT STARTED';
@@ -538,6 +538,8 @@ function recalculate(project){
       continue;
     }
     const wasComplete=state.status==='COMPLETE',result=gate(stage,project);
+    // gate() normalizes project shape and may replace stage objects; always mutate the current canonical object.
+    state=project.stages[stage];
     state.gate=result;
     if(result.blocked){state.status='BLOCKED';}
     else if(result.complete){state.status='COMPLETE';}
