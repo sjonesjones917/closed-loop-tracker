@@ -63,3 +63,5 @@ for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(c
 process.exit(0);
 
 process.exit(0);
+
+process.exit(0);
