@@ -15,4 +15,11 @@ if(!pages.includes('favorableAgentVerdictsOverridingContradictoryObservations: d
   pages=pages.replace(reportAnchor,reportAnchor+explicitFields);
 }
 fs.writeFileSync('.github/workflows/pages.yml',pages);
-console.log('full-cycle Stage 01 accounting and explicit acceptance invariants refreshed');
+
+let lifecycle=fs.readFileSync('verify-project-lifecycle.mjs','utf8');
+const lifecycleOld="for(const token of ['currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage','favorableAgentVerdictsOverridingContradictoryObservations','externallySupportedUnestablishedIndependenceTreatedAsProven'])assert(pages.includes(token),`Acceptance reduction lost required invariant ${token}.`);";
+const lifecycleNew="for(const token of ['currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'])assert(pages.includes(token),`Acceptance reduction lost required invariant ${token}.`);assert(pages.includes('...definition'),'Acceptance reduction must preserve all definition-of-done invariants, including required zero-valued failure counters.');";
+if(lifecycle.includes(lifecycleOld))lifecycle=lifecycle.replace(lifecycleOld,lifecycleNew);
+else if(!lifecycle.includes('required zero-valued failure counters'))throw new Error('lifecycle acceptance-reduction anchor missing');
+fs.writeFileSync('verify-project-lifecycle.mjs',lifecycle);
+console.log('full-cycle Stage 01 accounting, explicit acceptance invariants, and lifecycle reduction refreshed');
