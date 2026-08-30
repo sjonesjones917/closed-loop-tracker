@@ -1,0 +1,98 @@
+name: Minimal Stage 4 retained-intent repair final
+on:
+  push:
+    branches: [fix/stage4-durable-intent-final-20260830]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.event.head_commit.message != 'Fix Stage 4 durable human-intent reuse'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-durable-intent-final-20260830
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimal repair
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="  if(!config)return null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          new="  if(!config)return null;\n  if(Number(stage)===1)return safe(project.projectData.inputVersions).at(-1)||null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          if old not in s: raise SystemExit('Stage 01 version marker missing')
+          s=s.replace(old,new,1)
+          fn=s.index('function executionHandoff('); start=s.index('  if(stage===4){',fn); end=s.index('  for(const item of items)',start)
+          s=s[:start]+"  // Stage 04 consumes retained canonical human authority; material names remain provenance only.\n"+s[end:]
+          old="if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}"
+          new="if(stage===4)return 'Use the current Stage 04 instruction. The application supplies retained human-authority input and accepted Stage 01/03 context; do not resend the original intent file merely because its filename is recorded. When the agent finishes, paste its final JSON response here.';"
+          if old not in s: raise SystemExit('Stage 04 action marker missing')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",1)
+          start=s.index("\n4:'")+1; end=s.index("\n5:'",start)
+          text="Compile atomic requirement proposals only from the complete application-supplied Stage 04 obligation universe: current User Job Input, accepted Stage 01 job definition, human-origin obligations already captured from supplied material, accepted Stage 03 source research, candidate external-source obligations, and applicable source identities/evidence. The application owns input selection, stable obligation identities, provenance, current scope, and accounting completeness. Do not rediscover an unspecified input universe. Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file or any other material merely because a filename or material reference is present in SUPPLIED_MATERIALS_INVENTORY; those references are provenance and the captured human-authority information already present in canonical context controls this stage. Request original bytes only when the current Stage 04 context explicitly identifies a genuinely unresolved byte-dependent obligation that was not previously captured and whose substantive meaning cannot be established from canonical context; otherwise no Stage 04 file handoff exists. For every application-enumerated obligation, produce one or more atomic requirements or an explicit retained-nonnormative, inapplicable-with-reason, or blocked-with-reason disposition as required by the current response contract. No obligation may disappear. Preserve every original obligation identity independently even when multiple materially equivalent obligations map to one requirement. Each proposed requirement must be independently testable where possible and record requirement type, mandatory/optional status, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, provenance, and notes. The application assigns REQ_ID, versions, hashes, counts, scope, and gate status; do not assign them. Do not derive requirements from target-product behavior merely because it exists."
+          s=s[:start]+"4:"+json.dumps(text)+","+s[end:]
+          # Bind human authority itself into context identity; this is the missing one-line identity correction.
+          old="contextManifest={stage,operation,scope,verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
+          new="contextManifest={stage,operation,scope,humanInputSha256:hash.sha256Value(Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,d])=>d?.producer==='HUMAN').map(([name])=>[name,state?.job?.[name]??null]))),verificationBatchPlan:batchPlan,executionHandoff:promptHandoff,readCollections:"
+          if old not in s: raise SystemExit('context manifest marker missing')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('app-core.js'); s=p.read_text(); marker="function artifactControlMarkup(n,locked){if(n===19)return"
+          if marker not in s: raise SystemExit('artifact UI marker missing')
+          p.write_text(s.replace(marker,"function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)return",1))
+
+          # Replace only the obsolete Stage 04 repeated-file-transfer regressions.
+          for filename in ['verify-complete.mjs','verify-prompt-semantics.mjs']:
+            p=Path(filename); s=p.read_text(); start=s.index('// stage04-stage-prompt-material-regression-v3'); end=s.index("console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));",start)+len("console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));")
+            if filename=='verify-complete.mjs':
+              replacement="""// stage04-retained-human-authority-regression-v4
+{
+ const p=project('JOB-STAGE04-RETAINED-INTENT'); p.job.SUPPLIED_MATERIALS_INVENTORY='design-input.pdf'; p.job.EXACT_USER_OBJECTIVE_VERBATIM='Use the already supplied design intent.';
+ const before=p.job.CURRENT_INPUT_VERSION; engine.registerStageVersion(p,1,'CHANGE-STAGE01-INTERPRETATION'); assert(p.job.CURRENT_INPUT_VERSION===before,'Stage 01 agent interpretation changed human-input version.');
+ const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'}); assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 recreated input-file handoff.');
+ const prompt=globalThis.closedLoopPromptEngine.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt; assert(prompt.includes('design-input.pdf'),'Stage 04 lost retained provenance.'); assert(!prompt.includes('MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION'),'Stage 04 still emits repeated handoff.');
+}
+console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
+            else:
+              replacement="""// stage04-retained-human-authority-regression-v4
+{
+ const p=baseProject(); p.job.SUPPLIED_MATERIALS_INVENTORY='design-input.pdf'; const retained=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+ for(const token of ['design-input.pdf','complete application-supplied Stage 04 obligation universe','Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file'])if(!retained.prompt.includes(token))throw new Error('Stage 04 retained-input contract missing: '+token);
+ if(retained.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 material reacquisition remains in context.');
+ p.job.SUPPLIED_MATERIALS_INVENTORY='revised-design-input.pdf'; const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'}); if(revised.bodySha256===retained.bodySha256||revised.contextSignature===retained.contextSignature)throw new Error('Changed human material did not change Stage 04 prompt identity.');
+}
+console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
+            p.write_text(s[:start]+replacement+s[end:])
+          PY
+      - name: Run complete existing proof
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Run browser acceptance
+        run: node verify-browser.mjs
+      - name: Commit proven repair only
+        run: |
+          rm -f .github/workflows/repair-stage4-durable-intent.yml .github/workflows/repair-stage4-minimal-final.yml .github/workflows/diagnose-stage4-repair.yml .github/workflows/diagnose-stage4-tests.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Fix Stage 4 durable human-intent reuse'
+          git push origin HEAD:fix/stage4-durable-intent-final-20260830
