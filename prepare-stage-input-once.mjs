@@ -14,6 +14,10 @@ source=source.replaceAll(
   'It is the canonical later-stage intake representation; later stages must not reopen or request the original material.',
   'It is the canonical later-stage intake representation; later stages must not reopen or request the original material. Do not turn it into a Stage 02 archive/file inventory.'
 );
+source=source.replaceAll(
+  "'Stage 03 obligation sentinel','no original intake file is required or used'",
+  "'Stage 03 obligation sentinel','The original human-supplied intent file or other intake material must not be requested, consumed, attached, sent, reselected, reopened, or reused'"
+);
 fs.writeFileSync(file,source);
 
 const promptTestFile='verify-prompt-semantics.mjs';
