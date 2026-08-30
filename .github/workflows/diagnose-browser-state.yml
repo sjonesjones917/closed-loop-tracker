@@ -1,0 +1,30 @@
+name: Diagnose retained browser state
+'on':
+  push:
+    branches: [fix/stage06-authoring-contract-final]
+    paths: ['.github/workflows/diagnose-browser-state.yml']
+permissions: {contents: read}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/stage06-authoring-contract-final}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Print exact retained browser state at failing assertion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs');s=p.read_text()
+          old="assert(retained.stages['1'].status==='COMPLETE'&&Number(retained.job.CURRENT_STAGE)===2,'Retained Stage 01/02 state is wrong.');"
+          new="assert(retained.stages['1'].status==='COMPLETE'&&Number(retained.job.CURRENT_STAGE)===2,`Retained Stage 01/02 state is wrong: ${JSON.stringify({stage1:retained.stages['1'],currentStage:retained.job.CURRENT_STAGE,currentState:retained.job.CURRENT_STATE})}`);"
+          if old not in s: raise SystemExit('diagnostic assertion anchor missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
