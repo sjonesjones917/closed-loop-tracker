@@ -145,7 +145,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Exact deployed-byte verification
+      - name: Verify exact deployed source identity
         run: node verify-live.mjs
       - name: Deployed Chromium
         run: |
