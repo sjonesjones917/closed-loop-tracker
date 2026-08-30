@@ -28,7 +28,7 @@ assert.match(schema,/closed-loop-project\/3/,'project schema /3 is required');
 assert.match(schema,/closed-loop-stage-response\/3/,'response schema /3 is required');
 assert.match(schema,/closed-loop-test-spec\/1/,'Test IR schema /1 is required');
 assert.match(schema,/closed-loop-verification-package\/1/,'verification-package schema /1 is required');
-assert.match(schema,/EXECUTABLE_KIND[^\n]{0,1000}(?:NONE[^\n]{0,500}TEST_IR|TEST_IR[^\n]{0,500}NONE)/,'active executable contract must define NONE and TEST_IR');
+assert.match(schema,/fields\.EXECUTABLE_KIND='NONE'/,'schema migration/default path must define NONE as the non-executable state');
 assert.doesNotMatch(schema,/enumValues\s*:\s*\[[^\]]*CUSTOM_PIPELINE[^\]]*\]/,'CUSTOM_PIPELINE cannot remain an active executable enum member');
 assert.match(schema,/fields\.EXECUTABLE_KIND==='CUSTOM_PIPELINE'[^\n]*fields\.EXECUTABLE_KIND='TEST_IR'/,'historical CUSTOM_PIPELINE records must migrate deterministically to TEST_IR');
 assert.match(schema,/\bTEST_IR\b/,'TEST_IR executable kind is required');
