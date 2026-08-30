@@ -5,6 +5,7 @@ p=Path('prompt-engine.js')
 t=p.read_text()
 t=t.replace('Build only the independent external-source inventory for the already-defined current job.', 'Build only the inventory of independent external sources for the already-defined current job.', 1)
 t=t.replace('Research only the current accepted Stage 02 independent external source universe supplied in this prompt.', 'Research only the current accepted Stage 02 independent external source set supplied in this prompt.', 1)
+t=t.replace('accepted Stage 03 research and candidate external-source obligations', 'accepted Stage 03 findings, including research and candidate external-source obligations', 1)
 needle='Process every obligationId exactly once. Map each obligation to one or more atomic independently testable requirements, or explicitly dispose it as retained nonnormative context, inapplicable with reason, or blocked with reason.'
 replacement='Process every obligationId exactly once. No obligation may disappear. Map each obligation to one or more atomic independently testable requirements, or explicitly dispose it as retained nonnormative context, inapplicable with reason, or blocked with reason.'
 if needle not in t: raise SystemExit('Expected Stage 04 obligation procedure text not found')
