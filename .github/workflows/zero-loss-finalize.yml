@@ -21,29 +21,32 @@ jobs:
           python3 tools/zero_loss_finalize.py
           python3 tools/fix_zero_loss_test.py
       - name: Run focused and existing regressions
-        shell: bash
         run: |
-          set +e
-          {
-            node --check workbook.js
-            node --check workflow-schema.js
-            node --check workflow-engine.js
-            node --check prompt-engine.js
-            node --check response-ingestion.js
-            node verify-zero-loss-final.mjs
-            node verify-capture-once.mjs
-            node verify-followup-spec.mjs
-            node verify-test-runtime.mjs
-            node verify-ingestion.mjs
-            node verify-prompt-semantics.mjs
-          } > zero-loss-test-output.txt 2>&1
-          echo $? > zero-loss-test-status.txt
-          exit 0
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zero-loss-diagnostic
-          path: |
-            zero-loss-test-output.txt
-            zero-loss-test-status.txt
-      - name: Stop before commit for diagnostic
-        run: exit 1
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node verify-zero-loss-final.mjs
+          node verify-capture-once.mjs
+          node verify-followup-spec.mjs
+          node verify-test-runtime.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit integrated implementation and remove all one-time repair machinery
+        run: |
+          git config user.name "closed-loop-zero-loss"
+          git config user.email "actions@users.noreply.github.com"
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-zero-loss-final.mjs
+          for f in \
+            tools/zero_loss_finalize.py \
+            tools/fix_zero_loss_test.py \
+            .github/workflows/zero-loss-finalize.yml \
+            .github/workflows/apply-controlling-spec-fix.yml \
+            .github/workflows/apply-followup-spec-fix.yml \
+            tools/apply-controlling-spec-fix.py \
+            tools/apply-followup-spec-fix.py; do
+            if [ -e "$f" ]; then git rm "$f"; fi
+          done
+          git commit -m "Complete zero-loss Stage 1-4 handoff [zero-loss-applied]"
+          git push origin HEAD:fix/closed-loop-v3-zero-loss-final
