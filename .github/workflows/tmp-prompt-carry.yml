@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {ref: fix/controlling-spec3-complete}
-      - name: Patch prompt and prove
+      - name: Patch prompt and prove current Stage 1 and 4 semantics
         run: |
           python3 <<'PY'
           from pathlib import Path
