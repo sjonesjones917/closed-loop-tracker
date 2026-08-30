@@ -1,0 +1,83 @@
+name: Apply mobile stage-action repair
+on:
+  push:
+    branches: [repair/mobile-stage-action-overflow-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/mobile-stage-action-overflow-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch the established UI and permanent Pages proof
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index = Path('index.html')
+          text = index.read_text()
+          marker = '/* Permanent regression repair: mobile stage actions and long handoff identities must remain readable. */'
+          css = r'''
+
+          /* Permanent regression repair: mobile stage actions and long handoff identities must remain readable. */
+          .screen>*{min-width:0;max-width:100%}
+          .stage-hero>.stage-action-strip{display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:start;gap:6px;width:100%;min-width:0}
+          .stage-hero>.stage-action-strip>span{display:block;width:100%;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+          .stage-hero>.stage-action-strip>span:first-child::before{content:'Current state: ';font-weight:850;color:var(--ink)}
+          .stage-hero>.stage-action-strip>span:last-child::before{content:'Next: ';font-weight:850;color:var(--ink)}
+          .notice,.section-intro,.record-value,.prompt-meta,.field .help{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+          @media(max-width:620px){
+            .stage-hero>.stage-action-strip{grid-template-columns:minmax(0,1fr)}
+            .stage-hero>.stage-action-strip>span:first-child{white-space:normal}
+            #prompt-heading .expandable-prompt:not(.expanded){max-height:88px}
+            .file-button,.button-row button,.header-actions button{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+          }
+          '''
+          if marker not in text:
+              if text.count('</style>') != 1:
+                  raise SystemExit('index.html does not have one unambiguous style terminator')
+              text = text.replace('</style>', css + '</style>', 1)
+              index.write_text(text)
+
+          workflow = Path('.github/workflows/pages.yml')
+          text = workflow.read_text()
+          syntax_line = '          node --check verify-mobile-stage-action.mjs\n'
+          if syntax_line not in text:
+              anchor = '          node --check verify-browser-extra.mjs\n'
+              if text.count(anchor) != 1:
+                  raise SystemExit('Pages syntax-check anchor changed')
+              text = text.replace(anchor, anchor + syntax_line, 1)
+          run_line = '          run_browser_verifier verify-mobile-stage-action.mjs\n'
+          if text.count(run_line) != 2:
+              anchor = '          run_browser_verifier verify-browser-extra.mjs\n'
+              if text.count(anchor) != 2:
+                  raise SystemExit('Pages browser-run anchors changed')
+              text = text.replace(anchor, anchor + run_line)
+          workflow.write_text(text)
+          PY
+      - name: Prove the photographed failure is repaired before committing
+        run: |
+          node --check verify-mobile-stage-action.mjs
+          node verify-hash.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/mobile-stage-action-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-mobile-stage-action.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only the integrated repair and remove this one-time workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/apply-mobile-stage-action.yml
+          git add index.html .github/workflows/pages.yml verify-mobile-stage-action.mjs
+          git commit -m 'Repair unusable mobile stage action and lock regression'
+          git push origin HEAD:repair/mobile-stage-action-overflow-20260830
