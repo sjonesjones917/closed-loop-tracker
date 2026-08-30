@@ -27,7 +27,6 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
   'BLOCKING_NOW',
   'ASK_NOW_NONBLOCKING',
   'LATER_RESOLVABLE',
-  'classify every supplied unit exactly once',
   'humanInputRequestContract',
   'temporaryKey',
   'whyRequired',
@@ -36,6 +35,7 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
   'allowedValues',
   'Do not invent requestKey, required, whyNeeded, expectedAnswer'
  ])if(!r.prompt.includes(token))throw new Error('Stage 01 subject-neutral patent fixture is missing generic intake behavior or actual fixture context: '+token);
+ if(!/classify every supplied unit exactly once/i.test(r.prompt))throw new Error('Stage 01 subject-neutral fixture does not require exactly-once supplied-unit classification.');
  if(!/derive the complete foreseeable set of (?:genuinely )?human-only questions from the actual (?:user|project) request, accessible supplied materials, and current canonical context/i.test(r.prompt))throw new Error('Stage 01 subject-neutral fixture does not derive human-only questions from actual project context.');
  const source=fs.readFileSync('prompt-engine.js','utf8');
  for(const forbidden of ['PATENT / REGULATED FILING','intended jurisdiction(s)','filing route or application type','inventor identity','government funding','joint-research circumstances'])if(source.includes(forbidden))throw new Error('Patent fixture leaked into the runtime prompt engine as a project-subject branch: '+forbidden);
@@ -46,5 +46,5 @@ text=text[:a]+replacement+text[b:]
 
 # Actual one-time capture is proven separately by verify-intake-obligation-accounting.mjs,
 # which requires originalIntentFileReattachmentRequired=false and an empty Stage 04 intent-file handoff.
-# This fixture tests subject-neutral Stage 01 intake behavior without depending on one prose sentence.
+# This fixture tests subject-neutral Stage 01 intake behavior without depending on capitalization or one prose sentence.
 p.write_text(text)
