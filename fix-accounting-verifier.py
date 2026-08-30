@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 p = Path('verify-intake-obligation-accounting.mjs')
 text = p.read_text()
@@ -32,15 +33,25 @@ new = "assert(Array.isArray(handoff.send)&&handoff.send.length===0,'Stage 04 sti
 if old not in text:
     raise SystemExit('Stage 04 handoff regression anchor missing')
 text = text.replace(old, new, 1)
-
 p.write_text(text)
 
-# The exhaustive verifier must distinguish an explicit prohibition from an affirmative reattachment instruction.
+# Distinguish the prompt's explicit prohibition from an affirmative instruction to reattach.
 p = Path('verify-exhaustive-stage1-stage3-stage4.mjs')
 text = p.read_text()
-old = "assert.doesNotMatch(stage4.body,/attach the original intent file again/i);"
-new = "assert.match(stage4.body,/(?:do not|never)[^\\n]{0,160}(?:attach|re-attach|reattach)[^\\n]{0,120}original intent file/i,'Stage 04 must explicitly prohibit asking for the original intent file again.');"
-if old not in text:
-    raise SystemExit('Stage 04 exhaustive no-reattach assertion anchor missing')
-text = text.replace(old, new, 1)
-p.write_text(text)
+pattern = r"assert\.doesNotMatch\(stage4\.body\s*,\s*/[^;\n]*original intent file[^;\n]*/i\s*(?:,[^;\n]*)?\);"
+replacement = "assert.match(stage4.body,/(?:do not|never)[^\\n]{0,220}(?:attach|re-attach|reattach|re-supply|resupply)[^\\n]{0,180}original intent file|(?:do not|never)[^\\n]{0,220}original intent file[^\\n]{0,180}(?:attach|re-attach|reattach|re-supply|resupply)/i,'Stage 04 must explicitly prohibit requesting the original intent file again.');"
+text2, count = re.subn(pattern, replacement, text, count=1)
+if count != 1:
+    # Fallback for the exact historical assertion shape, regardless of spacing or regex prefix text.
+    lines = text.splitlines()
+    replaced = False
+    for i, line in enumerate(lines):
+        if 'assert.doesNotMatch(stage4.body' in line and 'original intent file' in line:
+            indent = line[:len(line)-len(line.lstrip())]
+            lines[i] = indent + replacement
+            replaced = True
+            break
+    if not replaced:
+        raise SystemExit('Stage 04 exhaustive no-reattach assertion not found')
+    text2 = '\n'.join(lines) + ('\n' if text.endswith('\n') else '')
+p.write_text(text2)
