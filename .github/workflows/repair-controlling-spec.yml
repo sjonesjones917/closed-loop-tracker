@@ -91,6 +91,15 @@ jobs:
           NODE
           node <<'NODE'
           const fs=require('fs');
+          let proof=fs.readFileSync('verify-definition-of-done.mjs','utf8');
+          const old="assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');";
+          const current="assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Schema identity changed.');";
+          if(!proof.includes(old))throw new Error('Legacy /2 definition-of-done assertion anchor missing.');
+          proof=proof.replace(old,current);
+          fs.writeFileSync('verify-definition-of-done.mjs',proof);
+          NODE
+          node <<'NODE'
+          const fs=require('fs');
           let html=fs.readFileSync('index.html','utf8');
           html=html.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src");
           if(!html.includes('test-runtime.js'))html=html.replace(/(<script\s+defer\s+src=\"workflow-schema\.js\?v=[^\"]+\"\s*><\/script>)/, '$1\n<script defer src="test-runtime.js?v=controlling-v3-20260830"></script>');
@@ -99,13 +108,6 @@ jobs:
           const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
           if(style!==fs.readFileSync('/tmp/visual-style-baseline.txt','utf8'))throw new Error('Visual stylesheet changed.');
           NODE
-          cat > verify-user-prompt-invariants.mjs <<'EOF'
-          import fs from 'node:fs';import vm from 'node:vm';
-          const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
-          const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;p=core.createBlankState('JOB-PROMPT-EXHAUSTION');
-          EOF
-          rm -f verify-user-prompt-invariants.mjs
           rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml
           node --check workbook.js
           node --check app-core.js
