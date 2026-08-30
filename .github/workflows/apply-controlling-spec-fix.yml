@@ -1,0 +1,105 @@
+name: Apply controlling spec fix
+
+on:
+  push:
+    branches:
+      - fix/controlling-spec-capture-once
+    paths:
+      - tools/apply-controlling-spec-fix.py
+      - .github/workflows/apply-controlling-spec-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Correct repair-script contract details
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/apply-controlling-spec-fix.py')
+          s=p.read_text(encoding='utf-8')
+
+          old="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS'"
+          new="'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS'"
+          if old not in s:
+              raise SystemExit('repair script missing Test IR record-field patch anchor')
+          s=s.replace(old,new,1)
+
+          old="EXECUTABLE_KIND = ${schema.TEST_IR.version if False else 'TEST_IR'}, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS."
+          # The literal prompt source does not contain Python interpolation; patch the JS text directly.
+          literal="EXECUTABLE_KIND = TEST_IR, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS."
+          replacement="EXECUTABLE_KIND = TEST_IR, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS. The application stamps EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version} and the canonical executable-spec SHA-256 after validated ingestion."
+          # Add this replacement operation to the repair script after its global CUSTOM_PIPELINE rename.
+          anchor="s = s.replace('CUSTOM_PIPELINE', 'TEST_IR')\n"
+          if anchor not in s:
+              raise SystemExit('repair script missing prompt Test IR anchor')
+          s=s.replace(anchor,anchor+f"s = s.replace({literal!r}, {replacement!r})\n",1)
+
+          # The additional field-type definitions must use actual schema type strings, not properties on VALUE_TYPES.
+          s=s.replace("valueType:VALUE_TYPES.STRING_ARRAY", "valueType:'STRING_ARRAY'")
+          s=s.replace("valueType:VALUE_TYPES.STRING", "valueType:'STRING'")
+          s=s.replace("valueType:VALUE_TYPES.OBJECT", "valueType:'OBJECT'")
+          s=s.replace("valueType:VALUE_TYPES.ENUM", "valueType:'STRING'")
+
+          # Ensure application-owned Test IR version/hash are stamped into canonical proposed tests.
+          needle="  for(const [collection,proposed] of Object.entries(envelope.records||{})){\n"
+          if needle not in s:
+              raise SystemExit('repair script missing ingestion insertion anchor')
+          # Append a patch operation to response-ingestion processing after canonicalRecords are assembled.
+          target="  for(const record of canonicalRecords.tests||[]){\n"
+          insertion="  for(const record of canonicalRecords.tests||[]){\n    record.fields=record.fields||{};\n    record.fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;\n    record.fields.EXECUTABLE_SPEC_SHA256=String(record.fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'?hash.sha256Value(record.fields.EXECUTABLE_SPEC):null;\n  }\n\n"
+          # Insert through a repair-script transformation immediately before canonical relationship validation.
+          patch_anchor="# response-ingestion.js: enforce intake/obligation closure before proposal planning.\np = 'response-ingestion.js'\ns = read(p)\n"
+          if patch_anchor not in s:
+              raise SystemExit('repair script missing response-ingestion section')
+          patch_code=("# Stamp application-owned Test IR identity after proposal record construction.\n"
+                      "stamp_anchor = '  for(const [collection,proposed] of Object.entries(envelope.records||{})){\\n'\n"
+                      "# The proposal loop itself is left intact; stamp just before relationship validation.\n"
+                      "relationship_anchor = '  const relationshipIssues=[];'\n"
+                      "if relationship_anchor in s:\n"
+                      "    s = s.replace(relationship_anchor, " + repr(insertion) + " + relationship_anchor, 1)\n")
+          s=s.replace(patch_anchor,patch_anchor+patch_code,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Apply repair
+        run: python3 tools/apply-controlling-spec-fix.py
+
+      - name: Syntax and capture-once proof
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-capture-once.mjs
+
+      - name: Commit repaired tree
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Implement capture-once Stage 4 and /3 controlling contracts"
+          git push origin HEAD:${GITHUB_REF_NAME}
