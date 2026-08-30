@@ -49,6 +49,14 @@ jobs:
           elif new not in s:
               raise SystemExit('runtime identity verifier anchor missing')
           p.write_text(s)
+
+          p=Path('verify-complete.mjs')
+          s=p.read_text()
+          if "EXECUTABLE_KIND:'CUSTOM_PIPELINE'" in s:
+              s=s.replace("EXECUTABLE_KIND:'CUSTOM_PIPELINE'","EXECUTABLE_KIND:'TEST_IR'")
+          if "EXECUTABLE_KIND:'CUSTOM_PIPELINE'" in s:
+              raise SystemExit('stale CUSTOM_PIPELINE remains in verify-complete.mjs')
+          p.write_text(s)
           PY
       - name: Refresh exact runtime build identity
         run: |
