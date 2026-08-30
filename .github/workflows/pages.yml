@@ -1,57 +1,167 @@
-name: Verify and materialize controlling-spec repair
+name: Verify and deploy the single reliability app
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 permissions:
   contents: write
+  pages: write
+  id-token: write
+  statuses: write
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply audited source materializer
-        shell: python
+      - name: Syntax
         run: |
-          import pathlib, subprocess
-          source=pathlib.Path('.github/workflows/spec-conformance-materializer.yml').read_text()
-          marker="      - name: Apply controlling specification repair\n        shell: bash\n        run: |\n"
-          start=source.index(marker)+len(marker)
-          end=source.index("      - name: Syntax and focused conformance proof",start)
-          body='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())+'\n'
-          a=body.index('          // Pages CI must execute') if '          // Pages CI must execute' in body else body.index('// Pages CI must execute')
-          b=body.index('          // The materializer must not survive',a) if '          // The materializer must not survive' in body else body.index('// The materializer must not survive',a)
-          body=body[:a]+body[b:]
-          pathlib.Path('/tmp/materialize.sh').write_text(body)
-          subprocess.run(['bash','/tmp/materialize.sh'],check=True)
-          subprocess.run(['node','.github/spec-postfix.cjs'],check=True)
-      - name: Focused conformance proof before source commit
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$f"; done
+          for f in build-test-project.mjs test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-controlling-spec.mjs verify-browser.mjs verify-browser-extra.mjs verify-live.mjs; do node --check "$f"; done
+      - name: Schema, ownership, migration and controlling specification
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node --check verify-controlling-spec.mjs
+          node build-test-project.mjs
+          node verify-controlling-spec.mjs
+          node verify-hash.mjs
+          node verify.mjs
+      - name: Test IR validation, security and deterministic runtime
+        run: node verify-test-runtime.mjs
+      - name: Ingestion and atomicity
+        run: |
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Workflow gates and full cycle
+        run: node verify-full-cycle.mjs
+      - name: Prompt semantics, neutrality and leakage
+        run: node verify-prompt-semantics.mjs
+      - name: Semantic false-acceptance invariant
+        run: node verify-semantic-invariant.mjs
+      - name: Definition-of-done coverage
+        run: node verify-definition-of-done.mjs
+      - name: Project lifecycle and persistence controls
+        run: node verify-project-lifecycle.mjs
+      - name: Architecture invariants
+        run: |
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -o -iname '*materializer*' -o -iname '*runner*' | head -1)"
+          ! grep -R "document.write\|MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(m=>m[1]);
+          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} runtime scripts; found ${src.length}`);
+          const tokens=new Set();
+          expected.forEach((file,i)=>{if(src[i].split('?')[0]!==file)throw new Error(`Wrong runtime order at ${file}`);const token=new URLSearchParams(src[i].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} lacks shared cache identity`);tokens.add(token);});
+          if(tokens.size!==1)throw new Error('Mixed runtime cache identities');
+          if(!/worker-src 'self'/.test(html))throw new Error('CSP does not permit only the required same-origin worker');
+          if(/max-height\s*:\s*88px/.test(html))throw new Error('Prompt box visual regression returned');
+          NODE
+      - name: Local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: test
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  verify-live:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact deployed bytes
+        run: node verify-live.mjs
+      - name: Deployed Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+  publish-status:
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require complete deployed proof
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
+        run: |
+          test "$TEST_RESULT" = success
+          test "$DEPLOY_RESULT" = success
+          test "$LIVE_RESULT" = success
           node verify-controlling-spec.mjs
           node verify-test-runtime.mjs
-          node verify-prompt-semantics.mjs
-      - name: Commit verified non-workflow source to PR branch
-        shell: bash
+          node verify-ingestion.mjs > /tmp/ingestion.out
+          node verify-definition-of-done.mjs > /tmp/dod.out
+          node - <<'NODE'
+          const fs=require('fs');
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            exactDeployedByteVerification:true,
+            deployedChromiumAcceptance:true,
+            productionMaturityClaim:false,
+            note:'Functional acceptance artifact. Full production maturity additionally requires the real-project and actual Android Chrome evidence defined by the controlling specification.'
+          };
+          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: closed-loop-acceptance.json
+      - name: Tag exact accepted commit
         run: |
-          git config user.name closed-loop-spec-repair
+          tag="accepted-${GITHUB_SHA::12}"
+          git config user.name closed-loop-release
           git config user.email actions@users.noreply.github.com
-          git add -A
-          git reset -- .github/workflows .github/spec-postfix.cjs
-          git diff --cached --check
-          git commit -m "Align runtime with controlling project-neutral /3 specification"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git tag -f "$tag" "$GITHUB_SHA"
+          git push -f origin "$tag"
