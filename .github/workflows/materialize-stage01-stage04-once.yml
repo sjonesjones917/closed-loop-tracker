@@ -8,7 +8,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   materialize:
@@ -128,7 +128,7 @@ jobs:
           node verify-v3-definition-of-done.mjs
           node verify-project-lifecycle.mjs
           git diff --check
-      - name: Commit permanent verified implementation
+      - name: Commit permanent verified implementation locally
         shell: bash
         run: |
           set -euo pipefail
@@ -137,4 +137,13 @@ jobs:
           git add -A
           git diff --cached --check
           git commit -m 'Close Stage 01 intake and Stage 04 obligation accounting'
-          git push origin HEAD:implementation/closed-loop-v3
+          git bundle create closed-loop-materialized.bundle HEAD
+          git format-patch -1 --stdout > closed-loop-materialized.patch
+      - name: Upload verified materialized commit
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-materialized-${{ github.sha }}
+          path: |
+            closed-loop-materialized.bundle
+            closed-loop-materialized.patch
+          if-no-files-found: error
