@@ -1,0 +1,16 @@
+===== workbook.js =====
+===== workflow-schema.js =====
+===== workflow-engine.js =====
+===== prompt-engine.js =====
+===== response-ingestion.js =====
+===== test-runtime.js =====
+/home/runner/work/closed-loop-tracker/closed-loop-tracker/test-runtime.js:32
+function selectXml(value,path){const text=String(path||'').trim();if(!/^/[A-Za-z_][\w.-]*(?:/[A-Za-z_][\w.-]*)*$/.test(text))throw new Error('SELECT_XML supports only absolute child-element selectors.');let nodes=[value.documentElement];const parts=text.split('/').filter(Boolean);if(!nodes[0]||nodes[0].tagName!==parts[0])return [];for(const name of parts.slice(1))nodes=nodes.flatMap(n=>Array.from(n.children||[]).filter(c=>c.tagName===name));return nodes;}
+                                                                                   ^
+
+SyntaxError: Invalid or unexpected token
+    at wrapSafe (node:internal/modules/cjs/loader:1713:18)
+    at checkSyntax (node:internal/main/check_syntax:78:3)
+
+Node.js v22.23.2
+===== app-core.js =====
