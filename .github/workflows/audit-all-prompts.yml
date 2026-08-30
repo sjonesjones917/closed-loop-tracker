@@ -1,0 +1,42 @@
+name: Audit all prompt contracts
+on:
+  push:
+    branches: [fix/stage01-intake-closure-20260830]
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Dump all stage and operation prompt contracts
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js']) vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          const p=core.createBlankState('JOB-PROMPT-AUDIT');
+          Object.assign(p.job,{JOB_ID:'JOB-PROMPT-AUDIT',JOB_TITLE:'Prompt audit',EXACT_USER_OBJECTIVE_VERBATIM:'Audit every stage prompt for complete stage-specific execution and zero repeated human input.',EXPLICIT_USER_REQUIREMENTS:'Use all canonical prior-stage data required by the current stage; never ask the human to repeat project information already supplied.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITER-001',CURRENT_BASELINE_ID:'BASE-001',CURRENT_PRODUCT_ID:'PROD-001'});
+          engine.ensureShape(p); engine.recalculate(p);
+          const out=[];
+          for(let stage=1;stage<=30;stage++){
+            const c=schema.STAGE_CONTRACTS[stage];
+            for(const operation of c.operations){
+              const op=schema.operationContract(stage,operation);
+              const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
+              let prompt='',error=null;
+              try{prompt=prompts.buildPromptRecord(stage,p,{operation,scope}).prompt;}catch(e){error={code:e.code||'ERROR',message:e.message};}
+              out.push({stage,title:core.STAGES[stage-1].title,role:core.STAGES[stage-1].role,operation,readCollections:op?.readCollections||c.readCollections||[],writeCollections:op?.agentWritableCollections||c.agentWritableCollections||[],allowedStageData:op?.allowedStageData||c.allowedStageData||[],scopeRequirements:op?.scopeRequirements||c.scopeRequirements||[],promptLength:prompt.length,error,hasProjectExecutionRule:prompt.includes('PROJECT DATA EXECUTION RULE — MANDATORY'),hasNoRepeatRule:prompt.includes('never ask the human to repeat, retype, summarize, resend, reopen, or reattach it'),hasResponseContract:prompt.includes('RESPONSE CONTRACT'),hasFailClosed:prompt.includes('fail')||prompt.includes('FAIL'),hasIntentManifest:prompt.includes('APPLICATION-OWNED STAGE 01 INTAKE MANIFEST'),hasObligationManifest:prompt.includes('APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST'),mentionsCustomPipeline:prompt.includes('CUSTOM_PIPELINE'),mentionsTestIR:prompt.includes('TEST_IR'),prompt});
+            }
+          }
+          fs.writeFileSync('all-prompt-audit.json',JSON.stringify(out,null,2));
+          console.log(JSON.stringify(out.map(({prompt,...x})=>x),null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: all-prompt-audit
+          path: all-prompt-audit.json
+          if-no-files-found: error
