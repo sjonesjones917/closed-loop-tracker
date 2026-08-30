@@ -48,5 +48,9 @@ import fs from 'node:fs';
   if(!text.includes(artifactBoundary))throw new Error('Obsolete Stage 01 artifact-production assertion missing.');
   text=text.replace(artifactBoundary,artifactBoundaryReplacement);
 
+  const blanketArtifactAssertion="  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');";
+  if(!text.includes(blanketArtifactAssertion))throw new Error('Obsolete blanket artifact prompt assertion missing.');
+  text=text.replace(blanketArtifactAssertion,'  }');
+
   fs.writeFileSync(path,text);
 }
