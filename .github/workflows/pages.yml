@@ -1,7 +1,7 @@
 name: Deploy application
 on:
   push:
-    branches: [main]
+    branches: [main, finish/final-live-stage-walkthrough-20260830]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -17,7 +17,21 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: echo "application deployment ready"
+      - name: Export exact branch source
+        if: github.ref == 'refs/heads/finish/final-live-stage-walkthrough-20260830'
+        shell: bash
+        run: |
+          mkdir -p /tmp/closed-loop-final-source
+          rsync -a --exclude='.git' ./ /tmp/closed-loop-final-source/
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/finish/final-live-stage-walkthrough-20260830'
+        with:
+          name: closed-loop-final-source
+          path: /tmp/closed-loop-final-source
+          include-hidden-files: true
+          retention-days: 1
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
