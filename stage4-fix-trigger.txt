@@ -1,0 +1,1 @@
+Stage 4 retained-intent repair validation trigger. Temporary; removed before final runtime merge.
