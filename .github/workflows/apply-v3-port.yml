@@ -27,8 +27,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git revert -m 1 --no-edit 69add6a0548eeb89cb0b6e666147008edef7662d
-          REPAIR_SHA="$(git log origin/fix/controlling-spec-capture-once --format='%H%x09%s' --grep='^Implement capture-once Stage 4 and /3 controlling contracts$' | cut -f1)"
-          test "$(printf '%s\n' "$REPAIR_SHA" | sed '/^$/d' | wc -l)" -eq 1
+          REPAIR_SHA="$(git rev-parse origin/tmp/verified-v3-source-f677)"
+          test "$REPAIR_SHA" = "f6773ab9b380d7bbc5ab71d752701b40d8632b2b"
           git cat-file -e "${REPAIR_SHA}^{commit}"
           echo "Using verified source commit ${REPAIR_SHA}"
           git cherry-pick "$REPAIR_SHA"
