@@ -54,7 +54,7 @@ jobs:
               raise SystemExit(f'index.html: expected one unauthorized 88px prompt override, found {html.count(shrink)}')
           html = html.replace(shrink, '', 1)
           old_token = 'runtime-866c62b3484bca56'
-          new_token = 'runtime-5d3e83b9f3a14b72'
+          new_token = 'runtime-e5a8f04a7835dd96'
           if html.count(old_token) != 8:
               raise SystemExit(f'index.html: expected eight copies of {old_token}, found {html.count(old_token)}')
           index.write_text(html.replace(old_token, new_token))
