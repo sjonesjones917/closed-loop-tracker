@@ -31,6 +31,8 @@ jobs:
           p.write_text(s)
           h=Path('index.html'); x=h.read_text()
           x=x.replace('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}','')
+          if "worker-src 'self'" not in x:
+              x=x.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src")
           h.write_text(x)
           PY
       - name: Apply controlling specification repair
