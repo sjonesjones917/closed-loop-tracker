@@ -1,0 +1,23 @@
+name: Materialize clean conformance patch
+on: [push]
+permissions: {contents: write}
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: |
+          git fetch origin fix/spec-conformance-zero-loss
+          git checkout origin/fix/spec-conformance-zero-loss -- index.html workbook.js workflow-schema.js prompt-engine.js
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          grep -F ".expandable-prompt{height:280px;max-height:280px}" index.html
+          grep -F "closed-loop-project/3" workbook.js
+          grep -F "closed-loop-stage-response/3" workflow-schema.js
+          git config user.name closed-loop-spec-repair
+          git config user.email actions@users.noreply.github.com
+          git add index.html workbook.js workflow-schema.js prompt-engine.js
+          git commit -m 'Restore visuals and align prompt contracts with controlling specification'
+          git push origin HEAD:fix/spec-conformance-zero-loss-clean
