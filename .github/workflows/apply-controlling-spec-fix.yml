@@ -21,6 +21,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Align repair anchor with current engine
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('tools/apply-controlling-spec-fix.py')
+          s=p.read_text(encoding='utf-8')
+          pattern=r'''s = replace_regex\(s, r"const APPLICATION_TEST_EXECUTORS=.*?'native capability authority'\)'''
+          replacement='''s = replace_exact(s, "function applicationTestCapabilities(){return Object.freeze([schema.TEST_IR.capability]);}", "function applicationTestCapabilities(){const runtime=globalThis.closedLoopTestRuntime;return Object.freeze(runtime?.capabilities?Array.from(runtime.capabilities()):[]);}", 'native capability authority')'''
+          s2,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit(f'native capability repair anchor patch count={n}')
+          p.write_text(s2,encoding='utf-8')
+          PY
       - name: Apply repair and preserve diagnostics on failure
         shell: bash
         run: |
@@ -31,7 +46,7 @@ jobs:
           if [ "$rc" -ne 0 ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add repair-diagnostic.log
+            git add tools/apply-controlling-spec-fix.py repair-diagnostic.log
             git commit -m "Record controlling-spec repair failure" || true
             git push origin HEAD:${GITHUB_REF_NAME}
             exit "$rc"
