@@ -6,7 +6,7 @@ const test={EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runti
 const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);const bytesSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});assert.equal(result.determination,'SATISFIED');
 const failed=await runtime.execute({spec:{...test.EXECUTABLE_SPEC,steps:[...test.EXECUTABLE_SPEC.steps.slice(0,-1),{op:'ASSERT_EQ',value:3}]},artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});assert.equal(failed.determination,'VIOLATED');
 
-// Stage 04 consumes canonical Stage 03 output. A filename in Stage 01's supplied-
+// Stage 04 consumes canonical Stage 01 + Stage 03 output. A filename in Stage 01's supplied-
 // material inventory is not an application-observed requirement to re-upload bytes.
 const appContext={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,Event:class Event{constructor(type){this.type=type;}},dispatchEvent:()=>true};
 appContext.globalThis=appContext;vm.createContext(appContext);
@@ -14,6 +14,11 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js
 const core=appContext.closedLoopCore,schema=appContext.closedLoopWorkflowSchema,engine=appContext.closedLoopWorkflowEngine,prompts=appContext.closedLoopPromptEngine;
 const project=core.createBlankState('JOB-STAGE04-CANONICAL-INPUT');engine.ensureShape(project);
 Object.assign(project.job,{JOB_ID:'JOB-STAGE04-CANONICAL-INPUT',EXACT_USER_OBJECTIVE_VERBATIM:'Compile the accepted researched obligations into atomic requirements.',SUPPLIED_MATERIALS_INVENTORY:'text 30(1).txt',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'NOT APPLICABLE',CURRENT_TEST_SUITE_VERSION:'NOT APPLICABLE',CURRENT_INSTRUCTION_VERSION:'NOT APPLICABLE',CURRENT_STAGE:'STAGE 04',CURRENT_STATE:'IN PROGRESS'});project.activeStage=4;
+const intake=prompts.buildPromptRecord(1,project).contextManifest.intakeCoverageManifest;
+project.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:`S${i+1}`,text:`Captured ${u.label}`,statementClass:i===0?'REQUIREMENT':'FACT'}]}))});
+project.stages[1].status='COMPLETE';project.stages[1].gate={complete:true,blocked:false,reasons:[]};
+project.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';project.stages[2].status='COMPLETE';project.stages[2].gate={complete:true,blocked:false,reasons:[]};
+project.stages[3].status='COMPLETE';project.stages[3].gate={complete:true,blocked:false,reasons:[]};
 const stage4Contract=schema.operationContract(4,'COMPLETE');assert.ok(stage4Contract.readCollections.includes('candidateRequirements'),'Stage 04 must read the canonical Stage 03 candidate-requirement set.');
 const canonicalCandidate=vm.runInContext(`({id:'CANDIDATE-REQ-000001',stage:3,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-000001',SOURCE_LOCATION:'Canonical Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},relationships:{},evidenceRefs:['EVIDENCE-STAGE-03']})`,appContext);
 project.projectData.candidateRequirements.push(canonicalCandidate);
@@ -23,5 +28,5 @@ const stage4Prompt=prompts.buildPromptRecord(4,project,{operation:'COMPLETE'});a
 for(const prohibited of ['REQUIRED INPUT FILES NOT READY','FILES YOU MUST RECEIVE','The operator must attach every file listed above','Add and verify the exact supplied project file before copying'])assert.ok(!stage4Prompt.prompt.includes(prohibited),`Stage 04 reintroduced a filename-derived upload gate: ${prohibited}`);
 const nextAction=String(engine.operationalNextAction(project)||'');assert.ok(!/required stage 04 input file|add the exact supplied project file|missing or unverified.*stage 04/i.test(nextAction),'Stage 04 next action must not require a filename-derived re-upload.');
 const uiSource=fs.readFileSync('app-core.js','utf8');for(const prohibited of ['function stagePromptBlocked(','function outgoingHandoffMarkup(','Required Stage 04 input file is missing','Attach every file shown in “Send with this instruction”'])assert.ok(!uiSource.includes(prohibited),`Stage 04 UI reintroduced the removed upload gate: ${prohibited}`);
-console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true},null,2));
+console.log(JSON.stringify({genericTestIr:true,stage04CanonicalInputBoundary:true,stage04UpstreamClosureFixture:true},null,2));
 console.log('verify-test-runtime: PASS');
