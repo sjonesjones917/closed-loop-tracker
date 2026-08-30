@@ -1,0 +1,46 @@
+name: Apply Stage 29 native evidence chain action current
+on:
+  push:
+    branches: [fix/stage29-native-evidence-chain-current-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
+          new="const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','BUILD_EVIDENCE_CHAINS','AI_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM','ATTACH_REQUIRED_FILES','CONTINUE_AGENT_CONVERSATION','PASTE_FINAL_JSON','REVIEW_PROPOSAL','BLOCKED','COMPLETE']);"
+          if old not in s: raise SystemExit('ACTION_TYPES anchor not found')
+          s=s.replace(old,new,1)
+          anchor="  if(stage===28)return actionEnvelope(project,stage,{actionType:'ATTACH_REQUIRED_FILES',heading:'Verify the exact delivery bytes',explanation:'No external agent response belongs to Stage 28. Open Release control, select the audited canonical files and the exact delivery files, then let the application hash and compare them one-to-one before delivery authorization.',primaryButton:null,blockingReason:null});"
+          addition="\n  if(stage===29){const reqs=mandatoryRequirements(project,currentScope(project)),chains=recordsForCurrentScope(project,'evidenceChains'),chainReqIds=new Set(chains.map(record=>String(recordValue(record,'REQ_ID')||record.relationships?.REQ_ID||''))),missing=reqs.filter(req=>!chainReqIds.has(requirementId(req)));if(!chains.length||missing.length)return actionEnvelope(project,stage,{actionType:'BUILD_EVIDENCE_CHAINS',heading:'Construct the current evidence chains',explanation:'No external agent should construct canonical evidence-chain truth. The application will build one current chain for every mandatory requirement from the exact current authority, requirement, instruction, execution, test/result, evidence, release, and artifact-identity records. If any chain remains incomplete afterward, the Stage 29 agent may investigate only the missing evidence.',primaryButton:'Build evidence chains'});}"
+          if anchor not in s: raise SystemExit('Stage 28 action anchor not found')
+          s=s.replace(anchor,anchor+addition,1)
+          p.write_text(s)
+
+          p=Path('app-core.js'); s=p.read_text()
+          old="RUN_APP_TESTS:'Application',AI_REVIEW:'Fresh independent reviewer'"
+          new="RUN_APP_TESTS:'Application',BUILD_EVIDENCE_CHAINS:'Application',AI_REVIEW:'Fresh independent reviewer'"
+          if old not in s: raise SystemExit('action actor anchor not found')
+          s=s.replace(old,new,1)
+          old="const action=displayedStageAction(stage),button=withPrimaryButton&&action.primaryButton?(action.actionType==='RUN_APP_TESTS'?`<button class=\"primary\" id=\"run-native-tests\" type=\"button\">${esc(action.primaryButton)}</button>`:['AI_REVIEW','EXTERNAL_AGENT_TOOL','EXTERNAL_SYSTEM'].includes(action.actionType)?"
+          new="const action=displayedStageAction(stage),button=withPrimaryButton&&action.primaryButton?(action.actionType==='RUN_APP_TESTS'?`<button class=\"primary\" id=\"run-native-tests\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='BUILD_EVIDENCE_CHAINS'?`<button class=\"primary\" id=\"build-evidence-chains\" type=\"button\">${esc(action.primaryButton)}</button>`:['AI_REVIEW','EXTERNAL_AGENT_TOOL','EXTERNAL_SYSTEM'].includes(action.actionType)?"
+          if old not in s: raise SystemExit('next action button anchor not found')
+          s=s.replace(old,new,1)
+          wire="if($('#run-native-tests'))$('#run-native-tests').onclick=()=>{if(Number(current.activeStage)!==22){announce('native execution blocked for this stage');alert('This stage does not have a valid application-owned native result commit path. Use the exact current stage action instead; the application will not write a Stage 22 result into another stage.');return;}return runNativeStage22Tests();};"
+          add=wire+"if($('#build-evidence-chains'))$('#build-evidence-chains').onclick=async()=>{try{if(Number(current.activeStage)!==29)throw new Error('Evidence-chain construction is available only at Stage 29.');const next=clone(current);engine.constructEvidenceChains(next);await persistReplacement(next);announce('evidence chains constructed');render();requestAnimationFrame(()=>$('#next-required-action')?.focus());}catch(error){announce('evidence-chain construction blocked');alert(error.message||error);}};"
+          if wire not in s: raise SystemExit('wire native tests anchor not found')
+          s=s.replace(wire,add,1)
+          p.write_text(s)
+          PY
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add workflow-engine.js app-core.js
+          git commit -m "Make Stage 29 construct evidence chains in the application"
+          git push
