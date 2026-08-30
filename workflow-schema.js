@@ -56,7 +56,7 @@ const AGENT_JOB_FIELDS=Object.freeze([
 ]);
 
 function jobFieldDefinition(name){
-  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});
+  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`,valueType:name==='NEXT_REQUIRED_ACTION'?'OBJECT':'STRING',closedProperties:name==='NEXT_REQUIRED_ACTION'?['actionType','heading','explanation','primaryButton','secondaryAction','filesToSend','filesToWithhold','expectedReturnFiles','blockingReason','canonicalStateChanged','newPromptRequired']:null});
   if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});
   if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{provenanceRequired:false,valueType:'STRING',nullable:true});
   if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1});
