@@ -162,7 +162,7 @@ async function importPackage(blob){
   if(hash.sha256Value(body)!==packageSha256)throw Object.assign(new Error('Project package hash mismatch.'),{existingProjectsUnchanged:true});
   if(body.schema!=='closed-loop-project-package/1')throw Object.assign(new Error('Unsupported project package schema.'),{existingProjectsUnchanged:true});
   const schemaApi=globalThis.closedLoopWorkflowSchema,project=clone(body.project),id=projectIdentity(project);
-  if(project?.schema!=='closed-loop-project/2'||project?.workflow!=='mobile-closed-loop/30'||Number(project?.stageCount)!==30||Object.keys(project?.stages||{}).length!==30)throw Object.assign(new Error('Imported project identity or stage count is invalid.'),{existingProjectsUnchanged:true});
+  if(project?.schema!=='closed-loop-project/3'||project?.workflow!=='mobile-closed-loop/30'||Number(project?.stageCount)!==30||Object.keys(project?.stages||{}).length!==30)throw Object.assign(new Error('Imported project identity or stage count is invalid.'),{existingProjectsUnchanged:true});
   if(body.projectSchema!==project.schema||body.workflow!==project.workflow||body.responseSchema!==schemaApi?.RESPONSE_SCHEMA)throw Object.assign(new Error('Package schema manifest does not match the embedded project.'),{existingProjectsUnchanged:true});
   if(!id)throw Object.assign(new Error('Imported project has no JOB_ID.'),{existingProjectsUnchanged:true});
   try{assertProjectIntegrity(project);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}
@@ -191,4 +191,11 @@ function clearLegacy(storage=globalThis.localStorage){if(!storage)return;for(con
 
 const ready=(async()=>{if(globalThis.indexedDB)await migrateLegacy();return true;})();
 globalThis.closedLoopProjectStore=Object.freeze({archiveMigrationPayload,version:'closed-loop-project-store/2',DB_NAME,DB_VERSION,stores:Object.freeze({projects:PROJECTS,artifacts:ARTIFACTS,meta:META}),STORE_KEY,LEGACY_KEYS,clone,projectIdentity,projectSha256,validateProjectIntegrity,openDatabase,ready,readAll,writeAll,writeProject,replaceProject,transact,removeProject,putArtifact,getArtifact,deleteArtifact,listArtifacts,verifyProjectArtifacts,createExecutionPackage,exportPackage,importPackage,storageHealth,metaGet,metaPut,clearLegacy});
+})();
+;(()=>{
+'use strict';
+const CLOSED_LOOP_V3_STORE_MIGRATION_EXPORT=true;
+const store=globalThis.closedLoopProjectStore;
+const schema=globalThis.closedLoopWorkflowSchema;
+if(store&&schema&&typeof schema.migrateProjectToCurrent==='function'&&typeof store.migrateProjectToCurrent!=='function')globalThis.closedLoopProjectStore=Object.freeze({...store,migrateProjectToCurrent:project=>schema.migrateProjectToCurrent(project)});
 })();

@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
@@ -51,9 +51,9 @@ function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  if(stage===1){const intake=engine.intakeCoverageManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:unit.rawValue,statementClass:'CONTEXT'}]})),conversationStatements:[]});}
   const records={};
-  if(stage===1)records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];
-  if(!Object.keys(stageData).length&&stage!==1){
+  if(!Object.keys(stageData).length){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
     const def=schema.RECORD_SCHEMAS[collection];
@@ -69,7 +69,7 @@ function validEnvelope(p,stage,promptRecord){
     operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,
     responseType:'DATA_PROPOSAL',
     humanInputRequests:[],stageData,records,
-    evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],
+    evidence:(()=>{const list=[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}];if(stage===4){for(const [index,item] of engine.obligationManifest(p).items.entries())list.push({temporaryKey:`obligation-disposition-${index+1}`,kind:'OBLIGATION_DISPOSITION',description:'Controlled obligation accounting fixture',location:'verification fixture',content:JSON.stringify({obligationId:item.obligationId,disposition:'RETAINED_NONNORMATIVE_CONTEXT',reason:'Synthetic all-stage ingestion fixture; obligation closure is the proposition under test.'})});}return list;})(),
     unresolved:[],warnings:[],attachments:[]
   };
 }
@@ -444,7 +444,7 @@ negativeAt('regression definition execution-truth injection',15,(e)=>{
 // demonstrated-smart-quote-and-stageData-provenance-regression-v1
 {
   let p=project('JOB-SMART-JSON-RECOVERY'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
-  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:'Human request and invention-packet.zip'};
+  e.stageData={EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts',INPUT_SET_CONTENTS:e.stageData.INPUT_SET_CONTENTS};
   const standard=JSON.stringify(e);const smart=standard.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”');
   const prepared=ingestion.prepare(p,{stage:1,text:smart,promptRecord:pr});
   if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
