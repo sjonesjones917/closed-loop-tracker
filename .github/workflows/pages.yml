@@ -1,41 +1,28 @@
-name: Deploy application
+name: Apply final operator completion
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches: [fix/final-live-operator-completion-20260830]
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  contents: write
 jobs:
-  test:
-    name: test
+  repair:
     runs-on: ubuntu-latest
-    steps:
-      - run: echo "application deployment ready"
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build static application
-        run: |
-          rm -rf _site
-          mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-      - name: Deploy application
-        id: deployment
-        uses: actions/deploy-pages@v4
+          fetch-depth: 0
+      - name: Apply final current-main repairs
+        shell: python
+        run: |
+          from pathlib import Path
+          import subprocess
+          p=Path('app-core.js'); s=p.read_text(); old="stageOneSummary=stageOne?`<div class=\"record-card\"><div class=\"record-body\"><div class=\"record-rows\">${field('Requested deliverable',p.envelope?.stageData?.EXACT_DELIVERABLE_REQUESTED||'UNKNOWN')}${field('Controlled input units accounted',stageOneAccounting.length)}${field('Intent statements captured',stageOneIntents.length)}${field('Assumptions',p.envelope?.stageData?.ASSUMPTIONS||'NONE')}${field('Unresolved human information',p.envelope?.stageData?.UNKNOWN_INFORMATION||'NONE')}</div></div></div><details class=\"record-card\"><summary>Advanced Stage 01 extraction details<span>${rows.length}</span></summary><div class=\"record-body\">${details('Complete extraction diff',rows,false)}</div></details>`:details('Proposal diff',rows,!longProposal);"; new=old.replace("details('Proposal diff',rows,!longProposal)","details('Proposal diff',rows,true)"); assert old in s; p.write_text(s.replace(old,new,1))
+          Path('verify-v3-contract.mjs').write_text(subprocess.check_output(['git','show','364477572a675d133d457f3be6ce86b35aa4505e:verify-v3-contract.mjs'],text=True))
+          Path('.github/workflows/pages.yml').write_text(subprocess.check_output(['git','show','364477572a675d133d457f3be6ce86b35aa4505e:.github/workflows/pages.yml'],text=True))
+      - name: Commit final branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js verify-v3-contract.mjs .github/workflows/pages.yml
+          git commit -m "Complete current-main operator prompt behavior"
+          git push
