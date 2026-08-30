@@ -61,3 +61,4 @@ jobs:
           node --check verify-prompt-semantics.mjs
           node --check verify-ingestion.mjs
           git diff --check
+# materialize direct Stage 4 current-user-input union
