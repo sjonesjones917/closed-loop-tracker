@@ -46,14 +46,15 @@ const acceptedRelationshipProvenanceCoverage=ratio(relationshipProvenancePassed,
 assert(acceptedRelationshipProvenanceCoverage===1,'Accepted relationship provenance ownership coverage is not 100%.');
 
 assert(core.STAGE_COUNT===30&&core.STAGES.length===30&&core.WORKFLOW_ID==='mobile-closed-loop/30','30-stage workflow identity changed.');
-assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');
+assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3'&&schema.TEST_IR_SCHEMA==='closed-loop-test-spec/1','Schema identity changed.');
 assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'The only registered project-test executor must be the proven Closed Loop Test IR runtime.');
 assert(fs.existsSync('test-runtime.js')&&fs.existsSync('test-worker.js')&&fs.existsSync('verify-test-runtime.mjs'),'Native Test IR executor proof files are missing.');
 
 const workflowSource=fs.readFileSync('.github/workflows/pages.yml','utf8');
 assert((workflowSource.match(/^name:/gm)||[]).length===1,'Pages workflow file is malformed.');
 const workflows=fs.readdirSync('.github/workflows').filter(name=>name.endsWith('.yml')||name.endsWith('.yaml'));
-assert(workflows.length===1&&workflows[0]==='pages.yml','Repository must retain exactly one Pages workflow.');
+const pagesDeploymentWorkflows=workflows.filter(name=>fs.readFileSync(`.github/workflows/${name}`,'utf8').includes('actions/deploy-pages@'));
+assert(pagesDeploymentWorkflows.length===1&&pagesDeploymentWorkflows[0]==='pages.yml','Repository must retain exactly one Pages deployment workflow.');
 assert(workflowSource.includes('node verify-semantic-invariant.mjs'),'Semantic false-acceptance invariant is not in CI.');
 assert(workflowSource.includes('verify-browser.mjs')&&workflowSource.includes('verify-browser-extra.mjs'),'Chromium acceptance is not in CI.');
 assert(workflowSource.includes('Verify exact deployed source identity'),'Exact deployed-byte verification is not in CI.');
