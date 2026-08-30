@@ -1,0 +1,132 @@
+name: Complete zero-loss intake and obligation closure
+
+on:
+  push:
+    branches:
+      - fix/closed-loop-v3-final-20260830
+
+permissions:
+  contents: write
+
+concurrency:
+  group: complete-zero-loss-closure
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[zero-loss-closure-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply complete intake, Stage 03, Stage 04, and legacy-capture closure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path):
+              return Path(path).read_text()
+
+          def write(path, text):
+              Path(path).write_text(text)
+
+          prompt_path = 'prompt-engine.js'
+          prompt = read(prompt_path)
+          prompt, count = re.subn(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/\d+';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/33';", prompt, count=1)
+          assert count == 1, 'prompt engine version target not found'
+          old = ".filter(([,definition])=>definition?.producer==='HUMAN')"
+          new = ".filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer))"
+          assert prompt.count(old) == 1, f'humanInputBlock producer target count={prompt.count(old)}'
+          prompt = prompt.replace(old, new, 1)
+          old = "if(definition?.producer!=='HUMAN')continue;"
+          new = "if(!['HUMAN','HUMAN_DECISION'].includes(definition?.producer))continue;"
+          assert prompt.count(old) == 1, f'intake manifest producer target count={prompt.count(old)}'
+          prompt = prompt.replace(old, new, 1)
+
+          marker = "for(const record of safe(state?.projectData?.candidateRequirements)"
+          assert prompt.count(marker) == 1, f'candidate requirement marker count={prompt.count(marker)}'
+          research_closure = "const normativeResearchFields=Object.freeze(['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL']);for(const record of safe(state?.projectData?.research).filter(r=>r?.active!==false&&!r?.invalidatedBy&&(!sourceSetVersion||!r?.scope?.sourceSetVersion||String(r.scope.sourceSetVersion)===String(sourceSetVersion)))){const researchId=recordId(record,'research'),sourceId=clean(recordValue(record,'SOURCE_ID')||record?.relationships?.SOURCE_ID)||null,fields=recordFields(record);for(const field of normativeResearchFields){const raw=fields[field];if(raw===undefined||raw===null)continue;const fragments=Array.isArray(raw)?raw:[raw];for(const [fragmentIndex,fragment] of fragments.entries()){const text=clean(typeof fragment==='string'?fragment:JSON.stringify(fragment));if(!text||placeholder(text))continue;const provenance={origin:'STAGE03_RESEARCH_FIELD',researchId,sourceId,field,fragmentIndex,sourceSetVersion};items.push({obligationId:stableId('OBLIGATION',{provenance,text}),text,origin:'EXTERNAL_SOURCE_RESEARCH',provenance,sourceIdentity:sourceId});}}}"
+          prompt = prompt.replace(marker, research_closure + marker, 1)
+          write(prompt_path, prompt)
+
+          engine_path = 'workflow-engine.js'
+          engine = read(engine_path)
+          old = "const current=currentScope(project),runExecution="
+          new = "const current=currentScope(project);if(stage===1)for(const a of artifacts){const scopedToLater=Boolean(a?.scope?.candidateId||a?.scope?.runId||a?.scope?.baselineId||a?.scope?.productId);if(!scopedToLater)addArtifact(a);}const runExecution="
+          assert engine.count(old) == 1, f'Stage 01 handoff target count={engine.count(old)}'
+          engine = engine.replace(old, new, 1)
+          write(engine_path, engine)
+
+          app_path = 'app-core.js'
+          app = read(app_path)
+          pattern = r"const legacyStage01Capture=JSON\.stringify\(\{humanAuthority:.*?\}\);p\.stages\[1\]\.agentData="
+          replacement = "const legacyInputManifest=globalThis.closedLoopPromptEngine.intakeCoverageManifest(p),legacyClassByField={JOB_TITLE:'CONTEXT',JOB_OWNER:'CONTEXT',EXACT_USER_OBJECTIVE_VERBATIM:'REQUESTED_OUTPUT',SUPPLIED_MATERIALS_INVENTORY:'MATERIAL_REFERENCE',REQUIRED_OUTPUT_FORMAT:'CONSTRAINT',DEADLINE_OR_TEMPORAL_SCOPE:'CONSTRAINT',DESIRED_SOURCE_COUNT:'PREFERENCE',KNOWN_AUTHORITATIVE_SOURCES:'REFERENCE',AVAILABLE_TOOLS:'CONSTRAINT',PROHIBITED_ACTIONS:'PROHIBITION',EXPLICIT_USER_REQUIREMENTS:'REQUIREMENT'},legacyDispositionByField={JOB_TITLE:'retained as context',JOB_OWNER:'retained as context',SUPPLIED_MATERIALS_INVENTORY:'retained as context',KNOWN_AUTHORITATIVE_SOURCES:'retained as context',DESIRED_SOURCE_COUNT:'retained as context'},legacyCapturedUnits=legacyInputManifest.units.map((unit,index)=>{const field=String(unit.sourceLocation||'').startsWith('job.')?String(unit.sourceLocation).slice(4):'',sourceValue=unit.kind==='SUPPLIED_MATERIAL'?String(unit.label||''):String(p.job[field]??''),statementClass=legacyClassByField[field]||(unit.kind==='SUPPLIED_MATERIAL'?'MATERIAL_REFERENCE':'FACT_AFFECTING_REQUIREMENTS');return {sourceUnitId:unit.unitId,disposition:legacyDispositionByField[field]||'incorporated into the job definition',extractedStatements:[{statementKey:`MIGRATED-${String(index+1).padStart(4,'0')}`,text:sourceValue,statementClass}]};}),legacyStage01Capture=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:p.job.CURRENT_INPUT_VERSION,units:legacyCapturedUnits}),migratedIntakeManifest={...legacyInputManifest,manifestId:`INTAKE-MANIFEST-${globalThis.closedLoopHash.sha256Value({jobId:p.job.JOB_ID,inputVersion:p.job.CURRENT_INPUT_VERSION,manifestSha256:legacyInputManifest.manifestSha256}).slice(0,20).toUpperCase()}`,jobId:p.job.JOB_ID,stage:1,acceptedChangeId,rawResponseId,promptIdentity:{instructionId,contextSignature},projectRevision:Number(p.revision||0),source:'DETERMINISTIC_MIGRATION'};p.projectData.intakeCoverageManifests=safe(p.projectData.intakeCoverageManifests);if(!p.projectData.intakeCoverageManifests.some(item=>item.manifestSha256===migratedIntakeManifest.manifestSha256&&item.inputVersion===migratedIntakeManifest.inputVersion))p.projectData.intakeCoverageManifests.push(migratedIntakeManifest);p.stages[1].agentData="
+          app, count = re.subn(pattern, replacement, app, count=1, flags=re.S)
+          assert count == 1, f'legacy Stage 01 capture target count={count}'
+          write(app_path, app)
+
+          browser_path = 'verify-browser.mjs'
+          browser = read(browser_path)
+          old = "assert(retainedInputCapture.includes(String(retained.job.EXACT_USER_OBJECTIVE_VERBATIM||'')),'Legacy Stage 01 accepted input-set capture does not contain the preserved exact user objective.');"
+          new = "let retainedInputCaptureObject=null;try{retainedInputCaptureObject=JSON.parse(retainedInputCapture);}catch{}assert(retainedInputCaptureObject?.schema==='closed-loop-stage01-capture/1'&&Array.isArray(retainedInputCaptureObject.units)&&retainedInputCaptureObject.units.length>0,'Legacy Stage 01 accepted input-set capture is not the required structured units[] contract.');const retainedInputTexts=retainedInputCaptureObject.units.flatMap(unit=>Array.isArray(unit.extractedStatements)?unit.extractedStatements:[]).map(statement=>String(statement?.text??''));assert(retainedInputTexts.includes(String(retained.job.EXACT_USER_OBJECTIVE_VERBATIM||'')),'Legacy Stage 01 accepted input-set capture does not preserve the exact user objective after parsing.');assert(retainedInputCaptureObject.units.every(unit=>String(unit?.sourceUnitId||'').trim()&&Array.isArray(unit?.extractedStatements)),'Legacy Stage 01 accepted input-set capture contains an unbound or malformed source unit.');"
+          assert browser.count(old) == 1, f'browser exact objective target count={browser.count(old)}'
+          browser = browser.replace(old, new, 1)
+          write(browser_path, browser)
+
+          test_path = 'verify-prompt-semantics.mjs'
+          test = read(test_path)
+          old = "Object.assign(project.job,{\n  EXACT_USER_OBJECTIVE_VERBATIM:"
+          new = "Object.assign(project.job,{\n  JOB_TITLE:'TITLE-HUMAN-DECISION-SENTINEL',\n  JOB_OWNER:'OWNER-HUMAN-DECISION-SENTINEL',\n  EXACT_USER_OBJECTIVE_VERBATIM:"
+          assert test.count(old) == 1, f'prompt test job target count={test.count(old)}'
+          test = test.replace(old, new, 1)
+          old = "assert(stage1.includes('EXACT_USER_OBJECTIVE_VERBATIM'),'Generated Stage 01 prompt omits current user project authority.');"
+          new = old + "\nassert(stage1.includes('TITLE-HUMAN-DECISION-SENTINEL')&&stage1.includes('OWNER-HUMAN-DECISION-SENTINEL'),'Generated Stage 01 prompt omits current human-decision authority.');\nconst intakeManifest=prompts.intakeCoverageManifest(project);assert(intakeManifest.units.some(unit=>unit.sourceLocation==='job.JOB_TITLE')&&intakeManifest.units.some(unit=>unit.sourceLocation==='job.JOB_OWNER'),'Application intake manifest omits HUMAN_DECISION fields.');"
+          assert test.count(old) == 1, f'prompt test Stage 01 target count={test.count(old)}'
+          test = test.replace(old, new, 1)
+          old = "const handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});"
+          new = "const stage1ArtifactId='ARTIFACT-STAGE1-INPUT-SENTINEL';project.projectData.artifacts.push({id:stage1ArtifactId,recordId:stage1ArtifactId,stage:1,active:true,scope:{...engine.currentScope(project)},fields:{ARTIFACT_ID:stage1ArtifactId,FILENAME:'intent-input-sentinel.txt',BYTE_SIZE:3,SHA256:'abc',ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});const stage1Handoff=engine.executionHandoff(project,{stage:1,operation:'COMPLETE'});assert(stage1Handoff.send.some(item=>item.artifactId===stage1ArtifactId),'Stage 01 does not hand off verified supplied project bytes exactly once.');\nproject.projectData.research.push({id:'RESEARCH-STAGE3-SENTINEL',recordId:'RESEARCH-STAGE3-SENTINEL',stage:3,active:true,scope:{sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION},fields:{RESEARCH_ID:'RESEARCH-STAGE3-SENTINEL',MANDATORY_STATEMENTS:'STAGE3-NORMATIVE-OBLIGATION-SENTINEL'},relationships:{SOURCE_ID:'SOURCE-STAGE3-SENTINEL'}});const obligationManifest=prompts.obligationManifest(project);assert(obligationManifest.items.some(item=>item.text==='STAGE3-NORMATIVE-OBLIGATION-SENTINEL'&&item.provenance?.origin==='STAGE03_RESEARCH_FIELD'),'Stage 04 obligation manifest omits normative Stage 03 research content.');\n\nconst handoff=engine.executionHandoff(project,{stage:4,operation:'COMPLETE'});"
+          assert test.count(old) == 1, f'prompt test handoff target count={test.count(old)}'
+          test = test.replace(old, new, 1)
+          old = "  stage04NoRepeatHandoff:true,\n  visualPromptBaseline:true"
+          new = "  stage04NoRepeatHandoff:true,\n  humanDecisionIntake:true,\n  stage01SingleTransfer:true,\n  stage03NormativeObligationClosure:true,\n  visualPromptBaseline:true"
+          assert test.count(old) == 1, f'prompt test summary target count={test.count(old)}'
+          test = test.replace(old, new, 1)
+          write(test_path, test)
+          PY
+      - name: Run focused closure proofs
+        run: |
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check verify-browser.mjs
+          node --check verify-prompt-semantics.mjs
+          node build-test-project.mjs
+          node verify-v3-migration.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-ingestion.mjs
+      - name: Run responsive Chromium proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit permanent implementation and remove one-time workflow
+        run: |
+          git config user.name "closed-loop-zero-loss"
+          git config user.email "actions@users.noreply.github.com"
+          git add app-core.js prompt-engine.js workflow-engine.js verify-browser.mjs verify-prompt-semantics.mjs
+          git rm .github/workflows/complete-zero-loss-closure.yml
+          git commit -m "Complete zero-loss intake and Stage 4 closure [zero-loss-closure-applied]"
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
