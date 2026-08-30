@@ -1,0 +1,79 @@
+name: Merge proved closed-loop v3 implementation
+on:
+  push:
+    branches: [implement/closed-loop-v3-bundle]
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+jobs:
+  merge:
+    if: "!contains(github.event.head_commit.message, '[v3-automerge]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: implement/closed-loop-v3-bundle, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Require only permanent implementation content
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          STATE="$(gh pr view 452 --repo "$GITHUB_REPOSITORY" --json state --jq .state)"
+          test "$STATE" = OPEN
+          test ! -e V3_REPAIR_FAILURE.log
+          test "$(find . -maxdepth 1 -type f -name 'spec-v3-*' | wc -l)" -eq 0
+          test ! -e .github/workflows/spec-v3-repair.yml
+          test ! -e .github/workflows/spec-v3-repair-v2.yml
+          test ! -e .github/workflows/spec-v3-repair-v3.yml
+          test ! -e .github/workflows/spec-v3-finalize.yml
+          grep -q "closed-loop-project/3" workbook.js
+          grep -q "closed-loop-stage-response/3" workflow-schema.js
+          grep -q "closed-loop-test-spec/1" test-runtime.js
+          rm .github/workflows/spec-v3-automerge.yml
+      - name: Prove the exact merge tree
+        run: |
+          set -o pipefail
+          node build-test-project.mjs
+          git diff --check
+          node --check workbook.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node verify-v3-contract.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Commit exact tree, merge, and dispatch deployment proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add -A
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m '[v3-automerge] Remove temporary merge controller after exact proof'
+          git push origin HEAD:implement/closed-loop-v3-bundle
+          gh pr ready 452 --repo "$GITHUB_REPOSITORY" || true
+          gh pr merge 452 --repo "$GITHUB_REPOSITORY" --merge --subject 'Merge PR #452: implement closed-loop v3 deterministic authority' --body 'Merged only after exact source and Chromium proof.'
+          gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
