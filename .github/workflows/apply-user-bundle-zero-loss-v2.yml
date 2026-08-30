@@ -1,0 +1,249 @@
+name: Apply user controlling bundle zero-loss v2
+
+on:
+  push:
+    branches: [repair/user-bundle-zero-loss-20260830]
+    paths: [.github/workflows/apply-user-bundle-zero-loss-v2.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/user-bundle-zero-loss-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Overlay closest v3 implementation
+        shell: bash
+        run: |
+          git fetch origin repair/controlling-v3-zero-loss:refs/remotes/origin/repair/controlling-v3-zero-loss
+          files=(
+            workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js
+            build-test-project.mjs verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs
+            verify-intake-obligation-accounting.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs
+          )
+          for f in "${files[@]}"; do git show "origin/repair/controlling-v3-zero-loss:$f" > "$f"; done
+      - name: Implement exhaustive intake and Stage 4 prerequisite closure
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          marker="const SCOPE_KEYS=Object.freeze(['inputVersion'"
+          if marker not in s: raise SystemExit('workflow-engine insertion marker missing')
+          helpers=r'''
+function currentHumanInputRecord(project){
+  ensureShape(project);
+  const version=String(project.job.CURRENT_INPUT_VERSION||'').trim();
+  const rows=safe(project.projectData.inputVersions);
+  return rows.slice().reverse().find(row=>String(row.version||'')===version)||rows.at(-1)||null;
+}
+function intakeCoverageManifest(project){
+  ensureShape(project);
+  const row=currentHumanInputRecord(project),inputVersion=String(project.job.CURRENT_INPUT_VERSION||row?.version||'').trim();
+  const payload=clone(row?.payload||project.projectData.userEntered||{}),units=[];
+  const definitions=schema.JOB_FIELDS||{};
+  const humanNames=Object.entries(definitions).filter(([,d])=>['HUMAN','HUMAN_DECISION'].includes(d?.producer)).map(([name])=>name);
+  const add=(sourceLocation,fieldName,rawValue,kind='HUMAN_FIELD')=>{
+    if(rawValue===undefined||rawValue===null)return;
+    if(typeof rawValue==='string'&&!rawValue.trim())return;
+    if(Array.isArray(rawValue)&&!rawValue.length)return;
+    const canonical=typeof rawValue==='string'?rawValue:JSON.stringify(rawValue);
+    const rawValueSha256=hash.sha256Value(rawValue);
+    const sourceUnitId='INPUT-'+hash.sha256Value({inputVersion,sourceLocation,rawValueSha256}).slice(0,24).toUpperCase();
+    units.push({sourceUnitId,sourceLocation,fieldName,kind,rawValue:clone(rawValue),text:canonical,rawValueSha256});
+  };
+  for(const name of humanNames)add(`/inputVersions/${row?.inputVersionId||inputVersion||'CURRENT'}/payload/${name}`,name,Object.prototype.hasOwnProperty.call(payload,name)?payload[name]:project.job[name]);
+  for(const [i,item] of safe(payload.clarifications).entries())add(`/inputVersions/${row?.inputVersionId||inputVersion||'CURRENT'}/payload/clarifications/${i}`,'clarification',item,'HUMAN_CLARIFICATION');
+  const identity={schema:'closed-loop-intake-manifest/1',inputVersion,units:units.map(({sourceUnitId,sourceLocation,fieldName,kind,rawValueSha256})=>({sourceUnitId,sourceLocation,fieldName,kind,rawValueSha256}))};
+  return {...identity,units,manifestSha256:hash.sha256Value(identity)};
+}
+function parseIntakeCapture(value){if(value&&typeof value==='object'&&!Array.isArray(value))return value;try{return JSON.parse(String(value||''));}catch{return null;}}
+function evaluateIntakeCoverage(project,inputSetContents){
+  const manifest=intakeCoverageManifest(project),capture=parseIntakeCapture(inputSetContents),errors=[];
+  if(!capture||typeof capture!=='object'||Array.isArray(capture))return {complete:false,coverage:0,total:manifest.units.length,accounted:0,errors:['INPUT_SET_CONTENTS must be valid closed-loop-intake-capture/1 JSON.'],manifest};
+  if(capture.schema!=='closed-loop-intake-capture/1')errors.push('Intake capture schema must be closed-loop-intake-capture/1.');
+  if(String(capture.inputVersion||'')!==String(manifest.inputVersion||''))errors.push('Intake capture inputVersion does not match the current User Job Input version.');
+  if(String(capture.manifestSha256||'')!==String(manifest.manifestSha256||''))errors.push('Intake capture manifestSha256 does not match the current application intake manifest.');
+  const allowed=new Set(['INCORPORATED','RETAINED_CONTEXT','UNRESOLVED_HUMAN_ONLY','LATER_RESOLVABLE','INAPPLICABLE']),ids=new Set(manifest.units.map(u=>u.sourceUnitId)),seen=new Set(),accounted=new Set();
+  const units=safe(capture.units);
+  for(const [i,u] of units.entries()){
+    const id=String(u?.sourceUnitId||'');
+    if(!ids.has(id)){errors.push(`Unknown intake sourceUnitId ${id||'(missing)'} at units[${i}].`);continue;}
+    if(seen.has(id)){errors.push(`Duplicate intake accounting for ${id}.`);continue;}seen.add(id);
+    const disposition=upper(u?.disposition);if(!allowed.has(disposition)){errors.push(`Invalid intake disposition for ${id}.`);continue;}
+    const statements=safe(u?.extractedStatements);
+    if(disposition!=='INAPPLICABLE'&&!statements.length)errors.push(`${id} has no extractedStatements; every semantically distinct project-relevant meaning must be preserved.`);
+    const statementKeys=new Set();
+    for(const [j,st] of statements.entries()){
+      const key=String(st?.statementKey||'').trim(),text=String(st?.text||'').trim(),cls=String(st?.statementClass||'').trim();
+      if(!key||!text||!cls)errors.push(`${id} extractedStatements[${j}] requires statementKey, text, and statementClass.`);
+      if(key&&statementKeys.has(key))errors.push(`${id} repeats statementKey ${key}.`);statementKeys.add(key);
+    }
+    if(disposition==='INAPPLICABLE'&&!String(u?.reason||'').trim())errors.push(`${id} is INAPPLICABLE without a reason.`);
+    accounted.add(id);
+  }
+  for(const id of ids)if(!seen.has(id))errors.push(`Controlled input unit ${id} is omitted from Stage 01 accounting.`);
+  const total=ids.size,coverage=total?accounted.size/total:1;
+  return {complete:errors.length===0&&coverage===1,coverage,total,accounted:accounted.size,errors,manifest,capture};
+}
+function obligationManifest(project){
+  ensureShape(project);
+  const prerequisites={stage1Complete:project.stages?.[1]?.status==='COMPLETE',stage3Complete:project.stages?.[3]?.status==='COMPLETE'};
+  const input=intakeCoverageManifest(project),intakeEval=evaluateIntakeCoverage(project,project.job.INPUT_SET_CONTENTS),obligations=[],seen=new Set();
+  const add=(originType,originId,sourceLocation,text,provenance={})=>{
+    const t=typeof text==='string'?text.trim():JSON.stringify(text);
+    if(!t||['NONE','NOT APPLICABLE'].includes(upper(t)))return;
+    const contentSha256=hash.sha256Value(text),obligationId='OBL-'+hash.sha256Value({originType,originId,sourceLocation,contentSha256}).slice(0,24).toUpperCase();
+    if(seen.has(obligationId))return;seen.add(obligationId);obligations.push({obligationId,originType,originId,sourceLocation,text:t,contentSha256,provenance:clone(provenance)});
+  };
+  for(const u of input.units)add('USER_JOB_INPUT',u.sourceUnitId,u.sourceLocation,u.rawValue,{inputVersion:input.inputVersion,rawValueSha256:u.rawValueSha256});
+  const cap=intakeEval.capture;
+  if(cap){for(const u of safe(cap.units))for(const [i,st] of safe(u.extractedStatements).entries())add('STAGE01_CAPTURE',String(st.statementKey||`${u.sourceUnitId}:${i}`),`/job/INPUT_SET_CONTENTS/units/${u.sourceUnitId}/extractedStatements/${i}`,st.text,{sourceUnitId:u.sourceUnitId,statementClass:st.statementClass});for(const [i,st] of safe(cap.conversationStatements).entries())add('STAGE01_CONVERSATION',String(st.statementKey||`conversation:${i}`),`/job/INPUT_SET_CONTENTS/conversationStatements/${i}`,st.text,{question:st.question,status:st.status,statementClass:st.statementClass});}
+  for(const name of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION'])add('STAGE01_JOB_DEFINITION',name,`/stages/1/agentData/${name}`,project.stages?.[1]?.agentData?.[name]??project.job?.[name],{stage:1});
+  const current=col=>recordsForCurrentScope(project,col);
+  for(const collection of ['research','candidateRequirements'])for(const rec of current(collection)){
+    const id=recordId(rec,collection)||hash.sha256Value(rec).slice(0,16),fields=recordFields(rec);
+    for(const [fieldName,value] of Object.entries(fields)){
+      if(fieldName===schema.RECORD_SCHEMAS?.[collection]?.idField)continue;
+      if(value===undefined||value===null||value===''||(Array.isArray(value)&&!value.length))continue;
+      add('STAGE03_'+collection.toUpperCase(),`${id}:${fieldName}`,`/${collection}/${id}/${fieldName}`,value,{stage:3,recordId:id,fieldName,relationships:clone(rec.relationships||{})});
+    }
+  }
+  for(const rec of current('sources')){const id=recordId(rec,'sources');add('SOURCE_IDENTITY',id,`/sources/${id}`,{id,fields:recordFields(rec)},{stage:2,recordId:id});}
+  const identity={schema:'closed-loop-obligation-manifest/1',inputVersion:input.inputVersion,sourceSetVersion:project.job.CURRENT_SOURCE_SET_VERSION||null,researchVersion:project.job.CURRENT_RESEARCH_VERSION||null,prerequisites,obligations:obligations.map(({obligationId,originType,originId,sourceLocation,contentSha256,provenance})=>({obligationId,originType,originId,sourceLocation,contentSha256,provenance}))};
+  return {...identity,obligations,manifestSha256:hash.sha256Value(identity)};
+}
+function obligationRefsFromRequirement(record){const value=record?.fields?.USER_INPUT_RELATIONSHIP??record?.USER_INPUT_RELATIONSHIP;return Array.isArray(value)?value.map(String):String(value||'').split(/[\s,;]+/).filter(v=>/^OBL-/i.test(v));}
+function evaluateObligationAccounting(project,{requirements=[],evidence=[]}={}){
+  const manifest=obligationManifest(project),errors=[];
+  if(!manifest.prerequisites.stage1Complete)errors.push('Stage 01 is not COMPLETE; Stage 04 obligation accounting cannot close.');
+  if(!manifest.prerequisites.stage3Complete)errors.push('Stage 03 is not COMPLETE; Stage 04 obligation accounting cannot close.');
+  const ids=new Set(manifest.obligations.map(o=>o.obligationId)),mapped=new Map(),disposed=new Map(),allowed=new Set(['RETAINED_NONNORMATIVE_CONTEXT','INAPPLICABLE','BLOCKED']);
+  for(const req of safe(requirements))for(const id of obligationRefsFromRequirement(req)){if(!ids.has(id))errors.push(`Requirement references unknown obligation ${id}.`);else{if(!mapped.has(id))mapped.set(id,0);mapped.set(id,mapped.get(id)+1);}}
+  for(const ev of safe(evidence))if(upper(ev?.kind)==='OBLIGATION_DISPOSITION'){
+    let d;try{d=typeof ev.content==='string'?JSON.parse(ev.content):ev.content;}catch{errors.push('OBLIGATION_DISPOSITION evidence content is malformed JSON.');continue;}
+    const keys=d&&typeof d==='object'&&!Array.isArray(d)?Object.keys(d):[];if(keys.length!==3||!['obligationId','disposition','reason'].every(k=>keys.includes(k))){errors.push('OBLIGATION_DISPOSITION must contain exactly obligationId, disposition, and reason.');continue;}
+    const id=String(d.obligationId||'');if(!ids.has(id)){errors.push(`Disposition references unknown obligation ${id||'(missing)'}.`);continue;}if(disposed.has(id))errors.push(`Duplicate disposition for ${id}.`);disposed.set(id,d);if(!allowed.has(upper(d.disposition)))errors.push(`Invalid non-requirement disposition for ${id}.`);if(!String(d.reason||'').trim())errors.push(`Disposition for ${id} requires a reason.`);
+  }
+  for(const id of ids){if(mapped.has(id)&&disposed.has(id))errors.push(`${id} is both mapped to a requirement and disposed.`);else if(!mapped.has(id)&&!disposed.has(id))errors.push(`${id} has no requirement mapping or valid non-requirement disposition.`);}
+  const accounted=[...ids].filter(id=>(mapped.has(id)?1:0)+(disposed.has(id)?1:0)===1).length,total=ids.size;
+  return {complete:errors.length===0&&accounted===total,coverage:total?accounted/total:1,total,accounted,errors,manifest};
+}
+'''
+          s=s.replace(marker,helpers+'\n'+marker,1)
+          # Strengthen Stage 1 gate.
+          old="""case 1:{\n      if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');\n      requireAccepted();\n      const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);\n      if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');\n      break;\n    }"""
+          new="""case 1:{\n      if(!String(project.job.CURRENT_INPUT_VERSION||'').trim())reasons.push('A current User Job Input version is required.');\n      if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');\n      requireAccepted();\n      for(const name of ['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'])if(project.job[name]===undefined||project.job[name]===null||String(project.job[name]).trim()==='')reasons.push(`Stage 01 required field ${name} is missing.`);\n      const accounting=evaluateIntakeCoverage(project,project.job.INPUT_SET_CONTENTS);if(!accounting.complete)reasons.push(...accounting.errors);\n      if(unresolvedHumanRequests(project,1).length)reasons.push('Stage 01 has unresolved blocking human-authority questions.');\n      const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);\n      if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');\n      break;\n    }"""
+          if old not in s: raise SystemExit('Stage 1 gate anchor missing')
+          s=s.replace(old,new,1)
+          # Strengthen Stage 3 to require exhaustion/saturation.
+          old3="""case 3:{\n      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';\n      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}\n      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;\n    }"""
+          new3="""case 3:{\n      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE',data=project.stages[3]?.agentData||{};\n      if(!sourceIds.length&&!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');\n      if(sourceIds.length){requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);if(!truth(data.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');if(!truth(data.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 second conflict and exception pass is not complete.');if(numeric(data.LATEST_PASS_NUMBER)<2)reasons.push('Stage 03 requires at least two documented research passes when applicable sources exist.');if(!falsey(data.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 latest pass still found a new material category; research is not exhausted.');}\n      const gaps=String(data.RESEARCH_GAPS_AND_BLOCKERS||'').trim();if(gaps&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(gaps)))reasons.push('Stage 03 research gaps or blockers remain unresolved.');\n      break;\n    }"""
+          if old3 not in s: raise SystemExit('Stage 3 gate anchor missing')
+          s=s.replace(old3,new3,1)
+          p.write_text(s)
+
+          p=Path('prompt-engine.js');s=p.read_text()
+          old1="Perform complete human-authority intake only. The application has enumerated every current controlled human-input unit in APPLICATION INTAKE MANIFEST. Classify every supplied unit exactly once and preserve every materially relevant fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue."
+          new1="Perform complete human-authority intake only. The application has enumerated every current controlled human-input unit in APPLICATION INTAKE MANIFEST. Inspect every controlled unit and extract EVERY semantically distinct project-relevant fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue. Preserve distinctions exactly: do not summarize away, merge, generalize, compress, paraphrase into loss, or omit separate meanings merely because they appear in one long user statement or artifact. Classify every supplied unit exactly once and preserve every distinct project-relevant meaning it contains."
+          if old1 not in s: raise SystemExit('Stage1 procedure anchor missing')
+          s=s.replace(old1,new1,1)
+          oldq="Ask genuinely human-only questions conversationally before final JSON."
+          newq="Classify every foreseeable unresolved issue as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE. Ask every BLOCKING_NOW and ASK_NOW_NONBLOCKING human-only question conversationally before final JSON; nonblocking means the human may answer UNKNOWN or DEFERRED, not that the question may be skipped. Do not ask the human to repeat information already supplied or information reliably obtainable from accessible supplied material, authorized research, or a later stage. When supplied artifact bytes are accessible, inspect them deeply enough to extract human-authority statements relevant to defining the job; when bytes are unavailable, preserve the named material and do not make the human describe it merely because bytes are unavailable."
+          s=s.replace(oldq,newq,1)
+          old3p="Research only the current accepted Stage 02 independent external source set, source-by-source and pass-by-pass. Examine exact portions and separately capture facts, mandatory obligations, recommendations, optional practices, examples, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, conflicts, superseded guidance, source evidence, candidate requirement proposals, and unresolved questions. Use response-local references rather than assigning canonical requirement identities. Do not treat the target product, this operating application, repository source code, prior implementations, project-generated artifacts, or current UI behavior as independent requirement authority. Repeat discovery passes until saturation is actually supported by the evidence."
+          new3p="Research only the current accepted Stage 02 independent external source set, source-by-source and pass-by-pass. Exhaust the accepted source set before completion: every current Stage 02 source must have current research coverage; separately capture facts, mandatory obligations, recommendations, optional practices, examples, explanatory material, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, conflicts, superseded guidance, source evidence, candidate requirement proposals, and unresolved questions. Perform a second conflict-and-exception pass and continue passes until the latest complete pass finds no new material requirement category, all known controlling sources are examined, and no unresolved research gap or blocker remains. Use response-local references rather than assigning canonical requirement identities. Do not treat the target product, this operating application, repository source code, prior implementations, project-generated artifacts, or current UI behavior as independent requirement authority."
+          if old3p not in s: raise SystemExit('Stage3 procedure anchor missing')
+          s=s.replace(old3p,new3p,1)
+          # Add full Stage3 canonical material to Stage4 context.
+          anchor="if(stage===4&&state?.stages?.[1]){const intake={agentData:state.stages[1].agentData||state.stages[1].acceptedData||{},humanData:state.stages[1].humanData||{},derivedData:state.stages[1].derivedData||{}};parts.push(`ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE\\n${show(intake)}`);}"
+          addition=anchor+"\n if(stage===4&&state?.stages?.[3]){const stage3={agentData:state.stages[3].agentData||state.stages[3].acceptedData||{},humanData:state.stages[3].humanData||{},derivedData:state.stages[3].derivedData||{},sources:workflow.recordsForCurrentScope(state,'sources'),research:workflow.recordsForCurrentScope(state,'research'),candidateRequirements:workflow.recordsForCurrentScope(state,'candidateRequirements'),sourceConflicts:workflow.recordsForCurrentScope(state,'sourceConflicts')};parts.push(`ACCEPTED STAGE 03 RESEARCH — COMPLETE CURRENT CANONICAL RESEARCH\\n${show(stage3)}`);}"
+          if anchor not in s: raise SystemExit('Stage4 Stage1 context anchor missing')
+          s=s.replace(anchor,addition,1)
+          # Fail closed before any Stage4 prompt can be generated.
+          anchor2="const opContract=schema.operationContract(stage,operation);"
+          guard="if(stage===4){const intake=workflow.evaluateIntakeCoverage(state,state?.job?.INPUT_SET_CONTENTS);if(state?.stages?.[1]?.status!=='COMPLETE'||!intake.complete){const e=new Error('Stage 04 prompt generation is blocked until Stage 01 is COMPLETE with 100% controlled-input accounting.');e.code='STAGE04_STAGE01_INCOMPLETE';throw e;}if(state?.stages?.[3]?.status!=='COMPLETE'){const e=new Error('Stage 04 prompt generation is blocked until Stage 03 research is COMPLETE and exhausted.');e.code='STAGE04_STAGE03_INCOMPLETE';throw e;}}\n "
+          if anchor2 not in s: raise SystemExit('buildPromptRecord guard anchor missing')
+          s=s.replace(anchor2,guard+anchor2,1)
+          p.write_text(s)
+          PY
+      - name: Preserve exact visual baseline and install runtime graph
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),{createHash}=require('node:crypto');
+          let html=fs.readFileSync('index.html','utf8');const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];if(!style)throw new Error('Visual baseline style block missing.');
+          if(!style.includes('.prompt{height:clamp(260px,45vh,520px)')||!style.includes('.expandable-prompt{max-height:280px}'))throw new Error('Prompt-box visual baseline changed before repair.');
+          html=html.replace(/; connect-src 'self';(?: worker-src 'self';)? object-src/,"; connect-src 'self'; worker-src 'self'; object-src");
+          const scripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const first=html.indexOf('<script defer src="workbook.js'),lastStart=html.indexOf('<script defer src="app-core.js',first),lastEnd=html.indexOf('</script>',lastStart)+9;if(first<0||lastStart<0||lastEnd<9)throw new Error('Runtime script block missing.');
+          const blob=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};const manifest=scripts.concat(['test-worker.js']).map(file=>`${file}:${blob(file)}\n`).join('');const id=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          html=html.slice(0,first)+scripts.map(file=>`<script defer src="${file}?v=${id}"></script>`).join('\n')+html.slice(lastEnd);if(html.match(/<style>[\s\S]*?<\/style>/)?.[0]!==style)throw new Error('Visual CSS changed.');fs.writeFileSync('index.html',html);
+          let worker=fs.readFileSync('test-worker.js','utf8');worker=worker.replace(/importScripts\(['"]test-runtime\.js(?:\?v=[^'"]+)?['"]\);/,`importScripts('test-runtime.js?v=${id}');`);fs.writeFileSync('test-worker.js',worker);
+          NODE
+      - name: Align Pages proof identities only
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');const p='.github/workflows/pages.yml';let s=fs.readFileSync(p,'utf8');s=s.replace(/const expected=\[[^\]]*'workbook\.js'[^\]]*\];/,"const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];");s=s.replace(/projectSchema:'closed-loop-project\/2'/g,"projectSchema:'closed-loop-project/3'").replace(/responseSchema:'closed-loop-stage-response\/2'/g,"responseSchema:'closed-loop-stage-response/3'");fs.writeFileSync(p,s);
+          NODE
+      - name: Add exact exhaustive prompt regressions
+        shell: bash
+        run: |
+          cat > verify-user-bundle-conformance.mjs <<'EOF'
+          import fs from 'node:fs';import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,runtime=globalThis.closedLoopTestRuntime,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;const assert=(x,m)=>{if(!x)throw new Error(m)};
+          assert(core.WORKFLOW_ID==='mobile-closed-loop/30'&&core.STAGE_COUNT===30,'workflow identity/stage count mismatch');assert(core.PROJECT_SCHEMA==='closed-loop-project/3','project schema not /3');assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','response schema not /3');assert(core.STAGES[15].title==='CORRECT THE ROOT CAUSE','Stage16 title mismatch');assert(schema.JOB_FIELDS.JOB_TITLE.producer==='HUMAN_DECISION'&&schema.JOB_FIELDS.JOB_OWNER.producer==='HUMAN_DECISION','human decision ownership mismatch');
+          const requiredOps=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];for(const op of requiredOps)assert(runtime.OPS.includes(op),'missing IR op '+op);
+          const source=fs.readFileSync('prompt-engine.js','utf8');for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])assert(!source.includes(x),'hard-coded project domain remains');
+          const p=core.createBlankState('JOB-EXHAUSTIVE');engine.ensureShape(p);p.job.CURRENT_INPUT_VERSION='INPUT-v001';p.job.EXACT_USER_OBJECTIVE_VERBATIM='USER-DETAIL-A. USER-DETAIL-B. Never ask me for these again.';p.job.EXPLICIT_USER_REQUIREMENTS='USER-DETAIL-C';p.projectData.inputVersions=[{inputVersionId:'INPUT-VERSION-1',version:'INPUT-v001',payload:{EXACT_USER_OBJECTIVE_VERBATIM:p.job.EXACT_USER_OBJECTIVE_VERBATIM,EXPLICIT_USER_REQUIREMENTS:p.job.EXPLICIT_USER_REQUIREMENTS}}];
+          const m=engine.intakeCoverageManifest(p);assert(m.units.length===2,'Stage1 did not enumerate every supplied nonempty controlled unit');const s1=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;assert(s1.includes('EVERY semantically distinct')&&s1.includes('do not summarize away'),'Stage1 prompt does not demand exhaustive semantic capture');for(const u of m.units)assert(s1.includes(u.sourceUnitId),'Stage1 prompt omitted controlled input unit '+u.sourceUnitId);
+          const capture={schema:'closed-loop-intake-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.sourceUnitId,disposition:'INCORPORATED',reason:'captured',extractedStatements:i===0?[{statementKey:'A',text:'USER-DETAIL-A',statementClass:'REQUIREMENT'},{statementKey:'B',text:'USER-DETAIL-B',statementClass:'PROHIBITION'}]:[{statementKey:'C',text:'USER-DETAIL-C',statementClass:'REQUIREMENT'}]}))};p.job.INPUT_SET_CONTENTS=JSON.stringify(capture);p.job.EXACT_DELIVERABLE_REQUESTED='DELIVERABLE-DETAIL';p.job.ASSUMPTIONS='NONE';p.job.UNKNOWN_INFORMATION='NONE';assert(engine.evaluateIntakeCoverage(p,p.job.INPUT_SET_CONTENTS).complete,'valid exhaustive intake rejected');
+          let blocked1=false;try{prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});}catch(e){blocked1=e.code==='STAGE04_STAGE01_INCOMPLETE'}assert(blocked1,'Stage4 generated before Stage1 COMPLETE');p.stages[1].status='COMPLETE';let blocked3=false;try{prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});}catch(e){blocked3=e.code==='STAGE04_STAGE03_INCOMPLETE'}assert(blocked3,'Stage4 generated before Stage3 COMPLETE');
+          p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-SET-v001';p.job.CURRENT_RESEARCH_VERSION='RESEARCH-v001';p.projectData.sources=[{id:'SOURCE-1',stage:2,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{SOURCE_ID:'SOURCE-1',TITLE:'SOURCE-IDENTITY-SENTINEL'}}];p.projectData.research=[{id:'RESEARCH-1',stage:3,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{RESEARCH_ID:'RESEARCH-1',SOURCE_ID:'SOURCE-1',MANDATORY_STATEMENTS:'STAGE3-MANDATORY-SENTINEL',EXCEPTIONS:'STAGE3-EXCEPTION-SENTINEL',EXPLANATORY_MATERIAL:'STAGE3-EXPLANATION-SENTINEL'}}];p.projectData.candidateRequirements=[{id:'CAND-1',stage:3,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{CANDIDATE_REQ_ID:'CAND-1',SOURCE_ID:'SOURCE-1',CANDIDATE_OBLIGATION:'STAGE3-CANDIDATE-SENTINEL'}}];p.stages[3].status='COMPLETE';p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE'};
+          const om=engine.obligationManifest(p);for(const x of ['USER-DETAIL-A','USER-DETAIL-B','USER-DETAIL-C','DELIVERABLE-DETAIL','STAGE3-MANDATORY-SENTINEL','STAGE3-EXCEPTION-SENTINEL','STAGE3-EXPLANATION-SENTINEL','STAGE3-CANDIDATE-SENTINEL'])assert(om.obligations.some(o=>o.text.includes(x)),'obligation manifest omitted '+x);const s4=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt;for(const x of ['USER-DETAIL-A','USER-DETAIL-B','USER-DETAIL-C','STAGE3-MANDATORY-SENTINEL','STAGE3-EXCEPTION-SENTINEL','STAGE3-EXPLANATION-SENTINEL','STAGE3-CANDIDATE-SENTINEL'])assert(s4.includes(x),'Stage4 prompt omitted '+x);assert(!/attach the original intent|reattach the original intent|resend the original intent/i.test(s4),'Stage4 asks user to resupply original intent');
+          const omitted=engine.evaluateObligationAccounting(p,{requirements:[],evidence:[]});assert(!omitted.complete&&omitted.errors.length===om.obligations.length,'Stage4 omission did not fail closed');const evidence=om.obligations.map((o,i)=>({temporaryKey:'E'+i,kind:'OBLIGATION_DISPOSITION',content:JSON.stringify({obligationId:o.obligationId,disposition:'RETAINED_NONNORMATIVE_CONTEXT',reason:'fixture accounting'})}));assert(engine.evaluateObligationAccounting(p,{requirements:[],evidence}).complete,'complete Stage4 accounting rejected');
+          const html=fs.readFileSync('index.html','utf8');assert(html.includes('.prompt{height:clamp(260px,45vh,520px)')&&html.includes('.expandable-prompt{max-height:280px}'),'prompt box visual size changed');
+          console.log(JSON.stringify({exhaustiveStage1:true,stage4RequiresStage1And3:true,stage4UsesAllCurrentStage1And3:true,noRepeatIntent:true,obligations:om.obligations.length,visualBaselinePreserved:true}));
+          EOF
+      - name: Run proof chain
+        shell: bash
+        run: |
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-user-bundle-conformance.mjs; do node --check "$f"; done
+          node verify-user-bundle-conformance.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-one-time-intent-intake.mjs
+      - name: Commit only after all proofs pass
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-user-bundle-repair'
+          git config user.email 'closed-loop-user-bundle-repair@users.noreply.github.com'
+          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml
+          git add -A
+          git commit -m 'Enforce exhaustive Stage 1 and Stage 3 input to Stage 4'
+          git push origin HEAD:repair/user-bundle-zero-loss-20260830
