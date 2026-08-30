@@ -1,0 +1,25 @@
+name: Export source snapshot
+
+on:
+  push:
+    branches:
+      - fix-stage04-canonical-context
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact branch
+        uses: actions/checkout@v4
+      - name: Upload exact source tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-source-${{ github.sha }}
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
+          retention-days: 1
