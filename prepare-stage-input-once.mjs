@@ -8,4 +8,6 @@ source=source.replace(old,replacement);
 source=source.replaceAll('complete semantic intake inspection','complete meaning-preserving intake inspection');
 source=source.replaceAll('every semantically relevant human-supplied statement','every materially relevant human-supplied statement');
 source=source.replaceAll('every semantically relevant supplied statement','every materially relevant supplied statement');
+source=source.replaceAll("`3:${JSON.stringify(stage3)},\\n4:`","`3:'${stage3}',\\n4:`");
+source=source.replaceAll("`4:${JSON.stringify(stage4)},\\n5:`","`4:'${stage4}',\\n5:`");
 fs.writeFileSync(file,source);
