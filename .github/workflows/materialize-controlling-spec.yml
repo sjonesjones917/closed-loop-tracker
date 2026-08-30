@@ -14,6 +14,8 @@ jobs:
         with: {ref: spec-v3-zero-loss-20260830}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
+      - name: Repair materializer literal
+        run: node repair-materializer.mjs
       - name: Materialize controlling specification
         run: node materialize-controlling-spec.mjs
       - name: Syntax and controlling invariants
@@ -31,7 +33,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm materialize-controlling-spec.mjs .github/workflows/materialize-controlling-spec.yml
+          git rm materialize-controlling-spec.mjs repair-materializer.mjs .github/workflows/materialize-controlling-spec.yml
           git add workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js index.html .github/workflows/pages.yml verify-controlling-spec.mjs
           git commit -m "[materialized-v3] Implement controlling /3 zero-loss architecture"
           git push origin HEAD:spec-v3-zero-loss-20260830
