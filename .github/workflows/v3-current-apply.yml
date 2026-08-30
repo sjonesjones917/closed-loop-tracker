@@ -44,8 +44,8 @@ jobs:
             git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
             exit 1
           fi
-          if ! git diff --quiet -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html verify-prompt-semantics.mjs; then
-            git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html verify-prompt-semantics.mjs
+          if ! git diff --quiet -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html verify-prompt-semantics.mjs verify-ingestion.mjs; then
+            git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html verify-prompt-semantics.mjs verify-ingestion.mjs
             git commit -m 'Strengthen v3 exhaustive stage semantics and regressions [skip ci]'
             git push origin HEAD:fix/closed-loop-v3-current-20260830
           fi
@@ -59,4 +59,5 @@ jobs:
           node --check test-runtime.js
           node --check app-core.js
           node --check verify-prompt-semantics.mjs
+          node --check verify-ingestion.mjs
           git diff --check
