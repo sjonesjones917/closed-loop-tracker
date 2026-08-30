@@ -1,3 +1,4 @@
+// Trigger materialization after v3 evidence-proof repair.
 import fs from 'node:fs';
 const path='verify-project-lifecycle.mjs';
 let s=fs.readFileSync(path,'utf8');
