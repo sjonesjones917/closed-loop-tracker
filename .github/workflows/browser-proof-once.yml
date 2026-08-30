@@ -16,6 +16,7 @@ jobs:
       - name: Apply final migration and acceptance repairs
         run: |
           node .patch-ci.mjs
+          node .patch-browser-test.mjs
           node .patch-stage1.mjs
       - name: Complete non-browser proof
         run: |
