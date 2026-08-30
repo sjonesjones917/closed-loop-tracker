@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/47';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/48';
 if(!core||!schema||!hash||!workflow||!testRuntime)throw new Error('workbook.js, hash.js, workflow-schema.js, test-runtime.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=value=>{if(value===undefined||value===null||value==='')return 'UNKNOWN';if(Array.isArray(value)&&!value.length)return 'NONE';if(typeof value==='object')return JSON.stringify(value,null,2);return String(value);};
 const safe=value=>Array.isArray(value)?value:[];
@@ -126,7 +126,7 @@ const STAGE_COMPLETION_DIRECTIVES=Object.freeze({
 22:'For external deterministic work, execute only the exact deterministic tests routed externally and return objective execution observations/evidence; never impersonate application-native execution. Stage 22 completes only when the application has one current sufficient result for every applicable mandatory deterministic test and all are satisfied.',
 23:'Complete only when every active meaning-review requirement receives one current independent review with product location, required meaning, observed meaning, evidence-based comparison, source evidence where applicable, and a supported determination; no mandatory review may remain violated or undetermined.',
 24:'Complete only after every applicable attack category and active historical regression pattern authorized for this review was actually tested, findings carry sufficient evidence, independence is preserved, and every unresolved mandatory finding has a defect or blocker.',
-25:'Complete only after every current product/delivery artifact, required representation, page/view, transformation, and packaged file has actually been inspected through the proper authority path and no mandatory representation unknown remains.',
+25:'Complete only after every current product/delivery artifact, required representation, page/view, transformation, and packaged file has actually been inspected through the proper authority path and no mandatory representation unknown remains. For each artifact, OBSERVATIONS must be a JSON STRING containing requiredPageOrViewIds, inspectedPageOrViewIds, requiredPackagedFileIds, openedOrTestedPackagedFileIds, requiredTransformationIds, inspectedTransformationIds, and observation. Use empty arrays only when that class genuinely does not apply; the application compares required and inspected identity sets exactly.',
 26:'Complete only when current process evidence and current product evidence are reviewed as distinct propositions, identities and missing links are reconciled, contradictions/discrepancies are resolved or blocked, and both evidence bodies support progression.',
 27:'Provide advisory release analysis only. The application alone calculates exactly one idempotent ACCEPTED, REJECTED, or BLOCKED release result from complete current evidence; never set or override release state, counts, controlling rule, or normalized reason.',
 28:'No external agent operation is required for the authoritative byte-identity decision. The application must compare current audited and delivery bytes one-to-one by canonical artifact identity, authorized filename, byte size, and SHA-256; missing, extra, duplicate, renamed, stale, or mismatched bytes prevent authorization.',
