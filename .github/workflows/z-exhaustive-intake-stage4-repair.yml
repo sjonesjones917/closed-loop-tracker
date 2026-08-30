@@ -1,0 +1,150 @@
+name: Exhaustive intake and Stage 04 repair
+on:
+  push:
+    branches: [fix/exhaustive-intake-stage3-stage4-20260830]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/exhaustive-intake-stage3-stage4-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconcile proven v3 mechanisms onto current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin repair/controlling-v3-zero-loss
+          donor=origin/repair/controlling-v3-zero-loss
+          git checkout "$donor" -- \
+            workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js \
+            build-test-project.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs \
+            verify-intake-obligation-accounting.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs \
+            verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-test-runtime.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs verify.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, hashlib
+
+          def replace_once(text, old, new, label):
+              if old not in text:
+                  raise SystemExit(f'missing patch anchor: {label}')
+              return text.replace(old, new, 1)
+
+          # /2 -> /3 migration must be deterministic and preserve the full imported payload.
+          p=Path('workbook.js'); text=p.read_text()
+          old="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;"""
+          new="""  if(!['closed-loop-project/2','human-project/30'].includes(p.schema))throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  const sourceSchema=String(p.schema);\n  migrated.schema=PROJECT_SCHEMA;"""
+          text=replace_once(text,old,new,'workbook migration source schemas')
+          text=text.replace("{kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30'","{kind:'LEGACY_STAGE_RECORDS',schema:sourceSchema")
+          text=text.replace("{kind:'MIGRATION_SOURCE',schema:'human-project/30'","{kind:'MIGRATION_SOURCE',schema:sourceSchema")
+          p.write_text(text)
+
+          # Stage 03 must be demonstrably exhausted before Stage 04 can become authoritative.
+          p=Path('prompt-engine.js'); text=p.read_text()
+          m=re.search(r"3:'([^']*(?:\\'[^']*)*)',\n4:'", text)
+          if not m: raise SystemExit('missing Stage 03 prompt procedure anchor')
+          stage3="""3:'Exhaust the current accepted Stage 02 source universe before Stage 04. Research every current accepted Stage 02 source source-by-source and exact-portion-by-exact-portion. Preserve mandatory statements, recommendations, optional practices, examples, explanatory material, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, conflicts, supersession, source evidence, candidate obligations, and unresolved gaps without compressing away distinct meaning. Perform an initial extraction pass and then at least one explicit conflict/exception/completeness pass over the entire current source set. Continue additional passes whenever a pass discovers a new material category, obligation, exception, restriction, dependency, conflict, or applicability fact. The latest complete pass must find no new material category before Stage 03 may be treated as exhausted. Every current Stage 02 source must have current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Do not invent a source or a finding. Do not use the target product, repository implementation, or generated work as independent authority. Return RESEARCH_GAPS_AND_BLOCKERS when anything remains materially unresolved; do not claim completion while a known research gap remains.',\n4:'"""
+          text=text[:m.start()]+stage3+text[m.end():]
+
+          # Stage 04 prompt explicitly receives the complete Stage 01 and exhausted Stage 03 state, in addition to the closed obligation universe.
+          old="""function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage===1)parts.push('APPLICATION INTAKE MANIFEST\\n'+show(workflow.intakeCoverageManifest(state)));\n if(stage===4)parts.push('APPLICATION OBLIGATION MANIFEST\\n'+show(workflow.obligationManifest(state)));"""
+          new="""function contextFor(stage,state,operation,scope={}){\n const parts=[];\n if(stage===1)parts.push('APPLICATION INTAKE MANIFEST\\n'+show(workflow.intakeCoverageManifest(state)));\n if(stage===4){\n   parts.push('APPLICATION OBLIGATION MANIFEST\\n'+show(workflow.obligationManifest(state)));\n   parts.push('COMPLETE ACCEPTED STAGE 01 JOB DEFINITION — DO NOT ASK THE HUMAN TO REPEAT IT\\n'+show({agentData:state?.stages?.[1]?.agentData||{},humanData:state?.stages?.[1]?.humanData||{},derivedData:state?.stages?.[1]?.derivedData||{},currentInputVersion:state?.job?.CURRENT_INPUT_VERSION||null}));\n   parts.push('COMPLETE EXHAUSTED STAGE 03 STAGE DATA — USE IT ALL\\n'+show({agentData:state?.stages?.[3]?.agentData||{},humanData:state?.stages?.[3]?.humanData||{},derivedData:state?.stages?.[3]?.derivedData||{}}));\n }"""
+          text=replace_once(text,old,new,'Stage 04 explicit Stage 01/03 context')
+          text=text.replace("Compile atomic requirement proposals only from APPLICATION OBLIGATION MANIFEST. That manifest is the complete application-generated input universe from current User Job Input, the accepted Stage 01 semantic capture, accepted Stage 01 job definition, and Stage 03 research.","Compile atomic requirement proposals only after consuming the entire APPLICATION OBLIGATION MANIFEST, the COMPLETE ACCEPTED STAGE 01 JOB DEFINITION, and the COMPLETE EXHAUSTED STAGE 03 STAGE DATA included in this exact prompt. The manifest is the closed application-generated obligation universe from current User Job Input, the accepted Stage 01 semantic capture and job definition, and every applicable Stage 03 research/candidate obligation. Do not omit, summarize away, or ask the human to repeat any information already present in those sections.")
+          text=text.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/28';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/32';")
+          p.write_text(text)
+
+          # Stage 03 gate: exact source coverage plus second-pass/saturation closure and no known gaps.
+          p=Path('workflow-engine.js'); text=p.read_text()
+          old="""    case 3:{\n      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';\n      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}\n      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;\n    }"""
+          new="""    case 3:{\n      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';\n      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}\n      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);\n      const data=project.stages[3]?.agentData||{},second=upper(data.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED),latest=Number(data.LATEST_PASS_NUMBER),newCategory=upper(data.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS),gaps=upper(data.RESEARCH_GAPS_AND_BLOCKERS);\n      if(!['TRUE','YES','COMPLETE','COMPLETED'].includes(second))reasons.push('Stage 03 has not completed the required second conflict/exception/completeness pass.');\n      if(!Number.isFinite(latest)||latest<2)reasons.push('Stage 03 latest complete research pass must be pass 2 or later.');\n      if(!['FALSE','NO','NONE','0'].includes(newCategory))reasons.push('Stage 03 latest complete pass still found new material; research is not exhausted.');\n      if(gaps&&!['NONE','NO','FALSE','0','NOT APPLICABLE'].includes(gaps))reasons.push('Stage 03 still reports research gaps or blockers.');\n      for(const research of collection('research'))if(!String(recordValue(research,'SATURATION_STATUS')||'').trim())reasons.push(`${recordId(research,'research')}: SATURATION_STATUS is missing.`);\n      break;\n    }"""
+          text=replace_once(text,old,new,'Stage 03 exhausted gate')
+          p.write_text(text)
+
+          # Pre-commit Stage 03 validation mirrors the gate so incomplete research never becomes a valid completion proposal.
+          p=Path('response-ingestion.js'); text=p.read_text()
+          anchor="""  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===4){\n    const accounting=workflow.evaluateObligationAccounting(project,{requirements:safe(envelope.records?.requirements),evidence:safe(envelope.evidence)});\n    for(const message of accounting.errors)issues.push(issue('INCOMPLETE_OBLIGATION_ACCOUNTING','/records/requirements',message));\n  }\n"""
+          insert="""  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===3){\n    const sourceIds=workflow.recordsForCurrentScope(project,'sources').map(record=>workflow.recordId(record,'sources'));\n    const proposedResearch=safe(envelope.records?.research),covered=new Set(proposedResearch.map(record=>String(record?.relationships?.SOURCE_ID?.recordId||record?.fields?.SOURCE_ID||'')));\n    const missing=sourceIds.filter(id=>!covered.has(id));if(missing.length)issues.push(issue('INCOMPLETE_STAGE03_SOURCE_COVERAGE','/records/research',`Research coverage is missing for source(s): ${missing.join(', ')}.`));\n    const second=upper(envelope.stageData?.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED),latest=Number(envelope.stageData?.LATEST_PASS_NUMBER),newCategory=upper(envelope.stageData?.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS),gaps=upper(envelope.stageData?.RESEARCH_GAPS_AND_BLOCKERS);\n    if(sourceIds.length&&!['TRUE','YES','COMPLETE','COMPLETED'].includes(second))issues.push(issue('INCOMPLETE_STAGE03_EXHAUSTION','/stageData/SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','Stage 03 requires the explicit second conflict/exception/completeness pass.'));\n    if(sourceIds.length&&(!Number.isFinite(latest)||latest<2))issues.push(issue('INCOMPLETE_STAGE03_EXHAUSTION','/stageData/LATEST_PASS_NUMBER','Stage 03 latest complete pass must be pass 2 or later.'));\n    if(sourceIds.length&&!['FALSE','NO','NONE','0'].includes(newCategory))issues.push(issue('INCOMPLETE_STAGE03_EXHAUSTION','/stageData/NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS','Stage 03 latest pass must find no new material category.'));\n    if(gaps&&!['NONE','NO','FALSE','0','NOT APPLICABLE'].includes(gaps))issues.push(issue('INCOMPLETE_STAGE03_EXHAUSTION','/stageData/RESEARCH_GAPS_AND_BLOCKERS','Stage 03 cannot complete while research gaps or blockers remain.'));\n  }\n"""
+          text=replace_once(text,anchor,insert+anchor,'Stage 03 ingestion closure')
+          p.write_text(text)
+
+          # Preserve the restored visual baseline. Only security/script loading changes are allowed in index.html.
+          p=Path('index.html'); text=p.read_text()
+          text=text.replace("connect-src 'self'; object-src 'none';","connect-src 'self'; worker-src 'self'; object-src 'none';")
+          if 'test-runtime.js?v=' not in text:
+              text=text.replace('<script defer src="workflow-schema.js?v=', '<script defer src="test-runtime.js?v=RUNTIME_TOKEN"></script>\n<script defer src="workflow-schema.js?v=',1)
+              # Reorder to workbook, hash, schema, runtime, engine by moving inserted runtime after schema.
+              lines=text.splitlines(); runtime=[x for x in lines if 'test-runtime.js?v=' in x][0]; lines.remove(runtime); idx=next(i for i,x in enumerate(lines) if 'workflow-schema.js?v=' in x); lines.insert(idx+1,runtime); text='\n'.join(lines)
+          # Normalize placeholder/query tokens after all runtime files are finalized.
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          manifest=''.join(f'{name}:{hashlib.sha256(Path(name).read_bytes()).hexdigest()}\n' for name in runtime_files)
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          text=re.sub(r'(?:RUNTIME_TOKEN|runtime-[0-9a-f]{16})',token,text)
+          p.write_text(text)
+
+          # CI must prove the /3 contract, migration, accounting, Test IR security/limits before deploy.
+          p=Path('.github/workflows/pages.yml'); text=p.read_text()
+          text=text.replace("          node --check verify-test-runtime.mjs\n","          node --check verify-test-runtime.mjs\n          node --check verify-test-runtime-v3.mjs\n          node --check verify-test-runtime-limits.mjs\n          node --check verify-v3-contract.mjs\n          node --check verify-v3-migration.mjs\n          node --check verify-intake-obligation-accounting.mjs\n")
+          text=text.replace("      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n","      - name: Verify generic deterministic Test IR runtime and security boundaries\n        run: |\n          node verify-test-runtime.mjs\n          node verify-test-runtime-v3.mjs\n          node verify-test-runtime-limits.mjs\n          node verify-v3-contract.mjs\n          node verify-v3-migration.mjs\n          node verify-intake-obligation-accounting.mjs\n")
+          text=text.replace("const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];")
+          text=text.replace("node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs", "node build-test-project.mjs && node verify-v3-contract.mjs && node verify-v3-migration.mjs && node verify-intake-obligation-accounting.mjs && node verify-test-runtime.mjs && node verify-test-runtime-v3.mjs && node verify-test-runtime-limits.mjs && node verify-hash.mjs")
+          p.write_text(text)
+
+          # Add a focused regression for Stage 03 exhaustion + Stage 04 complete upstream context + visual CSS immutability.
+          Path('verify-exhaustive-stage1-stage3-stage4.mjs').write_text(r'''import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          assert.equal(core.PROJECT_SCHEMA,'closed-loop-project/3');assert.equal(globalThis.closedLoopWorkflowSchema.RESPONSE_SCHEMA,'closed-loop-stage-response/3');
+          const p=core.createBlankState('JOB-EXHAUSTIVE');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'});engine.ensureShape(p);
+          p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Exact requested product',ASSUMPTIONS:'No unstated assumptions.',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:'INPUT-v001',manifestSha256:engine.intakeCoverageManifest(p).manifestSha256,units:engine.intakeCoverageManifest(p).units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'s'+i,text:u.label,statementClass:'REQUIREMENT'}]})),conversationStatements:[]})};
+          p.stages[3].agentData={SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE',EXCEPTIONS_AND_EDGE_CONDITIONS:'All found conditions captured.',CONFLICTING_OR_INVALIDATING_MATERIAL:'NONE'};
+          const prompt1=prompts.buildPromptRecord(1,p).prompt;assert.match(prompt1,/APPLICATION INTAKE MANIFEST/);assert.doesNotMatch(prompt1,/patent application fixture|software\/repository|building\/AEC|physical\/mechanical/i);
+          const prompt4=prompts.buildPromptRecord(4,p).prompt;assert.match(prompt4,/APPLICATION OBLIGATION MANIFEST/);assert.match(prompt4,/COMPLETE ACCEPTED STAGE 01 JOB DEFINITION/);assert.match(prompt4,/COMPLETE EXHAUSTED STAGE 03 STAGE DATA/);assert.match(prompt4,/Do not omit, summarize away, or ask the human to repeat/i);
+          assert.doesNotMatch(prompt4,/attach the original intent file again/i);
+          const html=fs.readFileSync('index.html','utf8'),baseline=fs.readFileSync('/tmp/index-visual-baseline.html','utf8');
+          const promptCss=s=>s.match(/\.prompt\{[^}]+\}/)?.[0];assert.equal(promptCss(html),promptCss(baseline),'Prompt box CSS changed from the restored visual baseline.');
+          console.log('verify-exhaustive-stage1-stage3-stage4: PASS');''')
+          PY
+          git show ebeeffad8a4397fb98074d42f293d51856c02d41:index.html > /tmp/index-visual-baseline.html
+      - name: Prove exact requested closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-exhaustive-stage1-stage3-stage4.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-exhaustive-stage1-stage3-stage4.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Commit proven implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html .github/workflows/pages.yml \
+            build-test-project.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-intake-obligation-accounting.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-test-runtime.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs verify.mjs verify-exhaustive-stage1-stage3-stage4.mjs
+          git diff --cached --check
+          git commit -m 'Enforce exhaustive Stage 01 and Stage 03 input closure for Stage 04'
+          git push origin HEAD:fix/exhaustive-intake-stage3-stage4-20260830
