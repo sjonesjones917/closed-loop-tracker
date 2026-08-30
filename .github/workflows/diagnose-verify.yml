@@ -1,0 +1,29 @@
+name: Diagnose canonical verification regression
+on:
+  push:
+    branches: [fix/stage01-intake-closure-20260830]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Capture verify.mjs result
+        id: verify
+        continue-on-error: true
+        run: |
+          set +e
+          node verify.mjs > verify-failure.log 2>&1
+          status=$?
+          cat verify-failure.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verify-failure-log
+          path: verify-failure.log
+          if-no-files-found: error
+      - name: Preserve failure status
+        if: steps.verify.outputs.status != '0'
+        run: exit 1
