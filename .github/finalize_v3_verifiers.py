@@ -82,13 +82,10 @@ if stale_specialist in s:s=s.replace(stale_specialist,neutral_specialist,1)
 elif prior_neutral_specialist in s:s=s.replace(prior_neutral_specialist,neutral_specialist,1)
 elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier anchor missing')
 
-# Replace the practical Stage 01 token list by structure rather than stale literal wording.
-practical_re=re.compile(r" const required=\[[^\n]*\];\n for\(const token of required\)if\(!r\.prompt\.includes\(token\)\)throw new Error\('Stage 01 practical intake/clarification contract missing: '\+token\);")
-new_practical=""" const required=['Ask only for facts or choices that must come from the human','Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority','do not enumerate archive entries','Do not begin substantive external-source research or downstream production work.','The application already owns JOB_ID'];
- for(const token of required)if(!r.prompt.includes(token))throw new Error('Stage 01 practical intake/clarification contract missing: '+token);"""
-if new_practical not in s:
-    s,n=practical_re.subn(new_practical,s,count=1)
-    if n!=1:raise SystemExit('Stage 01 practical-intake verifier structure missing')
+# Replace stale practical token assertions individually; do not depend on exact list formatting.
+s=s.replace("'Ask only what must come from the human'","'Ask only for facts or choices that must come from the human'")
+s=s.replace("'Do not block Stage 01 merely because information will be needed by a later'","'Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority'")
+if 'Ask only what must come from the human' in s or 'Do not block Stage 01 merely because information will be needed by a later' in s:raise SystemExit('stale Stage 01 practical verifier wording remains')
 
 old_mutants="""const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
