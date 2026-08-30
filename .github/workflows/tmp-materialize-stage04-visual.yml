@@ -70,9 +70,12 @@ jobs:
 
           let browser=fs.readFileSync('verify-browser.mjs','utf8');
           const browserAnchor=" await openStage(cdp,23);assert(await evalValue(cdp,`!document.querySelector('#reviewer-context-required')`),'Locked future Stage 23 exposed reviewer-context work before the operator needs it.');";
-          const browserReplacement=` await openStage(cdp,4);const stage04Visual=await evalValue(cdp,\`(()=>{const prompt=document.querySelector('#generated-prompt'),files=document.querySelector('#stage-files'),directory=document.querySelector('#stage-directory'),panel=files?.closest('.panel');return {promptHeight:prompt?.getBoundingClientRect().height||0,files:Boolean(files),directory:Boolean(directory),panelText:panel?.innerText||''};})()\`);assert(stage04Visual&&stage04Visual.files&&stage04Visual.directory&&stage04Visual.panelText.includes('Authorized files for this stage'),\`Stage 04 standard file-control visuals are missing: \\${JSON.stringify(stage04Visual)}\`);assert(stage04Visual.promptHeight>=279&&stage04Visual.promptHeight<=281,\`Stage 04 generated-instruction preview must remain 280px; got \\${stage04Visual.promptHeight}px.\`);
-          ${browserAnchor}`;
-          browser=replaceOnce(browser,browserAnchor,browserReplacement,'Stage 04 browser visual regression');
+          const browserCheck=` await openStage(cdp,4);
+          const stage04Visual=await evalValue(cdp,"(()=>{const prompt=document.querySelector('#generated-prompt'),files=document.querySelector('#stage-files'),directory=document.querySelector('#stage-directory'),panel=files?.closest('.panel');return {promptHeight:prompt?.getBoundingClientRect().height||0,files:Boolean(files),directory:Boolean(directory),panelText:panel?.innerText||''};})()");
+          assert(stage04Visual&&stage04Visual.files&&stage04Visual.directory&&stage04Visual.panelText.includes('Authorized files for this stage'),'Stage 04 standard file-control visuals are missing: '+JSON.stringify(stage04Visual));
+          assert(stage04Visual.promptHeight>=279&&stage04Visual.promptHeight<=281,'Stage 04 generated-instruction preview must remain 280px; got '+stage04Visual.promptHeight+'px.');
+          `;
+          browser=replaceOnce(browser,browserAnchor,browserCheck+browserAnchor,'Stage 04 browser visual regression');
           fs.writeFileSync('verify-browser.mjs',browser);
 
           fs.rmSync('.github/workflows/tmp-materialize-stage04-visual.yml');
