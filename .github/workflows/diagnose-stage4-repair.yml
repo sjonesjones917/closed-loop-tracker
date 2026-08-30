@@ -1,35 +1,142 @@
-name: Install Stage 4 context binding repair
+name: Apply and prove Stage 4 source repair
 on:
   push:
     branches: [fix/stage4-durable-intent-final-20260830]
 permissions:
   contents: write
 jobs:
-  install:
-    if: github.event.head_commit.message == 'Install Stage 4 context binding repair'
+  repair:
+    if: github.event.head_commit.message == 'Run Stage 4 source repair with context binding'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/stage4-durable-intent-final-20260830
-      - name: Extend one-time repair with exact context binding and dynamic build identity
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply source and regression corrections
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('.github/workflows/repair-stage4-durable-intent.yml')
-          s=p.read_text()
-          anchor="""          s=s[:start]+\"4:\"+json.dumps(text)+\",\"+s[end:]\n          p.write_text(s)\n\n          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.\n"""
-          insertion="""          s=s[:start]+\"4:\"+json.dumps(text)+\",\"+s[end:]\n          p.write_text(s)\n\n          # 3b. Prompt context identity must bind the exact selected human-authority input, not only version labels.\n          p=Path('prompt-engine.js'); s=p.read_text()\n          old=\"promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack,conversationMaterials:handoff.conversationMaterials},contextManifest={stage,operation,scope,\"\n          new=\"promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack,conversationMaterials:handoff.conversationMaterials},humanAuthorityContext=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null])),contextManifest={stage,operation,scope,humanAuthorityInput:{inputVersion:scope.inputVersion,sha256:hash.sha256Value(humanAuthorityContext)},\"\n          if old not in s: raise SystemExit('prompt context-manifest binding marker missing')\n          s=s.replace(old,new,1)\n          p.write_text(s)\n\n          # 4. Do not display a generic Stage 04 upload panel that contradicts retained-input reuse.\n"""
-          if anchor not in s: raise SystemExit('repair workflow Stage 4 prompt anchor missing')
-          s=s.replace(anchor,insertion,1)
-          anchor="""          p.write_text(s)\n          PY\n      - name: Remove one-time repair/diagnostic infrastructure before acceptance\n"""
-          insertion="""          p.write_text(s)\n\n          # 9. Synchronize the shared runtime cache identity after all runtime-source edits.\n          import hashlib,re\n          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']\n          def git_blob_sha(path):\n            data=Path(path).read_bytes()\n            return hashlib.sha1(f'blob {len(data)}\\0'.encode()+data).hexdigest()\n          manifest=''.join(f'{name}:{git_blob_sha(name)}\\n' for name in runtime_files).encode()\n          runtime_identity='runtime-'+hashlib.sha256(manifest).hexdigest()[:16]\n          p=Path('index.html'); html=p.read_text()\n          html,count=re.subn(r'runtime-[0-9a-f]{16}',runtime_identity,html)\n          if count!=8: raise SystemExit(f'expected 8 runtime cache tokens, updated {count}')\n          p.write_text(html)\n          PY\n      - name: Remove one-time repair/diagnostic infrastructure before acceptance\n"""
-          if anchor not in s: raise SystemExit('repair workflow final Python anchor missing')
-          s=s.replace(anchor,insertion,1)
-          p.write_text(s)
+          import json,hashlib,re
+
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="  if(!config)return null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          new="  if(!config)return null;\n  if(Number(stage)===1)return safe(project.projectData.inputVersions).at(-1)||null;\n  if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE')"
+          if old not in s: raise SystemExit('Stage 01 version authority marker missing')
+          s=s.replace(old,new,1)
+          fn=s.index('function executionHandoff('); start=s.index('  if(stage===4){',fn); end=s.index('  for(const item of items)',start)
+          s=s[:start]+"  // Stage 04 consumes durable canonical human-authority and accepted Stage 01/03 context.\n  // SUPPLIED_MATERIALS_INVENTORY references remain provenance; they do not create a repeat file handoff.\n"+s[end:]
+          old="if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}"
+          new="if(stage===4)return 'Use the current Stage 04 instruction. The application supplies the retained human-authority input and accepted Stage 01/03 context; do not resend the original intent file merely because its filename is recorded. When the agent finishes, paste its final JSON response here.';"
+          if old not in s: raise SystemExit('Stage 04 next action marker missing')
+          s=s.replace(old,new,1); p.write_text(s)
+
+          p=Path('prompt-engine.js'); s=p.read_text()
+          if "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';" not in s: raise SystemExit('Prompt version marker missing')
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/24';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';",1)
+          start=s.index("\n4:'")+1; end=s.index("\n5:'",start)
+          text="Compile atomic requirement proposals only from the complete application-supplied Stage 04 obligation universe: current User Job Input, accepted Stage 01 job definition, human-origin obligations already captured from supplied material, accepted Stage 03 source research, candidate external-source obligations, and applicable source identities/evidence. The application owns input selection, stable obligation identities, provenance, current scope, and accounting completeness. Do not rediscover an unspecified input universe. Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file or any other material merely because a filename or material reference is present in SUPPLIED_MATERIALS_INVENTORY; those references are provenance and the captured human-authority information already present in canonical context controls this stage. Request original bytes only when the current Stage 04 context explicitly identifies a genuinely unresolved byte-dependent obligation that was not previously captured and whose substantive meaning cannot be established from canonical context; otherwise no Stage 04 file handoff exists. For every application-enumerated obligation, produce one or more atomic requirements or an explicit retained-nonnormative, inapplicable-with-reason, or blocked-with-reason disposition as required by the current response contract. No obligation may disappear. Preserve every original obligation identity independently even when multiple materially equivalent obligations map to one requirement. Each proposed requirement must be independently testable where possible and record requirement type, mandatory/optional status, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, provenance, and notes. The application assigns REQ_ID, versions, hashes, counts, scope, and gate status; do not assign them. Do not derive requirements from target-product behavior merely because it exists."
+          s=s[:start]+"4:"+json.dumps(text)+","+s[end:]
+          old="promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack,conversationMaterials:handoff.conversationMaterials},contextManifest={stage,operation,scope,"
+          new="promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack,conversationMaterials:handoff.conversationMaterials},humanAuthorityContext=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null])),contextManifest={stage,operation,scope,humanAuthorityInput:{inputVersion:scope.inputVersion,sha256:hash.sha256Value(humanAuthorityContext)},"
+          if old not in s: raise SystemExit('Prompt context binding marker missing')
+          s=s.replace(old,new,1); p.write_text(s)
+
+          p=Path('app-core.js'); s=p.read_text(); marker="function artifactControlMarkup(n,locked){if(n===19)return"
+          if marker not in s: raise SystemExit('Stage artifact UI marker missing')
+          p.write_text(s.replace(marker,"function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)return",1))
+
+          p=Path('verify-complete.mjs'); s=p.read_text(); start=s.index('// stage04-stage-prompt-material-regression-v3'); end=s.index("console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));",start)+len("console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));")
+          replacement="""// stage04-retained-human-authority-regression-v4
+{
+  const p=project('JOB-STAGE04-RETAINED-INTENT');
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='Use the already supplied design intent.';
+  p.projectData.inputVersions.push({inputVersionId:'INPUT-VERSION-STAGE04',version:p.job.CURRENT_INPUT_VERSION,sha256:'fixture',payload:{SUPPLIED_MATERIALS_INVENTORY:p.job.SUPPLIED_MATERIALS_INVENTORY,EXACT_USER_OBJECTIVE_VERBATIM:p.job.EXACT_USER_OBJECTIVE_VERBATIM}});
+  const before=p.job.CURRENT_INPUT_VERSION; engine.registerStageVersion(p,1,'CHANGE-STAGE01-INTERPRETATION');
+  assert(p.job.CURRENT_INPUT_VERSION===before,'Stage 01 agent interpretation changed human-input version.');
+  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'}); assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 recreated an already-captured input-file handoff.');
+  const next=engine.operationalNextAction(p,4); assert(next.includes('do not resend the original intent file'),'Stage 04 next action does not prohibit redundant intent-file transfer.');
+  const prompt=globalThis.closedLoopPromptEngine.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt; assert(prompt.includes('design-input.pdf'),'Stage 04 lost retained material provenance.'); assert(prompt.includes('Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file'),'Stage 04 prompt does not enforce retained input reuse.'); assert(!prompt.includes('MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION'),'Stage 04 still emits obsolete repeated-material handoff.');
+  assert(fs.readFileSync('app-core.js','utf8').includes("if(n===4)return ''"),'Stage 04 generic upload panel is still rendered.');
+}
+console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
+          p.write_text(s[:start]+replacement+s[end:])
+
+          p=Path('verify-prompt-semantics.mjs'); s=p.read_text(); start=s.index('// stage04-stage-prompt-material-regression-v3'); end=s.index("console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));",start)+len("console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));")
+          replacement="""// stage04-retained-human-authority-regression-v4
+{
+  const p=baseProject(); p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  const retained=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['design-input.pdf','complete application-supplied Stage 04 obligation universe','Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file','otherwise no Stage 04 file handoff exists'])if(!retained.prompt.includes(token))throw new Error('Stage 04 retained-input contract missing: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','These materials are not embedded in the prompt','Attach or provide them in the agent conversation where this Stage 04 instruction is run'])if(retained.prompt.includes(prohibited))throw new Error('Stage 04 still requires redundant file transfer: '+prohibited);
+  if(retained.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 material reacquisition remains bound to prompt context identity.');
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'revised-design-input.pdf'}]); const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(revised.bodySha256===retained.bodySha256||revised.contextSignature===retained.contextSignature)throw new Error('Changed human material reference did not change Stage 04 prompt identity.');
+}
+console.log(JSON.stringify({stage04RetainedHumanAuthority:true}));"""
+          p.write_text(s[:start]+replacement+s[end:])
+
+          p=Path('verify-browser.mjs'); s=p.read_text(); start=s.index("await openStage(cdp,4);await setWidth(cdp,320);const stage04Snapshot"); end=s.index("await setWidth(cdp,393);",start)+len("await setWidth(cdp,393);")
+          replacement="""await openStage(cdp,4);await setWidth(cdp,320);const stage04Snapshot=await snapshot(cdp);for(const token of ['Use the current Stage 04 instruction.','do not resend the original intent file merely because its filename is recorded.','design-input.pdf','Do not ask the operator to resend, reattach, retranscribe, summarize, or reconstruct the original user-intent file'])assert(stage04Snapshot.text.includes(token),`Stage 04 retained-input UX missing ${token}.`);for(const prohibited of ['Send the Stage 04 instruction with the required material.','Attach or provide with the instruction: design-input.pdf.','The prompt does not include those materials.','MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION'])assert(!stage04Snapshot.text.includes(prohibited),`Stage 04 still requests repeated file transfer: ${prohibited}`);const stage04Layout=await evalValue(cdp,`(()=>({upload:Boolean(document.querySelector('#stage-files')),overflow:document.documentElement.scrollWidth>innerWidth+1}))()`);assert(stage04Layout&&!stage04Layout.upload&&!stage04Layout.overflow,`Stage 04 redundant upload control or overflow remains at 320px: ${JSON.stringify(stage04Layout)}`);await setWidth(cdp,393);"""
+          p.write_text(s[:start]+replacement+s[end:])
+
+          Path('verify-stage04-retained-intent.mjs').write_text("""import fs from 'node:fs';
+import vm from 'node:vm';
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
+const p=core.createBlankState('JOB-STAGE04-RETAINED-INTENT');engine.ensureShape(p);Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build from supplied intent.',SUPPLIED_MATERIALS_INVENTORY:'user-intent.txt',EXPLICIT_USER_REQUIREMENTS:'Capture my information once.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001'});p.projectData.inputVersions.push({inputVersionId:'INPUT-VERSION-000001',version:'INPUT-v001',sha256:'fixture',payload:{EXACT_USER_OBJECTIVE_VERBATIM:p.job.EXACT_USER_OBJECTIVE_VERBATIM,SUPPLIED_MATERIALS_INVENTORY:p.job.SUPPLIED_MATERIALS_INVENTORY}});
+const before=p.job.CURRENT_INPUT_VERSION;engine.registerStageVersion(p,1,'ACCEPTED-CHANGE-000001');assert(p.job.CURRENT_INPUT_VERSION===before,'Stage 01 agent acceptance changed CURRENT_INPUT_VERSION.');const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 still creates a user-intent re-handoff.');const first=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});assert(first.prompt.includes('user-intent.txt')&&!first.prompt.includes('MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION'),'Stage 04 retained intent failed.');p.job.SUPPLIED_MATERIALS_INVENTORY='revised-intent.txt';const second=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});assert(first.contextSignature!==second.contextSignature,'Human-authority context did not alter contextSignature.');p.job.EXACT_USER_OBJECTIVE_VERBATIM+=' Human correction.';const version=engine.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM'],'HUMAN_OPERATOR');assert(version.version!==before&&p.job.CURRENT_INPUT_VERSION===version.version,'Real human input change did not version input.');console.log(JSON.stringify({stage04RetainedIntent:true,stage01AgentCannotVersionHumanInput:true,humanAuthorityContextBound:true,humanInputChangeVersions:true}));console.log('verify-stage04-retained-intent: PASS');
+""")
+
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          def blob(path):
+            data=Path(path).read_bytes(); return hashlib.sha1(f'blob {len(data)}\0'.encode()+data).hexdigest()
+          identity='runtime-'+hashlib.sha256(''.join(f'{name}:{blob(name)}\n' for name in runtime_files).encode()).hexdigest()[:16]
+          p=Path('index.html'); html=p.read_text(); html,count=re.subn(r'runtime-[0-9a-f]{16}',identity,html)
+          if count!=8: raise SystemExit(f'expected 8 runtime tokens, updated {count}')
+          p.write_text(html)
           PY
+      - name: Execute repository proof on repaired source tree
+        run: |
+          rm -f .github/workflows/repair-stage4-durable-intent.yml .github/workflows/diagnose-stage4-repair.yml .github/workflows/diagnose-stage4-tests.yml
+          rm -f stage4-repair-diagnostic.txt stage4-patched-test-diagnostic.txt
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-stage04-retained-intent.mjs
+          node verify-stage04-retained-intent.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Execute Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit proven application and regression changes only
+        run: |
+          git checkout -- .github/workflows/repair-stage4-durable-intent.yml .github/workflows/diagnose-stage4-repair.yml .github/workflows/diagnose-stage4-tests.yml stage4-repair-diagnostic.txt 2>/dev/null || true
+          rm -f stage4-patched-test-diagnostic.txt
           git config user.name 'closed-loop-repair'
           git config user.email 'actions@users.noreply.github.com'
-          git add .github/workflows/repair-stage4-durable-intent.yml
-          git commit -m 'Install Stage 4 context binding and dynamic build identity'
+          git add workflow-engine.js prompt-engine.js app-core.js verify-complete.mjs verify-prompt-semantics.mjs verify-browser.mjs verify-stage04-retained-intent.mjs index.html
+          git commit -m 'Fix Stage 4 durable human-intent reuse and prompt context binding'
           git push origin HEAD:fix/stage4-durable-intent-final-20260830
