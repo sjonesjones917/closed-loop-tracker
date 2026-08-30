@@ -468,7 +468,12 @@ function enumerateInputLeaves(value,sourceLocation,kind,label,units,{inputVersio
 function intakeCoverageManifest(project){
   ensureShape(project);const inputVersion=project.job.CURRENT_INPUT_VERSION||'UNKNOWN',units=[];
   for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{})){if(!['HUMAN','HUMAN_DECISION'].includes(definition?.producer))continue;enumerateInputLeaves(project.job[name],`job.${name}`,definition.producer==='HUMAN'?'JOB_FIELD':'HUMAN_DECISION',name,units,{inputVersion});}
-  enumerateInputLeaves(project.projectData.userEntered,'projectData.userEntered','ORIGINAL_USER_INPUT','Original user input',units,{inputVersion});
+  const mirroredUserEnteredKeys=new Set([
+    'objective','suppliedMaterials','requiredOutputFormat','deadlineOrTemporalScope','desiredSourceCount','knownAuthorities','availableTools','prohibitedActions','explicitRequirements','suppliedArtifactFiles','suppliedArtifactText',
+    ...Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name)
+  ]);
+  const nonMirroredUserEntered=Object.fromEntries(Object.entries(project.projectData.userEntered||{}).filter(([key])=>!mirroredUserEnteredKeys.has(key)));
+  if(Object.keys(nonMirroredUserEntered).length)enumerateInputLeaves(nonMirroredUserEntered,'projectData.userEntered','ORIGINAL_USER_INPUT','Original user input',units,{inputVersion});
   for(const answer of safe(project.projectData.humanInputAnswers).filter(item=>!item.invalidatedBy)){const answerId=String(answer.answerId||answer.requestId||'UNKNOWN');enumerateInputLeaves(answer.answer,`projectData.humanInputAnswers.${answerId}.answer`,'HUMAN_ANSWER',`Human answer ${answerId}`,units,{inputVersion,extra:{answerId}});}
   const stageOneSelected=new Set(safe(project.stages?.[1]?.authorizedFiles).map(item=>String(item?.artifactId||item?.id||'')).filter(Boolean));
   const stageOneArtifacts=records(project,'artifacts').filter(record=>Number(record?.stage||recordValue(record,'STAGE')||record?.lineage?.stage||0)===1||stageOneSelected.has(recordId(record,'artifacts')));
