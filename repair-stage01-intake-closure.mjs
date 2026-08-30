@@ -1,0 +1,123 @@
+import fs from 'node:fs';
+
+const read=p=>fs.readFileSync(p,'utf8');
+const write=(p,s)=>fs.writeFileSync(p,s);
+const must=(ok,msg)=>{if(!ok)throw new Error(msg);};
+const replaceOnce=(text,from,to,label)=>{must(text.includes(from),`Missing replacement anchor: ${label}`);return text.replace(from,to);};
+
+// workbook.js — Stage 01 accounting is an agent semantic classification over an application-owned manifest.
+let workbook=read('workbook.js');
+workbook=replaceOnce(
+  workbook,
+  "1:['JOB_ID','JOB_TITLE','DATE_OPENED','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','EXACT_DELIVERABLE_REQUESTED','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_VERSION','INPUT_SET_CONTENTS','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE']",
+  "1:['JOB_ID','JOB_TITLE','DATE_OPENED','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','EXACT_DELIVERABLE_REQUESTED','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_VERSION','INPUT_SET_CONTENTS','INTAKE_ACCOUNTING','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE']",
+  'Stage 01 field inventory'
+);
+workbook=replaceOnce(
+  workbook,
+  "1:['Exact user objective preserved verbatim','Every atomic statement from the original intent file is captured in the canonical intentStatements ledger','Explicit requirements and assumptions separated','Complete input set has a controlled identity and the original file is not needed later']",
+  "1:['Exact user objective preserved verbatim','Every application-enumerated controlled input unit has exactly one valid Stage 01 intake disposition','Every atomic statement from the original intent file is captured in the canonical intentStatements ledger','Explicit requirements and assumptions separated','Complete input set has a controlled identity and the original file is not needed later']",
+  'Stage 01 gate description'
+);
+{
+  const ownershipStart=workbook.indexOf('const STAGE_OWNERSHIP=Object.freeze({');
+  const stage1Start=workbook.indexOf('  "1": {',ownershipStart);
+  const stage2Start=workbook.indexOf('  "2": {',stage1Start);
+  must(ownershipStart>=0&&stage1Start>=0&&stage2Start>stage1Start,'Cannot locate Stage 01 ownership block.');
+  let block=workbook.slice(stage1Start,stage2Start);
+  if(!block.includes('"INTAKE_ACCOUNTING"')){
+    const agentStart=block.indexOf('"agent": [');
+    const appStart=block.indexOf('"application": [',agentStart);
+    const close=block.lastIndexOf(']',appStart);
+    must(agentStart>=0&&appStart>agentStart&&close>agentStart,'Cannot locate Stage 01 agent ownership partition.');
+    const prefix=block.slice(0,close).replace(/\s*$/,'');
+    const comma=prefix.endsWith(',')?'':',';
+    block=prefix+comma+'\n      "INTAKE_ACCOUNTING"\n    '+block.slice(close);
+    workbook=workbook.slice(0,stage1Start)+block+workbook.slice(stage2Start);
+  }
+}
+write('workbook.js',workbook);
+
+// workflow-schema.js — closed Stage 01 accounting shape; repair stale Test IR error wording.
+let schema=read('workflow-schema.js');
+const stage1Override=/  '1':Object\.freeze\(\{DESIRED_SOURCE_COUNT:Object\.freeze\(\{[^\n]+\}\)\}\),/;
+must(stage1Override.test(schema),'Cannot locate Stage 01 field-type override.');
+schema=schema.replace(stage1Override,match=>match.replace(/\}\),$/,"}),INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['inputId','disposition','statementTempKeys','reason'])})}),"));
+schema=schema.replace("issues.push('EXECUTABLE_KIND must be CUSTOM_PIPELINE.');","issues.push('EXECUTABLE_KIND must be TEST_IR.');");
+write('workflow-schema.js',schema);
+
+// workflow-engine.js — manifest includes actual Stage 01 artifacts and Stage 01 gate independently proves closure.
+let engine=read('workflow-engine.js');
+const manifestPattern=/function stage01IntakeManifest\(project\)\{[\s\S]*?\n\}\nfunction stage04ObligationManifest/;
+must(manifestPattern.test(engine),'Cannot locate stage01IntakeManifest().');
+const manifestReplacement=`function stage01IntakeManifest(project){
+  ensureShape(project);const inputVersion=String(project.job?.CURRENT_INPUT_VERSION||'UNKNOWN'),entries=[],seen=new Set();
+  const add=(sourceKind,sourceIdentity,location,value)=>{if(value===undefined||value===null||String(value).trim()==='')return;const rawValueHash=hash.sha256Value(value),inputId='INPUT-'+hash.sha256Value({inputVersion,sourceKind,sourceIdentity,location,rawValueHash}).slice(0,20).toUpperCase();if(seen.has(inputId))return;seen.add(inputId);entries.push({inputId,sourceKind,sourceIdentity,location,rawValueHash,value:clone(value)});};
+  for(const [fieldName,definition] of Object.entries(schema.JOB_FIELDS||{}))if([schema.PRODUCER.HUMAN,schema.PRODUCER.HUMAN_DECISION].includes(definition.producer))add('JOB_FIELD',fieldName,fieldName,project.job?.[fieldName]);
+  for(const [i,answer] of safe(project.projectData?.humanInputAnswers).entries())add('HUMAN_ANSWER',String(answer.answerId||answer.requestId||i+1),String(answer.requestId||i+1),answer.answer??answer.value??answer.response??'');
+  for(const artifact of records(project,'artifacts').filter(record=>Number(record.stage)===1)){
+    const artifactId=recordId(artifact,'artifacts'),filename=String(recordValue(artifact,'FILENAME')||artifactId),identity={artifactId,filename,sha256:String(recordValue(artifact,'SHA256')||''),byteSize:Number(recordValue(artifact,'BYTE_SIZE')||0),role:String(recordValue(artifact,'ROLE')||'STAGE_ARTIFACT'),availability:String(recordValue(artifact,'AVAILABILITY')||'UNKNOWN')};
+    add('SUPPLIED_ARTIFACT',artifactId,filename,identity);
+  }
+  return {schema:'closed-loop-intake-manifest/1',jobId:String(project.job?.JOB_ID||''),inputVersion,entries,coverageDenominator:entries.length,manifestSha256:hash.sha256Value(entries.map(x=>({inputId:x.inputId,rawValueHash:x.rawValueHash})))};
+}
+function stage04ObligationManifest`;
+engine=engine.replace(manifestPattern,manifestReplacement);
+const case1='case 1:';
+const case1At=engine.indexOf(case1);
+must(case1At>=0,'Cannot locate Stage 01 gate case.');
+const acceptedAt=engine.indexOf('requireAccepted();',case1At);
+must(acceptedAt>case1At,'Cannot locate Stage 01 requireAccepted().');
+const insertAt=acceptedAt+'requireAccepted();'.length;
+const stage1Gate=`\n      {const intakeManifest=stage01IntakeManifest(project),accounting=safe(project.stages[1]?.agentData?.INTAKE_ACCOUNTING),seen=new Set(accounting.map(entry=>String(entry?.inputId||'')).filter(Boolean)),missing=safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(id=>id&&!seen.has(id));if(missing.length)reasons.push(\`Stage 01 intake accounting is missing application-generated input unit(s): \${missing.join(', ')}.\`);}`;
+engine=engine.slice(0,insertAt)+stage1Gate+engine.slice(insertAt);
+write('workflow-engine.js',engine);
+
+// prompt-engine.js — publish exact Stage 01 manifest and require complete classification; correct Test IR token.
+let prompt=read('prompt-engine.js');
+prompt=prompt.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/28';");
+prompt=replaceOnce(
+  prompt,
+  'The application already owns JOB_ID and controlled input identity; do not assign or invent them.',
+  'The application supplies an APPLICATION-OWNED STAGE 01 INTAKE MANIFEST in this prompt. Account for every inputId exactly once in stageData.INTAKE_ACCOUNTING. Each accounting object may contain only inputId, disposition, statementTempKeys, and reason. disposition must be exactly INCORPORATED_INTO_JOB_DEFINITION, RETAINED_AS_CONTEXT, UNRESOLVED_HUMAN_ONLY, LATER_RESOLVABLE, or INAPPLICABLE. Every disposition except INAPPLICABLE must map to one or more proposed records.intentStatements tempKeys in statementTempKeys so the controlled input unit cannot disappear; INAPPLICABLE must use an empty statementTempKeys array and a nonempty reason. Never invent, omit, duplicate, or rewrite an inputId. The application, not you, calculates coverage. The application already owns JOB_ID and controlled input identity; do not assign or invent them.',
+  'Stage 01 accounting instruction'
+);
+prompt=replaceOnce(
+  prompt,
+  '${humanInputBlock(j)}\n\nPERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN',
+  '${humanInputBlock(j)}\n\n${stage===1?`APPLICATION-OWNED STAGE 01 INTAKE MANIFEST — EVERY inputId MUST BE ACCOUNTED FOR\\n${show(workflow.stage01IntakeManifest(state))}\\n`:``}\nPERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN',
+  'Stage 01 manifest prompt block'
+);
+prompt=replaceOnce(
+  prompt,
+  'When responseType is DATA_PROPOSAL, populate all four Stage 01 stageData strings, include at least one evidence object, and populate records.intentStatements with one complete record per atomic statement from every authorized human message and the original intent file.',
+  'When responseType is DATA_PROPOSAL, populate all four Stage 01 job-definition stageData strings plus the complete stageData.INTAKE_ACCOUNTING array, include at least one evidence object, and populate records.intentStatements with one complete record per atomic statement from every authorized human message and the original intent file. Every application-generated intake-manifest inputId must occur exactly once in INTAKE_ACCOUNTING and must be mapped to the exact proposed intentStatements tempKeys that preserve it unless it is explicitly INAPPLICABLE with a reason.',
+  'Stage 01 machine output shape'
+);
+prompt=prompt.replace('EXECUTABLE_KIND = CUSTOM_PIPELINE','EXECUTABLE_KIND = TEST_IR');
+write('prompt-engine.js',prompt);
+
+// response-ingestion.js — closed, fail-closed Stage 01 accounting validation before canonical mutation.
+let ingestion=read('response-ingestion.js');
+const stage1Needle="  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){\n    const proposed=safe(envelope.records?.intentStatements),seen=new Set();\n    if(!proposed.length)issues.push(issue('MISSING_INTENT_STATEMENT_LEDGER','/records/intentStatements','Stage 01 DATA_PROPOSAL requires the complete canonical intent-statement ledger.'));\n    proposed.forEach((record,index)=>{const fields=record?.fields||{},key=`${String(fields.SOURCE_MATERIAL||'').trim()}|${String(fields.SOURCE_LOCATION||'').trim()}|${String(fields.EXACT_STATEMENT||'').trim()}`;if(seen.has(key))issues.push(issue('DUPLICATE_INTENT_STATEMENT',`/records/intentStatements/${index}`,'Duplicate source material, location, and exact statement are not permitted.'));else seen.add(key);});\n  }";
+must(ingestion.includes(stage1Needle),'Cannot locate Stage 01 ingestion validation block.');
+const stage1Replacement=`  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){
+    const proposed=safe(envelope.records?.intentStatements),seen=new Set(),tempKeys=new Set();
+    if(!proposed.length)issues.push(issue('MISSING_INTENT_STATEMENT_LEDGER','/records/intentStatements','Stage 01 DATA_PROPOSAL requires the complete canonical intent-statement ledger.'));
+    proposed.forEach((record,index)=>{const fields=record?.fields||{},key=\`${'${'}String(fields.SOURCE_MATERIAL||'').trim()}|${'${'}String(fields.SOURCE_LOCATION||'').trim()}|${'${'}String(fields.EXACT_STATEMENT||'').trim()}\`;if(seen.has(key))issues.push(issue('DUPLICATE_INTENT_STATEMENT',\`/records/intentStatements/${'${'}index}\`,'Duplicate source material, location, and exact statement are not permitted.'));else seen.add(key);if(record?.tempKey)tempKeys.add(String(record.tempKey));});
+    const intakeManifest=workflow.stage01IntakeManifest(project),manifestIds=new Set(safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(Boolean)),accounting=safe(envelope.stageData?.INTAKE_ACCOUNTING),accounted=new Set(),allowed=new Set(['INCORPORATED_INTO_JOB_DEFINITION','RETAINED_AS_CONTEXT','UNRESOLVED_HUMAN_ONLY','LATER_RESOLVABLE','INAPPLICABLE']);
+    accounting.forEach((entry,index)=>{const path=\`/stageData/INTAKE_ACCOUNTING/${'${'}index}\`;unknownKeys(entry,['inputId','disposition','statementTempKeys','reason'],path,issues);const inputId=String(entry?.inputId||'').trim(),disposition=String(entry?.disposition||'').trim(),mapped=safe(entry?.statementTempKeys).map(String),reason=String(entry?.reason||'').trim();if(!inputId)issues.push(issue('MISSING_INTAKE_INPUT_ID',\`${'${'}path}/inputId\`,'Stage 01 intake accounting requires inputId.'));else if(!manifestIds.has(inputId))issues.push(issue('UNKNOWN_INTAKE_INPUT_ID',\`${'${'}path}/inputId\`,\`Unknown application-generated Stage 01 inputId ${'${'}inputId}.\`));else if(accounted.has(inputId))issues.push(issue('DUPLICATE_INTAKE_DISPOSITION',\`${'${'}path}/inputId\`,\`Duplicate Stage 01 intake disposition for ${'${'}inputId}.\`));else accounted.add(inputId);if(!allowed.has(disposition))issues.push(issue('INVALID_INTAKE_DISPOSITION',\`${'${'}path}/disposition\`,'Invalid Stage 01 intake disposition.'));if(disposition==='INAPPLICABLE'){if(mapped.length)issues.push(issue('PROHIBITED_INTAKE_STATEMENT_MAPPING',\`${'${'}path}/statementTempKeys\`,'INAPPLICABLE input units must not map to intent statements.'));if(!reason)issues.push(issue('MISSING_INTAKE_DISPOSITION_REASON',\`${'${'}path}/reason\`,'INAPPLICABLE requires a nonempty reason.'));}else if(allowed.has(disposition)){if(!mapped.length)issues.push(issue('MISSING_INTAKE_STATEMENT_MAPPING',\`${'${'}path}/statementTempKeys\`,\`${'${'}disposition} must map to one or more proposed intentStatements tempKeys.\`));for(const tempKey of mapped)if(!tempKeys.has(tempKey))issues.push(issue('INVALID_INTAKE_STATEMENT_MAPPING',\`${'${'}path}/statementTempKeys\`,\`Unknown proposed intentStatements tempKey ${'${'}tempKey}.\`));}});
+    const missing=safe(intakeManifest?.entries).map(entry=>String(entry.inputId||'')).filter(id=>id&&!accounted.has(id));if(missing.length)issues.push(issue('MISSING_INTAKE_DISPOSITION','/stageData/INTAKE_ACCOUNTING',\`Stage 01 intake accounting is missing application-generated input unit(s): ${'${'}missing.join(', ')}.\`));
+  }`;
+ingestion=ingestion.replace(stage1Needle,stage1Replacement);
+write('response-ingestion.js',ingestion);
+
+// Permanent focused regression.
+write('verify-stage01-intake-closure.mjs',`import fs from 'node:fs';\nimport vm from 'node:vm';\n\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;\nconst assert=(value,message)=>{if(!value)throw new Error(message);};\nconst p=core.createBlankState('JOB-STAGE01-CLOSURE');\nObject.assign(p.job,{JOB_TITLE:'Intake closure',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',REQUIRED_OUTPUT_FORMAT:'Exact requested artifacts',PROHIBITED_ACTIONS:'Do not discard supplied intent.',EXPLICIT_USER_REQUIREMENTS:'Capture every supplied requirement exactly.',CURRENT_INPUT_VERSION:'INPUT-v001'});\nengine.ensureShape(p);\nengine.registerArtifactBytes(p,{stage:1,artifactId:'ARTIFACT-INTENT-001',filename:'intent.txt',mediaType:'text/plain',byteSize:42,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',role:'HUMAN_INPUT'});\nconst manifest=engine.stage01IntakeManifest(p);\nassert(manifest.entries.some(x=>x.sourceKind==='SUPPLIED_ARTIFACT'&&x.sourceIdentity==='ARTIFACT-INTENT-001'),'Stage 01 intake manifest does not bind the supplied artifact identity.');\nconst prompt={...prompts.buildPromptRecord(1,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(prompt);\nfor(const entry of manifest.entries)assert(prompt.prompt.includes(entry.inputId),\`Prompt 01 omitted application-owned input identity ${'${'}entry.inputId}.\`);\nassert(prompt.prompt.includes('stageData.INTAKE_ACCOUNTING'),'Prompt 01 does not command closed intake accounting.');\nassert(!prompt.prompt.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'Prompt still instructs obsolete CUSTOM_PIPELINE.');\nconst evidence=[{temporaryKey:'evidence-1',kind:'HUMAN_INPUT',description:'Stage 01 intake evidence',authorityType:'HUMAN',location:'AUTHORIZED USER JOB INPUT',content:'Controlled human input'}];\nconst intents=manifest.entries.map((entry,index)=>({tempKey:\`intent-${'${'}index+1}\`,fields:{SOURCE_MATERIAL:String(entry.sourceIdentity||entry.sourceKind),SOURCE_LOCATION:String(entry.location||entry.inputId),EXACT_STATEMENT:typeof entry.value==='string'?entry.value:JSON.stringify(entry.value),STATEMENT_KIND:'OTHER',REQUIREMENT_RELEVANCE:'CONTEXT_ONLY',NORMATIVE_FORCE:'FACTUAL',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:''},relationships:{},evidenceRefs:['evidence-1']}));\nconst accounting=manifest.entries.map((entry,index)=>({inputId:entry.inputId,disposition:'RETAINED_AS_CONTEXT',statementTempKeys:[\`intent-${'${'}index+1}\`],reason:''}));\nconst envelope=account=>({schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Exact requested product',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'Current user input and intent.txt',INTAKE_ACCOUNTING:account},records:{intentStatements:intents},evidence,unresolved:[],warnings:[],attachments:[]});\nlet prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope(accounting.slice(0,-1))),promptRecord:prompt});\nassert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='MISSING_INTAKE_DISPOSITION'),'Stage 01 accepted incomplete application-enumerated intake accounting.');\nprepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope(accounting)),promptRecord:prompt});\nassert(prepared.validation.valid,\`Stage 01 complete intake closure rejected: ${'${'}JSON.stringify(prepared.validation.issues)}\`);\nconsole.log('verify-stage01-intake-closure: PASS');\n`);
+
+// CI must execute the permanent regression in both test and deploy proof chains.
+let pages=read('.github/workflows/pages.yml');
+pages=pages.replaceAll('node verify-one-time-intent-intake.mjs','node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs');
+write('.github/workflows/pages.yml',pages);
+
+console.log('repair-stage01-intake-closure: applied');
