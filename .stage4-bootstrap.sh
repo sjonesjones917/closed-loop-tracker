@@ -10,22 +10,24 @@ test -z "$(git diff --name-only --diff-filter=U)"
 python3 - <<'PY'
 from pathlib import Path
 import hashlib,re
-p=Path('app-core.js'); text=p.read_text()
+
+p=Path('app-core.js')
+text=p.read_text()
 anchor="function importSeed(raw){if(![core.SCHEMA,'human-project/30'].includes(raw?.schema))throw new Error('Bundled project must use a supported 30-stage project schema.');"
 helper="""function migrateLegacyIntentStatements(p,raw){
   if(safe(p?.projectData?.intentStatements).length)return;
   const input=raw?.userJobInput&&typeof raw.userJobInput==='object'?raw.userJobInput:{},units=[],legacyUnknown='UNKNOWN - legacy input did not encode this classification.';
   const add=(location,value,statementKind,requirementRelevance,normativeForce)=>{const values=Array.isArray(value)?value:[value];values.forEach((item,index)=>{const exact=typeof item==='string'?item.trim():item===undefined||item===null?'':JSON.stringify(item);if(!exact)return;units.push({location:Array.isArray(value)?`${location}/${index}`:location,exact,statementKind,requirementRelevance,normativeForce});});};
-  add('/userJobInput/objective',input.objective,'OBJECTIVE','REQUIREMENT','MUST');
+  add('/userJobInput/objective',input.objective,'REQUIREMENT','REQUIREMENT','MUST');
   add('/userJobInput/deliverable',input.deliverable,'DELIVERABLE','REQUIREMENT','MUST');
-  add('/userJobInput/requiredOutputFormat',input.requiredOutputFormat,'OUTPUT_CONSTRAINT','REQUIREMENT','MUST');
-  add('/userJobInput/deadlineOrTemporalScope',input.deadlineOrTemporalScope,'TEMPORAL_CONSTRAINT','REQUIREMENT','MUST');
-  add('/userJobInput/desiredSourceCount',input.desiredSourceCount,'SOURCE_CONSTRAINT','REQUIREMENT','MUST');
-  add('/userJobInput/knownAuthorities',input.knownAuthorities,'AUTHORITY_CONTEXT','CONTEXT','CONTEXT');
-  add('/userJobInput/availableTools',input.availableTools,'CAPABILITY_CONTEXT','CONTEXT','CONTEXT');
+  add('/userJobInput/requiredOutputFormat',input.requiredOutputFormat,'CONSTRAINT','REQUIREMENT','MUST');
+  add('/userJobInput/deadlineOrTemporalScope',input.deadlineOrTemporalScope,'CONSTRAINT','REQUIREMENT','MUST');
+  add('/userJobInput/desiredSourceCount',input.desiredSourceCount,'CONSTRAINT','REQUIREMENT','MUST');
+  add('/userJobInput/knownAuthorities',input.knownAuthorities,'REFERENCE','CONTEXT_ONLY','FACTUAL');
+  add('/userJobInput/availableTools',input.availableTools,'FACT','CONTEXT_ONLY','FACTUAL');
   add('/userJobInput/prohibitedActions',input.prohibitedActions,'PROHIBITION','REQUIREMENT','MUST_NOT');
   add('/userJobInput/explicitRequirements',input.explicitRequirements,'REQUIREMENT','REQUIREMENT','MUST');
-  add('/suppliedMaterials',raw?.suppliedMaterials,'SUPPLIED_MATERIAL','CONTEXT','CONTEXT');
+  add('/suppliedMaterials',raw?.suppliedMaterials,'REFERENCE','CONTEXT_ONLY','FACTUAL');
   const createdAt=String(raw?.dateOpened||p?.job?.DATE_OPENED||'MIGRATED_LEGACY_INPUT');
   for(const unit of units){const id=engine.allocateId(p,'intentStatements'),fields={...engine.applicationInitialFields('intentStatements'),STATEMENT_ID:id,SOURCE_MATERIAL:'legacy human-project/30 import',SOURCE_LOCATION:unit.location,EXACT_STATEMENT:unit.exact,STATEMENT_KIND:unit.statementKind,REQUIREMENT_RELEVANCE:unit.requirementRelevance,NORMATIVE_FORCE:unit.normativeForce,DEPENDENCIES:legacyUnknown,EXCEPTIONS:legacyUnknown,CONFLICTS:legacyUnknown,NOTES:'Deterministically migrated from exact legacy human-authority input; no missing file contents or new substantive facts were inferred.'};const record={id,stage:1,createdAt,active:true,scope:{inputVersion:String(p.job.CURRENT_INPUT_VERSION||'')},fields,...fields,relationships:{},evidenceRefs:[],notes:'Deterministic legacy intent migration',sourceProposalId:null,rawResponseId:'MIGRATION-ARCHIVE'};engine.refreshRecordHashes(record,'intentStatements');p.projectData.intentStatements.push(record);}
 }
@@ -35,9 +37,14 @@ text=text.replace(anchor,helper+anchor)
 old="if(String(importedStageOne.status||'').toUpperCase()==='COMPLETE'){engine.ensureShape(p);const acceptedChangeId="
 new="if(String(importedStageOne.status||'').toUpperCase()==='COMPLETE'){engine.ensureShape(p);migrateLegacyIntentStatements(p,raw);const acceptedChangeId="
 if text.count(old)!=1: raise SystemExit(f'app-core Stage 01 legacy anchor count={text.count(old)}')
-p.write_text(text.replace(old,new))
+text=text.replace(old,new)
+stage4_old="The agent compiles the requirement specification from the canonical Stage 01 intent statements, Stage 03 candidate requirements, and accepted external-source research. The original intent file is prohibited and must not be attached or resent."
+stage4_new="Stage 04 uses the current User Job Input, accepted Stage 01 job definition, canonical Stage 01 intent statements, and accepted Stage 03 findings already stored by the application. Do not attach or resend the original intent file. The agent compiles the requirement specification from those current canonical inputs and accepted external-source research."
+if text.count(stage4_old)!=1: raise SystemExit(f'app-core Stage 04 guidance anchor count={text.count(stage4_old)}')
+p.write_text(text.replace(stage4_old,stage4_new))
 
-b=Path('verify-browser.mjs'); browser=b.read_text()
+b=Path('verify-browser.mjs')
+browser=b.read_text()
 old="let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Retained Stage 01/02 state is wrong.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');"
 new="let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Retained Stage 01/02 state is wrong.');const migratedIntent=retained.projectData.intentStatements||[];assert(migratedIntent.length>0,'Legacy Stage 01 human authority was not migrated into the canonical intent ledger.');assert(migratedIntent.every(r=>r.scope?.inputVersion===retained.job.CURRENT_INPUT_VERSION),'Migrated intent statement scope does not match the current input version.');assert(migratedIntent.some(r=>(r.fields?.EXACT_STATEMENT||r.EXACT_STATEMENT)===retained.job.EXACT_USER_OBJECTIVE_VERBATIM),'Exact legacy user objective is missing from the canonical intent ledger.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean load.');"
 if browser.count(old)!=1: raise SystemExit(f'verify-browser retained-state anchor count={browser.count(old)}')
@@ -46,9 +53,13 @@ b.write_text(browser.replace(old,new))
 runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
 manifest=''
 for filename in runtime:
-    data=Path(filename).read_bytes(); blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(); manifest+=f'{filename}:{blob}\n'
+    data=Path(filename).read_bytes()
+    blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+    manifest+=f'{filename}:{blob}\n'
 token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
-idx=Path('index.html'); html=idx.read_text(); html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
+idx=Path('index.html')
+html=idx.read_text()
+html,count=re.subn(r'runtime-[0-9a-f]{16}',token,html)
 if count!=8: raise SystemExit(f'index.html runtime token count={count}')
 idx.write_text(html)
 print(token)
@@ -81,7 +92,7 @@ run_browser_verifier verify-browser-extra.mjs
 kill "$SERVER_PID" 2>/dev/null || true
 trap - EXIT
 
-rm .github/workflows/stage4-canonical-bootstrap.yml .stage4-bootstrap.sh
+rm -f .github/workflows/stage4-canonical-bootstrap.yml .stage4-bootstrap.sh
 git add -A
 test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort | tr '\n' ' ')" = "pages.yml "
 git diff --cached --check
