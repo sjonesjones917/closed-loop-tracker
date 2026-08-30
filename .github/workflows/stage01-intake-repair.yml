@@ -50,12 +50,11 @@ jobs:
           git commit -m "Capture Stage 01 repair regression failure" || true
           git push origin HEAD:fix/stage01-intake-closure-20260830
           exit 1
-      - name: Remove one-time repair infrastructure
+      - name: Remove one-time repair scripts
         if: steps.focused.outputs.status == '0'
         run: |
           rm -f repair-failure.log
           rm -f fix-repair-generator.mjs repair-stage01-intake-closure.mjs repair-stage01-intake-closure-v2.mjs
-          rm .github/workflows/stage01-intake-repair.yml
       - name: Commit repaired source
         if: steps.focused.outputs.status == '0'
         run: |
