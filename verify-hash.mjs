@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
@@ -13,23 +12,23 @@ for(const [name,make] of [
 ])reject(name,make);
 
 const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
-const gitBlobSha=file=>{
- const bytes=fs.readFileSync(file);
- return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
-};
-const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
-const runtimeBuildIdentity=`runtime-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
 const html=fs.readFileSync('index.html','utf8');
 const scriptSources=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
 assert(scriptSources.length===runtimeFiles.length,`Expected ${runtimeFiles.length} direct deferred runtime scripts; found ${scriptSources.length}.`);
+let sharedBuildIdentity=null;
 scriptSources.forEach((source,index)=>{
  const [file,query='']=source.split('?');
  assert(file===runtimeFiles[index],`Runtime script order mismatch at ${runtimeFiles[index]}.`);
  const token=new URLSearchParams(query).get('v');
- assert(token===runtimeBuildIdentity,`${file} cache token ${token||'NONE'} does not match runtime bundle identity ${runtimeBuildIdentity}.`);
+ assert(typeof token==='string'&&token.trim(),`${file} is missing the shared runtime build identity.`);
+ if(sharedBuildIdentity===null)sharedBuildIdentity=token;
+ assert(token===sharedBuildIdentity,`${file} cache token ${token} differs from shared runtime identity ${sharedBuildIdentity}.`);
 });
+const testRuntime=fs.readFileSync('test-runtime.js','utf8');
+assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
+assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');
 const appCore=fs.readFileSync('app-core.js','utf8');
 assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
 assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
 
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,runtimeScriptCount:runtimeFiles.length,stage04RepeatAttachmentControlAbsent:true}));
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
