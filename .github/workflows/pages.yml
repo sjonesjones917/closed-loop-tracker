@@ -34,6 +34,15 @@ jobs:
           Path('/tmp/repair.sh').write_text(body)
           PY
           bash /tmp/repair.sh
+          node - <<'NODE'
+          const fs=require('fs');
+          let p=fs.readFileSync('prompt-engine.js','utf8');
+          const anchor='Classify unresolved issues as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE.';
+          if(!p.includes(anchor))throw new Error('Stage 01 unresolved-issue classification anchor missing.');
+          const rule=' Never silently place an unasked human-only issue into UNKNOWN_INFORMATION. Any foreseeable human-only issue not already supplied must be asked before Stage 01 final JSON; ASK_NOW_NONBLOCKING may be answered UNKNOWN or DEFERRED, but it may not be skipped.';
+          if(!p.includes('Never silently place an unasked human-only issue into UNKNOWN_INFORMATION.'))p=p.replace(anchor,anchor+rule);
+          fs.writeFileSync('prompt-engine.js',p);
+          NODE
       - name: Prove exhaustive Stage 01, Stage 03, and closed Stage 04
         shell: bash
         run: |
@@ -43,7 +52,7 @@ jobs:
           const q=(v,m)=>{if(!v)throw new Error(m)};
           q(p.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE'),'Stage 01 is not exhaustive intake');
           q(p.includes('account for EVERY INPUT UNIT ID'),'Stage 01 does not require complete input identity accounting');
-          q(p.includes('Do not silently place an unasked human-only issue'),'Stage 01 permits silent unknowns');
+          q(p.includes('Never silently place an unasked human-only issue into UNKNOWN_INFORMATION'),'Stage 01 permits silent unknowns');
           q(p.includes('Exhaustively research every current accepted Stage 02 independent external source'),'Stage 03 is not exhaustive');
           q(p.includes('Do not mark Stage 03 complete until all current sources have coverage'),'Stage 03 permits incomplete coverage');
           q(p.includes('Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST'),'Stage 04 does not use closed obligation universe');
