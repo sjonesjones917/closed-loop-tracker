@@ -47,10 +47,23 @@ function safeValue(name){
   return `verified-${name.toLowerCase()}`;
 }
 function valueForDefinition(def){if(def.enumValues?.length)return def.enumValues[0];if(def.valueType==='INTEGER')return 1;if(def.valueType==='NUMBER')return 1;if(def.valueType==='BOOLEAN')return true;if(def.valueType==='STRING_ARRAY'||def.valueType==='REFERENCE_ARRAY')return ['verified'];if(def.valueType==='OBJECT')return {};return 'verified';}
+function completeIntakeCapture(p){
+  const manifest=engine.intakeCoverageManifest(p);
+  const statementClass=unit=>{
+    const label=String(unit?.label||unit?.sourceLocation||'').toUpperCase();
+    if(unit?.kind==='SUPPLIED_MATERIAL')return 'MATERIAL_REFERENCE';
+    if(label.includes('PROHIBITED_ACTIONS'))return 'PROHIBITION';
+    if(label.includes('REQUIRED_OUTPUT_FORMAT'))return 'CONSTRAINT';
+    if(label.includes('EXPLICIT_USER_REQUIREMENTS')||label.includes('EXACT_USER_OBJECTIVE_VERBATIM'))return 'REQUIREMENT';
+    return 'FACT';
+  };
+  return {schema:'closed-loop-intake-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:`Captured human authority from ${unit.label}.`,statementClass:statementClass(unit)}]})),conversationStatements:[]};
+}
 function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
-  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  if(stage===1){Object.assign(stageData,{EXACT_DELIVERABLE_REQUESTED:'Verified deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(completeIntakeCapture(p))});}
+  else if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
   const records={};
   if(!Object.keys(stageData).length){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
