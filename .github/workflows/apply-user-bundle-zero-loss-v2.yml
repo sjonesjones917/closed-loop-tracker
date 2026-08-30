@@ -1,5 +1,5 @@
 name: Apply exhaustive intake repair
-# proof revision 8
+# proof revision 9
 on:
   push:
     branches:
@@ -28,6 +28,7 @@ jobs:
         run: |
           python3 tools/rewrite-patcher-structural.py
           python3 tools/apply-exhaustive-intake-patch.py
+          python3 tools/fix-canonical-intake-evaluator.py
           python3 tools/align-accounting-contract.py
           python3 tools/remove-repeat-intent-language.py
           node tools/finalize-runtime.mjs
@@ -61,7 +62,7 @@ jobs:
         run: |
           git config user.name closed-loop-user-bundle-repair
           git config user.email closed-loop-user-bundle-repair@users.noreply.github.com
-          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml tools/apply-exhaustive-intake-patch.py tools/rewrite-patcher-structural.py tools/align-accounting-contract.py tools/remove-repeat-intent-language.py tools/finalize-runtime.mjs
+          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml tools/apply-exhaustive-intake-patch.py tools/rewrite-patcher-structural.py tools/fix-canonical-intake-evaluator.py tools/align-accounting-contract.py tools/remove-repeat-intent-language.py tools/finalize-runtime.mjs
           git add -A
           git commit -m 'Enforce exhaustive Stage 1 and Stage 3 input to Stage 4'
           git push origin HEAD:repair/user-bundle-zero-loss-20260830
