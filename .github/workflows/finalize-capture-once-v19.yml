@@ -2,7 +2,7 @@ name: finalize-capture-once-v19
 on:
   push:
     branches: [fix/controlling-spec-zero-loss-20260830]
-    paths: [.github/workflows/finalize-capture-once-v19.yml]
+    paths: [.github/workflows/finalize-capture-once-v19.yml, tools/finalize_stage1_stage4_gate_v17.py]
 permissions: {contents: write}
 jobs:
   finalize:
