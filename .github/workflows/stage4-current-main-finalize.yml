@@ -22,9 +22,6 @@ jobs:
           set -euo pipefail
           donor=f5e5c14081373b89faf40a867425b99c34841dc3
           git fetch origin "$donor"
-
-          # Transplant only state-model, prompt, ingestion, workbook semantics, and regression proof.
-          # app-core.js and CSS are intentionally NOT taken from the donor branch.
           git checkout "$donor" -- \
             workflow-schema.js \
             workflow-engine.js \
@@ -44,8 +41,6 @@ jobs:
           from pathlib import Path
           import hashlib, re
 
-          # Current main already invalidated /25 prompts with /26. This stronger repair must
-          # invalidate both generations, so advance to /27 rather than regressing identity.
           p = Path('prompt-engine.js')
           text = p.read_text()
           text, count = re.subn(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';", text, count=1)
@@ -53,13 +48,9 @@ jobs:
               raise SystemExit(f'prompt-engine.js: expected donor /25 version once, found {count}')
           p.write_text(text)
 
-          # Keep prompt regression aligned with the new persisted identity.
           p = Path('verify-prompt-semantics.mjs')
-          text = p.read_text().replace("closed-loop-prompt-engine/26", "closed-loop-prompt-engine/27")
-          p.write_text(text)
+          p.write_text(p.read_text().replace("closed-loop-prompt-engine/26", "closed-loop-prompt-engine/27"))
 
-          # The existing UI already removes the Stage 04 upload control. Preserve app-core.js.
-          # Add the new regression to the one existing Pages workflow, without creating a second deployment workflow.
           pages_path = Path('.github/workflows/pages.yml')
           pages = pages_path.read_text()
           if 'verify-one-time-intent-intake.mjs' not in pages:
@@ -75,28 +66,22 @@ jobs:
               )
           pages_path.write_text(pages)
 
-          # Refresh only the shared runtime/cache identity. Do not modify any CSS/layout values.
-          runtime = [
-              'workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js',
-              'prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','test-worker.js'
-          ]
+          # Match verify-hash.mjs exactly: 8 direct deferred runtime scripts, git blob SHA manifest.
+          runtime = ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
           manifest = ''
           for filename in runtime:
-              f = Path(filename)
-              if not f.exists():
-                  continue
-              data = f.read_bytes()
-              manifest += filename + ':' + hashlib.sha256(data).hexdigest() + '\n'
+              data = Path(filename).read_bytes()
+              blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+              manifest += f'{filename}:{blob}\n'
           token = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
           index_path = Path('index.html')
           index = index_path.read_text()
           index, count = re.subn(r'runtime-[0-9a-f]{16}', token, index)
-          if count < 1:
-              raise SystemExit('index.html: shared runtime token not found')
+          if count != 8:
+              raise SystemExit(f'index.html: expected 8 shared runtime tokens, found {count}')
           index_path.write_text(index)
-          print('runtime token', token, 'occurrences', count)
+          print('runtime token', token)
 
-          # Temporary workflow must not exist in the delivered tree.
           Path('.github/workflows/stage4-current-main-finalize.yml').unlink()
           PY
 
