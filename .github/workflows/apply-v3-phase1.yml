@@ -39,6 +39,10 @@ jobs:
           for old,new in fixes:
             if old not in s: raise SystemExit('updater assumption not found: '+old[:80])
             s=s.replace(old,new,1)
+          old_xml="{op:'SELECT_XML',path:'/root/item[2]'},{op:'ASSERT_CONTAINS',value:'two'}"
+          new_xml="{op:'SELECT_XML',path:'/root/item'},{op:'COUNT'},{op:'ASSERT_EQ',value:2}"
+          if old_xml not in s: raise SystemExit('XML fixture updater text not found')
+          s=s.replace(old_xml,new_xml,1)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Apply prepared v3 source transformation
