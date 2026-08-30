@@ -15,6 +15,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Constrain repair transformation to the Stage 04 helper only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('repair-zero-loss.py')
+          t=p.read_text()
+          old='stage4_pattern = r"function stage4ExhaustedInputs\\(state\\)\\{.*?\\nfunction assertStage4UpstreamExhausted"\n    stage4_repl = "function stage4ExhaustedInputs(state){const active=list=>safe(list).filter(r=>r?.active!==false&&!r?.invalidatedBy).map(r=>({id:r?.id||r?.recordId||null,stage:r?.stage??null,scope:r?.scope||{},fields:recordFields(r),relationships:r?.relationships||{},evidenceRefs:r?.evidenceRefs||[]})),humanJobInput=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>[\'HUMAN\',\'HUMAN_DECISION\'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null]));return {currentUserJobInput:humanJobInput,originalUserEntered:state?.projectData?.userEntered||{},stage01AcceptedCapture:parseCapturedInputSet(state),stage01AcceptedDefinition:{agentData:state?.stages?.[1]?.agentData||state?.stages?.[1]?.acceptedData||{},humanData:state?.stages?.[1]?.humanData||{},derivedData:state?.stages?.[1]?.derivedData||{}},stage03AcceptedData:{agentData:state?.stages?.[3]?.agentData||state?.stages?.[3]?.acceptedData||{},humanData:state?.stages?.[3]?.humanData||{},derivedData:state?.stages?.[3]?.derivedData||{}},stage03Research:active(state?.projectData?.research),stage03CandidateRequirements:active(state?.projectData?.candidateRequirements),applicableSources:active(state?.projectData?.sources),applicableEvidence:active(state?.projectData?.evidenceRecords).filter(record=>[2,3].includes(Number(record.stage)))};}\\nfunction assertStage4UpstreamExhausted"'
+          new='stage4_pattern = r"function stage4ExhaustedInputs\\(state\\)\\{.*?\\n(?=function contextFor)"\n    stage4_repl = "function stage4ExhaustedInputs(state){const active=list=>safe(list).filter(r=>r?.active!==false&&!r?.invalidatedBy).map(r=>({id:r?.id||r?.recordId||null,stage:r?.stage??null,scope:r?.scope||{},fields:recordFields(r),relationships:r?.relationships||{},evidenceRefs:r?.evidenceRefs||[]})),humanJobInput=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>[\'HUMAN\',\'HUMAN_DECISION\'].includes(definition?.producer)).map(([name])=>[name,state?.job?.[name]??null]));return {currentUserJobInput:humanJobInput,originalUserEntered:state?.projectData?.userEntered||{},stage01AcceptedCapture:parseCapturedInputSet(state),stage01AcceptedDefinition:{agentData:state?.stages?.[1]?.agentData||state?.stages?.[1]?.acceptedData||{},humanData:state?.stages?.[1]?.humanData||{},derivedData:state?.stages?.[1]?.derivedData||{}},stage03AcceptedData:{agentData:state?.stages?.[3]?.agentData||state?.stages?.[3]?.acceptedData||{},humanData:state?.stages?.[3]?.humanData||{},derivedData:state?.stages?.[3]?.derivedData||{}},stage03Research:active(state?.projectData?.research),stage03CandidateRequirements:active(state?.projectData?.candidateRequirements),applicableSources:active(state?.projectData?.sources),applicableEvidence:active(state?.projectData?.evidenceRecords).filter(record=>[2,3].includes(Number(record.stage)))}};\\n"'
+          if old not in t:
+              raise SystemExit('Expected Stage 04 repair transformation was not found')
+          p.write_text(t.replace(old,new,1))
+          PY
       - name: Apply deterministic source repair
         run: python3 repair-zero-loss.py
       - name: Normalize permanent visual regression to compare exact baseline
