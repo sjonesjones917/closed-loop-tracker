@@ -10,6 +10,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Print exact accounting/schema anchors
         run: |
-          grep -n -E "RECORD_SCHEMAS|STAGE_FIELDS|STAGE_CONTRACTS|primaryCollections|agentWritableCollections|requirements.*record|function validateEnvelope|records\)" workflow-schema.js response-ingestion.js | head -n 200
-          grep -n -E "Stage 1|stage===1|stageNumber===1|Stage 4|stage===4|stageNumber===4|records\." response-ingestion.js | head -n 200
-          grep -n -E "PROJECT_SCHEMA|RESPONSE_SCHEMA|expected=\[|projectSchema:'|responseSchema:'|coverageKeys|zeroKeys" .github/workflows/pages.yml verify-definition-of-done.mjs | head -n 200
+          sed -n '970,1065p' workflow-schema.js
+          sed -n '1160,1215p' workflow-schema.js
+          sed -n '74,285p' response-ingestion.js
