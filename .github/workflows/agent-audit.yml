@@ -18,11 +18,11 @@ jobs:
           node-version: '22'
       - run: node agent-audit.mjs
       - run: node extract-donor.mjs
-      - name: Commit audit export without retriggering workflows
+      - name: Commit audit exports without retriggering workflows
         run: |
           git config user.name "closed-loop-audit"
           git config user.email "actions@users.noreply.github.com"
-          git add donor-snippets.json
+          git add candidate-scan.json donor-snippets.json
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Export donor snippets for verified integration [skip ci]"
+          git commit -m "Export candidate scan for verified integration [skip ci]"
           git push origin HEAD:fix/exhaustive-intent-obligation-closure
