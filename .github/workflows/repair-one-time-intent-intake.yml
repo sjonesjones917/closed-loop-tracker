@@ -44,23 +44,25 @@ jobs:
           if s.count(bad)!=1: raise SystemExit('response contract prompt expectation not found exactly once')
           s=s.replace(bad,good,1)
           pattern=r"// stage04-stage-prompt-material-regression-v3\n\{\n.*?\n\}\nconsole\.log\(JSON\.stringify\(\{stage04PromptMaterialHandoff:true\}\)\);"
-          replacement=r'''// one-time-intent-file-boundary-regression-v4
-{
-  const p=baseProject();
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  p.projectData.intentStatements.push({id:'INTENT-STATEMENT-000001',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{STATEMENT_ID:'INTENT-STATEMENT-000001',SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1 paragraph 1',EXACT_STATEMENT:'The product must preserve the supplied design intent.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'}});
-  const withoutAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  for(const token of ['The original Stage 01 intent file is prohibited input for this stage.','Never request, attach, resend, reopen','INTENT-STATEMENT-000001','The product must preserve the supplied design intent.'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 canonical-intent boundary missing: '+token);
-  const handoff=withoutAppCopy.contextManifest.executionHandoff;
-  if(handoff?.conversationMaterials?.length)throw new Error('Stage 04 still creates an original-file resend list.');
-  if(handoff?.send?.length)throw new Error('Stage 04 still transfers the original intent file as a required artifact.');
-  if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');
-  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','Send the Stage 04 instruction with'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 still instructs original-file reuse: '+prohibited);
-  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-PROHIBITED',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-PROHIBITED',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
-  const withStoredCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(withStoredCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withStoredCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Browser custody re-enabled Stage 04 original-file reuse.');
-}
-console.log(JSON.stringify({oneTimeIntentFileBoundary:true}));'''
+          replacement="\n".join([
+            "// one-time-intent-file-boundary-regression-v4",
+            "{",
+            "  const p=baseProject();",
+            "  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);",
+            "  p.projectData.intentStatements.push({id:'INTENT-STATEMENT-000001',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{STATEMENT_ID:'INTENT-STATEMENT-000001',SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1 paragraph 1',EXACT_STATEMENT:'The product must preserve the supplied design intent.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'}});",
+            "  const withoutAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});",
+            "  for(const token of ['The original Stage 01 intent file is prohibited input for this stage.','Never request, attach, resend, reopen','INTENT-STATEMENT-000001','The product must preserve the supplied design intent.'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 canonical-intent boundary missing: '+token);",
+            "  const handoff=withoutAppCopy.contextManifest.executionHandoff;",
+            "  if(handoff?.conversationMaterials?.length)throw new Error('Stage 04 still creates an original-file resend list.');",
+            "  if(handoff?.send?.length)throw new Error('Stage 04 still transfers the original intent file as a required artifact.');",
+            "  if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');",
+            "  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','Send the Stage 04 instruction with'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 still instructs original-file reuse: '+prohibited);",
+            "  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-PROHIBITED',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-PROHIBITED',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});",
+            "  const withStoredCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});",
+            "  if(withStoredCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withStoredCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Browser custody re-enabled Stage 04 original-file reuse.');",
+            "}",
+            "console.log(JSON.stringify({oneTimeIntentFileBoundary:true}));",
+          ])
           s,count=re.subn(pattern,replacement,s,count=1,flags=re.S)
           if count!=1: raise SystemExit(f'obsolete Stage 04 resend regression matched {count} times')
           p.write_text(s)
