@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
 if(!core||!schema||!engine||!prompts||!ingestion||!store)throw new Error('Responsible-layer modules failed to load.');
 const assert=(value,message)=>{if(!value)throw new Error(message);};
@@ -305,7 +305,7 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
   const p=project('JOB-NATIVE-STAGE22-NO-AGENT');
   Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-NATIVE'});
   const scope=engine.currentScope(p),req=record('requirements',4,{OBLIGATION:'Native deterministic proposition',MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'},'REQ-NATIVE-22');
-  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
+  const native=record('tests',6,{REQ_ID:'REQ-NATIVE-22',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-NATIVE-22'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]},INPUTS:'current product',TOOLS:'Closed Loop Test IR',PROCEDURE:'hash exact bytes',EXPECTED_RESULT:'expected hash',FAILURE_CONDITION:'hash differs',EVIDENCE_TO_PRESERVE:'application-native execution evidence',STATUS:'READY'},'TEST-NATIVE-22');
   req.scope=scope;native.scope=scope;p.projectData.requirements.push(req);p.projectData.tests.push(native);
   const nativeGate=engine.gate(22,p);
   assert(!nativeGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Native-only Stage 22 still requires an external accepted response.');
@@ -314,38 +314,34 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
   assert(externalGate.reasons.some(x=>/No validated agent response has been accepted/.test(x)),'Stage 22 stopped requiring an accepted response when an external deterministic executor is required.');
 }
 {
-  const native={fields:{EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-TEST'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]}}};
+  const native={fields:{EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-TEST'},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'HASH_SHA256'},{op:'ASSERT_EQ',value:'0'.repeat(64)}]}}};
   assert(schema.validateTestIRTest(native).valid===true,'Valid native Test IR test was rejected.');
   assert(engine.applicationTestCapabilities().includes('CLOSED_LOOP_TEST_IR'),'Closed Loop Test IR is not registered as an application-native capability.');
 }
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
 
 
-// Stage 04 must reuse accepted canonical input instead of requiring the user's intent file again.
+// stage04-captured-input-regression-v3
 {
-  const p=project('JOB-STAGE04-CANONICAL-REUSE');
+  const p=project('JOB-STAGE04-CAPTURED-INPUT');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});
-  const intent=record('intentStatements',1,{SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1',EXACT_STATEMENT:'CANONICAL-STAGE-01-INTENT-STATEMENT',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'},'INTENT-STATEMENT-STAGE04');intent.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.intentStatements.push(intent);
-  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'INTENT-STATEMENT-STAGE04',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');candidate.scope={inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION};candidate.evidenceRefs=['EVIDENCE-STAGE-03'];p.projectData.candidateRequirements.push(candidate);
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='CAPTURED-HUMAN-INTENT-SENTINEL';
+  p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'CAPTURED-STAGE01-DELIVERABLE-SENTINEL',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'design-input.pdf accounted for during intake'};
   const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.send.length===0&&handoff.withhold.length===0&&handoff.expectBack.length===0&&handoff.conversationMaterials.length===0&&handoff.optionalApplicationCopies.length===0,'Stage 04 converted previously supplied intent material into another file handoff.');
+  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 filename metadata incorrectly became a file-transfer contract.');
+  assert(!Object.prototype.hasOwnProperty.call(handoff,'conversationMaterials'),'Stage 04 still exposes the obsolete filename-derived conversation-material handoff.');
   const next=engine.operationalNextAction(p,4);
-  assert(next.includes('canonical Stage 01 intent-statement ledger')&&next.includes('Do not attach, resend, reopen, or otherwise reuse the original intent file.'),'Stage 04 next action does not identify canonical intent reuse.');
-  assert(!/send the Stage 04 instruction with|attach or provide the original|required material/i.test(next),'Stage 04 next action still asks for repeated intent-file transfer.');
-  const prompt=globalThis.closedLoopPromptEngine.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt;
-  for(const token of ['CANONICAL-STAGE-01-DELIVERABLE','CANONICAL-STAGE-01-ASSUMPTION','CANONICAL-STAGE-01-UNKNOWN','CANONICAL-STAGE-01-INTENT-CAPTURE','CANONICAL-STAGE-03-OBLIGATION'])assert(prompt.includes(token),'Stage 04 prompt omitted canonical prior-stage input: '+token);
-  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation'])assert(!prompt.includes(prohibited),'Stage 04 prompt still requests repeated material transfer: '+prohibited);
+  assert(!/design-input\.pdf|attach|provide the original|send the stage 04 instruction with/i.test(next),'Stage 04 next action still re-requests previously supplied material.');
   const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(!appSource.includes('Send the Stage 04 instruction with the required material.')&&!appSource.includes('Attach or provide with the instruction:'),'Stage 04 UI still requests the original intent file.');
+  assert(!appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI still contains the repeated attachment instruction.');
 }
-console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
+console.log(JSON.stringify({stage04CapturedInputReuse:true}));
 {
   const p=project('JOB-EXECUTION-ROUTING-HARDENING');
   Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-ROUTE'});
   const req=record('requirements',4,{OBLIGATION:'Native deterministic route',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'true',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC',EXPECTED_EVIDENCE:'native',FAILURE_CONDITION:'false',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-ROUTE');req.scope=engine.currentScope(p);p.projectData.requirements.push(req);
   const artifact=record('artifacts',22,{FILENAME:'product.json',TYPE:'application/json',VERSION:'1',BYTE_SIZE:2,SHA256:'0'.repeat(64),ROLE:'PRODUCT',STORAGE_REFERENCE:'idb',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:''},'ARTIFACT-ROUTE');artifact.scope={...engine.currentScope(p),productId:'PRODUCT-ROUTE'};p.projectData.artifacts.push(artifact);
-  const test=record('tests',6,{REQ_ID:'REQ-ROUTE',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{source:'CURRENT_PRODUCT',filename:'product.json'}},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:2}]},INPUTS:'product',TOOLS:'runtime',PROCEDURE:'read bytes',EXPECTED_RESULT:'2',FAILURE_CONDITION:'not 2',EVIDENCE_TO_PRESERVE:'application evidence',STATUS:'READY'},'TEST-ROUTE');test.scope=engine.currentScope(p);p.projectData.tests.push(test);
+  const test=record('tests',6,{REQ_ID:'REQ-ROUTE',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{source:'CURRENT_PRODUCT',filename:'product.json'}},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:2}]},INPUTS:'product',TOOLS:'runtime',PROCEDURE:'read bytes',EXPECTED_RESULT:'2',FAILURE_CONDITION:'not 2',EVIDENCE_TO_PRESERVE:'application evidence',STATUS:'READY'},'TEST-ROUTE');test.scope=engine.currentScope(p);p.projectData.tests.push(test);
   p.activeStage=22;const item=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(item&&item.executableNow&&item.userAction==='RUN_IN_APP','Native Test IR route was not executable in-app.');assert(item.returnRequirements.structuredResponse===false&&item.handoff.expectBack.length===0&&item.handoff.send.length===0,'Native Test IR incorrectly requires external response/file handoff.');
   artifact.AVAILABILITY=artifact.fields.AVAILABILITY='METADATA_ONLY';const blocked=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(blocked&&!blocked.executableNow&&blocked.operatorAction==='BLOCKED','Native Test IR did not fail closed after verified bytes became unavailable.');
 }

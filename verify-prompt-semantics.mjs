@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
@@ -163,13 +163,13 @@ for(const [index,mutant] of mutants.entries()){const issues=semanticIssues(mutan
 {
  const p=baseProject(),record=prompts.buildPromptRecord(12,p,{operation:'COMPLETE'}),descriptor=prompts.responseContractDescriptor(12,'COMPLETE');
  if(record.contractSha256!==globalThis.closedLoopHash.sha256Value(descriptor))throw new Error('CONTRACT_SHA256 is not the canonical descriptor hash.');
- if(descriptor.contractVersion!=='closed-loop-response-contract/2.5')throw new Error('Versioned response-contract descriptor is missing.');
+ if(descriptor.contractVersion!=='closed-loop-response-contract/2.4')throw new Error('Versioned response-contract descriptor is missing.');
  const stageField=Object.entries(descriptor.stageData)[0];if(stageField&&(!stageField[1].valueType||!Object.hasOwn(stageField[1],'nullable')||!Object.hasOwn(stageField[1],'provenanceRequired')))throw new Error('Stage-field type/nullability/provenance is not bound into the response contract.');
  const verification=descriptor.records.verification;if(!verification||verification.commitPolicy!==schema.RECORD_SCHEMAS.verification.commitPolicy||verification.idField!==schema.RECORD_SCHEMAS.verification.idField)throw new Error('Record commit policy or identity field is not bound into the response contract.');
  if(JSON.stringify(verification.relationships)!==JSON.stringify(schema.RECORD_SCHEMAS.verification.relationships))throw new Error('Relationship targets are not bound into the response contract.');
  const observed=verification.agentFields.OBSERVED_RESULT;if(!observed?.valueType||!Object.hasOwn(observed,'nullable'))throw new Error('Record field type metadata is not bound into the response contract.');
  if(!descriptor.envelope?.responseTypeRules?.DATA_PROPOSAL||!descriptor.envelope?.recordIdentityRule||!descriptor.envelope?.attachmentRule)throw new Error('Envelope identity/disposition/attachment semantics are not bound into the response contract.');
- if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.5'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
+ if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes('closed-loop-response-contract/2.4'))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');
  const mutated=structuredClone(descriptor);mutated.records.verification.agentFields.OBSERVED_RESULT.valueType='BOOLEAN';if(globalThis.closedLoopHash.sha256Value(mutated)===record.contractSha256)throw new Error('A material field-contract change did not change CONTRACT_SHA256.');
 }
 
@@ -422,24 +422,21 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
 
 
-// one-time-intent-file-boundary-regression-v4
+// stage04-captured-input-regression-v3
 {
   const p=baseProject();
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  p.projectData.intentStatements.push({id:'INTENT-STATEMENT-000001',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{STATEMENT_ID:'INTENT-STATEMENT-000001',SOURCE_MATERIAL:'design-input.pdf',SOURCE_LOCATION:'page 1 paragraph 1',EXACT_STATEMENT:'The product must preserve the supplied design intent.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'',STATUS:'ACTIVE'}});
-  const withoutAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  for(const token of ['The original Stage 01 intent file is prohibited input for this stage.','Never request, attach, resend, reopen','INTENT-STATEMENT-000001','The product must preserve the supplied design intent.'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 canonical-intent boundary missing: '+token);
-  const handoff=withoutAppCopy.contextManifest.executionHandoff;
-  if(handoff?.conversationMaterials?.length)throw new Error('Stage 04 still creates an original-file resend list.');
-  if(handoff?.send?.length)throw new Error('Stage 04 still transfers the original intent file as a required artifact.');
-  if((handoff?.withhold||[]).some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 still turns the original intent file into a later-stage handoff item.');
-  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','Send the Stage 04 instruction with'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 still instructs original-file reuse: '+prohibited);
-  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-PROHIBITED',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-PROHIBITED',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
-  const withStoredCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(withStoredCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withStoredCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Browser custody re-enabled Stage 04 original-file reuse.');
+  p.job.EXACT_USER_OBJECTIVE_VERBATIM='CAPTURED-HUMAN-INTENT-SENTINEL';
+  p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'CAPTURED-STAGE01-DELIVERABLE-SENTINEL',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'design-input.pdf already represented in controlled input'};
+  const first=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['CAPTURED-HUMAN-INTENT-SENTINEL','CAPTURED-STAGE01-DELIVERABLE-SENTINEL','ACCEPTED STAGE 01 JOB DEFINITION — CURRENT HUMAN-AUTHORITY CAPTURE'])if(!first.prompt.includes(token))throw new Error('Stage 04 omitted captured canonical input: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation','ask the human to attach or provide the original before final JSON'])if(first.prompt.includes(prohibited))throw new Error('Stage 04 still re-requests previously supplied material: '+prohibited);
+  if(Object.prototype.hasOwnProperty.call(first.contextManifest.executionHandoff||{},'conversationMaterials'))throw new Error('Stage 04 prompt identity still binds the obsolete repeated-attachment handoff.');
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-CAPTURED',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-CAPTURED',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  const withStoredBytes=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(/MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION|Attach or provide.*design-input\.pdf/i.test(withStoredBytes.prompt))throw new Error('Stored bytes reintroduced a Stage 04 attachment loop.');
 }
-if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
-console.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));
+console.log(JSON.stringify({stage04CapturedInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
   const p=baseProject();

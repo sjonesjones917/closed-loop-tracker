@@ -13,7 +13,7 @@ const PRODUCER=Object.freeze({
 const PROJECT_SCHEMA=core.PROJECT_SCHEMA;
 const WORKFLOW_ID=core.WORKFLOW_ID;
 const STAGE_COUNT=core.STAGE_COUNT;
-const RESPONSE_SCHEMA='closed-loop-stage-response/2';
+const RESPONSE_SCHEMA='closed-loop-stage-response/3';
 const VALUE_TYPES=Object.freeze(['STRING','INTEGER','NUMBER','BOOLEAN','STRING_ARRAY','REFERENCE','REFERENCE_ARRAY','OBJECT','OBJECT_ARRAY']);
 const COLLECTION_POLICIES=Object.freeze({REPLACE_CURRENT_STAGE_SET:'REPLACE_CURRENT_STAGE_SET',APPEND_SCOPED:'APPEND_SCOPED',UPDATE_RESERVED:'UPDATE_RESERVED',APPEND_ONLY:'APPEND_ONLY',APPLICATION_DERIVED:'APPLICATION_DERIVED'});
 const DEFAULT_RESOURCE_LIMITS=Object.freeze({maxRawResponseBytes:1048576,maxJsonDepth:32,maxRecordsPerCollection:250,maxEvidenceRecords:500,maxAttachments:25,maxTextFieldLength:200000});
@@ -57,33 +57,13 @@ const AGENT_JOB_FIELDS=Object.freeze([
 function jobFieldDefinition(name){
   if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});
   if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});
-  if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1});
+  if(AGENT_JOB_FIELDS.includes(name))return field(name,PRODUCER.AGENT,{requiredAtStage:1,valueType:name==='INPUT_SET_CONTENTS'?'OBJECT':'STRING'});
   return field(name,PRODUCER.APPLICATION,{derivation:`Application owns unclassified job-control field ${name}.`});
 }
 const JOB_FIELDS=Object.freeze(Object.fromEntries([...new Set([...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map(name=>[name,jobFieldDefinition(name)])));
 
 
 const RECORD_OWNERSHIP=Object.freeze({
-  "intentStatements": {
-    "human": [],
-    "humanDecision": [],
-    "agent": [
-      "SOURCE_MATERIAL",
-      "SOURCE_LOCATION",
-      "EXACT_STATEMENT",
-      "STATEMENT_KIND",
-      "REQUIREMENT_RELEVANCE",
-      "NORMATIVE_FORCE",
-      "DEPENDENCIES",
-      "EXCEPTIONS",
-      "CONFLICTS",
-      "NOTES"
-    ],
-    "application": [
-      "STATEMENT_ID",
-      "STATUS"
-    ]
-  },
   "sources": {
     "human": [],
     "humanDecision": [],
@@ -932,7 +912,7 @@ function stageFieldProducer(stage,name){return ownerFromPartition(core.STAGES[Nu
 const TEST_IR=Object.freeze({
   version:'closed-loop-test-spec/1',
   capability:'CLOSED_LOOP_TEST_IR',
-  executableKinds:Object.freeze(['NONE','CUSTOM_PIPELINE']),
+  executableKinds:Object.freeze(['NONE','TEST_IR']),
   operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE','ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']),
   limits:Object.freeze({maxSteps:64,maxTextBytes:16777216,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000})
 });
@@ -970,26 +950,12 @@ function validateTestIRTest(test){
   const issues=[];
   if(String(get('EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')issues.push('Test is not routed to APPLICATION_DETERMINISTIC.');
   if(String(get('REQUIRED_CAPABILITY')||'').trim()!==TEST_IR.capability)issues.push(`REQUIRED_CAPABILITY must be ${TEST_IR.capability}.`);
-  if(String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')issues.push('EXECUTABLE_KIND must be CUSTOM_PIPELINE.');
+  if(String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')issues.push('EXECUTABLE_KIND must be TEST_IR.');
   if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);
   issues.push(...validateTestIRSpec(get('EXECUTABLE_SPEC')).issues,...validateTestIRBindings(get('EXECUTABLE_INPUT_BINDINGS')).issues);
   return {valid:issues.length===0,issues};
 }
 const ADDITIONAL_RECORD_FIELD_TYPES=Object.freeze({
-  'INTENT-STATEMENT':Object.freeze({
-    STATEMENT_ID:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    SOURCE_MATERIAL:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    SOURCE_LOCATION:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    EXACT_STATEMENT:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    STATEMENT_KIND:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['DELIVERABLE','REQUIREMENT','CONSTRAINT','PROHIBITION','ACCEPTANCE_CRITERION','DEPENDENCY','EXCEPTION','DEFINITION','FACT','ASSUMPTION','QUESTION','REFERENCE','OTHER']),nullable:false,normalizerKey:null,closedProperties:null}),
-    REQUIREMENT_RELEVANCE:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['REQUIREMENT','CONTEXT_ONLY','EVIDENCE_ONLY','UNRESOLVED']),nullable:false,normalizerKey:null,closedProperties:null}),
-    NORMATIVE_FORCE:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['MUST','MUST_NOT','SHOULD','MAY','FACTUAL','UNRESOLVED']),nullable:false,normalizerKey:null,closedProperties:null}),
-    DEPENDENCIES:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    EXCEPTIONS:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    CONFLICTS:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    NOTES:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null}),
-    STATUS:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null})
-  }),
   TEST:Object.freeze({
     EXECUTABLE_KIND:Object.freeze({valueType:VALUE_TYPES.ENUM,enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
     EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
@@ -1031,9 +997,6 @@ function recordSchema({title,idField,prefix,stage,fields,required=[],relationshi
 }
 
 const RECORD_SCHEMAS=Object.freeze({
-  intentStatements:recordSchema({ownership:RECORD_OWNERSHIP.intentStatements,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Canonical one-time intent statements',idField:'STATEMENT_ID',prefix:'INTENT-STATEMENT',stage:1,fields:[
-    'STATEMENT_ID','SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE','DEPENDENCIES','EXCEPTIONS','CONFLICTS','NOTES','STATUS'
-  ],required:['SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE','DEPENDENCIES','EXCEPTIONS','CONFLICTS','STATUS']}),
   sources:recordSchema({ownership:RECORD_OWNERSHIP.sources,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'External governing sources',idField:'SOURCE_ID',prefix:'SOURCE',stage:2,fields:[
     'SOURCE_ID','TITLE','ISSUING_ORGANIZATION_OR_AUTHOR','SOURCE_TYPE','PUBLICATION_ORIGIN','URL_REFERENCE','VERSION',
     'PUBLICATION_UPDATE_DATE','RETRIEVAL_DATE','AUTHORITY_LEVEL','AUTHORITY_ROLE','RELEVANCE','APPLICABLE_PORTIONS',
@@ -1170,7 +1133,7 @@ const RECORD_SCHEMAS=Object.freeze({
 });
 
 const STAGE_COLLECTIONS=Object.freeze({
-  1:['intentStatements'],
+  1:[],
   2:['sources','sourceConflicts'],
   3:['research','candidateRequirements'],
   4:['requirements'],
@@ -1210,7 +1173,7 @@ const SUPPORT_COLLECTIONS=Object.freeze({
 });
 
 
-const READ_COLLECTIONS=Object.freeze({1:[],2:[],3:['intentStatements','sources','sourceConflicts'],4:['intentStatements','research','candidateRequirements','sources'],5:['requirements','research','sourceConflicts'],6:['requirements','requirementResolutions'],7:['requirements','tests'],8:['requirements','tests','failureTests','requirementResolutions'],9:['instructions','instructionTraces','requirements','tests'],10:['instructions','preflightRecords','tests','failureTests'],11:['candidateFreezes','iterations','runs','freshContexts'],12:['runs','requirements','tests','freshContexts'],13:['verification','runs','requirements'],14:['defects','comparisons','verification'],15:['defects','rootCauses'],16:['defects','rootCauses','regressions','regressionExecutions'],17:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions'],18:['iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','blockers'],19:['convergenceRecords','candidateFreezes','tests','regressions','regressionExecutions'],20:['confirmationRecords','candidateFreezes','iterations'],21:['baselines','freshContexts'],22:['products','tests','artifacts'],23:['products','requirements','tests','sources'],24:['products','requirements','tests','regressions','regressionExecutions'],25:['products','artifacts'],26:['products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections'],27:['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressionExecutions'],28:['releaseRecords','artifactIdentities','artifacts'],29:['sources','requirements','instructions','instructionTraces','runs','products','tests','verification','deterministicResults','meaningResults','releaseRecords','artifactIdentities','evidenceRecords'],30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines']});
+const READ_COLLECTIONS=Object.freeze({1:[],2:[],3:['sources','sourceConflicts'],4:['research','candidateRequirements','sources'],5:['requirements','research','sourceConflicts'],6:['requirements','requirementResolutions'],7:['requirements','tests'],8:['requirements','tests','failureTests','requirementResolutions'],9:['instructions','instructionTraces','requirements','tests'],10:['instructions','preflightRecords','tests','failureTests'],11:['candidateFreezes','iterations','runs','freshContexts'],12:['runs','requirements','tests','freshContexts'],13:['verification','runs','requirements'],14:['defects','comparisons','verification'],15:['defects','rootCauses'],16:['defects','rootCauses','regressions','regressionExecutions'],17:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions'],18:['iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','blockers'],19:['convergenceRecords','candidateFreezes','tests','regressions','regressionExecutions'],20:['confirmationRecords','candidateFreezes','iterations'],21:['baselines','freshContexts'],22:['products','tests','artifacts'],23:['products','requirements','tests','sources'],24:['products','requirements','tests','regressions','regressionExecutions'],25:['products','artifacts'],26:['products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections'],27:['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressionExecutions'],28:['releaseRecords','artifactIdentities','artifacts'],29:['sources','requirements','instructions','instructionTraces','runs','products','tests','verification','deterministicResults','meaningResults','releaseRecords','artifactIdentities','evidenceRecords'],30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines']});
 const APPLICATION_COLLECTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['blockers','freshContexts','artifacts','releaseRecords','artifactIdentities','evidenceChains'])])));
 const HUMAN_ACTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['ANSWER_HUMAN_INPUT','REJECT_RESPONSE','REQUEST_CORRECTION'])])));
 const SCOPE_REQUIREMENTS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>{const s=i+1,keys=['projectRevision','inputVersion'];if(s>=3)keys.push('sourceSetVersion');if(s>=5)keys.push('requirementsVersion');if(s>=7)keys.push('testSuiteVersion');if(s>=9)keys.push('instructionVersion');if(s>=10&&s<=20)keys.push('iterationId','candidateId');if(s===11)keys.push('runId','contextId');if(s>=20)keys.push('baselineId');if(s>=21)keys.push('productId');return [s,Object.freeze([...new Set(keys)])];})));
@@ -1264,4 +1227,60 @@ globalThis.closedLoopWorkflowSchema=Object.freeze({
   field,stageFieldDefinition,allowedCollections,allowedAgentStageFields,humanStageFields,recordAgentFields,recordHumanFields,operationContract,authorizeMutation,
   sourceClassificationIssues,TARGET_PRODUCT_REFERENCE_PATTERN
 });
+})();
+
+;(()=>{
+'use strict';
+const CLOSED_LOOP_V3_MIGRATION_LAYER=true;
+const base=globalThis.closedLoopWorkflowSchema;
+if(!base)throw new Error('closedLoopWorkflowSchema must exist before the v3 migration layer.');
+const CURRENT_PROJECT_SCHEMA='closed-loop-project/3';
+const PREVIOUS_PROJECT_SCHEMA='closed-loop-project/2';
+const CURRENT_RESPONSE_SCHEMA='closed-loop-stage-response/3';
+const PREVIOUS_RESPONSE_SCHEMA='closed-loop-stage-response/2';
+const TEST_IR_SCHEMA='closed-loop-test-spec/1';
+const PACKAGE_SCHEMA='closed-loop-verification-package/1';
+const clone=value=>typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));
+function normalizeTestRecords(value,seen=new WeakSet()){
+  if(!value||typeof value!=='object'||seen.has(value))return;seen.add(value);
+  const fields=value.fields&&typeof value.fields==='object'&&!Array.isArray(value.fields)?value.fields:value;
+  if(Object.prototype.hasOwnProperty.call(fields,'TEST_ID')||Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_KIND')||Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_SPEC')){
+    if(fields.EXECUTABLE_KIND==='CUSTOM_PIPELINE')fields.EXECUTABLE_KIND='TEST_IR';
+    if(!fields.EXECUTABLE_KIND)fields.EXECUTABLE_KIND='NONE';
+    fields.EXECUTABLE_SPEC_VERSION=TEST_IR_SCHEMA;
+    if(!Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_SPEC'))fields.EXECUTABLE_SPEC=null;
+    if(!fields.EXECUTABLE_INPUT_BINDINGS||typeof fields.EXECUTABLE_INPUT_BINDINGS!=='object'||Array.isArray(fields.EXECUTABLE_INPUT_BINDINGS))fields.EXECUTABLE_INPUT_BINDINGS={};
+    if(!Object.prototype.hasOwnProperty.call(fields,'EXECUTABLE_SPEC_SHA256'))fields.EXECUTABLE_SPEC_SHA256='';
+  }
+  if(Array.isArray(value)){for(const item of value)normalizeTestRecords(item,seen);}else for(const [key,item] of Object.entries(value)){if(key==='payload'&&value.operational===false)continue;normalizeTestRecords(item,seen);}
+}
+function ensureV3Defaults(project){
+  project.schema=CURRENT_PROJECT_SCHEMA;
+  project.workflow=project.workflow||project.workflowId||'mobile-closed-loop/30';
+  project.projectData=project.projectData&&typeof project.projectData==='object'?project.projectData:{};
+  for(const key of ['intakeCoverageManifests','obligationManifests','promptContextManifests','blindAliasMaps','nativeExecutionEvents'])if(!Array.isArray(project.projectData[key]))project.projectData[key]=[];
+  if(!Array.isArray(project.projectData.nonOperationalImportedPayloads))project.projectData.nonOperationalImportedPayloads=[];
+  project.projectData.schemaIdentities={...(project.projectData.schemaIdentities||{}),project:CURRENT_PROJECT_SCHEMA,response:CURRENT_RESPONSE_SCHEMA,testIr:TEST_IR_SCHEMA,verificationPackage:PACKAGE_SCHEMA};
+  normalizeTestRecords(project);
+  return project;
+}
+const priorMigrationName=['migrateProjectToCurrent','migrateProject','migrateLegacyProject','migrate'].find(name=>typeof base[name]==='function');
+const priorMigration=priorMigrationName?base[priorMigrationName].bind(base):null;
+function migrateProjectToCurrent(input){
+  if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Imported project must be an object.');
+  if(input.schema===CURRENT_PROJECT_SCHEMA)return ensureV3Defaults(clone(input));
+  const original=clone(input);
+  let migrated;
+  if(input.schema===PREVIOUS_PROJECT_SCHEMA)migrated=clone(input);
+  else if(priorMigration){migrated=priorMigration(clone(input));if(migrated&&typeof migrated.then==='function')throw new Error('Project migration must be deterministic and synchronous.');}
+  else throw new Error('Unsupported project schema '+String(input.schema));
+  migrated=ensureV3Defaults(migrated);
+  const already=migrated.projectData.nonOperationalImportedPayloads.some(item=>item&&item.sourceSchema===original.schema&&item.sourceRevision===Number(original.revision||0)&&item.operational===false);
+  if(!already)migrated.projectData.nonOperationalImportedPayloads.push({sourceSchema:String(original.schema||''),sourceRevision:Number(original.revision||0),operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:original});
+  migrated.projectHash='';
+  return migrated;
+}
+const replacement={...base,PROJECT_SCHEMA:CURRENT_PROJECT_SCHEMA,PROJECT_SCHEMA_ID:CURRENT_PROJECT_SCHEMA,RESPONSE_SCHEMA:CURRENT_RESPONSE_SCHEMA,RESPONSE_SCHEMA_ID:CURRENT_RESPONSE_SCHEMA,PREVIOUS_PROJECT_SCHEMA,PREVIOUS_RESPONSE_SCHEMA,TEST_IR_SCHEMA,PACKAGE_SCHEMA,migrateProjectToCurrent};
+if(priorMigrationName)replacement[priorMigrationName]=migrateProjectToCurrent;
+globalThis.closedLoopWorkflowSchema=Object.freeze(replacement);
 })();
