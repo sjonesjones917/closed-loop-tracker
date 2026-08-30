@@ -1,52 +1,64 @@
-name: Export verified all stage prompt source
+name: Diagnose current all stage prompt candidate
 on:
   push:
     branches: [fix/stage01-intake-closure-20260830]
 permissions: {contents: read}
 jobs:
-  export:
+  diagnose:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply exact verified candidate
+      - name: Apply candidate
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('repair-all-prompts.py'); s=p.read_text()
-          old="STAGE-SPECIFIC TASK\\n${procedures[stage]||'Perform the current stage completely and only the current stage.'}\\n\\nPERMITTED AGENT-OWNED STAGE DATA"
-          new="STAGE-SPECIFIC TASK\\n${procedures[stage]}\\n\\nPERMITTED AGENT-OWNED STAGE DATA"
-          s=s.replace(old,new,1)
-          old2="STAGE-SPECIFIC TASK\\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\\\n\\\\n':''}${procedures[stage]||'Perform the current stage completely and only the current stage.'}\\n\\nPERMITTED AGENT-OWNED STAGE DATA"
-          new2="STAGE-SPECIFIC TASK\\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\\\n\\\\n':''}${procedures[stage]}\\n\\nPERMITTED AGENT-OWNED STAGE DATA"
-          s=s.replace(old2,new2,1); p.write_text(s)
+          s=s.replace("STAGE-SPECIFIC TASK\\n${procedures[stage]||'Perform the current stage completely and only the current stage.'}\\n\\nPERMITTED AGENT-OWNED STAGE DATA","STAGE-SPECIFIC TASK\\n${procedures[stage]}\\n\\nPERMITTED AGENT-OWNED STAGE DATA",1)
+          s=s.replace("STAGE-SPECIFIC TASK\\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\\\n\\\\n':''}${procedures[stage]||'Perform the current stage completely and only the current stage.'}\\n\\nPERMITTED AGENT-OWNED STAGE DATA","STAGE-SPECIFIC TASK\\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\\\n\\\\n':''}${procedures[stage]}\\n\\nPERMITTED AGENT-OWNED STAGE DATA",1)
+          p.write_text(s)
           PY
           python3 repair-all-prompts.py
           sed -i "s/closed-loop-prompt-engine\/28/closed-loop-prompt-engine\/29/" prompt-engine.js
-      - name: Reprove candidate
+      - name: Capture exact current verification
+        id: verify
+        continue-on-error: true
         run: |
-          node --check workflow-schema.js
-          node --check prompt-engine.js
-          node --check verify-stage-prompts-complete.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-prompt-semantics.mjs
-          node verify-test-runtime.mjs
-          node verify-ingestion.mjs
-          node verify.mjs
-          node verify-full-cycle.mjs
-          node verify-definition-of-done.mjs
-      - name: Record exact byte hashes
-        run: sha256sum workflow-schema.js prompt-engine.js verify-stage-prompts-complete.mjs > verified-source.sha256
+          set +e
+          : > current-candidate.log
+          for cmd in \
+            'node --check workflow-schema.js' \
+            'node --check prompt-engine.js' \
+            'node --check verify-stage-prompts-complete.mjs' \
+            'node verify-stage-prompts-complete.mjs' \
+            'node verify-stage01-intake-closure.mjs' \
+            'node verify-one-time-intent-intake.mjs' \
+            'node verify-prompt-semantics.mjs' \
+            'node verify-test-runtime.mjs' \
+            'node verify-ingestion.mjs' \
+            'node verify.mjs' \
+            'node verify-full-cycle.mjs' \
+            'node verify-definition-of-done.mjs'; do
+              echo "=== $cmd ===" | tee -a current-candidate.log
+              eval "$cmd" >> current-candidate.log 2>&1
+              status=$?
+              if [ $status -ne 0 ]; then echo "FAILED_STATUS=$status" | tee -a current-candidate.log; echo "status=$status" >> "$GITHUB_OUTPUT"; break; fi
+          done
+          if [ -z "${status:-}" ] || [ "$status" -eq 0 ]; then echo "status=0" >> "$GITHUB_OUTPUT"; fi
+          cat current-candidate.log
+          sha256sum workflow-schema.js prompt-engine.js verify-stage-prompts-complete.mjs > verified-source.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: verified-all-stage-prompt-source
+          name: current-all-stage-candidate
           path: |
             workflow-schema.js
             prompt-engine.js
             verify-stage-prompts-complete.mjs
             verified-source.sha256
+            current-candidate.log
           if-no-files-found: error
+      - name: Preserve candidate failure
+        if: steps.verify.outputs.status != '0'
+        run: exit 1
