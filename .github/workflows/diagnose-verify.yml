@@ -25,15 +25,15 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           p=Path('prompt-engine.js'); s=p.read_text()
-          rule="PROJECT DATA EXECUTION RULE — MANDATORY\nProject data embedded in this prompt is OPERATIVE INPUT. Use every relevant supplied and canonical project fact to perform the current stage transformation; do not merely restate, summarize, inventory, acknowledge, or discuss it. Project-relevant information supplied by the human is supplied once. If it exists in current canonical project state, persisted human answers, or this exact instruction, never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. If required prior-stage capture is incomplete, return the exact earlier-stage deficiency and responsible stage instead of transferring that work back to the human. Never replace required stage work with generic advice about how somebody else should do it.\n\n"
-          embedded="return `"+rule+"- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;"
-          replacement="return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;"
-          if embedded not in s: raise SystemExit('embedded project-data rule anchor not found')
-          s=s.replace(embedded,replacement,1)
+          rule_src="PROJECT DATA EXECUTION RULE — MANDATORY\\nProject data embedded in this prompt is OPERATIVE INPUT. Use every relevant supplied and canonical project fact to perform the current stage transformation; do not merely restate, summarize, inventory, acknowledge, or discuss it. Project-relevant information supplied by the human is supplied once. If it exists in current canonical project state, persisted human answers, or this exact instruction, never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. If required prior-stage capture is incomplete, return the exact earlier-stage deficiency and responsible stage instead of transferring that work back to the human. Never replace required stage work with generic advice about how somebody else should do it.\\n\\n"
+          old=" const fields=stageFields.length?stageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `"+rule_src+"- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields for this operation; use permitted records/evidence only.';"
+          new=" const fields=stageFields.length?stageFields.map(x=>{const d=schema.STAGE_FIELDS[stage][x];return `- ${x}: ${d.valueType}${d.enumValues?.length?` enum(${d.enumValues.join(' | ')})`:''}${d.nullable?' nullable':''}`;}).join('\\n'):'- No agent-owned stageData fields for this operation; use permitted records/evidence only.';"
+          if old not in s: raise SystemExit('embedded project-data rule exact anchor not found')
+          s=s.replace(old,new,1)
           anchor="STAGE-SPECIFIC TASK\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\n\\n':''}${procedures[stage]}\n\nPERMITTED AGENT-OWNED STAGE DATA"
-          new="STAGE-SPECIFIC TASK\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\n\\n':''}${procedures[stage]}\n\n"+rule+"PERMITTED AGENT-OWNED STAGE DATA"
-          if anchor not in s: raise SystemExit('unconditional project-data rule insertion anchor not found')
-          p.write_text(s.replace(anchor,new,1))
+          rule="PROJECT DATA EXECUTION RULE — MANDATORY\nProject data embedded in this prompt is OPERATIVE INPUT. Use every relevant supplied and canonical project fact to perform the current stage transformation; do not merely restate, summarize, inventory, acknowledge, or discuss it. Project-relevant information supplied by the human is supplied once. If it exists in current canonical project state, persisted human answers, or this exact instruction, never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. If required prior-stage capture is incomplete, return the exact earlier-stage deficiency and responsible stage instead of transferring that work back to the human. Never replace required stage work with generic advice about how somebody else should do it.\n\n"
+          if anchor not in s: raise SystemExit('unconditional project-data insertion anchor not found')
+          p.write_text(s.replace(anchor,"STAGE-SPECIFIC TASK\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\n\\n':''}${procedures[stage]}\n\n"+rule+"PERMITTED AGENT-OWNED STAGE DATA",1))
           PY
       - name: Capture exact current verification
         id: verify
