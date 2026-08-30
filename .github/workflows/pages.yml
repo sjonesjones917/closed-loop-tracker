@@ -34,6 +34,7 @@ jobs:
           node --check verify-complete.mjs
           node --check verify-full-cycle.mjs
           node --check verify-prompt-semantics.mjs
+          node --check verify-one-time-intent-intake.mjs
           node --check verify-live.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
@@ -43,6 +44,8 @@ jobs:
           node --check verify-test-runtime.mjs
       - name: Verify generic deterministic Test IR runtime
         run: node verify-test-runtime.mjs
+      - name: Verify one-time exhaustive intent capture and Stage 04 canonical reuse
+        run: node verify-one-time-intent-intake.mjs
       - name: Verify canonical serialization and SHA-256
         run: node verify-hash.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
@@ -76,7 +79,7 @@ jobs:
           ! grep -R "document.write" --include='*.js' --include='*.html' .
           node - <<'NODE'
           const fs=require('fs'),html=fs.readFileSync('index.html','utf8');
-          const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
           const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
           if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
           const tokens=new Set();
@@ -117,7 +120,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -171,6 +174,7 @@ jobs:
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
           node verify-test-runtime.mjs > /tmp/verify-test-runtime.out
+          node verify-one-time-intent-intake.mjs > /tmp/verify-one-time-intent-intake.out
           node verify-ingestion.mjs > /tmp/verify-ingestion.out
           node verify.mjs > /tmp/verify-source.out
           node verify-complete.mjs > /tmp/verify-complete.out
@@ -178,6 +182,7 @@ jobs:
           node verify-definition-of-done.mjs > /tmp/verify-definition-of-done.out
           node verify-project-lifecycle.mjs > /tmp/verify-project-lifecycle.out
           grep -q 'verify-test-runtime: PASS' /tmp/verify-test-runtime.out
+          grep -q 'verify-one-time-intent-intake: PASS' /tmp/verify-one-time-intent-intake.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
           python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
@@ -233,12 +238,14 @@ jobs:
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
-            projectSchema:'closed-loop-project/2',
-            responseSchema:'closed-loop-stage-response/2',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
             ...definition,
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
             nativeTestSpecVersion:'closed-loop-test-spec/1',
+            oneTimeIntentIntake:true,
             stagesCompleted:30,
             negativeCasesPassed:Number(process.env.NEGATIVE_CASES),
             storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES),
@@ -255,6 +262,7 @@ jobs:
             proofSources:{
               structuralCoverage:'verify-definition-of-done.mjs',
               nativeTestRuntime:'verify-test-runtime.mjs',
+              oneTimeIntentIntake:'verify-one-time-intent-intake.mjs',
               canonicalWorkflow:'verify.mjs',
               ingestion:'verify-ingestion.mjs',
               workflowGates:'verify-complete.mjs',
@@ -265,57 +273,4 @@ jobs:
             }
           };
           const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
-          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
-          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
-          for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} must be zero.`);
-          if(!report.nativeTestRuntime||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          NODE
-      - name: Upload acceptance report
-        uses: actions/upload-artifact@v4
-        with:
-          name: closed-loop-acceptance-${{ github.sha }}
-          path: closed-loop-acceptance.json
-          if-no-files-found: error
-      - name: Tag exact accepted commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="acceptance-${GITHUB_SHA:0:12}"
-          EXISTING=$(curl --silent --show-error \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" || true)
-          EXISTING_SHA=$(printf '%s' "$EXISTING" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).object?.sha||'')}catch{}})")
-          if [ -n "$EXISTING_SHA" ]; then
-            test "$EXISTING_SHA" = "$GITHUB_SHA"
-          else
-            curl --fail-with-body --silent --show-error \
-              --request POST \
-              --header "Authorization: Bearer $GH_TOKEN" \
-              --header "Accept: application/vnd.github+json" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/refs" \
-              --data "{\"ref\":\"refs/tags/$TAG\",\"sha\":\"$GITHUB_SHA\"}"
-          fi
-      - name: Publish exact workflow status
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          LIVE_RESULT: ${{ needs.verify-live.result }}
-        run: |
-          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
-            STATE=success
-            DESCRIPTION='Measured deterministic, semantic, lifecycle, browser, persistence, and byte proofs passed'
-          else
-            STATE=failure
-            DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
-          fi
-          test "$(printf '%s' "$DESCRIPTION" | wc -c)" -le 140
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
-          test "$STATE" = success
+          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.

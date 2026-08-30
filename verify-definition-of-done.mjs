@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','response-ingestion.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
@@ -46,7 +46,7 @@ const acceptedRelationshipProvenanceCoverage=ratio(relationshipProvenancePassed,
 assert(acceptedRelationshipProvenanceCoverage===1,'Accepted relationship provenance ownership coverage is not 100%.');
 
 assert(core.STAGE_COUNT===30&&core.STAGES.length===30&&core.WORKFLOW_ID==='mobile-closed-loop/30','30-stage workflow identity changed.');
-assert(core.PROJECT_SCHEMA==='closed-loop-project/2'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/2','Schema identity changed.');
+assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Schema identity changed.');
 assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'The only registered project-test executor must be the proven Closed Loop Test IR runtime.');
 assert(fs.existsSync('test-runtime.js')&&fs.existsSync('test-worker.js')&&fs.existsSync('verify-test-runtime.mjs'),'Native Test IR executor proof files are missing.');
 

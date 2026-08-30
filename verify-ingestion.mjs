@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
@@ -143,7 +143,7 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 }
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
-negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
+negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/3"','TRUNCATED_RESPONSE');
 negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
