@@ -1,0 +1,49 @@
+name: Apply minimal prompt-only repair
+on:
+  push:
+    branches: [fix-prompt-only-stage4]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[prompt-fix-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix-prompt-only-stage4
+          fetch-depth: 0
+      - name: Apply exact two-file repair
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('prompt-engine.js')
+          s = p.read_text()
+          old1 = "handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds});if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';"
+          new1 = "rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff;if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';"
+          old2 = "handoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}"
+          new2 = "rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff,promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}"
+          assert s.count(old1) == 1, f'prompt body handoff match count={s.count(old1)}'
+          assert s.count(old2) == 1, f'prompt manifest handoff match count={s.count(old2)}'
+          s = s.replace(old1, new1).replace(old2, new2)
+          p.write_text(s)
+
+          p = Path('index.html')
+          s = p.read_text()
+          old = ".expandable-prompt{height:auto;max-height:clamp(280px,42vh,440px)}.expandable-prompt.expanded{height:auto;max-height:none}"
+          new = ".expandable-prompt{height:clamp(260px,45vh,520px);max-height:80vh}.expandable-prompt.expanded{height:auto;max-height:none}"
+          assert s.count(old) == 1, f'prompt box style match count={s.count(old)}'
+          s = s.replace(old, new)
+          p.write_text(s)
+          PY
+      - name: Remove one-time applicator and commit only final two-file diff
+        run: |
+          rm .github/workflows/apply-minimal-prompt-fix.yml
+          git config user.name closed-loop-prompt-fix
+          git config user.email actions@users.noreply.github.com
+          git add prompt-engine.js index.html .github/workflows/apply-minimal-prompt-fix.yml
+          git diff --cached --name-only
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "index.html prompt-engine.js "
+          git commit -m "Fix Stage 4 prompt handoff and restore prompt box [prompt-fix-applied]"
+          git push origin HEAD:fix-prompt-only-stage4
