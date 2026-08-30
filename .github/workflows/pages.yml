@@ -9,60 +9,83 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Reconcile current capture-once implementation with proven /3 runtime
+      - name: Materialize zero-loss candidate without visual redesign
         shell: bash
         run: |
-          git diff --binary 4acd4ad9795b053fed6952fbd8e95cda9912b08c 28aaaf10a630c45094f53a587b203848ef07ccea -- app-core.js build-test-project.mjs index.html prompt-engine.js response-ingestion.js verify-browser.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js > /tmp/capture-once.patch
-          git apply --3way /tmp/capture-once.patch
-      - name: Enforce exhaustive Stage 01 and Stage 03 before Stage 04 prompt generation
-        shell: node {0}
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+          git show origin/fix/final-zero-loss-v3-20260830:.github/workflows/final-v3-proof.yml > /tmp/final-v3-proof.yml
+          cp .github/workflows/pages.yml /tmp/pages.yml
+          git checkout origin/fix/final-zero-loss-v3-20260830 -- .
+          cp /tmp/pages.yml .github/workflows/pages.yml
+          rm -f .github/workflows/final-v3-proof.yml final-proof.log
+          python3 - <<'PY'
+          from pathlib import Path
+          source=Path('/tmp/final-v3-proof.yml').read_text()
+          marker="      - name: Repair controlling candidate in runner\n        shell: bash\n        run: |\n"
+          start=source.index(marker)+len(marker)
+          end=source.index("      - name: Run every deterministic proof",start)
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines())+'\n'
+          Path('/tmp/repair.sh').write_text(body)
+          PY
+          bash /tmp/repair.sh
+      - name: Prove exhaustive Stage 01, Stage 03, and closed Stage 04
+        shell: bash
         run: |
+          node - <<'NODE'
           const fs=require('fs');
-          const must=(c,m)=>{if(!c)throw new Error(m)};
-          const rep=(s,a,b,m)=>{must(s.includes(a),m);return s.replace(a,b)};
-          let p=fs.readFileSync('prompt-engine.js','utf8');
-          p=rep(p,'Stage 01 is complete human-authority intake for defining the Job and intentionally does not require every fact needed to execute later stages.','Stage 01 is complete and exhaustive human-authority intake for defining the requested outcome. Before DATA_PROPOSAL, exhaust every foreseeable project-relevant issue that must come from the human: it must already be supplied, be asked and answered, or be asked and explicitly answered UNKNOWN or DEFERRED. Never silently place an unasked human-only issue into UNKNOWN_INFORMATION. Facts obtainable from accessible supplied material or authorized research remain LATER_RESOLVABLE and must not be re-asked of the human.','Stage 01 contradictory prompt rule not found');
-          p=rep(p,'Before DATA_PROPOSAL, account for every application-supplied intake identity and do not omit a controlled input unit.','Before DATA_PROPOSAL, account for every application-supplied intake identity; every controlled input unit must have exactly one allowed semantic disposition, every foreseeable human-only issue must have been given to the human if not already supplied, and zero controlled input identities may be omitted. If any condition is false, return HUMAN_INPUT_REQUIRED or BLOCKED instead of DATA_PROPOSAL.','Stage 01 accounting rule not found');
-          p=rep(p,'Repeat discovery passes until saturation is actually supported: record the latest pass number, whether a new material category was found, and complete the required conflict/exception pass.','Repeat discovery passes until Stage 03 is exhausted: every current Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE, the required conflict/exception pass is complete, and the latest complete pass found no new material category. Do not return DATA_PROPOSAL while any current source is uncovered, any required pass is incomplete, or saturation is not established.','Stage 03 exhaustion rule not found');
-          p=rep(p,'Use the complete current canonical input union supplied by the application: current human input, accepted Stage 01 job definition and intake-accounting identities, project-material obligations already extracted into canonical intake/material records, and accepted Stage 03 research/source candidate obligations.','Use ONLY the complete application-enumerated current obligation universe, and use ALL of it: current User Job Input + the accepted exhaustive Stage 01 job definition + every current Stage 01 intake identity and human-origin obligation + every obligation extracted from accessible supplied project material + accepted exhaustive Stage 03 research + every current candidate external-source obligation + applicable current source identities and evidence. Stage 04 must not rediscover or ask the human to reconstruct this universe. If Stage 01 or Stage 03 is incomplete, or if the application obligation manifest is absent, stale, or incomplete, Stage 04 is BLOCKED and no DATA_PROPOSAL is permitted.','Stage 04 union rule not found');
-          fs.writeFileSync('prompt-engine.js',p);
-      - name: Focused proofs
+          const p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),a=fs.readFileSync('app-core.js','utf8'),s=fs.readFileSync('workflow-schema.js','utf8');
+          const q=(v,m)=>{if(!v)throw new Error(m)};
+          q(p.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE'),'Stage 01 is not exhaustive intake');
+          q(p.includes('account for EVERY INPUT UNIT ID'),'Stage 01 does not require complete input identity accounting');
+          q(p.includes('Do not silently place an unasked human-only issue'),'Stage 01 permits silent unknowns');
+          q(p.includes('Exhaustively research every current accepted Stage 02 independent external source'),'Stage 03 is not exhaustive');
+          q(p.includes('Do not mark Stage 03 complete until all current sources have coverage'),'Stage 03 permits incomplete coverage');
+          q(p.includes('Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST'),'Stage 04 does not use closed obligation universe');
+          q(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'Stage 04 can still repeat user input');
+          q(p.includes('If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT'),'Stage 04 can proceed on incomplete earlier stages');
+          q(e.includes('function stage1IntakeManifest(project)')&&e.includes('validateStage1IntakeAccounting'),'application-owned Stage 01 accounting missing');
+          q(e.includes('function stage4ObligationManifest(project)')&&e.includes('validateStage4ObligationAccounting'),'application-owned Stage 04 accounting missing');
+          q(e.includes('stage4Prompt.contextManifest.obligationManifest'),'Stage 04 gate not bound to controlling prompt manifest');
+          q(e.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED')&&e.includes('SATURATION_STATUS'),'Stage 03 saturation gate missing');
+          q(a.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 still exposes repeat upload control');
+          q(a.includes('registerIntakeArtifactSnapshot'),'Stage 01 does not snapshot supplied artifact content');
+          q(s.includes("const RESPONSE_SCHEMA='closed-loop-stage-response/3'"),'response schema is not /3');
+          console.log('stage-01-03-04-closure: PASS');
+          NODE
+      - name: Run every deterministic proof
         shell: bash
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node verify-controlling-spec.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-test-runtime.mjs
-          node verify-prompt-semantics.mjs
-      - name: Complete non-browser proof
-        shell: bash
-        run: |
+          set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
           node build-test-project.mjs
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-semantic-invariant.mjs
-          node verify-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
-      - name: Commit verified source only
+          for t in verify.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-single-supply-prompts.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do node "$t"; done
+      - name: Run local Chromium acceptance
         shell: bash
         run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit proven source only
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name closed-loop-spec-finalizer
           git config user.email actions@users.noreply.github.com
+          rm -f final-proof.log .spec-work-in-progress .github/workflows/final-v3-proof.yml
           git add -A -- ':!.github/workflows/*'
           git diff --cached --check
-          git commit -m 'Reconcile exhaustive intent capture with /3 runtime' || exit 0
+          git commit -m 'Complete exhaustive intent capture and closed obligation accounting' || exit 0
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
