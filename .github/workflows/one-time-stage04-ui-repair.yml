@@ -19,6 +19,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import hashlib,re
           p=Path('app-core.js')
           s=p.read_text()
           old="function artifactControlMarkup(n,locked){if(n===19)"
@@ -26,8 +27,7 @@ jobs:
           if new not in s:
               if old not in s:
                   raise SystemExit('expected current artifactControlMarkup preimage not found')
-              s=s.replace(old,new,1)
-              p.write_text(s)
+              p.write_text(s.replace(old,new,1))
           v=Path('verify-hash.mjs')
           t=v.read_text()
           old_proof="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===19)\"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
@@ -35,6 +35,19 @@ jobs:
           if old_proof not in t:
               raise SystemExit('expected contradictory Stage 04 verifier preimage not found')
           v.write_text(t.replace(old_proof,new_proof,1))
+          runtime_files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','test-worker.js']
+          manifest=''
+          for name in runtime_files:
+              b=Path(name).read_bytes()
+              blob=hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+              manifest+=f'{name}:{blob}\n'
+          token='runtime-'+hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          h=Path('index.html')
+          html=h.read_text()
+          html,n=re.subn(r'(src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)runtime-[a-f0-9]+',lambda m:m.group(1)+token,html)
+          if n!=9:
+              raise SystemExit(f'expected 9 runtime script cache tokens, updated {n}')
+          h.write_text(html)
           PY
           node --check app-core.js
           node verify-hash.mjs
@@ -42,6 +55,6 @@ jobs:
         run: |
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add app-core.js verify-hash.mjs
+          git add app-core.js verify-hash.mjs index.html
           git commit -m "Restore Stage 04 no-repeat attachment control"
           git push origin HEAD:controlling-spec-final-current
