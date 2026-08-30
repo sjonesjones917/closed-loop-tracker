@@ -29,8 +29,8 @@ jobs:
         run: |
           exec > >(tee /tmp/materialize.log) 2>&1
           set -euo pipefail
-          SOURCE=371ea9e9fd53586f78aa838217cdd97a7c442d76
           git fetch origin fix/controlling-spec-final-20260830
+          SOURCE=$(git rev-parse FETCH_HEAD)
           git cat-file -e "$SOURCE^{commit}"
 
           node - <<'NODE'
