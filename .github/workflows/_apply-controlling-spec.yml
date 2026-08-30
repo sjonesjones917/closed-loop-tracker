@@ -55,11 +55,20 @@ jobs:
           git commit -m "Record controlling-spec repair diagnostic" || true
           git push origin HEAD:fix/controlling-spec-20260830-0716 || true
       - name: Remove one-time scaffolding before repository proofs
-        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml repair-failure.log
+        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml repair-failure.log runtime-failure.log
       - name: Build architecture proof
         run: node build-test-project.mjs
       - name: Existing Test IR runtime proof
         run: node verify-test-runtime.mjs
+      - name: Preserve exact Test IR runtime failure
+        if: failure()
+        run: |
+          node verify-test-runtime.mjs > runtime-failure.log 2>&1 || true
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add runtime-failure.log
+          git commit -m "Record Test IR repair diagnostic" || true
+          git push origin HEAD:fix/controlling-spec-20260830-0716 || true
       - name: Canonical hash proof
         run: node verify-hash.mjs
       - name: Existing workflow proof
@@ -70,6 +79,7 @@ jobs:
         run: node verify-prompt-semantics.mjs
       - name: Commit verified repair
         run: |
+          rm -f runtime-failure.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
