@@ -1,0 +1,135 @@
+name: Finalize Stage 04 durable capture on current main
+on:
+  push:
+    branches: [fix/stage4-durable-accounting-current-main-20260830]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-durable-accounting-current-main-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply durable capture-once implementation without visual redesign
+        shell: bash
+        run: |
+          set -euo pipefail
+          donor=f5e5c14081373b89faf40a867425b99c34841dc3
+          git fetch origin "$donor"
+
+          # Transplant only state-model, prompt, ingestion, workbook semantics, and regression proof.
+          # app-core.js and CSS are intentionally NOT taken from the donor branch.
+          git checkout "$donor" -- \
+            workflow-schema.js \
+            workflow-engine.js \
+            prompt-engine.js \
+            response-ingestion.js \
+            workbook.js \
+            build-test-project.mjs \
+            verify-one-time-intent-intake.mjs \
+            verify-test-runtime.mjs \
+            verify-complete.mjs \
+            verify-full-cycle.mjs \
+            verify-ingestion.mjs \
+            verify-prompt-semantics.mjs \
+            verify.mjs
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, re
+
+          # Current main already invalidated /25 prompts with /26. This stronger repair must
+          # invalidate both generations, so advance to /27 rather than regressing identity.
+          p = Path('prompt-engine.js')
+          text = p.read_text()
+          text, count = re.subn(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';", text, count=1)
+          if count != 1:
+              raise SystemExit(f'prompt-engine.js: expected donor /25 version once, found {count}')
+          p.write_text(text)
+
+          # Keep prompt regression aligned with the new persisted identity.
+          p = Path('verify-prompt-semantics.mjs')
+          text = p.read_text().replace("closed-loop-prompt-engine/26", "closed-loop-prompt-engine/27")
+          p.write_text(text)
+
+          # The existing UI already removes the Stage 04 upload control. Preserve app-core.js.
+          # Add the new regression to the one existing Pages workflow, without creating a second deployment workflow.
+          pages_path = Path('.github/workflows/pages.yml')
+          pages = pages_path.read_text()
+          if 'verify-one-time-intent-intake.mjs' not in pages:
+              anchor = '          node --check verify-test-runtime.mjs\n'
+              if anchor in pages:
+                  pages = pages.replace(anchor, anchor + '          node --check verify-one-time-intent-intake.mjs\n', 1)
+              anchor = '          node verify-complete.mjs\n'
+              if anchor in pages:
+                  pages = pages.replace(anchor, anchor + '          node verify-one-time-intent-intake.mjs\n', 1)
+              pages = pages.replace(
+                  'node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs',
+                  'node verify-ingestion.mjs && node verify-complete.mjs && node verify-one-time-intent-intake.mjs && node verify-full-cycle.mjs'
+              )
+          pages_path.write_text(pages)
+
+          # Refresh only the shared runtime/cache identity. Do not modify any CSS/layout values.
+          runtime = [
+              'workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js',
+              'prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','test-worker.js'
+          ]
+          manifest = ''
+          for filename in runtime:
+              f = Path(filename)
+              if not f.exists():
+                  continue
+              data = f.read_bytes()
+              manifest += filename + ':' + hashlib.sha256(data).hexdigest() + '\n'
+          token = 'runtime-' + hashlib.sha256(manifest.encode()).hexdigest()[:16]
+          index_path = Path('index.html')
+          index = index_path.read_text()
+          index, count = re.subn(r'runtime-[0-9a-f]{16}', token, index)
+          if count < 1:
+              raise SystemExit('index.html: shared runtime token not found')
+          index_path.write_text(index)
+          print('runtime token', token, 'occurrences', count)
+
+          # Temporary workflow must not exist in the delivered tree.
+          Path('.github/workflows/stage4-current-main-finalize.yml').unlink()
+          PY
+
+      - name: Prove capture once, automatic Stage 04 reuse, and no visual-file change
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only 4acd4ad9795b053fed6952fbd8e95cda9912b08c -- app-core.js | wc -l)" -eq 0
+          for file in workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs; do
+            node --check "$file"
+          done
+          node build-test-project.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+
+      - name: Commit permanent implementation only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/stage4-current-main-finalize.yml
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'Capture project intent once and reuse it in Stage 04'
+          git push origin HEAD:fix/stage4-durable-accounting-current-main-20260830
