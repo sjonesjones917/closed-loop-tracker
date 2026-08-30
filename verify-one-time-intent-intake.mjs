@@ -29,7 +29,7 @@ assert(handoff.conversationMaterials.length===0,'Stage 04 still creates an origi
 assert(handoff.withhold.length===0,'Stage 04 still turns the original intent file into a later-stage handoff item.');
 assert(engine.operationalNextAction(p,4).includes('Do not attach, resend, reopen, or otherwise reuse the original intent file.'),'Stage 04 next action still permits file reuse.');
 function evidence(){return [{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Canonical intent coverage proof',location:'verify-one-time-intent-intake.mjs',content:'controlled proof'}];}
-function envelope(stage,prompt,records){return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records,evidence:evidence(),unresolved:[],warnings:[],attachments:[]};}
+function envelope(stage,prompt,records,stageData={}){return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:evidence(),unresolved:[],warnings:[],attachments:[]};}
 function candidate(key,id){return {tempKey:key,fields:{SOURCE_LOCATION:id,CANDIDATE_OBLIGATION:'Preserve '+id,CLASSIFICATION:'USER_REQUIREMENT',APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',EVIDENCE:'Canonical statement '+id},relationships:{},evidenceRefs:['evidence-1']};}
 function requirement(key,id){return {tempKey:key,fields:{OBLIGATION:'Implement '+id,REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:id,APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'Observed satisfied',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC',EXPECTED_EVIDENCE:'Verification evidence',FAILURE_CONDITION:'Requirement absent',SEVERITY:'MAJOR',NOTES:'NONE'},relationships:{},evidenceRefs:['evidence-1']};}
 const p3={...prompts.buildPromptRecord(3,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(p3);
@@ -43,6 +43,11 @@ assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.co
 const generic=requirement('requirement-generic','INTENT-STATEMENT-000001');generic.fields.USER_INPUT_RELATIONSHIP='User Job Input';
 prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[generic,requirement('requirement-2','INTENT-STATEMENT-000002')]})),promptRecord:p4});
 assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='INVALID_INTENT_STATEMENT_REFERENCE'),'Stage 04 accepted a generic user-input label instead of an exact STATEMENT_ID.');
-prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:[requirement('requirement-1','INTENT-STATEMENT-000001'),requirement('requirement-2','INTENT-STATEMENT-000002')]})),promptRecord:p4});
+const completeRequirements=[requirement('requirement-1','INTENT-STATEMENT-000001'),requirement('requirement-2','INTENT-STATEMENT-000002')];
+const manifest=engine.stage04ObligationManifest(p);const obligations=manifest.obligations||manifest.entries||manifest.items||[];
+assert(obligations.length===2,`Fixture expected two Stage 04 obligations, got ${obligations.length}.`);
+const keyForStatement=new Map([['INTENT-STATEMENT-000001','requirement-1'],['INTENT-STATEMENT-000002','requirement-2']]);
+const accounting=obligations.map(item=>{const key=keyForStatement.get(String(item.sourceIdentity||''));assert(key,`Unexpected fixture obligation ${JSON.stringify(item)}.`);return {obligationId:item.obligationId,disposition:'REQUIREMENT',requirementTempKeys:[key],reason:''};});
+prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:completeRequirements},{OBLIGATION_ACCOUNTING:accounting})),promptRecord:p4});
 assert(prepared.validation.valid,`Stage 04 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);
 console.log('verify-one-time-intent-intake: PASS');
