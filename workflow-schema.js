@@ -13,7 +13,7 @@ const PRODUCER=Object.freeze({
 const PROJECT_SCHEMA=core.PROJECT_SCHEMA;
 const WORKFLOW_ID=core.WORKFLOW_ID;
 const STAGE_COUNT=core.STAGE_COUNT;
-const RESPONSE_SCHEMA='closed-loop-stage-response/2';
+const RESPONSE_SCHEMA='closed-loop-stage-response/3';
 const VALUE_TYPES=Object.freeze(['STRING','INTEGER','NUMBER','BOOLEAN','STRING_ARRAY','REFERENCE','REFERENCE_ARRAY','OBJECT','OBJECT_ARRAY']);
 const COLLECTION_POLICIES=Object.freeze({REPLACE_CURRENT_STAGE_SET:'REPLACE_CURRENT_STAGE_SET',APPEND_SCOPED:'APPEND_SCOPED',UPDATE_RESERVED:'UPDATE_RESERVED',APPEND_ONLY:'APPEND_ONLY',APPLICATION_DERIVED:'APPLICATION_DERIVED'});
 const DEFAULT_RESOURCE_LIMITS=Object.freeze({maxRawResponseBytes:1048576,maxJsonDepth:32,maxRecordsPerCollection:250,maxEvidenceRecords:500,maxAttachments:25,maxTextFieldLength:200000});
@@ -215,14 +215,15 @@ const RECORD_OWNERSHIP=Object.freeze({
       "FAILURE_CONDITION",
       "EVIDENCE_TO_PRESERVE",
       "EXECUTABLE_KIND",
-      "EXECUTABLE_SPEC_VERSION",
       "EXECUTABLE_SPEC",
       "EXECUTABLE_INPUT_BINDINGS"
     ],
     "application": [
       "TEST_ID",
       "REQ_ID",
-      "STATUS"
+      "STATUS",
+      "EXECUTABLE_SPEC_VERSION",
+      "EXECUTABLE_SPEC_SHA256"
     ]
   },
   "failureTests": {
