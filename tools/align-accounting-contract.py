@@ -1,0 +1,35 @@
+from pathlib import Path
+
+# Add compatibility views without weakening the canonical exhaustive manifests.
+p=Path('workflow-engine.js')
+s=p.read_text()
+old="return {...identity,units,manifestSha256:hash.sha256Value(identity)};"
+new="return {...identity,units:units.map(unit=>({...unit,unitId:unit.sourceUnitId,label:unit.fieldName==='SUPPLIED_MATERIALS_INVENTORY'&&typeof unit.rawValue==='string'?(()=>{try{const parsed=JSON.parse(unit.rawValue);return Array.isArray(parsed)&&parsed[0]?.exactNameOrReference?String(parsed[0].exactNameOrReference):unit.fieldName;}catch{return unit.fieldName;}})():unit.fieldName)),unitCount:units.length,manifestSha256:hash.sha256Value(identity)};"
+if old not in s: raise SystemExit('intake manifest return anchor missing')
+s=s.replace(old,new,1)
+old="return {...identity,obligations,manifestSha256:hash.sha256Value(identity)};"
+new="return {...identity,obligations,items:obligations,obligationCount:obligations.length,manifestSha256:hash.sha256Value(identity)};"
+if old not in s: raise SystemExit('obligation manifest return anchor missing')
+s=s.replace(old,new,1)
+old="return {complete:errors.length===0&&accounted===total,coverage:total?accounted/total:1,total,accounted,errors,manifest};"
+new="const complete=errors.length===0&&accounted===total;return {complete,closed:complete,coverage:total?accounted/total:1,total,accounted,errors,manifest};"
+if old not in s: raise SystemExit('obligation accounting return anchor missing')
+s=s.replace(old,new,1)
+p.write_text(s)
+
+# Bring the historical accounting regression up to the controlling Stage-3 prerequisite.
+p=Path('verify-intake-obligation-accounting.mjs')
+s=p.read_text()
+anchor="p.projectData.candidateRequirements.push({id:'CANDIDATE-REQ-ACCOUNTING'"
+pos=s.index(anchor)
+end=s.index(";\nconst obligations=engine.obligationManifest(p);",pos)+1
+block=s[pos:end]
+replacement=block+"\np.stages[3].status='COMPLETE';p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE'};"
+s=s[:pos]+replacement+s[end:]
+# The old final assertion expected Stage 4 prompt regeneration immediately after upstream human authority changed.
+# Controlling behavior is fail-closed: changed input invalidates Stage 1 first, so Stage 4 must not generate until Stage 1 and Stage 3 are re-established.
+old="const oldContext=prompt4.contextSignature;p.job.EXACT_USER_OBJECTIVE_VERBATIM+=' Updated.';p.job.CURRENT_INPUT_VERSION='INPUT-v002';engine.recalculate(p);const newPrompt=prompts.buildPromptRecord(4,p);assert(newPrompt.contextSignature!==oldContext,'Changed human authority did not invalidate the Stage 04 context signature.');"
+new="const oldContext=prompt4.contextSignature;p.job.EXACT_USER_OBJECTIVE_VERBATIM+=' Updated.';p.job.CURRENT_INPUT_VERSION='INPUT-v002';engine.recalculate(p);let upstreamBlocked=false;try{prompts.buildPromptRecord(4,p);}catch(error){upstreamBlocked=error.code==='STAGE04_STAGE01_INCOMPLETE'||error.code==='STAGE04_STAGE03_INCOMPLETE';}assert(upstreamBlocked,'Changed human authority did not invalidate and block the old Stage 04 prompt.');assert(prompt4.contextSignature===oldContext,'Historical prompt identity was mutated instead of invalidated.');"
+if old not in s: raise SystemExit('old Stage4 changed-input assertion missing')
+s=s.replace(old,new,1)
+p.write_text(s)
