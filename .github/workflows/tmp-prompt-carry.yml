@@ -10,14 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {ref: fix/controlling-spec3-complete}
-      - name: Patch prompt and prove current Stage 1 and 4 semantics
+      - name: Patch prompt, prove Stage 1 and 4, and remove repair workflow
         run: |
           python3 <<'PY'
           from pathlib import Path
-          p=Path('prompt-engine.js'); s=p.read_text(); anchor='${humanInputBlock(j)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
-          replacement='${humanInputBlock(j)}\n\nPERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN\n${persistedHumanAnswersBlock(state)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
+          p=Path('prompt-engine.js'); s=p.read_text(); anchor='${humanInputBlock(j)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'; replacement='${humanInputBlock(j)}\n\nPERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN\n${persistedHumanAnswersBlock(state)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
           if anchor not in s: raise SystemExit('human input prompt anchor missing')
-          s=s.replace(anchor,replacement,1);p.write_text(s)
+          p.write_text(s.replace(anchor,replacement,1))
           PY
           node --check prompt-engine.js
           node verify-prompt-semantics.mjs
