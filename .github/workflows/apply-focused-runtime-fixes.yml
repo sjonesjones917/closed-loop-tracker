@@ -50,4 +50,4 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-engine.js prompt-engine.js .github/workflows/apply-focused-runtime-fixes.yml
           git commit -m "Fix Stage 03 context and verification routing"
-          git push origin HEAD:main
+          git push -f origin HEAD:refs/heads/automation/focused-runtime-patch-result
