@@ -65,6 +65,24 @@ old_specialist = " if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — 
 new_specialist = " if(!r.prompt.includes('APPLICATION INTAKE MANIFEST')||!r.prompt.includes('Classify every supplied unit exactly once')||!r.prompt.includes('accepted capture is the durable meaning-preserving handoff to every later stage'))throw new Error('Stage 01 generic complete-intake behavior is missing.');\n if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD/.test(r.prompt))throw new Error('Stage 01 prompt contains prohibited subject-specific runtime branches.');"
 if old_specialist not in text: raise SystemExit('Expected obsolete Stage 01 specialist fixture not found.')
 text = text.replace(old_specialist,new_specialist,1)
+old_ownership = """ const requiredOwnership=[
+  [1,'The application already owns JOB_ID'],
+  [10,'the application assigns CANDIDATE_ID and ITERATION_ID'],
+  [18,'The application calculates mandatory requirement coverage'],
+  [20,'the application assigns BASELINE_ID'],
+  [21,'The application assigns PRODUCT_ID and execution identity'],
+  [27,'Do not set a release state'],
+  [28,'The application performs the authoritative immediate pre-release byte comparison'],
+  [29,'The application constructs the complete evidence graph'],
+  [30,'The application maintains append-only defect and regression history']
+ ];
+ for(const [stage,phrase] of requiredOwnership){const r=prompts.buildPromptRecord(stage,baseProject(),{operation:schema.STAGE_CONTRACTS[stage].operations[0]});if(!r.prompt.includes(phrase))throw new Error(`Stage ${stage} is missing application-ownership semantics: ${phrase}`);}
+"""
+new_ownership = """ const ownershipStages=[1,10,18,20,21,27,28,29,30];
+ for(const stage of ownershipStages){const r=prompts.buildPromptRecord(stage,baseProject(),{operation:schema.STAGE_CONTRACTS[stage].operations[0]});if(!r.prompt.includes('Never assign canonical application IDs, versions, timestamps, counts, hashes, statuses, coverage values, release determinations, current stage/state, or other application-owned values.'))throw new Error(`Stage ${stage} is missing the shared application-ownership prohibition.`);}
+"""
+if old_ownership not in text: raise SystemExit('Expected obsolete exact-phrase ownership fixture not found.')
+text = text.replace(old_ownership,new_ownership,1)
 p.write_text(text)
 
 pages = Path('.github/workflows/pages.yml')
