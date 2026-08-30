@@ -37,6 +37,7 @@ jobs:
           write('prompt-engine.js',p);
           let semantic=read('verify-prompt-semantics.mjs');
           semantic=exact(semantic,'/limited intake inspection is Stage 01 job-definition work/i','/inspect them deeply enough to extract every human-supplied fact/i','Stage 01 locality expectation');
+          semantic=exact(semantic,"if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');","if(renamed.bodySha256!==record.bodySha256)throw new Error('Original intent filename leaked into Stage 04 after canonical Stage 01 capture.');",'Stage 04 filename independence expectation');
           write('verify-prompt-semantics.mjs',semantic);
           let html=read('index.html');
           if(!/\?v=[^\"']+/.test(html))throw new Error('No runtime build token found.');
