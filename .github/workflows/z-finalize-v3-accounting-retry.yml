@@ -36,28 +36,17 @@ jobs:
           path.write_text(text)
           PY
       - name: Apply closure and capture output
-        continue-on-error: true
-        run: node finalize-v3-accounting.mjs > stage4-finalizer.log 2>&1
-      - name: Syntax and focused proofs
-        continue-on-error: true
+        run: node finalize-v3-accounting.mjs > stage4-finalizer.log 2>&1 || true
+      - name: Capture focused proofs
         run: |
-          (for file in *.js *.mjs; do node --check "$file"; done) > stage4-syntax.log 2>&1
-          node build-test-project.mjs > stage4-build.log 2>&1
-          node verify.mjs > stage4-architecture.log 2>&1
-          node verify-intake-obligation-accounting.mjs > stage4-accounting.log 2>&1
-      - name: Persist diagnostic logs to implementation branch
-        if: always()
+          (for file in *.js *.mjs; do node --check "$file"; done) > stage4-syntax.log 2>&1 || true
+          node build-test-project.mjs > stage4-build.log 2>&1 || true
+          node verify.mjs > stage4-architecture.log 2>&1 || true
+          node verify-intake-obligation-accounting.mjs > stage4-accounting.log 2>&1 || true
+      - name: Persist exact diagnostic logs only
         run: |
           git config user.name closed-loop-stage4-diagnostic
           git config user.email closed-loop-stage4-diagnostic@users.noreply.github.com
-          git reset --hard HEAD
-          git clean -fd
-          # rerun only to produce logs without preserving patched source
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('stage4-diagnostic-summary.txt')
-          p.write_text('Diagnostic run completed. Inspect GitHub Action job outcome for exact failing proof steps.\n')
-          PY
-          git add stage4-diagnostic-summary.txt
-          git commit -m "Record Stage 01/04 diagnostic run marker" || true
+          git add -f stage4-finalizer.log stage4-syntax.log stage4-build.log stage4-architecture.log stage4-accounting.log
+          git commit -m "Capture exact Stage 01/04 proof failures"
           git push origin HEAD:implementation/closed-loop-v3
