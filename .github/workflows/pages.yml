@@ -1,103 +1,41 @@
-name: Verify and deploy the single reliability app
+name: Apply complete 30-stage prompt audit repair
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches: [implementation/closed-loop-v3]
+    paths: [.github/workflows/pages.yml]
 permissions:
   contents: write
-  pages: write
-  id-token: write
-  statuses: write
-concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  test:
+  repair-and-prove:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax and architecture
+      - name: Apply complete stage prompt/context repair
+        run: |
+          python3 .repair-all-stage-prompts.py
+          git show HEAD^:.github/workflows/pages.yml > /tmp/pages.final.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pages.final.yml'); s=p.read_text()
+          marker='          node verify-single-supply-prompts.mjs\n'
+          if 'node verify-all-stage-prompts.mjs' not in s:
+              s=s.replace(marker, marker+'          node verify-all-stage-prompts.mjs\n', 1)
+              idx=s.find(marker, s.find('Re-prove exact source before upload'))
+              if idx!=-1:
+                  end=idx+len(marker)
+                  s=s[:end]+'          node verify-all-stage-prompts.mjs\n'+s[end:]
+          p.write_text(s)
+          PY
+          mv /tmp/pages.final.yml .github/workflows/pages.yml
+          rm .repair-all-stage-prompts.py
+      - name: Prove syntax, schema, prompts, runtime, ingestion, workflow, and lifecycle
         run: |
           for file in *.js *.mjs; do node --check "$file"; done
-          node build-test-project.mjs
-          node verify.mjs
-          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
-          test ! -f app.js
-          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test "$(find .github/workflows -maxdepth 1 -type f -name '*.yml' | wc -l)" -eq 1
-          ! grep -R "document.write" --include='*.js' --include='*.html' .
-          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
-          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
-      - name: Migration and closed accounting
-        run: |
-          node verify-v3-migration.mjs
-          node verify-intake-obligation-accounting.mjs
-          node verify-single-supply-prompts.mjs
-      - name: Test IR validation, security, and deterministic runtime
-        run: |
-          node verify-v3-contract.mjs
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-      - name: Raw-first ingestion
-        run: node verify-ingestion.mjs
-      - name: Workflow, gates, and full cycle
-        run: |
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-      - name: Prompt semantics and context isolation
-        run: |
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-          node verify-single-supply-prompts.mjs
-      - name: Definition of done and lifecycle
-        run: |
-          node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
-      - name: Local Chromium acceptance
-        run: |
-          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
-          test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          run_browser() {
-            script="$1"
-            for attempt in 1 2 3; do
-              log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
-              cat "$log"
-              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
-              test "$attempt" -lt 3 || return 1
-            done
-          }
-          run_browser verify-browser.mjs
-          run_browser verify-browser-extra.mjs
-
-  deploy:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: test
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    outputs:
-      page_url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Re-prove exact source before upload
-        run: |
           node build-test-project.mjs
           node verify.mjs
           node verify-v3-migration.mjs
@@ -113,83 +51,26 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
           node verify-single-supply-prompts.mjs
+          node verify-all-stage-prompts.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
           node verify-project-lifecycle.mjs
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-      - id: deployment
-        uses: actions/deploy-pages@v4
-
-  verify-live:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: [test, deploy]
-    runs-on: ubuntu-latest
-    env:
-      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Verify exact deployed source identity
-        run: node verify-live.mjs
-      - name: Deployed Chromium acceptance
+      - name: Prove browser behavior at required widths
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
           node verify-browser.mjs
           node verify-browser-extra.mjs
-
-  publish-status:
-    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: [test, deploy, verify-live]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      statuses: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Build machine acceptance artifact from executed proofs
-        env:
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          LIVE_RESULT: ${{ needs.verify-live.result }}
+          kill "$PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only proven final source
         run: |
-          test "$TEST_RESULT" = success
-          test "$DEPLOY_RESULT" = success
-          test "$LIVE_RESULT" = success
-          node verify-ingestion.mjs > /tmp/ingestion.out
-          node verify-definition-of-done.mjs > /tmp/definition.out
-          node verify-v3-definition-of-done.mjs > /tmp/v3.out
-          node verify-project-lifecycle.mjs > /tmp/lifecycle.out
-          node - <<'NODE'
-          const fs=require('fs');
-          const definition=JSON.parse(fs.readFileSync('/tmp/definition.out','utf8'));
-          const v3=JSON.parse(fs.readFileSync('/tmp/v3.out','utf8'));
-          const lines=p=>Object.assign({},...fs.readFileSync(p,'utf8').split(/\r?\n/).map(x=>x.trim()).filter(x=>x.startsWith('{')).map(JSON.parse));
-          const ingestion=lines('/tmp/ingestion.out');
-          const lifecycle=lines('/tmp/lifecycle.out');
-          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',...definition,...v3,projectLifecycleControls:Boolean(lifecycle.projectLifecycleControls),negativeCasesPassed:Number(ingestion.totalNegativeCases||0),stagesCompleted:30,deployedByteIdentity:true,browserWidths:[320,393,'desktop'],liveVerification:true,androidChromeAcceptance:false,realThirtyStageProjectAcceptance:false,fullProductionMaturity:false};
-          const ones=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','stage01IntakeCoverage','stage04ObligationCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','mandatoryEvidenceSufficiencyCoverage','releaseArtifactIdentityCoverage','nativeExecutionCoverage'];
-          for(const k of ones)if(report[k]!==1)throw new Error(`${k} is not 100%.`);
-          const zeros=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
-          for(const k of zeros)if(report[k]!==0)throw new Error(`${k} must be zero.`);
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          NODE
-      - uses: actions/upload-artifact@v4
-        with:
-          name: closed-loop-acceptance-${{ github.sha }}
-          path: closed-loop-acceptance.json
-      - name: Create release tag only after deployed proof
-        run: |
-          TAG="acceptance-${GITHUB_SHA::12}"
-          git config user.name closed-loop-release
-          git config user.email closed-loop-release@users.noreply.github.com
-          git tag -f "$TAG" "$GITHUB_SHA"
-          git push --force origin "refs/tags/$TAG"
+          git config user.name closed-loop-integrator
+          git config user.email closed-loop-integrator@users.noreply.github.com
+          git add app-core.js workflow-schema.js prompt-engine.js index.html verify-all-stage-prompts.mjs .github/workflows/pages.yml
+          test -z "$(git status --porcelain | grep '^?? .*\.repair-' || true)"
+          git commit -m 'Complete all 30 stage prompts and preserve captured project memory'
+          git push origin HEAD:implementation/closed-loop-v3
