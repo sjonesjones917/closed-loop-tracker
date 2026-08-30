@@ -22,8 +22,26 @@ jobs:
         with:
           node-version: '22'
       - name: Materialize capture-once corrections
-        run: python3 tools/materialize_remaining.py
+        id: patch
+        continue-on-error: true
+        run: |
+          set +e
+          python3 tools/materialize_remaining.py > materialize-capture-once.log 2>&1
+          status=$?
+          cat materialize-capture-once.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Commit diagnostic on patch failure
+        if: steps.patch.outputs.status != '0'
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add materialize-capture-once.log
+          git commit -m 'Record capture-once materialization diagnostic'
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
       - name: Validate repaired runtime
+        if: steps.patch.outputs.status == '0'
         run: |
           set -euo pipefail
           node --check workflow-schema.js
@@ -35,6 +53,7 @@ jobs:
           node verify-test-runtime.mjs
           node verify.mjs
       - name: Commit repaired implementation
+        if: steps.patch.outputs.status == '0'
         run: |
           set -euo pipefail
           git config user.name closed-loop-repair
