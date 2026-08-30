@@ -1,6 +1,5 @@
 from pathlib import Path
 
-# Add compatibility views without weakening the canonical exhaustive manifests.
 p=Path('workflow-engine.js')
 s=p.read_text()
 old="return {...identity,units,manifestSha256:hash.sha256Value(identity)};"
@@ -17,11 +16,10 @@ if old not in s: raise SystemExit('obligation accounting return anchor missing')
 s=s.replace(old,new,1)
 p.write_text(s)
 
-# Bring the historical accounting regression up to the controlling prompt-bound lifecycle and Stage-3 prerequisite.
 p=Path('verify-intake-obligation-accounting.mjs')
 s=p.read_text()
-old="const stageOne=prompts.buildPromptRecord(1,p);const env1=prompts.responseContractDescriptor(1,'COMPLETE');"
-new="const stageOne=prompts.buildPromptRecord(1,p);p.projectData.generatedPrompts.push({...stageOne,generatedAt:new Date().toISOString(),invalidatedBy:null});p.stages[1].currentPromptId=stageOne.instructionId;const env1=prompts.responseContractDescriptor(1,'COMPLETE');"
+old="const prompt1=prompts.buildPromptRecord(1,p),envelope=(capture)=>"
+new="const prompt1=prompts.buildPromptRecord(1,p);p.projectData.generatedPrompts.push({...prompt1,generatedAt:new Date().toISOString(),invalidatedBy:null});p.stages[1].currentPromptId=prompt1.instructionId;const envelope=(capture)=>"
 if old not in s: raise SystemExit('Stage1 prompt fixture anchor missing')
 s=s.replace(old,new,1)
 anchor="p.projectData.candidateRequirements.push({id:'CANDIDATE-REQ-ACCOUNTING'"
