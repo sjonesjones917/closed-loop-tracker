@@ -1,0 +1,69 @@
+name: Finalize v3 intake and obligation accounting
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths:
+      - finalize-v3-accounting.mjs
+      - .github/workflows/z-finalize-v3-accounting.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: finalize-v3-accounting
+  cancel-in-progress: false
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: implementation/closed-loop-v3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply controlling Stage 01 and Stage 04 closure
+        run: node finalize-v3-accounting.mjs
+      - name: Syntax
+        run: |
+          for file in *.js *.mjs; do node --check "$file"; done
+      - name: Complete deterministic proof
+        run: |
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-v3-contract.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Local browser proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove one-time repair machinery and commit verified source
+        run: |
+          rm -f finalize-v3-accounting.mjs .github/workflows/z-finalize-v3-accounting.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name closed-loop-accounting-finalizer
+          git config user.email closed-loop-accounting-finalizer@users.noreply.github.com
+          git add -A
+          git commit -m "Close Stage 01 intake and Stage 04 obligation accounting"
+          git push origin HEAD:implementation/closed-loop-v3
