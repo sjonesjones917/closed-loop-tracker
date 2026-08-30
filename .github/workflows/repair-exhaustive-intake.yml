@@ -24,8 +24,7 @@ jobs:
         run: |
           node <<'NODE'
           const fs=require('fs');
-          const file='prompt-engine.js';
-          let s=fs.readFileSync(file,'utf8');
+          let s=fs.readFileSync('prompt-engine.js','utf8');
           const replaceRegexOnce=(re,to,label)=>{
             const matches=[...s.matchAll(new RegExp(re.source,re.flags.includes('g')?re.flags:re.flags+'g'))];
             if(matches.length!==1) throw new Error(`${label}: expected exactly one anchor, found ${matches.length}`);
@@ -42,21 +41,28 @@ jobs:
             'Stage 04 complete-union rule');
           replaceRegexOnce(/EXECUTABLE_KIND = CUSTOM_PIPELINE/,'EXECUTABLE_KIND = TEST_IR','Test IR executable kind');
           replaceRegexOnce(/const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine\/26';/,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';",'prompt engine version');
-          fs.writeFileSync(file,s);
+          fs.writeFileSync('prompt-engine.js',s);
           NODE
       - name: Strengthen permanent regression proof
         run: |
           node <<'NODE'
           const fs=require('fs');
-          const file='verify-one-time-intent-intake.mjs';
-          let s=fs.readFileSync(file,'utf8');
+          let s=fs.readFileSync('verify-one-time-intent-intake.mjs','utf8');
           const anchor="assert(stage1.prompt.includes('one intentStatements record for every atomic statement'),'Stage 01 prompt does not require exhaustive statement capture.');";
           if(!s.includes(anchor)) throw new Error('Stage 01 regression anchor missing');
           s=s.replace(anchor,anchor+"\nassert(stage1.prompt.includes('Stage 01 MUST NOT complete until human authority is exhausted'),'Stage 01 prompt still permits incomplete human-authority intake.');\nassert(!stage1.prompt.includes('Do not block Stage 01 merely because information will be needed by a later research'),'Stage 01 prompt still contains the old weakening rule.');");
           const loop="for(const stage of [3,4]){";
           if(!s.includes(loop)) throw new Error('Stage 3/4 prompt regression anchor missing');
           s=s.replace(loop,"const stage3Exhaustive=prompts.buildPromptRecord(3,p);\nassert(stage3Exhaustive.prompt.includes('Stage 03 MUST NOT complete on a vague claim of saturation'),'Stage 03 prompt does not require exhaustive source research.');\nassert(stage3Exhaustive.prompt.includes('every current Stage 02 source must have current research coverage'),'Stage 03 prompt does not require full current-source coverage.');\nconst stage4Union=prompts.buildPromptRecord(4,p);\nassert(stage4Union.prompt.includes('Stage 01 human-authority intake must be complete and fully accounted'),'Stage 04 prompt does not require closed Stage 01 input.');\nassert(stage4Union.prompt.includes('Stage 03 research must be complete for every current Stage 02 source'),'Stage 04 prompt does not require closed Stage 03 research.');\nassert(stage4Union.prompt.includes('current User Job Input + accepted Stage 01 job definition + every active canonical Stage 01 intent statement'),'Stage 04 prompt does not enumerate the complete upstream union.');\nassert(stage4Union.prompt.includes('do not rediscover, request, reattach, or ask the human to retransmit any already captured project information'),'Stage 04 prompt still permits repeated user input.');\nfor(const required of ['intentStatements','research','candidateRequirements','sources'])assert(schema.STAGE_CONTRACTS[4].readCollections.includes(required),'Stage 04 read contract omits '+required+'.');\nfor(const stage of [3,4]){");
-          fs.writeFileSync(file,s);
+          fs.writeFileSync('verify-one-time-intent-intake.mjs',s);
+
+          let v=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
+          const obsolete="'Do not block Stage 01 merely because information will be needed by a later'";
+          const replacement="'Stage 01 MUST NOT complete until human authority is exhausted'";
+          const count=v.split(obsolete).length-1;
+          if(count!==1)throw new Error(`Obsolete Stage 01 verifier token expected once, found ${count}`);
+          v=v.replace(obsolete,replacement);
+          fs.writeFileSync('verify-prompt-semantics.mjs',v);
           NODE
       - name: Prove no visual changes
         run: |
@@ -66,10 +72,10 @@ jobs:
           node verify-one-time-intent-intake.mjs
           node verify-prompt-semantics.mjs
           node --check prompt-engine.js
-      - name: Commit repaired runtime and regression
+      - name: Commit repaired runtime and regressions
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js verify-one-time-intent-intake.mjs
+          git add prompt-engine.js verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs
           git commit -m "Exhaust Stage 01 and 03 before Stage 04 compilation"
           git push origin HEAD:fix/exhaust-stage1-stage3-stage4
