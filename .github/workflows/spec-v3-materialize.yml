@@ -50,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm spec-v3-followup.mjs spec-v3-followup-fix.mjs
+          git rm -f spec-v3-followup.mjs spec-v3-followup-fix.mjs
           git add -A
           git commit -m "Complete v3 ownership action and runtime boundaries"
           git push origin HEAD:spec-v3-controlling-bundle
