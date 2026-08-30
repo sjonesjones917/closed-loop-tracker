@@ -13,16 +13,16 @@ jobs:
         with: {ref: fix/closed-loop-v3-current-20260830, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply transformer when source is still v2
+      - name: Apply transformer when active schema is still v2
         id: patch
         shell: bash
         run: |
           set +e
-          if grep -q "closed-loop-project/2" workbook.js; then
+          if grep -Fq "const PROJECT_SCHEMA='closed-loop-project/2';" workbook.js; then
             node apply-v3-driver.mjs > v3-apply.log 2>&1
             code=$?
           else
-            echo "Implementation already transformed; skipping one-time transformer." > v3-apply.log
+            echo "Implementation already declares closed-loop-project/3; skipping one-time transformer." > v3-apply.log
             code=0
           fi
           cat v3-apply.log
