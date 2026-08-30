@@ -21,12 +21,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import textwrap
           text=Path('.github/workflows/apply-v3-repair.yml').read_text()
           marker="          python3 - <<'PY'\n"
           start=text.index(marker)+len(marker)
           end=text.index("\n          PY\n",start)
-          Path('/tmp/repair.py').write_text(textwrap.dedent(text[start:end]))
+          lines=text[start:end].splitlines()
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)+'\n'
+          Path('/tmp/repair.py').write_text(script)
           PY
           python3 /tmp/repair.py
       - name: Commit repair
