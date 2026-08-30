@@ -85,11 +85,11 @@ jobs:
               else: raise SystemExit('Stage 01 proactive-intake verifier anchor missing')
           old_environment="  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');"
           if old_environment in s:
-              s=s.replace(old_environment,'',1)
+              s=s.replace(old_environment,'  }',1)
           elif 'CAPABILITY_HONESTY_RULE_MISSING' in s:
               start=s.index("  }else if(!record.prompt.includes('EXTERNAL ACTION / CAPABILITY HONESTY')")
               end=s.index("\n",start)
-              s=s[:start]+s[end+1:]
+              s=s[:start]+'  }'+s[end:]
           marker="function semanticIssues(record){"
           subject_guard="const promptSource=fs.readFileSync('prompt-engine.js','utf8');\nfor(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(promptSource.includes(forbidden))throw new Error('Subject-specific runtime prompt branch remains: '+forbidden);\n"
           if subject_guard not in s:
