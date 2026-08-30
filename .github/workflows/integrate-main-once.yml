@@ -17,15 +17,16 @@ jobs:
         run: |
           git config user.name closed-loop-integrator
           git config user.email closed-loop-integrator@users.noreply.github.com
+          BEFORE=$(git rev-parse HEAD)
           git fetch origin main --force
           set +e
           git merge --no-commit --no-ff origin/main
           set -e
           for f in .github/workflows/pages.yml app-core.js build-test-project.mjs project-store.js prompt-engine.js response-ingestion.js test-runtime.js verify-browser.mjs verify-complete.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify-test-runtime.mjs verify.mjs workflow-engine.js workflow-schema.js; do
-            git checkout --ours -- "$f"
+            git checkout "$BEFORE" -- "$f"
             git add "$f"
           done
-          git checkout --theirs -- index.html
+          git checkout origin/main -- index.html
           git add index.html
           rm -f verify-one-time-intent-intake.mjs .github/workflows/integrate-main-once.yml
           git add -A
