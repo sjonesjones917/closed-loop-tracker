@@ -14,13 +14,12 @@ import fs from 'node:fs';
   fs.writeFileSync(path,text);
 }
 
-{
-  const path='build-test-project.mjs';
+for(const path of ['build-test-project.mjs','verify.mjs']){
   let text=fs.readFileSync(path,'utf8');
-  const oldToken="'Research only the current accepted Stage 02 independent external source set'";
-  const newToken="'Research only the complete current accepted Stage 02 independent external source set'";
-  if(text.includes(oldToken))text=text.replace(oldToken,newToken);
-  else if(!text.includes(newToken))throw new Error('Stage 03 build proof anchor missing.');
+  const oldToken="Research only the current accepted Stage 02 independent external source set";
+  const newToken="Research only the complete current accepted Stage 02 independent external source set";
+  if(text.includes(oldToken))text=text.split(oldToken).join(newToken);
+  else if(!text.includes(newToken))throw new Error(path+' Stage 03 proof anchor missing.');
   fs.writeFileSync(path,text);
 }
 
