@@ -50,6 +50,14 @@ jobs:
               raise SystemExit('expected Stage 04 handoff regression assertion was not found')
           regression.write_text(r.replace(old,new,1))
 
+          runtime_regression=Path('verify-test-runtime.mjs')
+          t=runtime_regression.read_text()
+          old="assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,1);assert.equal(stage4Handoff.withhold[0]?.artifactIdOrCategory,'original Stage 01 intent file');assert.equal(stage4Handoff.expectBack.length,0);assert.equal(stage4Handoff.conversationMaterials.length,0,'Stage 04 must not convert a supplied-material filename into a repeated external-conversation attachment.');assert.equal(stage4Handoff.optionalApplicationCopies.length,0);"
+          new="assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,0,'Stage 04 must not convert prior intent into a synthetic withhold handoff item.');assert.equal(stage4Handoff.expectBack.length,0);assert.equal(stage4Handoff.conversationMaterials.length,0,'Stage 04 must not convert a supplied-material filename into a repeated external-conversation attachment.');assert.equal(stage4Handoff.optionalApplicationCopies.length,0);"
+          if old not in t:
+              raise SystemExit('expected legacy Stage 04 runtime handoff assertion was not found')
+          runtime_regression.write_text(t.replace(old,new,1))
+
           semantics=Path('verify-prompt-semantics.mjs')
           s=semantics.read_text()
           old="if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');"
