@@ -1,0 +1,112 @@
+name: Apply user controlling bundle zero-loss
+
+on:
+  push:
+    branches: [repair/user-bundle-zero-loss-20260830]
+    paths: [.github/workflows/apply-user-bundle-zero-loss.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/user-bundle-zero-loss-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Overlay only controlling-contract implementation files
+        shell: bash
+        run: |
+          git fetch origin repair/controlling-v3-zero-loss:refs/remotes/origin/repair/controlling-v3-zero-loss
+          files=(
+            workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js
+            build-test-project.mjs verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs
+            verify-intake-obligation-accounting.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs
+          )
+          for f in "${files[@]}"; do git show "origin/repair/controlling-v3-zero-loss:$f" > "$f"; done
+      - name: Preserve visual baseline and install exact runtime graph
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),{createHash}=require('node:crypto');
+          const htmlPath='index.html';let html=fs.readFileSync(htmlPath,'utf8');
+          const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];if(!style)throw new Error('Visual baseline style block missing.');
+          if(!style.includes('.prompt{height:clamp(260px,45vh,520px)')||!style.includes('.expandable-prompt{max-height:280px}'))throw new Error('Current main prompt-box visual baseline is not present.');
+          html=html.replace(/; connect-src 'self';(?: worker-src 'self';)? object-src/,"; connect-src 'self'; worker-src 'self'; object-src");
+          const scripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const first=html.indexOf('<script defer src="workbook.js');const lastTag='</script>',lastStart=html.indexOf('<script defer src="app-core.js',first),lastEnd=html.indexOf(lastTag,lastStart)+lastTag.length;
+          if(first<0||lastStart<0||lastEnd<lastTag.length)throw new Error('Cannot locate current runtime script block.');
+          const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+          const manifest=scripts.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');const id=`runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          const block=scripts.map(file=>`<script defer src="${file}?v=${id}"></script>`).join('\n');html=html.slice(0,first)+block+html.slice(lastEnd);
+          if(html.match(/<style>[\s\S]*?<\/style>/)?.[0]!==style)throw new Error('Visual CSS changed while installing runtime graph.');
+          fs.writeFileSync(htmlPath,html);
+          let worker=fs.readFileSync('test-worker.js','utf8');worker=worker.replace(/importScripts\(['"]test-runtime\.js(?:\?v=[^'"]+)?['"]\);/,`importScripts('test-runtime.js?v=${id}');`);fs.writeFileSync('test-worker.js',worker);
+          // Recompute after worker edit is intentionally not part of the direct-script bundle; the worker URL uses the same direct-runtime identity.
+          console.log(JSON.stringify({runtimeBuildIdentity:id,visualCssPreserved:true,scripts}));
+          NODE
+      - name: Align deployment proof with required /3 runtime graph
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');const p='.github/workflows/pages.yml';let s=fs.readFileSync(p,'utf8');
+          s=s.replace(/const expected=\[[^\]]*'workbook\.js'[^\]]*\];/,"const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];");
+          s=s.replace(/projectSchema:'closed-loop-project\/2'/g,"projectSchema:'closed-loop-project/3'").replace(/responseSchema:'closed-loop-stage-response\/2'/g,"responseSchema:'closed-loop-stage-response/3'");
+          fs.writeFileSync(p,s);
+          NODE
+      - name: Add exact user-bundle conformance regression
+        shell: bash
+        run: |
+          cat > verify-user-bundle-conformance.mjs <<'EOF'
+          import fs from 'node:fs';import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,runtime=globalThis.closedLoopTestRuntime,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          const assert=(x,m)=>{if(!x)throw new Error(m)};
+          assert(core.WORKFLOW_ID==='mobile-closed-loop/30'&&core.STAGE_COUNT===30,'workflow identity/stage count mismatch');assert(core.PROJECT_SCHEMA==='closed-loop-project/3','project schema not /3');assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','response schema not /3');assert(core.STAGES[15].title==='CORRECT THE ROOT CAUSE','Stage 16 visible title mismatch');
+          assert(schema.JOB_FIELDS.JOB_TITLE.producer==='HUMAN_DECISION'&&schema.JOB_FIELDS.JOB_OWNER.producer==='HUMAN_DECISION','job title/owner authority mismatch');
+          const requiredOps=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];for(const op of requiredOps)assert(runtime.OPS.includes(op),'missing Test IR op '+op);assert(!fs.readFileSync('workflow-schema.js','utf8').includes('CUSTOM_PIPELINE'),'obsolete CUSTOM_PIPELINE remains');
+          const promptSource=fs.readFileSync('prompt-engine.js','utf8');for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])assert(!promptSource.includes(x),'hard-coded project-subject branch remains: '+x);
+          const p=core.createBlankState('JOB-USER-BUNDLE');engine.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='Build exactly what I supplied.';p.job.SUPPLIED_MATERIALS_INVENTORY='ORIGINAL-INTENT-SENTINEL.txt';p.job.CURRENT_INPUT_VERSION='INPUT-v001';p.job.EXACT_DELIVERABLE_REQUESTED='Captured deliverable';p.job.ASSUMPTIONS='NONE';p.job.UNKNOWN_INFORMATION='NONE';
+          const manifest=engine.intakeCoverageManifest(p);assert(manifest&&Array.isArray(manifest.units),'Stage 01 intake manifest missing');
+          p.job.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:p.job.CURRENT_INPUT_VERSION,manifestSha256:manifest.manifestSha256,units:manifest.units.map(u=>({sourceUnitId:u.sourceUnitId,disposition:'INCORPORATED',reason:'Captured',extractedStatements:[{statementKey:'S-'+u.sourceUnitId,text:u.text||'captured user project statement',statementClass:'REQUIREMENT'}]}))});
+          const obligation=engine.obligationManifest(p);assert(obligation&&Array.isArray(obligation.obligations),'Stage 04 obligation manifest missing');const s4=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt;assert(s4.includes('APPLICATION OBLIGATION MANIFEST'),'Stage 04 prompt lacks application obligation universe');assert(!/attach the original intent|reattach the original intent|resend the original intent/i.test(s4),'Stage 04 asks for original intent again');
+          const html=fs.readFileSync('index.html','utf8');assert(html.includes('.prompt{height:clamp(260px,45vh,520px)')&&html.includes('.expandable-prompt{max-height:280px}'),'prompt box visuals changed');const scripts=[...html.matchAll(/<script defer src="([^"?]+)(?:\?v=([^"]+))?"><\/script>/g)].map(m=>[m[1],m[2]]);const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];assert(JSON.stringify(scripts.map(x=>x[0]))===JSON.stringify(expected),'runtime script order mismatch');assert(new Set(scripts.map(x=>x[1])).size===1,'runtime scripts do not share one build identity');assert(html.includes("worker-src 'self'"),'same-origin worker CSP missing');
+          console.log(JSON.stringify({userBundleCoreConformance:true,visualBaselinePreserved:true,intakeUnits:manifest.units.length,obligations:obligation.obligations.length}));
+          EOF
+      - name: Run /3, zero-loss, security, ingestion, workflow, prompt, and lifecycle proofs
+        shell: bash
+        run: |
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-user-bundle-conformance.mjs; do node --check "$f"; done
+          node verify-user-bundle-conformance.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-one-time-intent-intake.mjs
+      - name: Commit only after all proofs pass
+        shell: bash
+        run: |
+          git config user.name 'closed-loop-user-bundle-repair'
+          git config user.email 'closed-loop-user-bundle-repair@users.noreply.github.com'
+          git rm .github/workflows/apply-user-bundle-zero-loss.yml
+          git add -A
+          git commit -m 'Implement controlling bundle without visual redesign'
+          git push origin HEAD:repair/user-bundle-zero-loss-20260830
