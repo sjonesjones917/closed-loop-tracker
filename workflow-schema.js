@@ -237,13 +237,14 @@ const RECORD_OWNERSHIP=Object.freeze({
       "FAILURE_CONDITION",
       "EVIDENCE_TO_PRESERVE",
       "EXECUTABLE_KIND",
-      "EXECUTABLE_SPEC_VERSION",
       "EXECUTABLE_SPEC",
       "EXECUTABLE_INPUT_BINDINGS"
     ],
     "application": [
       "TEST_ID",
       "REQ_ID",
+      "EXECUTABLE_SPEC_VERSION",
+      "EXECUTABLE_SPEC_SHA256",
       "STATUS"
     ]
   },
@@ -925,7 +926,10 @@ const RECORD_FIELD_TYPE_OVERRIDES=Object.freeze({
   'RELEASE':Object.freeze({MANDATORY_REQUIREMENT_COUNTS:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),AFFIRMATIVE_EVIDENCE_COUNTS:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),VIOLATED_COUNTS:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),UNDETERMINED_COUNTS:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),VALIDATOR_COUNTS:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),FAILED_VALIDATORS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),UNKNOWN_VALIDATORS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),BLOCKING_REQUIREMENTS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),VIOLATIONS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),BLOCKERS:Object.freeze({valueType:'STRING_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null})})
 });
 const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
-  '1':Object.freeze({DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null}),INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['inputId','disposition','statementTempKeys','reason'])})}),
+  '1':Object.freeze({
+    DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null}),
+    INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['inputId','disposition','intentStatementTempKeys','reason'])})
+  }),
   '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})}),
   '4':Object.freeze({OBLIGATION_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['obligationId','disposition','requirementTempKeys','reason'])})})
 });
@@ -994,22 +998,23 @@ const ADDITIONAL_RECORD_FIELD_TYPES=Object.freeze({
     STATUS:Object.freeze({valueType:'STRING',enumValues:[],nullable:false,normalizerKey:null,closedProperties:null})
   }),
   TEST:Object.freeze({
-    EXECUTABLE_KIND:Object.freeze({valueType:VALUE_TYPES.ENUM,enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_SPEC:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
+    EXECUTABLE_KIND:Object.freeze({valueType:'STRING',enumValues:TEST_IR.executableKinds,nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_SPEC:Object.freeze({valueType:'OBJECT',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:'OBJECT',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   }),
   'DETERMINISTIC-RESULT':Object.freeze({
-    APPLICATION_DETERMINATION:Object.freeze({valueType:VALUE_TYPES.ENUM,enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),nullable:true,normalizerKey:null,closedProperties:null}),
-    RUNTIME_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    TEST_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    INPUT_ARTIFACT_IDENTITIES:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    RUNTIME_OBSERVATIONS:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
+    APPLICATION_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['SATISFIED','VIOLATED','UNDETERMINED']),nullable:true,normalizerKey:null,closedProperties:null}),
+    RUNTIME_VERSION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    TEST_SPEC_SHA256:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    INPUT_ARTIFACT_IDENTITIES:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    RUNTIME_OBSERVATIONS:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   }),
   EVIDENCE:Object.freeze({
-    APPLICATION_EVIDENCE_KIND:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    APPLICATION_EVIDENCE_DESCRIPTION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
-    APPLICATION_EVIDENCE_CONTENT:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
+    APPLICATION_EVIDENCE_KIND:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    APPLICATION_EVIDENCE_DESCRIPTION:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),
+    APPLICATION_EVIDENCE_CONTENT:Object.freeze({valueType:'STRING',enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})
   })
 });
 
@@ -1063,8 +1068,8 @@ const RECORD_SCHEMAS=Object.freeze({
     'RESOLUTION_ID','DEFECT_TYPE','AFFECTED_REQ_IDS','GOVERNING_EVIDENCE','RESOLUTION','CHANGED_REQUIREMENT_REFS','RESULTING_REQUIREMENTS_VERSION','AFFECTED_DOWNSTREAM_WORK','STATUS'
   ],required:['DEFECT_TYPE','AFFECTED_REQ_IDS','GOVERNING_EVIDENCE','RESOLUTION','AFFECTED_DOWNSTREAM_WORK','STATUS']}),
   tests:recordSchema({ownership:RECORD_OWNERSHIP.tests,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Verification tests',idField:'TEST_ID',prefix:'TEST',stage:6,fields:[
-    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'
-  ],required:['TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'],relationships:{REQ_ID:'requirements'}}),
+    'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'
+  ],required:['TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','INPUTS','TOOLS','PROCEDURE','EXPECTED_RESULT','FAILURE_CONDITION','EVIDENCE_TO_PRESERVE','STATUS'],relationships:{REQ_ID:'requirements'}}),
   failureTests:recordSchema({ownership:RECORD_OWNERSHIP.failureTests,commitPolicy:COLLECTION_POLICIES.REPLACE_CURRENT_STAGE_SET,title:'Failure and mutation tests',idField:'MUTATION_ID',prefix:'MUTATION',stage:7,fields:[
     'MUTATION_ID','REQ_ID','VIOLATION_MODE','FIXTURE','EXPECTED_REJECTION','ACTUAL_RESULT','EXECUTION_OUTCOME','VALIDATOR_DEFECT_ID','EVIDENCE'
   ],required:['VIOLATION_MODE','FIXTURE','EXPECTED_REJECTION','EVIDENCE'],relationships:{REQ_ID:'requirements',VALIDATOR_DEFECT_ID:'defects'}}),
@@ -1213,11 +1218,60 @@ const SUPPORT_COLLECTIONS=Object.freeze({
 });
 
 
-const READ_COLLECTIONS=Object.freeze({1:[],2:['intentStatements'],3:['intentStatements','sources','sourceConflicts'],4:['intentStatements','research','candidateRequirements','sources','sourceConflicts'],5:['intentStatements','sources','sourceConflicts','research','candidateRequirements','requirements'],6:['requirements','requirementResolutions','sources','research'],7:['requirements','tests'],8:['requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts'],9:['instructions','instructionTraces','requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts'],10:['instructions','preflightRecords','tests','failureTests','artifacts'],11:['candidateFreezes','iterations','runs','freshContexts'],12:['runs','requirements','tests','freshContexts'],13:['verification','runs','requirements','tests'],14:['intentStatements','sources','sourceConflicts','research','candidateRequirements','requirements','requirementResolutions','tests','failureTests','instructions','instructionTraces','preflightRecords','candidateFreezes','iterations','runs','verification','comparisons','defects','products','deterministicResults','meaningResults','adversarialResults','representationInspections','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','comparisons','products','deterministicResults','meaningResults','adversarialResults','representationInspections','defects','rootCauses','regressions','regressionExecutions','artifacts','evidenceRecords'],16:['intentStatements','sources','sourceConflicts','research','candidateRequirements','requirements','requirementResolutions','tests','failureTests','instructions','instructionTraces','preflightRecords','candidateFreezes','iterations','runs','verification','comparisons','products','deterministicResults','meaningResults','adversarialResults','representationInspections','defects','rootCauses','regressions','regressionExecutions','changes','artifacts','evidenceRecords'],17:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions'],18:['requirements','tests','iterations','runs','verification','comparisons','defects','rootCauses','regressions','regressionExecutions','changes','blockers'],19:['convergenceRecords','candidateFreezes','tests','regressions','regressionExecutions'],20:['confirmationRecords','candidateFreezes','iterations','artifacts'],21:['baselines','freshContexts','instructions','artifacts'],22:['products','tests','artifacts'],23:['products','requirements','tests','sources','research','evidenceRecords'],24:['products','requirements','tests','regressions','regressionExecutions','sources','sourceConflicts','research','evidenceRecords','artifacts'],25:['products','artifacts'],26:['requirements','tests','instructions','instructionTraces','iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','confirmationRecords','products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections','artifacts','evidenceRecords','blockers'],27:['products','baselines','convergenceRecords','confirmationRecords','requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressions','regressionExecutions','evidenceRecords'],28:['releaseRecords','artifactIdentities','artifacts'],29:['sources','requirements','instructions','instructionTraces','runs','products','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','baselines','releaseRecords','artifactIdentities','evidenceRecords','evidenceChains','defects','blockers'],30:['requirements','defects','rootCauses','regressions','regressionExecutions','changes','baselines','evidenceRecords']});
+const READ_COLLECTIONS=Object.freeze({
+1:[],
+2:['intentStatements'],
+3:['intentStatements','sources','sourceConflicts'],
+4:['intentStatements','research','candidateRequirements','sources','sourceConflicts','evidenceRecords'],
+5:['requirements','intentStatements','research','candidateRequirements','sources','sourceConflicts','evidenceRecords'],
+6:['requirements','requirementResolutions','sources','evidenceRecords'],
+7:['requirements','tests','requirementResolutions','research','sources','evidenceRecords','artifacts'],
+8:['requirements','tests','failureTests','requirementResolutions','sources','evidenceRecords','artifacts'],
+9:['instructions','instructionTraces','requirements','tests','failureTests','requirementResolutions','sources','evidenceRecords'],
+10:['instructions','instructionTraces','preflightRecords','requirements','tests','failureTests','artifacts'],
+11:['candidateFreezes','iterations','runs','freshContexts','instructions','artifacts'],
+12:['runs','requirements','tests','freshContexts','sources','evidenceRecords','artifacts'],
+13:['verification','runs','requirements','tests','evidenceRecords'],
+14:['defects','comparisons','verification','runs','requirements','tests','failureTests','instructions','instructionTraces','requirementResolutions','research','sources','candidateFreezes','artifacts','evidenceRecords'],
+15:['defects','rootCauses','requirements','tests','failureTests','artifacts','evidenceRecords'],
+16:['defects','rootCauses','regressions','regressionExecutions','requirements','tests','failureTests','instructions','instructionTraces','requirementResolutions','research','sources','artifacts','evidenceRecords'],
+17:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions','instructions','requirements','artifacts','evidenceRecords'],
+18:['iterations','runs','verification','comparisons','defects','requirements','tests','regressions','regressionExecutions','blockers','evidenceRecords'],
+19:['convergenceRecords','candidateFreezes','iterations','instructions','requirements','tests','regressions','regressionExecutions','artifacts','evidenceRecords'],
+20:['confirmationRecords','candidateFreezes','iterations','artifacts','regressions','regressionExecutions'],
+21:['baselines','freshContexts','instructions','requirements','artifacts'],
+22:['products','requirements','tests','artifacts','evidenceRecords'],
+23:['products','requirements','tests','sources','artifacts','evidenceRecords'],
+24:['products','requirements','tests','sources','regressions','regressionExecutions','defects','artifacts','evidenceRecords'],
+25:['products','baselines','requirements','tests','artifacts','defects','evidenceRecords'],
+26:['products','baselines','requirements','instructions','instructionTraces','runs','verification','comparisons','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','defects','blockers','evidenceRecords'],
+27:['products','baselines','requirements','tests','instructionTraces','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressionExecutions','evidenceRecords'],
+28:['releaseRecords','products','baselines','artifactIdentities','artifacts'],
+29:['sources','requirements','instructions','instructionTraces','runs','products','baselines','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','regressionExecutions','defects','blockers','releaseRecords','artifactIdentities','artifacts','evidenceRecords'],
+30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines','requirements','tests','iterations','products','artifacts','evidenceRecords']
+});
 const APPLICATION_COLLECTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['blockers','freshContexts','artifacts','releaseRecords','artifactIdentities','evidenceChains'])])));
 const HUMAN_ACTIONS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['ANSWER_HUMAN_INPUT','REJECT_RESPONSE','REQUEST_CORRECTION'])])));
 const SCOPE_REQUIREMENTS=Object.freeze(Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>{const s=i+1,keys=['projectRevision','inputVersion'];if(s>=3)keys.push('sourceSetVersion');if(s>=5)keys.push('requirementsVersion');if(s>=7)keys.push('testSuiteVersion');if(s>=9)keys.push('instructionVersion');if(s>=10&&s<=20)keys.push('iterationId','candidateId');if(s===11)keys.push('runId','contextId');if(s>=20)keys.push('baselineId');if(s>=21)keys.push('productId');return [s,Object.freeze([...new Set(keys)])];})));
-const OPERATION_CONTRACT_OVERRIDES=Object.freeze({17:Object.freeze({FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','instructions','preflightRecords','requirements','tests','failureTests','regressions','regressionExecutions','artifacts'],agentWritableCollections:[],allowedStageData:['NEW_FROZEN_VERSIONS','OLD_CONVERSATIONS_CONTINUED']}),EXECUTE_RUN:Object.freeze({readCollections:['candidateFreezes','iterations','runs','freshContexts'],agentWritableCollections:['runs'],allowedStageData:[]}),VERIFY:Object.freeze({readCollections:['runs','requirements','tests','freshContexts'],agentWritableCollections:['verification'],allowedStageData:[]}),COMPARE:Object.freeze({readCollections:['verification','runs','requirements','tests'],agentWritableCollections:['comparisons'],allowedStageData:[]}),ROOT_CAUSE:Object.freeze({readCollections:['intentStatements','sources','sourceConflicts','research','candidateRequirements','requirements','requirementResolutions','tests','failureTests','instructions','instructionTraces','preflightRecords','candidateFreezes','iterations','runs','verification','comparisons','defects','products','deterministicResults','meaningResults','adversarialResults','representationInspections','artifacts','evidenceRecords'],agentWritableCollections:['defects','rootCauses'],allowedStageData:['ROOT_CAUSE_COMPLETED']}),REGRESSION:Object.freeze({readCollections:['requirements','tests','runs','verification','comparisons','products','deterministicResults','meaningResults','adversarialResults','representationInspections','defects','rootCauses','regressions','regressionExecutions','artifacts','evidenceRecords'],agentWritableCollections:['regressions','regressionExecutions'],allowedStageData:[]}),CORRECT:Object.freeze({readCollections:['intentStatements','sources','sourceConflicts','research','candidateRequirements','requirements','requirementResolutions','tests','failureTests','instructions','instructionTraces','preflightRecords','candidateFreezes','iterations','runs','verification','comparisons','products','deterministicResults','meaningResults','adversarialResults','representationInspections','defects','rootCauses','regressions','regressionExecutions','changes','artifacts','evidenceRecords'],agentWritableCollections:['changes'],allowedStageData:['CORRECTIONS_COMPLETED']})}),19:Object.freeze({CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','requirements','tests','regressions','regressionExecutions','artifacts'],agentWritableCollections:[],allowedStageData:[]}),EXECUTE_RUN:Object.freeze({readCollections:['candidateFreezes','iterations','runs','freshContexts'],agentWritableCollections:['runs'],allowedStageData:[]}),VERIFY:Object.freeze({readCollections:['runs','requirements','tests','freshContexts'],agentWritableCollections:['verification'],allowedStageData:[]}),COMPARE:Object.freeze({readCollections:['verification','runs','requirements','tests'],agentWritableCollections:['comparisons'],allowedStageData:[]}),REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','tests','requirements','artifacts','evidenceRecords','defects','rootCauses'],agentWritableCollections:['regressionExecutions'],allowedStageData:[]}),CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','regressionExecutions','candidateFreezes','requirements','tests','regressions','defects','blockers'],agentWritableCollections:['confirmationRecords'],allowedStageData:[]})})});
+const OPERATION_CONTRACT_OVERRIDES=Object.freeze({
+17:Object.freeze({
+  FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','instructions','requirements','tests','regressions','regressionExecutions','artifacts','evidenceRecords'],agentWritableCollections:[],allowedStageData:[]}),
+  EXECUTE_RUN:Object.freeze({readCollections:['candidateFreezes','iterations','runs','freshContexts','instructions','artifacts'],agentWritableCollections:['runs'],allowedStageData:[]}),
+  VERIFY:Object.freeze({readCollections:['runs','requirements','tests','freshContexts','sources','artifacts','evidenceRecords'],agentWritableCollections:['verification'],allowedStageData:[]}),
+  COMPARE:Object.freeze({readCollections:['verification','runs','requirements','tests','evidenceRecords'],agentWritableCollections:['comparisons'],allowedStageData:[]}),
+  ROOT_CAUSE:Object.freeze({readCollections:['defects','comparisons','verification','runs','requirements','tests','failureTests','instructions','instructionTraces','requirementResolutions','research','sources','candidateFreezes','artifacts','evidenceRecords'],agentWritableCollections:['defects','rootCauses'],allowedStageData:[]}),
+  REGRESSION:Object.freeze({readCollections:['defects','rootCauses','regressions','regressionExecutions','requirements','tests','failureTests','artifacts','evidenceRecords'],agentWritableCollections:['regressions','regressionExecutions'],allowedStageData:[]}),
+  CORRECT:Object.freeze({readCollections:['defects','rootCauses','regressions','regressionExecutions','changes','requirements','tests','failureTests','instructions','instructionTraces','requirementResolutions','research','sources','artifacts','evidenceRecords'],agentWritableCollections:['changes'],allowedStageData:[]})
+}),
+19:Object.freeze({
+  CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','instructions','requirements','tests','regressions','artifacts','evidenceRecords'],agentWritableCollections:[],allowedStageData:[]}),
+  EXECUTE_RUN:Object.freeze({readCollections:['candidateFreezes','iterations','runs','freshContexts','instructions','artifacts'],agentWritableCollections:['runs'],allowedStageData:[]}),
+  VERIFY:Object.freeze({readCollections:['runs','requirements','tests','freshContexts','sources','artifacts','evidenceRecords'],agentWritableCollections:['verification'],allowedStageData:[]}),
+  COMPARE:Object.freeze({readCollections:['verification','runs','requirements','tests','evidenceRecords'],agentWritableCollections:['comparisons'],allowedStageData:[]}),
+  REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','requirements','tests','artifacts','evidenceRecords'],agentWritableCollections:['regressionExecutions'],allowedStageData:[]}),
+  CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','regressionExecutions','candidateFreezes','requirements','tests','defects','artifacts','evidenceRecords'],agentWritableCollections:['confirmationRecords'],allowedStageData:[]})
+})
+});
 function operationContract(stage,operation){const operations=STAGE_OPERATIONS[stage]||['COMPLETE'];if(!operations.includes(operation))return null;const override=OPERATION_CONTRACT_OVERRIDES[stage]?.[operation]||{};let scopeRequirements=override.scopeRequirements||SCOPE_REQUIREMENTS[stage]||[];if((stage===17||stage===19)&&!['EXECUTE_RUN','VERIFY'].includes(operation))scopeRequirements=scopeRequirements.filter(key=>key!=='runId'&&key!=='contextId');return Object.freeze({operation,readCollections:Object.freeze(override.readCollections||READ_COLLECTIONS[stage]||[]),agentWritableCollections:Object.freeze(override.agentWritableCollections||STAGE_COLLECTIONS[stage]||[]),allowedStageData:Object.freeze(override.allowedStageData||STAGE_CONTRACTS[stage]?.allowedStageData||[]),applicationCollections:Object.freeze(APPLICATION_COLLECTIONS[stage]||[]),humanActions:Object.freeze(HUMAN_ACTIONS[stage]||[]),scopeRequirements:Object.freeze(scopeRequirements)});}
 
 const HUMAN_INTAKE_FIELDS=Object.freeze([
