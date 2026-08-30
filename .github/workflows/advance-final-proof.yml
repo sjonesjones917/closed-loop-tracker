@@ -38,6 +38,30 @@ jobs:
               if old_phrase in text:
                   test.write_text(text.replace(old_phrase,new_phrase))
 
+          # The controlling specification expressly prohibits project-subject branches in prompt-engine.js.
+          # Remove obsolete proof assertions that demanded patent/software/AEC/mechanical prompt catalogues.
+          p=Path('verify-prompt-semantics.mjs'); t=p.read_text()
+          obsolete=[
+              "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
+              "  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');\n",
+              "  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');\n",
+              "  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');\n",
+              "    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');\n",
+              "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');\n",
+              "    if(!record.prompt.includes('do not require the human to know those formats in advance')||!record.prompt.includes('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose')||!record.prompt.includes('Only propose an implementation-ready'))issues.push('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING');\n"
+          ]
+          for s in obsolete:
+              t=t.replace(s,'')
+          anchor="  if(record.promptEngineVersion!==prompts.version)issues.push('PROMPT_ENGINE_VERSION_MISSING');\n"
+          replacement=anchor+"  for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(record.prompt.includes(forbidden))issues.push(`PROHIBITED_DOMAIN_BRANCH_${forbidden}`);\n"
+          if anchor in t and 'PROHIBITED_DOMAIN_BRANCH_' not in t:
+              t=t.replace(anchor,replacement,1)
+          stage1_anchor="  if(record.stage===1){\n"
+          stage1_checks="    if(!record.prompt.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE')||!record.prompt.includes('account for EVERY INPUT UNIT ID')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE'))issues.push('STAGE01_EXHAUSTIVE_SUBJECT_NEUTRAL_INTAKE_MISSING');\n    if(!record.prompt.includes('Do not perform source research')||!record.prompt.includes('requirement atomization')||!record.prompt.includes('test design'))issues.push('STAGE01_LATER_WORK_BOUNDARY_MISSING');\n"
+          if stage1_anchor in t and 'STAGE01_EXHAUSTIVE_SUBJECT_NEUTRAL_INTAKE_MISSING' not in t:
+              t=t.replace(stage1_anchor,stage1_anchor+stage1_checks,1)
+          p.write_text(t)
+
           p=Path('workflow-schema.js'); t=p.read_text()
           t=t.replace("if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);","if(get('EXECUTABLE_SPEC')?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);",1)
           old="EXECUTABLE_INPUT_BINDINGS:Object.freeze({valueType:VALUE_TYPES.OBJECT,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null})\n  }),"
@@ -118,6 +142,9 @@ jobs:
           for x in ['Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE','account for EVERY INPUT UNIT ID','Exhaustively research every current accepted Stage 02 independent external source','Do not mark Stage 03 complete until all current sources have coverage','Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST','NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize','If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT']:
               if x not in p:
                   raise SystemExit('MISSING PROMPT INVARIANT: '+x)
+          for forbidden in ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE']:
+              if forbidden in p:
+                  raise SystemExit('PROHIBITED DOMAIN BRANCH: '+forbidden)
           if "function artifactControlMarkup(n,locked){if(n===4)return '';" not in a:
               raise SystemExit('STAGE 4 UPLOAD CONTROL REMAINS')
           PY
@@ -129,7 +156,7 @@ jobs:
           git add index.html workflow-schema.js response-ingestion.js test-runtime.js *.mjs
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m 'Persist exhaustive Stage 1-4, Test IR authority, and runtime identity corrections'
+            git commit -m 'Persist subject-neutral prompt proof and closed-accounting corrections'
             git push origin HEAD:fix/final-zero-loss-v3-20260830
           fi
       - name: Run deterministic suite
