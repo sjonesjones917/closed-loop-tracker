@@ -115,3 +115,9 @@ zero_new="const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutatio
 text=text.replace(zero_old,zero_new)
 
 p.write_text(text)
+
+# Prior prompt-fixture composition can leave whitespace-only lines. Normalize only
+# trailing whitespace after every prompt verifier patch so git diff --check remains a hard gate.
+prompt_tests=Path('verify-prompt-semantics.mjs')
+prompt_text=prompt_tests.read_text()
+prompt_tests.write_text('\n'.join(line.rstrip() for line in prompt_text.splitlines())+'\n')
