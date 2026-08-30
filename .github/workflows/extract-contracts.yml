@@ -1,0 +1,21 @@
+name: Extract stage context contracts
+on:
+  push:
+    branches: [inspect/prompt-stages-21-30-20260830]
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: inspect/prompt-stages-21-30-20260830
+      - run: |
+          node .github/repair/extract-contracts.js
+          rm .github/repair/extract-contracts.js .github/workflows/extract-contracts.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Extract stage context contracts' || exit 0
+          git push
