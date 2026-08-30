@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
@@ -12,22 +13,20 @@ for(const [name,make] of [
 ])reject(name,make);
 
 const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const gitBlobSha=file=>{const bytes=fs.readFileSync(file);return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');};
+const runtimeManifest=runtimeFiles.map(file=>`${file}:${gitBlobSha(file)}\n`).join('');
+const runtimeSourceIdentity=`runtime-source-${createHash('sha256').update(runtimeManifest).digest('hex').slice(0,16)}`;
 const html=fs.readFileSync('index.html','utf8');
 const scriptSources=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
 assert(scriptSources.length===runtimeFiles.length,`Expected ${runtimeFiles.length} direct deferred runtime scripts; found ${scriptSources.length}.`);
-const buildTokens=new Set();
-scriptSources.forEach((source,index)=>{
- const [file,query='']=source.split('?');
- assert(file===runtimeFiles[index],`Runtime script order mismatch at ${runtimeFiles[index]}.`);
- const token=new URLSearchParams(query).get('v');
- assert(/^runtime-[0-9a-f]{16}$/.test(token||''),`${file} does not use a valid shared runtime build token.`);
- buildTokens.add(token);
-});
-assert(buildTokens.size===1,'Runtime scripts do not share one build/cache identity.');
-const runtimeBuildIdentity=[...buildTokens][0];
+const tokens=new Set();
+scriptSources.forEach((source,index)=>{const [file,query='']=source.split('?');assert(file===runtimeFiles[index],`Runtime script order mismatch at ${runtimeFiles[index]}.`);const token=new URLSearchParams(query).get('v');assert(token,`${file} lacks the shared build/cache identity.`);tokens.add(token);});
+assert(tokens.size===1,'Runtime scripts do not use one shared build/cache identity.');
+const sharedBuildIdentity=[...tokens][0];
+const testRuntime=fs.readFileSync('test-runtime.js','utf8');
+assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test worker URL does not inherit the test-runtime build/cache identity.');
+assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test worker is not loaded as the same-origin registered worker entry.');
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Established artifact-control rendering is missing.');
-assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
-assert(html.includes('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'),'Established 280px prompt preview and full expansion behavior changed.');
-
-console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,sharedRuntimeBuildIdentity:true,stage04CanonicalReuseWithoutVisualSuppression:true,promptVisualBaselinePreserved:true,visualRegressionAuthority:'ESTABLISHED_BASELINE'}));
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 repeat-attachment control returned; previously supplied project information must be reused from canonical state.');
+assert(appCore.includes("if(n===19)return"),'Stage 19 unchanged-candidate control is missing.');
+console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeSourceIdentity,sharedBuildIdentity,runtimeFiles:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));

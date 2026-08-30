@@ -12,7 +12,7 @@ for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error
 if(fs.existsSync('.github/workflows'))for(const file of fs.readdirSync('.github/workflows'))if(/repair/i.test(file))throw new Error(`Temporary repair workflow remains: ${file}`);
 
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-if(project.schema!=='human-project/30')throw new Error(`Unexpected retained source project schema ${project.schema}`);
+if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
 if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Authorized retained project identity is wrong.');
 if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Retained project must contain exactly 30 stage records.');
 if(project.stageRecords?.['1']?.status!=='COMPLETE'||project.currentStage!==2||project.currentState!=='READY')throw new Error('Retained project must preserve completed Stage 01 and current Stage 02 READY state.');
@@ -29,13 +29,13 @@ const buildTokens=new Set();
 orderedScripts.forEach((file,index)=>{const matches=scriptTags.filter(src=>src.split('?')[0]===file);if(matches.length!==1)throw new Error(`${file} must occur exactly once in index.html.`);if(scriptTags[index].split('?')[0]!==file)throw new Error(`Runtime script order is wrong at ${file}.`);const token=new URLSearchParams(scriptTags[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} is missing the shared build token.`);buildTokens.add(token);});
 if(buildTokens.size!==1)throw new Error('Runtime scripts do not use one shared build token.');
 if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('Dynamic loader app.js/document.write remains.');
-for(const retiredToken of retired)if(html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
+for(const retiredToken of ['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'])if(html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
 for(const token of ['closed-loop-stage-response/3','PRODUCER','STAGE_CONTRACTS','sourceClassificationIssues','HUMAN_INTAKE_FIELDS'])if(!schema.includes(token))throw new Error(`Ownership/response schema control missing: ${token}`);
 for(const token of ['strictParse','validateEnvelope','PENDING_OPERATOR_REVIEW','ACCEPTED_DATA_CHANGE','extractionManifests','answerHumanInput'])if(!ingestion.includes(token))throw new Error(`Transactional ingestion control missing: ${token}`);
-for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources','Research the current accepted Stage 02 independent external source set and the canonical Stage 01 intentStatements ledger'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
+for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources','Research only the current accepted Stage 02 independent external source set'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
 for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);
 if(/MutationObserver/.test(html+app+prompts+schema+ingestion))throw new Error('Patch-style MutationObserver behavior remains in the active application.');
-const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-engine.js','utf8')+fs.readFileSync('project-store.js','utf8')+fs.readFileSync('workbook.js','utf8');
+const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-engine.js','utf8')+fs.readFileSync('project-store.js','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('test-runtime.js','utf8')+fs.readFileSync('test-worker.js','utf8');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(activeSource+JSON.stringify(project)))throw new Error('Unauthorized product interpretation remains active.');
 if(/human-project\/31|31 operations|Stage 31|Operation 31/i.test(activeSource))throw new Error('A prohibited Stage/Operation 31 remains.');
 
