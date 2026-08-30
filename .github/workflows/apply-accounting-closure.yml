@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - name: Correct accounting repair metadata
+      - name: Correct accounting repair metadata and proof contract
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -20,6 +20,15 @@ jobs:
           s=s.replace("  'OBLIGATION-DISPOSITION':Object.freeze({\n    OBLIGATION_ID:","  'OBLIGATION-DISPOSITION':Object.freeze({\n    DISPOSITION_ID:Object.freeze({valueType:'STRING',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    OBLIGATION_ID:",1)
           for token in ['STRING_ARRAY','STRING']:
               s=s.replace(f'VALUE_TYPES.{token}',repr(token))
+          p.write_text(s)
+
+          p=Path('verify.mjs'); s=p.read_text()
+          s=s.replace("'index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js'","'index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")
+          s=s.replace("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']")
+          s=s.replace("orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']","orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']")
+          s=s.replace("'Revise the Responsible Layer'","'CORRECT THE ROOT CAUSE'")
+          s=s.replace("'closed-loop-project/2'","'closed-loop-project/3'").replace("'closed-loop-stage-response/2'","'closed-loop-stage-response/3'")
+          s=s.replace("for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);","for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file)&&file!=='.repair-accounting-closure.py')throw new Error(`Unexpected repair scaffolding remains: ${file}`);")
           p.write_text(s)
           PY
       - name: Apply accounting repair
