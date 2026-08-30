@@ -39,4 +39,4 @@ jobs:
         run: node verify-complete.mjs
       - name: Acceptance marker
         run: echo 'V3 subject-neutral zero-loss acceptance sequence completed.'
-# acceptance trigger 2026-08-30 current branch rerun 8 direct-user-input-union
+# acceptance trigger 2026-08-30 restored-core-verifier
