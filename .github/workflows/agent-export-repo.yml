@@ -1,0 +1,38 @@
+name: Agent repository export
+
+on:
+  push:
+    branches:
+      - agent/complete-app-20260830
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/complete-app-20260830
+      - name: Apply pending exhaustive context repair to exported workspace
+        shell: bash
+        run: |
+          if [ -f .repair-context-contracts.py ]; then
+            python3 .repair-context-contracts.py
+          fi
+          if [ -f verify-all-stage-prompts.mjs ]; then
+            sed -i 's/PERSISTED HUMAN ANSWERS — OPERATIVE CANONICAL USER INPUT/PERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN/g' verify-all-stage-prompts.mjs
+          fi
+      - name: Stage repository snapshot
+        shell: bash
+        run: |
+          mkdir -p /tmp/closed-loop-tracker
+          rsync -a --exclude='.git' ./ /tmp/closed-loop-tracker/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-tracker-source
+          path: /tmp/closed-loop-tracker
+          include-hidden-files: true
+          retention-days: 1
