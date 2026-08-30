@@ -101,7 +101,7 @@ function nextVersion(current,prefix){
   return `${prefix}-v${String(number).padStart(3,'0')}`;
 }
 const VERSION_BY_STAGE=Object.freeze({
-  1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
+  2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
   4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });
@@ -773,8 +773,10 @@ function obligationManifest(project){
     const clean=String(text||'').trim();if(!clean)return;
     const obligationId=accountingId('OBLIGATION',{jobId:job.JOB_ID,inputVersion,sourceSetVersion,origin,provenance,text:clean});if(seen.has(obligationId))return;seen.add(obligationId);items.push({obligationId,text:clean,origin,provenance:clone(provenance),sourceIdentity});
   };
-  const obligationClasses=new Set(['FACT_AFFECTING_REQUIREMENTS','REQUIREMENT','CONSTRAINT','DECISION','PROHIBITION','REQUESTED_OUTPUT','ACCEPTANCE_CONDITION','UNRESOLVED_HUMAN_ONLY']);
-  for(const statement of intake.capturedStatements||[]){if(!obligationClasses.has(statement.statementClass)||statement.disposition==='INAPPLICABLE'||statement.disposition==='RETAINED_CONTEXT')continue;add(statement.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{statementId:statement.statementId,sourceUnitId:statement.sourceUnitId,statementKey:statement.statementKey,inputVersion,status:statement.status||null});}
+  for(const statement of intake.capturedStatements||[]){
+    if(statement.disposition==='INAPPLICABLE')continue;
+    add(statement.text,'STAGE01_CAPTURED_HUMAN_AUTHORITY',{statementId:statement.statementId,sourceUnitId:statement.sourceUnitId,statementKey:statement.statementKey,statementClass:statement.statementClass,stage01Disposition:statement.disposition,inputVersion,status:statement.status||null});
+  }
   for(const text of obligationFragments(project.stages?.[1]?.agentData?.EXACT_DELIVERABLE_REQUESTED||job.EXACT_DELIVERABLE_REQUESTED))add(text,'STAGE01_JOB_DEFINITION',{field:'EXACT_DELIVERABLE_REQUESTED',inputVersion});
   for(const text of obligationFragments(project.stages?.[1]?.agentData?.UNKNOWN_INFORMATION||job.UNKNOWN_INFORMATION))add(text,'STAGE01_UNRESOLVED_HUMAN_AUTHORITY',{field:'UNKNOWN_INFORMATION',inputVersion});
   for(const candidate of recordsForCurrentScope(project,'candidateRequirements')){const text=String(recordValue(candidate,'CANDIDATE_OBLIGATION')||'').trim();if(!text)continue;const candidateRequirementId=recordId(candidate,'candidateRequirements'),sourceId=String(recordValue(candidate,'SOURCE_ID')||candidate.relationships?.SOURCE_ID||'').trim()||null;add(text,'STAGE03_CANDIDATE_REQUIREMENT',{candidateRequirementId,recordSha256:candidate.recordSha256||candidate.sha256||null,sourceId,sourceSetVersion},sourceId);}
