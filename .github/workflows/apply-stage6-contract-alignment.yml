@@ -1,0 +1,60 @@
+name: Apply Stage 6 contract alignment
+on:
+  push:
+    branches:
+      - fix/stage6-contract-alignment-20260830
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage6-contract-alignment-20260830
+          fetch-depth: 0
+      - name: Align Test IR types and Stage 6 artifact readiness
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js')
+          s=p.read_text()
+          for old,new in [
+              ('valueType:VALUE_TYPES.ENUM',"valueType:'STRING'"),
+              ('valueType:VALUE_TYPES.STRING',"valueType:'STRING'"),
+              ('valueType:VALUE_TYPES.OBJECT',"valueType:'OBJECT'"),
+          ]:
+              s=s.replace(old,new)
+          p.write_text(s)
+
+          p=Path('response-ingestion.js')
+          s=p.read_text()
+          start="    if(collection==='tests'&&String(record?.fields?.ARTIFACT_REQUIREMENTS||'').trim().toUpperCase()!=='NONE'){"
+          end="    if(object(record?.relationships))for(const [name,reference] of Object.entries(record.relationships)){"
+          a=s.index(start)
+          b=s.index(end,a)
+          replacement=(
+              "    // Stage 06 defines verification requirements before candidate/product bytes necessarily exist.\n"
+              "    // Artifact availability is execution readiness owned by testExecutionPlan()/workflow gates, not test-definition ingestion.\n"
+              "    // Explicit artifactId bindings are still validated above; CURRENT_PRODUCT/CURRENT_SCOPE bindings remain declarative until execution.\n"
+          )
+          s=s[:a]+replacement+s[b:]
+          p.write_text(s)
+
+          for name in ['index.html','app-core.js']:
+              p=Path(name)
+              s=p.read_text()
+              if 'runtime-20260830-live-operator-52' not in s:
+                  raise SystemExit(f'expected build identity missing from {name}')
+              p.write_text(s.replace('runtime-20260830-live-operator-52','runtime-20260830-live-operator-53'))
+          PY
+      - name: Remove one-time repair workflow and commit
+        shell: bash
+        run: |
+          rm .github/workflows/apply-stage6-contract-alignment.yml
+          git config user.name sjonesjones917
+          git config user.email sjones.jones917@gmail.com
+          git add workflow-schema.js response-ingestion.js index.html app-core.js .github/workflows/apply-stage6-contract-alignment.yml
+          git commit -m "Align Stage 6 Test IR and future artifact contracts"
+          git push origin HEAD:fix/stage6-contract-alignment-20260830
