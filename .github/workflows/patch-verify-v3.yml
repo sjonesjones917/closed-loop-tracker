@@ -46,6 +46,12 @@ jobs:
               s=s.replace("EXECUTABLE_KIND:'CUSTOM_PIPELINE'","EXECUTABLE_KIND:'TEST_IR'")
           if "EXECUTABLE_KIND:'CUSTOM_PIPELINE'" in s:
               raise SystemExit('stale CUSTOM_PIPELINE remains in verify-complete.mjs')
+          anchor="  const p=project('JOB-STAGE04-CANONICAL-REUSE');\n  p.job.SUPPLIED_MATERIALS_INVENTORY="
+          replacement="  const p=project('JOB-STAGE04-CANONICAL-REUSE');\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};\n  p.job.SUPPLIED_MATERIALS_INVENTORY="
+          if anchor in s:
+              s=s.replace(anchor,replacement,1)
+          elif replacement.split("\n  p.job")[0] not in s:
+              raise SystemExit('Stage 04 canonical-reuse fixture anchor missing')
           p.write_text(s)
           PY
       - name: Refresh exact runtime graph build identity
