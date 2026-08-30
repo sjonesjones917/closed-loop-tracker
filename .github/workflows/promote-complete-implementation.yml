@@ -1,0 +1,27 @@
+name: Promote completed implementation
+on:
+  push:
+    branches: ["finish/blind-context-and-prompt-authority-43"]
+    paths: [".github/workflows/promote-complete-implementation.yml"]
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge completed implementation to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin finish/blind-context-and-prompt-authority-43
+          git config user.name "closed-loop-implementation"
+          git config user.email "closed-loop-implementation@users.noreply.github.com"
+          git merge --no-ff --no-commit origin/finish/blind-context-and-prompt-authority-43
+          rm -f .github/workflows/promote-complete-implementation.yml
+          git add -A
+          git commit -m "Complete subject-neutral 30-stage prompt implementation"
+          git push origin HEAD:main
