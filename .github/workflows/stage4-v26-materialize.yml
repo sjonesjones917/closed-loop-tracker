@@ -1,0 +1,88 @@
+name: Materialize rebased Stage 4 persistence repair
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  materialize:
+    if: github.head_ref == 'fix/stage4-persisted-prompt-v26-rebased'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the rebased repair and remove this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+
+          node <<'NODE'
+          const fs = require('fs');
+          const {createHash} = require('crypto');
+
+          let prompt = fs.readFileSync('prompt-engine.js', 'utf8');
+          const oldVersion = "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';";
+          const newVersion = "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';";
+          if (!prompt.includes(oldVersion)) throw new Error('Expected prompt-engine/25 boundary was not found on current main.');
+          prompt = prompt.replace(oldVersion, newVersion);
+          fs.writeFileSync('prompt-engine.js', prompt);
+
+          let semantic = fs.readFileSync('verify-prompt-semantics.mjs', 'utf8');
+          const marker = "console.log(JSON.stringify({stage04CanonicalInputReuse:true}));";
+          const replacement = "if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');\nconsole.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));";
+          if (!semantic.includes(marker)) throw new Error('Stage 04 canonical-input regression marker was not found on current main.');
+          semantic = semantic.replace(marker, replacement);
+          fs.writeFileSync('verify-prompt-semantics.mjs', semantic);
+
+          let workflow = fs.readFileSync('.github/workflows/pages.yml', 'utf8');
+          const priorWorkflow = workflow;
+          workflow = workflow.replace(/\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/, '');
+          if (workflow === priorWorkflow) throw new Error('Obsolete one-time Stage 04 materializer was not found.');
+          fs.writeFileSync('.github/workflows/pages.yml', workflow);
+
+          const runtimeFiles = ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const gitBlobSha = file => {
+            const bytes = fs.readFileSync(file);
+            return createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+          };
+          const manifest = runtimeFiles.map(file => `${file}:${gitBlobSha(file)}\n`).join('');
+          const runtimeIdentity = `runtime-${createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let html = fs.readFileSync('index.html', 'utf8');
+          let changed = 0;
+          html = html.replace(/(<script defer src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("><\/script>)/g, (_match, prefix, suffix) => {
+            changed += 1;
+            return prefix + runtimeIdentity + suffix;
+          });
+          if (changed !== runtimeFiles.length) throw new Error(`Expected ${runtimeFiles.length} runtime script identities; changed ${changed}.`);
+          fs.writeFileSync('index.html', html);
+
+          fs.unlinkSync('.github/workflows/stage4-v26-materialize.yml');
+          console.log(JSON.stringify({promptEngineVersion:'closed-loop-prompt-engine/26',runtimeIdentity,updatedScripts:changed}));
+          NODE
+
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-hash.mjs
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          git diff --check
+          git add -A
+          git diff --cached --check
+          git commit -m "Invalidate persisted Stage 4 prompts on current main"
+          git push origin "HEAD:${BRANCH}"
+          gh workflow run pages.yml --ref "$BRANCH"
