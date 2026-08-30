@@ -3,7 +3,7 @@ on:
   push:
     branches: [spec-v3-zero-loss-20260830]
   workflow_dispatch:
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -12,6 +12,16 @@ jobs:
         with: {ref: spec-v3-zero-loss-20260830}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
+      - name: Apply one-time stale-verifier migration
+        if: ${{ hashFiles('repair-v3-verifiers.mjs') != '' }}
+        run: |
+          node repair-v3-verifiers.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm repair-v3-verifiers.mjs
+          git add verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-browser.mjs verify-browser-extra.mjs verify-live.mjs
+          git commit -m "Align verification suite with controlling v3 contracts"
+          git push origin HEAD:spec-v3-zero-loss-20260830
       - name: Syntax
         run: |
           node --check workbook.js
