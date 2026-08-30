@@ -63,6 +63,7 @@ old_block=""" const required=[
   'affectedStageFields',
   'answerType',
   'allowedValues',
+  'blocking',
   'Do not invent requestKey, required, whyNeeded, expectedAnswer'
  ];"""
 new_block=""" const required=[
@@ -82,6 +83,7 @@ new_block=""" const required=[
   'affectedStageFields',
   'answerType',
   'allowedValues',
+  'blocking',
   'Do not invent requestKey, required, whyNeeded, expectedAnswer'
  ];"""
 if old_block in s:s=s.replace(old_block,new_block)
@@ -95,13 +97,13 @@ for line in s.splitlines():
 s='\n'.join(lines)+'\n'
 p.write_text(s)
 
-# The controlling runtime graph now includes the Test IR authority between schema and engine.
-# Keep the verifier strict about exact order, uniqueness, and one shared build token.
+# The controlling runtime graph includes the Test IR authority between schema and engine.
 p=Path('verify.mjs')
 s=p.read_text()
 s=s.replace("'index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js'","'index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'")
 s=s.replace("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js']")
 s=s.replace("orderedScripts=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']","orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']")
-# Materialization helpers are intentionally present during this transient proof step and are removed atomically before the proven source commit.
+s=s.replace("'Revise the Responsible Layer'","'CORRECT THE ROOT CAUSE'")
+# Materialization helper is intentionally present during the transient proof step and is removed before the proven source commit.
 s=s.replace("for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file))throw new Error(`Repair scaffolding remains: ${file}`);","for(const file of fs.readdirSync('.'))if(/^\\.repair-/.test(file)&&file!=='.repair-project-memory.py')throw new Error(`Unexpected repair scaffolding remains: ${file}`);")
 p.write_text(s)
