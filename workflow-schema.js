@@ -1243,6 +1243,21 @@ const PREVIOUS_RESPONSE_SCHEMA='closed-loop-stage-response/2';
 const TEST_IR_SCHEMA='closed-loop-test-spec/1';
 const PACKAGE_SCHEMA='closed-loop-verification-package/1';
 const clone=value=>typeof structuredClone==='function'?structuredClone(value):JSON.parse(JSON.stringify(value));
+const STAGE01_HUMAN_CAPTURE_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS']);
+function restoreMigratedStage01AcceptedCapture(migrated,original){
+  const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];
+  if(!stage01||String(stage01.status||'').toUpperCase()!=='COMPLETE')return migrated;
+  stage01.agentData=stage01.agentData&&typeof stage01.agentData==='object'&&!Array.isArray(stage01.agentData)?stage01.agentData:{};
+  const accepted=stage01.acceptedData&&typeof stage01.acceptedData==='object'&&!Array.isArray(stage01.acceptedData)?stage01.acceptedData:{};
+  if(String(stage01.agentData.INPUT_SET_CONTENTS||'').trim())return migrated;
+  if(String(accepted.INPUT_SET_CONTENTS||'').trim()){stage01.agentData.INPUT_SET_CONTENTS=String(accepted.INPUT_SET_CONTENTS);return migrated;}
+  const legacy=original?.userJobInput&&typeof original.userJobInput==='object'&&!Array.isArray(original.userJobInput)?original.userJobInput:null;
+  const human={};for(const name of STAGE01_HUMAN_CAPTURE_FIELDS){const value=original?.job?.[name];if(value!==undefined&&value!==null&&String(value).trim()!=='')human[name]=clone(value);}
+  const source=legacy&&Object.keys(legacy).length?legacy:Object.keys(human).length?human:null;
+  const captured=source?JSON.stringify(source):String(stage01.draftRecord||'').trim();
+  if(captured)stage01.agentData.INPUT_SET_CONTENTS=captured;
+  return migrated;
+}
 function normalizeTestRecords(value,seen=new WeakSet()){
   if(!value||typeof value!=='object'||seen.has(value))return;seen.add(value);
   const fields=value.fields&&typeof value.fields==='object'&&!Array.isArray(value.fields)?value.fields:value;
@@ -1277,6 +1292,7 @@ function migrateProjectToCurrent(input){
   else if(priorMigration){migrated=priorMigration(clone(input));if(migrated&&typeof migrated.then==='function')throw new Error('Project migration must be deterministic and synchronous.');}
   else throw new Error('Unsupported project schema '+String(input.schema));
   migrated=ensureV3Defaults(migrated);
+  restoreMigratedStage01AcceptedCapture(migrated,original);
   const already=migrated.projectData.nonOperationalImportedPayloads.some(item=>item&&item.sourceSchema===original.schema&&item.sourceRevision===Number(original.revision||0)&&item.operational===false);
   if(!already)migrated.projectData.nonOperationalImportedPayloads.push({sourceSchema:String(original.schema||''),sourceRevision:Number(original.revision||0),operational:false,purpose:'ORIGINAL_IMPORTED_PAYLOAD_AUDIT_EVIDENCE',payload:original});
   migrated.projectHash='';
