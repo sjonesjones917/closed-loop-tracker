@@ -1,0 +1,63 @@
+name: Finalize Stage 04 one-time intent correction
+on:
+  push:
+    branches: [fix/stage4-intent-reuse-current-main]
+permissions:
+  contents: write
+concurrency:
+  group: stage4-finalize-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-intent-reuse-current-main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Remove repeated-intent handoff and one-time materializer
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const enginePath='workflow-engine.js';
+          let engine=fs.readFileSync(enginePath,'utf8');
+          const bad="  if(stage>1)withhold.set('original Stage 01 intent file',{artifactIdOrCategory:'original Stage 01 intent file',reason:'One-time intake only. Later stages use the canonical intentStatements ledger and must not request, attach, resend, reopen, or rely on the original file.'});\n";
+          if(!engine.includes(bad)) throw new Error('Expected repeated-intent handoff anchor not found.');
+          if(engine.indexOf(bad)!==engine.lastIndexOf(bad)) throw new Error('Repeated-intent handoff anchor is not unique.');
+          engine=engine.replace(bad,'');
+          if(engine.includes("withhold.set('original Stage 01 intent file'")) throw new Error('Original intent file still appears as a handoff item.');
+          fs.writeFileSync(enginePath,engine);
+
+          const workflowPath='.github/workflows/pages.yml';
+          let workflow=fs.readFileSync(workflowPath,'utf8');
+          const before=workflow;
+          workflow=workflow.replace(/\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/,'');
+          if(workflow===before) throw new Error('One-time Stage 04 materializer block not found.');
+          if(/\n  materialize-stage4-intent-reuse:/.test(workflow)) throw new Error('One-time Stage 04 materializer still present.');
+          fs.writeFileSync(workflowPath,workflow);
+
+          fs.unlinkSync('.github/workflows/stage4-finalize.yml');
+          NODE
+      - name: Prove Stage 04 no-repeat behavior before commit
+        run: |
+          node --check workflow-engine.js
+          node verify-stage4-intent-reuse.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit only permanent corrections
+        shell: bash
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add workflow-engine.js .github/workflows/pages.yml .github/workflows/stage4-finalize.yml
+          git diff --cached --check
+          git commit -m "Finalize Stage 04 one-time intent reuse"
+          git push origin HEAD:fix/stage4-intent-reuse-current-main
