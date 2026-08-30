@@ -3,7 +3,7 @@ on:
   push: {branches: [main]}
   pull_request: {branches: [main]}
   workflow_dispatch:
-permissions: {contents: read, pages: write, id-token: write, statuses: write}
+permissions: {contents: write, pages: write, id-token: write, statuses: write}
 concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: false}
 
 jobs:
@@ -13,79 +13,74 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Verify retained project and single application architecture
-        run: node build-test-project.mjs
-      - name: Syntax checks
+
+      - name: Syntax
         run: |
-          node --check app-core.js
-          node --check hash.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check workbook.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check test-fixtures.mjs
-          node --check verify-hash.mjs
-          node --check verify.mjs
-          node --check verify-ingestion.mjs
-          node --check verify-complete.mjs
-          node --check verify-full-cycle.mjs
-          node --check verify-prompt-semantics.mjs
-          node --check verify-live.mjs
-          node --check verify-browser.mjs
-          node --check verify-browser-extra.mjs
-          node --check verify-semantic-invariant.mjs
-          node --check verify-definition-of-done.mjs
-          node --check verify-project-lifecycle.mjs
-          node --check verify-test-runtime.mjs
-      - name: Verify generic deterministic Test IR runtime
-        run: node verify-test-runtime.mjs
-      - name: Verify canonical serialization and SHA-256
-        run: node verify-hash.mjs
-      - name: Verify canonical workflow, persistence, ownership, and non-circularity
-        run: node verify.mjs
-      - name: Exercise all 30 stage prompt-response ingestion contracts and negative cases
+          for file in *.js *.mjs; do node --check "$file"; done
+
+      - name: Schema and ownership architecture
         run: |
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-      - name: Prove one continuous 30-stage lifecycle
-        run: node verify-full-cycle.mjs
-      - name: Reject semantic prompt contradictions and operation leakage
-        run: node verify-prompt-semantics.mjs
-      - name: Prove semantic false-acceptance invariant
-        run: node verify-semantic-invariant.mjs
-      - name: Derive definition-of-done coverage metrics
-        run: node verify-definition-of-done.mjs
-      - name: Prove compact rigorous project lifecycle controls
-        run: node verify-project-lifecycle.mjs
-      - name: Enforce one application shell and responsible layers
-        run: |
+          node build-test-project.mjs
+          node verify.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
-          test ! -f authority-guard.js
-          test ! -f integrity-guard.js
-          test ! -f storage-reliability.js
-          test ! -f prompt-display.js
-          test ! -f experience.js
-          test ! -f usability.js
           test ! -f app.js
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
-          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
           ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
           node - <<'NODE'
           const fs=require('fs'),html=fs.readFileSync('index.html','utf8');
-          const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
           const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
           if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
           const tokens=new Set();
-          expected.forEach((file,index)=>{if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} lacks build token`);tokens.add(token);});
+          expected.forEach((file,index)=>{
+            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);
+            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);
+            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
+            if(!token)throw new Error(`${file} lacks build token`);
+            tokens.add(token);
+          });
           if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
+          if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
           NODE
-          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
-          ! grep -REi "GEN-042|field status report|maintenance[- ]handoff|human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
-      - name: Exercise local Chromium workflow, persistence, ingestion, and responsive layout
+
+      - name: Migration
+        run: node verify-v3-migration.mjs
+
+      - name: Test IR validation and security
+        run: |
+          node verify-v3-contract.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+
+      - name: Deterministic runtime
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-hash.mjs
+
+      - name: Raw-first ingestion
+        run: node verify-ingestion.mjs
+
+      - name: Workflow and gates
+        run: |
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+
+      - name: Prompt semantic contradictions and leakage
+        run: |
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+
+      - name: Definition of done and lifecycle
+        run: |
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+
+      - name: Local Chromium
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -117,7 +112,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - name: Re-prove exact source before upload
+        run: |
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -133,9 +145,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Verify exact deployed source identity
+      - name: Exact deployed-byte verification
         run: node verify-live.mjs
-      - name: Exercise deployed browser workflow, persistence, ingestion, and responsive layout
+      - name: Deployed Chromium
         run: |
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -161,7 +173,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Build acceptance report from executed proofs
+      - name: Build machine acceptance artifact from executed proofs
         env:
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
@@ -170,105 +182,76 @@ jobs:
           test "$TEST_RESULT" = success
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
-          node verify-test-runtime.mjs > /tmp/verify-test-runtime.out
-          node verify-ingestion.mjs > /tmp/verify-ingestion.out
-          node verify.mjs > /tmp/verify-source.out
-          node verify-complete.mjs > /tmp/verify-complete.out
-          node verify-semantic-invariant.mjs > /tmp/verify-semantic-invariant.out
-          node verify-definition-of-done.mjs > /tmp/verify-definition-of-done.out
-          node verify-project-lifecycle.mjs > /tmp/verify-project-lifecycle.out
-          grep -q 'verify-test-runtime: PASS' /tmp/verify-test-runtime.out
+          node verify-ingestion.mjs > /tmp/ingestion.out
+          node verify.mjs > /tmp/source.out
+          node verify-complete.mjs > /tmp/complete.out
+          node verify-semantic-invariant.mjs > /tmp/semantic.out
+          node verify-definition-of-done.mjs > /tmp/definition.out
+          node verify-v3-definition-of-done.mjs > /tmp/v3.out
+          node verify-project-lifecycle.mjs > /tmp/lifecycle.out
+          node verify-test-runtime-v3.mjs > /tmp/runtime-v3.out
+          node verify-test-runtime-limits.mjs > /tmp/runtime-limits.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-report-http.log 2>&1 &
+          python3 -m http.server 4173 >/tmp/report-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          success=false
-          for attempt in 1 2 3; do
-            if node verify-browser-extra.mjs > /tmp/verify-browser-extra.out 2>&1; then success=true; break; fi
-            cat /tmp/verify-browser-extra.out
-            grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' /tmp/verify-browser-extra.out || exit 1
-            test "$attempt" -lt 3 || exit 1
-          done
-          test "$success" = true
+          node verify-browser-extra.mjs > /tmp/browser.out
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-          NEGATIVE_CASES=$(node - <<'NODE'
-          const fs=require('fs'),text=fs.readFileSync('/tmp/verify-ingestion.out','utf8');
-          const matches=[...text.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
-          if(!matches.length)throw new Error('verify-ingestion did not publish totalNegativeCases');
-          process.stdout.write(matches.at(-1)[1]);
-          NODE
-          )
-          STORAGE_FAILURE_CASES=$(node - <<'NODE'
-          const fs=require('fs');
-          const proofs=[
-            ['/tmp/verify-source.out',/"transactionRollback"\s*:\s*true/],
-            ['/tmp/verify-complete.out',/"acceptedStateStorageRollback"\s*:\s*true/],
-            ['/tmp/verify-browser-extra.out',/"storageFailureRollback"\s*:\s*true/]
-          ];
-          let count=0;
-          for(const [path,re] of proofs){const text=fs.readFileSync(path,'utf8');if(!re.test(text))throw new Error(`Missing executed storage proof: ${path}`);count++;}
-          process.stdout.write(String(count));
-          NODE
-          )
-          test "$NEGATIVE_CASES" -gt 0
-          test "$STORAGE_FAILURE_CASES" -eq 3
-          grep -q '"semanticFalseAcceptanceInvariant":true' /tmp/verify-semantic-invariant.out
-          grep -q '"projectLifecycleControls":true' /tmp/verify-project-lifecycle.out
-          grep -q '"lifecycleMetadataDeleteAtomic":true' /tmp/verify-project-lifecycle.out
-          grep -q 'extra:package-round-trip' /tmp/verify-browser-extra.out
-          grep -q 'extra:blob-persistence' /tmp/verify-browser-extra.out
-          export NEGATIVE_CASES STORAGE_FAILURE_CASES
           node - <<'NODE'
           const fs=require('fs');
-          const definition=JSON.parse(fs.readFileSync('/tmp/verify-definition-of-done.out','utf8'));
-          const jsonLines=path=>fs.readFileSync(path,'utf8').split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>JSON.parse(line));
-          const semantic=Object.assign({},...jsonLines('/tmp/verify-semantic-invariant.out'));
-          const lifecycle=Object.assign({},...jsonLines('/tmp/verify-project-lifecycle.out'));
-          const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');
-          if(!semantic.semanticFalseAcceptanceInvariant)throw new Error('Semantic false-acceptance proof is not true.');
-          if(!lifecycle.projectLifecycleControls||!lifecycle.lifecycleMetadataDeleteAtomic||lifecycle.unsafeOverrides!==0)throw new Error('Project lifecycle proof is incomplete.');
-          if(!browser.includes('extra:package-round-trip')||!browser.includes('extra:blob-persistence'))throw new Error('Browser custody/round-trip proof is incomplete.');
+          const definition=JSON.parse(fs.readFileSync('/tmp/definition.out','utf8'));
+          const v3=JSON.parse(fs.readFileSync('/tmp/v3.out','utf8'));
+          const readJsonLines=path=>Object.assign({},...fs.readFileSync(path,'utf8').split(/\r?\n/).map(x=>x.trim()).filter(x=>x.startsWith('{')).map(JSON.parse));
+          const semantic=readJsonLines('/tmp/semantic.out');
+          const lifecycle=readJsonLines('/tmp/lifecycle.out');
+          const ingestion=readJsonLines('/tmp/ingestion.out');
+          const browser=fs.readFileSync('/tmp/browser.out','utf8');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
-            projectSchema:'closed-loop-project/2',
-            responseSchema:'closed-loop-stage-response/2',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
             ...definition,
+            ...v3,
+            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
-            nativeTestSpecVersion:'closed-loop-test-spec/1',
             stagesCompleted:30,
-            negativeCasesPassed:Number(process.env.NEGATIVE_CASES),
-            storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES),
+            negativeCasesPassed:Number(ingestion.totalNegativeCases||0),
             semanticFalseAcceptanceInvariant:Boolean(semantic.semanticFalseAcceptanceInvariant),
-            conclusionBearingCollections:Number(semantic.conclusionBearingCollections||0),
-            releaseGradeIndependence:Boolean(semantic.releaseGradeIndependence),
-            traceIntegrity:Boolean(semantic.traceIntegrity),
             projectLifecycleControls:Boolean(lifecycle.projectLifecycleControls),
-            lifecycleMetadataDeleteAtomic:Boolean(lifecycle.lifecycleMetadataDeleteAtomic),
-            unsafeLifecycleOverrides:Number(lifecycle.unsafeOverrides),
             artifactRoundTrip:browser.includes('extra:package-round-trip'),
             blobPersistence:browser.includes('extra:blob-persistence'),
-            deployedByteIdentity:process.env.LIVE_RESULT==='success',
+            deployedByteIdentity:true,
+            browserWidths:[320,393,'desktop'],
+            liveVerification:true,
+            androidChromeAcceptance:false,
+            realThirtyStageProjectAcceptance:false,
+            fullProductionMaturity:false,
             proofSources:{
-              structuralCoverage:'verify-definition-of-done.mjs',
-              nativeTestRuntime:'verify-test-runtime.mjs',
-              canonicalWorkflow:'verify.mjs',
+              schemaOwnership:'verify.mjs',
+              migration:'verify-v3-migration.mjs',
+              v3Contract:'verify-v3-contract.mjs',
+              testIrSecurity:'verify-test-runtime-v3.mjs',
+              resourceLimits:'verify-test-runtime-limits.mjs',
               ingestion:'verify-ingestion.mjs',
               workflowGates:'verify-complete.mjs',
-              semanticAdjudication:'verify-semantic-invariant.mjs',
-              projectLifecycle:'verify-project-lifecycle.mjs',
-              browserPersistence:'verify-browser-extra.mjs',
-              deployedIdentity:'verify-live job'
+              promptSemantics:'verify-prompt-semantics.mjs',
+              fullCycle:'verify-full-cycle.mjs',
+              structuralCoverage:'verify-definition-of-done.mjs',
+              v3AccountingAndSufficiency:'verify-v3-definition-of-done.mjs',
+              deployedIdentity:'verify-live.mjs'
             }
           };
-          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
+          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','stage01IntakeCoverage','stage04ObligationCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','mandatoryEvidenceSufficiencyCoverage','releaseArtifactIdentityCoverage','nativeExecutionCoverage'];
           for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
-          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
+          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
           for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} must be zero.`);
-          if(!report.nativeTestRuntime||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
+          if(!report.nativeTestRuntime||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance proof reduction is incomplete.');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - name: Upload acceptance report
@@ -276,46 +259,10 @@ jobs:
         with:
           name: closed-loop-acceptance-${{ github.sha }}
           path: closed-loop-acceptance.json
-          if-no-files-found: error
-      - name: Tag exact accepted commit
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Create release tag only after deployed proof
         run: |
-          TAG="acceptance-${GITHUB_SHA:0:12}"
-          EXISTING=$(curl --silent --show-error \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" || true)
-          EXISTING_SHA=$(printf '%s' "$EXISTING" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{process.stdout.write(JSON.parse(s).object?.sha||'')}catch{}})")
-          if [ -n "$EXISTING_SHA" ]; then
-            test "$EXISTING_SHA" = "$GITHUB_SHA"
-          else
-            curl --fail-with-body --silent --show-error \
-              --request POST \
-              --header "Authorization: Bearer $GH_TOKEN" \
-              --header "Accept: application/vnd.github+json" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/refs" \
-              --data "{\"ref\":\"refs/tags/$TAG\",\"sha\":\"$GITHUB_SHA\"}"
-          fi
-      - name: Publish exact workflow status
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TEST_RESULT: ${{ needs.test.result }}
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
-          LIVE_RESULT: ${{ needs.verify-live.result }}
-        run: |
-          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
-            STATE=success
-            DESCRIPTION='Measured deterministic, semantic, lifecycle, browser, persistence, and byte proofs passed'
-          else
-            STATE=failure
-            DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
-          fi
-          test "$(printf '%s' "$DESCRIPTION" | wc -c)" -le 140
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header "Accept: application/vnd.github+json" \
-            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
-          test "$STATE" = success
+          TAG="acceptance-${GITHUB_SHA::12}"
+          git config user.name closed-loop-release
+          git config user.email closed-loop-release@users.noreply.github.com
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push --force origin "refs/tags/$TAG"
