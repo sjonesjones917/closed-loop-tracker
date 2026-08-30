@@ -1,4 +1,4 @@
-name: Inspect stage context contract source
+name: Apply exhaustive stage context contracts
 on:
   push:
     branches:
@@ -6,13 +6,39 @@ on:
     paths:
       - .github/workflows/tmp-exhaustive-intake-stage4.yml
 permissions:
-  contents: read
+  contents: write
 jobs:
-  inspect:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/exhaustive-intake-stage4-20260830
-      - name: Show READ_COLLECTIONS source
-        run: grep -n "READ_COLLECTIONS" workflow-schema.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply stage context repair
+        run: python3 .repair-context-contracts.py
+      - name: Syntax and exhaustive prompt/context proof
+        run: |
+          node --check workflow-schema.js
+          node --check prompt-engine.js
+          node --check verify-all-stage-prompts.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-hash.mjs
+          node verify-test-runtime.mjs
+          node verify-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          git diff --check
+      - name: Commit tested context repair
+        run: |
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git checkout -- .github/workflows/tmp-exhaustive-intake-stage4.yml .repair-context-contracts.py .repair-exhaustive-intake.py .repair-orchestrate.py .repair-fixture.py .repair-all-prompts.py .print-stage-contracts.mjs
+          git add workflow-schema.js verify-all-stage-prompts.mjs
+          git commit -m 'Supply every stage prompt the canonical context it needs'
+          git push origin HEAD:fix/exhaustive-intake-stage4-20260830
