@@ -1,5 +1,5 @@
 name: Apply exhaustive intake repair
-# proof revision 18
+# proof revision 19
 on:
   push:
     branches:
@@ -35,6 +35,7 @@ jobs:
           python3 tools/align-verify-stage4-fixture.py
           python3 tools/align-ingestion-stage1-fixture.py
           python3 tools/align-ingestion-stage4-lifecycle.py
+          python3 tools/align-ingestion-stage4-accounting.py
           python3 tools/remove-repeat-intent-language.py
           node tools/finalize-runtime.mjs
       - name: Syntax
@@ -67,7 +68,7 @@ jobs:
         run: |
           git config user.name closed-loop-user-bundle-repair
           git config user.email closed-loop-user-bundle-repair@users.noreply.github.com
-          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml tools/apply-exhaustive-intake-patch.py tools/rewrite-patcher-structural.py tools/fix-canonical-intake-evaluator.py tools/fix-stage1-input-version-authority.py tools/align-accounting-contract.py tools/align-test-runtime-stage4-fixture.py tools/align-verify-stage4-fixture.py tools/align-ingestion-stage1-fixture.py tools/align-ingestion-stage4-lifecycle.py tools/remove-repeat-intent-language.py tools/finalize-runtime.mjs
+          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml tools/apply-exhaustive-intake-patch.py tools/rewrite-patcher-structural.py tools/fix-canonical-intake-evaluator.py tools/fix-stage1-input-version-authority.py tools/align-accounting-contract.py tools/align-test-runtime-stage4-fixture.py tools/align-verify-stage4-fixture.py tools/align-ingestion-stage1-fixture.py tools/align-ingestion-stage4-lifecycle.py tools/align-ingestion-stage4-accounting.py tools/remove-repeat-intent-language.py tools/finalize-runtime.mjs
           git add -A
           git commit -m 'Enforce exhaustive Stage 1 and Stage 3 input to Stage 4'
           git push origin HEAD:repair/user-bundle-zero-loss-20260830
