@@ -43,7 +43,6 @@ jobs:
           files=(
             app-core.js
             build-test-project.mjs
-            index.html
             project-store.js
             prompt-engine.js
             response-ingestion.js
@@ -69,6 +68,21 @@ jobs:
             workflow-schema.js
           )
           git checkout "$SOURCE" -- "${files[@]}"
+
+          node - <<'NODE'
+          const fs=require('fs');
+          let html=fs.readFileSync('index.html','utf8');
+          if(!html.includes("connect-src 'self'; worker-src 'self';")){
+            const old="connect-src 'self'; object-src 'none';";
+            if(!html.includes(old)) throw new Error('CSP anchor missing');
+            html=html.replace(old,"connect-src 'self'; worker-src 'self'; object-src 'none';");
+          }
+          const scripts=`<script defer src="workbook.js?v=controlling-v3-20260830"></script>\n<script defer src="hash.js?v=controlling-v3-20260830"></script>\n<script defer src="workflow-schema.js?v=controlling-v3-20260830"></script>\n<script defer src="test-runtime.js?v=controlling-v3-20260830"></script>\n<script defer src="workflow-engine.js?v=controlling-v3-20260830"></script>\n<script defer src="prompt-engine.js?v=controlling-v3-20260830"></script>\n<script defer src="response-ingestion.js?v=controlling-v3-20260830"></script>\n<script defer src="project-store.js?v=controlling-v3-20260830"></script>\n<script defer src="app-core.js?v=controlling-v3-20260830"></script>`;
+          const re=/<script defer src="workbook\.js\?v=[^"]+"><\/script>[\s\S]*?<script defer src="app-core\.js\?v=[^"]+"><\/script>/;
+          if(!re.test(html)) throw new Error('Runtime script block anchor missing');
+          html=html.replace(re,scripts);
+          fs.writeFileSync('index.html',html);
+          NODE
 
           rm -f .github/workflows/materialize-final-v3.yml
           rm -f .tmp-lifecycle-proof-refresh.mjs .tmp-*.mjs
@@ -101,7 +115,7 @@ jobs:
           node build-test-project.mjs
 
           git checkout HEAD -- .github/workflows/materialize-final-v3.yml
-          git add "${files[@]}"
+          git add "${files[@]}" index.html
           git status --short
           if git diff --cached --quiet; then
             echo 'No production changes to commit.'
