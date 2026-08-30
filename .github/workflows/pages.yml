@@ -66,7 +66,6 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-project-lifecycle.mjs
-          node verify-mobile-stage-action.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
           node build-test-project.mjs
@@ -78,6 +77,7 @@ jobs:
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-mobile-stage-action.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
           kill "$SERVER_PID" 2>/dev/null || true
@@ -197,6 +197,7 @@ jobs:
         run: |
           set -euo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
+          node verify-mobile-stage-action.mjs
           node verify-browser.mjs
           node verify-browser-extra.mjs
 
