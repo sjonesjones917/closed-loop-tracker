@@ -76,8 +76,10 @@ if stage4_contract_anchor in s:s=s.replace(stage4_contract_anchor,stage4_contrac
 elif stage4_contract_replacement not in s:raise SystemExit('Stage 04 response-contract fixture anchor missing')
 
 stale_specialist=" if(!r.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!/supplied invention disclosure/.test(r.prompt)||!/supplied repository or file materials/.test(r.prompt)||!/human-supplied project location/.test(r.prompt)||!/supplied geometry\\/specifications/.test(r.prompt))throw new Error('Stage 01 specialist intake adaptation is missing.');"
-neutral_specialist=" if(!r.prompt.includes('derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context')||!r.prompt.includes('Do not use a hard-coded domain checklist'))throw new Error('Stage 01 subject-neutral intake derivation rule is missing.');"
+prior_neutral_specialist=" if(!r.prompt.includes('derive subject-specific human-authority questions from the user’s actual request, accessible supplied materials, and current canonical context')||!r.prompt.includes('Do not use a hard-coded domain checklist'))throw new Error('Stage 01 subject-neutral intake derivation rule is missing.');"
+neutral_specialist=" if(!r.prompt.includes('Stage 01 also owns proactive human intake')||!r.prompt.includes('collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome')||!r.prompt.includes('Ask only for facts or choices that must come from the human')||!r.prompt.includes('do not ask the human for common domain knowledge, facts available in supplied materials, or facts the agent can obtain from authorized research/tools'))throw new Error('Stage 01 subject-neutral intake derivation rule is missing.');"
 if stale_specialist in s:s=s.replace(stale_specialist,neutral_specialist,1)
+elif prior_neutral_specialist in s:s=s.replace(prior_neutral_specialist,neutral_specialist,1)
 elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier anchor missing')
 
 old_mutants="""const mutants=[
