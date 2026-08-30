@@ -12,6 +12,18 @@ import fs from 'node:fs';
   }else console.log('Stage 03 exhaustion semantics already patched');
 }
 {
+  const path='prompt-engine.js';
+  let s=fs.readFileSync(path,'utf8');
+  const anchor='Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome, even when a later stage will use them.';
+  const required=' Every foreseeable human-only issue must be supplied, asked and answered, or asked and explicitly deferred before Stage 01 completion.';
+  if(!s.includes(required.trim())){
+    if(!s.includes(anchor))throw new Error('Stage 01 proactive human intake anchor not found.');
+    s=s.replace(anchor,anchor+required);
+    fs.writeFileSync(path,s);
+    console.log('patched prompt-engine Stage 01 human-only closure semantics');
+  }else console.log('Stage 01 human-only closure semantics already patched');
+}
+{
   const path='verify-prompt-semantics.mjs';
   let s=fs.readFileSync(path,'utf8');
   const replacements=[
