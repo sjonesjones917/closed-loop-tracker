@@ -9,17 +9,13 @@
 ===== node --check app-core.js =====
 ===== node --check verify-capture-once.mjs =====
 ===== capture-once regression =====
-workflow-schema.js:1003
-  if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name)))throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);
-                                                                                                                 ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-capture-once.mjs:5
+const assert=(ok,msg)=>{if(!ok)throw new Error(msg)};
+                                     ^
 
-Error: Ownership partition for Verification tests is incomplete or overlapping.
-    at recordSchema (workflow-schema.js:1003:120)
-    at workflow-schema.js:1033:9
-    at workflow-schema.js:1238:3
-    at Script.runInThisContext (node:vm:137:12)
-    at Object.runInThisContext (node:vm:317:38)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-capture-once.mjs:3:151
+Error: Stage 04 prompt asks human to resupply original intent
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-capture-once.mjs:5:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-capture-once.mjs:27:1
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/[eval1]:1:99
