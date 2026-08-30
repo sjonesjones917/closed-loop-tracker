@@ -29,10 +29,11 @@ function parseCsv(text,config){
   if(config.header&&rows.length){const header=rows.shift();return rows.map(row=>Object.fromEntries(header.map((name,i)=>[name,row[i]??''])));}return rows;
 }
 function parseXml(text){const parser=typeof DOMParser!=='undefined'?new DOMParser():null;if(!parser)throw new Error('PARSE_XML is unavailable in this runtime context.');const doc=parser.parseFromString(String(text),'application/xml');if(doc.querySelector('parsererror'))throw new Error('Malformed XML.');return doc;}
-function selectXml(value,path){const text=String(path||'').trim();if(!/^/[A-Za-z_][\w.-]*(?:/[A-Za-z_][\w.-]*)*$/.test(text))throw new Error('SELECT_XML supports only absolute child-element selectors.');let nodes=[value.documentElement];const parts=text.split('/').filter(Boolean);if(!nodes[0]||nodes[0].tagName!==parts[0])return [];for(const name of parts.slice(1))nodes=nodes.flatMap(n=>Array.from(n.children||[]).filter(c=>c.tagName===name));return nodes;}
+function selectXml(value,path){const text=String(path||'').trim();if(!/^\/[A-Za-z_][\w.-]*(?:\/[A-Za-z_][\w.-]*)*$/.test(text))throw new Error('SELECT_XML supports only absolute child-element selectors.');const parts=text.split('/').filter(Boolean);if(parts.length>LIMITS.maxSelectorDepth)throw new Error('SELECT_XML exceeds selector depth limit.');let nodes=[value?.documentElement];if(!nodes[0]||nodes[0].tagName!==parts[0])return [];for(const name of parts.slice(1))nodes=nodes.flatMap(n=>Array.from(n.children||[]).filter(c=>c.tagName===name));return nodes;}
 function selectJsonPath(value,path){
   const text=String(path||'').trim();if(text==='$')return value;if(!text.startsWith('$.'))throw new Error('SELECT_JSON_PATH supports only deterministic root paths beginning with $.');
   const parts=[];for(const token of text.slice(2).split('.')){const m=token.match(/^([^\[\]]+)(?:\[(\d+)\])?$/);if(!m)throw new Error('Unsupported JSON path token: '+token);parts.push(m[1]);if(m[2]!==undefined)parts.push(Number(m[2]));}
+  if(parts.length>LIMITS.maxSelectorDepth)throw new Error('SELECT_JSON_PATH exceeds selector depth limit.');
   let out=value;for(const part of parts){if(out===null||out===undefined||!(part in Object(out)))throw new Error('JSON path does not exist: '+text);out=out[part];}return out;
 }
 function comparable(value){return value instanceof Uint8Array?[...value]:value;}
@@ -69,8 +70,8 @@ async function execute({spec,artifacts}){
   for(const [index,step] of spec.steps.entries()){
     switch(step.op){
       case 'LOAD_ARTIFACT':{const a=source[step.binding];if(!a)throw new Error(`Artifact binding ${step.binding} is unavailable.`);currentArtifact=a;value=a;observations.push({step:index,op:step.op,binding:step.binding,artifactId:a.artifactId||null,filename:a.filename||null,sha256:a.sha256||null});break;}
-      case 'READ_BYTES':{const bytes=bytesOf(currentArtifact?.bytes??value?.bytes??value);if(!bytes)throw new Error('READ_BYTES requires artifact bytes.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
-      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)throw new Error('DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)throw new Error('Text input exceeds deterministic runtime byte limit.');value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);break;}
+      case 'READ_BYTES':{const bytes=bytesOf(currentArtifact?.bytes??value?.bytes??value);if(!bytes)throw new Error('READ_BYTES requires artifact bytes.');if(bytes.byteLength>LIMITS.maxInputBytes)throw new Error('Input exceeds deterministic runtime byte limit.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
+      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)throw new Error('DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxInputBytes)throw new Error('Text input exceeds deterministic runtime byte limit.');value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);break;}
       case 'PARSE_JSON':value=JSON.parse(String(value));break;
       case 'PARSE_CSV':value=parseCsv(String(value),step.config);break;
       case 'PARSE_XML':value=parseXml(String(value));break;
@@ -81,14 +82,15 @@ async function execute({spec,artifacts}){
       case 'SORT':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error('SORT requires a bounded array.');value=[...value].sort((a,b)=>stable(a).localeCompare(stable(b)));break;}
       case 'UNIQUE':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error('UNIQUE requires a bounded array.');const seen=new Set();value=value.filter(v=>{const k=stable(v);if(seen.has(k))return false;seen.add(k);return true;});break;}
       case 'HASH_SHA256':value=await sha256(value);break;
-      case 'REGEX':{const r=new RegExp(String(step.pattern||''),String(step.flags||''));lastRegex=r;value=r.test(String(value));break;}
+      case 'REGEX':{const input=String(value);if(new TextEncoder().encode(input).byteLength>LIMITS.maxRegexInputBytes)throw new Error('REGEX input exceeds limit.');const r=new RegExp(String(step.pattern||''),String(step.flags||''));lastRegex=r;value=r.test(input);break;}
       case 'COMPARE':{const other=Object.prototype.hasOwnProperty.call(step,'value')?step.value:source[step.binding]?.value;value=stable(comparable(value))===stable(comparable(other));break;}
       case 'BYTE_COMPARE':{const left=bytesOf(value),other=bytesOf(source[step.binding]?.bytes);if(!left||!other)throw new Error('BYTE_COMPARE requires byte-backed current value and target binding.');let equal=left.byteLength===other.byteLength;if(equal)for(let i=0;i<left.byteLength;i++)if(left[i]!==other[i]){equal=false;break;}value=equal;break;}
+      case 'ASSERT_EQ':assertion=assertCondition(stable(comparable(value))===stable(comparable(step.value)),step.value,comparable(value),step.message);break;
       case 'ASSERT_GT':assertion=assertCondition(Number(value)>Number(step.value),`> ${step.value}`,value,step.message);break;
       case 'ASSERT_GTE':assertion=assertCondition(Number(value)>=Number(step.value),`>= ${step.value}`,value,step.message);break;
       case 'ASSERT_LT':assertion=assertCondition(Number(value)<Number(step.value),`< ${step.value}`,value,step.message);break;
       case 'ASSERT_LTE':assertion=assertCondition(Number(value)<=Number(step.value),`<= ${step.value}`,value,step.message);break;
-      case 'ASSERT_MATCH':{const r=lastRegex||new RegExp(String(step.pattern??step.value??''),String(step.flags||''));assertion=assertCondition(r.test(String(value)),String(r),value,step.message);break;}
+      case 'ASSERT_MATCH':{const input=String(value);if(new TextEncoder().encode(input).byteLength>LIMITS.maxRegexInputBytes)throw new Error('ASSERT_MATCH input exceeds limit.');const r=lastRegex||new RegExp(String(step.pattern??step.value??''),String(step.flags||''));assertion=assertCondition(r.test(input),String(r),value,step.message);break;}
       case 'ASSERT_CONTAINS':{const ok=Array.isArray(value)?value.some(v=>stable(v)===stable(step.value)):String(value).includes(String(step.value));assertion=assertCondition(ok,`contains ${stable(step.value)}`,value,step.message);break;}
       case 'ASSERT_NOT_CONTAINS':{const ok=Array.isArray(value)?!value.some(v=>stable(v)===stable(step.value)):!String(value).includes(String(step.value));assertion=assertCondition(ok,`does not contain ${stable(step.value)}`,value,step.message);break;}
       case 'ASSERT_SET_EQUAL':{if(!Array.isArray(value)||!Array.isArray(step.value))throw new Error('ASSERT_SET_EQUAL requires arrays.');const a=[...new Set(value.map(stable))].sort(),b=[...new Set(step.value.map(stable))].sort();assertion=assertCondition(stable(a)===stable(b),step.value,value,step.message);break;}
