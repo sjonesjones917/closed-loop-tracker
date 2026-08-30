@@ -148,6 +148,9 @@ jobs:
           print(token)
           PY
 
+          # The temporary finalizer is not part of the delivered workflow set.
+          rm .github/workflows/stage4-durable-finalize.yml
+
       - name: Prove the repaired one-time intake and Stage 04 path
         shell: bash
         run: |
@@ -174,7 +177,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/stage4-durable-finalize.yml
+          test ! -e .github/workflows/stage4-durable-finalize.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git add -A
