@@ -1,0 +1,26 @@
+name: Finish v3 exhaustion
+on:
+  push:
+    branches:
+      - fix/closed-loop-v3-final-20260830
+    paths:
+      - tools/finish-v3-exhaustion.py
+      - .github/workflows/finish-v3-exhaustion.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply guarded repair
+        run: python3 tools/finish-v3-exhaustion.py
+      - name: Publish source commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
