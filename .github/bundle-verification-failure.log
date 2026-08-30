@@ -1,8 +1,0 @@
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-bundle-v3.mjs:12
-  const p=core.createBlankProject({jobId:'JOB-INTAKE-IDENTITY'});
-               ^
-
-TypeError: core.createBlankProject is not a function
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-bundle-v3.mjs:12:16
-
-Node.js v22.23.2
