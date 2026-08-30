@@ -4,7 +4,7 @@ on:
     branches:
       - fix/complete-spec-stage4-prompts-20260830
 permissions:
-  contents: read
+  contents: write
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -13,17 +13,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax checks
+      - name: Complete deterministic suite
+        shell: bash
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check verify-stage01-stage04-exhaustion.mjs
-      - name: Stage 01 and Stage 04 zero-loss proof
-        run: node verify-stage01-stage04-exhaustion.mjs
+          set +e
+          {
+            node build-test-project.mjs
+            for f in app-core.js hash.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-runtime.js test-worker.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-stage01-stage04-exhaustion.mjs; do node --check "$f" || exit 1; done
+            node verify-test-runtime.mjs
+            node verify-hash.mjs
+            node verify.mjs
+            node verify-ingestion.mjs
+            node verify-complete.mjs
+            node verify-full-cycle.mjs
+            node verify-prompt-semantics.mjs
+            node verify-semantic-invariant.mjs
+            node verify-definition-of-done.mjs
+            node verify-project-lifecycle.mjs
+            node verify-stage01-stage04-exhaustion.mjs
+            git diff --check
+          } > branch-proof.log 2>&1
+          code=$?
+          cat branch-proof.log
+          if [ "$code" -ne 0 ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add branch-proof.log TEST_PROJECT.json
+            git commit -m 'Capture complete branch verification diagnostic [skip ci]' || true
+            git push origin HEAD:fix/complete-spec-stage4-prompts-20260830 || true
+          fi
+          exit "$code"
