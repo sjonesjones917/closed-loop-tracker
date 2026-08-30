@@ -36,7 +36,11 @@ jobs:
           s=p.read_text()
           bad="descriptor.contractVersion!=='closed-loop-response-contract/2.4'"
           good="descriptor.contractVersion!=='closed-loop-response-contract/2.5'"
-          if s.count(bad)!=1: raise SystemExit('response contract test expectation not found exactly once')
+          if s.count(bad)!=1: raise SystemExit('response contract descriptor expectation not found exactly once')
+          s=s.replace(bad,good,1)
+          bad="record.prompt.includes('closed-loop-response-contract/2.4')"
+          good="record.prompt.includes('closed-loop-response-contract/2.5')"
+          if s.count(bad)!=1: raise SystemExit('response contract prompt expectation not found exactly once')
           p.write_text(s.replace(bad,good,1))
           PY
           node --check workflow-schema.js
