@@ -1,0 +1,108 @@
+name: Port v3 controlling spec
+
+on:
+  push:
+    branches:
+      - fix/closed-loop-v3-controlling-spec
+    paths:
+      - .github/workflows/port-v3-controlling-spec.yml
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Replace partial Stage 4 workaround with verified v3 source commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert -m 1 --no-edit 69add6a0548eeb89cb0b6e666147008edef7662d
+          git cherry-pick f6773ab9b380d7bbc5ab71d752701b40d8632b2b
+      - name: Close v3 ownership, runtime stamping, prompt neutrality, and script-order gaps
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('workflow-schema.js')
+          s=p.read_text(encoding='utf-8')
+          for old,new in [
+            ('valueType:VALUE_TYPES.ENUM',"valueType:'STRING'"),
+            ('valueType:VALUE_TYPES.STRING_ARRAY',"valueType:'STRING_ARRAY'"),
+            ('valueType:VALUE_TYPES.STRING',"valueType:'STRING'"),
+            ('valueType:VALUE_TYPES.OBJECT',"valueType:'OBJECT'")
+          ]:
+            s=s.replace(old,new)
+          old="if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);"
+          new="if(get('EXECUTABLE_SPEC_VERSION')!=null&&get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);"
+          if old not in s: raise SystemExit('Test IR application-version validation anchor missing')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('response-ingestion.js')
+          s=p.read_text(encoding='utf-8')
+          anchor="  for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}"
+          insertion="""  for(const record of canonicalRecords.tests||[]){
+    record.fields=record.fields||{};
+    record.fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;
+    record.fields.EXECUTABLE_SPEC_SHA256=String(record.fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'?hash.sha256Value(record.fields.EXECUTABLE_SPEC):null;
+    record.EXECUTABLE_SPEC_VERSION=record.fields.EXECUTABLE_SPEC_VERSION;
+    record.EXECUTABLE_SPEC_SHA256=record.fields.EXECUTABLE_SPEC_SHA256;
+  }
+"""
+          if anchor not in s: raise SystemExit('canonical record hashing anchor missing')
+          s=s.replace(anchor,insertion+anchor,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('prompt-engine.js')
+          s=p.read_text(encoding='utf-8')
+          subject_specific=[
+            ('For engineering artifacts, meaning review includes whether dimensions, tolerances, interfaces, notes, symbols, manufacturing intent, and other human-interpreted meaning communicate the required design unambiguously.','Apply the accepted project-specific meaning rubric and governing evidence without introducing a hard-coded subject model.'),
+            ('For drawings, CAD/CAM, CNC, and additive-manufacturing artifacts, inspect every required view/representation and verify that human-visible units, scales, datums/coordinates, dimensions/tolerances, notes, revision identifiers, and manufacturing information are present and coherent where applicable.','Inspect every representation and project-specific human-visible property required by the accepted requirements and verification plan.')
+          ]
+          for old,new in subject_specific:
+            if old in s:s=s.replace(old,new,1)
+          forbidden=['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE']
+          for token in forbidden:
+            if token in s: raise SystemExit('hard-coded subject branch remains: '+token)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace("connect-src 'self'; object-src 'none';","connect-src 'self'; worker-src 'self'; object-src 'none';")
+          s=s.replace('.expandable-prompt{max-height:280px}', '.expandable-prompt{max-height:80vh}')
+          schema_script='<script defer src="workflow-schema.js?v=runtime-5859ee5a07f239ae"></script>'
+          runtime_script='<script defer src="test-runtime.js?v=runtime-5859ee5a07f239ae"></script>'
+          if runtime_script not in s:
+            if schema_script not in s: raise SystemExit('workflow-schema script anchor missing')
+            s=s.replace(schema_script,schema_script+'\n'+runtime_script,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify syntax and critical v3 invariants
+        run: |
+          set -euo pipefail
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs; do node --check "$f"; done
+          node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')"
+          grep -q "closed-loop-stage-response/3" workflow-schema.js
+          grep -q "closed-loop-project/3" workbook.js
+          grep -q "worker-src 'self'" index.html
+          grep -q 'src="test-runtime.js?v=runtime-5859ee5a07f239ae"' index.html
+          ! grep -q 'CUSTOM_PIPELINE' workflow-schema.js
+          ! grep -q 'CUSTOM_PIPELINE' test-runtime.js
+      - name: Commit current-main v3 port
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git add workbook.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html verify-capture-once.mjs
+          git diff --cached --check
+          if ! git diff --cached --quiet; then git commit -m "Complete v3 capture-once contracts on current main lineage"; fi
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
