@@ -1,0 +1,20 @@
+name: Apply current canonical binding fix
+on:
+  push:
+    branches: [fix/canonical-bindings-current-v2]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply functional change
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git cherry-pick 5a08c227f619a2c0d7afd0d6fa652e6fc11c1f2d
+          git push
