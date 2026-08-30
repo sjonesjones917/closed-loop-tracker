@@ -54,6 +54,14 @@ jobs:
           record=record.replace(old,new)
           t=t[:rs]+record+t[re:]
           p.write_text(t)
+
+          # The source-repair generator represents physical JS line breaks with \n and
+          # also contains literal JS newline escapes. Its previous global conversion
+          # changed quote-backslash-n-quote into quote-newline-quote. Repair only that
+          # invalid lexical form; physical source line layout is otherwise irrelevant.
+          rt=Path('test-runtime.js').read_text()
+          rt=rt.replace("'\n'", "'\\n'")
+          Path('test-runtime.js').write_text(rt)
           PY
           git diff --check
       - name: Remove all temporary workflows before proof
