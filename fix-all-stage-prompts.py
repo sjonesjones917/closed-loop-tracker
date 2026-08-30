@@ -35,7 +35,7 @@ addition="""  if(!record.prompt.includes('STAGE-SPECIFIC TASK'))issues.push('STA
   if(!record.prompt.includes('Never ask the human to repeat, retype, restate, summarize, reconstruct, reattach, or resend it'))issues.push('NO_REPEAT_HUMAN_INPUT_RULE_MISSING');
   if(!record.prompt.includes('If previously supplied information should be present but is absent from the current canonical projection, fail closed as MISSING_APPLICATION_CONTEXT or INADEQUATE_PRIOR_OUTPUT'))issues.push('MISSING_PRIOR_CONTEXT_FAIL_CLOSED_RULE_MISSING');
   for(const collection of op?.readCollections||[]){const heading=collection.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/_/g,' ').toUpperCase();if(!record.prompt.includes(heading))issues.push('REQUIRED_CONTEXT_COLLECTION_MISSING_'+collection);}
-  for(const condition of schema.STAGE_CONTRACTS[record.stage]?.completionConditions||[]){if(!record.prompt.includes('- '+condition))issues.push('DECLARED_COMPLETION_CONDITION_MISSING');}
+  for(const condition of core.STAGES[record.stage-1]?.completionGate||[]){if(!record.prompt.includes('- '+condition))issues.push('DECLARED_COMPLETION_CONDITION_MISSING');}
 """
 if addition.strip() not in text:
     if anchor not in text: raise SystemExit('semanticIssues insertion anchor missing')
