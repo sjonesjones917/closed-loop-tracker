@@ -36,6 +36,15 @@ jobs:
               if text.count(old)!=1:
                   raise SystemExit(f'bootstrap enum mapping anchor mismatch: {old} -> {text.count(old)}')
               text=text.replace(old,new)
+          needle="p.write_text(text.replace(old,new))"
+          injected="""text=text.replace(old,new)
+stage4_old=\"The agent compiles the requirement specification from the canonical Stage 01 intent statements, Stage 03 candidate requirements, and accepted external-source research. The original intent file is prohibited and must not be attached or resent.\"
+stage4_new=\"Stage 04 uses the current User Job Input, accepted Stage 01 job definition, canonical Stage 01 intent statements, and accepted Stage 03 findings already stored by the application. Do not attach or resend the original intent file. The agent compiles the requirement specification from those current canonical inputs and accepted external-source research.\"
+if text.count(stage4_old)!=1: raise SystemExit(f'app-core Stage 04 guidance anchor count={text.count(stage4_old)}')
+p.write_text(text.replace(stage4_old,stage4_new))"""
+          if text.count(needle)!=1:
+              raise SystemExit(f'bootstrap app-core write anchor mismatch: {text.count(needle)}')
+          text=text.replace(needle,injected)
           p.write_text(text)
           PY
           rm -f .github/workflows/stage4-canonical-bootstrap.yml
