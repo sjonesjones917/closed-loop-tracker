@@ -18,6 +18,18 @@ jobs:
           node-version: '22'
       - name: Assemble source patcher
         run: cat .stage4-repair.part1 .stage4-repair.part2 .stage4-repair.part3 > .stage4-repair.mjs
+      - name: Normalize engine infrastructure anchor
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures'\n]);"
+          new="  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeCoverageManifests','obligationManifests']);"
+          if old not in s:
+              raise SystemExit('engine infrastructure anchor not found')
+          p.write_text(s.replace(old,new,1))
+          PY
       - name: Apply structural fix
         run: node .stage4-repair.mjs
       - name: Remove one-time patch assets
