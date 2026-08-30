@@ -33,7 +33,9 @@ jobs:
           printf 'Conflicts: %s\n' "${conflicts[*]:-NONE}"
           for file in "${conflicts[@]}"; do
             case "$file" in
-              app-core.js|index.html)
+              app-core.js|index.html|prompt-engine.js)
+                # The branch contains the complete canonical-ledger repair. Current
+                # main contains narrower Stage 04 UI/prompt masks already subsumed by it.
                 git checkout --ours -- "$file"
                 git add "$file"
                 ;;
