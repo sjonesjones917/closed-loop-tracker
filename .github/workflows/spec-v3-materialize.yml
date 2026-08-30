@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: '22'
       - name: Materialize controlling implementation
-        run: node spec-v3-materialize.mjs
+        run: |
+          node spec-v3-materialize.mjs
+          node spec-v3-postfix.mjs
       - name: Syntax and controlling checks
         run: |
           node --check workbook.js
@@ -36,7 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm spec-v3-materialize.mjs .github/workflows/spec-v3-materialize.yml
+          git rm spec-v3-materialize.mjs spec-v3-postfix.mjs .github/workflows/spec-v3-materialize.yml
           git add -A
           git commit -m "Implement controlling v3 reliability contract"
           git push origin HEAD:spec-v3-controlling-bundle
