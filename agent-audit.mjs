@@ -79,7 +79,7 @@ for (const branch of candidates) {
   const workbook = contents['workbook.js'];
   const runtime = contents['test-runtime.js'];
   const index = contents['index.html'];
-  const changed = run(['diff', '--name-only', 'origin/main...', ref]).split('\n').filter(Boolean);
+  const changed = run(['diff', '--name-only', `origin/main...${ref}`]).split('\n').filter(Boolean);
   const [behind, ahead] = run(['rev-list', '--left-right', '--count', `origin/main...${ref}`]).split(/\s+/).map(Number);
   const visualSelectorsEqualMain = selectors.every(selector => cssRule(index, selector) === cssRule(mainIndex, selector));
   const hardCodedDomainBranch = /STAGE 01 DOMAIN INTAKE ADAPTATION|PATENT \/ REGULATED|SOFTWARE \/ TECHNICAL|AEC \/ BUILDING|MECHANICAL \/ PHYSICAL/i.test(prompt);
