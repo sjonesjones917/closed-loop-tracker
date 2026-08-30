@@ -1,0 +1,21 @@
+name: Branch conformance suite
+on:
+  push:
+    branches: [fix/final-spec-conformance]
+permissions:
+  contents: read
+jobs:
+  test:
+    if: "!contains(github.event.head_commit.message, 'REMOVE-BRANCH-CONFORMANCE')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-spec-conformance
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          set -euxo pipefail
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-worker.js; do node --check "$f"; done
+          for f in verify*.mjs; do echo "=== $f ==="; node "$f"; done
