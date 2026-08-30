@@ -87,6 +87,11 @@ jobs:
               "assert(handoff.withhold.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'),'Stage 04 does not explicitly withhold the original intent file.');",
               "assert(handoff.withhold.length===0,'Stage 04 still turns the original intent file into a later-stage handoff item.');"
           )
+          replace_once(
+              'verify-prompt-semantics.mjs',
+              "  if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');",
+              "  if((handoff?.send?.length||0)!==0||(handoff?.withhold?.length||0)!==0||(handoff?.expectBack?.length||0)!==0)throw new Error('Stage 04 must not create any original-intent-file handoff item.');"
+          )
 
           # Existing complete-suite fixture must model the canonical statement ledger and current next-action wording.
           replace_once(
@@ -147,7 +152,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in app-core.js workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs; do
+          for file in app-core.js workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-hash.mjs verify-complete.mjs verify-full-cycle.mjs verify-ingestion.mjs verify-prompt-semantics.mjs verify.mjs; do
             node --check "$file"
           done
           node build-test-project.mjs
