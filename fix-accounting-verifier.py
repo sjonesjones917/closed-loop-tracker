@@ -58,3 +58,13 @@ if old not in text:
     raise SystemExit('Stale Stage 03 literal regression anchor missing')
 text = text.replace(old, new, 1)
 p.write_text(text)
+
+# Generic ingestion fixtures must now satisfy the mandatory Stage 01 intake accounting contract.
+p = Path('verify-ingestion.mjs')
+text = p.read_text()
+old = "  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
+new = "  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const intake=engine.intakeCoverageManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:unit.rawValue,statementClass:'CONTEXT'}]})),conversationStatements:[]});}"
+if old not in text:
+    raise SystemExit('verify-ingestion Stage 01 fixture anchor missing')
+text = text.replace(old, new, 1)
+p.write_text(text)
