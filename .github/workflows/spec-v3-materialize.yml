@@ -18,7 +18,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply second-pass conformance corrections
-        run: node spec-v3-followup.mjs
+        run: |
+          node spec-v3-followup-fix.mjs
+          node spec-v3-followup.mjs
       - name: Syntax and controlling checks
         run: |
           node --check workbook.js
@@ -33,11 +35,20 @@ jobs:
           node --check verify-spec-v3.mjs
           node verify-spec-v3.mjs
           node verify-test-runtime.mjs
+      - name: Upload patched source for independent audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: spec-v3-patched-source
+          path: |
+            *.js
+            *.mjs
+            *.html
+            .github/workflows/pages.yml
       - name: Commit second-pass implementation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm spec-v3-followup.mjs
+          git rm spec-v3-followup.mjs spec-v3-followup-fix.mjs
           git add -A
           git commit -m "Complete v3 ownership action and runtime boundaries"
           git push origin HEAD:spec-v3-controlling-bundle
