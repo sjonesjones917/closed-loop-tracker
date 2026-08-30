@@ -1,0 +1,50 @@
+name: Diagnose zero-loss Stage 04 browser transition
+
+on:
+  push:
+    branches:
+      - fix/closed-loop-v3-final-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Materialize the candidate implementation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+          workflow=Path('.github/workflows/complete-zero-loss-closure.yml').read_text()
+          start=workflow.index("          python3 - <<'PY'\n")+len("          python3 - <<'PY'\n")
+          end=workflow.index("\n          PY",start)
+          Path('/tmp/zero_loss_patch.py').write_text(textwrap.dedent(workflow[start:end]))
+          PY
+          python3 /tmp/zero_loss_patch.py
+      - name: Instrument the exact failing stage transition
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs')
+          t=p.read_text()
+          old="async function openStage(cdp,n){await click(cdp,'[data-view=\"Workflow\"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);await waitExpr(cdp,`document.body.innerText.includes('Stage ${String(n).padStart(2,'0')}')`);}"
+          new="async function openStage(cdp,n){await click(cdp,'[data-view=\"Workflow\"]');await evalValue(cdp,`(()=>{const s=document.querySelector('#stage-picker');s.value='${n}';s.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);try{await waitExpr(cdp,`document.body.innerText.includes('Stage ${String(n).padStart(2,'0')}')`);}catch(error){let diagnostic;try{diagnostic=await evalValue(cdp,`(()=>({picker:document.querySelector('#stage-picker')?.value,bodyText:document.body.innerText.slice(0,12000),screenText:document.querySelector('#screen')?.innerText?.slice(0,12000),screenHtml:document.querySelector('#screen')?.innerHTML?.slice(0,12000),appError:String(globalThis.closedLoopAppError||''),currentSummary:document.querySelector('#current-project-summary')?.textContent||'',ready:globalThis.closedLoopAppReady===true}))()`);}catch(diagError){diagnostic={diagnosticError:String(diagError)}}const events=cdp.events.filter(event=>['Runtime.exceptionThrown','Runtime.consoleAPICalled','Log.entryAdded'].includes(event.method)).slice(-40);throw new Error(`Stage ${n} transition failed: ${error.message}; diagnostic=${JSON.stringify(diagnostic)}; events=${JSON.stringify(events)}`);}}"
+          assert t.count(old)==1, f'openStage target count={t.count(old)}'
+          p.write_text(t.replace(old,new,1))
+          PY
+      - name: Run instrumented Chromium proof
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
