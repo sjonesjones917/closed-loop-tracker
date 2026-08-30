@@ -1,0 +1,50 @@
+name: One-time Stage 04 UI repair
+on:
+  push:
+    branches: [controlling-spec-final-current]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: controlling-spec-final-current
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore Stage 04 no-repeat attachment behavior
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="function artifactControlMarkup(n,locked){if(n===19)"
+          new="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"
+          if old not in s:
+              raise SystemExit('expected current artifactControlMarkup preimage not found')
+          if new in s:
+              raise SystemExit('repair already present unexpectedly')
+          p.write_text(s.replace(old,new,1))
+          v=Path('verify-hash.mjs')
+          t=v.read_text()
+          marker="Stage 04 must not render the generic artifact upload control after canonical intent capture."
+          if marker not in t:
+              anchor="console.log(JSON.stringify("
+              assertion="const appCore=fs.readFileSync('app-core.js','utf8');\nassert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)\"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');\n\n"
+              if anchor not in t:
+                  raise SystemExit('verify-hash console anchor not found')
+              t=t.replace(anchor,assertion+anchor,1)
+              v.write_text(t)
+          PY
+          node --check app-core.js
+          node verify-hash.mjs
+      - name: Commit repair
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add app-core.js verify-hash.mjs
+          git commit -m "Restore Stage 04 no-repeat attachment control"
+          git push origin HEAD:controlling-spec-final-current
