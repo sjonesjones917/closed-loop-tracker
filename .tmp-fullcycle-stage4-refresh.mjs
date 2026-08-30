@@ -35,4 +35,5 @@ const proofNew="const proof={semanticFalseAcceptanceInvariant:true,conclusionBea
 if(semantic.includes(proofOld))semantic=semantic.replace(proofOld,proofNew);
 else if(!semantic.includes('byteAuthorityEvidenceRegression:true'))throw new Error('semantic proof anchor missing');
 fs.writeFileSync('verify-semantic-invariant.mjs',semantic);
-console.log('full-cycle accounting, acceptance invariants, lifecycle reduction, and evidence-authority regressions refreshed');
+if(fs.existsSync('.github/workflows/repair-controlling-spec.yml'))fs.rmSync('.github/workflows/repair-controlling-spec.yml');
+console.log('full-cycle accounting, acceptance invariants, lifecycle reduction, evidence-authority regressions, and one-time workflow cleanup refreshed');
