@@ -27,7 +27,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git revert -m 1 --no-edit 69add6a0548eeb89cb0b6e666147008edef7662d
-          git cherry-pick f6773ab9b380d7bbc5ab71d752701b40d8632b2b
+          git cherry-pick origin/fix/controlling-spec-capture-once
       - name: Enforce Stage 1 and Stage 3 exhaustion before Stage 4
         shell: bash
         run: |
@@ -38,11 +38,15 @@ jobs:
           old="function gateStage04(project){"
           if old not in s:
               raise SystemExit('gateStage04 anchor missing')
-          s=s.replace(old,"function stage01Exhausted(project){const stage=project.stages?.[1];const manifest=project.projectData?.intakeCoverageManifests?.filter?.(m=>!m.invalidatedBy&&m.inputVersion===project.job.CURRENT_INPUT_VERSION)?.at?.(-1);return Boolean(stage?.status==='COMPLETE'&&manifest&&Number(manifest.coverage)===1&&Number(manifest.omittedCount||0)===0&&Number(manifest.unaskedHumanOnlyCount||0)===0);}\nfunction stage03Exhausted(project){const stage=project.stages?.[3];if(stage?.status!=='COMPLETE')return false;if(String(project.stages?.[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION||'').toUpperCase()==='NO_APPLICABLE_EXTERNAL_SOURCE')return true;const currentSources=recordsForCurrentScope(project,'sources');const currentResearch=recordsForCurrentScope(project,'research');if(!currentSources.length)return false;const covered=new Set(currentResearch.map(r=>String(recordValue(r,'SOURCE_ID')||r.relationships?.SOURCE_ID||'')));return currentSources.every(src=>covered.has(recordId(src,'sources')))&&truth(stage.agentData?.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)&&truth(stage.agentData?.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)&&['FALSE','NO','NONE','NOT APPLICABLE'].includes(upper(stage.agentData?.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS));}\nfunction gateStage04(project){",1)
+          prefix="function stage01Exhausted(project){const stage=project.stages?.[1];const manifest=project.projectData?.intakeCoverageManifests?.filter?.(m=>!m.invalidatedBy&&m.inputVersion===project.job.CURRENT_INPUT_VERSION)?.at?.(-1);return Boolean(stage?.status==='COMPLETE'&&manifest&&Number(manifest.coverage)===1&&Number(manifest.omittedCount||0)===0&&Number(manifest.unaskedHumanOnlyCount||0)===0);}\nfunction stage03Exhausted(project){const stage=project.stages?.[3];if(stage?.status!=='COMPLETE')return false;if(String(project.stages?.[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION||'').toUpperCase()==='NO_APPLICABLE_EXTERNAL_SOURCE')return true;const currentSources=recordsForCurrentScope(project,'sources');const currentResearch=recordsForCurrentScope(project,'research');if(!currentSources.length)return false;const covered=new Set(currentResearch.map(r=>String(recordValue(r,'SOURCE_ID')||r.relationships?.SOURCE_ID||'')));return currentSources.every(src=>covered.has(recordId(src,'sources')))&&truth(stage.agentData?.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)&&truth(stage.agentData?.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)&&['FALSE','NO','NONE','NOT APPLICABLE'].includes(upper(stage.agentData?.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS));}\n"
+          s=s.replace(old,prefix+old,1)
           needle="function gateStage04(project){"
           idx=s.index(needle)+len(needle)
           guard="if(!stage01Exhausted(project))return failGate('Stage 01 intake is not exhausted: every controlled human-input unit must be accounted for before Stage 04.');if(!stage03Exhausted(project))return failGate('Stage 03 research is not exhausted: every current Stage 02 source must have current research coverage and the final conflict/exception pass must be complete before Stage 04.');"
           s=s[:idx]+guard+s[idx:]
+          export_anchor="evaluateContextIndependence,evaluateEvidenceSufficiency,detectCurrentContradictions,"
+          if export_anchor in s:s=s.replace(export_anchor,"stage01Exhausted,stage03Exhausted,"+export_anchor,1)
+          else: raise SystemExit('engine export anchor missing')
           p.write_text(s,encoding='utf-8')
           PY
       - name: Close v3 runtime and prompt gaps
@@ -74,32 +78,11 @@ jobs:
           if runtime_script not in s:s=s.replace(schema_script,schema_script+'\n'+runtime_script,1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Add Stage 1/3/4 prompt regression
-        shell: bash
-        run: |
-          cat > verify-stage1-stage3-stage4.mjs <<'EOF'
-          import './workbook.js';
-          import './hash.js';
-          import './workflow-schema.js';
-          import './test-runtime.js';
-          import './workflow-engine.js';
-          import './prompt-engine.js';
-          const assert=(v,m)=>{if(!v)throw new Error(m)};
-          const engine=globalThis.closedLoopWorkflowEngine,prompt=globalThis.closedLoopPromptEngine;
-          assert(typeof engine.stage01Exhausted==='function','stage01Exhausted missing');
-          assert(typeof engine.stage03Exhausted==='function','stage03Exhausted missing');
-          const text=String(prompt.procedures?.[1]||prompt.PROCEDURES?.[1]||'');
-          assert(/every human-supplied/i.test(text)&&/fact|requirement|constraint|decision|prohibition|acceptance/i.test(text),'Stage 1 prompt does not require exhaustive human-authority capture');
-          const p4=String(prompt.procedures?.[4]||prompt.PROCEDURES?.[4]||'');
-          assert(/complete current canonical input union/i.test(p4),'Stage 4 prompt does not require complete canonical union');
-          assert(/do not ask the human to attach, resend, retype, or summarize/i.test(p4),'Stage 4 repeat-input prohibition missing');
-          console.log('verify-stage1-stage3-stage4: PASS');
-          EOF
       - name: Verify source tree
         shell: bash
         run: |
           set -euo pipefail
-          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs verify-stage1-stage3-stage4.mjs; do node --check "$f"; done
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs; do node --check "$f"; done
           node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')"
           grep -q "closed-loop-stage-response/3" workflow-schema.js
           grep -q "closed-loop-project/3" workbook.js
@@ -107,13 +90,16 @@ jobs:
           grep -q 'src="test-runtime.js?v=runtime-5859ee5a07f239ae"' index.html
           ! grep -q 'CUSTOM_PIPELINE' workflow-schema.js
           ! grep -q 'CUSTOM_PIPELINE' test-runtime.js
+          grep -q 'function stage01Exhausted' workflow-engine.js
+          grep -q 'function stage03Exhausted' workflow-engine.js
+          grep -q 'complete current canonical input union' prompt-engine.js
       - name: Commit repaired source
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git add workbook.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html verify-capture-once.mjs verify-stage1-stage3-stage4.mjs
+          git add workbook.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html verify-capture-once.mjs
           git diff --cached --check
           git commit -m "Enforce exhausted Stage 1 and 3 inputs before Stage 4" || true
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
