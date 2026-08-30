@@ -422,23 +422,26 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
 
 
-// stage04-stage-prompt-material-regression-v3
+// Stage 04 canonical-input reuse regression: a filename in Stage 01 inventory must never create a repeated attachment request.
 {
   const p=baseProject();
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  const withoutAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  for(const token of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','design-input.pdf','These materials are not embedded in the prompt','Attach or provide them in the agent conversation where this Stage 04 instruction is run','Do not assume access to any earlier stage conversation','Do not ask the human to retype or summarize its contents','Do not infer contents from a filename'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 prompt-material handoff missing: '+token);
-  if(!withoutAppCopy.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 material handoff is not bound to prompt context identity.');
-  for(const prohibited of ['No second upload into the application is required','already attached and readable in this external conversation','Continue in the external agent conversation that already has','Required input file is missing'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 prompt still assumes prior-conversation continuity or discusses irrelevant app upload: '+prohibited);
-  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-OPTIONAL',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-OPTIONAL',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
-  const withOptionalAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(withOptionalAppCopy.prompt.includes('FILES YOU MUST RECEIVE'))throw new Error('An application-stored copy became a mandatory Stage 04 external handoff.');
-  for(const token of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Do not assume access to any earlier stage conversation'])if(!withOptionalAppCopy.prompt.includes(token))throw new Error('Optional browser custody weakened the Stage 04 prompt-material instruction: '+token);
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'revised-design-input.pdf'}]);
-  const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(revised.bodySha256===withoutAppCopy.bodySha256||revised.contextSignature===withoutAppCopy.contextSignature)throw new Error('A changed Stage 04 material reference did not change prompt identity.');
+  p.job.EXACT_DELIVERABLE_REQUESTED='CANONICAL-STAGE-01-DELIVERABLE';
+  p.job.ASSUMPTIONS='CANONICAL-STAGE-01-ASSUMPTION';
+  p.job.UNKNOWN_INFORMATION='CANONICAL-STAGE-01-UNKNOWN';
+  p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE';
+  p.projectData.candidateRequirements.push({id:'CANDIDATE-REQ-STAGE04',stage:3,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-STAGE04',SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},relationships:{},evidenceRefs:['EVIDENCE-STAGE-03']});
+  const record=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
+  if(handoff.send.length||handoff.withhold.length||handoff.expectBack.length||handoff.conversationMaterials.length||handoff.optionalApplicationCopies.length)throw new Error('Stage 04 converted previously supplied intent material into a new file handoff.');
+  for(const token of ['CANONICAL-STAGE-01-DELIVERABLE','CANONICAL-STAGE-01-ASSUMPTION','CANONICAL-STAGE-01-UNKNOWN','CANONICAL-STAGE-01-INTENT-CAPTURE','CANONICAL-STAGE-03-OBLIGATION'])if(!record.prompt.includes(token))throw new Error('Stage 04 omitted canonical prior-stage input: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','These materials are not embedded in the prompt','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation','attach or provide the original before final JSON'])if(record.prompt.includes(prohibited))throw new Error('Stage 04 still requests repeated intent-material transfer: '+prohibited);
+  if(record.contextManifest.executionHandoff?.conversationMaterials)throw new Error('Obsolete Stage 04 conversation-material state remains in prompt identity.');
+  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
+  const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
 }
-console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
   const p=baseProject();

@@ -321,22 +321,24 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
 
 
-// stage04-stage-prompt-material-regression-v3
+// Stage 04 must reuse accepted canonical input instead of requiring the user's intent file again.
 {
-  const p=project('JOB-STAGE04-PROMPT-MATERIAL');
+  const p=project('JOB-STAGE04-CANONICAL-REUSE');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
+  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});
+  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');candidate.scope={inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION};candidate.evidenceRefs=['EVIDENCE-STAGE-03'];p.projectData.candidateRequirements.push(candidate);
   const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.conversationMaterials.length===1&&handoff.conversationMaterials[0].label==='design-input.pdf','Stage 04 did not derive the material that must accompany its instruction.');
-  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 input material incorrectly became a returned-file or canonical-artifact transport contract.');
+  assert(handoff.send.length===0&&handoff.withhold.length===0&&handoff.expectBack.length===0&&handoff.conversationMaterials.length===0&&handoff.optionalApplicationCopies.length===0,'Stage 04 converted previously supplied intent material into another file handoff.');
   const next=engine.operationalNextAction(p,4);
-  assert(next.includes('Send the Stage 04 instruction with design-input.pdf'),'Stage 04 next action does not identify the exact material to send with the prompt.');
-  assert(next.includes('The prompt does not include those materials'),'Stage 04 next action does not explain that copying the prompt does not transfer the file.');
+  assert(next.includes('accepted Stage 01 job definition')&&next.includes('accepted Stage 03 findings'),'Stage 04 next action does not identify the canonical input sources it reuses.');
+  assert(!/send the Stage 04 instruction with|attach or provide the original|required material/i.test(next),'Stage 04 next action still asks for repeated intent-file transfer.');
+  const prompt=globalThis.closedLoopPromptEngine.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt;
+  for(const token of ['CANONICAL-STAGE-01-DELIVERABLE','CANONICAL-STAGE-01-ASSUMPTION','CANONICAL-STAGE-01-UNKNOWN','CANONICAL-STAGE-01-INTENT-CAPTURE','CANONICAL-STAGE-03-OBLIGATION'])assert(prompt.includes(token),'Stage 04 prompt omitted canonical prior-stage input: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation','Do not assume access to any earlier stage conversation'])assert(!prompt.includes(prohibited),'Stage 04 prompt still requests repeated material transfer: '+prohibited);
   const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI does not use the existing interaction notice for the concise handoff instruction.');
-  assert(!appSource.includes('stage04-material-handoff')&&!appSource.includes('No upload to this application is required.')&&!appSource.includes('Optional application file custody'),'Stage 04 still contains the redundant app-upload panel or self-directed upload warnings.');
-  assert(!appSource.includes('Required input file is missing. Add and verify'),'The rejected Stage 04 browser-upload hard block returned.');
+  assert(!appSource.includes('Send the Stage 04 instruction with the required material.')&&!appSource.includes('Attach or provide with the instruction:'),'Stage 04 UI still requests the original intent file.');
 }
-console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
 {
   const p=project('JOB-EXECUTION-ROUTING-HARDENING');
   Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-ROUTE'});
