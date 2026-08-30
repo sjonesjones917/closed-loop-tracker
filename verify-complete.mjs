@@ -337,3 +337,53 @@ console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidenc
   assert(!appSource.includes('Required input file is missing. Add and verify'),'The rejected Stage 04 browser-upload hard block returned.');
 }
 console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+{
+  const p=project('JOB-EXECUTION-ROUTING-HARDENING');
+  Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-ROUTE'});
+  const req=record('requirements',4,{OBLIGATION:'Native deterministic route',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'true',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC',EXPECTED_EVIDENCE:'native',FAILURE_CONDITION:'false',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-ROUTE');req.scope=engine.currentScope(p);p.projectData.requirements.push(req);
+  const artifact=record('artifacts',22,{FILENAME:'product.json',TYPE:'application/json',VERSION:'1',BYTE_SIZE:2,SHA256:'0'.repeat(64),ROLE:'PRODUCT',STORAGE_REFERENCE:'idb',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:''},'ARTIFACT-ROUTE');artifact.scope={...engine.currentScope(p),productId:'PRODUCT-ROUTE'};p.projectData.artifacts.push(artifact);
+  const test=record('tests',6,{REQ_ID:'REQ-ROUTE',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:'CLOSED_LOOP_TEST_IR',ARTIFACT_REQUIREMENTS:'NONE',EXECUTABLE_KIND:'CUSTOM_PIPELINE',EXECUTABLE_SPEC_VERSION:'closed-loop-test-spec/1',EXECUTABLE_INPUT_BINDINGS:{PRODUCT:{source:'CURRENT_PRODUCT',filename:'product.json'}},EXECUTABLE_SPEC:{version:'closed-loop-test-spec/1',steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'ASSERT_EQ',value:2}]},INPUTS:'product',TOOLS:'runtime',PROCEDURE:'read bytes',EXPECTED_RESULT:'2',FAILURE_CONDITION:'not 2',EVIDENCE_TO_PRESERVE:'application evidence',STATUS:'READY'},'TEST-ROUTE');test.scope=engine.currentScope(p);p.projectData.tests.push(test);
+  p.activeStage=22;const item=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(item&&item.executableNow&&item.userAction==='RUN_IN_APP','Native Test IR route was not executable in-app.');assert(item.returnRequirements.structuredResponse===false&&item.handoff.expectBack.length===0&&item.handoff.send.length===0,'Native Test IR incorrectly requires external response/file handoff.');
+  artifact.AVAILABILITY=artifact.fields.AVAILABILITY='METADATA_ONLY';const blocked=engine.testExecutionPlan(p).items.find(x=>x.testId==='TEST-ROUTE');assert(blocked&&!blocked.executableNow&&blocked.operatorAction==='BLOCKED','Native Test IR did not fail closed after verified bytes became unavailable.');
+}
+{
+  const p=project('JOB-CAPABILITY-NEGATION');p.job.AVAILABLE_TOOLS='SolidWorks import capability is UNAVAILABLE';Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001'});const req=record('requirements',4,{OBLIGATION:'External import',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'imports',INTENDED_VERIFICATION_METHOD:'EXTERNAL',EXPECTED_EVIDENCE:'report',FAILURE_CONDITION:'fails',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-CAP');req.scope=engine.currentScope(p);p.projectData.requirements.push(req);const test=record('tests',6,{REQ_ID:'REQ-CAP',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL',REQUIRED_CAPABILITY:'SOLIDWORKS',ARTIFACT_REQUIREMENTS:'NONE',INPUTS:'file',TOOLS:'SolidWorks',PROCEDURE:'import',EXPECTED_RESULT:'no errors',FAILURE_CONDITION:'error',EVIDENCE_TO_PRESERVE:'report',STATUS:'READY'},'TEST-CAP');test.scope=engine.currentScope(p);p.projectData.tests.push(test);const item=engine.testExecutionPlan(p).items[0];assert(item&&!item.executableNow&&item.blockingReason.includes('not affirmatively available'),'Negated capability text was incorrectly treated as available.');
+}
+{
+  const p=project('JOB-STAGE7-FAIL-CLOSED');const req=record('requirements',4,{OBLIGATION:'Reject invalid input',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',USER_INPUT_RELATIONSHIP:'User input',APPLICABILITY:'APPLICABLE',OBSERVABLE_SATISFACTION_CONDITION:'reject',INTENDED_VERIFICATION_METHOD:'MUTATION',EXPECTED_EVIDENCE:'execution',FAILURE_CONDITION:'accept',SEVERITY:'MAJOR',STATUS:'ACTIVE'},'REQ-MUT');p.projectData.requirements.push(req);const mutation=record('failureTests',7,{REQ_ID:'REQ-MUT',VIOLATION_MODE:'INVALID',FIXTURE:'fixture',EXPECTED_REJECTION:'REJECT',ACTUAL_RESULT:'ACCEPTED',EVIDENCE:'validator accepted invalid fixture',VALIDATOR_DEFECT_ID:'DEFECT-VAL'},'MUTATION-1');p.projectData.failureTests.push(mutation);p.projectData.acceptedChanges.push({changeId:'CHANGE-7',stage:7});p.stages[6].status='COMPLETE';const g=engine.gate(7,p);assert(!g.complete&&g.reasons.some(x=>/remains blocked until the validator is corrected/i.test(x)),'Stage 07 completed while a known-invalid fixture was still accepted.');
+}
+console.log(JSON.stringify({nativeHandoffNoExternalReturn:true,capabilityNegation:true,stage7AcceptedInvalidBlocks:true},null,2));
+
+// Stage 23/24 reviewer independence is application-established from canonical context identity when observable.
+{
+  const p=project('JOB-REVIEWER-INDEPENDENCE');
+  const production=record('freshContexts',21,{EXTERNAL_CONTEXT_IDENTIFIER:'production-session',ROLE:'PRODUCTION',AUTHORIZED_PROJECT_INPUTS:['baseline'],TOOL_AVAILABILITY:'available',CONTAMINATION_STATUS:'NONE',EVIDENCE:'registered',USABILITY_DETERMINATION:'USABLE'},'CONTEXT-PRODUCTION');
+  const reviewer=record('freshContexts',23,{EXTERNAL_CONTEXT_IDENTIFIER:'production-session',ROLE:'MEANING_REVIEWER',AUTHORIZED_PROJECT_INPUTS:['product','requirement'],TOOL_AVAILABILITY:'available',CONTAMINATION_STATUS:'NONE',EVIDENCE:'registered',USABILITY_DETERMINATION:'USABLE'},'CONTEXT-REVIEWER');
+  p.projectData.freshContexts.push(production,reviewer);
+  let result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-REVIEWER',productionContextId:'CONTEXT-PRODUCTION'});
+  assert(result.determination==='VIOLATED','Reviewer reused the production external context but independence was not violated.');
+  reviewer.fields.EXTERNAL_CONTEXT_IDENTIFIER=reviewer.EXTERNAL_CONTEXT_IDENTIFIER='meaning-review-session';
+  result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-REVIEWER',productionContextId:'CONTEXT-PRODUCTION'});
+  assert(result.determination==='APPLICATION_ESTABLISHED','Distinct canonical production/reviewer contexts were not application-established.');
+  reviewer.fields.AUTHORIZED_PROJECT_INPUTS=reviewer.AUTHORIZED_PROJECT_INPUTS=['product','prior reviewer conclusion'];
+  result=engine.evaluateContextIndependence(p,{role:'MEANING_REVIEW',reviewerContextId:'CONTEXT-REVIEWER',productionContextId:'CONTEXT-PRODUCTION'});
+  assert(result.determination==='VIOLATED','Prohibited prior-review material did not invalidate reviewer independence.');
+}
+
+// Reliability measurement counts completed application-established independent operations, never reserved runs.
+{
+  const p=project('JOB-OPERATIONAL-METRICS');
+  p.job.CURRENT_ITERATION='ITERATION-METRICS';
+  p.job.CURRENT_CANDIDATE_ID='CANDIDATE-METRICS';
+  const scope={...engine.currentScope(p),iterationId:'ITERATION-METRICS',candidateId:'CANDIDATE-METRICS'};
+  for(let i=0;i<10;i++){
+    const runId=`RUN-METRICS-${i+1}`,contextId=`CONTEXT-METRICS-${i+1}`;
+    const run=record('runs',11,{ITERATION_ID:'ITERATION-METRICS',CANDIDATE_ID:'CANDIDATE-METRICS',CONTEXT_ID:contextId,FRESH_CONTEXT_RECORD:'reserved',CONTAMINATION_CHECK:'NONE',TOOL_CONFIGURATION:'same',EXECUTION_STATUS:'RESERVED',COMPLETE_OUTPUT:''},runId);run.scope=scope;
+    const context=record('freshContexts',11,{ITERATION_ID:'ITERATION-METRICS',RUN_ID:runId,EXTERNAL_CONTEXT_IDENTIFIER:`external-metrics-${i+1}`,ROLE:'PRODUCTION_RUN',AUTHORIZED_PROJECT_INPUTS:['candidate'],TOOL_AVAILABILITY:'available',CONTAMINATION_STATUS:'NONE',EVIDENCE:'registered',USABILITY_DETERMINATION:'USABLE'},contextId);context.scope=scope;
+    p.projectData.runs.push(run);p.projectData.freshContexts.push(context);
+  }
+  let metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===0,'Reserved runs were falsely counted as materially independent accepted operations.');
+  for(const run of p.projectData.runs){run.fields.EXECUTION_STATUS=run.EXECUTION_STATUS='COMPLETED';run.fields.COMPLETE_OUTPUT=run.COMPLETE_OUTPUT='controlled output';}
+  metrics=engine.operationalMetrics(p);assert(metrics.materiallyIndependentAcceptedOperations===10,'Ten completed application-established run contexts did not count as ten independent accepted operations.');
+}
+console.log(JSON.stringify({reviewerIndependenceAuthority:true,truthfulOperationalMetrics:true},null,2));

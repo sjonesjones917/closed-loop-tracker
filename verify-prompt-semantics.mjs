@@ -439,3 +439,12 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   if(revised.bodySha256===withoutAppCopy.bodySha256||revised.contextSignature===withoutAppCopy.contextSignature)throw new Error('A changed Stage 04 material reference did not change prompt identity.');
 }
 console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+// Independent final-product review prompts carry the application-selected reviewer context identity.
+{
+  const p=baseProject();
+  const stage23=prompts.buildPromptRecord(23,p,{operation:'COMPLETE',scope:{contextId:'CONTEXT-MEANING-REVIEW'}});
+  if(stage23.scope.contextId!=='CONTEXT-MEANING-REVIEW'||!stage23.prompt.includes('CONTEXT-MEANING-REVIEW'))throw new Error('Stage 23 controlling prompt did not retain the application-selected reviewer context identity.');
+  const stage24=prompts.buildPromptRecord(24,p,{operation:'COMPLETE',scope:{contextId:'CONTEXT-ADVERSARIAL-REVIEW'}});
+  if(stage24.scope.contextId!=='CONTEXT-ADVERSARIAL-REVIEW'||!stage24.prompt.includes('CONTEXT-ADVERSARIAL-REVIEW'))throw new Error('Stage 24 controlling prompt did not retain the application-selected reviewer context identity.');
+}
+console.log(JSON.stringify({independentReviewerPromptIdentity:true,promptEngineVersion:prompts.version},null,2));
