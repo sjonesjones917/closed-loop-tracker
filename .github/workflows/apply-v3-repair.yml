@@ -1,0 +1,25 @@
+name: Apply pending v3 repair
+on:
+  push:
+    branches: [spec-v3-zero-loss-20260830]
+  workflow_dispatch:
+permissions: {contents: write}
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: spec-v3-zero-loss-20260830}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply pending repair
+        run: |
+          node --check repair-ingestion-accounting.mjs
+          node repair-ingestion-accounting.mjs
+          node --check verify-ingestion.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm repair-ingestion-accounting.mjs
+          git add verify-ingestion.mjs
+          git commit -m "Prove Stage 1 and Stage 4 accounting closure"
+          git push origin HEAD:spec-v3-zero-loss-20260830
