@@ -39,6 +39,12 @@ import fs from 'node:fs';
   const migrated="  if(stage===1){const manifest=engine.stage01IntakeManifest(p);stageData.INTAKE_ACCOUNTING=manifest.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:engine.INTAKE_DISPOSITIONS[0],normalizedMeaning:String(unit.rawValue||unit.value||unit.text||'Preserved controlled human input'),reason:''}));records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];}";
   if(s.includes(legacy))s=s.replace(legacy,migrated);
   s=s.replaceAll("disposition:'INCORPORATED',normalizedMeaning:","disposition:engine.INTAKE_DISPOSITIONS[0],normalizedMeaning:");
+  const stage1Line="  if(stage===1){const manifest=engine.stage01IntakeManifest(p);stageData.INTAKE_ACCOUNTING=manifest.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:engine.INTAKE_DISPOSITIONS[0],normalizedMeaning:String(unit.rawValue||unit.value||unit.text||'Preserved controlled human input'),reason:''}));records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];}";
+  const stage4Line="\n  if(stage===4){const manifest=engine.stage04ObligationManifest(p);stageData.OBLIGATION_ACCOUNTING=manifest.obligations.map(obligation=>({obligationId:obligation.obligationId,disposition:engine.OBLIGATION_DISPOSITIONS[1],requirementTempKeys:[],reason:'Controlled fixture retains this manifest item as nonnormative context.'}));}";
+  if(!s.includes('if(stage===4){const manifest=engine.stage04ObligationManifest(p);')){
+    if(!s.includes(stage1Line))throw new Error('Stage 1 migrated fixture anchor missing for Stage 4 insertion.');
+    s=s.replace(stage1Line,stage1Line+stage4Line);
+  }
   fs.writeFileSync(path,s);
-  console.log('aligned Stage 01 ingestion fixture to application-owned disposition enum');
+  console.log('aligned Stage 01 and Stage 04 ingestion fixtures to exhaustive accounting contracts');
 }
