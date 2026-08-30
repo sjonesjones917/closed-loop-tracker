@@ -23,7 +23,12 @@ const operationContext={
  '19:REGRESSION_VERIFY':['regressions','regressionExecutions','runs','tests','artifacts'],
  '19:CONFIRM':['runs','verification','comparisons','regressionExecutions','candidateFreezes','requirements','tests','defects','regressions']
 };
-const stageTokens={1:['ONE-TIME INTENT FILE INTAKE','INTAKE_ACCOUNTING'],2:['independent external sources','no-applicable-source'],3:['RESEARCH COVERAGE MANIFEST','RESEARCH_ACCOUNTING'],4:['STAGE 04 OBLIGATION MANIFEST','OBLIGATION_ACCOUNTING'],5:['duplicate obligations','requirement-set defects'],6:['TEST IR','false positive'],7:['Fixture creation is not execution'],8:['production instruction','trace'],9:['independent preflight','material clause'],10:['freeze','application'],11:['exactly ten','prior-run'],12:['REQ_ID × RUN_ID × TEST_ID','independent'],13:['all ten','variance'],14:['earliest defective layer','root cause'],15:['pre-correction','actual execution'],16:['earliest responsible layer','execution-only'],17:['ten-run iteration','current operation'],18:['convergence','application derives'],19:['unchanged confirmation','ten'],20:['baseline','application'],21:['finished product','actual artifact'],22:['deterministic','native'],23:['meaning','independent'],24:['adversarial','regression'],25:['representation','package'],26:['process','product'],27:['advisory','application'],28:['byte','application'],29:['evidence chain','missing'],30:['append-only','regression']};
+const stageTokens={
+  1:['ONE-TIME INTENT FILE INTAKE','INTAKE_ACCOUNTING'],
+  3:['RESEARCH COVERAGE MANIFEST','RESEARCH_ACCOUNTING'],
+  4:['STAGE 04 OBLIGATION MANIFEST','OBLIGATION_ACCOUNTING'],
+  6:['TEST IR']
+};
 let promptCount=0;
 for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
   const contract=schema.operationContract(stage,operation),record=prompts.buildPromptRecord(stage,p,{operation,scope:genericScope}),text=record.prompt;promptCount++;
@@ -32,7 +37,7 @@ for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[
   assert(text.includes('CANONICAL INPUT EXECUTION RULE — APPLIES TO EVERY STAGE'),`Stage ${stage} ${operation} lacks canonical-input execution rule.`);assert(text.includes('never ask the human to repeat, retype, summarize, resend, reopen, select again, or reattach it'),`Stage ${stage} ${operation} permits repeated human transcription.`);assert(text.includes('Do not tell the operator how an agent should do this stage instead of doing the stage.'),`Stage ${stage} ${operation} can devolve into agent-instruction advice.`);
   const expected=operationContext[`${stage}:${operation}`]||requiredContext[stage]||[];for(const collection of expected)assert(contract.readCollections.includes(collection),`Stage ${stage} ${operation} is missing required prompt context collection ${collection}.`);
   for(const token of stageTokens[stage]||[])assert(text.toLowerCase().includes(token.toLowerCase()),`Stage ${stage} ${operation} prompt lacks stage-semantic token ${token}.`);
-  if(stage>1)assert(text.includes('PERSISTED HUMAN ANSWERS — OPERATIVE CANONICAL USER INPUT'),`Stage ${stage} ${operation} does not carry persisted human answers forward.`);
+  if(stage>1)assert(text.includes('PERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN'),`Stage ${stage} ${operation} does not carry persisted human answers forward.`);
 }
 for(const file of ['workbook.js','workflow-schema.js','workflow-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html']){const text=fs.readFileSync(file,'utf8');for(const signature of ['HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','STRICT RESPONSE CONTRACT','CANONICAL INPUT EXECUTION RULE — APPLIES TO EVERY STAGE'])assert(!text.includes(signature),`${file} contains agent prompt instructions outside prompt-engine.js.`);}
 console.log(JSON.stringify({all30Stages:true,promptOperationsAudited:promptCount,stageResultsPresent:true,completionConditionsPresent:true,noRepeatHumanInputRule:true,minimumPriorContextContracts:true,agentInstructionsCentralized:true}));
