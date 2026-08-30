@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/45';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/46';
 if(!core||!schema||!hash||!workflow||!testRuntime)throw new Error('workbook.js, hash.js, workflow-schema.js, test-runtime.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=value=>{if(value===undefined||value===null||value==='')return 'UNKNOWN';if(Array.isArray(value)&&!value.length)return 'NONE';if(typeof value==='object')return JSON.stringify(value,null,2);return String(value);};
 const safe=value=>Array.isArray(value)?value:[];
@@ -61,7 +61,7 @@ const PROMPT_CONTEXT_ADDITIONS=Object.freeze({
 6:Object.freeze(['requirements','requirementResolutions','sources','research','artifacts','evidenceRecords']),
 7:Object.freeze(['requirements','tests','artifacts','evidenceRecords']),
 8:Object.freeze(['requirements','requirementResolutions','tests','failureTests','sources','research','sourceConflicts','evidenceRecords']),
-9:Object.freeze(['instructions','requirements','requirementResolutions','tests','failureTests','sources','sourceConflicts','evidenceRecords','freshContexts']),
+9:Object.freeze(['instructions','requirements','requirementResolutions','tests','failureTests','sources','research','candidateRequirements','sourceConflicts','evidenceRecords','freshContexts']),
 10:Object.freeze(['instructions','preflightRecords','requirements','tests','failureTests','artifacts']),
 11:Object.freeze(['candidateFreezes','iterations','instructions','artifacts','freshContexts']),
 12:Object.freeze(['runs','requirements','tests','sources','research','evidenceRecords','artifacts','freshContexts']),
@@ -75,9 +75,9 @@ const PROMPT_CONTEXT_ADDITIONS=Object.freeze({
 22:Object.freeze(['products','requirements','tests','artifacts','evidenceRecords']),
 23:Object.freeze(['products','requirements','tests','sources','research','evidenceRecords','artifacts','freshContexts']),
 24:Object.freeze(['products','requirements','tests','regressions','regressionExecutions','sources','research','evidenceRecords','artifacts','freshContexts']),
-25:Object.freeze(['products','baselines','tests','artifacts','evidenceRecords']),
-26:Object.freeze(['requirements','tests','instructions','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','confirmationRecords','baselines','products','evidenceRecords']),
-27:Object.freeze(['requirements','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','confirmationRecords','baselines','products','blockers','evidenceRecords']),
+25:Object.freeze(['products','baselines','requirements','tests','artifacts','evidenceRecords']),
+26:Object.freeze(['requirements','tests','instructions','runs','verification','comparisons','defects','rootCauses','changes','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','confirmationRecords','baselines','products','blockers','evidenceRecords']),
+27:Object.freeze(['requirements','tests','defects','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','confirmationRecords','baselines','products','blockers','evidenceRecords']),
 29:Object.freeze(['requirements','instructions','instructionTraces','tests','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','evidenceRecords','releaseRecords','artifactIdentities','baselines','products','evidenceChains']),
 30:Object.freeze(['requirements','defects','regressions','regressionExecutions','baselines','evidenceRecords'])
 })
