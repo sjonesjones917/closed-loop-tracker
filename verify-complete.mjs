@@ -326,17 +326,17 @@ console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidenc
   const p=project('JOB-STAGE04-PROMPT-MATERIAL');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
   const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.conversationMaterials.length===1&&handoff.conversationMaterials[0].label==='design-input.pdf','Stage 04 did not derive the material that must accompany its instruction.');
+  assert(handoff.conversationMaterials.length===0,'Stage 04 attempted to route the original intake material into a later conversation.');
   assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 input material incorrectly became a returned-file or canonical-artifact transport contract.');
   const next=engine.operationalNextAction(p,4);
-  assert(next.includes('Send the Stage 04 instruction with design-input.pdf'),'Stage 04 next action does not identify the exact material to send with the prompt.');
-  assert(next.includes('The prompt does not include those materials'),'Stage 04 next action does not explain that copying the prompt does not transfer the file.');
+  assert(!next.includes('design-input.pdf')&&!/attach|provide|send the Stage 04 instruction with/i.test(next),'Stage 04 next action still requests reuse of the original intake file.');
+  assert(next.includes('no original intake file is required or used'),'Stage 04 next action does not state the one-time intake invariant.');
   const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI does not use the existing interaction notice for the concise handoff instruction.');
+  assert(!appSource.includes('Send the Stage 04 instruction with the required material.')&&appSource.includes('No original intake file is required or used.'),'Stage 04 UI still requests the original intake material or omits the one-time intake rule.');
   assert(!appSource.includes('stage04-material-handoff')&&!appSource.includes('No upload to this application is required.')&&!appSource.includes('Optional application file custody'),'Stage 04 still contains the redundant app-upload panel or self-directed upload warnings.');
   assert(!appSource.includes('Required input file is missing. Add and verify'),'The rejected Stage 04 browser-upload hard block returned.');
 }
-console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+console.log(JSON.stringify({stage04CanonicalIntakeOnly:true}));
 {
   const p=project('JOB-EXECUTION-ROUTING-HARDENING');
   Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-ROUTE'});
