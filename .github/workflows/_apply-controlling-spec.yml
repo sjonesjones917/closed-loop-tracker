@@ -45,6 +45,15 @@ jobs:
         run: node --check verify-controlling-spec.mjs
       - name: Focused controlling-spec proof
         run: node verify-controlling-spec.mjs
+      - name: Preserve exact semantic failure
+        if: failure()
+        run: |
+          node verify-controlling-spec.mjs > repair-failure.log 2>&1 || true
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add repair-failure.log
+          git commit -m "Record controlling-spec repair diagnostic" || true
+          git push origin HEAD:fix/controlling-spec-20260830-0716 || true
       - name: Existing architecture/runtime proof
         run: |
           node build-test-project.mjs
@@ -54,7 +63,7 @@ jobs:
           node verify-ingestion.mjs
           node verify-prompt-semantics.mjs
       - name: Remove one-time repair machinery
-        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml
+        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml repair-failure.log
       - name: Commit verified repair
         run: |
           git config user.name github-actions[bot]
