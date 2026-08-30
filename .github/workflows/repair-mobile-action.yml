@@ -27,7 +27,7 @@ jobs:
           new2=".stage-action-strip span:last-child{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;white-space:normal}"
           if old2 not in s: raise SystemExit('stage-action-strip child rule not found')
           s=s.replace(old2,new2,1)
-          marker='@media(max-width:900px)'
+          marker='@media(max-width:620px)'
           mobile="@media(max-width:620px){.stage-action-strip{grid-template-columns:1fr}.stage-action-strip span:first-child{justify-self:start}.stage-action-strip span:last-child{width:100%;border-radius:10px}.stage-hero,.stage-hero>*{min-width:0;max-width:100%}}\n"
           if mobile not in s:
               pos=s.find(marker)
