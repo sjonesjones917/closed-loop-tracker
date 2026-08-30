@@ -2,7 +2,7 @@ name: Apply v3 current branch
 on:
   push:
     branches: [fix/closed-loop-v3-current-20260830]
-    paths: [apply-v3-current.mjs, apply-v3-driver.mjs, .github/workflows/v3-current-apply.yml]
+    paths: [apply-v3-current.mjs, apply-v3-driver.mjs, apply-v3-followup.mjs, .github/workflows/v3-current-apply.yml]
   workflow_dispatch:
 permissions: {contents: write}
 jobs:
@@ -13,22 +13,27 @@ jobs:
         with: {ref: fix/closed-loop-v3-current-20260830, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Apply transformer when active schema is still v2
+      - name: Apply active implementation patches
         id: patch
         shell: bash
         run: |
           set +e
+          : > v3-apply.log
           if grep -Fq "const PROJECT_SCHEMA='closed-loop-project/2';" workbook.js; then
-            node apply-v3-driver.mjs > v3-apply.log 2>&1
+            node apply-v3-driver.mjs >> v3-apply.log 2>&1
             code=$?
           else
-            echo "Implementation already declares closed-loop-project/3; skipping one-time transformer." > v3-apply.log
+            echo "Implementation already declares closed-loop-project/3; skipping initial transformer." >> v3-apply.log
             code=0
+          fi
+          if [ $code -eq 0 ]; then
+            node apply-v3-followup.mjs >> v3-apply.log 2>&1
+            code=$?
           fi
           cat v3-apply.log
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0
-      - name: Preserve transform or diagnostic
+      - name: Preserve implementation or diagnostic
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
@@ -41,38 +46,16 @@ jobs:
           fi
           if ! git diff --quiet -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html; then
             git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html
-            git commit -m 'Apply v3 exhaustive intake and obligation implementation [skip ci]'
+            git commit -m 'Strengthen v3 exhaustive stage semantics [skip ci]'
             git push origin HEAD:fix/closed-loop-v3-current-20260830
           fi
       - name: Syntax proof
-        id: syntax
-        shell: bash
         run: |
-          set +e
-          : > v3-syntax.log
-          code=0
-          for f in workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js; do
-            echo "===== $f =====" >> v3-syntax.log
-            node --check "$f" >> v3-syntax.log 2>&1
-            rc=$?
-            if [ $rc -ne 0 ]; then code=$rc; fi
-          done
-          git diff --check >> v3-syntax.log 2>&1
-          rc=$?
-          if [ $rc -ne 0 ]; then code=$rc; fi
-          cat v3-syntax.log
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
-      - name: Preserve syntax diagnostic
-        if: steps.syntax.outputs.exit_code != '0'
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add v3-syntax.log
-          git commit -m 'Capture v3 syntax diagnostic [skip ci]' || true
-          git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
-          exit 1
-      - name: Syntax accepted
-        if: steps.syntax.outputs.exit_code == '0'
-        run: echo 'v3 syntax proof passed'
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check test-runtime.js
+          node --check app-core.js
+          git diff --check
