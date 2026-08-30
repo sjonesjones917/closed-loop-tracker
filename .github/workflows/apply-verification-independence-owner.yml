@@ -1,7 +1,8 @@
 name: Apply verification independence ownership
 on:
   push:
-    branches: [fix/verification-independence-owner-20260830]
+    branches:
+      - fix/verification-independence-owner-20260830
 permissions:
   contents: write
 jobs:
@@ -15,48 +16,7 @@ jobs:
       - name: Apply source correction
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          schema = Path('workflow-schema.js')
-          text = schema.read_text()
-
-          old_agent = '''      "VERIFIER",
-      "VERIFIER_CONTEXT_ID",
-      "INDEPENDENCE_STATUS",
-      "INPUTS",'''
-          new_agent = '''      "VERIFIER",
-      "VERIFIER_CONTEXT_ID",
-      "INPUTS",'''
-          if old_agent in text:
-              text = text.replace(old_agent, new_agent, 1)
-          elif new_agent not in text:
-              raise SystemExit('verification agent ownership block not found')
-
-          old_app = '''      "VERIFICATION_ID",
-      "REQ_ID",
-      "RUN_ID",
-      "TEST_ID",
-      "DEFECT_ID"
-    ]
-  },
-  "comparisons":'''
-          new_app = '''      "VERIFICATION_ID",
-      "REQ_ID",
-      "RUN_ID",
-      "TEST_ID",
-      "DEFECT_ID",
-      "INDEPENDENCE_STATUS"
-    ]
-  },
-  "comparisons":'''
-          if old_app in text:
-              text = text.replace(old_app, new_app, 1)
-          elif new_app not in text:
-              raise SystemExit('verification application ownership block not found')
-
-          schema.write_text(text)
-          PY
+          python -c 'from pathlib import Path; p=Path("workflow-schema.js"); s=p.read_text(); oa="      \"VERIFIER\",\n      \"VERIFIER_CONTEXT_ID\",\n      \"INDEPENDENCE_STATUS\",\n      \"INPUTS\","; na="      \"VERIFIER\",\n      \"VERIFIER_CONTEXT_ID\",\n      \"INPUTS\","; aa="      \"VERIFICATION_ID\",\n      \"REQ_ID\",\n      \"RUN_ID\",\n      \"TEST_ID\",\n      \"DEFECT_ID\"\n    ]\n  },\n  \"comparisons\":"; ab="      \"VERIFICATION_ID\",\n      \"REQ_ID\",\n      \"RUN_ID\",\n      \"TEST_ID\",\n      \"DEFECT_ID\",\n      \"INDEPENDENCE_STATUS\"\n    ]\n  },\n  \"comparisons\":"; assert oa in s or na in s; s=s.replace(oa,na,1); assert aa in s or ab in s; s=s.replace(aa,ab,1); p.write_text(s)'
           rm -f .github/workflows/apply-preflight-independence-ownership.yml
           rm -f .github/workflows/apply-verification-independence-owner.yml
           git config user.name github-actions[bot]
