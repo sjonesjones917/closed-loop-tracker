@@ -1,11 +1,30 @@
-name: Identify failing Test IR contract command
+name: Capture exact verifier failures
 on:
   push:
     branches: [fix/final-runtime-authority-20260830]
+permissions:
+  contents: write
 jobs:
-  contract: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-v3-contract.mjs}]}
-  migration: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-v3-migration.mjs}]}
-  runtime: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-test-runtime.mjs}]}
-  runtime-v3: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-test-runtime-v3.mjs}]}
-  runtime-limits: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-test-runtime-limits.mjs}]}
-  hash: {runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{uses: actions/setup-node@v4, with: {node-version: '22'}},{run: node verify-hash.mjs}]}
+  diagnose:
+    if: github.event.head_commit.message != 'Diagnostic output'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Capture failures
+        run: |
+          {
+            echo '=== verify-v3-contract ==='
+            node verify-v3-contract.mjs || true
+            echo '=== verify-hash ==='
+            node verify-hash.mjs || true
+          } > diagnostic-output.txt 2>&1
+      - name: Persist diagnostic output
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add diagnostic-output.txt
+          git commit -m 'Diagnostic output'
+          git push
