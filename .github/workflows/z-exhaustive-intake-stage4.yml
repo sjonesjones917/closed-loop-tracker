@@ -34,6 +34,7 @@ jobs:
           python3 fix-accounting-verifier.py
           python3 fix-stage1-input-version.py
           python3 fix-stage3-prompt.py
+          python3 fix-stage4-accounting-contract.py
       - name: Align acceptance report with controlling schemas and metrics
         shell: bash
         run: |
@@ -64,7 +65,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f exhaustive-bootstrap.py fix-accounting-verifier.py fix-stage1-input-version.py fix-stage3-prompt.py fix-runtime-token.py .github/workflows/z-exhaustive-intake-stage4.yml
+          rm -f exhaustive-bootstrap.py fix-accounting-verifier.py fix-stage1-input-version.py fix-stage3-prompt.py fix-stage4-accounting-contract.py fix-runtime-token.py .github/workflows/z-exhaustive-intake-stage4.yml
           for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-exhaustive-stage1-stage3-stage4.mjs; do node --check "$f"; done
           node build-test-project.mjs
           node verify-v3-contract.mjs
