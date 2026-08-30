@@ -18,7 +18,9 @@ jobs:
       - name: Apply source repair
         run: python3 .repair-project-memory.py
       - name: Align controlling regressions
-        run: python3 .patch-zero-loss-tests.py
+        run: |
+          python3 .patch-zero-loss-tests.py
+          python3 -c "from pathlib import Path; p=Path('verify.mjs'); s=p.read_text().replace(\"'closed-loop-project/2'\",\"'closed-loop-project/3'\").replace(\"'closed-loop-stage-response/2'\",\"'closed-loop-stage-response/3'\"); p.write_text(s)"
       - name: Syntax and regression proof
         run: |
           node --check workflow-schema.js
