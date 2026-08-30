@@ -19,7 +19,7 @@ jobs:
           import json,re
           p=Path('prompt-engine.js')
           text=p.read_text()
-          text=text.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/40';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/41';",1)
+          text=re.sub(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/\d+';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/41';",text,count=1)
           replacements={
           3:"Research only the complete current accepted Stage 02 independent external source set supplied in this prompt, using the accepted Stage 01 human-authority capture and current User Job Input only to determine relevance and applicability. Never ask the human to repeat available project facts or reattach the original Stage 01 intent file. Inspect every current source and every applicable portion deeply enough to extract every mandatory statement, recommendation, optional practice, example, explanatory statement, prohibition, exception, dependency, applicability fact, restriction, invalidating material, conflict, supersession issue, and candidate obligation with exact source evidence. Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform the complete first research pass, the required conflict-and-exception pass, and at least one second complete pass over the entire current source set. If any complete pass discovers any new material obligation, requirement category, exception, restriction, dependency, applicability fact, conflict, supersession issue, or invalidating condition, incorporate it and perform another complete pass over the entire current source set. Repeat until the latest complete pass finds no new material of any of those kinds. Do not atomize final requirements, resolve the requirement set, design tests, or perform later-stage work here.",
           22:"Handle only deterministic verification of the current finished product and only the deterministic tests selected by the application for Stage 22. Application-native Test IR execution is application-owned: never claim, imitate, fabricate, or substitute for an application-native execution, native result, native receipt, application hash, or application gate. Native-ready tests require no external agent execution and are run by the application worker. This prompt is used only for deterministic work that the application explicitly routes to an external capable executor; execute exactly those routed tests with the exact supplied product bytes, test specifications, capabilities, and handoff, preserve objective evidence and returned artifacts, and report observations honestly. If a required capability or byte-backed input is unavailable, return the exact blocker or execution failure rather than a synthetic pass. Do not perform meaning review, adversarial review, representation inspection, release calculation, or any later-stage work.",
@@ -28,17 +28,14 @@ jobs:
           }
           for stage,new_text in replacements.items():
               pattern=rf'("{stage}":)"(?:\\.|[^"\\])*"'
-              repl=lambda m: m.group(1)+json.dumps(new_text,ensure_ascii=False)
-              text2,n=re.subn(pattern,repl,text,count=1)
+              text,n=re.subn(pattern,lambda m:m.group(1)+json.dumps(new_text,ensure_ascii=False),text,count=1)
               if n!=1:
                   raise SystemExit(f'could not replace stage {stage} prompt exactly once; got {n}')
-              text=text2
-          old="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category.');"
-          new="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and at least one second complete pass must be performed, and whenever any complete pass finds a new material obligation, category, exception, restriction, dependency, applicability fact, conflict, supersession issue, or invalidating condition, incorporate it and repeat a complete pass over the entire current source set. Stage 03 completes only when the latest complete pass finds no new material of any such kind.');"
-          if old in text:
-              text=text.replace(old,new,1)
-          elif new not in text:
-              raise SystemExit('Stage 03 centralized completion rule not found')
+          new_rule="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and at least one second complete pass must be performed, and whenever any complete pass finds a new material obligation, category, exception, restriction, dependency, applicability fact, conflict, supersession issue, or invalidating condition, incorporate it and repeat a complete pass over the entire current source set. Stage 03 completes only when the latest complete pass finds no new material of any such kind.');"
+          pattern=r"if\(stage===3\)lines\.push\('Stage 03 is exhaustive source research:[^']*'\);"
+          text,n=re.subn(pattern,new_rule,text,count=1)
+          if n!=1 and new_rule not in text:
+              raise SystemExit(f'could not replace centralized Stage 03 rule; got {n}')
           p.write_text(text)
           PY
           rm -f .github/workflows/tmp-final-stage-prompt-semantics.yml .github/workflows/apply-prompt-data-closure.yml
