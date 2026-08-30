@@ -26,8 +26,7 @@ jobs:
           old="const css=fs.readFileSync('index.html','utf8');assert(css.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Visual prompt-box baseline changed.');"
           if old not in t:
               raise SystemExit('Expected visual assertion not found')
-          t=t.replace(old,"",1)
-          p.write_text(t)
+          p.write_text(t.replace(old,"",1))
           PY
       - name: Prove source syntax
         run: |
@@ -38,7 +37,17 @@ jobs:
           node --check app-core.js
           node --check verify-zero-loss-accounting.mjs
       - name: Prove zero-loss accounting semantics
-        run: node verify-zero-loss-accounting.mjs
+        run: |
+          if node verify-zero-loss-accounting.mjs > zero-loss-failure.log 2>&1; then
+            rm -f zero-loss-failure.log
+          else
+            git config user.name closed-loop-diagnostic
+            git config user.email closed-loop-diagnostic@users.noreply.github.com
+            git add zero-loss-failure.log
+            git commit -m "Capture zero-loss semantic failure [diagnostic]"
+            git push origin HEAD:fix/closed-loop-v3-final-20260830
+            exit 1
+          fi
       - name: Prove full synthetic lifecycle
         run: node build-test-project.mjs
       - name: Prove browser behavior and established prompt dimensions
@@ -60,6 +69,7 @@ jobs:
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
           git rm repair-zero-loss.py .github/workflows/complete-zero-loss-closure.yml
+          git rm -f zero-loss-failure.log || true
           git add workflow-engine.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-zero-loss-accounting.mjs
           git commit -m "Enforce zero-loss Stage 01 and Stage 04 accounting [zero-loss-closure-applied]"
           git push origin HEAD:fix/closed-loop-v3-final-20260830
