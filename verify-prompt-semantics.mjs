@@ -439,7 +439,7 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   if(record.contextManifest.executionHandoff?.conversationMaterials)throw new Error('Obsolete Stage 04 conversation-material state remains in prompt identity.');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
   const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
+  if(renamed.bodySha256!==record.bodySha256)throw new Error('Original intent filename leaked into Stage 04 after canonical Stage 01 capture.');
 }
 console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
