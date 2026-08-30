@@ -20,7 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Materialize permanent accounting
-        run: node run-v3-accounting-finalize.mjs
+        run: |
+          node run-v3-accounting-finalize.mjs
+          node patch-accounting-regression-fixtures.mjs
       - name: Prove accounting and full non-browser suite
         shell: bash
         run: |
@@ -50,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f .github/workflows/materialize-stage01-stage04-once.yml
-          rm -f finalize-v3-accounting.mjs run-v3-accounting-finalize.mjs
+          rm -f finalize-v3-accounting.mjs run-v3-accounting-finalize.mjs patch-accounting-regression-fixtures.mjs
           rm -f stage4-*.log stage4-diagnostic-summary.txt .gate-diag-trigger
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
