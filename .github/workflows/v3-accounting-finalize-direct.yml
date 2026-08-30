@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Materialize permanent accounting with stable human input version
+      - name: Materialize permanent accounting and explicit Stage 04 reuse action
         run: node run-v3-accounting-finalize.mjs
       - name: Syntax and accounting proof
         shell: bash
