@@ -18,3 +18,4 @@ jobs:
           git add app-core.js workflow-schema.js prompt-engine.js
           git commit -m "Complete locked-stage and upstream prompt context behavior"
           git push origin HEAD:finish-stage-prompts-current-20260830
+# apply
