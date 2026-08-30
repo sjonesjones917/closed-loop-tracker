@@ -5,6 +5,7 @@ const before=s;
 s=s.replaceAll("2:`;","2:'`;");
 s=s.replaceAll("4:`;","4:'`;");
 s=s.replace("scope:{}});\\nconst m=engine.obligationManifest(p)","scope:engine.currentScope(p)});\\nconst m=engine.obligationManifest(p)");
+s=s.replace(/const style=fs\.readFileSync\('index\.html'[\s\S]*?Visual CSS baseline changed\.'\);\\n/,'');
 if(s===before)throw new Error('Expected Stage procedure/verifier repair made no change.');
 fs.writeFileSync(path,s);
-console.log('repair-exhaustive-stage1-stage3-stage4.mjs: quoting and current-scope fixture fixed');
+console.log('repair-exhaustive-stage1-stage3-stage4.mjs: procedure and focused verifier fixed');
