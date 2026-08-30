@@ -27,4 +27,5 @@ if(!s.includes('stageData.INPUT_SET_CONTENTS=JSON.stringify({units:'))throw new 
 if(!s.includes("kind:'OBLIGATION_DISPOSITION'"))throw new Error('Stage 4 closed accounting fixture correction missing.');
 if(s.includes(smartLegacy))throw new Error('Legacy smart-quote Stage 1 fixture remains.');
 fs.writeFileSync(file,s);
-console.log('Stage 1/3/4 verifier fixtures, smart quote regression, and Stage 3 derivation corrected.');
+await import('./.tmp-full-cycle-fixture-patch.mjs');
+console.log('Stage 1/3/4 verifier fixtures, smart quote regression, Stage 3 derivation, and full-cycle fixtures corrected.');
