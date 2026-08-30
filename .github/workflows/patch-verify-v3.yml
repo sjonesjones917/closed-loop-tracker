@@ -1,4 +1,4 @@
-name: Align verify.mjs with v3 architecture
+name: Finalize controlling v3 closure
 on:
   push:
     branches: [controlling-spec-final-current]
@@ -12,24 +12,41 @@ jobs:
         with: {ref: controlling-spec-final-current, fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Align and verify the canonical architecture proof
+      - name: Materialize final controlling semantics and visual rollback
+        run: python3 .github/patch_verify_v3.py
+      - name: Syntax and architecture checks
         run: |
-          python3 .github/patch_verify_v3.py
+          node --check workbook.js
+          node --check hash.js
           node --check workflow-schema.js
+          node --check test-runtime.js
           node --check workflow-engine.js
           node --check prompt-engine.js
-          node --check verify.mjs
-          node --check verify-ingestion.mjs
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check test-worker.js
+          node --check verify-stage01-stage03-stage04-closure.mjs
+      - name: Execute controlling proofs
+        run: |
           node build-test-project.mjs
-          node verify.mjs
           node verify-stage01-stage03-stage04-closure.mjs
           node verify-closed-accounting.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
           node verify-ingestion.mjs
-      - name: Commit permanent verifier changes
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-definition-of-done.mjs
+      - name: Remove one-time repair machinery and commit exact source
         run: |
+          rm -f .github/patch_verify_v3.py .github/workflows/patch-verify-v3.yml
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
           git config user.name closed-loop-conformance
           git config user.email actions@users.noreply.github.com
-          git add workflow-schema.js workflow-engine.js prompt-engine.js verify.mjs verify-ingestion.mjs
+          git add -A
           git diff --cached --quiet && exit 0
-          git commit -m "Enforce zero-loss Stage 04 obligation universe"
+          git commit -m "Finalize exhaustive Stage 01 and Stage 03 closure"
           git push origin HEAD:controlling-spec-final-current
