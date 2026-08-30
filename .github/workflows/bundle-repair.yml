@@ -58,16 +58,11 @@ jobs:
           git add .github/bundle-repair-failure.log .github/bundle-verification-failure.log
           git commit -m "Record bundle verification failure diagnostic" || true
           git push origin HEAD:fix/full-controlling-bundle-20260830
-      - name: Remove one-time repair infrastructure
-        run: |
-          rm -f .github/bundle-repair-failure.log .github/bundle-verification-failure.log
-          rm .github/bundle_repair.py
-          rm .github/bundle_repair_shim.py
-          rm .github/workflows/bundle-repair.yml
-      - name: Commit repaired repository
+      - name: Commit repaired application
         run: |
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git add -A
+          git reset -- .github/workflows/bundle-repair.yml .github/bundle_repair.py .github/bundle_repair_shim.py .github/bundle-repair-failure.log .github/bundle-verification-failure.log || true
           git commit -m "Implement controlling bundle v3 contracts"
           git push origin HEAD:fix/full-controlling-bundle-20260830
