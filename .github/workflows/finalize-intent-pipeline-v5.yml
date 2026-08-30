@@ -1,0 +1,124 @@
+name: Finalize exhaustive intent pipeline and runtime order
+on:
+  push:
+    branches: [fix/stage4-canonical-intent-capture]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    if: "!contains(github.event.head_commit.message, 'Finalize exhaustive intent pipeline')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-canonical-intent-capture
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exhaustive intake/research/Stage04 corrections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';",1)
+          pairs=[
+          ("1:'Initialize only this current job from this current job’s exact user input. Account for every INPUT-UNIT identity supplied by the application exactly once in INTAKE_ACCOUNTING using only inputUnitId, disposition, and reason. Allowed dispositions are INCORPORATED_INTO_JOB_DEFINITION, RETAINED_AS_CONTEXT, UNRESOLVED_HUMAN_ONLY, LATER_RESOLVABLE, or INAPPLICABLE. Never omit an INPUT-UNIT.  Preserve the verbatim objective, requested deliverable, format requirements, temporal and geographic scope, user-supplied authority, tools, prohibitions, explicit user requirements, assumptions, unresolved unknowns, and any human decisions genuinely required to define the work.","1:'Initialize only this current job from this current job’s exact user input. Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE, not a minimal job-labeling pass. Account for every INPUT-UNIT identity supplied by the application exactly once in INTAKE_ACCOUNTING using only inputUnitId, disposition, and reason. Allowed dispositions are INCORPORATED_INTO_JOB_DEFINITION, RETAINED_AS_CONTEXT, UNRESOLVED_HUMAN_ONLY, LATER_RESOLVABLE, or INAPPLICABLE. Never omit an INPUT-UNIT. Preserve every human-supplied project fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, unresolved human-only issue, the verbatim objective, requested deliverable, format requirements, temporal and geographic scope, user-supplied authority, tools, explicit user requirements, assumptions, and unknowns that are relevant to the requested outcome. No supplied project meaning may be dropped merely because it does not fit a predefined field."),
+          ("3:'Research only the current accepted Stage 02 independent external source set, source-by-source and pass-by-pass. Examine exact portions and separately capture facts, mandatory obligations, recommendations, optional practices, examples, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, conflicts, superseded guidance, source evidence, candidate requirement proposals, and unresolved questions. Use response-local references rather than assigning canonical requirement identities. Do not treat the target product, this operating application, repository source code, prior implementations, project-generated artifacts, or current UI behavior as independent requirement authority. Repeat discovery passes until saturation is actually supported by the evidence.',","3:'Research the complete current accepted Stage 02 independent external source set exhaustively, source-by-source, applicable-portion-by-applicable-portion, and pass-by-pass. Every current Stage 02 source must have current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Extract and separately preserve every material fact, mandatory obligation, recommendation, optional practice, example, prohibition, exception, dependency, applicability fact, restriction, invalidating material, conflict, supersession fact, source evidence, candidate obligation, and unresolved question that can affect the requested outcome. Use response-local references rather than assigning canonical requirement identities. Do not treat the target product, this operating application, repository source code, prior implementations, project-generated artifacts, or current UI behavior as independent requirement authority. Repeat full conflict/exception/discovery passes until the latest complete pass finds no new material requirement category and saturation is supported by evidence; do not stop because the first pass looks adequate.',"),
+          ("4:'Compile atomic requirement proposals only from the complete current canonical input union selected by the application. Account for every OBLIGATION identity supplied by the application exactly once in OBLIGATION_ACCOUNTING using only obligationId, disposition, requirementTempKeys, and reason.","4:'Compile atomic requirement proposals only after Stage 01 complete human-authority intake and Stage 03 exhaustive source research are both current and complete. Use the complete current canonical input union selected by the application; never ask the human to reconstruct prior input. Account for every OBLIGATION identity supplied by the application exactly once in OBLIGATION_ACCOUNTING using only obligationId, disposition, requirementTempKeys, and reason.")]
+          for a,b in pairs:
+            if a not in s: raise SystemExit('prompt procedure anchor missing')
+            s=s.replace(a,b,1)
+          pattern=r"\$\{stage===1\?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY.*?`:`DOMAIN / DELIVERABLE ADAPTATION — APPLY ONLY WHAT IS RELEVANT.*?`\}\n\n"
+          repl="${stage===1?`STAGE 01 GENERIC INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY\nDerive project-specific human-authority questions only from the actual request, accessible supplied materials, and current canonical context. Do not use a hard-coded subject catalogue. Identify every human-only fact or decision foreseeably necessary to achieve the requested outcome, ask it now unless it is later-resolvable, and never ask the human to repeat a fact already supplied. Inspect available supplied artifacts only deeply enough to extract human-authority statements relevant to defining the job. Do not perform external research, requirement atomization, verification design, production, filing, simulation, manufacturing, or product verification.\n`:`PROJECT-SPECIFIC ADAPTATION — DERIVE FROM CURRENT PROJECT ONLY\nInfer relevant authorities, domain primitives, units, interfaces, toolchain constraints, safety or regulatory concerns, artifact types, and verification methods from current canonical project data and accepted evidence. Do not branch on a hard-coded domain label and do not request data already captured in canonical state.\n`}\n\n"
+          s,n=re.subn(pattern,repl,s,flags=re.S); assert n==1,n
+          s,n=re.subn(r"For PATENT / REGULATED FILING jobs,[^\n]*\n","",s,count=1); assert n==1,n
+          a='const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);'
+          b='const stage=Number(stageOrDefinition?.number||stageOrDefinition);if(!Number.isInteger(stage)||stage<1||stage>schema.STAGE_COUNT)throw new Error(`Stage must be 1 through ${schema.STAGE_COUNT}.`);if(stage===4){const s1=state?.stages?.[1],s3=state?.stages?.[3];if(!s1?.gate?.complete||!s3?.gate?.complete){const error=new Error(\'Stage 04 prompt cannot be generated until current Stage 01 intake and Stage 03 research are complete.\');error.code=\'INCOMPLETE_STAGE_04_INPUT_UNIVERSE\';error.missingStages=[...(!s1?.gate?.complete?[1]:[]),...(!s3?.gate?.complete?[3]:[])];throw error;}}'
+          if a not in s: raise SystemExit('stage4 guard anchor missing')
+          s=s.replace(a,b,1); p.write_text(s)
+
+          p=Path('workflow-schema.js');s=p.read_text()
+          a="const HUMAN_JOB_FIELDS=Object.freeze([\n  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',";b="const HUMAN_JOB_FIELDS=Object.freeze([\n  'EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY',"
+          if a not in s: raise SystemExit('human job field anchor missing')
+          s=s.replace(a,b,1).replace("const APPLICATION_JOB_FIELDS=Object.freeze([","const HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER']);\nconst APPLICATION_JOB_FIELDS=Object.freeze([",1)
+          a="  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});\n  if(HUMAN_JOB_FIELDS.includes(name))";b="  if(APPLICATION_JOB_FIELDS.includes(name))return field(name,PRODUCER.APPLICATION,{derivation:`Application derives ${name} from canonical project state.`});\n  if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{nullable:true,provenanceRequired:false});\n  if(HUMAN_JOB_FIELDS.includes(name))"
+          if a not in s: raise SystemExit('job definition anchor missing')
+          s=s.replace(a,b,1)
+          a="const JOB_FIELDS=Object.freeze(Object.fromEntries([...new Set([...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map(name=>[name,jobFieldDefinition(name)])));";b="const JOB_FIELDS=Object.freeze(Object.fromEntries([...new Set([...HUMAN_DECISION_JOB_FIELDS,...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])].map(name=>[name,jobFieldDefinition(name)])));"
+          if a not in s: raise SystemExit('job fields anchor missing')
+          s=s.replace(a,b,1);p.write_text(s)
+
+          p=Path('workbook.js');s=p.read_text()
+          pairs=[
+          ("1:['Exact user objective preserved verbatim','Every supplied item and material unknown recorded','Explicit requirements and assumptions separated','Complete input set has a controlled identity']","1:['Exact user objective preserved verbatim','Every controlled human-supplied input unit is accounted for with zero omission','Every foreseeable human-only issue was supplied, asked and answered, or explicitly deferred','Explicit requirements and assumptions separated','Complete input set has a controlled identity']"),
+          ("3:['Every current accepted Stage 02 source has a research record','User, format, medium, delivery, and dependency requirements were considered','Conflict, restriction, and exception pass complete','Latest complete pass found no new material requirement category']","3:['Every current accepted Stage 02 source has complete current research coverage unless no applicable external source was validly established','Every material obligation, recommendation, prohibition, exception, dependency, applicability fact, restriction, invalidating fact, and candidate obligation was extracted','Conflict, restriction, and exception pass complete','Latest complete pass found no new material requirement category']"),
+          ("4:['Every mandatory obligation maps to an atomic requirement','Every requirement has observable satisfaction and failure conditions','Every external requirement traces to exact evidence','Requirement registry has a controlled identity']","4:['Current Stage 01 intake and Stage 03 research are complete before compilation','Every application-enumerated obligation has exactly one valid disposition','Every requirement has observable satisfaction and failure conditions','Every original obligation remains independently traceable','Requirement registry has a controlled identity']")]
+          for a,b in pairs:
+            if a not in s: raise SystemExit('workbook gate anchor missing')
+            s=s.replace(a,b,1)
+          p.write_text(s)
+
+          p=Path('verify-stage4-intent-reuse.mjs');s=p.read_text();a="const prompt=prompts.buildPromptRecord(4,p);";b="p.stages[1].gate={...(p.stages[1].gate||{}),complete:true,blocked:false,reasons:[]};\np.stages[3].gate={...(p.stages[3].gate||{}),complete:true,blocked:false,reasons:[]};\nconst prompt=prompts.buildPromptRecord(4,p);"
+          if a not in s: raise SystemExit('stage4 regression anchor missing')
+          s=s.replace(a,b,1);p.write_text(s)
+          PY
+      - name: Align required runtime dependency order and cache identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-hash.mjs');s=p.read_text()
+          a="const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];"
+          b="const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];"
+          if a not in s: raise SystemExit('verify-hash runtime list anchor missing')
+          p.write_text(s.replace(a,b,1))
+          p=Path('index.html');s=p.read_text()
+          if 'test-runtime.js?' not in s:
+            import re
+            m=re.search(r'<script\s+defer\s+src="workflow-schema\.js\?v=([^"]+)"\s*></script>',s)
+            if not m: raise SystemExit('workflow-schema script anchor missing')
+            anchor=m.group(0)
+            s=s.replace(anchor,anchor+'\n<script defer src="test-runtime.js?v='+m.group(1)+'"></script>',1)
+          p.write_text(s)
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const blob=f=>{const b=fs.readFileSync(f);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};
+          const manifest=files.map(f=>`${f}:${blob(f)}\n`).join('');const id=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;
+          let h=fs.readFileSync('index.html','utf8');
+          h=h.replace(/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*><\/script>)/g,`$1${id}$2`);
+          fs.writeFileSync('index.html',h);console.log(id);
+          NODE
+      - name: Add permanent intent pipeline regression
+        run: |
+          cat > verify-intent-pipeline.mjs <<'NODE'
+          import fs from 'node:fs';import vm from 'node:vm';globalThis.window=globalThis;globalThis.addEventListener=globalThis.addEventListener||(()=>{});globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,src=fs.readFileSync('prompt-engine.js','utf8');
+          for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(src.includes(x))throw new Error('hard-coded domain remains '+x);
+          if(schema.JOB_FIELDS.JOB_TITLE.producer!=='HUMAN_DECISION'||schema.JOB_FIELDS.JOB_OWNER.producer!=='HUMAN_DECISION')throw new Error('job title/owner producer mismatch');
+          const p=core.createBlankState('JOB-INTENT-PIPELINE');engine.ensureShape(p);p.job.EXACT_USER_OBJECTIVE_VERBATIM='SENTINEL-USER-ALPHA';p.job.EXPLICIT_USER_REQUIREMENTS='SENTINEL-USER-BETA';p.job.SUPPLIED_MATERIALS_INVENTORY='intent.txt';engine.recalculate(p);const s1=prompts.buildPromptRecord(1,p).prompt;
+          if(!s1.includes('COMPLETE HUMAN-AUTHORITY INTAKE')||!s1.includes('SENTINEL-USER-ALPHA')||!s1.includes('SENTINEL-USER-BETA'))throw new Error('stage1 prompt incomplete');let blocked=false;try{prompts.buildPromptRecord(4,p)}catch(e){blocked=e?.code==='INCOMPLETE_STAGE_04_INPUT_UNIVERSE'}if(!blocked)throw new Error('stage4 accepted incomplete stage1/stage3');if(!src.includes('latest complete pass finds no new material requirement category'))throw new Error('stage3 exhaustion missing');if(!src.includes('never ask the human to reconstruct prior input'))throw new Error('stage4 capture-once missing');console.log('intent pipeline regression passed');
+          NODE
+      - name: Verify behavior and visual invariance
+        run: |
+          node --check prompt-engine.js
+          node --check workflow-schema.js
+          node --check workbook.js
+          node --check test-runtime.js
+          node verify-intent-pipeline.mjs
+          node verify-stage4-intent-reuse.mjs
+          node verify-hash.mjs
+          git diff --exit-code -- app-core.js
+          if git diff -- index.html | grep -E '^[-+].*(\.prompt\{|expandable-prompt|textarea\{|stage-output|height:clamp|max-height:280px)' ; then echo 'prompt/UI sizing changed'; exit 1; fi
+      - name: Commit integrated repair and remove temporary workflows
+        run: |
+          rm -f .github/workflows/finalize-intent-pipeline.yml .github/workflows/finalize-intent-pipeline-v2.yml .github/workflows/finalize-intent-pipeline-v3.yml .github/workflows/finalize-intent-pipeline-v4.yml .github/workflows/finalize-intent-pipeline-v5.yml
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Finalize exhaustive intent pipeline"
+          git push origin HEAD:fix/stage4-canonical-intent-capture
