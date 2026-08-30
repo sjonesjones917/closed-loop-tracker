@@ -1,9 +1,0 @@
-import fs from 'node:fs';
-const path='verify-full-cycle.mjs';
-let s=fs.readFileSync(path,'utf8');
-const needle=" const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:[evidence(`stage-${stage}-${pr.operation}`)],unresolved:[],warnings:[],attachments:[]};";
-if(!s.includes(needle))throw new Error('Full-cycle envelope fixture marker not found.');
-const replacement=" const accounting=stage===1?(()=>{const m=engine.intakeCoverageManifest(p);return {manifestId:m.manifestId,entries:m.units.map(u=>({inputId:u.unitId,disposition:'INCORPORATED',reason:'Full-cycle fixture accounts for every controlled human input unit.'}))};})():stage===4?(()=>{const m=engine.obligationManifest(p),keys=(records.requirements||[]).map(r=>r.tempKey).filter(Boolean);return {manifestId:m.manifestId,entries:m.items.map(item=>({inputId:item.obligationId,disposition:keys.length?'REQUIREMENT':'RETAINED_CONTEXT',...(keys.length?{requirementTempKeys:keys}:{}),reason:'Full-cycle fixture accounts for every Stage 4 obligation.'}))};})():undefined;\n const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData,records,evidence:[evidence(`stage-${stage}-${pr.operation}`)],unresolved:[],warnings:[],attachments:[],...(accounting?{accounting}:{})};";
-s=s.replace(needle,replacement);
-fs.writeFileSync(path,s);
-console.log('verify-full-cycle.mjs: Stage 1 and Stage 4 accounting fixtures added');
