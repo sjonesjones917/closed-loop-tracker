@@ -8,19 +8,20 @@
 ===== node --check project-store.js =====
 ===== node --check app-core.js =====
 ===== node --check verify-capture-once.mjs =====
-===== node verify-capture-once.mjs =====
-workbook.js:788
-globalThis.closedLoopCore={SCHEMA,WORKFLOW_ID,PROJECT_SCHEMA,STAGE_COUNT,STAGE_OWNERSHIP,STAGES,APPENDICES,STAGE_DECISIONS,createBlankState,migrateState,stageTemplate,stageHumanItems:s=>s.humanChecklist||[],stageGateItems:s=>s.completionGate||[],stageEvidenceItems:s=>s.evidenceToPreserve||[],validateStageDraft,parseRecordFields,sha256Bytes,sha256Text,immutableRevision,invalidateDownstream,compareArtifactSets};dispatchEvent(new Event('closed-loop-core-ready'));
-                                                                                                                                                                                                                                                                                                                                                                                                                             ^
+===== capture-once regression =====
+workflow-schema.js:1003
+  if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name)))throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);
+                                                                                                                 ^
 
-ReferenceError: dispatchEvent is not defined
-    at workbook.js:788:414
-    at workbook.js:789:3
+Error: Ownership partition for Verification tests is incomplete or overlapping.
+    at recordSchema (workflow-schema.js:1003:120)
+    at workflow-schema.js:1033:9
+    at workflow-schema.js:1238:3
     at Script.runInThisContext (node:vm:137:12)
     at Object.runInThisContext (node:vm:317:38)
     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-capture-once.mjs:3:151
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+    at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/[eval1]:1:99
 
 Node.js v22.23.2
