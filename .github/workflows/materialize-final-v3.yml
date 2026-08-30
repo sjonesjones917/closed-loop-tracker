@@ -1,0 +1,114 @@
+name: Materialize final closed-loop v3
+
+on:
+  push:
+    branches:
+      - fix/closed-loop-v3-final-20260830
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: materialize-final-v3
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize verified production tree and prove it
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE=371ea9e9fd53586f78aa838217cdd97a7c442d76
+          git fetch origin "$SOURCE"
+
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const m=html.match(/<style>[\s\S]*?<\/style>/);
+          if(!m) throw new Error('Current main style block missing');
+          fs.writeFileSync('/tmp/style-before.txt',m[0]);
+          NODE
+
+          files=(
+            app-core.js
+            build-test-project.mjs
+            index.html
+            project-store.js
+            prompt-engine.js
+            response-ingestion.js
+            test-runtime.js
+            test-worker.js
+            verify-complete.mjs
+            verify-definition-of-done.mjs
+            verify-full-cycle.mjs
+            verify-ingestion.mjs
+            verify-project-lifecycle.mjs
+            verify-prompt-semantics.mjs
+            verify-semantic-invariant.mjs
+            verify-test-runtime-limits.mjs
+            verify-test-runtime-v3.mjs
+            verify-test-runtime.mjs
+            verify-user-prompt-invariants.mjs
+            verify-v3-contract.mjs
+            verify-v3-definition-of-done.mjs
+            verify-v3-migration.mjs
+            verify.mjs
+            workbook.js
+            workflow-engine.js
+            workflow-schema.js
+          )
+          git checkout "$SOURCE" -- "${files[@]}"
+
+          # The one-time workflow must not exist in the acceptance workspace or final production commit.
+          rm -f .github/workflows/materialize-final-v3.yml
+          rm -f .tmp-lifecycle-proof-refresh.mjs .tmp-*.mjs
+
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const m=html.match(/<style>[\s\S]*?<\/style>/);
+          if(!m) throw new Error('Materialized style block missing');
+          const before=fs.readFileSync('/tmp/style-before.txt','utf8');
+          if(m[0]!==before) throw new Error('VISUAL REGRESSION: the complete stylesheet changed');
+          if(!html.includes('height:clamp(260px,45vh,520px)')) throw new Error('Prompt box size changed');
+          if(!html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}')) throw new Error('Prompt expansion sizing changed');
+          NODE
+
+          node verify.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-definition-of-done.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-full-cycle.mjs
+          node build-test-project.mjs
+
+          # Restore the workflow in the index/working tree so this commit never attempts a workflow-token change.
+          git checkout HEAD -- .github/workflows/materialize-final-v3.yml
+          git add "${files[@]}"
+          git status --short
+          if git diff --cached --quiet; then
+            echo 'No production changes to commit.'
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'Apply verified closed-loop v3 implementation to current main'
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
