@@ -141,6 +141,38 @@ function openBlockers(project,stage){
 function acceptedChanges(project,stage){return safe(project?.projectData?.acceptedChanges).filter(change=>Number(change.stage)===Number(stage)&&change.status==='COMMITTED'&&change.responseType==='DATA_PROPOSAL'&&!change.invalidatedBy);}
 function acceptedControlEvents(project,stage){return safe(project?.projectData?.responseDispositions).filter(item=>Number(item.stage)===Number(stage)&&['ACCEPTED_HUMAN_QUESTION_SET','ACCEPTED_BLOCKER_EVENT','ACCEPTED_EXECUTION_FAILURE'].includes(item.type)&&!item.invalidatedBy);}
 
+
+const INTAKE_DISPOSITIONS=Object.freeze(['INCORPORATED_JOB_DEFINITION','RETAINED_CONTEXT','UNRESOLVED_HUMAN_ONLY','LATER_RESOLVABLE','INAPPLICABLE']);
+const INTAKE_OBLIGATION_KINDS=Object.freeze(['OBLIGATION','CONTEXT','UNRESOLVED','INAPPLICABLE']);
+const OBLIGATION_DISPOSITIONS=Object.freeze(['REQUIREMENT','RETAINED_NONNORMATIVE_CONTEXT','INAPPLICABLE','BLOCKED']);
+function accountingLeafUnits(value,path,out){
+  if(value===undefined||value===null||value==='')return out;
+  if(Array.isArray(value)){value.forEach(function(item,index){accountingLeafUnits(item,path+'['+index+']',out);});return out;}
+  if(value&&typeof value==='object'){Object.keys(value).sort().forEach(function(key){accountingLeafUnits(value[key],path+'.'+key,out);});return out;}
+  const raw=String(value),lines=raw.split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean),pieces=lines.length?lines:[raw.trim()];
+  pieces.forEach(function(piece,index){if(piece)out.push({sourceLocation:pieces.length===1?path:path+'#'+(index+1),rawValue:piece,rawValueSha256:hash.sha256Text(piece)});});return out;
+}
+function stage01IntakeManifest(project){
+  ensureShape(project);const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNKNOWN'),latest=safe(project.projectData.inputVersions).filter(function(x){return String(x.version||'')===inputVersion;}).at(-1),root=latest&&latest.payload&&typeof latest.payload==='object'?latest.payload:(project.projectData.userEntered&&typeof project.projectData.userEntered==='object'?project.projectData.userEntered:{}),units=[];accountingLeafUnits(root,'UserJobInput',units);
+  Object.entries(schema.JOB_FIELDS||{}).forEach(function(entry){const name=entry[0],definition=entry[1],value=project.job&&project.job[name];if(['HUMAN','HUMAN_DECISION'].includes(definition&&definition.producer)&&value!==undefined&&value!==null&&value!=='')accountingLeafUnits(value,'job.'+name,units);});
+  const unique=[],seen=new Set();units.forEach(function(unit){const key=unit.sourceLocation+'|'+unit.rawValueSha256;if(!seen.has(key)){seen.add(key);unique.push(unit);}});
+  const normalized=unique.map(function(unit,index){return Object.assign({},unit,{inputUnitId:'INTAKE-'+hash.sha256Value({inputVersion:inputVersion,sourceLocation:unit.sourceLocation,index:index,rawValueSha256:unit.rawValueSha256}).slice(0,20).toUpperCase()});}),accepted=safe(project.stages&&project.stages[1]&&project.stages[1].agentData&&project.stages[1].agentData.INTAKE_ACCOUNTING),byId=new Map(accepted.map(function(x){return [String(x&&x.inputUnitId||''),x];})),accounted=normalized.filter(function(u){return byId.has(u.inputUnitId);}).length,duplicates=accepted.length-new Set(accepted.map(function(x){return String(x&&x.inputUnitId||'');})).size;
+  const manifest={schema:'closed-loop-intake-manifest/1',inputVersion:inputVersion,projectRevision:Number(project.revision||0),units:normalized,expectedCount:normalized.length,accountedCount:accounted,coverage:normalized.length?accounted/normalized.length:1,duplicateDispositionCount:duplicates,complete:accounted===normalized.length&&duplicates===0};project.projectData.stageRecords.accounting=project.projectData.stageRecords.accounting||{};project.projectData.stageRecords.accounting.stage01=clone(manifest);return manifest;
+}
+function stage03ResearchCoverage(project){
+  ensureShape(project);const noSource=upper(project.stages&&project.stages[2]&&project.stages[2].agentData&&project.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE',sources=recordsForCurrentScope(project,'sources'),research=recordsForCurrentScope(project,'research'),covered=new Set(research.map(function(r){return String(recordValue(r,'SOURCE_ID')||r.relationships&&r.relationships.SOURCE_ID||'');})),missingSourceIds=sources.map(function(r){return recordId(r,'sources');}).filter(function(id){return !covered.has(id);}),unsaturatedSourceIds=sources.map(function(r){return recordId(r,'sources');}).filter(function(id){return !research.filter(function(rr){return String(recordValue(rr,'SOURCE_ID')||rr.relationships&&rr.relationships.SOURCE_ID||'')===id;}).some(function(rr){return ['SATURATED','COMPLETE','NO NEW MATERIAL'].includes(upper(recordValue(rr,'SATURATION_STATUS')));});}),secondPass=truth(project.stages&&project.stages[3]&&project.stages[3].agentData&&project.stages[3].agentData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED),latestNew=upper(project.stages&&project.stages[3]&&project.stages[3].agentData&&project.stages[3].agentData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS),noNew=['FALSE','NO','NONE','NOT APPLICABLE','0'].includes(latestNew),complete=noSource||(sources.length>0&&missingSourceIds.length===0&&unsaturatedSourceIds.length===0&&secondPass&&noNew);return {noApplicableExternalSource:noSource,sourceCount:sources.length,researchCount:research.length,missingSourceIds:missingSourceIds,unsaturatedSourceIds:unsaturatedSourceIds,secondConflictAndExceptionPassCompleted:secondPass,latestPassFoundNoNewMaterialCategory:noNew,complete:complete};
+}
+function stage04ObligationManifest(project){
+  ensureShape(project);const inputVersion=String(project.job.CURRENT_INPUT_VERSION||'UNKNOWN'),sourceSetVersion=String(project.job.CURRENT_SOURCE_SET_VERSION||'NOT APPLICABLE'),inputs=[];
+  stage01IntakeManifest(project).units.forEach(function(unit){inputs.push({origin:'USER_JOB_INPUT',sourceIdentity:unit.inputUnitId,sourceLocation:unit.sourceLocation,text:unit.rawValue,evidenceSha256:unit.rawValueSha256});});
+  const s1=project.stages&&project.stages[1]&&project.stages[1].agentData||{};['EXACT_DELIVERABLE_REQUESTED','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'].forEach(function(name){const leaves=[];accountingLeafUnits(s1[name],'Stage01.'+name,leaves);leaves.forEach(function(leaf){inputs.push({origin:'STAGE01_ACCEPTED',sourceIdentity:'S1-'+name,sourceLocation:leaf.sourceLocation,text:leaf.rawValue,evidenceSha256:leaf.rawValueSha256});});});
+  recordsForCurrentScope(project,'sources').forEach(function(source){const sid=recordId(source,'sources');inputs.push({origin:'SOURCE_IDENTITY',sourceIdentity:sid,sourceLocation:'sources.'+sid,text:String(recordValue(source,'TITLE')||sid),evidenceSha256:source.recordSha256||source.sha256||hash.sha256Value(recordFields(source))});});
+  const semanticFields=['MANDATORY_STATEMENTS','RECOMMENDATIONS','OPTIONAL_PRACTICES','EXAMPLES','EXPLANATORY_MATERIAL','PROHIBITIONS','EXCEPTIONS','DEPENDENCIES','APPLICABILITY_FACTS','RESTRICTIONS','INVALIDATING_MATERIAL'];recordsForCurrentScope(project,'research').forEach(function(rr){const rid=recordId(rr,'research');semanticFields.forEach(function(name){const leaves=[];accountingLeafUnits(recordValue(rr,name),'research.'+rid+'.'+name,leaves);leaves.forEach(function(leaf){inputs.push({origin:'STAGE03_RESEARCH',sourceIdentity:rid,sourceLocation:leaf.sourceLocation,text:leaf.rawValue,evidenceSha256:leaf.rawValueSha256});});});});
+  recordsForCurrentScope(project,'candidateRequirements').forEach(function(cr){const cid=recordId(cr,'candidateRequirements'),value=String(recordValue(cr,'CANDIDATE_OBLIGATION')||'').trim();if(value)inputs.push({origin:'STAGE03_CANDIDATE_OBLIGATION',sourceIdentity:cid,sourceLocation:String(recordValue(cr,'SOURCE_LOCATION')||('candidateRequirements.'+cid)),text:value,evidenceSha256:hash.sha256Text(value)});});
+  const obligations=inputs.map(function(item,index){return Object.assign({},item,{obligationId:'OBL-'+hash.sha256Value({inputVersion:inputVersion,sourceSetVersion:sourceSetVersion,origin:item.origin,sourceIdentity:item.sourceIdentity,sourceLocation:item.sourceLocation,index:index,evidenceSha256:item.evidenceSha256}).slice(0,20).toUpperCase()});}),accepted=safe(project.stages&&project.stages[4]&&project.stages[4].agentData&&project.stages[4].agentData.OBLIGATION_ACCOUNTING),byId=new Map(accepted.map(function(x){return [String(x&&x.obligationId||''),x];})),accounted=obligations.filter(function(o){return byId.has(o.obligationId);}).length,duplicates=accepted.length-new Set(accepted.map(function(x){return String(x&&x.obligationId||'');})).size,blocked=accepted.filter(function(x){return upper(x&&x.disposition)==='BLOCKED';}).length;
+  const manifest={schema:'closed-loop-obligation-manifest/1',inputVersion:inputVersion,sourceSetVersion:sourceSetVersion,projectRevision:Number(project.revision||0),obligations:obligations,expectedCount:obligations.length,accountedCount:accounted,coverage:obligations.length?accounted/obligations.length:1,duplicateDispositionCount:duplicates,blockedDispositionCount:blocked,complete:accounted===obligations.length&&duplicates===0};project.projectData.stageRecords.accounting=project.projectData.stageRecords.accounting||{};project.projectData.stageRecords.accounting.stage04=clone(manifest);return manifest;
+}
+
 function hasStageActivity(project,stage){
   if(acceptedChanges(project,stage).length)return true;
   if(safe(project?.projectData?.rawResponses).some(item=>Number(item.stage)===Number(stage)))return true;
@@ -313,6 +345,7 @@ function gate(stage,project){
     case 1:{
       if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');
       requireAccepted();
+      const intake=stage01IntakeManifest(project);if(!intake.complete)reasons.push('Stage 01 intake accounting is incomplete: '+intake.accountedCount+'/'+intake.expectedCount+' controlled input units accounted for.');
       const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);
       if(!confirmed)reasons.push('Human confirmation bound to the current accepted change and input version is required.');
       break;
@@ -326,12 +359,16 @@ function gate(stage,project){
       break;
     }
     case 3:{
-      requireAccepted();const sourceIds=all('sources').map(record=>recordId(record,'sources')),noSource=upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';
-      if(!sourceIds.length){if(!noSource)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');break;}
-      requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;
+      requireAccepted();const coverage=stage03ResearchCoverage(project);
+      if(!coverage.noApplicableExternalSource&&!coverage.sourceCount)reasons.push('Stage 03 cannot proceed without a current Stage 02 source set or valid no-source determination.');
+      if(coverage.missingSourceIds.length)reasons.push('Research is missing for source(s): '+coverage.missingSourceIds.join(', ')+'.');
+      if(coverage.unsaturatedSourceIds.length)reasons.push('Research is not exhausted or saturated for source(s): '+coverage.unsaturatedSourceIds.join(', ')+'.');
+      if(!coverage.noApplicableExternalSource&&!coverage.secondConflictAndExceptionPassCompleted)reasons.push('Stage 03 second conflict and exception pass is not complete.');
+      if(!coverage.noApplicableExternalSource&&!coverage.latestPassFoundNoNewMaterialCategory)reasons.push('Stage 03 latest pass still found new material; research must continue until saturation.');
+      break;
     }
     case 4:{
-      requireAccepted();requireCount('requirements',1);
+      requireAccepted();const obligationManifest=stage04ObligationManifest(project);if(!obligationManifest.complete)reasons.push('Stage 04 obligation accounting is incomplete: '+obligationManifest.accountedCount+'/'+obligationManifest.expectedCount+' obligations accounted for.');if(obligationManifest.blockedDispositionCount)reasons.push('Stage 04 has '+obligationManifest.blockedDispositionCount+' blocked obligation disposition(s).');requireCount('requirements',1);
       for(const req of collection('requirements')){
         for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: ${name} is missing.`);
         const sourceId=String(recordValue(req,'SOURCE_ID')||req.relationships?.SOURCE_ID||'').trim(),userRelationship=String(recordValue(req,'USER_INPUT_RELATIONSHIP')||'').trim();
@@ -754,7 +791,7 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,
   clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,reconcileArtifactCustodyVerification,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,recordApplicationDeterministicResult,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
-  unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
+  unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,stage01IntakeManifest,stage03ResearchCoverage,stage04ObligationManifest,INTAKE_DISPOSITIONS,INTAKE_OBLIGATION_KINDS,OBLIGATION_DISPOSITIONS,mandatoryRequirements,confirmedDefects,unresolvedMaterialDefects,
   currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
   recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
