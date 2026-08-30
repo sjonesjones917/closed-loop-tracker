@@ -1,20 +1,22 @@
 name: Materialize Stage 4 persisted prompt invalidation
 
 on:
-  push:
+  pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
-  pull-requests: write
+  actions: write
 
 jobs:
   materialize:
-    if: contains(github.event.head_commit.message, 'Materialize Stage 4 persisted prompt invalidation')
+    if: github.head_ref == 'automation/stage4-materializer-v2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -22,13 +24,12 @@ jobs:
       - name: Apply and prove the permanent Stage 4 repair
         env:
           GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
         shell: bash
         run: |
           set -euo pipefail
-          BRANCH=fix/stage4-persisted-prompt-v26
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git checkout -b "$BRANCH"
 
           node <<'NODE'
           const fs = require('fs');
@@ -75,9 +76,5 @@ jobs:
           git add -A
           git diff --cached --check
           git commit -m "Invalidate persisted Stage 4 prompts after canonical reuse fix"
-          git push -u origin "$BRANCH"
-          gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "Invalidate persisted Stage 4 prompts after canonical reuse fix" \
-            --body "Stage 4 already consumes accepted Stage 1 canonical intent data and no longer creates an intent-file handoff. This patch closes the remaining persistence defect: it increments the prompt-engine identity so stored pre-fix Stage 4 prompts/proposals become obsolete, refreshes the shared browser cache identity, strengthens the permanent regression, removes the obsolete materializer, and deletes this one-time workflow."
+          git push origin "HEAD:${BRANCH}"
+          gh workflow run pages.yml --ref "$BRANCH"
