@@ -20,8 +20,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Materialize the repair
-        run: python3 .github/scripts/materialize_stage4.py
+      - name: Correct materializer syntax and materialize the repair
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('.github/scripts/materialize_stage4.py')
+          data=path.read_text()
+          old="`/records/intentStatements/${index}/fields/SOURCE_MATERIAL','SOURCE_MATERIAL"
+          new="`/records/intentStatements/${index}/fields/SOURCE_MATERIAL`,'SOURCE_MATERIAL"
+          if old not in data:
+              raise SystemExit('expected materializer syntax defect was not found')
+          path.write_text(data.replace(old,new,1))
+          PY
+          python3 .github/scripts/materialize_stage4.py
       - name: Syntax and targeted regressions
         run: |
           node --check workbook.js
