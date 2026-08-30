@@ -373,7 +373,7 @@ import fsStageBoundary from 'node:fs';
  const r=prompts.buildPromptRecord(1,p);
  const required=[
   'do not ask the human to re-enter facts that are already present in those materials',
-  'Do not block Stage 01 merely because information will be needed by a later',
+  'Stage 01 MUST NOT complete until human authority is exhausted',
   'Stage 01 does not require every fact needed to execute later stages',
   'A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01',
   'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers',
@@ -438,7 +438,7 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   const withStoredCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
   if(withStoredCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withStoredCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Browser custody re-enabled Stage 04 original-file reuse.');
 }
-if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
+if(prompts.version!=='closed-loop-prompt-engine/27')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
 console.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {

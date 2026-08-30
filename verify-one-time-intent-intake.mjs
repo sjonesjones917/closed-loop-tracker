@@ -17,7 +17,18 @@ function statement(id,location,text){return {id,stage:1,active:true,scope,fields
 p.projectData.intentStatements.push(statement('INTENT-STATEMENT-000001','line 1','The product must preserve all intent statements.'),statement('INTENT-STATEMENT-000002','line 2','The original intent file must never be reused after intake.'));
 const stage1=prompts.buildPromptRecord(1,p);
 assert(stage1.prompt.includes('one intentStatements record for every atomic statement'),'Stage 01 prompt does not require exhaustive statement capture.');
+assert(stage1.prompt.includes('Stage 01 MUST NOT complete until human authority is exhausted'),'Stage 01 prompt still permits incomplete human-authority intake.');
+assert(!stage1.prompt.includes('Do not block Stage 01 merely because information will be needed by a later research'),'Stage 01 prompt still contains the old weakening rule.');
 assert(stage1.prompt.includes('Use the original intent file now, in Stage 01 only'),'Stage 01 prompt does not establish one-time use.');
+const stage3Exhaustive=prompts.buildPromptRecord(3,p);
+assert(stage3Exhaustive.prompt.includes('Stage 03 MUST NOT complete on a vague claim of saturation'),'Stage 03 prompt does not require exhaustive source research.');
+assert(stage3Exhaustive.prompt.includes('every current Stage 02 source must have current research coverage'),'Stage 03 prompt does not require full current-source coverage.');
+const stage4Union=prompts.buildPromptRecord(4,p);
+assert(stage4Union.prompt.includes('Stage 01 human-authority intake must be complete and fully accounted'),'Stage 04 prompt does not require closed Stage 01 input.');
+assert(stage4Union.prompt.includes('Stage 03 research must be complete for every current Stage 02 source'),'Stage 04 prompt does not require closed Stage 03 research.');
+assert(stage4Union.prompt.includes('current User Job Input + accepted Stage 01 job definition + every active canonical Stage 01 intent statement'),'Stage 04 prompt does not enumerate the complete upstream union.');
+assert(stage4Union.prompt.includes('do not rediscover, request, reattach, or ask the human to retransmit any already captured project information'),'Stage 04 prompt still permits repeated user input.');
+for(const required of ['intentStatements','research','candidateRequirements','sources'])assert(schema.STAGE_CONTRACTS[4].readCollections.includes(required),'Stage 04 read contract omits '+required+'.');
 for(const stage of [3,4]){
   const prompt=prompts.buildPromptRecord(stage,p);
   assert(prompt.prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),`Stage ${stage} does not prohibit original-file reuse.`);
