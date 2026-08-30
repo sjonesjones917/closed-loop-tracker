@@ -53,6 +53,34 @@ jobs:
           elif replacement.split("\n  p.job")[0] not in s:
               raise SystemExit('Stage 04 canonical-reuse fixture anchor missing')
           p.write_text(s)
+
+          p=Path('verify-prompt-semantics.mjs')
+          s=p.read_text()
+          for old in [
+            "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');\n",
+            "  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');\n"
+          ]:
+              s=s.replace(old,'')
+          old="    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');"
+          new="    if(!record.prompt.includes('EXHAUSTIVE HUMAN-AUTHORITY INTAKE IS REQUIRED')||!record.prompt.includes('derive subject-specific human-authority questions from the user’s actual request')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_SUBJECT_NEUTRAL_INTAKE_BOUNDARY_MISSING');"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('Stage 01 domain-boundary verifier anchor missing')
+          old="    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('Nonblocking means the human may defer; it does not mean the agent may skip the question')||!record.prompt.includes('intended jurisdiction(s)')||!record.prompt.includes('additional human-controlled invention materials exist'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
+          new="    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!record.prompt.includes('BLOCKING_NOW')||!record.prompt.includes('ASK_NOW_NONBLOCKING')||!record.prompt.includes('LATER_RESOLVABLE')||!record.prompt.includes('nonblocking never means the question may be skipped')||!record.prompt.includes('every foreseeable genuinely human-only fact or decision relevant to the requested outcome')||!record.prompt.includes('accessible supplied material, authorized research, or a later deterministic stage without human authority'))issues.push('STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING');"
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('Stage 01 proactive intake verifier anchor missing')
+          marker="function semanticIssues(record){"
+          subject_guard="const promptSource=fs.readFileSync('prompt-engine.js','utf8');\nfor(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])if(promptSource.includes(forbidden))throw new Error('Subject-specific runtime prompt branch remains: '+forbidden);\n"
+          if subject_guard not in s:
+              if marker not in s: raise SystemExit('semanticIssues marker missing')
+              s=s.replace(marker,subject_guard+marker,1)
+          p.write_text(s)
           PY
       - name: Refresh exact runtime graph build identity
         run: |
@@ -90,6 +118,7 @@ jobs:
           node --check test-worker.js
           node --check build-test-project.mjs
           node --check verify-stage01-stage03-stage04-closure.mjs
+          node --check verify-prompt-semantics.mjs
       - name: Execute controlling proofs
         run: |
           node build-test-project.mjs
