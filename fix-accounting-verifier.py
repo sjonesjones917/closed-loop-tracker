@@ -34,7 +34,6 @@ if old not in text:
 text = text.replace(old, new, 1)
 p.write_text(text)
 
-# Generated exhaustive verifier stores the prompt body directly in prompt4.
 p = Path('verify-exhaustive-stage1-stage3-stage4.mjs')
 text = p.read_text()
 old = "assert.doesNotMatch(prompt4,/attach the original intent file again/i);"
@@ -42,4 +41,10 @@ new = "assert.match(prompt4,/(?:do not|never)[^\\n]{0,260}(?:attach|re-attach|re
 if old not in text:
     raise SystemExit('Stage 04 exhaustive no-reattach assertion not found')
 text = text.replace(old, new, 1)
+
+old_css = ".prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;white-space:pre;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55}"
+main_css = ".prompt{height:clamp(260px,45vh,520px);max-height:80vh;resize:vertical;overflow:auto;border:1px solid #d8ddd9;border-radius:9px;background:#f5f7f5;padding:9px;font:10.5px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}"
+if old_css not in text:
+    raise SystemExit('Historical prompt-box regression baseline not found')
+text = text.replace(old_css, main_css, 1)
 p.write_text(text)
