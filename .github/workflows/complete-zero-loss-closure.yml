@@ -57,6 +57,16 @@ jobs:
           t=t.replace(old2,"",1)
           p.write_text(t)
           PY
+      - name: Make Stage 04 browser proof a native closed project
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser.mjs'); t=p.read_text()
+          old="const p=structuredClone(globalThis.closedLoopRetainedProject);p.job.JOB_ID='JOB-BROWSER-STAGE04-PROOF';p.job.EXACT_USER_OBJECTIVE_VERBATIM='stage04-objective';p.job.EXPLICIT_USER_REQUIREMENTS='stage04-requirement';p.projectData.userEntered={objective:'stage04-objective',requirement:'stage04-requirement'};p.job.CURRENT_INPUT_VERSION='INPUT-BROWSER-STAGE04';const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(p);p.stages[1].agentData=p.stages[1].agentData||{};p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S-'+i,statementClass:'REQUIREMENT',text:u.rawValueText}]}))});globalThis.closedLoopWorkflowEngine.recalculate(p);const r=globalThis.closedLoopPromptEngine.buildPromptRecord(4,p);"
+          new="const p=globalThis.closedLoopCore.createBlankState('JOB-BROWSER-STAGE04-PROOF');p.job.EXACT_USER_OBJECTIVE_VERBATIM='stage04-objective';p.job.EXPLICIT_USER_REQUIREMENTS='stage04-requirement';p.job.CURRENT_INPUT_VERSION='INPUT-BROWSER-STAGE04';p.job.CURRENT_SOURCE_SET_VERSION='SOURCE-BROWSER-STAGE04';p.projectData.userEntered={objective:'stage04-objective',requirement:'stage04-requirement'};globalThis.closedLoopWorkflowEngine.recalculate(p);const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(p);p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'stage04-deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S-'+i,statementClass:'REQUIREMENT',text:u.rawValueText}]}))})};p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true};p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true};p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false};p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true};const r=globalThis.closedLoopPromptEngine.buildPromptRecord(4,p);"
+          if old not in t: raise SystemExit('Expected Stage 04 retained-project fixture not found')
+          p.write_text(t.replace(old,new,1))
+          PY
       - name: Normalize permanent visual regression to compare exact baseline
         run: |
           python3 - <<'PY'
