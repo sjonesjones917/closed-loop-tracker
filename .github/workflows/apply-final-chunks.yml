@@ -1,19 +1,19 @@
-name: Apply final prepared implementation
+name: Inspect prepared implementation conflicts
 on:
   push:
     branches: ["finish/blind-context-and-prompt-authority-43"]
     paths: [".github/workflows/apply-final-chunks.yml"]
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: finish/blind-context-and-prompt-authority-43
           fetch-depth: 0
-      - name: Apply prepared patch exactly
+      - name: Show exact conflict regions
         shell: bash
         run: |
           set -euo pipefail
@@ -27,16 +27,20 @@ jobs:
               src = src.replace(prefix, '')
           Path('/tmp/root.patch').write_text(src)
           PY
-          git apply --3way /tmp/root.patch
-          if git ls-files -u | grep -q .; then
-            echo 'THREE-WAY CONFLICTS:'
-            git status --short
-            exit 2
-          fi
-          rm -rf .repair
-          rm -f .github/workflows/apply-blind-context-final.yml .github/workflows/apply-final-chunks.yml .github/workflows/export-source.yml
-          git config user.name "closed-loop-implementation"
-          git config user.email "closed-loop-implementation@users.noreply.github.com"
-          git add -A
-          git commit -m "Complete subject-neutral prompt and blind-context implementation"
-          git push origin HEAD:finish/blind-context-and-prompt-authority-43
+          git apply --3way /tmp/root.patch || true
+          for f in app-core.js prompt-engine.js workflow-engine.js workflow-schema.js; do
+            echo "===== $f CONFLICT REGIONS ====="
+            python3 - "$f" <<'PY'
+          import sys
+          from pathlib import Path
+          p=Path(sys.argv[1]); lines=p.read_text().splitlines()
+          marks=[i for i,l in enumerate(lines) if l.startswith('<<<<<<<')]
+          for k,i in enumerate(marks,1):
+              j=i
+              while j < len(lines) and not lines[j].startswith('>>>>>>>'): j+=1
+              a=max(0,i-18); b=min(len(lines),j+19)
+              print(f'--- conflict {k}, lines {i+1}-{j+1} ---')
+              for n in range(a,b): print(f'{n+1:6}: {lines[n]}')
+          PY
+          done
+          exit 1
