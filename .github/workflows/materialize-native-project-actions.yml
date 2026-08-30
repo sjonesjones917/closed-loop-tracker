@@ -1,0 +1,36 @@
+name: Materialize native Project actions
+on:
+  push:
+    branches: [fix/native-project-actions-no-interception-20260830]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    if: github.event.head_commit.message != 'Use native Project actions disclosure without interception'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove custom Project actions interception and advance live cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          from pathlib import Path
+          app=Path('app-core.js')
+          s=app.read_text()
+          old="const projectActionsMenu=$('.project-action-menu'),projectActionsToggle=$('#project-actions-toggle');if(projectActionsMenu&&projectActionsToggle){const syncProjectActions=()=>projectActionsToggle.setAttribute('aria-expanded',String(projectActionsMenu.open));projectActionsMenu.addEventListener('toggle',syncProjectActions);syncProjectActions();document.addEventListener('click',event=>{if(projectActionsMenu.open&&!projectActionsMenu.contains(event.target)){projectActionsMenu.open=false;syncProjectActions();}},true);}"
+          if old not in s:
+              raise SystemExit('current Project actions interception block not found')
+          s=s.replace(old,"")
+          s=s.replace("runtime-20260830-live-operator-50","runtime-20260830-live-operator-51")
+          app.write_text(s)
+          idx=Path('index.html')
+          h=idx.read_text().replace("runtime-20260830-live-operator-50","runtime-20260830-live-operator-51")
+          idx.write_text(h)
+          Path('.github/workflows/materialize-native-project-actions.yml').unlink()
+          PY
+          git add -A
+          git commit -m 'Use native Project actions disclosure without interception'
+          git push origin HEAD
