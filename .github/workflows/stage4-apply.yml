@@ -1,0 +1,59 @@
+name: Apply Stage 04 canonical intake correction
+
+on:
+  push:
+    branches:
+      - fix/stage4-canonical-intake-reuse
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-canonical-intake-reuse
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify and apply the exact Stage 04 correction
+        run: |
+          cat .stage4-patch-part-* > /tmp/stage4-canonical-intake.patch.gz.b64
+          echo '94555006b2f67241f8fba5ec21188f89fe5272423065065cd148518efbd1fc4b  /tmp/stage4-canonical-intake.patch.gz.b64' | sha256sum -c -
+          base64 -d /tmp/stage4-canonical-intake.patch.gz.b64 | gzip -dc > /tmp/stage4-canonical-intake.patch
+          echo '6e5688bc20eef7515f8bcf92905e04581a05f1593d008702b1c056019e0c0ade  /tmp/stage4-canonical-intake.patch' | sha256sum -c -
+          git apply --check /tmp/stage4-canonical-intake.patch
+          git apply /tmp/stage4-canonical-intake.patch
+          rm .stage4-patch-part-* .github/workflows/stage4-apply.yml
+      - name: Verify the permanent correction
+        run: |
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-browser.mjs
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-test-runtime.mjs
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Commit the repaired tree without one-time machinery
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && { echo 'No permanent correction was produced.' >&2; exit 1; }
+          git commit -m 'Fix Stage 04 canonical intent reuse'
+          git push origin HEAD:fix/stage4-canonical-intake-reuse
