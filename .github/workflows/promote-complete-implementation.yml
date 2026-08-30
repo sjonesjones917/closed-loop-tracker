@@ -1,27 +1,39 @@
-name: Promote completed implementation
+name: Inspect promotion conflicts
 on:
   push:
     branches: ["finish/blind-context-and-prompt-authority-43"]
     paths: [".github/workflows/promote-complete-implementation.yml"]
 permissions:
-  contents: write
+  contents: read
 jobs:
-  promote:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-      - name: Merge completed implementation to main
+      - name: Show exact current-main conflict regions
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin finish/blind-context-and-prompt-authority-43
-          git config user.name "closed-loop-implementation"
-          git config user.email "closed-loop-implementation@users.noreply.github.com"
-          git merge --no-ff --no-commit origin/finish/blind-context-and-prompt-authority-43
-          rm -f .github/workflows/promote-complete-implementation.yml
-          git add -A
-          git commit -m "Complete subject-neutral 30-stage prompt implementation"
-          git push origin HEAD:main
+          git merge --no-ff --no-commit origin/finish/blind-context-and-prompt-authority-43 || true
+          for f in app-core.js project-store.js prompt-engine.js response-ingestion.js workflow-engine.js workflow-schema.js; do
+            if grep -q '^<<<<<<<' "$f" 2>/dev/null; then
+              echo "===== $f ====="
+              python3 - "$f" <<'PY'
+          import sys
+          from pathlib import Path
+          lines=Path(sys.argv[1]).read_text().splitlines()
+          for i,l in enumerate(lines):
+              if l.startswith('<<<<<<<'):
+                  j=i
+                  while j<len(lines) and not lines[j].startswith('>>>>>>>'): j+=1
+                  a=max(0,i-12); b=min(len(lines),j+13)
+                  print(f'--- lines {i+1}-{j+1} ---')
+                  for n in range(a,b): print(f'{n+1:6}: {lines[n]}')
+          PY
+            fi
+          done
+          exit 1
