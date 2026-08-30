@@ -59,3 +59,5 @@ console.log(JSON.stringify({stagesCompleted:30,clarificationCycles:1,confirmedDe
 }
 
 for(const [collection,definition] of Object.entries(schema.RECORD_SCHEMAS))for(const record of p.projectData[collection]||[]){if(record.recordSha256)assert(record.recordSha256===hash.recordSha256(record),`${collection} ${engine.recordId(record,collection)} has a stale recordSha256.`);if(record.contentSha256)assert(record.contentSha256===hash.contentRecordSha256(record,definition.idField),`${collection} ${engine.recordId(record,collection)} has a stale contentSha256.`);}
+
+process.exit(0);
