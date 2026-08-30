@@ -45,9 +45,13 @@ prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{require
 assert(!prepared.validation.valid&&prepared.validation.issues.some(item=>item.code==='INVALID_INTENT_STATEMENT_REFERENCE'),'Stage 04 accepted a generic user-input label instead of an exact STATEMENT_ID.');
 const completeRequirements=[requirement('requirement-1','INTENT-STATEMENT-000001'),requirement('requirement-2','INTENT-STATEMENT-000002')];
 const manifest=engine.stage04ObligationManifest(p);const obligations=manifest.obligations||manifest.entries||manifest.items||[];
-assert(obligations.length===2,`Fixture expected two Stage 04 obligations, got ${obligations.length}.`);
+assert(obligations.length>=4,`Stage 04 obligation universe did not include all current user/intake sources; got ${obligations.length}.`);
+assert(obligations.some(item=>item.origin==='CURRENT_USER_JOB_INPUT'&&String(item.text||'').includes('Build exactly what the intent file requires.')),'Stage 04 omitted the current User Job Input objective.');
+assert(obligations.some(item=>item.origin==='HUMAN_INTENT'&&item.sourceIdentity==='INTENT-STATEMENT-000001'),'Stage 04 omitted the first captured Stage 01 intent statement.');
+assert(obligations.some(item=>item.origin==='HUMAN_INTENT'&&item.sourceIdentity==='INTENT-STATEMENT-000002'),'Stage 04 omitted the second captured Stage 01 intent statement.');
 const keyForStatement=new Map([['INTENT-STATEMENT-000001','requirement-1'],['INTENT-STATEMENT-000002','requirement-2']]);
-const accounting=obligations.map(item=>{const key=keyForStatement.get(String(item.sourceIdentity||''));assert(key,`Unexpected fixture obligation ${JSON.stringify(item)}.`);return {obligationId:item.obligationId,disposition:'REQUIREMENT',requirementTempKeys:[key],reason:''};});
+const accounting=obligations.map(item=>{const key=keyForStatement.get(String(item.sourceIdentity||''));return key?{obligationId:item.obligationId,disposition:'REQUIREMENT',requirementTempKeys:[key],reason:''}:{obligationId:item.obligationId,disposition:'RETAINED_NONNORMATIVE_CONTEXT',requirementTempKeys:[],reason:'This fixture preserves the additional directly enumerated current-input unit while exact intent-statement requirements remain separately mapped.'};});
+assert(accounting.length===obligations.length,'Stage 04 fixture failed to disposition every manifest obligation.');
 prepared=ingestion.prepare(p,{stage:4,text:JSON.stringify(envelope(4,p4,{requirements:completeRequirements},{OBLIGATION_ACCOUNTING:accounting})),promptRecord:p4});
 assert(prepared.validation.valid,`Stage 04 complete canonical coverage was rejected: ${JSON.stringify(prepared.validation.issues)}`);
 console.log('verify-one-time-intent-intake: PASS');
