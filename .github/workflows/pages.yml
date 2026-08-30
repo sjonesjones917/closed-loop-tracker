@@ -30,21 +30,7 @@ jobs:
           pathlib.Path('/tmp/materialize.sh').write_text(body)
           subprocess.run(['bash','/tmp/materialize.sh'],check=True)
           subprocess.run(['node','.github/spec-postfix.cjs'],check=True)
-      - name: Restore and update the one Pages workflow
-        shell: bash
-        run: |
-          git show origin/main:.github/workflows/pages.yml > .github/workflows/pages.yml
-          node <<'NODE'
-          const fs=require('fs');let s=fs.readFileSync('.github/workflows/pages.yml','utf8');
-          s=s.replace("          node --check workflow-schema.js\n          node --check workflow-engine.js","          node --check workflow-schema.js\n          node --check test-runtime.js\n          node --check workflow-engine.js");
-          if(!s.includes('node --check verify-controlling-spec.mjs'))s=s.replace('          node --check verify-test-runtime.mjs\n','          node --check verify-test-runtime.mjs\n          node --check verify-controlling-spec.mjs\n');
-          s=s.replace('      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs','      - name: Verify generic deterministic Test IR runtime\n        run: |\n          node verify-test-runtime.mjs\n          node verify-controlling-spec.mjs');
-          s=s.replace("const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];");
-          s=s.replace("projectSchema:'closed-loop-project/2'","projectSchema:'closed-loop-project/3'").replace("responseSchema:'closed-loop-stage-response/2'","responseSchema:'closed-loop-stage-response/3'").replace("nativeTestRuntimeVersion:'closed-loop-test-runtime/1'","nativeTestRuntimeVersion:'closed-loop-test-runtime/2'");
-          fs.writeFileSync('.github/workflows/pages.yml',s);
-          NODE
-          rm -f .github/workflows/spec-conformance-materializer.yml .github/workflows/spec-conformance-runner.yml .github/spec-postfix.cjs
-      - name: Focused conformance proof before commit
+      - name: Focused conformance proof before source commit
         run: |
           node --check workbook.js
           node --check workflow-schema.js
@@ -59,12 +45,13 @@ jobs:
           node verify-controlling-spec.mjs
           node verify-test-runtime.mjs
           node verify-prompt-semantics.mjs
-      - name: Commit verified repair to PR branch
+      - name: Commit verified non-workflow source to PR branch
         shell: bash
         run: |
           git config user.name closed-loop-spec-repair
           git config user.email actions@users.noreply.github.com
           git add -A
+          git reset -- .github/workflows .github/spec-postfix.cjs
           git diff --cached --check
           git commit -m "Align runtime with controlling project-neutral /3 specification"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
