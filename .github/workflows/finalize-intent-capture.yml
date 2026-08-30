@@ -17,9 +17,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin implementation/full-spec-repair144
-          for f in verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-v3-definition-of-done.mjs; do
-            git checkout origin/implementation/full-spec-repair144 -- "$f"
-          done
+          for f in verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-v3-definition-of-done.mjs; do git checkout origin/implementation/full-spec-repair144 -- "$f"; done
       - name: Apply complete guarded repair set
         run: |
           set -euo pipefail
@@ -37,46 +35,33 @@ jobs:
       - name: Complete deterministic proof
         shell: bash
         run: |
-          set -euo pipefail
-          for f in *.js *.mjs; do node --check "$f"; done
-          node verify-intent-capture.mjs
-          node verify-prompt-semantics.mjs
-          node verify-semantic-invariant.mjs
-          node verify-v3-migration.mjs
-          node verify-v3-contract.mjs
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
-          node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
-          node verify.mjs
+          set +e
+          : > proof-final.log
+          rc=0
+          run_test(){ echo "===== $* =====" | tee -a proof-final.log; "$@" >> proof-final.log 2>&1; x=$?; echo "EXIT=$x" >> proof-final.log; if [ $x -ne 0 ]; then rc=$x; return $x; fi; return 0; }
+          for f in *.js *.mjs; do run_test node --check "$f" || break; done
+          if [ $rc -eq 0 ]; then for f in verify-intent-capture.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs verify.mjs; do run_test node "$f" || break; done; fi
+          if [ $rc -ne 0 ]; then
+            git config user.name closed-loop-repair
+            git config user.email actions@users.noreply.github.com
+            git add proof-final.log
+            git commit -m 'Record exact remaining controlling proof failure' || true
+            git push origin HEAD:fix/controlling-spec-zero-loss-20260830
+            exit $rc
+          fi
       - name: Preserve exact current visual baseline
         run: |
           set -euo pipefail
           git show origin/main:index.html > /tmp/main-index.html
           node - <<'NODE'
-          const fs=require('fs'),crypto=require('crypto');
-          const style=s=>(s.match(/<style>([\s\S]*?)<\/style>/)||[])[1];
-          const main=style(fs.readFileSync('/tmp/main-index.html','utf8'));
-          const candidate=style(fs.readFileSync('index.html','utf8'));
-          if(!main||!candidate)throw Error('style block missing');
-          const h=x=>crypto.createHash('sha256').update(x).digest('hex');
-          if(h(main)!==h(candidate))throw Error(`VISUAL CSS CHANGED: main=${h(main)} candidate=${h(candidate)}`);
-          if(!fs.readFileSync('index.html','utf8').includes('.expandable-prompt{max-height:280px}'))throw Error('prompt box baseline changed');
-          console.log('VISUAL_CSS_UNCHANGED='+h(main));
+          const fs=require('fs'),crypto=require('crypto');const style=s=>(s.match(/<style>([\s\S]*?)<\/style>/)||[])[1];const main=style(fs.readFileSync('/tmp/main-index.html','utf8')),candidate=style(fs.readFileSync('index.html','utf8'));if(!main||!candidate)throw Error('style block missing');const h=x=>crypto.createHash('sha256').update(x).digest('hex');if(h(main)!==h(candidate))throw Error(`VISUAL CSS CHANGED: main=${h(main)} candidate=${h(candidate)}`);if(!fs.readFileSync('index.html','utf8').includes('.expandable-prompt{max-height:280px}'))throw Error('prompt box baseline changed');console.log('VISUAL_CSS_UNCHANGED='+h(main));
           NODE
       - name: Local Chromium acceptance
         run: |
           set -euo pipefail
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
-          pid=$!
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 & pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node verify-browser.mjs
           node verify-browser-extra.mjs
@@ -89,7 +74,7 @@ jobs:
           git config user.email actions@users.noreply.github.com
           find .github/workflows -maxdepth 1 -type f ! -name pages.yml -delete
           rm -rf tools
-          rm -f materialize-v4.log materialize-v4.status materialize-capture-once.log materialize-capture-once.status semantic-diagnostic.log semantic-v8.log semantic-v10.log semantic-v12.log semantic-v14.log semantic-v16.log semantic-v18.log semantic-v20.log semantic-v23.log proof-v25.log proof-v27.log proof-v29.log proof-v31.log proof-v33.log proof-v35.log
+          rm -f materialize-v4.log materialize-v4.status materialize-capture-once.log materialize-capture-once.status semantic-diagnostic.log semantic-v8.log semantic-v10.log semantic-v12.log semantic-v14.log semantic-v16.log semantic-v18.log semantic-v20.log semantic-v23.log proof-v25.log proof-v27.log proof-v29.log proof-v31.log proof-v33.log proof-v35.log proof-final.log
           git add -A
           git commit -m 'Finalize controlling v3 closed-loop reliability implementation'
           git push origin HEAD:fix/controlling-spec-zero-loss-20260830
