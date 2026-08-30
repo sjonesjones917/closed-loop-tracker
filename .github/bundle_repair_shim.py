@@ -28,6 +28,11 @@ if s.count(old_decl)!=1:
     raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
 s=s.replace(old_decl,new_decl,1)
 sp.write_text(s)
+pp=Path('prompt-engine.js')
+ps=pp.read_text()
+if '${accountingPromptBlock(stage,project)}' not in ps: raise SystemExit('prompt accounting state binding anchor missing')
+ps=ps.replace('${accountingPromptBlock(stage,project)}','${accountingPromptBlock(stage,state)}',1)
+pp.write_text(ps)
 vp=Path('verify-bundle-v3.mjs')
 v=vp.read_text()
 old_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].name,'CORRECT THE ROOT CAUSE');"
