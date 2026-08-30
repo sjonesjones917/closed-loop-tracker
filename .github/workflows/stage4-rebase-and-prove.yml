@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Merge current main while preserving the complete canonical repair
+      - name: Merge current main and reconcile the Stage 04 operator control
         shell: bash
         run: |
           set -euo pipefail
@@ -27,6 +27,18 @@ jobs:
           git config user.email actions@users.noreply.github.com
           git fetch origin main
           git merge --no-edit -X ours origin/main
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('app-core.js')
+          text=path.read_text()
+          start=text.index('function artifactControlMarkup(n,locked){')
+          stage19=text.index('if(n===19)return',start)
+          text=text[:start]+"function artifactControlMarkup(n,locked){if(n===4)return '';"+text[stage19:]
+          required="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"
+          if required not in text:
+              raise SystemExit('Stage 04 artifact-control reconciliation failed.')
+          path.write_text(text)
+          PY
           rm -f .stage4-ci-trigger
           find .github/workflows -maxdepth 1 -type f ! -name pages.yml -print -delete
           printf 'Permanent workflows after cleanup:\n'
@@ -78,7 +90,7 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
-          ! grep -R "materialize-stage4-intent-reuse\|stage4-rebase-and-prove" .github/workflows/pages.yml
+          ! grep -R "materialize-stage4-intent-reuse\|stage4-rebase-and-prove\|stage4-reconcile-main" .github/workflows/pages.yml
           test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort)" = "pages.yml"
       - name: Commit the conflict-resolved permanent tree
         shell: bash
