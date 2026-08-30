@@ -4,6 +4,15 @@ on:
     branches: [implementation/closed-loop-v3]
     paths:
       - .github/workflows/v3-upgrade-authoritative.yml
+      - upgrade-v3.mjs
+      - upgrade-v3-compat.mjs
+      - upgrade-v3-corrections.mjs
+      - upgrade-v3-final.mjs
+      - build-test-project.mjs
+      - verify-v3-migration.mjs
+      - verify-v3-contract.mjs
+      - verify-test-runtime-v3.mjs
+      - verify-test-runtime-limits.mjs
   workflow_dispatch:
 permissions:
   contents: write
@@ -93,4 +102,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Implement complete closed-loop v3 deterministic reliability contract"
           git push origin HEAD:implementation/closed-loop-v3
-# rerun after migration verifier browser-context correction
