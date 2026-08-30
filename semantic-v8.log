@@ -1,0 +1,19 @@
+===== verify-intent-capture.mjs =====
+intent capture and Stage 04 capture-once regression passed
+EXIT=0
+===== verify-prompt-semantics.mjs =====
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:131
+    if(issues.length)throw new Error(`Stage ${stage} ${operation} semantic contradiction(s): ${issues.join(', ')}`);
+                           ^
+
+Error: Stage 1 COMPLETE semantic contradiction(s): PATENT_DOMAIN_RULE_MISSING, SOFTWARE_DOMAIN_RULE_MISSING, BUILDING_DOMAIN_RULE_MISSING, PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING, STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING, STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING, STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:131:28
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+EXIT=1
+===== verify-semantic-invariant.mjs =====
+{"semanticFalseAcceptanceInvariant":true,"conclusionBearingCollections":12,"releaseGradeIndependence":true,"traceIntegrity":true,"centralAdjudication":true,"affirmativeCapabilityAvailability":true,"epistemicEvidenceChains":true,"effectiveStability":true}
+EXIT=0
