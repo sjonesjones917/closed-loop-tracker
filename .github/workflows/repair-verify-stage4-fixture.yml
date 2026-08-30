@@ -1,0 +1,37 @@
+name: Repair verify Stage 04 fixture and self-remove
+on:
+  push:
+    branches: [fix/closed-loop-v3-final-20260830]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.event.head_commit.message == 'Run one-time verify Stage 04 fixture repair'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/closed-loop-v3-final-20260830
+          fetch-depth: 0
+      - name: Bind verify.mjs Stage 01 capture to current manifest
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs')
+          t=p.read_text()
+          old="function prepareStage4(p){const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,disposition:'incorporated into the job definition',extractedStatements:[{statementKey:'S'+String(i+1),text:'Captured '+u.label,statementClass:'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};return p;}"
+          new="function prepareStage4(p){const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};return p;}"
+          if old in t:
+              t=t.replace(old,new,1)
+          elif new not in t:
+              raise SystemExit('verify.mjs prepareStage4 anchor not found')
+          p.write_text(t)
+          PY
+          node --check verify.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify.mjs
+          git rm .github/workflows/repair-verify-stage4-fixture.yml
+          git commit -m "Bind verify Stage 04 fixture to the current intake manifest"
+          git push origin HEAD:fix/closed-loop-v3-final-20260830
