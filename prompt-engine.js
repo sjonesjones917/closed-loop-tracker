@@ -4,7 +4,7 @@ const core=globalThis.closedLoopCore;
 const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/35';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/36';
 if(!core||!schema||!hash||!workflow)throw new Error('workbook.js, hash.js, workflow-schema.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=value=>{if(value===undefined||value===null||value==='')return 'UNKNOWN';if(Array.isArray(value)&&!value.length)return 'NONE';if(typeof value==='object')return JSON.stringify(value,null,2);return String(value);};
 const safe=value=>Array.isArray(value)?value:[];
