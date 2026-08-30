@@ -20,13 +20,12 @@ jobs:
         run: |
           python3 - <<'PYRUN'
           from pathlib import Path
-          import textwrap
           source = Path('.github/workflows/apply-stage04-canonical-context.yml').read_text(encoding='utf-8')
           start_marker = "          python3 - <<'PY'\n"
           end_marker = "\n          PY\n"
           start = source.index(start_marker) + len(start_marker)
           end = source.index(end_marker, start)
-          code = textwrap.dedent(source[start:end])
+          code = '\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines()) + '\n'
           exec(compile(code, 'stage04-update.py', 'exec'))
           PYRUN
       - name: Rebuild retained fixture and run deterministic proofs
@@ -49,10 +48,22 @@ jobs:
           node verify-definition-of-done.mjs
           node verify-project-lifecycle.mjs
           git diff --check
+      - name: Exercise the repaired operator path in Chromium
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-stage04-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
       - name: Commit the tested minimal change
         run: |
           rm .github/workflows/apply-stage04-canonical-context.yml
           rm .github/workflows/stage04-canonical-context-apply.yml
+          rm .github/workflows/stage04-canonical-context-apply-v2.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
