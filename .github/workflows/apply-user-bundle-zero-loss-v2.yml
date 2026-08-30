@@ -25,6 +25,7 @@ jobs:
           for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js build-test-project.mjs verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs verify-intake-obligation-accounting.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs; do git show "origin/repair/controlling-v3-zero-loss:$f" > "$f"; done
       - name: Apply controlling corrections
         run: |
+          python3 tools/rewrite-patcher-structural.py
           python3 tools/apply-exhaustive-intake-patch.py
           node tools/finalize-runtime.mjs
       - name: Syntax
@@ -57,7 +58,7 @@ jobs:
         run: |
           git config user.name closed-loop-user-bundle-repair
           git config user.email closed-loop-user-bundle-repair@users.noreply.github.com
-          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml tools/apply-exhaustive-intake-patch.py tools/finalize-runtime.mjs
+          git rm .github/workflows/apply-user-bundle-zero-loss.yml .github/workflows/apply-user-bundle-zero-loss-v2.yml tools/apply-exhaustive-intake-patch.py tools/rewrite-patcher-structural.py tools/finalize-runtime.mjs
           git add -A
           git commit -m 'Enforce exhaustive Stage 1 and Stage 3 input to Stage 4'
           git push origin HEAD:repair/user-bundle-zero-loss-20260830
