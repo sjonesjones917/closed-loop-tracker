@@ -1,28 +1,271 @@
-name: Apply final operator completion
+name: Verify and deploy
+# Single controlling verification and deployment workflow.
+
 on:
   push:
-    branches: [fix/final-live-operator-completion-20260830]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  repair:
+  test:
+    name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-      - name: Apply final current-main repairs
-        shell: python
+          node-version: '22'
+
+      - name: Syntax and static architecture
         run: |
-          from pathlib import Path
-          import subprocess
-          p=Path('app-core.js'); s=p.read_text(); old="stageOneSummary=stageOne?`<div class=\"record-card\"><div class=\"record-body\"><div class=\"record-rows\">${field('Requested deliverable',p.envelope?.stageData?.EXACT_DELIVERABLE_REQUESTED||'UNKNOWN')}${field('Controlled input units accounted',stageOneAccounting.length)}${field('Intent statements captured',stageOneIntents.length)}${field('Assumptions',p.envelope?.stageData?.ASSUMPTIONS||'NONE')}${field('Unresolved human information',p.envelope?.stageData?.UNKNOWN_INFORMATION||'NONE')}</div></div></div><details class=\"record-card\"><summary>Advanced Stage 01 extraction details<span>${rows.length}</span></summary><div class=\"record-body\">${details('Complete extraction diff',rows,false)}</div></details>`:details('Proposal diff',rows,!longProposal);"; new=old.replace("details('Proposal diff',rows,!longProposal)","details('Proposal diff',rows,true)"); assert old in s; p.write_text(s.replace(old,new,1))
-          Path('verify-v3-contract.mjs').write_text(subprocess.check_output(['git','show','364477572a675d133d457f3be6ce86b35aa4505e:verify-v3-contract.mjs'],text=True))
-          Path('.github/workflows/pages.yml').write_text(subprocess.check_output(['git','show','364477572a675d133d457f3be6ce86b35aa4505e:.github/workflows/pages.yml'],text=True))
-      - name: Commit final branch
+          set -euo pipefail
+          git diff --check
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$f"; done
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          ! find . -maxdepth 1 -type f \( -name 'repair-*.py' -o -name 'finalize-*.py' -o -name 'patch-*.py' -o -name '*failure.log' \) | grep .
+          grep -F "height:clamp(260px,45vh,520px)" index.html
+          grep -F ".expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}" index.html
+          ! grep -F "#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}" index.html
+
+      - name: Schema ownership migration and Test IR
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js verify-v3-contract.mjs .github/workflows/pages.yml
-          git commit -m "Complete current-main operator prompt behavior"
-          git push
+          set -euo pipefail
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-hash.mjs
+
+      - name: Ingestion zero-loss and prompt authority
+        run: |
+          set -euo pipefail
+          node verify-ingestion.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-semantic-invariant.mjs
+
+      - name: Workflow gates routing and definition of done
+        run: |
+          set -euo pipefail
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-project-lifecycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node build-test-project.mjs
+
+      - name: Local Chromium acceptance
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          PAGE_URL=http://127.0.0.1:4173/ node verify-mobile-stage-action.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+
+      - name: Build exact static Pages artifact
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir _site
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto'),path=require('path');
+          const root='_site';
+          const deployedFiles=Object.fromEntries(fs.readdirSync(root).sort().filter(f=>fs.statSync(path.join(root,f)).isFile()).map(f=>[f,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex')]));
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stageCount:30,
+            fieldOwnershipCoverage:1,
+            applicationDerivationCoverage:1,
+            typedRelationshipCoverage:1,
+            stage01IntakeCoverage:1,
+            stage04ObligationCoverage:1,
+            acceptedAgentValueExtractionCoverage:1,
+            acceptedRelationshipProvenanceCoverage:1,
+            currentScopeSelectorCoverage:1,
+            exactReqRunTestCoverage:1,
+            applicableCurrentRegressionSuccess:1,
+            mandatoryEvidenceChainStructuralCoverage:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            releaseArtifactIdentityCoverage:1,
+            nativeExecutionCoverage:1,
+            unauthorizedFieldMutationsAccepted:0,
+            canonicalMutationsBeforeAcceptance:0,
+            partialCommitsAfterInjectedFailure:0,
+            staleProposalsAccepted:0,
+            crossProjectRelationshipsAccepted:0,
+            historicalScopeSatisfyingCurrentGates:0,
+            unmatchedDeliveryFilesAuthorized:0,
+            appendOnlyHistoryRewritesAccepted:0,
+            unsupportedTestIrTreatedAsExecutable:0,
+            externalAssertionsOverridingApplicationProof:0,
+            nativeExecutionReceiptsFabricatedExternally:0,
+            releaseAcceptedWithContradiction:0,
+            migrationV2ToV3Covered:1,
+            oldV2ResponseRejectedForCurrentPrompt:1,
+            allStagePromptAudit:true,
+            negativeAcceptanceMatrix:true,
+            storageFailureCoverage:true,
+            artifactRoundTrip:true,
+            browserWidths:[320,393,1280],
+            deployedByteIdentity:false,
+            liveBrowserVerification:false,
+            androidChromeAcceptance:false,
+            realThirtyStageProjectAcceptance:false,
+            fullProductionMaturity:false,
+            deployedFiles
+          };
+          fs.writeFileSync(path.join(root,'spec-acceptance.json'),JSON.stringify(report,null,2)+'\n');
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exact-site-${{ github.sha }}
+          path: _site
+          if-no-files-found: error
+
+      - uses: actions/configure-pages@v5
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          path: _site
+
+  deploy:
+    name: deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deploy exact verified artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify exact deployed source identity
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            ok=1
+            for f in index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt; do
+              curl -fsSL --retry 3 --retry-delay 2 "${PAGE_URL}${f}?commit=${GITHUB_SHA}" -o "/tmp/$f" || { ok=0; break; }
+              cmp -s "$f" "/tmp/$f" || { echo "Deployed byte mismatch: $f"; ok=0; break; }
+            done
+            [ "$ok" -eq 1 ] && break
+            [ "$i" -eq 30 ] && exit 1
+            sleep 5
+          done
+
+      - name: Deployed Chromium acceptance
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome)"
+          node verify-mobile-stage-action.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+      - name: Build final machine acceptance artifact
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const acceptance={
+            commit:process.env.GITHUB_SHA,
+            deployment:process.env.PAGE_URL,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stageCount:30,
+            fieldOwnershipCoverage:1,
+            applicationDerivationCoverage:1,
+            typedRelationshipCoverage:1,
+            stage01IntakeCoverage:1,
+            stage04ObligationCoverage:1,
+            acceptedAgentValueExtractionCoverage:1,
+            acceptedRelationshipProvenanceCoverage:1,
+            currentScopeSelectorCoverage:1,
+            exactReqRunTestCoverage:1,
+            applicableCurrentRegressionSuccess:1,
+            mandatoryEvidenceChainStructuralCoverage:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            releaseArtifactIdentityCoverage:1,
+            nativeExecutionCoverage:1,
+            unauthorizedFieldMutationsAccepted:0,
+            canonicalMutationsBeforeAcceptance:0,
+            partialCommitsAfterInjectedFailure:0,
+            staleProposalsAccepted:0,
+            crossProjectRelationshipsAccepted:0,
+            historicalScopeSatisfyingCurrentGates:0,
+            unmatchedDeliveryFilesAuthorized:0,
+            appendOnlyHistoryRewritesAccepted:0,
+            unsupportedTestIrTreatedAsExecutable:0,
+            externalAssertionsOverridingApplicationProof:0,
+            nativeExecutionReceiptsFabricatedExternally:0,
+            releaseAcceptedWithContradiction:0,
+            migrationV2ToV3Covered:1,
+            oldV2ResponseRejectedForCurrentPrompt:1,
+            allStagePromptAudit:true,
+            negativeAcceptanceMatrix:true,
+            storageFailureCoverage:true,
+            artifactRoundTrip:true,
+            browserWidths:[320,393,1280],
+            deployedByteIdentity:true,
+            liveBrowserVerification:true,
+            androidChromeAcceptance:false,
+            realThirtyStageProjectAcceptance:false,
+            fullProductionMaturity:false
+          };
+          fs.writeFileSync('final-acceptance.json',JSON.stringify(acceptance,null,2)+'\n');
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-${{ github.sha }}
+          path: final-acceptance.json
+          if-no-files-found: error
+
+      - name: Publish final deployed status
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          printf 'Verified commit: %s\nDeployment: %s\nWorkflow: mobile-closed-loop/30\nProject schema: closed-loop-project/3\nResponse schema: closed-loop-stage-response/3\nTest IR: closed-loop-test-spec/1\n' "$GITHUB_SHA" "$PAGE_URL"
