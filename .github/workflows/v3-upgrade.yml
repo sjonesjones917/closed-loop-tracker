@@ -1,0 +1,54 @@
+name: One-time closed-loop v3 source upgrade
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths:
+      - upgrade-v3.mjs
+      - .github/workflows/v3-upgrade.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: closed-loop-v3-upgrade
+  cancel-in-progress: false
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: implementation/closed-loop-v3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic source transformation
+        run: node upgrade-v3.mjs
+      - name: Syntax verification
+        run: |
+          for file in *.js *.mjs; do node --check "$file"; done
+      - name: Contract, migration, and Test IR proof
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Remove one-time transformer and commit proven result
+        run: |
+          rm -f upgrade-v3.mjs v3-upgrade-report.json .github/workflows/v3-upgrade.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "Implement closed-loop project and response v3 contracts"
+          git push origin HEAD:implementation/closed-loop-v3
