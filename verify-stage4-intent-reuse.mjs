@@ -7,6 +7,9 @@ for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
 if(core.PROJECT_SCHEMA!=='closed-loop-project/3'||schema.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Stage 04 repair did not activate /3 contracts.');
 const p=core.createBlankState('JOB-STAGE4-REUSE');
+delete p.job.DESIRED_SOURCE_COUNT;
+engine.ensureShape(p);
+engine.currentIntakeCoverageManifest(p);
 Object.assign(p.job,{
   EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested system. NEVER-RESUPPLY-INTENT-SENTINEL must survive into Stage 04.',
   SUPPLIED_MATERIALS_INVENTORY:'intent.txt',

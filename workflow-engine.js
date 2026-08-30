@@ -517,7 +517,7 @@ function materialUnitValues(value){
 function inputPayload(project){
   const current=String(project.job.CURRENT_INPUT_VERSION||''),version=safe(project.projectData.inputVersions).findLast?.(item=>String(item.version)===current)||safe(project.projectData.inputVersions).filter(item=>String(item.version)===current).at(-1);
   if(version?.payload)return clone(version.payload);
-  const payload=Object.fromEntries((globalThis.closedLoopWorkflowSchema?.HUMAN_INTAKE_FIELDS||[]).map(name=>[name,clone(project.job[name])]))
+  const payload=Object.fromEntries((globalThis.closedLoopWorkflowSchema?.HUMAN_INTAKE_FIELDS||[]).map(name=>[name,project.job[name]===undefined?null:clone(project.job[name])]))
   payload.clarifications=safe(project.projectData.humanInputAnswers).filter(item=>!item.invalidatedBy).map(item=>({requestId:item.requestId,answer:clone(item.answer),inputVersion:item.inputVersion||current}));return payload;
 }
 function intakeUnits(project,payload,inputVersion){
