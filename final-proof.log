@@ -1,0 +1,42 @@
+=== node --check app-core.js ===
+=== node --check hash.js ===
+=== node --check project-store.js ===
+=== node --check prompt-engine.js ===
+=== node --check response-ingestion.js ===
+=== node --check test-runtime.js ===
+=== node --check test-worker.js ===
+=== node --check workbook.js ===
+=== node --check workflow-engine.js ===
+=== node --check workflow-schema.js ===
+=== node --check build-test-project-impl.mjs ===
+=== node --check build-test-project.mjs ===
+=== node --check test-fixtures.mjs ===
+=== node --check verify-browser-extra.mjs ===
+=== node --check verify-browser.mjs ===
+=== node --check verify-complete.mjs ===
+=== node --check verify-definition-of-done.mjs ===
+=== node --check verify-full-cycle.mjs ===
+=== node --check verify-hash.mjs ===
+=== node --check verify-ingestion.mjs ===
+=== node --check verify-intent-capture.mjs ===
+=== node --check verify-live.mjs ===
+=== node --check verify-mobile-stage-action.mjs ===
+=== node --check verify-project-lifecycle.mjs ===
+=== node --check verify-prompt-semantics.mjs ===
+=== node --check verify-semantic-invariant.mjs ===
+=== node --check verify-test-runtime.mjs ===
+=== node --check verify.mjs ===
+=== node build-test-project.mjs ===
+Committed retained project requires no source materialization.
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:35
+for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources','Research only the current accepted Stage 02 independent external source set'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
+                                                                                                                                                                                                                                                                     ^
+
+Error: Canonical prompt contract missing: Research only the current accepted Stage 02 independent external source set
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:35:262
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+FAILED rc=1: node build-test-project.mjs
