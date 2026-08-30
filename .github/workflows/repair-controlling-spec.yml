@@ -98,6 +98,7 @@ jobs:
           proof=proof.replace(old,current);
           fs.writeFileSync('verify-definition-of-done.mjs',proof);
           NODE
+          node .tmp-stage4-exhaustive-patch.mjs
           node <<'NODE'
           const fs=require('fs');
           let html=fs.readFileSync('index.html','utf8');
@@ -108,7 +109,7 @@ jobs:
           const style=html.match(/<style>[\s\S]*?<\/style>/)?.[0];
           if(style!==fs.readFileSync('/tmp/visual-style-baseline.txt','utf8'))throw new Error('Visual stylesheet changed.');
           NODE
-          rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml
+          rm -f .github/workflows/repair-controlling-spec.yml .github/workflows/patch-controlling-materializer.yml .tmp-stage4-exhaustive-patch.mjs
           node --check workbook.js
           node --check app-core.js
           node --check workflow-schema.js
@@ -118,6 +119,7 @@ jobs:
           node --check prompt-engine.js
           node --check response-ingestion.js
           node --check project-store.js
+          node verify-user-prompt-invariants.mjs
           node build-test-project.mjs
           node verify-v3-contract.mjs
           node verify-v3-migration.mjs
