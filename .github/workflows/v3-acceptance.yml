@@ -49,3 +49,5 @@ jobs:
         run: node verify.mjs
       - name: Complete verification
         run: node verify-complete.mjs
+      - name: Acceptance marker
+        run: echo 'Stage 1/3/4 zero-loss acceptance sequence completed.'
