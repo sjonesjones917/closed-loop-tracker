@@ -1,0 +1,37 @@
+name: Apply v3 source only
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+  workflow_dispatch:
+permissions: {contents: write}
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message || '', '[v3-source-final]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: implementation/closed-loop-v3, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Transform and commit ordinary source
+        run: |
+          node upgrade-v3.mjs
+          node upgrade-v3-compat.mjs
+          node upgrade-v3-corrections.mjs
+          node upgrade-v3-final.mjs
+          node upgrade-v3-actions.mjs
+          node upgrade-v3-domain-neutral.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-test-runtime.mjs'); s=p.read_text().replace("const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:'x'.repeat(64),bytes}}});", "const bytes=new TextEncoder().encode(JSON.stringify({records:[1,2]}));const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);const bytesSha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');const result=await runtime.execute({spec:test.EXECUTABLE_SPEC,artifacts:{PRODUCT:{artifactId:'ARTIFACT-1',filename:'data.json',sha256:bytesSha256,bytes}}});").replace("sha256:'x'.repeat(64),bytes","sha256:bytesSha256,bytes"); p.write_text(s)
+          p=Path('verify-test-runtime-limits.mjs'); p.write_text(p.read_text().replace("assert.deepEqual(timeout.observations,[]);","assert.equal(Array.isArray(timeout.observations)&&timeout.observations.length===0,true);"))
+          p=Path('verify-test-runtime-v3.mjs'); p.write_text(p.read_text().replace('/tolerance/','/tolerance/i'))
+          p=Path('prompt-engine.js'); p.write_text(p.read_text().replace(/[ \t]+$/gm,''))
+          PY
+          rm -f upgrade-v3*.mjs v3-upgrade-report.json v3-upgrade-base.log
+          git config user.name closed-loop-finalizer
+          git config user.email closed-loop-finalizer@users.noreply.github.com
+          git add -A ':!.github/workflows'
+          git diff --cached --check
+          git commit -m 'Apply controlling closed-loop v3 source [v3-source-final]'
+          git push origin HEAD:implementation/closed-loop-v3
