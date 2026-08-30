@@ -85,7 +85,8 @@ elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier 
 replacements={
 "Ask only what must come from the human":"Ask only for facts or choices that must come from the human",
 "Do not block Stage 01 merely because information will be needed by a later":"Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority",
-"Stage 01 does not require every fact needed to execute later stages":"Stage 01 requires every foreseeable genuinely human-only fact or decision relevant to the requested outcome to be supplied, asked and answered, or asked and explicitly deferred before DATA_PROPOSAL"
+"Stage 01 does not require every fact needed to execute later stages":"Stage 01 requires every foreseeable genuinely human-only fact or decision relevant to the requested outcome to be supplied, asked and answered, or asked and explicitly deferred before DATA_PROPOSAL",
+"Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers":"Every genuinely human-only BLOCKING_NOW and ASK_NOW_NONBLOCKING issue MUST be asked now conversationally"
 }
 for old,new in replacements.items():s=s.replace(old,new)
 for old in replacements:
