@@ -80,3 +80,7 @@ console.log(JSON.stringify({
   stage04NoRepeatHandoff:true,
   visualPromptBaseline:true
 },null,2));
+
+// Permanent regression for the historical repeated-intent-file failure. This executes
+// the /3 intake/exhaustion/obligation-manifest fixture in the same mandatory CI step.
+await import('./verify-one-time-intent-intake.mjs');
