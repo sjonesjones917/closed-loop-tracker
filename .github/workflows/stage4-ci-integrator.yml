@@ -1,0 +1,58 @@
+name: Integrate Stage 04 reuse regression
+on:
+  push:
+    branches: [fix/stage4-canonical-intent-capture]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: "!contains(github.event.head_commit.message, 'Finalize permanent Stage 04 regression integration')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-canonical-intent-capture
+      - name: Integrate permanent regression and remove obsolete materializer
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('.github/workflows/pages.yml')
+          s=p.read_text()
+          s,n=re.subn(r'\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)', '', s, count=1)
+          if n != 1:
+              raise SystemExit(f'expected obsolete Stage 04 materializer once, found {n}')
+          syntax='          node --check verify-test-runtime.mjs\n'
+          if '          node --check verify-stage4-intent-reuse.mjs\n' not in s:
+              if syntax not in s: raise SystemExit('syntax anchor missing')
+              s=s.replace(syntax, syntax+'          node --check verify-stage4-intent-reuse.mjs\n', 1)
+          step='      - name: Verify generic deterministic Test IR runtime\n        run: node verify-test-runtime.mjs\n'
+          regression='      - name: Verify Stage 01 capture and Stage 04 canonical intent reuse\n        run: node verify-stage4-intent-reuse.mjs\n'
+          if regression not in s:
+              if step not in s: raise SystemExit('runtime step anchor missing')
+              s=s.replace(step, step+regression, 1)
+          deploy='node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs'
+          deploy_new='node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-stage4-intent-reuse.mjs && node verify-full-cycle.mjs'
+          if deploy in s:
+              s=s.replace(deploy, deploy_new, 1)
+          elif deploy_new not in s:
+              raise SystemExit('deploy test chain anchor missing')
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/stage4-ci-integrator.yml
+      - name: Verify workflow and focused regression
+        run: |
+          test -f verify-stage4-intent-reuse.mjs
+          node --check verify-stage4-intent-reuse.mjs
+          node verify-stage4-intent-reuse.mjs
+          grep -q 'Verify Stage 01 capture and Stage 04 canonical intent reuse' .github/workflows/pages.yml
+          ! grep -q '^  materialize-stage4-intent-reuse:' .github/workflows/pages.yml
+      - name: Commit permanent integration
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Finalize permanent Stage 04 regression integration"
+          git push origin HEAD:fix/stage4-canonical-intent-capture
