@@ -22,7 +22,6 @@ jobs:
           python3 finalize-zero-loss.py
           python3 patch-browser-extra-v3.py
           python3 patch-all-stage-audit-v2.py
-          python3 patch-complete-30-stage-prompts-v2.py
           python3 patch-stage01-operator.py
           python3 - <<'PY'
           from pathlib import Path
@@ -39,7 +38,7 @@ jobs:
       - name: Prove source syntax
         run: |
           git diff --check
-          python3 -m py_compile patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-complete-30-stage-prompts-v2.py patch-stage01-operator.py
+          python3 -m py_compile patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-stage01-operator.py
           node --check workflow-engine.js
           node --check workflow-schema.js
           node --check prompt-engine.js
