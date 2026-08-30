@@ -1,0 +1,23 @@
+name: One-time execution package lane repair
+on:
+  push:
+    branches: ["fix/execution-package-lane-39"]
+    paths: [".github/workflows/one-time-execution-package-lane.yml"]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "fix/execution-package-lane-39"
+          fetch-depth: 0
+      - run: python3 repair_execution_package_lane.py
+      - run: |
+          rm .github/workflows/one-time-execution-package-lane.yml repair_execution_package_lane.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add project-store.js app-core.js index.html .github/workflows/one-time-execution-package-lane.yml repair_execution_package_lane.py
+          git commit -m "Bind execution packages to the current operation lane"
+          git push origin HEAD:fix/execution-package-lane-39
