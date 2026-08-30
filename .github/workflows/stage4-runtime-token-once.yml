@@ -1,0 +1,37 @@
+name: Refresh runtime token for minimal Stage 1 change
+on:
+  push:
+    branches: [fix/stage4-intent-capture-minimal]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-intent-capture-minimal
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Update only the shared runtime cache token
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text()
+          old = 'runtime-866c62b3484bca56'
+          new = 'runtime-16a196a012385188'
+          count = text.count(old)
+          if count != 8:
+              raise SystemExit(f'expected exactly 8 runtime script tokens, found {count}')
+          path.write_text(text.replace(old, new))
+          PY
+          node verify-hash.mjs
+      - name: Commit token-only update and remove this one-time workflow
+        run: |
+          rm .github/workflows/stage4-runtime-token-once.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html .github/workflows/stage4-runtime-token-once.yml
+          git commit -m "Refresh runtime identity for Stage 1 capture fix"
+          git push origin HEAD:fix/stage4-intent-capture-minimal
