@@ -20,6 +20,9 @@ const stage1ChangeId='CHANGE-STAGE1-CAPTURE-ONCE';
 p.projectData.acceptedChanges.push({changeId:stage1ChangeId,stage:1,status:'COMMITTED',responseType:'DATA_PROPOSAL'});
 p.projectData.stageConfirmations.push({confirmationId:'CONFIRM-STAGE1-CAPTURE-ONCE',stage:1,confirmed:true,acceptedChangeId:stage1ChangeId,inputVersion:p.job.CURRENT_INPUT_VERSION});
 p.stages[1].status='COMPLETE';
+const stage2ProposalId='PROPOSAL-STAGE2-NO-SOURCE';
+p.projectData.responseProposals.push({proposalId:stage2ProposalId,stage:2,evidence:[{temporaryKey:'e-stage2-no-source',kind:'SOURCE_RESEARCH',description:'No applicable external authority exists for this fixture.',authorityType:'EXTERNAL_AGENT_RESPONSE',location:'fixture',content:'Evidence-supported no-applicable-source determination.'}]});
+p.projectData.acceptedChanges.push({changeId:'CHANGE-STAGE2-CAPTURE-ONCE',stage:2,status:'COMMITTED',responseType:'DATA_PROPOSAL',proposalId:stage2ProposalId});
 p.stages[2].status='COMPLETE';p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};
 let blockedBeforeResearch=false;try{prompt.buildPromptRecord(4,p,{operation:'COMPLETE'});}catch(error){blockedBeforeResearch=/Stage 03 source research is not exhausted/.test(String(error?.message||error));}
 assert(blockedBeforeResearch,'Stage 04 prompt generation did not fail closed before Stage 03 exhaustion');
