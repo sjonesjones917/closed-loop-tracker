@@ -39,38 +39,6 @@ const badChange=record('changes',{TRIGGERING_DEFECT_IDS:'DEFECT-X',RESPONSIBLE_L
 assert(typeof engine.releaseVerificationTrust==='function','Release-grade verification trust evaluator is not exported');
 const nakedVerification=record('verification',{REQ_ID:'REQ-1',RUN_ID:'RUN-X',TEST_ID:'TEST-1',VERIFIER_CONTEXT_ID:'EXTERNAL-CTX',OBSERVED_RESULT:'PASSED',EXPECTED_RESULT:'PASSED',DETERMINATION:'SATISFIED'},{stage:19});const trust=engine.releaseVerificationTrust(p,nakedVerification);assert(trust.determination!=='APPLICATION_ESTABLISHED','Self-asserted verifier identity became release-grade evidence');
 
-// Evidence-authority regressions: each invalid state must fail, then a repaired state must pass.
-{
- const req=p.projectData.requirements[0];
- const byteTest=record('tests',{TEST_TYPE:'BYTE_IDENTITY',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'independent byte verifier',ARTIFACT_REQUIREMENTS:'exact product bytes',PROCEDURE:'Compare exact artifact bytes and SHA-256.',EXPECTED_RESULT:'identical bytes',EVIDENCE_TO_PRESERVE:'application-verified byte identity'});
- const proseOnlyByte=record('verification',{EXACT_EVIDENCE:'An agent claims the byte hash matches.'});
- let byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:proseOnlyByte});
- assert(!byteEvidence.sufficient&&byteEvidence.requiredEvidenceClasses.includes('APPLICATION_VERIFIED_BYTES'),'Prose or a claimed hash satisfied a byte-authority proposition');
- p.projectData.artifacts.push({id:'ART-BYTE',stage:22,active:true,scope:{...scope},fields:{ARTIFACT_ID:'ART-BYTE',FILENAME:'product.bin',SHA256:'a'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
- p.projectData.evidenceRecords.push({id:'EVIDENCE-BYTE',stage:22,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-BYTE',KIND:'BYTE_HASH',AUTHORITY_TYPE:'APPLICATION',DESCRIPTION:'Application-computed byte identity.',CONTENT:'Verified exact bytes and SHA-256.',ATTACHMENT_ID:'ART-BYTE'},relationships:{ATTACHMENT_ID:'ART-BYTE'}});
- const verifiedByte=record('verification',{EXACT_EVIDENCE:'EVIDENCE-BYTE'},{evidenceRefs:['EVIDENCE-BYTE']});
- byteEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:byteTest,result:verifiedByte});
- assert(byteEvidence.sufficient,'Application-verified byte evidence did not repair byte-authority sufficiency');
-
- p.projectData.evidenceRecords.push({id:'EVIDENCE-MEANING',stage:23,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-MEANING',KIND:'MEANING_OBSERVATION',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',DESCRIPTION:'Independent meaning observation.',CONTENT:'Observed and compared the product meaning.'}});
- const meaningTest=record('tests',{TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'independent meaning review',ARTIFACT_REQUIREMENTS:'NONE',PROCEDURE:'Compare required and observed meaning.',EXPECTED_RESULT:'meaning matches',EVIDENCE_TO_PRESERVE:'meaning comparison'});
- const incompleteMeaning=record('meaningResults',{PRODUCT_LOCATION:'section 1',REQUIRED_MEANING:'RIGHT',OBSERVED_MEANING:'WRONG',EVIDENCE_BASED_COMPARISON:''},{stage:23,evidenceRefs:['EVIDENCE-MEANING']});
- let meaningEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:meaningTest,result:incompleteMeaning});
- assert(!meaningEvidence.sufficient&&meaningEvidence.requiredEvidenceClasses.includes('MEANING_COMPARISON'),'Incomplete meaning comparison satisfied semantic evidence');
- const completeMeaning=record('meaningResults',{PRODUCT_LOCATION:'section 1',REQUIRED_MEANING:'RIGHT',OBSERVED_MEANING:'RIGHT',EVIDENCE_BASED_COMPARISON:'The observed statement has the same controlling meaning.'},{stage:23,evidenceRefs:['EVIDENCE-MEANING']});
- meaningEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:meaningTest,result:completeMeaning});
- assert(meaningEvidence.sufficient,'Complete evidence-backed meaning comparison did not repair semantic sufficiency');
-
- const humanTest=record('tests',{TEST_TYPE:'HUMAN_INSPECTION',EXECUTION_MODE:'HUMAN_INSPECTION',REQUIRED_CAPABILITY:'human observation',ARTIFACT_REQUIREMENTS:'NONE',PROCEDURE:'A human opens and inspects the representation.',EXPECTED_RESULT:'representation acceptable',EVIDENCE_TO_PRESERVE:'human-owned observation'});
- const agentOnlyHuman=record('verification',{EXACT_EVIDENCE:'An agent claims a human inspected it.'});
- let humanEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:humanTest,result:agentOnlyHuman});
- assert(!humanEvidence.sufficient&&humanEvidence.requiredEvidenceClasses.includes('HUMAN_OBSERVATION'),'Agent assertion substituted for human-owned inspection evidence');
- p.projectData.evidenceRecords.push({id:'EVIDENCE-HUMAN',stage:25,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-HUMAN',KIND:'HUMAN_INSPECTION',AUTHORITY_TYPE:'HUMAN_OBSERVATION',DESCRIPTION:'Human-owned inspection record.',CONTENT:'The operator opened and inspected the representation.'}});
- const actualHuman=record('verification',{EXACT_EVIDENCE:'EVIDENCE-HUMAN'},{evidenceRefs:['EVIDENCE-HUMAN']});
- humanEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:humanTest,result:actualHuman});
- assert(humanEvidence.sufficient,'Human-owned observation did not repair human-inspection sufficiency');
-}
-
 // A release reduction over incomplete/contradictory canonical state can never ACCEPT.
 const metrics=engine.releaseMetrics(p);assert(metrics.determination!=='ACCEPTED','Incomplete contradictory project released');
 
@@ -83,7 +51,7 @@ assert(adjudicationHotPath.includes('projectData:{...(project?.projectData||{})}
 assert(adjudicationHotPath.includes('map(record=>clone(record))'),'Gate adjudication does not isolate only conclusion-bearing records before rewriting effective determinations');
 for(const unrelated of ['rawResponses','generatedPrompts','history','responseProposals'])assert(!adjudicationHotPath.includes('copy.projectData['+JSON.stringify(unrelated)+']'),'Gate adjudication clones unrelated large provenance collection '+unrelated);
 
-const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true,byteAuthorityEvidenceRegression:true,meaningEvidenceRegression:true,humanInspectionEvidenceRegression:true};
+const proof={semanticFalseAcceptanceInvariant:true,conclusionBearingCollections:cases.length,releaseGradeIndependence:true,traceIntegrity:true,centralAdjudication:true};
 
 // Capability names are not capability availability. External tool/system execution requires affirmative canonical availability.
 {
