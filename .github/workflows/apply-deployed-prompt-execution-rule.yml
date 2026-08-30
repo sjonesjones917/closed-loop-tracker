@@ -1,0 +1,20 @@
+name: Apply deployed prompt execution rule
+on:
+  push:
+    branches: [fix/deployed-prompt-execution-rule]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/deployed-prompt-execution-rule
+      - run: python repair-deployed-prompt-execution-rule.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js
+          git commit -m "Put mandatory execution and one-time data rules in every prompt"
+          git push origin HEAD:fix/deployed-prompt-execution-rule
