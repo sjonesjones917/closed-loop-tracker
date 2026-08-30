@@ -1,0 +1,30 @@
+name: Carry persisted human answers
+on:
+  push:
+    branches: [fix/controlling-spec3-complete]
+    paths: [.github/workflows/tmp-prompt-carry.yml]
+permissions: {contents: write}
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec3-complete}
+      - name: Patch prompt and prove
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text(); anchor='${humanInputBlock(j)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
+          replacement='${humanInputBlock(j)}\n\nPERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN\n${persistedHumanAnswersBlock(state)}\n\nCURRENT AGENT-NORMALIZED DELIVERABLE'
+          if anchor not in s: raise SystemExit('human input prompt anchor missing')
+          s=s.replace(anchor,replacement,1);p.write_text(s)
+          PY
+          node --check prompt-engine.js
+          node verify-prompt-semantics.mjs
+          node verify-one-time-intent-intake.mjs
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/tmp-prompt-carry.yml
+          git add prompt-engine.js
+          git commit -m 'Carry supplied human answers into current prompts'
+          git push origin HEAD:fix/controlling-spec3-complete
