@@ -4,12 +4,12 @@ const VERSION='closed-loop-test-runtime/1';
 const SPEC_VERSION='closed-loop-test-spec/1';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
 const OPS=Object.freeze([
-  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH',
+  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',
   'COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE',
   'ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE',
   'ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL'
 ]);
-const LIMITS=Object.freeze({maxSteps:64,maxTextBytes:16*1024*1024,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000});
+const LIMITS=Object.freeze({maxSteps:64,maxInputBytes:32*1024*1024,maxTextBytes:16*1024*1024,maxCollectionItems:100000,maxParsedDepth:64,maxRegexLength:2000,maxRegexInputBytes:4*1024*1024,maxCsvCells:250000,workerTimeoutMs:10000,maxArchiveExpandedBytes:64*1024*1024});
 const FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script']);
 const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
@@ -32,6 +32,13 @@ function parseCsv(text){
   if(rows.length>LIMITS.maxCollectionItems)throw new Error('CSV exceeds deterministic runtime row limit.');
   return rows;
 }
+function parseXmlRestricted(text){
+  const source=String(text||'');if(/<!DOCTYPE|<!ENTITY/i.test(source))throw new Error('DTD and entity declarations are unsupported.');
+  const root={name:'#document',attributes:{},children:[],text:''},stack=[root],token=/<[^>]+>|[^<]+/g;let m;
+  while((m=token.exec(source))){const part=m[0];if(part.startsWith('<?')||part.startsWith('<!--'))continue;if(part.startsWith('</')){const name=part.slice(2,-1).trim();if(stack.length<2||stack.at(-1).name!==name)throw new Error('Malformed XML closing element.');stack.pop();continue;}if(part.startsWith('<')){const self=/\/>$/.test(part),inner=part.slice(1,self?-2:-1).trim(),tag=inner.match(/^([A-Za-z_][\w:.-]*)([\s\S]*)$/);if(!tag)throw new Error('Unsupported XML element syntax.');const node={name:tag[1],attributes:{},children:[],text:''},attrs=tag[2].trim();if(attrs){const re=/([A-Za-z_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;let a;while((a=re.exec(attrs)))node.attributes[a[1]]=a[2]??a[3]??'';if(attrs.replace(re,'').trim())throw new Error('Unsupported XML attribute syntax.');}stack.at(-1).children.push(node);if(!self)stack.push(node);continue;}if(part.trim())stack.at(-1).text+=part;}
+  if(stack.length!==1||root.children.length!==1)throw new Error('XML must contain exactly one root element.');return root.children[0];
+}
+function selectXmlRestricted(root,selector){const text=String(selector||'').trim();if(!/^\/[A-Za-z_][\w:.-]*(?:\/[A-Za-z_][\w:.-]*)*(?:\/@[A-Za-z_][\w:.-]*)?$/.test(text))throw new Error('Unsupported XML selector syntax.');const parts=text.slice(1).split('/');let nodes=[root];if(parts[0]===root.name)parts.shift();for(const part of parts){if(part.startsWith('@')){if(nodes.length!==1||!(part.slice(1) in nodes[0].attributes))throw new Error('XML attribute selector did not resolve exactly once.');return nodes[0].attributes[part.slice(1)];}nodes=nodes.flatMap(n=>n.children.filter(c=>c.name===part));if(!nodes.length)throw new Error('XML selector matched no nodes.');}return nodes.length===1?nodes[0]:nodes;}
 function selectJsonPath(value,path){
   const text=String(path||'').trim();if(text==='$')return value;if(!text.startsWith('$.'))throw new Error('SELECT_JSON_PATH supports only deterministic root paths beginning with $.');
   const parts=[];for(const token of text.slice(2).split('.')){const m=token.match(/^([^\[\]]+)(?:\[(\d+)\])?$/);if(!m)throw new Error('Unsupported JSON path token: '+token);parts.push(m[1]);if(m[2]!==undefined)parts.push(Number(m[2]));}
@@ -61,7 +68,7 @@ function validateBindings(bindings){
 function supports(test){
   if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
   if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')return false;
+  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')return false;
   if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
   return validateSpec(field(test,'EXECUTABLE_SPEC')).valid&&validateBindings(field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
 }
@@ -74,8 +81,10 @@ async function execute({spec,artifacts}){
       case 'READ_BYTES':{const bytes=bytesOf(currentArtifact?.bytes??value?.bytes??value);if(!bytes)throw new Error('READ_BYTES requires artifact bytes.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
       case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)throw new Error('DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)throw new Error('Text input exceeds deterministic runtime byte limit.');value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);break;}
       case 'PARSE_JSON':value=JSON.parse(String(value));break;
-      case 'PARSE_CSV':value=parseCsv(String(value));break;
+      case 'PARSE_CSV':{if(step.encoding!=='UTF-8'||typeof step.delimiter!=='string'||step.delimiter.length!==1||typeof step.header!=='boolean'||!['LF','CRLF','AUTO'].includes(step.newline)||step.quote!=='"')throw new Error('PARSE_CSV requires explicit delimiter, header, quote, newline, and UTF-8 encoding.');if(step.delimiter!==',')throw new Error('Version 1 CSV runtime currently supports only comma delimiter.');value=parseCsv(String(value));if(step.header&&value.length){const head=value.shift();value=value.map(row=>Object.fromEntries(head.map((key,i)=>[key,row[i]??''])));}break;}
+      case 'PARSE_XML':value=parseXmlRestricted(String(value));break;
       case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;
+      case 'SELECT_XML':value=selectXmlRestricted(value,step.selector);break;
       case 'COUNT':{if(value==null||typeof value.length!=='number')throw new Error('COUNT requires an array, string, or array-like value.');if(value.length>LIMITS.maxCollectionItems)throw new Error('COUNT input exceeds collection limit.');value=value.length;break;}
       case 'SUM':case 'MIN':case 'MAX':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error(`${step.op} requires a bounded array.`);const nums=value.map(Number);if(nums.some(x=>!Number.isFinite(x)))throw new Error(`${step.op} requires finite numeric values.`);value=step.op==='SUM'?nums.reduce((a,b)=>a+b,0):step.op==='MIN'?Math.min(...nums):Math.max(...nums);break;}
       case 'SORT':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error('SORT requires a bounded array.');value=[...value].sort((a,b)=>stable(a).localeCompare(stable(b)));break;}
