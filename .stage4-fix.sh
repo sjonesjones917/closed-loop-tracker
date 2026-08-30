@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+python - <<'PY'
+from pathlib import Path
+p=Path('workflow-engine.js'); s=p.read_text()
+old="const currentInput=String(currentScope(project).inputVersion||''),activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput);"
+new="const activeArtifacts=records(project,'artifacts').filter(a=>Number(a.stage||a.lineage?.stage||0)<=1&&upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED');"
+assert old in s, 'Stage 04 current-input artifact filter not found'
+s=s.replace(old,new,1)
+old2="""conversationMaterials.push({
+      label:reference.label,
+      type:reference.type,
+      transferMode:reference.transferMode,
+      externalAccessStatus:'NOT_OBSERVABLE_BY_APPLICATION',
+      operatorAction:reference.transferMode==='AUTHORIZED_REFERENCE'
+        ?'Provide this reference with the Stage 04 instruction.'
+        :'Attach or provide the original material with the Stage 04 instruction.',
+      applicationUploadRequired:false,
+      optionalApplicationArtifactId:copy?.artifactId||null
+    });"""
+new2="""conversationMaterials.push({
+      label:reference.label,
+      type:reference.type,
+      transferMode:reference.transferMode,
+      externalAccessStatus:copy?'STORED_IN_APPLICATION_EXTERNAL_ACCESS_NOT_AUTOMATIC':'NOT_OBSERVABLE_BY_APPLICATION',
+      operatorAction:copy
+        ?'The application already has a verified stored copy. Do not upload this file to the application again. Send the stored copy to the external Stage 04 agent only if that agent must inspect the original bytes.'
+        :reference.transferMode==='AUTHORIZED_REFERENCE'
+          ?'Provide this reference with the Stage 04 instruction.'
+          :'Provide the original material to the external Stage 04 agent. The application does not currently possess a verified stored copy.',
+      applicationUploadRequired:false,
+      optionalApplicationArtifactId:copy?.artifactId||null
+    });"""
+assert old2 in s, 'Stage 04 handoff block not found'
+s=s.replace(old2,new2,1)
+old3="""if(stage===4){
+  const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);
+  if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';
+}"""
+new3="""if(stage===4){
+  const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials;
+  const missing=materials.filter(item=>item.transferMode!=='AUTHORIZED_REFERENCE'&&!item.optionalApplicationArtifactId);
+  if(missing.length)return 'Stage 04 needs the external agent to inspect '+missing.map(item=>item.label).join(', ')+', but the application does not possess verified stored bytes for '+missing.map(item=>item.label).join(', ')+'. Provide those original bytes to the external agent. Do not re-upload anything the application already stores.';
+  if(materials.length)return 'No application re-upload is required. Stage 04 reuses the job information and verified artifacts already captured. If the external agent must inspect original bytes, send the stored copies listed in the handoff; do not attach them to this application again. When the agent finishes, paste its final JSON response here.';
+}"""
+assert old3 in s, 'Stage 04 next-action block not found'
+s=s.replace(old3,new3,1)
+p.write_text(s)
+PY
+cat > verify-stage4-retained-intent.mjs <<'EOF'
+import fs from 'node:fs';
+import vm from 'node:vm';
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;
+const assert=(v,m)=>{if(!v)throw new Error(m);};
+const p=core.createBlankState('JOB-STAGE4-RETAINED-INTENT');engine.ensureShape(p);
+p.job.EXACT_USER_OBJECTIVE_VERBATIM='Build exactly what the intent file requires.';
+p.job.SUPPLIED_MATERIALS_INVENTORY='intent.txt';
+p.job.CURRENT_INPUT_VERSION='INPUT-v001';
+p.projectData.artifacts.push({id:'ARTIFACT-INTENT',stage:1,active:true,scope:{inputVersion:'INPUT-v001'},fields:{ARTIFACT_ID:'ARTIFACT-INTENT',FILENAME:'intent.txt',TYPE:'text/plain',VERSION:'1',BYTE_SIZE:17,SHA256:'a'.repeat(64),ROLE:'USER_SUPPLIED_INPUT',STORAGE_REFERENCE:'indexeddb://artifact/ARTIFACT-INTENT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:'captured once'},relationships:{},evidenceRefs:[]});
+const material=()=>engine.executionHandoff(p,{stage:4,operation:'COMPLETE'}).conversationMaterials.find(x=>x.label==='intent.txt');
+let m=material();assert(m?.optionalApplicationArtifactId==='ARTIFACT-INTENT','Initial stored intent was not resolved.');assert(m.applicationUploadRequired===false,'Initial stored intent requested repeat upload.');assert(/Do not upload this file to the application again/.test(m.operatorAction),'Repeat-upload prohibition missing.');
+p.job.CURRENT_INPUT_VERSION='INPUT-v002';m=material();assert(m?.optionalApplicationArtifactId==='ARTIFACT-INTENT','INPUT-v002 lost the stored intent artifact.');assert(m.applicationUploadRequired===false,'INPUT-v002 requested repeat upload.');
+p.job.CURRENT_INPUT_VERSION='INPUT-v003';m=material();assert(m?.optionalApplicationArtifactId==='ARTIFACT-INTENT','INPUT-v003 lost the stored intent artifact.');
+p.projectData.artifacts[0].fields.AVAILABILITY='UNAVAILABLE';m=material();assert(!m?.optionalApplicationArtifactId,'Unavailable bytes were treated as verified custody.');assert(/does not currently possess a verified stored copy/.test(m.operatorAction),'Byte-loss recovery is not explicit.');
+const src=fs.readFileSync('workflow-engine.js','utf8');assert(!src.includes("activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput)"),'Legacy Stage 04 artifact filter remains.');
+console.log(JSON.stringify({stage4RetainedIntentAcrossInputRevisions:true,noRepeatApplicationUpload:true,byteLossFailsClosed:true}));
+EOF
+python - <<'PY'
+from pathlib import Path
+p=Path('.github/workflows/pages.yml'); s=p.read_text()
+needle='          node --check verify-semantic-invariant.mjs\n'; assert needle in s; s=s.replace(needle,needle+'          node --check verify-stage4-retained-intent.mjs\n',1)
+needle='      - name: Prove semantic false-acceptance invariant\n        run: node verify-semantic-invariant.mjs\n'; assert needle in s; s=s.replace(needle,needle+'      - name: Prove Stage 4 retains supplied intent across input revisions\n        run: node verify-stage4-retained-intent.mjs\n',1)
+p.write_text(s)
+PY
+node --check workflow-engine.js
+node --check verify-stage4-retained-intent.mjs
+node verify-stage4-retained-intent.mjs
+node verify-hash.mjs
+node verify.mjs
+node verify-ingestion.mjs
+node verify-complete.mjs
+node verify-full-cycle.mjs
+node verify-prompt-semantics.mjs
+node verify-semantic-invariant.mjs
+node verify-definition-of-done.mjs
+node verify-project-lifecycle.mjs
+node verify-test-runtime.mjs
+git rm .github/workflows/stage4-fix-once.yml .stage4-fix.sh
+git config user.name 'closed-loop-reliability-bot'
+git config user.email 'actions@users.noreply.github.com'
+git add workflow-engine.js verify-stage4-retained-intent.mjs .github/workflows/pages.yml
+git commit -m 'Fix Stage 4 retained intent artifact handling'
+git push origin HEAD:fix/stage04-retained-intent-final-20260830a
