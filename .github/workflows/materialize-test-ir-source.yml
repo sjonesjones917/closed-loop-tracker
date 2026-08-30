@@ -1,0 +1,89 @@
+name: Materialize Test IR schema and derivation
+on:
+  push:
+    branches: [fix/final-spec-conformance]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    if: "!contains(github.event.head_commit.message, 'TEST-IR-SOURCE-MATERIALIZED')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/final-spec-conformance
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch schema, ingestion, prompt, loader
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('workflow-schema.js');s=p.read_text()
+          s=s.replace('"EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC",','"EXECUTABLE_SPEC",',1)
+          s=s.replace('"TEST_ID",\n      "REQ_ID",\n      "STATUS"','"TEST_ID",\n      "REQ_ID",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256",\n      "STATUS"',1)
+          s=s.replace("executableKinds:Object.freeze(['NONE','CUSTOM_PIPELINE'])","executableKinds:Object.freeze(['NONE','TEST_IR'])",1)
+          s=s.replace("operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE','ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL'])","operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'])",1)
+          s=s.replace("limits:Object.freeze({maxSteps:64,maxTextBytes:16777216,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000})","limits:Object.freeze({maxInputBytes:16777216,maxDecompressedBytes:33554432,maxSteps:64,maxSelectorDepth:32,maxParsedDepth:64,maxCollectionItems:100000,maxRegexLength:2000,maxRegexInputLength:2097152,maxWorkerDurationMs:5000,maxArchiveExpansionBytes:33554432,maxCsvCells:250000})",1)
+          s=s.replace("const TEST_IR_FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script']);","const TEST_IR_FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script','import','url','network']);",1)
+          s=s.replace("if(String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')issues.push('EXECUTABLE_KIND must be CUSTOM_PIPELINE.');","if(String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')issues.push('EXECUTABLE_KIND must be TEST_IR.');",1)
+          s=s.replace("if(get('EXECUTABLE_SPEC_VERSION')!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC_VERSION must be ${TEST_IR.version}.`);","if(get('EXECUTABLE_SPEC')?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);",1)
+          s=s.replace("EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC:Object.freeze","EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC:Object.freeze",1)
+          s=s.replace("'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'","'TEST_ID','REQ_ID','TEST_TYPE','EXECUTION_MODE','REQUIRED_CAPABILITY','ARTIFACT_REQUIREMENTS','EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'",1)
+          anchor="    for(const key of TEST_IR_FORBIDDEN_STEP_KEYS)if(Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} contains forbidden executable field ${key}.`);\n    if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&String(step.pattern??step.value??'').length>TEST_IR.limits.maxRegexLength)issues.push(`Step ${index} regex exceeds the deterministic runtime limit.`);"
+          replacement="    for(const key of TEST_IR_FORBIDDEN_STEP_KEYS)if(Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} contains forbidden executable field ${key}.`);\n    const allowedByOp={LOAD_ARTIFACT:['op','binding'],READ_BYTES:['op'],DECODE_UTF8:['op','encoding'],PARSE_JSON:['op'],PARSE_CSV:['op','delimiter','header','quote','newline','encoding'],PARSE_XML:['op'],SELECT_JSON_PATH:['op','path'],SELECT_XML:['op','path'],COUNT:['op'],SUM:['op'],MIN:['op'],MAX:['op'],SORT:['op'],UNIQUE:['op'],HASH_SHA256:['op'],REGEX:['op','pattern','flags'],COMPARE:['op','value','binding'],ASSERT_EQ:['op','value','message','absoluteTolerance','relativeTolerance','numericMode'],ASSERT_GT:['op','value','message'],ASSERT_GTE:['op','value','message'],ASSERT_LT:['op','value','message'],ASSERT_LTE:['op','value','message'],ASSERT_MATCH:['op','pattern','flags','message'],ASSERT_CONTAINS:['op','value','message'],ASSERT_NOT_CONTAINS:['op','value','message'],ASSERT_SET_EQUAL:['op','value','message'],BYTE_COMPARE:['op','binding']}[step.op]||[];\n    for(const key of Object.keys(step))if(!allowedByOp.includes(key))issues.push(`Step ${index} contains unknown property ${key}.`);\n    const requiredByOp={LOAD_ARTIFACT:['binding'],PARSE_CSV:['delimiter','header','quote','newline','encoding'],SELECT_JSON_PATH:['path'],SELECT_XML:['path'],REGEX:['pattern'],ASSERT_EQ:['value'],ASSERT_GT:['value'],ASSERT_GTE:['value'],ASSERT_LT:['value'],ASSERT_LTE:['value'],ASSERT_MATCH:['pattern'],ASSERT_CONTAINS:['value'],ASSERT_NOT_CONTAINS:['value'],ASSERT_SET_EQUAL:['value'],BYTE_COMPARE:['binding']}[step.op]||[];\n    for(const key of requiredByOp)if(!Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} is missing required property ${key}.`);\n    if(step.op==='PARSE_CSV'){if(typeof step.delimiter!=='string'||step.delimiter.length!==1)issues.push(`Step ${index} has invalid CSV delimiter.`);if(typeof step.header!=='boolean')issues.push(`Step ${index} has invalid CSV header setting.`);if(typeof step.quote!=='string'||step.quote.length!==1)issues.push(`Step ${index} has invalid CSV quote setting.`);if(!['LF','CRLF','AUTO'].includes(step.newline))issues.push(`Step ${index} has invalid CSV newline setting.`);if(step.encoding!=='UTF-8')issues.push(`Step ${index} must use UTF-8.`);}\n    if(step.op==='DECODE_UTF8'&&step.encoding&&step.encoding!=='UTF-8')issues.push(`Step ${index} must use UTF-8.`);\n    if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&String(step.pattern??step.value??'').length>TEST_IR.limits.maxRegexLength)issues.push(`Step ${index} regex exceeds the deterministic runtime limit.`);"
+          if anchor not in s: raise SystemExit('schema validation anchor missing')
+          s=s.replace(anchor,replacement,1)
+          p.write_text(s)
+
+          p=Path('response-ingestion.js');s=p.read_text()
+          anchor="      const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      fields[definition.idField]=id;"
+          repl="      const fields={...workflow.applicationInitialFields(collection),...clone(proposed.fields||{})};\n      if(collection==='tests'&&String(fields.EXECUTABLE_KIND||'').toUpperCase()==='TEST_IR'){fields.EXECUTABLE_SPEC_VERSION=schema.TEST_IR.version;fields.EXECUTABLE_SPEC_SHA256=hash.sha256Value(fields.EXECUTABLE_SPEC);}\n      fields[definition.idField]=id;"
+          if anchor not in s: raise SystemExit('ingestion canonical fields anchor missing')
+          s=s.replace(anchor,repl,1)
+          p.write_text(s)
+
+          p=Path('prompt-engine.js');s=p.read_text().replace('CUSTOM_PIPELINE','TEST_IR')
+          s=s.replace('For every proposed test, first decide whether the proposition can be represented exactly and safely using only this grammar.','For every proposed test, first decide whether the proposition can be represented faithfully, exactly, and safely using only this registered grammar and bindings. The application owns runtime semantics; you are compiling a test into that language, not inventing executable behavior.',1)
+          s=s.replace('EXECUTABLE_KIND = TEST_IR, EXECUTABLE_SPEC_VERSION = ${schema.TEST_IR.version}, and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS.','EXECUTABLE_KIND = TEST_IR and provide EXECUTABLE_SPEC plus EXECUTABLE_INPUT_BINDINGS under the published ${schema.TEST_IR.version} grammar. The application assigns EXECUTABLE_SPEC_VERSION and the normalized executable-spec SHA-256; do not set either application-owned field.',1)
+          p.write_text(s)
+
+          for p in Path('.').glob('verify*.mjs'):
+            t=p.read_text()
+            if 'CUSTOM_PIPELINE' in t:p.write_text(t.replace('CUSTOM_PIPELINE','TEST_IR'))
+
+          p=Path('index.html');s=p.read_text()
+          if 'test-runtime.js?' not in s:
+            m=re.search(r'<script\s+defer\s+src="workflow-schema\.js\?v=([^"]+)"\s*></script>',s)
+            if not m: raise SystemExit('workflow-schema script tag missing')
+            s=s.replace(m.group(0),m.group(0)+'\n<script defer src="test-runtime.js?v='+m.group(1)+'"></script>',1)
+          p.write_text(s)
+          p=Path('verify-hash.mjs');s=p.read_text();s=s.replace("const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];","const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];",1);p.write_text(s)
+          PY
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];const blob=f=>{const b=fs.readFileSync(f);return crypto.createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex')};const manifest=files.map(f=>`${f}:${blob(f)}\n`).join('');const id=`runtime-${crypto.createHash('sha256').update(manifest).digest('hex').slice(0,16)}`;let h=fs.readFileSync('index.html','utf8');h=h.replace(/(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*><\/script>)/g,`$1${id}$2`);fs.writeFileSync('index.html',h);
+          NODE
+      - name: Add and run focused regressions
+        run: |
+          cat > verify-test-ir-contract-v1.mjs <<'NODE'
+          import fs from 'node:fs';import vm from 'node:vm';vm.runInThisContext(fs.readFileSync('test-runtime.js','utf8'),{filename:'test-runtime.js'});const r=globalThis.closedLoopTestRuntime;const required=['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'];for(const op of required)if(!r.OPS.includes(op))throw new Error('missing '+op);if(r.validateSpec({version:r.SPEC_VERSION,steps:[{op:'PARSE_CSV'}]}).valid)throw new Error('ambiguous CSV accepted');if(r.validateSpec({version:r.SPEC_VERSION,steps:[{op:'READ_BYTES',code:'x'}]}).valid)throw new Error('unknown/unsafe property accepted');const bytes=new TextEncoder().encode('a,b\n1,2\n');const csv=await r.execute({spec:{version:r.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'A'},{op:'READ_BYTES'},{op:'DECODE_UTF8',encoding:'UTF-8'},{op:'PARSE_CSV',delimiter:',',header:true,quote:'"',newline:'LF',encoding:'UTF-8'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]},artifacts:{A:{bytes}}});if(csv.determination!=='SATISFIED')throw new Error('csv failed');console.log('Test IR v1 contract regression passed');
+          NODE
+          node --check workflow-schema.js
+          node --check response-ingestion.js
+          node --check prompt-engine.js
+          node verify-test-ir-contract-v1.mjs
+          node verify-intent-pipeline.mjs
+          node verify-stage4-intent-reuse.mjs
+          node verify-hash.mjs
+          if git diff -- index.html | grep -E '^[-+].*(\.prompt\{|expandable-prompt|textarea\{|stage-output|height:clamp|max-height:280px)' ; then echo 'Visual/prompt sizing changed'; exit 1; fi
+      - name: Commit source patch
+        run: |
+          rm -f .github/workflows/materialize-test-ir-source.yml
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "TEST-IR-SOURCE-MATERIALIZED"
+          git push origin HEAD:fix/final-spec-conformance
