@@ -5,6 +5,7 @@ on:
     branches:
       - fix/controlling-spec-capture-once
     paths:
+      - tools/execute-controlling-spec-repair.py
       - tools/complete-controlling-spec-repair.py
       - .github/workflows/apply-controlling-spec-fix-v3.yml
 
