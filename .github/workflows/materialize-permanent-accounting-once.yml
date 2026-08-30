@@ -27,6 +27,10 @@ jobs:
           p=Path('finalize-v3-accounting.mjs')
           s=p.read_text()
           s=s.replace("function executionHandoff(project,{stage,operation,testIds=null,runIds=null}={}){","function executionHandoff(project,{stage=Number(project.activeStage||0),operation=null,testIds=null,runIds=null}={}){")
+          old="if(next===text)throw new Error(`Patch anchor not found: ${label}`);"
+          new="if(next===text){if(label==='remove Stage 04 repeated file handoff')return text;throw new Error(`Patch anchor not found: ${label}`);}"
+          if old not in s: raise SystemExit('replaceOnce guard anchor not found')
+          s=s.replace(old,new,1)
           p.write_text(s)
           PY
           node finalize-v3-accounting.mjs
