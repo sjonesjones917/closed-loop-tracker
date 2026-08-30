@@ -19,7 +19,7 @@ engine.recordHumanInputVersion(p,['EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATE
 engine.recalculate(p);
 let intake=engine.currentIntakeCoverageManifest(p);
 if(!intake.units.some(unit=>unit.rawValue.includes('NEVER-RESUPPLY-INTENT-SENTINEL')))throw new Error('Current intake manifest lost supplied intent.');
-p.projectData.acceptedChanges.push({changeId:'ACCEPTED-STAGE1',stage:1,status:'COMMITTED',rawResponseId:'RAW-STAGE1'});
+p.projectData.acceptedChanges.push({changeId:'ACCEPTED-STAGE1',stage:1,status:'COMMITTED',responseType:'DATA_PROPOSAL',rawResponseId:'RAW-STAGE1'});
 p.stages[1].acceptedDataChangeIds=['ACCEPTED-STAGE1'];
 p.stages[1].agentData={
   EXACT_DELIVERABLE_REQUESTED:'A closed-loop reliability application.',
