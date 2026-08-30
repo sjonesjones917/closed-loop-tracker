@@ -26,6 +26,14 @@ jobs:
           {
             node spec-v3-repair-v2.mjs
             node spec-v3-postpatch.mjs
+            # The proof must run against the permanent implementation tree only.
+            # Temporary branch-only repair/finalization controllers are not runtime
+            # implementation and must not participate in acceptance.
+            rm -f .github/workflows/spec-v3-repair.yml \
+                  .github/workflows/spec-v3-repair-v2.yml \
+                  .github/workflows/spec-v3-repair-v3.yml \
+                  .github/workflows/spec-v3-finalize.yml \
+                  .github/workflows/spec-v3-automerge.yml
             node build-test-project.mjs
             git diff --check
           } 2>&1 | tee /tmp/v3-transform.log
@@ -99,7 +107,7 @@ jobs:
         if: steps.transform.outcome == 'success' && steps.proof.outcome == 'success' && steps.browser.outcome == 'success'
         run: |
           rm -f spec-v3-repair.mjs spec-v3-bootstrap.mjs spec-v3-repair-v2.mjs spec-v3-runtime.js spec-v3-worker.js spec-v3-verifier.mjs spec-v3-postpatch.mjs V3_REPAIR_FAILURE.log
-          rm -f .github/workflows/spec-v3-repair.yml .github/workflows/spec-v3-repair-v2.yml .github/workflows/spec-v3-repair-v3.yml
+          rm -f .github/workflows/spec-v3-repair.yml .github/workflows/spec-v3-repair-v2.yml .github/workflows/spec-v3-repair-v3.yml .github/workflows/spec-v3-finalize.yml .github/workflows/spec-v3-automerge.yml
           git add -A
           git diff --cached --quiet && { echo 'No implementation changes were generated.'; exit 1; }
           git config user.name github-actions[bot]
