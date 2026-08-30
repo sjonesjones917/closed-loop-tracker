@@ -7,10 +7,11 @@ for line in [
 "  if(!record.prompt.includes('SOFTWARE / MULTI-FILE SYSTEM'))issues.push('SOFTWARE_DOMAIN_RULE_MISSING');\n",
 "  if(!record.prompt.includes('BUILDING / ARCHITECTURE / AEC'))issues.push('BUILDING_DOMAIN_RULE_MISSING');\n",
 "  if(!record.prompt.includes('PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'))issues.push('PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING');\n",
+"  }else if(!record.prompt.includes('ARTIFACT GENERATION VS DOWNSTREAM EXECUTION')||!record.prompt.includes('must not be represented as completed'))issues.push('ENVIRONMENT_LIMIT_RULE_MISSING');\n",
 ]:
     if line not in text:
-        raise SystemExit('Expected forbidden domain assertion not found: '+line.strip())
-    text = text.replace(line, '', 1)
+        raise SystemExit('Expected obsolete assertion not found: '+line.strip())
+    text = text.replace(line, '' if 'ARTIFACT GENERATION' not in line else '  }\n', 1)
 old = "    if(!record.prompt.includes('STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY')||!record.prompt.includes('Do not perform source discovery, source research, requirement derivation, verification design, production-instruction authoring, implementation, artifact production'))issues.push('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING');"
 new = "    if(!record.prompt.includes('Perform complete human-authority intake only.')||!record.prompt.includes('preserve every materially relevant fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue')||!record.prompt.includes('Do not perform source research, requirement atomization, test design, production, filing, simulation, manufacturing, or product verification.'))issues.push('STAGE01_INTAKE_BOUNDARY_MISSING');"
 if old not in text: raise SystemExit('Expected obsolete Stage 01 domain-boundary assertion not found.')
