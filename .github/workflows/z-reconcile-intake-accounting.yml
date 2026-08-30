@@ -1,0 +1,77 @@
+name: Reconcile Stage 01 zero-loss accounting
+on:
+  push:
+    branches: [fix/v3-zero-loss-reconcile-20260830]
+permissions:
+  contents: write
+jobs:
+  prove:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v3-zero-loss-reconcile-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply narrow Stage 01 reconciliation
+        run: python3 reconcile-intake-accounting.py
+      - name: Syntax and zero-loss Stage 01 proof
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify-stage1-intake-accounting.mjs
+          node verify-stage1-intake-accounting.mjs
+      - name: Run complete current-main deterministic proof suite
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node verify-test-runtime.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Exercise current browser acceptance
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then return 1; fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only proven production/test delta
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          rm -f reconcile-intake-accounting.py
+          git add workflow-engine.js prompt-engine.js response-ingestion.js verify-stage1-intake-accounting.mjs
+          git add -u -- reconcile-intake-accounting.py
+          git diff --cached --check
+          git commit -m 'Enforce application-owned Stage 01 intake accounting'
+          git push origin HEAD:fix/v3-zero-loss-reconcile-20260830
