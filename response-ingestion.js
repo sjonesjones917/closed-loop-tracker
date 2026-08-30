@@ -256,6 +256,26 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
   if(Array.isArray(envelope.unresolved))envelope.unresolved.forEach((item,index)=>{const path=`/unresolved/${index}`;if(!object(item)){issues.push(issue('INVALID_UNRESOLVED',path,'Unresolved item must be an object.'));return;}unknownKeys(item,UNRESOLVED_KEYS,path,issues);if(!UNRESOLVED_KINDS.includes(item.kind))issues.push(issue('INVALID_UNRESOLVED_KIND',`${path}/kind`,'Unresolved kind is not controlled.'));for(const key of ['temporaryKey','description','whyBlocking'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_UNRESOLVED_FIELD',`${path}/${key}`,`${key} is required.`));if(!Array.isArray(item.affectedStageFields)||!Array.isArray(item.affectedRecords))issues.push(issue('INVALID_UNRESOLVED_TARGETS',path,'affectedStageFields and affectedRecords must be arrays.'));if(item.blocking!==undefined&&typeof item.blocking!=='boolean')issues.push(issue('WRONG_VALUE_TYPE',`${path}/blocking`,'blocking must be BOOLEAN when supplied.'));});
   if(Array.isArray(envelope.warnings))envelope.warnings.forEach((item,index)=>{const path=`/warnings/${index}`;if(!object(item)){issues.push(issue('INVALID_WARNING',path,'Warning must be an object.'));return;}unknownKeys(item,WARNING_KEYS,path,issues);for(const key of ['code','message','path'])if(!String(item[key]??'').trim())issues.push(issue('MISSING_WARNING_FIELD',`${path}/${key}`,`${key} is required.`));});
 
+  const canonicalIntentStatements=workflow.records(project,'intentStatements',{active:true});
+  const canonicalIntentIds=new Set(canonicalIntentStatements.map(record=>workflow.recordId(record,'intentStatements')));
+  const requiredIntentIds=canonicalIntentStatements.filter(record=>upper(workflow.recordValue(record,'REQUIREMENT_RELEVANCE'))==='REQUIREMENT').map(record=>workflow.recordId(record,'intentStatements'));
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===1){
+    const proposed=safe(envelope.records?.intentStatements),seen=new Set();
+    if(!proposed.length)issues.push(issue('MISSING_INTENT_STATEMENT_LEDGER','/records/intentStatements','Stage 01 DATA_PROPOSAL requires the complete canonical intent-statement ledger.'));
+    proposed.forEach((record,index)=>{const fields=record?.fields||{},key=`${String(fields.SOURCE_MATERIAL||'').trim()}|${String(fields.SOURCE_LOCATION||'').trim()}|${String(fields.EXACT_STATEMENT||'').trim()}`;if(seen.has(key))issues.push(issue('DUPLICATE_INTENT_STATEMENT',`/records/intentStatements/${index}`,'Duplicate source material, location, and exact statement are not permitted.'));else seen.add(key);});
+  }
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===3){
+    const covered=new Set(safe(envelope.records?.candidateRequirements).map(record=>String(record?.fields?.SOURCE_LOCATION||'').trim()));
+    const missing=requiredIntentIds.filter(id=>!covered.has(id));
+    if(missing.length)issues.push(issue('MISSING_INTENT_STATEMENT_CANDIDATE','/records/candidateRequirements',`Candidate requirement coverage is missing for canonical intent statement(s): ${missing.join(', ')}.`));
+  }
+  if(envelope.responseType==='DATA_PROPOSAL'&&stageNumber===4){
+    const proposed=safe(envelope.records?.requirements),covered=new Set();
+    proposed.forEach((record,index)=>{const reference=String(record?.fields?.USER_INPUT_RELATIONSHIP||'').trim();if(!reference)return;if(!canonicalIntentIds.has(reference))issues.push(issue('INVALID_INTENT_STATEMENT_REFERENCE',`/records/requirements/${index}/fields/USER_INPUT_RELATIONSHIP`,'USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID.'));else covered.add(reference);});
+    const missing=requiredIntentIds.filter(id=>!covered.has(id));
+    if(missing.length)issues.push(issue('MISSING_INTENT_STATEMENT_REQUIREMENT','/records/requirements',`Requirement coverage is missing for canonical intent statement(s): ${missing.join(', ')}.`));
+  }
+
   if(envelope.responseType==='HUMAN_INPUT_REQUIRED'){
     if(!safe(envelope.humanInputRequests).length)issues.push(issue('MISSING_HUMAN_INPUT_REQUESTS','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one question.'));
     else if(!safe(envelope.humanInputRequests).some(request=>request.blocking!==false))issues.push(issue('MISSING_BLOCKING_HUMAN_INPUT_REQUEST','/humanInputRequests','HUMAN_INPUT_REQUIRED must include at least one blocking human-authority question.'));
