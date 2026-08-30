@@ -53,6 +53,7 @@ function validEnvelope(p,stage,promptRecord){
   if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
   const records={};
   if(stage===1){const manifest=engine.stage01IntakeManifest(p);stageData.INTAKE_ACCOUNTING=manifest.units.map(unit=>({inputUnitId:unit.inputUnitId,disposition:engine.INTAKE_DISPOSITIONS[0],normalizedMeaning:String(unit.rawValue||unit.value||unit.text||'Preserved controlled human input'),reason:''}));records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];}
+  if(stage===4){const manifest=engine.stage04ObligationManifest(p);stageData.OBLIGATION_ACCOUNTING=manifest.obligations.map(obligation=>({obligationId:obligation.obligationId,disposition:engine.OBLIGATION_DISPOSITIONS[1],requirementTempKeys:[],reason:'Controlled fixture retains this manifest item as nonnormative context.'}));}
   if(!Object.keys(stageData).length&&stage!==1){
     const collection=writableCollections.find(name=>name!=='blockers'&&schema.recordAgentFields(name).length)||writableCollections.find(name=>schema.recordAgentFields(name).length);
     if(!collection)return null;
