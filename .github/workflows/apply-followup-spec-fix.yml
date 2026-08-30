@@ -1,0 +1,52 @@
+# temporary one-shot repair; remove after successful source commit
+name: Apply follow-up controlling spec fix
+
+on:
+  push:
+    branches:
+      - fix/controlling-spec-capture-once
+    paths:
+      - tools/apply-followup-spec-fix.py
+      - .github/workflows/apply-followup-spec-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply follow-up repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/apply-followup-spec-fix.py
+          git checkout HEAD -- tools/apply-followup-spec-fix.py .github/workflows/apply-followup-spec-fix.yml
+      - name: Verify syntax and focused invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-capture-once.mjs verify-followup-spec.mjs; do node --check "$f"; done
+          node verify-followup-spec.mjs
+          node --input-type=module -e "globalThis.Event=class Event{constructor(type){this.type=type}};globalThis.dispatchEvent=()=>true;await import('./verify-capture-once.mjs')"
+      - name: Commit repaired source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html workflow-schema.js prompt-engine.js workflow-engine.js app-core.js project-store.js verify-followup-spec.mjs
+          git commit -m "Use structured next actions and restore prompt preview geometry"
+      - name: Push repaired source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
