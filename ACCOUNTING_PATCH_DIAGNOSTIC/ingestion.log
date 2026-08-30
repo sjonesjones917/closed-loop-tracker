@@ -1,0 +1,50 @@
+{
+  "stagesExercised": 30,
+  "responseSchema": "closed-loop-stage-response/2",
+  "negativeCases": 70,
+  "clarificationLoop": true,
+  "atomicPrecommit": true,
+  "extractionManifest": true,
+  "canonicalIdsApplicationAssigned": true,
+  "scopeIdentityMatrix": true,
+  "verifiedAttachmentBinding": true
+}
+{
+  "pr3Dispositions": true,
+  "preconditions": true,
+  "promptEnginePreconditions": true,
+  "idempotentAcceptance": true,
+  "canonicalEnvelopeIdempotency": true,
+  "typedHumanAnswers": true,
+  "clarificationPromptInvalidation": true,
+  "exactManifestPointers": true,
+  "acceptanceAfterRejectionBlocked": true,
+  "staleProjectRevisionBlocked": true,
+  "totalNegativeCases": 74
+}
+{
+  "operationStageDataIsolation": true,
+  "reservedTargetPolicy": true,
+  "completedReservedTargetBlocked": true,
+  "targetScopeIsolation": true,
+  "totalNegativeCases": 79
+}
+{
+  "persistedPromptAuthority": true,
+  "readableClarificationTargets": true,
+  "humanInputResponseExclusivity": true,
+  "choiceContractValidation": true,
+  "humanAnswerEdgeValidation": true,
+  "totalNegativeCases": 86
+}
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:435
+  if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
+                                      ^
+
+Error: Deterministic smart-quote delimiter recovery failed: [{"code":"INCOMPLETE_INTAKE_ACCOUNTING","path":"/stageData/INPUT_SET_CONTENTS","message":"INPUT_SET_CONTENTS must be a closed structured intake capture; free-form summaries cannot prove complete accounting.","severity":"ERROR"},{"code":"JSON_TYPOGRAPHY_NORMALIZED","path":"/","message":"Typographic JSON delimiter quotes were deterministically normalized for parsing; the exact raw response remains preserved unchanged.","severity":"WARNING"}]
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-ingestion.mjs:435:39
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
