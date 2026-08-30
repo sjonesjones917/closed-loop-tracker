@@ -1,0 +1,48 @@
+name: Restore established prompt visual baseline
+on:
+  push:
+    branches: [fix/controlling-spec3-complete]
+    paths: [.github/workflows/tmp-restore-prompt-visual.yml]
+permissions: {contents: write}
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec3-complete}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Restore only the established prompt preview dimensions and its regression proof
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          p=Path('index.html')
+          s=p.read_text()
+          exact='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          if exact not in s:
+              anchor='\n.prompt{line-height:1.55;background:#f7f9f7;border-color:#cfd6d1;padding:11px;scrollbar-gutter:stable}'
+              if anchor not in s:
+                  raise SystemExit('Prompt visual anchor not found; refusing broad CSS rewrite.')
+              s=s.replace(anchor,'\n'+exact+anchor,1)
+              p.write_text(s)
+
+          p=Path('verify-hash.mjs')
+          s=p.read_text()
+          old="assert(!html.includes('.expandable-prompt{height:280px;max-height:280px}'),'Prompt box must not be forced to the unauthorized 280px size.');"
+          new="assert(html.includes('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'),'Established 280px prompt preview and full expansion behavior changed.');"
+          if old not in s:
+              raise SystemExit('Expected temporary visual assertion not found; refusing ambiguous edit.')
+          s=s.replace(old,new,1)
+          s=s.replace('promptBoxUnauthorizedResizeAbsent:true','promptVisualBaselinePreserved:true',1)
+          p.write_text(s)
+          PY
+          node --check verify-hash.mjs
+          node verify-hash.mjs
+          git diff --check
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/tmp-restore-prompt-visual.yml
+          git add index.html verify-hash.mjs
+          git commit -m 'Restore established 280px prompt preview without other visual changes'
+          git push origin HEAD:fix/controlling-spec3-complete
