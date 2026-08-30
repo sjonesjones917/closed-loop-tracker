@@ -1,0 +1,40 @@
+name: Clean final implementation branch
+
+on:
+  push:
+    branches:
+      - agent/complete-app-20260830
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/complete-app-20260830
+          fetch-depth: 0
+      - name: Preserve current UI and restore the established prompt height
+        run: |
+          set -e
+          git fetch origin main
+          git checkout origin/main -- app-core.js index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}', '.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}')
+          p.write_text(s)
+          PY
+      - name: Remove one-time repair machinery
+        run: |
+          rm -f .print-stage-contracts.mjs .repair-all-prompts.py .repair-context-contracts.py .repair-exhaustive-intake.py .repair-fixture.py .repair-orchestrate.py .github/workflows/tmp-exhaustive-intake-stage4.yml
+          rm -f .github/workflows/agent-clean-reconcile.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Preserve UI and remove one-time repair machinery"
+          git push origin HEAD:agent/complete-app-20260830
