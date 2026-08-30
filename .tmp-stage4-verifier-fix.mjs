@@ -32,4 +32,11 @@ if(!s.includes("kind:'OBLIGATION_DISPOSITION'"))throw new Error('Stage 4 closed 
 if(s.includes(smartLegacy))throw new Error('Legacy smart-quote Stage 1 fixture remains.');
 fs.writeFileSync(file,s);
 await import('./.tmp-full-cycle-fixture-patch.mjs');
-console.log('Human input version authority, Stage 1/3/4 verifier fixtures, smart quote regression, Stage 3 derivation, and full-cycle fixtures corrected.');
+let pages=fs.readFileSync('.github/workflows/pages.yml','utf8');
+const zeroNeedle="'releaseAcceptedWithContradiction'";
+if(!pages.includes(zeroNeedle))throw new Error('Acceptance zero-key anchor missing.');
+for(const key of ['favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven']){
+  if(!pages.includes(`'${key}'`))pages=pages.replace(zeroNeedle,`'${key}',${zeroNeedle}`);
+}
+fs.writeFileSync('.github/workflows/pages.yml',pages);
+console.log('Human input version authority, Stage 1/3/4 accounting, full-cycle fixtures, and zero-loss acceptance reduction corrected.');
