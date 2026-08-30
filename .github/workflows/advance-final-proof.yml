@@ -27,9 +27,18 @@ jobs:
           set -euo pipefail
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
+          git fetch origin main
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib,re
+          import hashlib,re,subprocess
+
+          # Restore the exact current main stylesheet. Functional HTML/script changes remain intact.
+          p=Path('index.html'); current=p.read_text(); main_index=subprocess.check_output(['git','show','origin/main:index.html'],text=True)
+          current_style=re.search(r'<style>(.*?)</style>',current,re.S); main_style=re.search(r'<style>(.*?)</style>',main_index,re.S)
+          if not current_style or not main_style:
+              raise SystemExit('Cannot restore exact visual baseline: style block missing.')
+          current=current[:current_style.start(1)]+main_style.group(1)+current[current_style.end(1):]
+          p.write_text(current)
 
           old_phrase='Research only the current accepted Stage 02 independent external source set'
           new_phrase='Exhaustively research every current accepted Stage 02 independent external source'
@@ -39,7 +48,6 @@ jobs:
                   test.write_text(text.replace(old_phrase,new_phrase))
 
           # The controlling specification expressly prohibits project-subject branches in prompt-engine.js.
-          # Remove obsolete proof assertions that demanded patent/software/AEC/mechanical prompt catalogues.
           p=Path('verify-prompt-semantics.mjs'); t=p.read_text()
           obsolete=[
               "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
@@ -156,7 +164,7 @@ jobs:
           git add index.html workflow-schema.js response-ingestion.js test-runtime.js *.mjs
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m 'Persist subject-neutral prompt proof and closed-accounting corrections'
+            git commit -m 'Persist subject-neutral prompt proof, exact visuals, and closed-accounting corrections'
             git push origin HEAD:fix/final-zero-loss-v3-20260830
           fi
       - name: Run deterministic suite
