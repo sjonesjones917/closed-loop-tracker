@@ -36,6 +36,13 @@ const root=process.cwd();const read=file=>fs.readFileSync(path.join(root,file),'
   write('prompt-engine.js',text);
 }
 
+/* Duplicate-member ambiguity is detected before JSON.parse and uses an explicit diagnostic. */
+{
+  let text=read('response-ingestion.js');
+  text=text.replaceAll('Duplicate JSON member ${key}.','Duplicate member ${key}.');
+  write('response-ingestion.js',text);
+}
+
 /* Normalize the permanent Pages workflow around the controlling proof order. */
 {
   const file='.github/workflows/pages.yml';let text=read(file);
@@ -56,4 +63,4 @@ const root=process.cwd();const read=file=>fs.readFileSync(path.join(root,file),'
 
 for(const file of fs.readdirSync(root).filter(file=>fs.statSync(path.join(root,file)).isFile()&&/\.(?:js|mjs|md)$/.test(file))){let text=read(file);text=text.replaceAll("['workbook.js','hash.js','workflow-schema.js','workflow-engine.js'","['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'");write(file,text);}
 execFileSync(process.execPath,['build-test-project.mjs'],{cwd:root,stdio:'inherit'});
-console.log(JSON.stringify({resourceEnvelope:true,allArtifactInputsHashed:true,limitProofs:true,ciProofOrder:true,acceptanceMetadata:true,promptHandoffHeadings:true}));
+console.log(JSON.stringify({resourceEnvelope:true,allArtifactInputsHashed:true,limitProofs:true,ciProofOrder:true,acceptanceMetadata:true,promptHandoffHeadings:true,duplicateMemberDiagnostic:true}));
