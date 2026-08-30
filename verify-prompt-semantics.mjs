@@ -347,7 +347,7 @@ console.log(JSON.stringify({promptSemanticContradictions:true,stageOperationsChe
 import fsStageBoundary from 'node:fs';
 {
  const source=fsStageBoundary.readFileSync('prompt-engine.js','utf8');
- const capture=(n,next)=>{const re=new RegExp('\n'+n+":'(.*?)',\n"+next+":'",'s');const m=source.match(re);if(!m)throw new Error('Cannot isolate Stage '+n+' procedure');return m[1];};
+ const capture=(n,next)=>{const start=source.indexOf('\n'+n+':');const end=source.indexOf('\n'+next+':',start+1);if(start<0||end<0)throw new Error('Cannot isolate Stage '+n+' procedure');return source.slice(start,end);};
  const s1=capture(1,2);
  const s2=capture(2,3);
  const forbidden1=[/supplied-material inventory/i,/inspection state/i,/build .*source inventory/i,/discover independent external sources/i,/establish source identity/i,/authority hierarchy/i,/source conflicts/i,/research requirements/i];
