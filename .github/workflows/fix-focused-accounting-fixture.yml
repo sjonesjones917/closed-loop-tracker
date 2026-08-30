@@ -1,0 +1,37 @@
+name: Fix focused accounting fixture prompt persistence
+on:
+  push:
+    branches:
+      - fix/stage01-stage04-closed-accounting-v2
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: contains(github.event.head_commit.message, 'Fix focused accounting fixture prompt persistence')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Persist controlling prompts in focused fixture
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('apply-accounting.mjs')
+          s=p.read_text()
+          old="const prompt1=prompts.buildPromptRecord(1,p);\nconst env1=capture=>"
+          new="const prompt1=prompts.buildPromptRecord(1,p);p.projectData.generatedPrompts.push(prompt1);\nconst env1=capture=>"
+          if s.count(old)!=1: raise SystemExit(f'Stage 01 prompt fixture anchor count {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="const prompt4=prompts.buildPromptRecord(4,p),obligations=engine.obligationManifest(p).items;\nassert.ok(prompt4.prompt.includes('APPLICATION OBLIGATION MANIFEST'));"
+          new="const prompt4=prompts.buildPromptRecord(4,p),obligations=engine.obligationManifest(p).items;p.projectData.generatedPrompts.push(prompt4);\nassert.ok(prompt4.prompt.includes('APPLICATION OBLIGATION MANIFEST'));"
+          if s.count(old)!=1: raise SystemExit(f'Stage 04 prompt fixture anchor count {s.count(old)}')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          rm -rf ACCOUNTING_PATCH_DIAGNOSTIC .github/workflows/fix-focused-accounting-fixture.yml
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Run closed accounting patch retry 2"
+          git push origin HEAD:fix/stage01-stage04-closed-accounting-v2
