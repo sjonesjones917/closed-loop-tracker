@@ -1,0 +1,40 @@
+name: Inspect every stage and operation prompt contract
+on:
+  push:
+    branches: [fix/complete-stage-prompts-20260830]
+    paths: [.github/workflows/stage-prompt-inspection.yml]
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Print exact stage and operation prompt contracts
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+          const state=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
+          engine.ensureShape(state);engine.recalculate(state);
+          const rec=(collection)=>engine.records(state,collection).find(x=>engine.isActiveRecord(x));
+          const run=rec('runs'),context=rec('freshContexts'),candidate=rec('candidateFreezes'),product=rec('products'),baseline=rec('baselines');
+          const baseScope={iterationId:run?engine.recordValue(run,'ITERATION_ID')||run.scope?.iterationId:null,candidateId:candidate?engine.recordId(candidate,'candidateFreezes'):null,runId:run?engine.recordId(run,'runs'):null,contextId:context?engine.recordId(context,'freshContexts'):null,productId:product?engine.recordId(product,'products'):null,baselineId:baseline?engine.recordId(baseline,'baselines'):null};
+          const output=[];
+          for(let stage=1;stage<=schema.STAGE_COUNT;stage++){
+            const contract=schema.STAGE_CONTRACTS[stage];
+            for(const operation of contract.operations){
+              let record,error=null;
+              try{record=prompts.buildPromptRecord(stage,state,{operation,scope:baseScope});}catch(e){error={code:e.code||'ERROR',message:e.message};}
+              const text=record?.prompt||'';
+              output.push({stage,operation,readCollections:schema.operationContract(stage,operation).readCollections,writeCollections:schema.operationContract(stage,operation).agentWritableCollections,scopeRequirements:schema.operationContract(stage,operation).scopeRequirements,promptLength:text.length,error,hasProjectExecutionRule:text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'),projectExecutionRuleCount:(text.match(/PROJECT DATA EXECUTION RULE — MANDATORY/g)||[]).length,hasNoRepeatRule:/never ask[^\n]{0,160}(repeat|retype|resend|reattach)/i.test(text),hasOriginalIntentProhibition:stage===1||text.includes('The original Stage 01 intent file is prohibited input for this stage.'),hasStageTask:text.includes('STAGE-SPECIFIC TASK'),hasContract:text.includes('RESPONSE CONTRACT DEFINITIONS'),usesCustomPipeline:text.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),usesTestIr:text.includes('EXECUTABLE_KIND = TEST_IR'),contextCounts:Object.fromEntries(Object.entries(record?.contextManifest?.readCollections||{}).map(([k,v])=>[k,v.length]))});
+            }
+          }
+          const executableKind=schema.RECORD_SCHEMAS.tests.fieldDefinitions.EXECUTABLE_KIND;
+          console.log(JSON.stringify({projectSchema:core.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,promptEngine:prompts.version,executableKindEnum:executableKind.enumValues,stage01Intake:engine.stage01IntakeManifest(state),stage04Obligation:engine.stage04ObligationManifest(state),prompts:output},null,2));
+          NODE
