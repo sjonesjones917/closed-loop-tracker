@@ -1,0 +1,38 @@
+name: diagnose-final-semantic-v20
+on:
+  push:
+    branches: [fix/controlling-spec-zero-loss-20260830]
+    paths: [.github/workflows/diagnose-final-semantic-v20.yml]
+permissions: {contents: write}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec-zero-loss-20260830, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply current repair set
+        run: |
+          set -euo pipefail
+          python3 tools/finalize_capture_once_v4.py
+          python3 tools/update_prompt_semantic_regressions.py
+          python3 tools/fix_semantic_mutation_v15.py
+          python3 tools/fix_semantic_mutation_v17.py
+          python3 tools/finalize_stage1_stage4_gate_v17.py
+      - name: Capture exact semantic outputs
+        run: |
+          set +e
+          : > semantic-v20.log
+          for test in verify-intent-capture.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs; do
+            echo "===== $test =====" >> semantic-v20.log
+            node "$test" >> semantic-v20.log 2>&1
+            echo "EXIT=$?" >> semantic-v20.log
+          done
+          cat semantic-v20.log
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add semantic-v20.log
+          git commit -m 'Record exact Stage 01 03 04 semantic failure v20'
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
+          exit 0
