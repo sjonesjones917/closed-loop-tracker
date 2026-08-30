@@ -1,0 +1,92 @@
+name: Materialize exact Stage 04 visual restoration
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.head_ref == 'fix/stage04-visual-restore-current-main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage04-visual-restore-current-main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore Stage 04 visuals without changing capture-once data flow
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+
+          function replaceOnce(text,before,after,label){
+            const first=text.indexOf(before);
+            if(first<0)throw new Error(`${label}: anchor not found`);
+            if(text.indexOf(before,first+before.length)>=0)throw new Error(`${label}: anchor is not unique`);
+            return text.slice(0,first)+after+text.slice(first+before.length);
+          }
+
+          let app=fs.readFileSync('app-core.js','utf8');
+          app=replaceOnce(
+            app,
+            "function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)",
+            "function artifactControlMarkup(n,locked){if(n===19)",
+            'Stage 04 visual restoration'
+          );
+          fs.writeFileSync('app-core.js',app);
+
+          let index=fs.readFileSync('index.html','utf8');
+          const oldToken='runtime-09e60bd87cea10f0';
+          const newToken='runtime-c2144fb2d4d5b4c5';
+          const tokenCount=(index.match(new RegExp(oldToken,'g'))||[]).length;
+          if(tokenCount!==8)throw new Error(`Expected 8 current runtime tokens; found ${tokenCount}`);
+          index=index.replaceAll(oldToken,newToken);
+          fs.writeFileSync('index.html',index);
+
+          let verifyHash=fs.readFileSync('verify-hash.mjs','utf8');
+          const oldTail=`const appCore=fs.readFileSync('app-core.js','utf8');
+          assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');
+
+          console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04RepeatAttachmentControlAbsent:true}));`;
+          const newTail=`const appCore=fs.readFileSync('app-core.js','utf8');
+          const promptEngine=fs.readFileSync('prompt-engine.js','utf8');
+          assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not be visually special-cased or hidden.');
+          assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 must retain the standard authorized-file controls used by applicable stages.');
+          assert(html.includes('.expandable-prompt{height:280px;max-height:80vh}'),'The generated-instruction preview must retain the established 280px collapsed height.');
+          assert(promptEngine.includes("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';"),'Saved pre-repair Stage 04 prompts must be invalidated.');
+          assert((promptEngine.match(/handoff=stage===4\\?\\{\\.\\.\\.rawHandoff,send:\\[\\]\\}:rawHandoff/g)||[]).length===2,'Stage 04 file-send suppression must govern both prompt text and the persisted context manifest.');
+          assert(promptEngine.includes('ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT'),'Stage 04 must receive accepted Stage 01 project meaning through the generated instruction.');
+          assert(promptEngine.includes('Do not ask the human to attach, resend, retype, or summarize the original intent file'),'Stage 04 must prohibit repeated intent-file supply.');
+
+          console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,stage04VisualsRestored:true,stage04PromptPreviewHeight:280,stage04CanonicalInputReuse:true,stage04RepeatedFileSendSuppressed:true,staleStage04PromptsInvalidated:true}));`;
+          verifyHash=replaceOnce(verifyHash,oldTail,newTail,'Stage 04 permanent source regression');
+          fs.writeFileSync('verify-hash.mjs',verifyHash);
+
+          let browser=fs.readFileSync('verify-browser.mjs','utf8');
+          const browserAnchor=" await openStage(cdp,23);assert(await evalValue(cdp,`!document.querySelector('#reviewer-context-required')`),'Locked future Stage 23 exposed reviewer-context work before the operator needs it.');";
+          const browserReplacement=` await openStage(cdp,4);const stage04Visual=await evalValue(cdp,\`(()=>{const prompt=document.querySelector('#generated-prompt'),files=document.querySelector('#stage-files'),directory=document.querySelector('#stage-directory'),panel=files?.closest('.panel');return {promptHeight:prompt?.getBoundingClientRect().height||0,files:Boolean(files),directory:Boolean(directory),panelText:panel?.innerText||''};})()\`);assert(stage04Visual&&stage04Visual.files&&stage04Visual.directory&&stage04Visual.panelText.includes('Authorized files for this stage'),\`Stage 04 standard file-control visuals are missing: \\${JSON.stringify(stage04Visual)}\`);assert(stage04Visual.promptHeight>=279&&stage04Visual.promptHeight<=281,\`Stage 04 generated-instruction preview must remain 280px; got \\${stage04Visual.promptHeight}px.\`);
+          ${browserAnchor}`;
+          browser=replaceOnce(browser,browserAnchor,browserReplacement,'Stage 04 browser visual regression');
+          fs.writeFileSync('verify-browser.mjs',browser);
+
+          fs.rmSync('.github/workflows/tmp-materialize-stage04-visual.yml');
+          NODE
+          node --check app-core.js
+          node --check verify-hash.mjs
+          node --check verify-browser.mjs
+          node verify-hash.mjs
+      - name: Commit exact final patch
+        shell: bash
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Restore Stage 04 visuals without repeated project input"
+          git push origin HEAD:fix/stage04-visual-restore-current-main
