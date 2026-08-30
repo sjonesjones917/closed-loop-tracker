@@ -1,0 +1,30 @@
+name: diagnose-capture-semantics-v8
+on:
+  push:
+    branches: [fix/controlling-spec-zero-loss-20260830]
+    paths: [.github/workflows/diagnose-capture-semantics-v8.yml]
+permissions: {contents: write}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec-zero-loss-20260830, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python3 tools/finalize_capture_once_v4.py
+      - name: Capture exact outputs
+        run: |
+          set +e
+          : > semantic-v8.log
+          for test in verify-intent-capture.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs; do
+            echo "===== $test =====" >> semantic-v8.log
+            node "$test" >> semantic-v8.log 2>&1
+            echo "EXIT=$?" >> semantic-v8.log
+          done
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add semantic-v8.log
+          git commit -m 'Record post-inventory semantic diagnostic'
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
+          exit 0
