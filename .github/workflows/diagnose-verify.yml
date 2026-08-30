@@ -1,15 +1,14 @@
-name: Commit verified all stage prompt repairs
+name: Export verified all stage prompt source
 on:
   push:
     branches: [fix/stage01-intake-closure-20260830]
-permissions: {contents: write}
+permissions: {contents: read}
 jobs:
-  commit:
+  export:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Apply exact verified candidate
@@ -26,7 +25,7 @@ jobs:
           PY
           python3 repair-all-prompts.py
           sed -i "s/closed-loop-prompt-engine\/28/closed-loop-prompt-engine\/29/" prompt-engine.js
-      - name: Reprove exact candidate before commit
+      - name: Reprove candidate
         run: |
           node --check workflow-schema.js
           node --check prompt-engine.js
@@ -40,11 +39,14 @@ jobs:
           node verify.mjs
           node verify-full-cycle.mjs
           node verify-definition-of-done.mjs
-      - name: Commit source
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-schema.js prompt-engine.js verify-stage-prompts-complete.mjs
-          git commit -m "Make all stage prompts context-complete and operation-specific"
-          git pull --rebase origin fix/stage01-intake-closure-20260830
-          git push origin HEAD:fix/stage01-intake-closure-20260830
+      - name: Record exact byte hashes
+        run: sha256sum workflow-schema.js prompt-engine.js verify-stage-prompts-complete.mjs > verified-source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-all-stage-prompt-source
+          path: |
+            workflow-schema.js
+            prompt-engine.js
+            verify-stage-prompts-complete.mjs
+            verified-source.sha256
+          if-no-files-found: error
