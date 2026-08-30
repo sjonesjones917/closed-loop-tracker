@@ -71,3 +71,16 @@ const currentHandoff="assert(Array.isArray(handoff.send)&&handoff.send.length===
 if(!focused.includes(obsoleteHandoff))throw new Error('Stage 04 obsolete handoff assertion anchor missing.');
 focused=focused.replace(obsoleteHandoff,currentHandoff);
 fs.writeFileSync(focusedPath,focused);
+
+const ingestionTestPath='verify-ingestion.mjs';
+let ingestionTest=fs.readFileSync(ingestionTestPath,'utf8');
+const genericStageData="  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n";
+if(!ingestionTest.includes(genericStageData))throw new Error('verify-ingestion StageData fixture anchor missing.');
+const stage1Fixture=String.raw`  if(stage===1){
+    const intake=engine.intakeCoverageManifest(p);
+    const capture={schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'ingestion-'+String(index+1),text:String(unit.rawValue??unit.label??unit.unitId),statementClass:unit.label==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUESTED_OUTPUT':'FACT'}]})),conversationStatements:[]};
+    Object.assign(stageData,{EXACT_DELIVERABLE_REQUESTED:'Verified ingestion deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)});
+  }
+`;
+ingestionTest=ingestionTest.replace(genericStageData,genericStageData+stage1Fixture);
+fs.writeFileSync(ingestionTestPath,ingestionTest);
