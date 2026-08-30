@@ -49,7 +49,6 @@ if old_css not in text:
 text = text.replace(old_css, main_css, 1)
 p.write_text(text)
 
-# Replace the old Stage 03 single-sentence regression with the controlling exhaustion semantics.
 p = Path('verify.mjs')
 text = p.read_text()
 old = "if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');"
@@ -59,12 +58,16 @@ if old not in text:
 text = text.replace(old, new, 1)
 p.write_text(text)
 
-# Generic ingestion fixtures must now satisfy the mandatory Stage 01 intake accounting contract.
 p = Path('verify-ingestion.mjs')
 text = p.read_text()
 old = "  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
 new = "  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const intake=engine.intakeCoverageManifest(p);stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-intake-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:`fixture-${index+1}`,text:unit.rawValue,statementClass:'CONTEXT'}]})),conversationStatements:[]});}"
 if old not in text:
     raise SystemExit('verify-ingestion Stage 01 fixture anchor missing')
+text = text.replace(old, new, 1)
+old = "    evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],"
+new = "    evidence:(()=>{const list=[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}];if(stage===4){for(const [index,item] of engine.obligationManifest(p).items.entries())list.push({temporaryKey:`obligation-disposition-${index+1}`,kind:'OBLIGATION_DISPOSITION',description:'Controlled obligation accounting fixture',location:'verification fixture',content:JSON.stringify({obligationId:item.obligationId,disposition:'RETAINED_NONNORMATIVE_CONTEXT',reason:'Synthetic all-stage ingestion fixture; obligation closure is the proposition under test.'})});}return list;})(),"
+if old not in text:
+    raise SystemExit('verify-ingestion evidence fixture anchor missing')
 text = text.replace(old, new, 1)
 p.write_text(text)
