@@ -41,17 +41,18 @@ if old in text:text=text.replace(old,new,1)
 elif 'PATENT / REGULATED FILING' in text and 'const mutants=[' in text:raise SystemExit('legacy mutant block not replaced')
 # Contract-descriptor identity is required, but the controlling specification does not assign a literal
 # descriptor sub-version. Verify a versioned descriptor exists and that the exact generated prompt publishes it.
-text=re.sub(
-    r"if\(descriptor\.contractVersion!==['\"]closed-loop-response-contract/[^'\"]+['\"]\)throw new Error\('Versioned response-contract descriptor is missing\.'\);",
-    "if(!/^closed-loop-response-contract\\/\\d+\\.\\d+$/.test(descriptor.contractVersion))throw new Error('Versioned response-contract descriptor is missing.');",
-    text,count=1)
-text=re.sub(
-    r"if\(!record\.prompt\.includes\('RESPONSE CONTRACT DEFINITIONS'\)\|\|!record\.prompt\.includes\('closed-loop-response-contract/[^']+'\)\)throw new Error\('The agent cannot inspect the exact contract descriptor whose hash it must echo\.'\);",
-    "if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes(descriptor.contractVersion))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');",
-    text,count=1)
+pattern=r"if\(descriptor\.contractVersion!==['\"]closed-loop-response-contract/[^'\"]+['\"]\)throw new Error\('Versioned response-contract descriptor is missing\.'\);"
+replacement=r"if(!/^closed-loop-response-contract\/\d+\.\d+$/.test(descriptor.contractVersion))throw new Error('Versioned response-contract descriptor is missing.');"
+text=re.sub(pattern,lambda _m:replacement,text,count=1)
+pattern2=r"if\(!record\.prompt\.includes\('RESPONSE CONTRACT DEFINITIONS'\)\|\|!record\.prompt\.includes\('closed-loop-response-contract/[^']+'\)\)throw new Error\('The agent cannot inspect the exact contract descriptor whose hash it must echo\.'\);"
+replacement2="if(!record.prompt.includes('RESPONSE CONTRACT DEFINITIONS')||!record.prompt.includes(descriptor.contractVersion))throw new Error('The agent cannot inspect the exact contract descriptor whose hash it must echo.');"
+text=re.sub(pattern2,lambda _m:replacement2,text,count=1)
 # Add direct source-level protection against subject branches in prompt-engine.js.
 anchor="function semanticIssues(record){\n  const issues=[];"
-addition="function semanticIssues(record){\n  const issues=[];\n  const promptSource=fs.readFileSync('prompt-engine.js','utf8');\n  if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD \/ CAM \/ CNC \/ ADDITIVE/.test(promptSource))issues.push('FORBIDDEN_PROJECT_SUBJECT_BRANCH');"
+addition=r"""function semanticIssues(record){
+  const issues=[];
+  const promptSource=fs.readFileSync('prompt-engine.js','utf8');
+  if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD \/ CAM \/ CNC \/ ADDITIVE/.test(promptSource))issues.push('FORBIDDEN_PROJECT_SUBJECT_BRANCH');"""
 if anchor in text:text=text.replace(anchor,addition,1)
 elif 'FORBIDDEN_PROJECT_SUBJECT_BRANCH' not in text:raise SystemExit('semanticIssues anchor missing')
 p.write_text(text)
