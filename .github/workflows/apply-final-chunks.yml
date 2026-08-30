@@ -20,19 +20,19 @@ jobs:
           cat .repair/final_patch.part* > /tmp/final.patch.gz.b64
           base64 -d /tmp/final.patch.gz.b64 > /tmp/final.patch.gz
           gzip -dc /tmp/final.patch.gz > /tmp/final.patch
-          echo 'PATCH HEADERS:'
-          grep -m 30 -E '^(diff --git|--- |\+\+\+ )' /tmp/final.patch || true
           python3 - <<'PY'
           from pathlib import Path
           src = Path('/tmp/final.patch').read_text()
-          # The prepared diff was generated between sibling working directories.
-          # Strip only those directory prefixes from diff metadata; leave patch body untouched.
-          for prefix in ('main-current/', 'main-updated/'):
+          for prefix in ('main-current/', 'final-work/'):
               src = src.replace(prefix, '')
           Path('/tmp/root.patch').write_text(src)
           PY
-          git apply --check /tmp/root.patch
-          git apply /tmp/root.patch
+          git apply --3way /tmp/root.patch
+          if git ls-files -u | grep -q .; then
+            echo 'THREE-WAY CONFLICTS:'
+            git status --short
+            exit 2
+          fi
           rm -rf .repair
           rm -f .github/workflows/apply-blind-context-final.yml .github/workflows/apply-final-chunks.yml .github/workflows/export-source.yml
           git config user.name "closed-loop-implementation"
