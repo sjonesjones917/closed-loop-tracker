@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+
+const context={console,TextDecoder,TextEncoder,Uint8Array,ArrayBuffer,structuredClone,crypto:globalThis.crypto,setTimeout,clearTimeout,Date,Math,URL};context.globalThis=context;vm.createContext(context);vm.runInContext(fs.readFileSync('test-runtime.js','utf8'),context,{filename:'test-runtime.js'});const runtime=context.closedLoopTestRuntime;
+const L=runtime.LIMITS;
+for(const key of ['maxTotalInputBytes','maxDecompressedBytes','maxSteps','maxSelectorDepth','maxParsedDepth','maxCollectionItems','maxRegexPatternBytes','maxRegexInputBytes','workerTimeoutMs','maxArchiveExpansionBytes'])assert.ok(Number.isFinite(L[key])&&L[key]>0,`Missing centralized limit ${key}.`);
+assert.equal(runtime.validateResourceEnvelope({totalInputBytes:L.maxTotalInputBytes,decompressedBytes:L.maxDecompressedBytes,archiveExpansionBytes:L.maxArchiveExpansionBytes}).valid,true);
+assert.equal(runtime.validateResourceEnvelope({totalInputBytes:L.maxTotalInputBytes+1}).valid,false,'Input-byte limit did not fail closed.');
+assert.equal(runtime.validateResourceEnvelope({decompressedBytes:L.maxDecompressedBytes+1}).valid,false,'Decompressed-byte limit did not fail closed.');
+assert.equal(runtime.validateResourceEnvelope({archiveExpansionBytes:L.maxArchiveExpansionBytes+1}).valid,false,'Archive-expansion limit did not fail closed.');
+const tooManySteps={version:runtime.SPEC_VERSION,steps:Array.from({length:L.maxSteps+1},()=>({op:'ASSERT_EQ',value:1}))};
+assert.equal(runtime.validateSpec(tooManySteps).valid,false,'IR step limit was not enforced.');
+const regexTooLarge={version:runtime.SPEC_VERSION,steps:[{op:'REGEX',pattern:'a'.repeat(L.maxRegexPatternBytes+1)},{op:'ASSERT_EQ',value:true}]};
+assert.equal(runtime.validateSpec(regexTooLarge).valid,false,'Regex pattern limit was not enforced.');
+const selectorTooDeep={version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_JSON'},{op:'SELECT_JSON_PATH',path:'$.'+Array.from({length:L.maxSelectorDepth+1},(_,i)=>'x'+i).join('.')},{op:'ASSERT_EQ',value:1}]};
+assert.equal(runtime.validateSpec(selectorTooDeep,{PRODUCT:'ARTIFACT-1'}).valid,false,'Selector-depth limit was not enforced.');
+const explicitCsv={version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'DECODE_UTF8'},{op:'PARSE_CSV',delimiter:',',header:true,quote:'"',newline:'AUTO',encoding:'UTF-8'},{op:'COUNT'},{op:'ASSERT_EQ',value:1}]};
+assert.equal(runtime.validateSpec(explicitCsv,{PRODUCT:'ARTIFACT-1'}).valid,true,'Explicit CSV contract was rejected.');
+const ambiguousCsv={version:runtime.SPEC_VERSION,steps:[{op:'PARSE_CSV'},{op:'ASSERT_EQ',value:1}]};
+assert.equal(runtime.validateSpec(ambiguousCsv).valid,false,'Ambiguous CSV defaults were accepted.');
+class NeverRespondWorker{constructor(){this.onmessage=null;this.onerror=null;this.terminated=false;}postMessage(){}terminate(){this.terminated=true;NeverRespondWorker.last=this;}}
+const test={TEST_ID:'TEST-TIMEOUT',EXECUTION_MODE:'APPLICATION_DETERMINISTIC',REQUIRED_CAPABILITY:runtime.CAPABILITY,EXECUTABLE_KIND:'TEST_IR',EXECUTABLE_SPEC_VERSION:runtime.SPEC_VERSION,EXECUTABLE_INPUT_BINDINGS:{PRODUCT:'ARTIFACT-1'},EXECUTABLE_SPEC:{version:runtime.SPEC_VERSION,steps:[{op:'LOAD_ARTIFACT',binding:'PRODUCT'},{op:'READ_BYTES'},{op:'COUNT'},{op:'ASSERT_EQ',value:0}]}};
+const timeout=await runtime.executeTest(test,{PRODUCT:{artifactId:'ARTIFACT-1',filename:'x.bin',sha256:'00',bytes:new Uint8Array()}},{},{Worker:NeverRespondWorker,timeoutMs:5});
+assert.equal(timeout.status,'EXECUTION_FAILED');
+assert.equal(timeout.determination,'UNDETERMINED');
+assert.equal(timeout.failure?.code,'WORKER_TIMEOUT');
+assert.equal(NeverRespondWorker.last?.terminated,true,'Timed-out worker was not terminated.');
+assert.equal(timeout.testSpecSha256,null,'Timed-out execution fabricated a completed Test IR hash/result.');
+console.log(JSON.stringify({centralizedLimits:true,inputByteLimit:true,decompressedByteLimit:true,archiveExpansionLimit:true,stepLimit:true,selectorDepthLimit:true,regexLimit:true,explicitCsv:true,workerTimeoutTerminates:true,timeoutNoPartialResult:true},null,2));
