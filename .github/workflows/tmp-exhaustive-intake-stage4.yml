@@ -42,3 +42,4 @@ jobs:
           git add workflow-schema.js verify-all-stage-prompts.mjs
           git commit -m 'Supply every stage prompt the canonical context it needs'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
+# fixture v2
