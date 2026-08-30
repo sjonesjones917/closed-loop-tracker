@@ -21,9 +21,13 @@ new = "    if(!record.prompt.includes('MANDATORY STAGE 01 HUMAN-INTAKE GATE')||!
 if old not in text: raise SystemExit('Expected obsolete patent-coupled Stage 01 gate assertion not found.')
 text = text.replace(old,new,1)
 old = "    if(!record.prompt.includes('do not require the human to know those formats in advance')||!record.prompt.includes('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose')||!record.prompt.includes('Only propose an implementation-ready'))issues.push('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING');"
-new = "    if(!record.prompt.includes('If a material is named in SUPPLIED_MATERIALS_INVENTORY but its bytes are not available')||!record.prompt.includes('Do not ask the human to describe or re-enter its contents during Stage 01')||!record.prompt.includes('never infer substantive facts merely from the filename'))issues.push('STAGE01_ARTIFACT_BOUNDARY_MISSING');"
+new = "    if(!record.prompt.includes('If a material is named in SUPPLIED_MATERIALS_INVENTORY but its bytes are not available')||!record.prompt.includes('Do not ask the human to describe or re-enter its contents during Stage 01')||!record.prompt.includes('never infer substantive facts merely from the filename'))issues.push('STAGE01_ARTIFACT_BOUNDARY_MISSING');\n    if(!record.prompt.includes('The accepted capture is the durable meaning-preserving handoff to every later stage')||!record.prompt.includes('original intent file must not be repeatedly requested'))issues.push('STAGE01_DURABLE_HANDOFF_MISSING');"
 if old not in text: raise SystemExit('Expected obsolete Stage 01 artifact-generation assertion not found.')
 text = text.replace(old,new,1)
+anchor = "  if(record.stage===6){\n"
+stage4 = "  if(record.stage===4){\n    if(!record.prompt.includes('APPLICATION OBLIGATION MANIFEST')||!record.prompt.includes('No obligation may disappear.')||!record.prompt.includes('do not ask the human to attach the original intent file again'))issues.push('STAGE04_ZERO_LOSS_CONTRACT_MISSING');\n  }\n"
+if anchor not in text: raise SystemExit('Stage 6 semantic assertion anchor not found.')
+text = text.replace(anchor,stage4+anchor,1)
 old_mutants = """const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
   {...original,prompt:original.prompt.replace(`OPERATION: ${original.operation}`,'OPERATION: VERIFY')},
