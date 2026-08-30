@@ -1,0 +1,51 @@
+name: Apply Stage 27 application release action
+on:
+  push:
+    branches: [fix/stage27-application-release-action]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          s=s.replace("const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','BUILD_EVIDENCE_CHAINS'", "const ACTION_TYPES=Object.freeze(['RUN_APP_TESTS','CALCULATE_RELEASE_GATE','BUILD_EVIDENCE_CHAINS'", 1)
+          needle="  if(stage===28)return actionEnvelope(project,stage,{actionType:'ATTACH_REQUIRED_FILES'"
+          insert="  if(stage===27)return actionEnvelope(project,stage,{actionType:'CALCULATE_RELEASE_GATE',heading:'Calculate the release gate',explanation:'No agent or human sets the release state. The application will evaluate the complete current Stage 26 evidence, mandatory requirements and tests, regressions, blockers, contradictions, baseline/product identity, and evidence sufficiency, then record exactly one current ACCEPTED, REJECTED, or BLOCKED release determination.',primaryButton:'Calculate release gate'});\n"
+          if insert not in s:
+              if needle not in s: raise SystemExit('Stage 28 action marker not found')
+              s=s.replace(needle,insert+needle,1)
+          p.write_text(s)
+
+          p=Path('app-core.js'); s=p.read_text()
+          s=s.replace("RUN_APP_TESTS:'Application',BUILD_EVIDENCE_CHAINS:'Application'", "RUN_APP_TESTS:'Application',CALCULATE_RELEASE_GATE:'Application',BUILD_EVIDENCE_CHAINS:'Application'",1)
+          s=s.replace("action.actionType==='RUN_APP_TESTS'?`<button class=\"primary\" id=\"run-native-tests\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='BUILD_EVIDENCE_CHAINS'?", "action.actionType==='RUN_APP_TESTS'?`<button class=\"primary\" id=\"run-native-tests\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='CALCULATE_RELEASE_GATE'?`<button class=\"primary\" id=\"calculate-stage27-release\" type=\"button\">${esc(action.primaryButton)}</button>`:action.actionType==='BUILD_EVIDENCE_CHAINS'?",1)
+          s=s.replace("applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===28", "applicationOnlyInteraction=(n===22&&nativeStage22Tests().length>0)||n===27||n===28",1)
+          old="applicationOnlyInteraction?(n===28?'No external instruction is used at Stage 28. Use Release control for the application-owned byte comparison.':'The application must run the pending native deterministic verification before any external handoff. No agent prompt or final JSON is required for the pending native work.')"
+          new="applicationOnlyInteraction?(n===27?'No external instruction is used to decide Stage 27. The application calculates the release gate from current evidence.':n===28?'No external instruction is used at Stage 28. Use Release control for the application-owned byte comparison.':'The application must run the pending native deterministic verification before any external handoff. No agent prompt or final JSON is required for the pending native work.')"
+          if old in s:s=s.replace(old,new,1)
+          old="applicationOnlyInteraction?(n===28?'No agent response belongs to Stage 28. Complete the byte-identity comparison in Release control.':'No agent response belongs to the pending application-native verification. Run the application verification first.')"
+          new="applicationOnlyInteraction?(n===27?'No agent response sets Stage 27 release. Use the application release-gate action above.':n===28?'No agent response belongs to Stage 28. Complete the byte-identity comparison in Release control.':'No agent response belongs to the pending application-native verification. Run the application verification first.')"
+          if old in s:s=s.replace(old,new,1)
+          marker="if($('#build-evidence-chains'))$('#build-evidence-chains').onclick=async()=>"
+          handler="if($('#calculate-stage27-release'))$('#calculate-stage27-release').onclick=async()=>{try{if(Number(current.activeStage)!==27)throw new Error('Release-gate calculation is available only at Stage 27.');const next=clone(current);engine.recordReleaseDetermination(next);await persistReplacement(next);announce('release determination recalculated');render();requestAnimationFrame(()=>$('#next-required-action')?.focus());}catch(error){announce('release calculation blocked');alert(error.message||error);}};"
+          if handler not in s:
+              if marker not in s: raise SystemExit('wire marker not found')
+              s=s.replace(marker,handler+marker,1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/apply-stage27-release-action.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Route Stage 27 to application-owned release calculation"
+          git push origin HEAD:fix/stage27-application-release-action
