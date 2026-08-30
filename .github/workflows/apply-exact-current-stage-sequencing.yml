@@ -12,21 +12,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-      - name: Apply repair
+          fetch-depth: 3
+      - name: Apply schema and engine repair
         run: |
-          git show HEAD^:.github/workflows/apply-exact-current-stage-sequencing.yml > /tmp/previous-repair.yml
+          git show HEAD^^:.github/workflows/apply-exact-current-stage-sequencing.yml > /tmp/original-repair.yml
           python3 - <<'PY'
           from pathlib import Path
-          text=Path('/tmp/previous-repair.yml').read_text()
+          text=Path('/tmp/original-repair.yml').read_text()
           start=text.index("          python3 - <<'PY'")+len("          python3 - <<'PY'\n")
           end=text.index("          PY\n",start)
           lines=text[start:end].splitlines()
           script='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)+'\n'
-          exec(compile(script,'exact-current-stage-sequencing-repair','exec'),{})
+          script=script[:script.index("p=Path('app-core.js')")]
+          exec(compile(script,'exact-current-stage-engine-repair','exec'),{})
           PY
           git config user.name closed-loop-reliability-bot
           git config user.email actions@users.noreply.github.com
-          git add workflow-schema.js workflow-engine.js app-core.js
-          git commit -m "Enforce exact operation order and fresh verification contexts"
+          git add workflow-schema.js workflow-engine.js
+          git commit -m "Enforce exact operation order and fresh verification lanes"
           git push
