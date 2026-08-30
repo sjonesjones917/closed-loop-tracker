@@ -1,0 +1,56 @@
+name: Verify deterministic Stage 04 schema migration
+on:
+  push:
+    branches: [fix/stage4-canonical-intent-capture]
+permissions:
+  contents: write
+jobs:
+  fix:
+    if: "!contains(github.event.head_commit.message, 'Make closed-loop /3 migration deterministic')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/stage4-canonical-intent-capture
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Remove wall-clock data from migration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workbook.js')
+          s=p.read_text()
+          anchor='function migrateState(p){\n'
+          helper="function migrationEvidenceTime(p){return String(p?.updatedAt||p?.createdAt||p?.job?.DATE_OPENED||'')||null;}\nfunction migrateState(p){\n"
+          if helper not in s:
+              if anchor not in s: raise SystemExit('migrateState anchor missing')
+              s=s.replace(anchor,helper,1)
+          count=s.count('preservedAt:new Date().toISOString()')
+          if count != 3: raise SystemExit(f'expected three nondeterministic migration timestamps, found {count}')
+          s=s.replace('preservedAt:new Date().toISOString()','preservedAt:migrationEvidenceTime(p)')
+          p.write_text(s)
+          q=Path('verify-stage4-intent-reuse.mjs')
+          t=q.read_text()
+          anchor2="if(migrated.schema!=='closed-loop-project/3'||!migrated.projectData.migrationArchives.some(item=>item.schema==='closed-loop-project/2'))throw new Error('/2 to /3 migration failed or lost audit source.');\n"
+          addition=anchor2+"const migratedAgain=core.migrateState(JSON.parse(JSON.stringify(legacy)));\nif(JSON.stringify(migrated)!==JSON.stringify(migratedAgain))throw new Error('/2 to /3 migration is not deterministic for identical input.');\n"
+          if 'migration is not deterministic for identical input' not in t:
+              if anchor2 not in t: raise SystemExit('migration regression anchor missing')
+              t=t.replace(anchor2,addition,1)
+          q.write_text(t)
+          PY
+          rm -f .github/workflows/stage4-migration-determinism.yml
+      - name: Prove deterministic migration and Stage 04 reuse
+        run: |
+          node --check workbook.js
+          node --check verify-stage4-intent-reuse.mjs
+          node verify-stage4-intent-reuse.mjs
+      - name: Commit deterministic migration
+        run: |
+          git config user.name "closed-loop-reliability-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Make closed-loop /3 migration deterministic"
+          git push origin HEAD:fix/stage4-canonical-intent-capture
