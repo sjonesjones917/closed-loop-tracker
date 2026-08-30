@@ -436,7 +436,7 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   const withStoredCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
   if(withStoredCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withStoredCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Browser custody re-enabled Stage 04 original-file reuse.');
 }
-if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
+if(prompts.version!=='closed-loop-prompt-engine/27')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');
 console.log(JSON.stringify({stage04CanonicalInputReuse:true,stage04PersistedPromptInvalidation:true,promptEngineVersion:prompts.version}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
