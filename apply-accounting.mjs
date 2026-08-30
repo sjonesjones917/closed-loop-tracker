@@ -183,7 +183,7 @@ engine.ensureShape(p);engine.recalculate(p);
 const manifest=engine.intakeCoverageManifest(p);
 assert.ok(manifest.units.length>=3);
 const captureFor=units=>({schema:'closed-loop-intake-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:units.map((unit,index)=>({sourceUnitId:unit.sourceUnitId,disposition:'INCORPORATED',reason:'',extractedStatements:[{statementKey:'s-'+(index+1),text:unit.kind==='SUPPLIED_MATERIAL'?'The supplied intent contains controlling human project authority.':String(unit.rawValue),statementClass:unit.fieldName==='EXACT_USER_OBJECTIVE_VERBATIM'?'REQUESTED_OUTPUT':unit.fieldName==='EXPLICIT_USER_REQUIREMENTS'?'REQUIREMENT':unit.kind==='SUPPLIED_MATERIAL'?'MATERIAL_REFERENCE':'FACT'}]})),conversationStatements:[]});
-const prompt1=prompts.buildPromptRecord(1,p);
+const prompt1=prompts.buildPromptRecord(1,p);p.projectData.generatedPrompts.push(prompt1);
 const env1=capture=>({schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:prompt1.operation,promptIdentity:{instructionId:prompt1.instructionId,bodySha256:prompt1.bodySha256,contractSha256:prompt1.contractSha256,contextSignature:prompt1.contextSignature},scope:prompt1.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Controlled product',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]});
 let x=ingestion.prepare(p,{stage:1,text:JSON.stringify(env1(captureFor(manifest.units.slice(1)))),promptRecord:prompt1});
 assert.equal(x.validation.valid,false);assert.ok(x.validation.issues.some(i=>i.code==='INCOMPLETE_INTAKE_ACCOUNTING'));
@@ -191,7 +191,7 @@ x=ingestion.prepare(p,{stage:1,text:JSON.stringify(env1(captureFor(manifest.unit
 assert.equal(x.validation.valid,true,JSON.stringify(x.validation.issues));
 p=ingestion.commit(x.project,x.proposal.proposalId,{operator:'TEST'}).project;
 assert.equal(engine.evaluateIntakeCoverage(p).complete,true);
-const prompt4=prompts.buildPromptRecord(4,p),obligations=engine.obligationManifest(p).items;
+const prompt4=prompts.buildPromptRecord(4,p),obligations=engine.obligationManifest(p).items;p.projectData.generatedPrompts.push(prompt4);
 assert.ok(prompt4.prompt.includes('APPLICATION OBLIGATION MANIFEST'));assert.ok(obligations.length>0);
 const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});assert.equal(handoff.send.length,0);assert.ok(!/FILES YOU MUST RECEIVE[\s\S]*intent\.pdf/i.test(prompt4.prompt));
 const requirement=ids=>({tempKey:'req-1',fields:{OBLIGATION:'All mapped obligations are preserved.',REQUIREMENT_TYPE:'FUNCTIONAL',MANDATORY_OPTIONAL_STATUS:'MANDATORY',SOURCE_LOCATION:'APPLICATION OBLIGATION MANIFEST',SOURCE_AUTHORITY:'HUMAN',USER_INPUT_RELATIONSHIP:ids.join(' '),APPLICABILITY:'APPLICABLE',DEPENDENCIES:'NONE',PROHIBITIONS:'NONE',DEFINED_TERMS:'NONE',OBSERVABLE_SATISFACTION_CONDITION:'All mapped obligations are satisfied.',INTENDED_VERIFICATION_METHOD:'DETERMINISTIC_AND_INDEPENDENT_CONTENT_REVIEW',EXPECTED_EVIDENCE:'Current sufficient evidence',FAILURE_CONDITION:'A mapped obligation is not satisfied.',SEVERITY:'MAJOR',NOTES:''},relationships:{},evidenceRefs:['evidence-1']});
