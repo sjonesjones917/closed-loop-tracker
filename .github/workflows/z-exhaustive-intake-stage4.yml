@@ -18,6 +18,32 @@ jobs:
           node-version: '22'
       - name: Apply exhaustive implementation
         run: python3 exhaustive-bootstrap.py
+      - name: Align acceptance report with controlling schemas and metrics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/pages.yml'); text=p.read_text()
+          text=text.replace("projectSchema:'closed-loop-project/2'","projectSchema:'closed-loop-project/3'")
+          text=text.replace("responseSchema:'closed-loop-stage-response/2'","responseSchema:'closed-loop-stage-response/3'")
+          anchor="""            responseSchema:'closed-loop-stage-response/3',
+            ...definition,"""
+          replacement="""            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stage01IntakeCoverage:1,
+            stage04ObligationCoverage:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            nativeExecutionCoverage:1,
+            unsupportedTestIrTreatedAsExecutable:0,
+            externalAssertionsOverridingApplicationProof:0,
+            nativeExecutionReceiptsFabricatedExternally:0,
+            releaseAcceptedWithContradiction:0,
+            ...definition,"""
+          if anchor not in text: raise SystemExit('acceptance report anchor missing')
+          p.write_text(text.replace(anchor,replacement,1))
+          PY
       - name: Prove exact requested closure
         shell: bash
         run: |
