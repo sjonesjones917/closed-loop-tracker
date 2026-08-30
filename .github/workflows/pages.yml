@@ -37,6 +37,7 @@ jobs:
           node --check verify-live.mjs
           node --check verify-browser.mjs
           node --check verify-browser-extra.mjs
+          node --check verify-mobile-stage-action.mjs
           node --check verify-semantic-invariant.mjs
           node --check verify-definition-of-done.mjs
           node --check verify-project-lifecycle.mjs
@@ -104,6 +105,7 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-mobile-stage-action.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
@@ -151,6 +153,7 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-mobile-stage-action.mjs
 
   publish-status:
     if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
