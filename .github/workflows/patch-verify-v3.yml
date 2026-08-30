@@ -1,0 +1,26 @@
+name: Align verify.mjs with v3 architecture
+on:
+  push:
+    branches: [controlling-spec-final-current]
+    paths: ['.github/workflows/patch-verify-v3.yml']
+permissions: {contents: write}
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: controlling-spec-final-current, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          python3 .github/patch_verify_v3.py
+          node --check verify.mjs
+          node build-test-project.mjs
+          node verify.mjs
+      - run: |
+          git config user.name closed-loop-conformance
+          git config user.email actions@users.noreply.github.com
+          git add verify.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Align canonical architecture verifier with v3 runtime"
+          git push origin HEAD:controlling-spec-final-current
