@@ -27,4 +27,10 @@ if old not in text:
     raise SystemExit('Stage 04 prompt fixture anchor missing')
 text = text.replace(old, new, 1)
 
+old = "assert(handoff.conversationMaterials.length===0&&handoff.send.length===0,'Stage 04 still derives an original-intent-file handoff.');"
+new = "assert(Array.isArray(handoff.send)&&handoff.send.length===0,'Stage 04 still derives an original-intent-file handoff.');"
+if old not in text:
+    raise SystemExit('Stage 04 handoff regression anchor missing')
+text = text.replace(old, new, 1)
+
 p.write_text(text)
