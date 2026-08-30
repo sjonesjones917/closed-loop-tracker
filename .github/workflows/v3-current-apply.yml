@@ -44,9 +44,9 @@ jobs:
             git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
             exit 1
           fi
-          if ! git diff --quiet -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html; then
-            git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html
-            git commit -m 'Strengthen v3 exhaustive stage semantics [skip ci]'
+          if ! git diff --quiet -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html verify-prompt-semantics.mjs; then
+            git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html verify-prompt-semantics.mjs
+            git commit -m 'Strengthen v3 exhaustive stage semantics and regressions [skip ci]'
             git push origin HEAD:fix/closed-loop-v3-current-20260830
           fi
       - name: Syntax proof
@@ -58,4 +58,5 @@ jobs:
           node --check response-ingestion.js
           node --check test-runtime.js
           node --check app-core.js
+          node --check verify-prompt-semantics.mjs
           git diff --check
