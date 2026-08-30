@@ -18,7 +18,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply stage context repair
-        run: python3 .repair-context-contracts.py
+        run: |
+          python3 .repair-context-contracts.py
+          sed -i "s/PERSISTED HUMAN ANSWERS — OPERATIVE CANONICAL USER INPUT/PERSISTED HUMAN ANSWERS — ALREADY SUPPLIED; DO NOT ASK AGAIN/" verify-all-stage-prompts.mjs
       - name: Syntax and exhaustive prompt/context proof
         run: |
           node --check workflow-schema.js
@@ -42,4 +44,3 @@ jobs:
           git add workflow-schema.js verify-all-stage-prompts.mjs
           git commit -m 'Supply every stage prompt the canonical context it needs'
           git push origin HEAD:fix/exhaustive-intake-stage4-20260830
-# fixture v2
