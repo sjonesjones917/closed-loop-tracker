@@ -1,0 +1,24 @@
+name: Apply full-cycle verifier repair
+on:
+  push:
+    branches: [spec-v3-zero-loss-20260830]
+  workflow_dispatch:
+permissions: {contents: write}
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: spec-v3-zero-loss-20260830}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply fixture repair
+        run: |
+          node repair-full-cycle-accounting.mjs
+          node --check verify-full-cycle.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm -f repair-full-cycle-accounting.mjs
+          git add verify-full-cycle.mjs
+          git commit -m "Align full-cycle fixture with mandatory accounting"
+          git push origin HEAD:spec-v3-zero-loss-20260830
