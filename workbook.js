@@ -268,20 +268,19 @@ const STAGE_OWNERSHIP=Object.freeze({
   "13": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "REQUIREMENTS_SATISFIED_BY_ALL_TEN",
-      "CORRECTNESS_AFFECTING_DISAGREEMENTS",
-      "PROHIBITED_OUTPUT_VARIANCES",
-      "INCONCLUSIVE_TESTS",
-      "REPEATED_FAILURE_GROUPS",
-      "UNIQUE_FAILURES"
-    ],
+    "agent": [],
     "application": [
       "ITERATION_ID",
       "COMPARISON_VERSION",
       "REQUIREMENT_COMPARISON_RECORDS",
+      "REQUIREMENTS_SATISFIED_BY_ALL_TEN",
       "REQUIREMENTS_WITH_AT_LEAST_ONE_VIOLATION",
       "REQUIREMENTS_WITH_AT_LEAST_ONE_UNDETERMINED",
+      "CORRECTNESS_AFFECTING_DISAGREEMENTS",
+      "PROHIBITED_OUTPUT_VARIANCES",
+      "INCONCLUSIVE_TESTS",
+      "REPEATED_FAILURE_GROUPS",
+      "UNIQUE_FAILURES",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -289,15 +288,14 @@ const STAGE_OWNERSHIP=Object.freeze({
   "14": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "CONFIRMED_ROOT_CAUSES",
-      "UNDETERMINED_ROOT_CAUSES",
-      "BLOCKED_ANALYSES"
-    ],
+    "agent": [],
     "application": [
       "ROOT_CAUSE_ANALYSIS_VERSION",
       "DEFECT_ROOT_CAUSE_RECORDS",
       "TOTAL_MATERIAL_DEFECTS",
+      "CONFIRMED_ROOT_CAUSES",
+      "UNDETERMINED_ROOT_CAUSES",
+      "BLOCKED_ANALYSES",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -305,9 +303,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "15": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "UNCONVERTED_CONFIRMED_DEFECTS"
-    ],
+    "agent": [],
     "application": [
       "INPUT_TEST_SUITE_VERSION",
       "OUTPUT_TEST_SUITE_VERSION",
@@ -316,6 +312,7 @@ const STAGE_OWNERSHIP=Object.freeze({
       "CONFIRMED_DEFECTS",
       "CONFIRMED_DEFECTS_WITH_REGRESSION_TEST",
       "PRE_CORRECTION_FAILURES_PROVEN",
+      "UNCONVERTED_CONFIRMED_DEFECTS",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -323,21 +320,20 @@ const STAGE_OWNERSHIP=Object.freeze({
   "16": {
     "human": [],
     "humanDecision": [],
-    "agent": [
+    "agent": [],
+    "application": [
+      "CHANGE_SET_ID",
+      "TRIGGERING_DEFECT_IDS",
+      "RCA_VERSION",
       "DATE",
+      "ARTIFACT_CHANGE_RECORDS",
       "INSTRUCTION_CHANGED",
       "IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED",
       "PREFLIGHT_REPEATED_IF_CHANGED",
       "ARTIFACTS_CHANGED",
       "NEW_VERSIONS_CREATED",
       "IN_PLACE_MODIFICATIONS",
-      "DOWNSTREAM_VERIFICATIONS_INVALIDATED"
-    ],
-    "application": [
-      "CHANGE_SET_ID",
-      "TRIGGERING_DEFECT_IDS",
-      "RCA_VERSION",
-      "ARTIFACT_CHANGE_RECORDS",
+      "DOWNSTREAM_VERIFICATIONS_INVALIDATED",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -345,9 +341,16 @@ const STAGE_OWNERSHIP=Object.freeze({
   "17": {
     "human": [],
     "humanDecision": [],
-    "agent": [
+    "agent": [],
+    "application": [
+      "PREVIOUS_ITERATION_ID",
+      "NEW_ITERATION_ID",
+      "PREVIOUS_CANDIDATE_ID",
+      "NEW_CANDIDATE_ID",
+      "CHANGESET_ID",
       "NEW_FROZEN_VERSIONS",
       "OLD_CONVERSATIONS_CONTINUED",
+      "TEN_NEW_CONTEXTS_CREATED",
       "RUN_NAMESPACE",
       "IDENTICAL_PACKAGE_CONFIRMED_FOR_ALL_RUNS",
       "PRIOR_OUTPUTS_WITHHELD",
@@ -356,15 +359,7 @@ const STAGE_OWNERSHIP=Object.freeze({
       "COMPARE_COMPLETED",
       "ROOT_CAUSE_COMPLETED",
       "REGRESSION_TESTS_ADDED",
-      "CORRECTIONS_COMPLETED"
-    ],
-    "application": [
-      "PREVIOUS_ITERATION_ID",
-      "NEW_ITERATION_ID",
-      "PREVIOUS_CANDIDATE_ID",
-      "NEW_CANDIDATE_ID",
-      "CHANGESET_ID",
-      "TEN_NEW_CONTEXTS_CREATED",
+      "CORRECTIONS_COMPLETED",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -401,17 +396,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "19": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "COMPLETE_TEST_SUITE_RUN",
-      "CROSS_RUN_COMPARISON_COMPLETED",
-      "NEW_CRITICAL_DEFECTS",
-      "NEW_MAJOR_DEFECTS",
-      "NEW_REQUIREMENTS_DISCOVERED",
-      "INJECTED_DEFECTS_NOT_DETECTED",
-      "NEW_CORRECTNESS_AFFECTING_VARIANCE",
-      "CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED",
-      "REQUIRED_RETURN_STAGE"
-    ],
+    "agent": [],
     "application": [
       "SOURCE_CONVERGED_ITERATION",
       "CONFIRMATION_ITERATION_ID",
@@ -420,6 +405,15 @@ const STAGE_OWNERSHIP=Object.freeze({
       "SAME_FROZEN_PACKAGE_USED",
       "RUNS_COMPLETED",
       "ALL_REGRESSION_TESTS_RUN",
+      "COMPLETE_TEST_SUITE_RUN",
+      "CROSS_RUN_COMPARISON_COMPLETED",
+      "NEW_CRITICAL_DEFECTS",
+      "NEW_MAJOR_DEFECTS",
+      "NEW_REQUIREMENTS_DISCOVERED",
+      "INJECTED_DEFECTS_NOT_DETECTED",
+      "NEW_CORRECTNESS_AFFECTING_VARIANCE",
+      "CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED",
+      "REQUIRED_RETURN_STAGE",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -472,10 +466,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "22": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "APPLICABLE_MANDATORY_DETERMINISTIC_TESTS",
-      "PRODUCT_REJECTED_BY_MANDATORY_FAILURE"
-    ],
+    "agent": [],
     "application": [
       "PRODUCT_ID",
       "PRODUCT_VERSION",
@@ -488,6 +479,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "VIOLATED",
       "UNDETERMINED",
       "MISSING_TEST_RESULTS",
+      "APPLICABLE_MANDATORY_DETERMINISTIC_TESTS",
+      "PRODUCT_REJECTED_BY_MANDATORY_FAILURE",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -495,10 +488,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "23": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "EVALUATOR_INDEPENDENT_FROM_GENERATOR",
-      "UNSUPPORTED_BARE_CONCLUSIONS"
-    ],
+    "agent": [],
     "application": [
       "PRODUCT_ID",
       "PRODUCT_VERSION",
@@ -511,6 +501,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "SATISFIED",
       "VIOLATED",
       "UNDETERMINED",
+      "EVALUATOR_INDEPENDENT_FROM_GENERATOR",
+      "UNSUPPORTED_BARE_CONCLUSIONS",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -518,13 +510,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "24": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "REVIEWER_INDEPENDENT",
-      "ATTACKS_EXECUTED",
-      "UNDETERMINED_ATTACKS",
-      "REGRESSIONS_FOUND",
-      "RETURN_TO_ROOT_CAUSE_REQUIRED"
-    ],
+    "agent": [],
     "application": [
       "PRODUCT_ID",
       "PRODUCT_VERSION",
@@ -534,6 +520,11 @@ const STAGE_OWNERSHIP=Object.freeze({
       "MANDATORY_DEFECTS_FOUND",
       "CRITICAL_DEFECTS_FOUND",
       "MAJOR_DEFECTS_FOUND",
+      "REVIEWER_INDEPENDENT",
+      "ATTACKS_EXECUTED",
+      "UNDETERMINED_ATTACKS",
+      "REGRESSIONS_FOUND",
+      "RETURN_TO_ROOT_CAUSE_REQUIRED",
       "STAGE_DECISION",
       "DECISION_EVIDENCE"
     ]
@@ -592,11 +583,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "27": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "CONTROLLING_DECISION_RULE",
-      "CONTROLLING_REASON",
-      "AFFIRMATIVE_EVIDENCE"
-    ],
+    "agent": [],
     "application": [
       "RELEASE_GATE_ID",
       "DATE_AND_TIME",
@@ -620,7 +607,10 @@ const STAGE_OWNERSHIP=Object.freeze({
       "UNDETERMINED_OR_MISSING_TEST_IDS",
       "UNRESOLVED_DEFECT_IDS",
       "BLOCKER_IDS",
-      "SELECTED_RELEASE_STATE"
+      "SELECTED_RELEASE_STATE",
+      "CONTROLLING_DECISION_RULE",
+      "CONTROLLING_REASON",
+      "AFFIRMATIVE_EVIDENCE"
     ]
   },
   "28": {
@@ -686,7 +676,6 @@ const STAGE_OWNERSHIP=Object.freeze({
     "agent": [
       "REGISTRY_STORAGE_LOCATION",
       "REGISTRY_RETENTION_RULE",
-      "DEFECT_RECORDS_MISSING_REQUIRED_FIELDS",
       "REGISTRY_HASH_OR_INTEGRITY_EVIDENCE",
       "CONTROLLING_EVIDENCE"
     ],
@@ -701,6 +690,7 @@ const STAGE_OWNERSHIP=Object.freeze({
       "TOTAL_CONFIRMED_DEFECTS_WITH_REGRESSION_TESTS",
       "TOTAL_ACTIVE_REGRESSION_TESTS",
       "TOTAL_RETIRED_REGRESSION_TESTS",
+      "DEFECT_RECORDS_MISSING_REQUIRED_FIELDS",
       "CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS",
       "FINAL_REGISTRY_DETERMINATION"
     ]
