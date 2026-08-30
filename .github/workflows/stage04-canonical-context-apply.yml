@@ -1,0 +1,60 @@
+name: Stage 04 canonical context apply
+on:
+  push:
+    branches:
+      - fix-stage04-canonical-context
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix-stage04-canonical-context
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the prepared source changes
+        run: |
+          python3 - <<'PYRUN'
+          from pathlib import Path
+          import textwrap
+          source = Path('.github/workflows/apply-stage04-canonical-context.yml').read_text(encoding='utf-8')
+          start_marker = "          python3 - <<'PY'\n"
+          end_marker = "\n          PY\n"
+          start = source.index(start_marker) + len(start_marker)
+          end = source.index(end_marker, start)
+          code = textwrap.dedent(source[start:end])
+          exec(compile(code, 'stage04-update.py', 'exec'))
+          PYRUN
+      - name: Rebuild retained fixture and run deterministic proofs
+        run: |
+          node build-test-project.mjs
+          node --check app-core.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-browser.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+      - name: Commit the tested minimal change
+        run: |
+          rm .github/workflows/apply-stage04-canonical-context.yml
+          rm .github/workflows/stage04-canonical-context-apply.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Make Stage 04 use canonical context only [stage04-applied]"
+          git push origin HEAD:fix-stage04-canonical-context
