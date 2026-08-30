@@ -71,8 +71,11 @@ function operationalNextAction(project,currentStage){
   text=text.replace(oldStrip,'<div class="stage-action-strip"><span>${esc(current.job.CURRENT_STATE)}</span><span>${esc(currentNextAction().heading||currentNextAction().actionType)}</span></div></div>${nextActionMarkup(false)}');
   text=text.replace("if($('#run-native-tests'))$('#run-native-tests').onclick=runNativeStage22Tests;","if($('#run-native-tests'))$('#run-native-tests').onclick=()=>{current.activeStage=22;return runNativeStage22Tests();};");
   text=text.replace("if($('#download-execution-package'))$('#download-execution-package').onclick=downloadExecutionPackage;","if($('#download-execution-package'))$('#download-execution-package').onclick=()=>{current.activeStage=canonicalCurrentStage();return downloadExecutionPackage();};");
+  /* The proposal review is a human-facing diff. Use exact, explicit visible labels rather than relying on camel-case prettification. */
+  text=text.replace('({recordType:c.canonicalRecordType||c.canonicalCollection||\'stageData\',temporaryKey:c.temporaryResponseKey||\'\',canonicalId:c.canonicalRecordId||\'APPLICATION_ASSIGNED\',field:c.canonicalField||c.canonicalRelationship||\'\',currentValue:(()=>',"({'Record type':c.canonicalRecordType||c.canonicalCollection||'stageData','Response temporary key':c.temporaryResponseKey||'','Canonical ID to be assigned':c.canonicalRecordId||'APPLICATION_ASSIGNED','Field or relationship':c.canonicalField||c.canonicalRelationship||'','Current value':(()=>");
+  text=text.replace("})(),proposedValue:c.normalizedValue,jsonPointer:c.jsonPointer||'',evidence:c.evidenceIds||'',validation:'SATISFIED'}))","})(),'Proposed value':c.normalizedValue,'JSON pointer':c.jsonPointer||'','Evidence reference':c.evidenceIds||'','Validation status':'SATISFIED'}))");
   write('app-core.js',text);
 }
 
 execFileSync(process.execPath,['build-test-project.mjs'],{cwd:root,stdio:'inherit'});
-console.log(JSON.stringify({structuredOperationalAction:true,runAppTestsAction:true,canonicalChangeCertainty:true,primaryUiConsumesAction:true}));
+console.log(JSON.stringify({structuredOperationalAction:true,runAppTestsAction:true,canonicalChangeCertainty:true,primaryUiConsumesAction:true,proposalDiffLabels:true}));
