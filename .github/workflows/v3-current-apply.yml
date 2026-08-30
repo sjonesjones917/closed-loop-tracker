@@ -1,0 +1,48 @@
+name: Apply v3 current branch
+on:
+  push:
+    branches: [fix/closed-loop-v3-current-20260830]
+    paths: [apply-v3-current.mjs, .github/workflows/v3-current-apply.yml]
+  workflow_dispatch:
+permissions: {contents: write}
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/closed-loop-v3-current-20260830, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply transformer
+        id: patch
+        shell: bash
+        run: |
+          set +e
+          node apply-v3-current.mjs > v3-apply.log 2>&1
+          code=$?
+          cat v3-apply.log
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Commit transform or diagnostic
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ "${{ steps.patch.outputs.exit_code }}" != "0" ]; then
+            git add v3-apply.log
+            git commit -m 'Capture v3 transform diagnostic [skip ci]' || true
+            git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
+            exit 1
+          fi
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check test-runtime.js
+          node --check app-core.js
+          node --check index.html 2>/dev/null || true
+          git diff --check
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js test-runtime.js app-core.js index.html
+          git commit -m 'Implement v3 exhaustive intake and obligation closure [skip ci]'
+          git push origin HEAD:fix/closed-loop-v3-current-20260830
