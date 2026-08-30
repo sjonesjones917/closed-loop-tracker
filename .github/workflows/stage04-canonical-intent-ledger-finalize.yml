@@ -77,6 +77,9 @@ jobs:
           one('verify-prompt-semantics.mjs',
               "if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');",
               "if((handoff?.withhold||[]).some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 still turns the original intent file into a later-stage handoff item.');")
+          one('verify-prompt-semantics.mjs',
+              "  for(const token of ['The original Stage 01 intent file is prohibited input for this stage.','Never request, attach, resend, reopen','INTENT-STATEMENT-000001','The product must preserve the supplied design intent.'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 canonical-intent boundary missing: '+token);",
+              "  for(const token of ['Do not ask the human to attach, resend, retype, or summarize the original Stage 01 intent material.','complete current canonical input union','INTENT-STATEMENT-000001','The product must preserve the supplied design intent.'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 canonical-intent boundary missing: '+token);")
 
           vc=Path('verify-complete.mjs'); text=vc.read_text()
           old="  Object.assign(p.job,{EXACT_DELIVERABLE_REQUESTED:'CANONICAL-STAGE-01-DELIVERABLE',ASSUMPTIONS:'CANONICAL-STAGE-01-ASSUMPTION',UNKNOWN_INFORMATION:'CANONICAL-STAGE-01-UNKNOWN',INPUT_SET_CONTENTS:'CANONICAL-STAGE-01-INTENT-CAPTURE'});\n  const candidate=record('candidateRequirements',3,{SOURCE_LOCATION:'accepted Stage 03 research',CANDIDATE_OBLIGATION:'CANONICAL-STAGE-03-OBLIGATION',CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',EVIDENCE:'EVIDENCE-STAGE-03'},'CANDIDATE-REQ-STAGE04');"
