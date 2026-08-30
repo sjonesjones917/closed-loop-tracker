@@ -1,0 +1,28 @@
+name: diagnose-semantic-v12
+on:
+  push:
+    branches: [fix/controlling-spec-zero-loss-20260830]
+    paths: [.github/workflows/diagnose-semantic-v12.yml]
+permissions: {contents: write}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec-zero-loss-20260830, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          python3 tools/finalize_capture_once_v4.py
+          python3 tools/update_prompt_semantic_regressions.py
+      - run: |
+          set +e
+          node verify-prompt-semantics.mjs > semantic-v12.log 2>&1
+          echo "EXIT=$?" >> semantic-v12.log
+          cat semantic-v12.log
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add semantic-v12.log
+          git commit -m 'Record exact remaining semantic failure v12'
+          git push origin HEAD:fix/controlling-spec-zero-loss-20260830
+          exit 0
