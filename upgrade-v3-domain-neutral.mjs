@@ -13,5 +13,6 @@ text=text.slice(0,start)+generic+text.slice(end);
 text=text.replace(/For PATENT \/ REGULATED FILING jobs,[\s\S]*?Do not turn researchable legal strategy into a human question\.\n/,"");
 
 if(/PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD \/ CAM \/ CNC \/ ADDITIVE/.test(text))throw new Error('Project-subject branch remains in prompt-engine.js.');
+text=text.replace(/[ \t]+$/gm,'');
 fs.writeFileSync(file,text);
 console.log(JSON.stringify({subjectNeutralPromptRuntime:true,domainBranches:0}));
