@@ -95,17 +95,6 @@ jobs:
           a(h.includes('.expandable-prompt{max-height:280px}'),'prompt box size changed');
           console.log('intent capture and Stage 04 capture-once regression passed');
           EOF
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('.github/workflows/pages.yml')
-          t=p.read_text()
-          step="      - name: Verify exhaustive intent capture and Stage 04 capture-once behavior\n        run: node verify-intent-capture.mjs\n"
-          if 'node verify-intent-capture.mjs' not in t:
-              marker='      - name: Syntax checks\n'
-              if marker not in t: raise SystemExit('pages workflow syntax anchor missing')
-              t=t.replace(marker,step+marker,1)
-          p.write_text(t)
-          PY
       - name: Validate repaired files
         run: |
           set -euo pipefail
