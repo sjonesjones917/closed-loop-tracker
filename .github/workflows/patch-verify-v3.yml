@@ -40,16 +40,6 @@ jobs:
               raise SystemExit('UI terminology regression anchor missing in verify.mjs')
           p.write_text(s)
 
-          p=Path('verify-hash.mjs')
-          s=p.read_text()
-          old="const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];"
-          new="const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];"
-          if old in s:
-              s=s.replace(old,new,1)
-          elif new not in s:
-              raise SystemExit('runtime identity verifier anchor missing')
-          p.write_text(s)
-
           p=Path('verify-complete.mjs')
           s=p.read_text()
           if "EXECUTABLE_KIND:'CUSTOM_PIPELINE'" in s:
@@ -58,21 +48,22 @@ jobs:
               raise SystemExit('stale CUSTOM_PIPELINE remains in verify-complete.mjs')
           p.write_text(s)
           PY
-      - name: Refresh exact runtime build identity
+      - name: Refresh exact runtime graph build identity
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,re
-          files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          direct=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
+          graph=direct+['test-worker.js']
           rows=[]
-          for name in files:
+          for name in graph:
               data=Path(name).read_bytes()
               blob=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
               rows.append(f'{name}:{blob}\n')
           identity='runtime-'+hashlib.sha256(''.join(rows).encode()).hexdigest()[:16]
           p=Path('index.html')
           html=p.read_text()
-          for name in files:
+          for name in direct:
               pattern=rf'(<script\s+defer\s+src="{re.escape(name)})(?:\?v=runtime-[0-9a-f]+)?("\s*></script>)'
               html,n=re.subn(pattern,rf'\1?v={identity}\2',html,count=1)
               if n!=1: raise SystemExit(f'Runtime script tag missing for {name}')
