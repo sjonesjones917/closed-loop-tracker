@@ -2,7 +2,7 @@ name: Align verify.mjs with v3 architecture
 on:
   push:
     branches: [controlling-spec-final-current]
-    paths: ['.github/workflows/patch-verify-v3.yml']
+    paths: ['.github/workflows/patch-verify-v3.yml','.github/patch_verify_v3.py']
 permissions: {contents: write}
 jobs:
   apply:
