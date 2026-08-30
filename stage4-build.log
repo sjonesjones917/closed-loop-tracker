@@ -1,0 +1,11 @@
+Committed retained project requires no source materialization.
+{
+  "singleApplicationShell": true,
+  "stages": 30,
+  "retainedJobId": "JOB-20260823144121",
+  "currentStage": 2,
+  "stage1": "COMPLETE",
+  "downstreamFabricated": false,
+  "responseSchema": "closed-loop-stage-response/3",
+  "obsoleteRuntimeWrappers": false
+}
