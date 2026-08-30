@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const WORKFLOW_ID='mobile-closed-loop/30';
-const PROJECT_SCHEMA='closed-loop-project/2';
+const PROJECT_SCHEMA='closed-loop-project/3';
 const STAGE_COUNT=30;
 const SCHEMA=PROJECT_SCHEMA;
 const STAGE_DECISIONS=Object.freeze(['READY TO PROCEED','BLOCKED','NOT READY - CORRECTION REQUIRED']);
@@ -762,7 +762,7 @@ function migrateState(p){
     if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
     return migrated;
   }
-  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
+  if(!['human-project/30','closed-loop-project/2'].includes(p.schema))throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
   const migrated=JSON.parse(JSON.stringify(p));
   const original=JSON.parse(JSON.stringify(p));
   migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;

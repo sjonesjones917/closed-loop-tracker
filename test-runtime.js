@@ -4,12 +4,12 @@ const VERSION='closed-loop-test-runtime/1';
 const SPEC_VERSION='closed-loop-test-spec/1';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
 const OPS=Object.freeze([
-  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH',
+  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',
   'COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE',
-  'ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE',
+  'ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE',
   'ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL'
 ]);
-const LIMITS=Object.freeze({maxSteps:64,maxTextBytes:16*1024*1024,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000});
+const LIMITS=Object.freeze({maxInputBytes:16*1024*1024,maxDecompressedBytes:32*1024*1024,maxSteps:64,maxSelectorDepth:32,maxParsedDepth:64,maxCollectionItems:100000,maxRegexLength:2000,maxRegexInputBytes:4*1024*1024,maxCsvCells:250000,maxWorkerDurationMs:10000,maxArchiveExpansionBytes:32*1024*1024});
 const FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script']);
 const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
@@ -32,6 +32,8 @@ function parseCsv(text){
   if(rows.length>LIMITS.maxCollectionItems)throw new Error('CSV exceeds deterministic runtime row limit.');
   return rows;
 }
+function parseXml(text){const root={name:'#document',children:[],text:''},stack=[root],token=/<\/?([A-Za-z_][\w:.-]*)(?:\s[^<>]*?)?\s*\/?>|([^<]+)/g;let m,last=0;while((m=token.exec(text))){if(m.index!==last&&text.slice(last,m.index).trim())throw new Error('Malformed XML.');last=token.lastIndex;if(m[2]!=null){const t=m[2].trim();if(t)stack.at(-1).text+=(stack.at(-1).text?' ':'')+t;continue;}const raw=m[0],name=m[1];if(raw.startsWith('</')){if(stack.length<2||stack.at(-1).name!==name)throw new Error('Malformed XML closing tag.');stack.pop();}else{const node={name,children:[],text:''};stack.at(-1).children.push(node);if(!raw.endsWith('/>'))stack.push(node);}}if(stack.length!==1||last<text.length&&text.slice(last).trim())throw new Error('Malformed XML.');return root;}
+function selectXml(root,selector){const s=String(selector||'');if(!/^\/(?:[A-Za-z_][\w:.-]*)(?:\/[A-Za-z_][\w:.-]*)*$/.test(s))throw new Error('Unsupported XML selector syntax.');let nodes=[root];for(const part of s.slice(1).split('/'))nodes=nodes.flatMap(n=>n.children||[]).filter(n=>n.name===part);return nodes;}
 function selectJsonPath(value,path){
   const text=String(path||'').trim();if(text==='$')return value;if(!text.startsWith('$.'))throw new Error('SELECT_JSON_PATH supports only deterministic root paths beginning with $.');
   const parts=[];for(const token of text.slice(2).split('.')){const m=token.match(/^([^\[\]]+)(?:\[(\d+)\])?$/);if(!m)throw new Error('Unsupported JSON path token: '+token);parts.push(m[1]);if(m[2]!==undefined)parts.push(Number(m[2]));}
@@ -61,7 +63,7 @@ function validateBindings(bindings){
 function supports(test){
   if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
   if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')return false;
+  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')return false;
   if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
   return validateSpec(field(test,'EXECUTABLE_SPEC')).valid&&validateBindings(field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
 }
@@ -74,8 +76,8 @@ async function execute({spec,artifacts}){
       case 'READ_BYTES':{const bytes=bytesOf(currentArtifact?.bytes??value?.bytes??value);if(!bytes)throw new Error('READ_BYTES requires artifact bytes.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
       case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)throw new Error('DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)throw new Error('Text input exceeds deterministic runtime byte limit.');value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);break;}
       case 'PARSE_JSON':value=JSON.parse(String(value));break;
-      case 'PARSE_CSV':value=parseCsv(String(value));break;
-      case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;
+      case 'PARSE_CSV':value=parseCsv(String(value));break;case 'PARSE_XML':value=parseXml(String(value));break;
+      case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;case 'SELECT_XML':value=selectXml(value,step.path);break;
       case 'COUNT':{if(value==null||typeof value.length!=='number')throw new Error('COUNT requires an array, string, or array-like value.');if(value.length>LIMITS.maxCollectionItems)throw new Error('COUNT input exceeds collection limit.');value=value.length;break;}
       case 'SUM':case 'MIN':case 'MAX':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error(`${step.op} requires a bounded array.`);const nums=value.map(Number);if(nums.some(x=>!Number.isFinite(x)))throw new Error(`${step.op} requires finite numeric values.`);value=step.op==='SUM'?nums.reduce((a,b)=>a+b,0):step.op==='MIN'?Math.min(...nums):Math.max(...nums);break;}
       case 'SORT':{if(!Array.isArray(value)||value.length>LIMITS.maxCollectionItems)throw new Error('SORT requires a bounded array.');value=[...value].sort((a,b)=>stable(a).localeCompare(stable(b)));break;}
@@ -84,10 +86,7 @@ async function execute({spec,artifacts}){
       case 'REGEX':{const r=new RegExp(String(step.pattern||''),String(step.flags||''));lastRegex=r;value=r.test(String(value));break;}
       case 'COMPARE':{const other=Object.prototype.hasOwnProperty.call(step,'value')?step.value:source[step.binding]?.value;value=stable(comparable(value))===stable(comparable(other));break;}
       case 'BYTE_COMPARE':{const left=bytesOf(value),other=bytesOf(source[step.binding]?.bytes);if(!left||!other)throw new Error('BYTE_COMPARE requires byte-backed current value and target binding.');let equal=left.byteLength===other.byteLength;if(equal)for(let i=0;i<left.byteLength;i++)if(left[i]!==other[i]){equal=false;break;}value=equal;break;}
-      case 'ASSERT_EXISTS':assertion=assertCondition(value!==null&&value!==undefined,step.value??'present',value,step.message);break;
-      case 'ASSERT_TYPE':{const actual=Array.isArray(value)?'array':value===null?'null':typeof value;assertion=assertCondition(actual===String(step.value),step.value,actual,step.message);break;}
       case 'ASSERT_EQ':assertion=assertCondition(stable(comparable(value))===stable(comparable(step.value)),step.value,comparable(value),step.message);break;
-      case 'ASSERT_NE':assertion=assertCondition(stable(comparable(value))!==stable(comparable(step.value)),`not ${stable(step.value)}`,comparable(value),step.message);break;
       case 'ASSERT_GT':assertion=assertCondition(Number(value)>Number(step.value),`> ${step.value}`,value,step.message);break;
       case 'ASSERT_GTE':assertion=assertCondition(Number(value)>=Number(step.value),`>= ${step.value}`,value,step.message);break;
       case 'ASSERT_LT':assertion=assertCondition(Number(value)<Number(step.value),`< ${step.value}`,value,step.message);break;

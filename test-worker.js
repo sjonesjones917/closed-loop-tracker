@@ -1,5 +1,6 @@
 'use strict';
-importScripts('test-runtime.js');
+importScripts('test-runtime.js?v=runtime-5859ee5a07f239ae');
+self.fetch=undefined;self.XMLHttpRequest=undefined;self.WebSocket=undefined;
 self.onmessage=async event=>{
   const {requestId,spec,artifacts}=event.data||{};
   try{

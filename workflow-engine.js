@@ -101,12 +101,12 @@ function nextVersion(current,prefix){
   return `${prefix}-v${String(number).padStart(3,'0')}`;
 }
 const VERSION_BY_STAGE=Object.freeze({
-  1:['CURRENT_INPUT_VERSION','INPUT'],2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
+  2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
   4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });
 function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}
-const VERSION_SCOPE_KEY_BY_STAGE=Object.freeze({1:'inputVersion',2:'sourceSetVersion',4:'requirementsVersion',5:'requirementsVersion',6:'testSuiteVersion',8:'instructionVersion'});
+const VERSION_SCOPE_KEY_BY_STAGE=Object.freeze({2:'sourceSetVersion',4:'requirementsVersion',5:'requirementsVersion',6:'testSuiteVersion',8:'instructionVersion'});
 function stampCurrentVersionMembership(project,stage,version){const key=VERSION_SCOPE_KEY_BY_STAGE[stage];if(!key||!version)return;const collections=stage===5?[...new Set(['requirements',...versionCollections(stage)])]:versionCollections(stage);for(const collection of collections)for(const record of records(project,collection)){record.scope={...(record.scope||{}),[key]:version};refreshRecordHashes(record,collection);}}
 function registerStageVersion(project,stage,acceptedChangeId){
   ensureShape(project);
@@ -159,6 +159,8 @@ function mandatoryRequirements(project,scopeRule=null){
     return value!=='OPTIONAL'&&value!=='FALSE'&&value!=='NO';
   });
 }
+function intakeCoverageManifest(project){ensureShape(project);const units=[];const add=(sourceLocation,raw,sourceKind='HUMAN_INPUT')=>{const text=String(raw??'').trim();if(!text)return;const parts=text.split(/\n\s*\n|(?<=\.)\s+(?=[A-Z0-9])/).map(x=>x.trim()).filter(Boolean);for(const part of parts){const rawValueHash=hash.sha256Text(part),unitId='INTAKE-'+hash.sha256Text(`${project.job.CURRENT_INPUT_VERSION}|${sourceLocation}|${rawValueHash}`).slice(0,20).toUpperCase();units.push({unitId,sourceKind,sourceLocation,rawValueHash,content:part});}};for(const [name,definition] of Object.entries(schema.JOB_FIELDS||{}))if(definition?.producer==='HUMAN')add(`JOB.${name}`,project.job?.[name],'HUMAN_FIELD');for(const item of safe(project.projectData.suppliedTextUnits))if(!item.invalidatedBy&&String(item.inputVersion||project.job.CURRENT_INPUT_VERSION)===String(project.job.CURRENT_INPUT_VERSION))add(`ARTIFACT:${item.artifactId}:${item.location||item.filename||'text'}`,item.content,'SUPPLIED_MATERIAL');for(const answer of safe(project.projectData.humanInputAnswers))if(!answer.invalidatedBy&&String(answer.inputVersion||project.job.CURRENT_INPUT_VERSION)===String(project.job.CURRENT_INPUT_VERSION))add(`HUMAN_ANSWER:${answer.answerId||answer.requestId}`,answer.value??answer.answer,'HUMAN_ANSWER');const seen=new Set();return units.filter(x=>!seen.has(x.unitId)&&seen.add(x.unitId));}
+function obligationManifest(project){ensureShape(project);const byContent=new Map();const add=(kind,sourceId,content,provenance={})=>{const text=String(content??'').trim();if(!text)return;const contentKey=hash.sha256Text(text.replace(/\s+/g,' ').trim().toLowerCase());const prior=byContent.get(contentKey),origin={kind,sourceId,provenance};if(prior){prior.origins.push(origin);return;}byContent.set(contentKey,{obligationId:'OBL-'+contentKey.slice(0,20).toUpperCase(),kind,sourceId,content:text,provenance,origins:[origin]});};for(const statement of currentIntentStatements(project))if(intentStatementRequiresRequirement(statement))add('HUMAN_OR_MATERIAL',recordId(statement,'intentStatements'),recordValue(statement,'EXACT_STATEMENT'),{sourceLocation:recordValue(statement,'SOURCE_LOCATION')});for(const candidate of recordsForCurrentScope(project,'candidateRequirements'))add('EXTERNAL_CANDIDATE',recordId(candidate,'candidateRequirements'),recordValue(candidate,'CANDIDATE_OBLIGATION'),{sourceId:recordValue(candidate,'SOURCE_ID')||candidate.relationships?.SOURCE_ID,sourceLocation:recordValue(candidate,'SOURCE_LOCATION')});return [...byContent.values()];}
 function currentIntentStatements(project){return recordsForCurrentScope(project,'intentStatements');}
 function intentStatementRequiresRequirement(record){return upper(recordValue(record,'REQUIREMENT_RELEVANCE'))==='REQUIREMENT';}
 function confirmedDefects(project){
@@ -315,7 +317,8 @@ function gate(stage,project){
     case 1:{
       if(!String(project.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim())reasons.push('Verbatim User Job Input is required.');
       requireAccepted();
-      const statements=currentIntentStatements(project);
+      const statements=currentIntentStatements(project),intakeUnits=intakeCoverageManifest(project);
+      const coveredUnits=new Set(statements.map(record=>String(recordValue(record,'SOURCE_LOCATION')||'').trim())),missingUnits=intakeUnits.map(unit=>unit.unitId).filter(id=>!coveredUnits.has(id));if(missingUnits.length)reasons.push(`Stage 01 intake accounting is incomplete; missing controlled input unit(s): ${missingUnits.join(', ')}.`);
       if(!statements.length)reasons.push('Stage 01 requires a canonical intent-statement ledger; the original intent file may not be deferred to a later stage.');
       for(const statement of statements)for(const name of ['SOURCE_MATERIAL','SOURCE_LOCATION','EXACT_STATEMENT','STATEMENT_KIND','REQUIREMENT_RELEVANCE','NORMATIVE_FORCE'])if(!String(recordValue(statement,name)||'').trim())reasons.push(`${recordId(statement,'intentStatements')}: ${name} is missing.`);
       const latest=changes.at(-1),confirmed=safe(project.projectData.stageConfirmations).some(item=>Number(item.stage)===1&&item.confirmed===true&&!item.invalidatedBy&&item.acceptedChangeId===latest?.changeId&&item.inputVersion===project.job.CURRENT_INPUT_VERSION);
@@ -347,7 +350,7 @@ function gate(stage,project){
         if(userRelationship){if(!statementIds.has(userRelationship))reasons.push(`${recordId(req,'requirements')}: USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID, not a generic User Job Input label.`);else coveredIntentStatements.add(userRelationship);}
         if(!sourceId&&!userRelationship)reasons.push(`${recordId(req,'requirements')}: requirement lacks source provenance or an exact canonical intent STATEMENT_ID.`);
       }
-      const missingStatements=requiredStatementIds.filter(id=>!coveredIntentStatements.has(id));if(missingStatements.length)reasons.push(`Requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);
+      const missingStatements=requiredStatementIds.filter(id=>!coveredIntentStatements.has(id));if(missingStatements.length)reasons.push(`Requirement coverage is missing for canonical intent statement(s): ${missingStatements.join(', ')}.`);const obligations=obligationManifest(project),coveredObligations=new Set();for(const req of collection('requirements')){const rel=String(recordValue(req,'USER_INPUT_RELATIONSHIP')||'').trim(),src=String(recordValue(req,'SOURCE_LOCATION')||'').trim();for(const o of obligations)if(rel===o.sourceId||src===o.sourceId||src===o.obligationId)coveredObligations.add(o.obligationId);}const missingObligations=obligations.map(o=>o.obligationId).filter(id=>!coveredObligations.has(id));if(missingObligations.length)reasons.push(`Stage 04 obligation accounting is incomplete; missing obligation(s): ${missingObligations.join(', ')}.`);
       break;
     }
     case 5:
@@ -801,7 +804,7 @@ globalThis.closedLoopWorkflowEngine=Object.freeze({recordMigratedAcceptedChange,
   version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,
   clone,now,safe,upper,truth,falsey,numeric,recordFields,recordValue,recordId,isActiveRecord,records,refreshRecordHashes,registerGeneratedPrompt,createHumanBlocker,reconcileArtifactCustodyVerification,resolveHumanBlocker,registerFreshContext,recordHumanDecision,invalidateAcceptedResponse,invalidateStageForAuthorityChange,reserveRunBatch,registerArtifactBytes,freezeCandidate,beginUnchangedConfirmationIteration,freezeBaseline,reserveProductExecution,createNewJobReset,recordApplicationDeterministicResult,
   ensureShape,addHistory,allocateId,allocateInfrastructureId,nextVersion,registerStageVersion,
-  unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,currentIntentStatements,intentStatementRequiresRequirement,confirmedDefects,unresolvedMaterialDefects,
+  unresolvedHumanRequests,openBlockers,acceptedChanges,hasStageActivity,mandatoryRequirements,intakeCoverageManifest,obligationManifest,currentIntentStatements,intentStatementRequiresRequirement,confirmedDefects,unresolvedMaterialDefects,
   currentScope,recordsForScope,recordsForCurrentScope,scopeForIteration,recordsForIteration,verificationMatrix,evaluateIteration,DERIVATIONS,coverageMetrics,convergenceMetrics,releaseMetrics,applicationTestCapabilities,capabilityAffirmativelyAvailable,testExecutionPlan,executionHandoff,evaluateContextIndependence,evaluateEvidenceSufficiency,evaluateEvidenceContract,releaseVerificationTrust,evaluateResultConsistency,effectiveDetermination,validateTraceIntegrity,detectCurrentContradictions,executionStability,evidenceChainExplanation,stage16CorrectionPlan,operationalNextAction,operationalMetrics,gate,deriveStageData,recalculate,invalidateDownstream,applicationInitialFields,
   recordHumanInputVersion,recordStageConfirmation,recordReleaseDetermination,acceptedControlEvents,constructEvidenceChains,verifyArtifactIdentity
 });
