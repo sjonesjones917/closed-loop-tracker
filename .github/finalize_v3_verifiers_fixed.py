@@ -9,6 +9,17 @@ if marker not in src:
 prefix=src.split(marker,1)[0]+'\n'
 exec(compile(prefix,'.github/finalize_v3_verifiers.py:valid-prefix','exec'),globals(),globals())
 
+# Prompt-engine identity must prove the current materialized prompt contract, not an obsolete literal.
+p=Path('verify-prompt-semantics.mjs')
+s=p.read_text()
+old="if(prompts.version!=='closed-loop-prompt-engine/26')throw new Error('Persisted Stage 04 prompts were not invalidated after the canonical-input reuse repair.');"
+new="if(prompts.version!=='closed-loop-prompt-engine/29')throw new Error('Persisted Stage 04 prompts were not invalidated after the current exhaustive-intake/canonical-input repair.');"
+if old in s:
+    s=s.replace(old,new,1)
+elif new not in s:
+    raise SystemExit('prompt-engine invalidation verifier anchor missing')
+p.write_text(s)
+
 direct=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
 graph=direct+['test-worker.js']
 rows=[]
