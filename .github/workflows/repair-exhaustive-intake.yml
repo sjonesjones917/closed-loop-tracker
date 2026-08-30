@@ -62,6 +62,11 @@ jobs:
           const count=v.split(obsolete).length-1;
           if(count!==1)throw new Error(`Obsolete Stage 01 verifier token expected once, found ${count}`);
           v=v.replace(obsolete,replacement);
+          const oldVersion="prompts.version!=='closed-loop-prompt-engine/26'";
+          const newVersion="prompts.version!=='closed-loop-prompt-engine/27'";
+          const versionCount=v.split(oldVersion).length-1;
+          if(versionCount!==1)throw new Error(`Obsolete prompt-version assertion expected once, found ${versionCount}`);
+          v=v.replace(oldVersion,newVersion);
           fs.writeFileSync('verify-prompt-semantics.mjs',v);
           NODE
       - name: Prove no visual changes
