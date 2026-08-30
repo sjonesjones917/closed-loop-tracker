@@ -1,4 +1,4 @@
-name: Inspect every stage and operation prompt contract
+name: Inspect exact schema prompt context source blocks
 on:
   push:
     branches: [fix/complete-stage-prompts-20260830]
@@ -9,32 +9,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Print exact stage and operation prompt contracts
+      - name: Print schema blocks and populated manifest behavior
         run: |
+          python3 <<'PY'
+          from pathlib import Path
+          s=Path('workflow-schema.js').read_text()
+          for marker,next_marker in [
+            ('const READ_COLLECTIONS=','const STAGE_COLLECTIONS='),
+            ('const OPERATION_CONTRACT_OVERRIDES=','function operationContract'),
+            ('function operationContract','const STAGE_CONTRACTS=')
+          ]:
+            a=s.index(marker); b=s.index(next_marker,a+len(marker))
+            print('\n===== '+marker+' =====\n'+s[a:b])
+          p=Path('prompt-engine.js').read_text()
+          for marker,next_marker in [
+            ('const fields=','const writable='),
+            ('CLOSED LOOP TEST IR — APPLICATION-OWNED DETERMINISTIC LANGUAGE','APPLICATION-NATIVE TEST CAPABILITIES')
+          ]:
+            a=p.index(marker); b=p.index(next_marker,a+len(marker))
+            print('\n===== '+marker+' =====\n'+p[a:b])
+          PY
           node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          import vm from 'node:vm';
-          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
-          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          import fs from 'node:fs';import vm from 'node:vm';
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
           for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-          const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
-          const state=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-          engine.ensureShape(state);engine.recalculate(state);
-          const rec=(collection)=>engine.records(state,collection).find(x=>engine.isActiveRecord(x));
-          const run=rec('runs'),context=rec('freshContexts'),candidate=rec('candidateFreezes'),product=rec('products'),baseline=rec('baselines');
-          const baseScope={iterationId:run?engine.recordValue(run,'ITERATION_ID')||run.scope?.iterationId:null,candidateId:candidate?engine.recordId(candidate,'candidateFreezes'):null,runId:run?engine.recordId(run,'runs'):null,contextId:context?engine.recordId(context,'freshContexts'):null,productId:product?engine.recordId(product,'products'):null,baselineId:baseline?engine.recordId(baseline,'baselines'):null};
-          const output=[];
-          for(let stage=1;stage<=schema.STAGE_COUNT;stage++){
-            const contract=schema.STAGE_CONTRACTS[stage];
-            for(const operation of contract.operations){
-              let record,error=null;
-              try{record=prompts.buildPromptRecord(stage,state,{operation,scope:baseScope});}catch(e){error={code:e.code||'ERROR',message:e.message};}
-              const text=record?.prompt||'';
-              output.push({stage,operation,readCollections:schema.operationContract(stage,operation).readCollections,writeCollections:schema.operationContract(stage,operation).agentWritableCollections,scopeRequirements:schema.operationContract(stage,operation).scopeRequirements,promptLength:text.length,error,hasProjectExecutionRule:text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'),projectExecutionRuleCount:(text.match(/PROJECT DATA EXECUTION RULE — MANDATORY/g)||[]).length,hasNoRepeatRule:/never ask[^\n]{0,160}(repeat|retype|resend|reattach)/i.test(text),hasOriginalIntentProhibition:stage===1||text.includes('The original Stage 01 intent file is prohibited input for this stage.'),hasStageTask:text.includes('STAGE-SPECIFIC TASK'),hasContract:text.includes('RESPONSE CONTRACT DEFINITIONS'),usesCustomPipeline:text.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),usesTestIr:text.includes('EXECUTABLE_KIND = TEST_IR'),contextCounts:Object.fromEntries(Object.entries(record?.contextManifest?.readCollections||{}).map(([k,v])=>[k,v.length]))});
-            }
-          }
-          const executableKind=schema.RECORD_SCHEMAS.tests.fieldDefinitions.EXECUTABLE_KIND;
-          console.log(JSON.stringify({projectSchema:core.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,promptEngine:prompts.version,executableKindEnum:executableKind.enumValues,stage01Intake:engine.stage01IntakeManifest(state),stage04Obligation:engine.stage04ObligationManifest(state),prompts:output},null,2));
+          const core=closedLoopCore,engine=closedLoopWorkflowEngine;
+          const p=core.createBlankState('PROMPT-CONTEXT-PROBE');
+          Object.assign(p.job,{JOB_ID:'PROMPT-CONTEXT-PROBE',EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product once.',EXPLICIT_USER_REQUIREMENTS:'Never ask the user to supply the same project information twice. Preserve every requirement. Use exact verified bytes.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',KNOWN_AUTHORITATIVE_SOURCES:'Official standard named by the user',AVAILABLE_TOOLS:'Browser and external agent',PROHIBITED_ACTIONS:'Do not omit requirements',EXACT_DELIVERABLE_REQUESTED:'A complete verified finished product',ASSUMPTIONS:'None',UNKNOWN_INFORMATION:'None',INPUT_SET_CONTENTS:'Human request and intent.txt'});
+          p.projectData.humanInputAnswers=[{answerId:'ANSWER-1',stage:1,question:'Required human choice',answer:'The supplied choice applies.',inputVersion:p.job.CURRENT_INPUT_VERSION}];
+          engine.ensureShape(p);engine.recalculate(p);
+          console.log('\n===== POPULATED INTAKE MANIFEST =====\n'+JSON.stringify(engine.stage01IntakeManifest(p),null,2));
+          console.log('\n===== POPULATED OBLIGATION MANIFEST =====\n'+JSON.stringify(engine.stage04ObligationManifest(p),null,2));
           NODE
