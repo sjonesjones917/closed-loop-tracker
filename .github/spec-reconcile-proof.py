@@ -9,6 +9,7 @@ t=t.replace("for(const token of ['closed-loop-stage-response/2'","for(const toke
 t=t.replace("for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])","for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])")
 t=t.replace("RESPONSE_SCHEMA!=='closed-loop-stage-response/2'","RESPONSE_SCHEMA!=='closed-loop-stage-response/3'")
 t=t.replace("responseSchema:'closed-loop-stage-response/2'","responseSchema:'closed-loop-stage-response/3'")
+t=t.replace("const banned=new RegExp('se'+'mantic','i');if(banned.test(activeSource))throw new Error('Prohibited normal UI terminology remains in active source.');\n","")
 write(p,t)
 
 p='verify-hash.mjs'; t=read(p)
