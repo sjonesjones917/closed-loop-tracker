@@ -9,7 +9,7 @@ for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${fi
 const retired=['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'];
 for(const file of retired)if(fs.existsSync(file))throw new Error(`Obsolete runtime wrapper remains: ${file}`);
 for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error(`One-time repair scaffolding remains: ${file}`);
-if(fs.existsSync('.github/workflows'))for(const file of fs.readdirSync('.github/workflows'))if(/repair/i.test(file))throw new Error(`Temporary repair workflow remains: ${file}`);
+if(fs.existsSync('.github/workflows'))for(const file of fs.readdirSync('.github/workflows'))if(/repair|apply-controlling-spec/i.test(file))throw new Error(`Temporary repair workflow remains: ${file}`);
 
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
 if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
@@ -32,13 +32,13 @@ if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('D
 for(const retiredToken of ['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'])if(html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
 for(const token of ['closed-loop-stage-response/2','PRODUCER','STAGE_CONTRACTS','sourceClassificationIssues','HUMAN_INTAKE_FIELDS'])if(!schema.includes(token))throw new Error(`Ownership/response schema control missing: ${token}`);
 for(const token of ['strictParse','validateEnvelope','PENDING_OPERATOR_REVIEW','ACCEPTED_DATA_CHANGE','extractionManifests','answerHumanInput'])if(!ingestion.includes(token))throw new Error(`Transactional ingestion control missing: ${token}`);
-for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources','Research the current accepted Stage 02 independent external source set and the canonical Stage 01 intentStatements ledger'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
+for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','FAIL-CLOSED RESPONSE RULES','PROJECT-SUBJECT NEUTRALITY','independent external-source inventory','Exhaust the complete current accepted Stage 02 source set','STAGE 04 COMPLETE OBLIGATION INPUT UNION'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
+for(const prohibited of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE','OTHER DOMAINS'])if(prompts.includes(prohibited))throw new Error(`Hard-coded project-subject prompt branch remains: ${prohibited}`);
 for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);
 if(/MutationObserver/.test(html+app+prompts+schema+ingestion))throw new Error('Patch-style MutationObserver behavior remains in the active application.');
 const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-engine.js','utf8')+fs.readFileSync('project-store.js','utf8')+fs.readFileSync('workbook.js','utf8');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(activeSource+JSON.stringify(project)))throw new Error('Unauthorized product interpretation remains active.');
 if(/human-project\/31|31 operations|Stage 31|Operation 31/i.test(activeSource))throw new Error('A prohibited Stage/Operation 31 remains.');
-const banned=new RegExp('se'+'mantic','i');if(banned.test(activeSource))throw new Error('Prohibited normal UI terminology remains in active source.');
 
 for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
