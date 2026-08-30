@@ -266,6 +266,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
   if(envelope.responseType==='DATA_PROPOSAL'){
     if(safe(envelope.humanInputRequests).some(request=>request.blocking!==false))issues.push(issue('MIXED_RESPONSE_TYPE','/humanInputRequests','A DATA_PROPOSAL cannot contain blocking human-input requests.'));
     if(safe(envelope.unresolved).some(item=>item.blocking!==false))issues.push(issue('MIXED_RESPONSE_TYPE','/unresolved','A DATA_PROPOSAL cannot contain blocking unresolved items. Use BLOCKED instead.'));
+    if(stageNumber===1){const materialCapture=schema.assessStage1MaterialCapture(project.job,envelope.stageData||{});if(materialCapture.required&&!materialCapture.sufficient)issues.push(issue('INCOMPLETE_STAGE01_MATERIAL_CAPTURE','/stageData/INPUT_SET_CONTENTS','Stage 01 must preserve the substantive human-authority content already read from supplied material. A filename, path, URL, artifact identity, or material inventory alone is not sufficient for Stage 04 reuse.'));}
     const hasData=Object.keys(envelope.stageData||{}).length||Object.values(envelope.records||{}).some(list=>safe(list).length);
     if(!hasData)issues.push(issue('EMPTY_DATA_PROPOSAL','/','DATA_PROPOSAL contains no stage data or records.'));
     if(!safe(envelope.evidence).length)issues.push(issue('MISSING_PROVENANCE','/evidence','DATA_PROPOSAL requires evidence.'));
@@ -400,5 +401,5 @@ function answerHumanInput(project,answers,{operator='HUMAN_OPERATOR'}={}){
   workflow.addHistory(next,'HUMAN_INPUT_REQUESTS_ANSWERED',{answerCount:changed.length,inputVersion:version.version,requestIds:changed,generatedPromptIds});workflow.recalculate(next);return {project:next,version,answeredCount:changed.length,generatedPromptIds};
 }
 
-globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/4',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,prepareCaptured,prepare,commit,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
+globalThis.closedLoopResponseIngestion=Object.freeze({version:'closed-loop-response-ingestion/5',TOP_LEVEL_KEYS,RECORD_KEYS,EVIDENCE_KEYS,QUESTION_KEYS,ATTACHMENT_KEYS,ANSWER_TYPES,strictParse,scanJsonAmbiguity,validateValue,validateHumanAnswer,validateEnvelope,planProposal,proposalPreconditions,captureRaw,prepareCaptured,prepare,commit,reject,abandon,answerHumanInput,findProposal,findReceipt,findRaw,findValidation});
 })();

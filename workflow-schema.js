@@ -1208,6 +1208,44 @@ function authorizeMutation({fieldDefinition,actor,mutationType}){
 }
 
 const TARGET_PRODUCT_REFERENCE_PATTERN=/(?:closed-loop-tracker|(?:current|existing)\s+(?:operating\s+)?application\s+(?:repository|source\s+code|ui|stored\s+state|implementation|artifact|screenshot)|target\s+product|current\s+ui|target\s+screenshot|app-core\.js|workbook\.js|prompt-engine\.js|TEST_PROJECT\.json|github\.com\/sjonesjones917\/closed-loop-tracker)/i;
+
+const EMPTY_SUPPLIED_MATERIALS_PATTERN=/^(?:\s*|\[\s*\]|\{\s*\}|null|none|no supplied materials?|not applicable|n\/a|unknown)$/i;
+const REFERENCE_ONLY_MATERIAL_WORDS=/\b(?:type|file|files|filename|filenames|document|documents|attachment|attachments|artifact|artifacts|material|materials|inventory|input|inputs|intent|original|reference|references|exactnameorreference|name|path|url|sha256|hash|bytes|byte|size|media|provided|supplied|attached|available|persisted|verified|captured|from|only|the|a|an|this|that|is|are|was|were|and|or|none|unknown|not|applicable)\b/gi;
+function assessStage1MaterialCapture(job={},stageData={}){
+  const inventory=String(job?.SUPPLIED_MATERIALS_INVENTORY??'').trim();
+  const inputSet=String(stageData?.INPUT_SET_CONTENTS??job?.INPUT_SET_CONTENTS??'').trim();
+  let parsedInventory=null;try{parsedInventory=JSON.parse(inventory);}catch{}
+  const materialRequired=!EMPTY_SUPPLIED_MATERIALS_PATTERN.test(inventory)&&!(Array.isArray(parsedInventory)&&parsedInventory.length===0)&&!(parsedInventory&&typeof parsedInventory==='object'&&!Array.isArray(parsedInventory)&&Object.keys(parsedInventory).length===0);
+  if(!materialRequired)return {required:false,sufficient:true,reason:'NO_SUPPLIED_MATERIAL_REQUIRES_CAPTURE'};
+  if(!inputSet)return {required:true,sufficient:false,reason:'MISSING_INPUT_SET_CONTENTS'};
+  const normalize=value=>String(value??'').normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim();
+  if(normalize(inputSet)===normalize(inventory))return {required:true,sufficient:false,reason:'MATERIAL_INVENTORY_REPEATED_WITHOUT_SEMANTIC_CAPTURE'};
+  const referenceLike=value=>{
+    const text=String(value??'').trim();
+    if(!text)return true;
+    if(/^(?:file|document|attachment|artifact|material|input|intent|none|unknown|not applicable)$/i.test(text))return true;
+    if(/^https?:\/\/\S+$/i.test(text)||/^ARTIFACT-[A-Za-z0-9-]+$/i.test(text)||/^[a-f0-9]{64}$/i.test(text))return true;
+    if(/^(?:[A-Za-z]:[\\/])?.+\.[A-Za-z0-9]{1,12}$/i.test(text))return true;
+    if(/^(?:\.\.?[\\/]|[A-Za-z]:[\\/]|[\\/]).+/.test(text))return true;
+    return false;
+  };
+  const leaves=[];const collect=value=>{if(Array.isArray(value))for(const item of value)collect(item);else if(value&&typeof value==='object')for(const item of Object.values(value))collect(item);else leaves.push(value);};
+  try{collect(JSON.parse(inputSet));}catch{}
+  if(leaves.length&&leaves.every(referenceLike))return {required:true,sufficient:false,reason:'STRUCTURED_REFERENCE_ONLY_CAPTURE'};
+  if(referenceLike(inputSet))return {required:true,sufficient:false,reason:'REFERENCE_ONLY_CAPTURE'};
+  const semanticResidue=inputSet
+    .replace(/https?:\/\/[^\s"',;)\]}]+/gi,' ')
+    .replace(/\bARTIFACT-[A-Za-z0-9-]+\b/gi,' ')
+    .replace(/\b[a-f0-9]{64}\b/gi,' ')
+    .replace(/["'](?:[^"']+\.)[A-Za-z0-9]{1,12}["']/gi,' ')
+    .replace(/\b[^\s"'()[\]{}:,;]+\.[A-Za-z0-9]{1,12}\b/gi,' ')
+    .replace(REFERENCE_ONLY_MATERIAL_WORDS,' ')
+    .replace(/[^A-Za-z0-9]+/g,' ')
+    .trim();
+  if(!semanticResidue)return {required:true,sufficient:false,reason:'REFERENCE_ONLY_CAPTURE'};
+  return {required:true,sufficient:true,reason:'SEMANTIC_CAPTURE_PRESENT'};
+}
+
 function sourceClassificationIssues(fields={}){
   const issues=[];
   const combined=Object.values(fields).join(' ');
@@ -1225,6 +1263,6 @@ globalThis.closedLoopWorkflowSchema=Object.freeze({
   JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS,
   STAGE_FIELDS,STAGE_CONTRACTS,STAGE_COLLECTIONS,SUPPORT_COLLECTIONS,RECORD_SCHEMAS,
   field,stageFieldDefinition,allowedCollections,allowedAgentStageFields,humanStageFields,recordAgentFields,recordHumanFields,operationContract,authorizeMutation,
-  sourceClassificationIssues,TARGET_PRODUCT_REFERENCE_PATTERN
+  assessStage1MaterialCapture,sourceClassificationIssues,TARGET_PRODUCT_REFERENCE_PATTERN
 });
 })();
