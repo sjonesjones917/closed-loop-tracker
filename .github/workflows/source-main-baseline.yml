@@ -1,0 +1,23 @@
+name: Temporary main UI baseline
+on:
+  push:
+    branches: [fix/stage4-canonical-reuse-v3]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ce5e890666de467d14e89d14d1cf2b8b3ce45c45
+      - run: |
+          mkdir baseline-ui
+          cp index.html app-core.js baseline-ui/
+          sha256sum baseline-ui/index.html baseline-ui/app-core.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: main-ui-baseline
+          path: baseline-ui
+          retention-days: 1
