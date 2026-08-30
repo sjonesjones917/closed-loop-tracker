@@ -1,0 +1,46 @@
+name: final-v3-proof
+on:
+  push:
+    branches: ['fix/final-zero-loss-v3-20260830']
+    paths: ['.github/workflows/final-v3-proof.yml']
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and controlling prompt invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
+          node - <<'NODE'
+          const fs=require('fs');const p=fs.readFileSync('prompt-engine.js','utf8'),e=fs.readFileSync('workflow-engine.js','utf8'),a=fs.readFileSync('app-core.js','utf8'),h=fs.readFileSync('index.html','utf8');const q=(v,m)=>{if(!v)throw Error(m)};
+          q(p.includes('Stage 01 is COMPLETE HUMAN-AUTHORITY INTAKE'),'Stage 01 exhaustive intake instruction missing');
+          q(p.includes('Exhaustively research every current accepted Stage 02 independent external source'),'Stage 03 exhaustive research instruction missing');
+          q(p.includes('Compile the requirement specification ONLY from the complete APPLICATION OBLIGATION MANIFEST'),'Stage 04 complete-union instruction missing');
+          q(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'Stage 04 repeat-supply prohibition missing');
+          q(p.includes('If an earlier stage is incomplete, return BLOCKED with INADEQUATE_PRIOR_OUTPUT'),'Stage 04 prior-stage fail-closed rule missing');
+          q(p.indexOf('YOUR TASK — DO THIS NOW')<p.indexOf('JOB CONTROL'),'action is not before project data');
+          for(const x of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])q(!p.includes(x),'hard-coded project-subject branch remains: '+x);
+          q(e.includes('function stage1IntakeManifest(project)'),'Stage 01 intake manifest missing');
+          q(e.includes('function stage4ObligationManifest(project)'),'Stage 04 obligation manifest missing');
+          q(e.includes('validateStage1IntakeAccounting'),'Stage 01 accounting gate missing');
+          q(e.includes('validateStage4ObligationAccounting'),'Stage 04 accounting gate missing');
+          q(e.includes('SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED'),'Stage 03 second-pass gate missing');
+          q(e.includes('SATURATION_STATUS'),'Stage 03 saturation gate missing');
+          q(a.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 still exposes attachment control');
+          q(a.includes('registerIntakeArtifactSnapshot'),'Stage 01 artifact text is not captured into canonical intake evidence');
+          q(h.includes('.expandable-prompt{max-height:280px}'),'prompt preview baseline size changed');
+          console.log('controlling-stage134-invariants: PASS');
+          NODE
+      - name: Repository verification suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for t in verify.mjs verify-v3-migration.mjs verify-v3-contract.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-test-runtime.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-single-supply-prompts.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do echo "=== $t ==="; node "$t"; done
