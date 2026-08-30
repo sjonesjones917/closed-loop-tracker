@@ -1,0 +1,59 @@
+name: Apply materialized stage closure
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Materialize final generic prompt authority
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('prompt-engine.js')
+          text=p.read_text()
+          m=re.search(r"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/(\d+)';",text)
+          if not m: raise SystemExit('prompt engine version not found')
+          text=text[:m.start()]+f"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/{int(m.group(1))+1}';"+text[m.end():]
+          old="function humanInputBlock(job){const names=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>definition?.producer==='HUMAN').map(([name])=>name);"
+          new="function humanInputBlock(job){const names=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name);"
+          if old in text: text=text.replace(old,new,1)
+          if 'function projectAuthorityBasis(' not in text:
+              marker='function contextFor(stage,state,operation,scope={}){const parts=[];'
+              i=text.find(marker)
+              if i<0: raise SystemExit('contextFor marker not found')
+              helper="function projectAuthorityBasis(state,stage,operation,scope={}){const job=state?.job||{},humanAuthority=Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>[name,job?.[name]??null])),stageOne=state?.stages?.[1]||{},sources=workflow.recordsForCurrentScope(state,'sources').filter(record=>workflow.isActiveRecord(record)).map(record=>({sourceId:recordId(record,'sources'),title:recordValue(record,'TITLE')||null,authorityLevel:recordValue(record,'AUTHORITY_LEVEL')||null,authorityRole:recordValue(record,'AUTHORITY_ROLE')||null,controllingState:recordValue(record,'CONTROLLING_STATE')||null})),requirements=workflow.recordsForCurrentScope(state,'requirements').filter(record=>workflow.isActiveRecord(record)).map(record=>({requirementId:recordId(record,'requirements'),obligation:recordValue(record,'OBLIGATION')||null,mandatoryOptionalStatus:recordValue(record,'MANDATORY_OPTIONAL_STATUS')||null,applicability:recordValue(record,'APPLICABILITY')||null,status:recordValue(record,'STATUS')||null}));return {rule:'Every stage is generated from this same subject-neutral project authority basis. Preserve the human intent captured once in Stage 01 and current external-authority and requirement identities. Never ask the human to repeat or reattach information already captured. Detailed records remain limited to the current stage and operation context contract so independence and withholding rules are preserved.',humanAuthority,acceptedStage01:{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1)},currentAuthoritySummary:{sources,requirements},currentVersions:{inputVersion:job.CURRENT_INPUT_VERSION||null,sourceSetVersion:job.CURRENT_SOURCE_SET_VERSION||null,requirementsVersion:job.CURRENT_REQUIREMENTS_VERSION||null,testSuiteVersion:job.CURRENT_TEST_SUITE_VERSION||null,instructionVersion:job.CURRENT_INSTRUCTION_VERSION||null},stage,operation,scope};}\n"
+              text=text[:i]+helper+text[i:]
+              text=text.replace(marker,"function contextFor(stage,state,operation,scope={}){const parts=[];if(stage>1)parts.push(`PROJECT AUTHORITY BASIS — HUMAN INTENT + CURRENT EXTERNAL REQUIREMENTS\\n${show(projectAuthorityBasis(state,stage,operation,scope))}`);",1)
+          if 'function stageCompletionDirective(stage)' not in text:
+              marker='function projectDataExecutionRule(stage){'
+              i=text.find(marker)
+              if i<0: raise SystemExit('projectDataExecutionRule marker not found')
+              helper="function stageCompletionDirective(stage){return `Complete the entire current Stage ${String(stage).padStart(2,'0')} procedure before returning final JSON. Satisfy every stage-specific instruction above and every declared response requirement. Do not return DATA_PROPOSAL while any required part of the current stage remains incomplete; use HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED when applicable. Do not perform later-stage work.`;}\n"
+              text=text[:i]+helper+text[i:]
+          if 'STAGE COMPLETION BOUNDARY — DO NOT STOP EARLY' not in text:
+              old='\\n\\nSTAGE PROCEDURE\\n${procedureFor(stage,operation)}\\n\\n'
+              new='\\n\\nSTAGE PROCEDURE\\n${procedureFor(stage,operation)}\\n\\nSTAGE COMPLETION BOUNDARY — DO NOT STOP EARLY\\n${stageCompletionDirective(stage)}\\n\\n'
+              if old not in text: raise SystemExit('stage procedure insertion point not found')
+              text=text.replace(old,new,1)
+          p.write_text(text)
+          PY
+          rm -f .github/workflows/apply-all-stage-prompt-context-closure.yml
+          rm -f .github/workflows/apply-combined-prompt-engine.yml
+          rm -f .github/workflows/apply-current-all-stage-prompt-closure.yml
+          rm -f .github/workflows/apply-materialize-stage-closure.yml
+          rm -f .github/workflows/apply-operator-conversation-state.yml
+          rm -f .prompt-closure-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Finalize generic all-stage prompt authority"
+          git push origin HEAD:main
