@@ -27,6 +27,7 @@ jobs:
       - name: Materialize verified production tree and prove it
         shell: bash
         run: |
+          exec > >(tee /tmp/materialize.log) 2>&1
           set -euo pipefail
           SOURCE=371ea9e9fd53586f78aa838217cdd97a7c442d76
           git fetch origin fix/controlling-spec-final-20260830
@@ -125,3 +126,10 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git commit -m 'Apply verified closed-loop v3 implementation to current main'
           git push origin HEAD:fix/closed-loop-v3-final-20260830
+      - name: Upload materializer diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: materializer-diagnostics
+          path: /tmp/materialize.log
+          if-no-files-found: ignore
