@@ -73,3 +73,6 @@ jobs:
           git commit -m 'Capture v3 syntax diagnostic [skip ci]' || true
           git push origin HEAD:fix/closed-loop-v3-current-20260830 || true
           exit 1
+      - name: Syntax accepted
+        if: steps.syntax.outputs.exit_code == '0'
+        run: echo 'v3 syntax proof passed'
