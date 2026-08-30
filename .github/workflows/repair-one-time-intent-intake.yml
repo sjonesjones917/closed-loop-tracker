@@ -26,6 +26,12 @@ jobs:
           good="issue('INVALID_INTENT_STATEMENT_REFERENCE',`/records/requirements/${index}/fields/USER_INPUT_RELATIONSHIP`,'USER_INPUT_RELATIONSHIP must equal an active canonical STATEMENT_ID.')"
           if s.count(bad)!=1: raise SystemExit('validator delimiter target not found exactly once')
           p.write_text(s.replace(bad,good,1))
+          p=Path('app-core.js')
+          s=p.read_text()
+          bad='Stage 01 is the one-time intent intake conversation.'
+          good='Stage 01 is an intake conversation and the one-time intent-file intake.'
+          if s.count(bad)!=1: raise SystemExit('Stage 01 UI wording target not found exactly once')
+          p.write_text(s.replace(bad,good,1))
           PY
           node --check workflow-schema.js
           node --check workflow-engine.js
