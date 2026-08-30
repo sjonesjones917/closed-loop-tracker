@@ -1,0 +1,38 @@
+name: Repair package import migration
+on:
+  push:
+    branches: [fix/controlling-spec3-complete]
+    paths: [.github/workflows/tmp-fix-package-migration.yml]
+permissions: {contents: write}
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/controlling-spec3-complete}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Repair package import without weakening package integrity
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p=Path('project-store.js'); s=p.read_text()
+          old="""  const schemaApi=globalThis.closedLoopWorkflowSchema,project=clone(body.project),id=projectIdentity(project);\n  if(project?.schema!=='closed-loop-project/2'||project?.workflow!=='mobile-closed-loop/30'||Number(project?.stageCount)!==30||Object.keys(project?.stages||{}).length!==30)throw Object.assign(new Error('Imported project identity or stage count is invalid.'),{existingProjectsUnchanged:true});\n  if(body.projectSchema!==project.schema||body.workflow!==project.workflow||body.responseSchema!==schemaApi?.RESPONSE_SCHEMA)throw Object.assign(new Error('Package schema manifest does not match the embedded project.'),{existingProjectsUnchanged:true});\n  if(!id)throw Object.assign(new Error('Imported project has no JOB_ID.'),{existingProjectsUnchanged:true});\n  try{assertProjectIntegrity(project);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}\n"""
+          new="""  const schemaApi=globalThis.closedLoopWorkflowSchema,core=globalThis.closedLoopCore,embeddedProject=clone(body.project),embeddedSchema=String(embeddedProject?.schema||''),embeddedProjectSha256=projectSha256(embeddedProject),embeddedId=projectIdentity(embeddedProject);\n  if(embeddedProject?.workflow!=='mobile-closed-loop/30'||Number(embeddedProject?.stageCount)!==30||Object.keys(embeddedProject?.stages||{}).length!==30)throw Object.assign(new Error('Imported project identity or stage count is invalid.'),{existingProjectsUnchanged:true});\n  const expectedResponseSchema=embeddedSchema==='closed-loop-project/2'?'closed-loop-stage-response/2':schemaApi?.RESPONSE_SCHEMA;\n  if(body.projectSchema!==embeddedSchema||body.workflow!==embeddedProject.workflow||body.responseSchema!==expectedResponseSchema)throw Object.assign(new Error('Package schema manifest does not match the embedded project.'),{existingProjectsUnchanged:true});\n  let project=embeddedProject;\n  if(embeddedSchema!==schemaApi?.PROJECT_SCHEMA){if(embeddedSchema==='closed-loop-project/2'&&core?.migrateState)project=core.migrateState(embeddedProject);else throw Object.assign(new Error(`Unsupported embedded project schema ${embeddedSchema||'UNKNOWN'}.`),{existingProjectsUnchanged:true});}\n  const id=projectIdentity(project);\n  if(!id||id!==embeddedId)throw Object.assign(new Error('Imported project has no stable JOB_ID.'),{existingProjectsUnchanged:true});\n  try{assertProjectIntegrity(project);}catch(error){throw Object.assign(error,{existingProjectsUnchanged:true});}\n"""
+          if old not in s: raise SystemExit('Package import identity block not found; refusing ambiguous rewrite.')
+          s=s.replace(old,new,1)
+          old2="manifest.projectSha256!==projectSha256(project)"
+          if old2 not in s: raise SystemExit('Package manifest project hash comparison not found.')
+          s=s.replace(old2,"manifest.projectSha256!==embeddedProjectSha256",1)
+          p.write_text(s)
+          PY
+          node --check project-store.js
+          node verify.mjs
+          node verify-project-lifecycle.mjs
+          git diff --check
+          git config user.name closed-loop-reliability-bot
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/tmp-fix-package-migration.yml
+          git add project-store.js
+          git commit -m 'Accept current schema 3 packages and migrate verified schema 2 packages'
+          git push origin HEAD:fix/controlling-spec3-complete
