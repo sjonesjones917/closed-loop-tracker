@@ -1,0 +1,204 @@
+name: Controlling specification repair phase 1
+on:
+  push:
+    branches: [spec-conformance-zero-loss]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.event.head_commit.message == 'Install controlling specification repair phase 1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: spec-conformance-zero-loss
+          fetch-depth: 0
+      - name: Apply controlling contract corrections
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(p): return Path(p).read_text()
+          def write(p,s): Path(p).write_text(s)
+          def one(s, old, new, label):
+              n=s.count(old)
+              if n != 1: raise SystemExit(f'{label}: expected one match, found {n}')
+              return s.replace(old,new)
+
+          # workbook.js: /3 identity, correct Stage 16 label, deterministic /2 migration, and controlling gates.
+          p='workbook.js'; s=read(p)
+          s=one(s,"const PROJECT_SCHEMA='closed-loop-project/2';","const PROJECT_SCHEMA='closed-loop-project/3';",'project schema')
+          s=one(s,"'REVISE THE RESPONSIBLE LAYER'","'CORRECT THE ROOT CAUSE'",'stage16 label')
+          s=one(s,"2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked']",
+                "2:['At least one legitimate inspected external authority exists or an evidence-supported NO_APPLICABLE_EXTERNAL_SOURCE determination exists','Supplied project artifacts are not treated as independent external authority','Authority and evidentiary roles are recorded for accepted external sources','Every controlling conflict is resolved or blocked']",'stage2 gate')
+          s=one(s,"1:['Exact user objective preserved verbatim','Every supplied item and material unknown recorded','Explicit requirements and assumptions separated','Complete input set has a controlled identity']",
+                "1:['Exact user objective preserved verbatim','Every supplied material human-authority statement is captured or explicitly accounted for','Explicit requirements and assumptions are separated','Complete input set has a controlled identity and 100% intake-manifest accounting']",'stage1 gate')
+          s=one(s,"4:['Every mandatory obligation maps to an atomic requirement','Every requirement has observable satisfaction and failure conditions','Every external requirement traces to exact evidence','Requirement registry has a controlled identity']",
+                "4:['Every obligation in the application-generated obligation manifest has a valid disposition','Every resulting requirement is atomic enough to test and has observable satisfaction and failure conditions','Every original obligation identity remains independently traceable to provenance and disposition','Requirement registry has a controlled identity']",'stage4 gate')
+          old="""  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
+    const migrated=JSON.parse(JSON.stringify(p));"""
+          new="""  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
+    const migrated=JSON.parse(JSON.stringify(p));"""
+          # keep current branch unchanged; insert /2 migration immediately before human-project path.
+          marker="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);"""
+          insert="""  if(p.schema==='closed-loop-project/2'&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
+    const migrated=JSON.parse(JSON.stringify(p));
+    const original=JSON.parse(JSON.stringify(p));
+    migrated.schema=PROJECT_SCHEMA;
+    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
+    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
+    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
+    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),payload:original});
+    migrated.projectData.intakeCoverageManifests=Array.isArray(migrated.projectData.intakeCoverageManifests)?migrated.projectData.intakeCoverageManifests:[];
+    migrated.projectData.obligationManifests=Array.isArray(migrated.projectData.obligationManifests)?migrated.projectData.obligationManifests:[];
+    migrated.projectData.promptContextManifests=Array.isArray(migrated.projectData.promptContextManifests)?migrated.projectData.promptContextManifests:[];
+    migrated.projectData.blindAliasMaps=Array.isArray(migrated.projectData.blindAliasMaps)?migrated.projectData.blindAliasMaps:[];
+    migrated.projectData.nativeExecutionEvents=Array.isArray(migrated.projectData.nativeExecutionEvents)?migrated.projectData.nativeExecutionEvents:[];
+    if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:'closed-loop-project/2',records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}
+    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
+    return migrated;
+  }
+  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);"""
+          s=one(s,marker,insert,'/2 migration')
+          # New blank projects carry the durable metadata families required by /3.
+          s=one(s,"projectData:{userEntered:{},sources:[]", "projectData:{userEntered:{},intakeCoverageManifests:[],obligationManifests:[],promptContextManifests:[],blindAliasMaps:[],nativeExecutionEvents:[],sources:[]",'blank metadata')
+          write(p,s)
+
+          # workflow-schema.js: /3 response contract and static authority corrections.
+          p='workflow-schema.js'; s=read(p)
+          s=one(s,"const RESPONSE_SCHEMA='closed-loop-stage-response/2';","const RESPONSE_SCHEMA='closed-loop-stage-response/3';\nconst PACKAGE_SCHEMA='closed-loop-verification-package/1';",'response schema')
+          s=one(s,"const HUMAN_JOB_FIELDS=Object.freeze([\n  'JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM'", "const HUMAN_DECISION_JOB_FIELDS=Object.freeze(['JOB_TITLE','JOB_OWNER']);\nconst HUMAN_JOB_FIELDS=Object.freeze([\n  'EXACT_USER_OBJECTIVE_VERBATIM'",'job authority list')
+          s=one(s,"  if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});",
+                "  if(HUMAN_DECISION_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN_DECISION,{provenanceRequired:false,nullable:true});\n  if(HUMAN_JOB_FIELDS.includes(name))return field(name,PRODUCER.HUMAN,{requiredAtStage:name==='EXACT_USER_OBJECTIVE_VERBATIM'?1:null,provenanceRequired:false,valueType:name==='DESIRED_SOURCE_COUNT'?'INTEGER':'STRING',nullable:name!=='EXACT_USER_OBJECTIVE_VERBATIM'});",'job field producer')
+          s=one(s,"[...new Set([...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])]", "[...new Set([...HUMAN_DECISION_JOB_FIELDS,...HUMAN_JOB_FIELDS,...APPLICATION_JOB_FIELDS,...AGENT_JOB_FIELDS])]",'job fields union')
+          s=one(s,"      \"EXECUTABLE_SPEC_VERSION\",\n      \"EXECUTABLE_SPEC\",", "      \"EXECUTABLE_SPEC\",",'test agent spec version')
+          s=one(s,"      \"TEST_ID\",\n      \"REQ_ID\",\n      \"STATUS\"", "      \"TEST_ID\",\n      \"REQ_ID\",\n      \"STATUS\",\n      \"EXECUTABLE_SPEC_VERSION\",\n      \"EXECUTABLE_SPEC_SHA256\"",'test app fields')
+          test_ir_pattern=r"const TEST_IR=Object\.freeze\(\{.*?\n\}\);\nconst TEST_IR_FORBIDDEN_STEP_KEYS"
+          test_ir_repl="""const TEST_IR=Object.freeze({
+  version:'closed-loop-test-spec/1',
+  capability:'CLOSED_LOOP_TEST_IR',
+  executableKinds:Object.freeze(['NONE','TEST_IR']),
+  operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE']),
+  limits:Object.freeze({maxInputBytes:16777216,maxDecompressedBytes:33554432,maxSteps:64,maxSelectorDepth:32,maxParsedDepth:64,maxCollectionItems:100000,maxRegexLength:2000,maxRegexInputBytes:4194304,maxWorkerDurationMs:5000,maxArchiveExpansionBytes:33554432,maxCsvCells:250000})
+});
+const TEST_IR_FORBIDDEN_STEP_KEYS"""
+          s,n=re.subn(test_ir_pattern,test_ir_repl,s,flags=re.S)
+          if n!=1: raise SystemExit(f'Test IR block: {n}')
+          s=s.replace("String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE'","String(get('EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR'")
+          s=s.replace("EXECUTABLE_KIND must be CUSTOM_PIPELINE.","EXECUTABLE_KIND must be TEST_IR.")
+          s=one(s,"    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC:Object.freeze", "    EXECUTABLE_SPEC_VERSION:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC_SHA256:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:[],nullable:true,normalizerKey:null,closedProperties:null}),\n    EXECUTABLE_SPEC:Object.freeze",'test field types')
+          # Test record field list gets the application-owned hash.
+          s=one(s,"'EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'", "'EXECUTABLE_KIND','EXECUTABLE_SPEC_VERSION','EXECUTABLE_SPEC_SHA256','EXECUTABLE_SPEC','EXECUTABLE_INPUT_BINDINGS'",'test record fields')
+          s=one(s,"version:'closed-loop-workflow-schema/2',", "version:'closed-loop-workflow-schema/3',",'schema api version')
+          s=one(s,"PROJECT_SCHEMA,WORKFLOW_ID,STAGE_COUNT,VALUE_TYPES", "PROJECT_SCHEMA,RESPONSE_SCHEMA,PACKAGE_SCHEMA,WORKFLOW_ID,STAGE_COUNT,VALUE_TYPES",'schema exports')
+          s=one(s,"JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS", "JOB_FIELDS,HUMAN_DECISION_JOB_FIELDS,HUMAN_JOB_FIELDS,APPLICATION_JOB_FIELDS,AGENT_JOB_FIELDS,HUMAN_INTAKE_FIELDS",'job export')
+          write(p,s)
+
+          # test-runtime.js: canonical TEST_IR kind and required primitive registry/central limits.
+          p='test-runtime.js'; s=read(p)
+          ops_old="""const OPS=Object.freeze([
+  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH',
+  'COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE',
+  'ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE',
+  'ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL'
+]);
+const LIMITS=Object.freeze({maxSteps:64,maxTextBytes:16*1024*1024,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000});"""
+          ops_new="""const OPS=Object.freeze([
+  'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML',
+  'COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE',
+  'ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE'
+]);
+const LIMITS=Object.freeze({maxInputBytes:16*1024*1024,maxDecompressedBytes:32*1024*1024,maxSteps:64,maxSelectorDepth:32,maxParsedDepth:64,maxCollectionItems:100000,maxRegexLength:2000,maxRegexInputBytes:4*1024*1024,maxWorkerDurationMs:5000,maxArchiveExpansionBytes:32*1024*1024,maxCsvCells:250000});"""
+          s=one(s,ops_old,ops_new,'runtime registry')
+          s=s.replace("String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE'","String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR'")
+          # Explicit CSV contract: delimiter/header/quote/newline/encoding must be present in the step.
+          s=one(s,"function parseCsv(text){", "function parseCsv(text,{delimiter,header,quote,newline,encoding}={}){\n  if(encoding!=='UTF-8')throw new Error('PARSE_CSV requires encoding UTF-8.');\n  if(typeof delimiter!=='string'||delimiter.length!==1)throw new Error('PARSE_CSV requires a one-character delimiter.');\n  if(typeof quote!=='string'||quote.length!==1)throw new Error('PARSE_CSV requires a one-character quote.');\n  if(!['LF','CRLF','AUTO'].includes(newline))throw new Error('PARSE_CSV requires newline LF, CRLF, or AUTO.');\n  if(typeof header!=='boolean')throw new Error('PARSE_CSV requires explicit boolean header.');",'csv signature')
+          s=s.replace("if(ch==='\"'&&text[i+1]==='\"'){cell+='\"';i++;}else if(ch==='\"')quoted=false", "if(ch===quote&&text[i+1]===quote){cell+=quote;i++;}else if(ch===quote)quoted=false")
+          s=s.replace("if(ch==='\"'){if(cell.length)throw new Error('Malformed CSV: quote begins inside an unquoted field.');quoted=true;continue;}", "if(ch===quote){if(cell.length)throw new Error('Malformed CSV: quote begins inside an unquoted field.');quoted=true;continue;}")
+          s=s.replace("if(ch===','){row.push(cell);cell='';cells++;}", "if(ch===delimiter){row.push(cell);cell='';cells++;}")
+          s=s.replace("  return rows;\n}", "  if(header&&rows.length){const keys=rows.shift();return rows.map(row=>Object.fromEntries(keys.map((key,index)=>[key,row[index]??''])));}\n  return rows;\n}",1)
+          # Restricted XML parser/selector uses DOMParser in browser/worker environments only.
+          anchor="""function comparable(value){return value instanceof Uint8Array?[...value]:value;}"""
+          xml="""function parseXml(text){if(typeof DOMParser!=='function')throw new Error('PARSE_XML is unavailable in this execution environment.');const doc=new DOMParser().parseFromString(String(text),'application/xml');if(doc.querySelector('parsererror'))throw new Error('Malformed XML.');return doc;}
+function selectXml(value,selector){const text=String(selector||'').trim();if(!/^\/?[A-Za-z_][A-Za-z0-9_.:-]*(?:\/[A-Za-z_][A-Za-z0-9_.:-]*)*$/.test(text))throw new Error('SELECT_XML supports only restricted element-name paths.');const parts=text.replace(/^\//,'').split('/');if(parts.length>LIMITS.maxSelectorDepth)throw new Error('XML selector exceeds depth limit.');let nodes=[value.documentElement||value];for(let i=0;i<parts.length;i++){const name=parts[i];nodes=nodes.flatMap(node=>i===0&&node.nodeName===name?[node]:[...node.children].filter(child=>child.nodeName===name));}return nodes;}
+function comparable(value){return value instanceof Uint8Array?[...value]:value;}"""
+          s=one(s,anchor,xml,'xml helpers')
+          s=s.replace("if(step.op==='REGEX'||step.op==='ASSERT_MATCH')if(String(step.pattern??step.value??'').length>LIMITS.maxRegexLength)issues.push(`Step ${index} regex exceeds maximum length.`);", "if(step.op==='REGEX'||step.op==='ASSERT_MATCH')if(String(step.pattern??step.value??'').length>LIMITS.maxRegexLength)issues.push(`Step ${index} regex exceeds maximum length.`);if(step.op==='PARSE_CSV'){for(const key of ['delimiter','header','quote','newline','encoding'])if(!Object.prototype.hasOwnProperty.call(step,key))issues.push(`Step ${index} PARSE_CSV requires explicit ${key}.`);}")
+          s=s.replace("case 'PARSE_CSV':value=parseCsv(String(value));break;", "case 'PARSE_CSV':value=parseCsv(String(value),step);break;\n      case 'PARSE_XML':value=parseXml(String(value));break;\n      case 'SELECT_XML':value=selectXml(value,step.path);break;")
+          # Remove runtime semantics not present in v1 controlling primitive set.
+          s=re.sub(r"\n      case 'ASSERT_EXISTS':.*?break;\n      case 'ASSERT_TYPE':.*?break;\n",'\n',s,flags=re.S)
+          s=s.replace("      case 'ASSERT_NE':assertion=assertCondition(stable(comparable(value))!==stable(comparable(step.value)),`not ${stable(step.value)}`,comparable(value),step.message);break;\n",'')
+          write(p,s)
+
+          # prompt-engine.js: domain-neutral algorithm, task first, /3 contract, TEST_IR kind, no Stage-4 handoff override.
+          p='prompt-engine.js'; s=read(p)
+          s=one(s,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/27';",'prompt engine version')
+          s=one(s,"contractVersion:'closed-loop-response-contract/2.4'","contractVersion:'closed-loop-response-contract/3.0'",'prompt contract')
+          # Replace hard-coded subject branches with one generic algorithm.
+          start="${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY"
+          end="`}" 
+          a=s.find(start)
+          b=s.find("\n\n${stage===1?`STAGE 01 CLARIFICATION EXPERIENCE",a)
+          if a<0 or b<0: raise SystemExit('domain adaptation block not found')
+          generic="""${stage===1?`STAGE 01 SUBJECT-NEUTRAL INTAKE — CLARIFY AND NORMALIZE ONLY
+Derive the project-specific human-authority questions from the actual user request, supplied materials that are actually accessible, and current canonical context. Use domain knowledge only to recognize what human-specific facts or decisions are genuinely required; do not use hard-coded subject catalogues. Ask only what must come from the human. Do not ask for facts already supplied or facts reliably obtainable from supplied materials, authorized research/tools, or later stages. Do not perform source discovery, source research, requirement atomization, verification design, production, filing, simulation, manufacturing, or product verification here.
+`:`SUBJECT-NEUTRAL STAGE ADAPTATION
+Derive the stage-specific substantive work from the current project request, canonical records, governing evidence, authorized tools, and the exact stage contract. Do not branch on a hard-coded catalogue of project subjects. Preserve the boundary between artifact generation and downstream execution: generate actual artifact bytes whenever the authorized environment can reliably construct them from sufficient accepted inputs; never claim import, compilation, simulation, fabrication, filing, deployment, physical performance, or other downstream execution unless it actually occurred and is evidenced.
+`}"""
+          s=s[:a]+generic+s[b:]
+          # Remove the patent-only runtime question list; the same invariant is exercised by fixtures, not a branch.
+          s=re.sub(r"For PATENT / REGULATED FILING jobs, when not already known.*?Do not turn researchable legal strategy into a human question\.\n", "For every project, derive ASK_NOW_NONBLOCKING human-only questions from the actual requested outcome and available materials. Do not encode or infer a project-subject-specific checklist in the runtime prompt.\n", s, count=1, flags=re.S)
+          s=s.replace('EXECUTABLE_KIND = CUSTOM_PIPELINE','EXECUTABLE_KIND = TEST_IR')
+          s=s.replace("rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff,promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}", "handoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}")
+          s=s.replace("rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff;", "handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds});")
+          # Stage-specific task is presented before project data/context, once.
+          role="""ROLE
+You are the ${d.role}. Perform only Stage ${String(stage).padStart(2,'0')} for this single current project.
+
+PROJECT-SCOPE BOUNDARY"""
+          role2="""ROLE
+You are the ${d.role}. Perform only Stage ${String(stage).padStart(2,'0')} for this single current project.
+
+STAGE-SPECIFIC TASK — DO THIS WORK
+${procedures[stage]}
+
+PROJECT-SCOPE BOUNDARY"""
+          s=one(s,role,role2,'task-first')
+          later="""STAGE-SPECIFIC TASK
+${procedures[stage]}
+
+PERMITTED AGENT-OWNED STAGE DATA"""
+          s=one(s,later,"PERMITTED AGENT-OWNED STAGE DATA",'remove duplicate task')
+          write(p,s)
+
+          # index.html: restore established visual CSS from the prior broad baseline, keep current body, then add only required runtime/CSP wiring.
+          p='index.html'; current=read(p)
+          baseline=__import__('subprocess').check_output(['git','show','6cff796f4ad8db03864342f84585b75fda412f49:index.html'],text=True)
+          base_style=re.search(r'<style>.*?</style>',baseline,flags=re.S).group(0)
+          current=re.sub(r'<style>.*?</style>',base_style,current,count=1,flags=re.S)
+          current=current.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src")
+          script_marker='<script defer src="workflow-engine.js?v='
+          idx=current.find(script_marker)
+          if idx<0: raise SystemExit('workflow-engine script marker not found')
+          line_start=current.rfind('\n',0,idx)+1
+          token=re.search(r'workflow-engine\.js\?v=([^\"]+)',current).group(1)
+          current=current[:line_start]+f'<script defer src="test-runtime.js?v={token}"></script>\n'+current[line_start:]
+          write(p,current)
+          PY
+      - name: Syntax check changed runtime files
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check prompt-engine.js
+      - name: Commit phase 1
+        shell: bash
+        run: |
+          rm .github/workflows/spec-repair-phase1.yml
+          git config user.name "closed-loop-spec-repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add workbook.js workflow-schema.js test-runtime.js prompt-engine.js index.html .github/workflows/spec-repair-phase1.yml
+          git commit -m "Apply controlling /3 contract and prompt corrections"
+          git push origin HEAD:spec-conformance-zero-loss
