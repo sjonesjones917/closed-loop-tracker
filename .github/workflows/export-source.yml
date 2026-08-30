@@ -1,0 +1,23 @@
+name: Export complete working source
+on:
+  push:
+    branches:
+      - fix/complete-stage-context-and-ci-20260830
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage exact source
+        shell: bash
+        run: |
+          mkdir -p /tmp/closed-loop-complete-source
+          rsync -a --exclude='.git' ./ /tmp/closed-loop-complete-source/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-complete-source
+          path: /tmp/closed-loop-complete-source
+          include-hidden-files: true
+          retention-days: 1
