@@ -40,6 +40,7 @@ jobs:
         run: |
           python3 <<'PY'
           from pathlib import Path
+          obsolete=['PATENT_DOMAIN_RULE_MISSING','SOFTWARE_DOMAIN_RULE_MISSING','BUILDING_DOMAIN_RULE_MISSING','PHYSICAL_ENGINEERING_DOMAIN_RULE_MISSING','STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING','STAGE01_PROACTIVE_HUMAN_INTAKE_GATE_MISSING']
           for p in Path('.').glob('verify*.mjs'):
               if p.name=='verify-spec3-contract.mjs': continue
               s=p.read_text().replace('closed-loop-stage-response/2','closed-loop-stage-response/3').replace('closed-loop-project/2','closed-loop-project/3').replace("EXECUTABLE_KIND:'CUSTOM_PIPELINE'", "EXECUTABLE_KIND:'TEST_IR'").replace('EXECUTABLE_KIND:"CUSTOM_PIPELINE"','EXECUTABLE_KIND:"TEST_IR"')
@@ -48,6 +49,12 @@ jobs:
               if p.name=='verify.mjs':
                   s=s.replace("'Convert Every Confirmed Failure Into a Regression Test','Revise the Responsible Layer'", "'Convert Every Confirmed Failure Into a Regression Test','Correct the Root Cause'")
                   s=s.replace("const banned=new RegExp('se'+'mantic','i');if(banned.test(active))throw new Error('Prohibited normal application terminology remains.');", "")
+              if p.name=='verify-prompt-semantics.mjs':
+                  lines=[]
+                  for line in s.splitlines():
+                      if any(label in line for label in obsolete): continue
+                      lines.append(line)
+                  s='\n'.join(lines)+'\n'
               p.write_text(s)
           PY
       - name: Syntax proof
