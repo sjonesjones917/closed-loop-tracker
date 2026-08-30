@@ -169,7 +169,7 @@ def sub_proc(src,n,value):
     pattern=rf"(^|\n){n}:'((?:\\.|[^'])*)',\n{n+1}:'"
     escaped=value.replace('\\','\\\\').replace("'","\\'")
     repl=("\\1"+str(n)+":'"+escaped+"',\n"+str(n+1)+":'")
-    out,count=re.subn(pattern,repl,src,count=1)
+    out,count=re.subn(pattern,lambda m:m.group(1)+str(n)+":'"+escaped+"',\n"+str(n+1)+":'",src,count=1)
     require(count==1,f"stage {n} procedure anchor missing")
     return out
 block=sub_proc(block,1,p1)
