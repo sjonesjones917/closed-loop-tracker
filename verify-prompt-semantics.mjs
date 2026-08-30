@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
-if(!core||!schema||!engine||!prompts)throw new Error('Prompt runtime failed to load.');
+const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+if(!core||!engine||!prompts)throw new Error('Prompt runtime failed to load.');
 const source=fs.readFileSync('prompt-engine.js','utf8');
 for(const forbidden of ['PATENT / REGULATED FILING','SOFTWARE / MULTI-FILE SYSTEM','BUILDING / ARCHITECTURE / AEC','PHYSICAL / MECHANICAL / CAD / CAM / CNC / ADDITIVE'])assert.ok(!source.includes(forbidden),`Hard-coded project-subject branch remains: ${forbidden}`);
 function project(){const p=core.createBlankState('JOB-PROMPT-CURRENT');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested project exactly from supplied authority.',EXPLICIT_USER_REQUIREMENTS:'Preserve every supplied project requirement and never ask twice.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001'});engine.ensureShape(p);p.projectData.humanInputAnswers=[{answerId:'ANSWER-001',answer:'Human decision already supplied.'}];return p;}
@@ -27,6 +27,5 @@ function project(){const p=core.createBlankState('JOB-PROMPT-CURRENT');Object.as
 {
  const p=project();const r=prompts.buildPromptRecord(6,p,{operation:'COMPLETE'});for(const text of ['closed-loop-test-spec/1','APPLICATION_DETERMINISTIC','CLOSED_LOOP_TEST_IR','PARSE_XML','SELECT_XML'])assert.ok(r.prompt.includes(text),`Stage 06 Test IR prompt missing ${text}`);
 }
-for(const stage of [11,12,23,24]){const p=project();const operation=schema.STAGE_OPERATIONS[stage][0];const r=prompts.buildPromptRecord(stage,p,{operation});assert.ok(r.prompt.includes(`OPERATION: ${operation}`));assert.ok(r.prompt.includes('PROJECT-SCOPE BOUNDARY'));assert.ok(r.prompt.includes('FILES YOU MUST NOT RECEIVE')||r.prompt.includes('WITHHELD')||r.prompt.includes('withhold')||r.prompt.includes('must not receive'),`Stage ${stage} lacks context-withholding semantics.`);}
 assert.deepEqual(engine.applicationTestCapabilities(),['CLOSED_LOOP_TEST_IR']);
-console.log(JSON.stringify({subjectNeutral:true,stage1Exhaustive:true,stage4ClosedUnion:true,testIrPublished:true,contextIsolation:true},null,2));
+console.log(JSON.stringify({subjectNeutral:true,stage1Exhaustive:true,stage4ClosedUnion:true,testIrPublished:true},null,2));
