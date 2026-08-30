@@ -26,6 +26,7 @@ jobs:
           start = source.index(start_marker) + len(start_marker)
           end = source.index(end_marker, start)
           code = '\n'.join(line[10:] if line.startswith('          ') else line for line in source[start:end].splitlines()) + '\n'
+          code = code.replace('runtime-9e3db4a52d0f7c18', 'runtime-cf29ccf62c2efded')
 
           # Replace the two fragile exact-source edits in the prepared script with
           # equivalent boundary-based edits. The application source is deliberately
