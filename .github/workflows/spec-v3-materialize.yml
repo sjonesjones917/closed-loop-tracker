@@ -1,0 +1,42 @@
+name: Materialize controlling v3 bundle
+on:
+  push:
+    branches: [spec-v3-controlling-bundle]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: spec-v3-controlling-bundle
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Materialize controlling implementation
+        run: node spec-v3-materialize.mjs
+      - name: Syntax and controlling checks
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check app-core.js
+          node --check verify-spec-v3.mjs
+          node verify-spec-v3.mjs
+          node verify-test-runtime.mjs
+      - name: Commit integrated implementation and remove repair machinery
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm spec-v3-materialize.mjs .github/workflows/spec-v3-materialize.yml
+          git add -A
+          git commit -m "Implement controlling v3 reliability contract"
+          git push origin HEAD:spec-v3-controlling-bundle
