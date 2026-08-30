@@ -1,0 +1,48 @@
+from pathlib import Path
+import re
+
+
+def replace_once(text, old, new, label):
+    if old not in text:
+        raise SystemExit(f'missing expected text for {label}')
+    if text.count(old) != 1:
+        raise SystemExit(f'expected one match for {label}, found {text.count(old)}')
+    return text.replace(old, new, 1)
+
+# Restore the established generated-prompt viewport instead of forcing a smaller 280px preview.
+index = Path('index.html')
+text = index.read_text()
+text = replace_once(text, '.expandable-prompt{max-height:280px}', '.expandable-prompt{max-height:80vh}', 'prompt preview max-height')
+index.write_text(text)
+
+app = Path('app-core.js')
+text = app.read_text()
+old_stage4 = "4:'The agent compiles the requirement specification from current human input, actually accessible supplied materials, and accepted external-source research. Keep the work in the external conversation that has the original material; no duplicate upload into this application is required.'"
+new_stage4 = "4:'The agent compiles the requirement specification from the complete application-owned Stage 04 obligation manifest. That manifest already carries current User Job Input, accepted Stage 01 job definition and captured human/material obligations, and accepted Stage 03 research/candidate obligations. Do not attach, resend, reopen, summarize, or ask for the original Stage 01 intent file. Do not ask the human to repeat any project information already captured. If required upstream canonical data is incomplete, return to the deficient earlier stage; do not make the human retranscribe it.'"
+text = replace_once(text, old_stage4, new_stage4, 'Stage 04 user-facing purpose')
+
+pattern = re.compile(r"function artifactControlMarkup\(n,locked\)\{.*?\nfunction runBatchMarkup\(n\)", re.S)
+match = pattern.search(text)
+if not match:
+    raise SystemExit('artifactControlMarkup function not found')
+replacement = '''function artifactControlMarkup(n,locked){
+  if(n===19)return `<div class="panel"><h2 class="section-title">Unchanged candidate control</h2><p class="section-intro">Stage 19 reuses the exact current Stage 17 frozen candidate identity and hashes. Do not select replacement files or create a new candidate.</p><div class="button-row"><button id="begin-unchanged-confirmation"${locked?' disabled':''}>Begin unchanged confirmation using Stage 17 candidate</button></div></div>`;
+  const files=safe(current.stages[n].authorizedFiles);
+  // Stages 03 and 04 consume canonical upstream capture. Showing a generic file picker here falsely implies that the Stage 01 intent file must be supplied again.
+  if(n===3||n===4)return files.length?`<div class="panel"><h2 class="section-title">Previously returned stage files</h2><p class="section-intro">These bytes were already captured for this stage. No project-intent file should be attached or resent here.</p>${details('Verified artifact bytes',files,true)}</div>`:'';
+  const applicable=[1,10,17,20,21,25].includes(n),productReady=n!==21||Boolean(currentStageProduct()),fileLocked=locked||!productReady;
+  const title=n===1?'One-time Stage 01 input files':applicable?'Artifact control':'Returned response files';
+  const intro=n===1
+    ?'Attach the original intent file and any other supplied project files here once for Stage 01 intake. After Stage 01 acceptance, later stages consume the canonical captured project data; do not attach or resend these files again.'
+    :'Use this control only when the current stage explicitly requires an exact artifact or the agent actually returned a file required by its response contract. Do not reattach, resend, or substitute the original Stage 01 intent file. Actual selected bytes are stored in IndexedDB, hashed by the application, read back, and rehashed before becoming canonical artifact identities. A filename, hash claim, or code block is not file possession.';
+  return `<div class="panel"><h2 class="section-title">${title}</h2><p class="section-intro">${intro}</p>${n===21&&!productReady?'<div class="notice warn">Reserve the Stage 21 product execution before selecting finished-product files. The reserved PRODUCT_ID controls artifact scope, inventory, and lineage.</div>':''}<div class="grid-2"><div class="field"><label>${n===1?'Attach supplied files once':'Attach exact required/returned files only'}</label><input id="stage-files" type="file" multiple${fileLocked?' disabled':''}></div><div class="field"><label>Select structured package folder</label><input id="stage-directory" type="file" webkitdirectory directory multiple${fileLocked?' disabled':''}><span class="help">Use folder selection when directory structure is meaningful; canonical filenames preserve paths relative to the selected root.</span></div></div>${files.length?details('Verified artifact bytes',files,true):'<div class="empty-state">No verified stage artifact bytes.</div>'}<div class="button-row">${[10,17].includes(n)?`<button id="freeze-candidate"${locked?' disabled':''}>${n===17?'Freeze corrected candidate':'Freeze selected candidate'}</button>`:''}${n===20?`<button id="freeze-baseline"${locked?' disabled':''}>Freeze selected baseline</button>`:''}${n===21?`<button id="reserve-product-execution"${locked?' disabled':''}>Reserve product execution</button>`:''}</div></div>`;
+}
+function runBatchMarkup(n)'''
+text = text[:match.start()] + replacement + text[match.end():]
+
+old_response = 'Paste only the final strict JSON from ChatGPT after the conversation is complete. If ChatGPT is still asking you questions, answer them there instead of pasting that conversation here. Parse / validate preserves the raw response first, then validates it without changing canonical project records. If the final response declares returned files, attach those exact files in Authorized files for this stage before parsing.'
+new_response = 'Paste only the final strict JSON from ChatGPT after the conversation is complete. If ChatGPT is still asking you questions, answer them there instead of pasting that conversation here. Parse / validate preserves the raw response first, then validates it without changing canonical project records. If the final response declares returned files, attach only those exact returned files when this stage shows a returned-file control. Never reattach the original Stage 01 intent file; Stages 03 and 04 consume the canonical captured intent and upstream records embedded in their controlling prompts.'
+text = replace_once(text, old_response, new_response, 'returned response file guidance')
+app.write_text(text)
+
+print('repair applied')
