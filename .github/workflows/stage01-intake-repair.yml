@@ -7,20 +7,31 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   repair:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/stage01-intake-closure-20260830
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Apply repair
         run: node repair-stage01-intake-closure-v2.mjs
+      - name: Verify exact tested bytes
+        run: |
+          echo 'b5faf470ba7922fc6fea16c5061e49f0d7eb21345d174d1bc3f399664a561520  workbook.js' | sha256sum -c -
+          echo 'd1608844d4d54e31e3c1192a999e5ee22876c65c143fe0762baded97580ba853  workflow-schema.js' | sha256sum -c -
+          echo 'e787faac02a8942587ef314492f311425c5e8333dd1da4ac94eafeeedae02c0a  workflow-engine.js' | sha256sum -c -
+          echo '3125c9b684768bc0f3f7527d54c02f63ae047b3a2abb3d02d1f9c64bf8130a2e  prompt-engine.js' | sha256sum -c -
+          echo '9e4cf971680c2caa6666c6ac2ae7b30ce663efc13c7682b1abe8593a60f24f3e  response-ingestion.js' | sha256sum -c -
+          echo 'e233c04d70c4408be6b6a4335d0c5a0d6d3fbd953907ab69f5b081c4524d6196  verify-stage01-intake-closure.mjs' | sha256sum -c -
+          echo '585ab215d64a07e4936334b8fe35582c86b3102da414bc36e79b7f1b672f78ea  .github/workflows/pages.yml' | sha256sum -c -
       - name: Syntax and focused regression
         run: |
           node --check workbook.js
@@ -31,12 +42,12 @@ jobs:
           node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
           node verify-test-runtime.mjs
-      - name: Package tested source
+      - name: Commit exact tested source
         run: |
-          mkdir tested-stage01-repair
-          cp workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-stage01-intake-closure.mjs .github/workflows/pages.yml tested-stage01-repair/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tested-stage01-repair
-          path: tested-stage01-repair
-          if-no-files-found: error
+          rm -f fix-repair-generator.mjs repair-stage01-intake-closure.mjs repair-stage01-intake-closure-v2.mjs repair-failure.log stage01-repair-trigger.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Close Stage 01 intake accounting and correct Test IR prompt"
+          git pull --rebase origin fix/stage01-intake-closure-20260830
+          git push origin HEAD:fix/stage01-intake-closure-20260830
