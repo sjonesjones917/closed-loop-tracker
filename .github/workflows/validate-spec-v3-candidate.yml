@@ -1,0 +1,88 @@
+name: Validate complete v3 candidate
+on:
+  push:
+    branches:
+      - fix/exhaustive-intent-obligation-closure
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: spec-v3-zero-loss-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record candidate identity and exact delta
+        run: |
+          git rev-parse HEAD
+          git rev-parse origin/main
+          git diff --stat origin/main...HEAD
+          git diff --numstat origin/main...HEAD -- workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html test-runtime.js test-worker.js .github/workflows/pages.yml
+      - name: Syntax checks
+        run: |
+          for f in app-core.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js workbook.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs verify-test-runtime.mjs verify-controlling-spec.mjs; do node --check "$f"; done
+      - name: Verify candidate deterministic suite
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node verify-controlling-spec.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Inspect controlling implementation paths
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const files=['workbook.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','index.html','test-runtime.js','test-worker.js'];
+          const text=Object.fromEntries(files.map(f=>[f,fs.readFileSync(f,'utf8')]));
+          const around=(s,n,r=900)=>{const i=s.indexOf(n);return i<0?null:s.slice(Math.max(0,i-r),Math.min(s.length,i+n.length+r));};
+          const checks={
+            project3:text['workbook.js'].includes("PROJECT_SCHEMA='closed-loop-project/3'"),
+            response3:text['workflow-schema.js'].includes("RESPONSE_SCHEMA='closed-loop-stage-response/3'"),
+            noRuntimeDomainCatalogue:!/(PATENT \/ REGULATED FILING|SOFTWARE \/ MULTI-FILE SYSTEM|BUILDING \/ ARCHITECTURE \/ AEC|PHYSICAL \/ MECHANICAL \/ CAD)/.test(text['prompt-engine.js']),
+            intakeManifestInEngine:text['workflow-engine.js'].includes('intakeCoverageManifest'),
+            obligationManifestInEngine:text['workflow-engine.js'].includes('obligationManifest'),
+            accountingClosureInEngine:text['workflow-engine.js'].includes('accountingClosure'),
+            stage1FailClosed:text['response-ingestion.js'].includes('INCOMPLETE_ACCOUNTING'),
+            stage4WrongManifestRejected:text['response-ingestion.js'].includes('WRONG_ACCOUNTING_MANIFEST'),
+            captureOncePrompt:text['prompt-engine.js'].includes('PROJECT MEMORY — CAPTURE ONCE, REUSE EVERYWHERE'),
+            stage4NoResupply:/do not ask the human to resend/i.test(text['prompt-engine.js']),
+            humanLegacyMigration:text['project-store.js'].includes('human-project/30')||text['workbook.js'].includes('human-project/30'),
+            directV2Migration:/closed-loop-project\/2/.test(text['project-store.js'])&&/closed-loop-project\/3/.test(text['project-store.js']),
+            structuredNextAction:/operationalNextAction[\s\S]{0,5000}actionType/.test(text['workflow-engine.js']),
+            testIrKind:text['workflow-schema.js'].includes("['NONE','TEST_IR']"),
+            workerNoNetwork:text['test-worker.js'].includes('self.fetch=undefined')&&text['test-worker.js'].includes('self.XMLHttpRequest=undefined'),
+            promptVisualBaseline:text['index.html'].includes('.prompt{height:clamp(260px,45vh,520px);')&&text['index.html'].includes('.expandable-prompt{max-height:280px}')&&text['index.html'].includes('textarea{min-height:92px;resize:vertical}')&&text['index.html'].includes('.stage-output{min-height:220px}')
+          };
+          console.log(JSON.stringify(checks,null,2));
+          for(const [file,needle] of [
+            ['workflow-engine.js','intakeCoverageManifest'],
+            ['workflow-engine.js','obligationManifest'],
+            ['workflow-engine.js','operationalNextAction'],
+            ['prompt-engine.js','PROJECT MEMORY — CAPTURE ONCE, REUSE EVERYWHERE'],
+            ['response-ingestion.js','INCOMPLETE_ACCOUNTING'],
+            ['project-store.js','human-project/30']
+          ]) console.log(`\n===== ${file}: ${needle} =====\n${around(text[file],needle)}`);
+          if(Object.entries(checks).some(([,value])=>!value))process.exitCode=1;
+          NODE
+      - name: Exercise local Chromium workflow and responsive layout
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser() { for attempt in 1 2 3; do if node "$1"; then return 0; fi; test "$attempt" -lt 3 || return 1; done; }
+          run_browser verify-browser.mjs
+          run_browser verify-browser-extra.mjs
