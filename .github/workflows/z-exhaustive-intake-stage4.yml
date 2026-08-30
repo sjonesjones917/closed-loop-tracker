@@ -35,8 +35,8 @@ jobs:
           python3 fix-accounting-verifier.py
           python3 fix-stage1-input-version.py
           python3 fix-stage3-prompt.py
-          python3 fix-subject-neutral-prompt-tests.py
           python3 fix-stage1-deliverable-boundary.py
+          python3 fix-subject-neutral-prompt-tests.py
           python3 fix-pages-v3-proof.py
       - name: Align acceptance report with controlling schemas and metrics
         shell: bash
