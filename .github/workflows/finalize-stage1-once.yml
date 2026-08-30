@@ -1,0 +1,65 @@
+name: Finalize Stage 01 retained state once
+on:
+  push:
+    branches: [implementation/closed-loop-v3]
+    paths: [.github/workflows/finalize-stage1-once.yml]
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair retained Stage 01 canonicalization
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();p.schema=core.SCHEMA;p.stages=p.stages&&typeof p.stages==='object'?p.stages:{};for(let n=1;n<=30;n++){const s=p.stages[n]||p.stages[String(n)]||blankStage(n);p.stages[n]={...blankStage(n),...s,number:n,authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{},acceptedResponseIds:safe(s.acceptedResponseIds),revisions:safe(s.revisions)};}p.activeView=views.includes(p.activeView)?p.activeView:'Overview';p.activeStage=Math.max(1,Math.min(30,Number(p.activeStage||String(p.job?.CURRENT_STAGE||'').match(/\\d+/)?.[0]||1)));p.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[],...(p.release||{})};engine.ensureShape(p);engine.recalculate(p);return p;}"
+          new="function ensureState(p){p=p&&typeof p==='object'?p:core.createBlankState();p.schema=core.SCHEMA;p.stages=p.stages&&typeof p.stages==='object'?p.stages:{};for(let n=1;n<=30;n++){const s=p.stages[n]||p.stages[String(n)]||blankStage(n);p.stages[n]={...blankStage(n),...s,number:n,authorizedFiles:safe(s.authorizedFiles),acceptedData:s.acceptedData&&typeof s.acceptedData==='object'?s.acceptedData:{},humanData:s.humanData&&typeof s.humanData==='object'?s.humanData:{},acceptedResponseIds:safe(s.acceptedResponseIds),revisions:safe(s.revisions)};}p.activeView=views.includes(p.activeView)?p.activeView:'Overview';p.activeStage=Math.max(1,Math.min(30,Number(p.activeStage||String(p.job?.CURRENT_STAGE||'').match(/\\d+/)?.[0]||1)));p.release={gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[],...(p.release||{})};engine.ensureShape(p);if(typeof engine.migrateLegacyStage01Accounting==='function')engine.migrateLegacyStage01Accounting(p);engine.recalculate(p);return p;}"
+          if old not in s: raise SystemExit('ensureState target not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Complete non-browser proof
+        run: |
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-v3-contract.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-single-supply-prompts.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Browser acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/http.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit proven repair
+        run: |
+          git config user.name closed-loop-integrator
+          git config user.email closed-loop-integrator@users.noreply.github.com
+          git add app-core.js
+          git commit -m 'Canonicalize retained Stage 01 accounting on every app load path'
+          git push origin HEAD:implementation/closed-loop-v3
