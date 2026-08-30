@@ -24,11 +24,9 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
  for(const token of [
   'I need a patent application for my project',
   'MAINFRAME_INVENTION_DISCLOSURE.zip',
-  'do not ask the human to re-enter facts that are already present in those materials',
   'BLOCKING_NOW',
   'ASK_NOW_NONBLOCKING',
   'LATER_RESOLVABLE',
-  'derive the complete foreseeable set of human-only questions from the actual project request, accessible supplied materials, and current canonical context',
   'classify every supplied unit exactly once',
   'humanInputRequestContract',
   'temporaryKey',
@@ -38,6 +36,7 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
   'allowedValues',
   'Do not invent requestKey, required, whyNeeded, expectedAnswer'
  ])if(!r.prompt.includes(token))throw new Error('Stage 01 subject-neutral patent fixture is missing generic intake behavior or actual fixture context: '+token);
+ if(!/derive the complete foreseeable set of (?:genuinely )?human-only questions from the actual (?:user|project) request, accessible supplied materials, and current canonical context/i.test(r.prompt))throw new Error('Stage 01 subject-neutral fixture does not derive human-only questions from actual project context.');
  const source=fs.readFileSync('prompt-engine.js','utf8');
  for(const forbidden of ['PATENT / REGULATED FILING','intended jurisdiction(s)','filing route or application type','inventor identity','government funding','joint-research circumstances'])if(source.includes(forbidden))throw new Error('Patent fixture leaked into the runtime prompt engine as a project-subject branch: '+forbidden);
  if(r.prompt.includes('Treat any human-supplied files, links, references, records, or other materials as opaque authorized inputs'))throw new Error('Stage 01 still treats supplied human material as opaque instead of usable intake.');
@@ -45,7 +44,7 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
 """
 text=text[:a]+replacement+text[b:]
 
-# The Stage 01 locality regression deliberately combines positive intake requirements above
-# with the existing forbidden1 leakage patterns in verify-prompt-semantics.mjs. This proves
-# Stage 01 is complete intake while rejecting Stage 02/03 work without depending on one prose sentence.
+# Actual one-time capture is proven separately by verify-intake-obligation-accounting.mjs,
+# which requires originalIntentFileReattachmentRequired=false and an empty Stage 04 intent-file handoff.
+# This fixture tests subject-neutral Stage 01 intake behavior without depending on one prose sentence.
 p.write_text(text)
