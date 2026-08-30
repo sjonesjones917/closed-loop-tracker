@@ -1,0 +1,54 @@
+name: One-time Stage 04 captured-intent hotfix 2
+on:
+  push:
+    branches: ['fix/stage4-captured-intent']
+    paths: ['.github/workflows/stage4-hotfix2.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply exact Stage 04 correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="4:'Compile atomic requirement proposals for this current job from authorized User Job Input, supplied project materials sent with this Stage 04 instruction and actually readable in the executing context, and legitimately applicable Stage 03 external-source research, preserving provenance for each obligation. A supplied project material is human-authority input, not automatically independent external authority. Do not assume access to any file, link, package, or conversation used for an earlier stage. When a listed non-inline material is needed for Stage 04, the operator must attach or provide it with this Stage 04 instruction in the agent conversation where this stage is run. If a required material is not actually available, ask the human conversationally to attach or provide the original before final JSON. Do not ask the human to retype or summarize material merely because you cannot access it, and never infer substantive contents from a filename, path, link label, claimed hash, or metadata. If a required material remains inaccessible, return BLOCKED with the exact MISSING_ARTIFACT or MISSING_INPUT reason rather than fabricating a complete requirement set. Each proposed requirement should express one independently testable obligation where possible and record type, mandatory/optional status, governing source or user-input relationship, exact source location when applicable, authority, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, and notes. The application assigns REQ_ID and controlled requirement-set identity after validated ingestion. Do not derive requirements from the target product or an existing implementation merely because that implementation contains a behavior.',"
+          new="4:'Compile atomic requirement proposals for this current job from the complete application-supplied Stage 04 obligation universe: current User Job Input, the accepted Stage 01 job definition, human-origin obligations already captured from supplied materials, accepted Stage 03 external-source research, candidate external-source obligations, and their application-owned provenance identities. Treat the application-supplied obligation manifest as the complete input set for this compilation pass. Do not ask the human to reattach, resend, retype, summarize, or restate a user-intent file or other supplied material merely because this is a new stage or a new agent conversation. Information already captured into current canonical User Job Input, accepted Stage 01 data, intake-accounting entries, evidence, or the Stage 04 obligation manifest is authoritative input for this stage and must be used directly. Original file bytes are required again only when the application explicitly identifies a specific uncaptured byte-dependent obligation that cannot be established from the canonical captured content; filename presence alone is never such a reason. If the application-provided obligation universe itself is incomplete, return BLOCKED with the exact missing canonical obligation identity or missing byte-dependent input; do not convert that defect into a repeated human upload request. For every obligation identity, map it to one or more atomic requirements, retained nonnormative context, explicitly inapplicable with reason, or blocked with reason; no obligation may disappear. Each proposed requirement should express one independently testable obligation where possible and record type, mandatory/optional status, governing source or user-input relationship, exact source location when applicable, authority, applicability, dependencies, prohibitions, defined terms, observable satisfaction condition, intended verification method, expected evidence, failure condition, severity, and notes. The application assigns REQ_ID and controlled requirement-set identity after validated ingestion. Do not derive requirements from the target product or an existing implementation merely because that implementation contains a behavior.',"
+          if old not in s: raise SystemExit('Stage 04 procedure text not found')
+          s=s.replace(old,new,1)
+          # Replace the legacy Stage 04 repeat-upload handoff if present.
+          s=s.replace("if(materials.length){lines.push('MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION');for(const item of materials)lines.push('- '+item.label+' — '+item.type);lines.push('These materials are not embedded in the prompt.\\nAttach or provide them in the agent conversation where this Stage 04 instruction is run. Do not assume access to any earlier stage conversation. If a required material is unavailable, ask the human to attach or provide the original before final JSON. Do not ask the human to retype or summarize its contents. Do not infer contents from a filename, path, link label, claimed hash, or metadata.\\nIf required material remains inaccessible, return BLOCKED with the exact missing-item reason.');}","if(materials.length){lines.push('CAPTURED STAGE 04 MATERIAL CONTEXT');for(const item of materials)lines.push('- '+item.label+' — '+item.type);lines.push('These labels identify material already represented in current canonical intake/obligation context. Do not ask the human to attach the material again unless the application explicitly marks a specific byte-dependent obligation as uncaptured and unavailable.');}")
+          p.write_text(s)
+
+          a=Path('app-core.js'); s=a.read_text()
+          marker="function stageArtifactHelpText(n){\n  const supplied=suppliedFileMaterialLabels();"
+          replacement="function stageArtifactHelpText(n){\n  if(n===4)return 'Use the captured current User Job Input, accepted Stage 01 intake, and application-generated Stage 04 obligation manifest. Do not reattach the user-intent file unless the application identifies a specific uncaptured byte-dependent obligation.';\n  const supplied=suppliedFileMaterialLabels();"
+          if marker not in s: raise SystemExit('stageArtifactHelpText marker not found')
+          a.write_text(s.replace(marker,replacement,1))
+
+          v=Path('verify-prompt-semantics.mjs'); s=v.read_text()
+          checks="\n// Stage 04 captured-intent regression.\n{\n const src=fs.readFileSync('prompt-engine.js','utf8');\n if(/operator must attach or provide it with this Stage 04 instruction/i.test(src))throw new Error('Stage 04 still requires repeated attachment.');\n if(/ask the human.*attach or provide the original before final JSON/i.test(src))throw new Error('Stage 04 still requests repeated upload.');\n if(!/Do not ask the human to reattach, resend, retype, summarize, or restate a user-intent file/i.test(src))throw new Error('Stage 04 captured-intent invariant missing.');\n}\n"
+          if 'Stage 04 captured-intent regression' not in s:
+            idx=s.rfind('console.log'); s=s[:idx]+checks+s[idx:] if idx>=0 else s+checks; v.write_text(s)
+          PY
+      - name: Verify exact correction
+        run: |
+          node --check prompt-engine.js
+          node --check app-core.js
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+          ! grep -qi "operator must attach or provide it with this Stage 04 instruction" prompt-engine.js
+          grep -q "Do not ask the human to reattach, resend, retype, summarize, or restate a user-intent file" prompt-engine.js
+      - name: Commit corrected source
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/stage4-hotfix.yml .github/workflows/stage4-hotfix2.yml
+          git add prompt-engine.js app-core.js verify-prompt-semantics.mjs
+          git commit -m "Fix Stage 04 repeated intent-file requests"
+          git push origin HEAD:fix/stage4-captured-intent
