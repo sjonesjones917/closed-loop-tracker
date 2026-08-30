@@ -142,7 +142,7 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 }
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
-negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
+negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/3"','TRUNCATED_RESPONSE');
 negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
 negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
 negative('wrong root type',()=> '[]','INVALID_ROOT');
