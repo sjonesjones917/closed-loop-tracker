@@ -125,6 +125,7 @@ jobs:
       - name: Prove one-time supply, closure, lifecycle, and browser behavior
         shell: bash
         run: |
+          rm .github/workflows/stage04-canonical-intent-ledger-finalize.yml
           node --check app-core.js
           node --check workflow-schema.js
           node --check workflow-engine.js
@@ -157,7 +158,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          rm .github/workflows/stage04-canonical-intent-ledger-finalize.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
           git add -A
