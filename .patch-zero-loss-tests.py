@@ -8,8 +8,6 @@ p.write_text(s)
 
 p=Path('prompt-engine.js')
 s=p.read_text()
-# Canonical prompt hashes always consume JSON-normalized plain data. Keep the
-# canonical hasher strict; normalize imported/cross-realm prompt context first.
 s=s.replace("hash.sha256Value(record.fields||record)","hash.sha256Value(JSON.parse(JSON.stringify(record.fields||record)))")
 s=s.replace("const contextSignature=hash.sha256Value(contextManifest)","const contextSignature=hash.sha256Value(JSON.parse(JSON.stringify(contextManifest)))")
 anchor='Capture every material human-authority statement that is actually available and relevant to the job definition in the accepted Stage 01 job definition so later stages can consume it canonically.'
@@ -52,6 +50,46 @@ replacements=[
 ]
 for old,new in replacements:
     if old in s:s=s.replace(old,new)
+
+# Replace every remaining Stage-01 prompt-token test that hard-codes a project subject
+# with the controlling subject-neutral intake invariants. The patent scenario remains a
+# fixture input, but patent-specific wording is not required in the generated prompt.
+old_block=""" const required=[
+  'do not ask the human to re-enter facts that are already present in those materials',
+  'Do not block Stage 01 merely because information will be needed by a later',
+  'Stage 01 does not require every fact needed to execute later stages',
+  'A request such as \"prepare a patent application for this project\" is sufficient to define a patent-application drafting job at Stage 01',
+  'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers',
+  'Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome',
+  'humanInputRequestContract',
+  'temporaryKey',
+  'whyRequired',
+  'affectedStageFields',
+  'answerType',
+  'allowedValues',
+  'Do not invent requestKey, required, whyNeeded, expectedAnswer'
+ ];"""
+new_block=""" const required=[
+  'do not ask the human to re-enter facts that are already present in those materials',
+  'Do not block Stage 01 merely because information will be needed by a later',
+  'Stage 01 does not require every fact needed to execute later stages',
+  'MANDATORY STAGE 01 HUMAN-INTAKE GATE',
+  'BLOCKING_NOW',
+  'ASK_NOW_NONBLOCKING',
+  'LATER_RESOLVABLE',
+  'Nonblocking means the human may defer; it does not mean the agent may skip the question',
+  'Never ask the human to repeat information available in supplied materials',
+  'Never silently drop an intake identity',
+  'humanInputRequestContract',
+  'temporaryKey',
+  'whyRequired',
+  'affectedStageFields',
+  'answerType',
+  'allowedValues',
+  'Do not invent requestKey, required, whyNeeded, expectedAnswer'
+ ];"""
+if old_block in s:s=s.replace(old_block,new_block)
+
 lines=[]
 for line in s.splitlines():
     if "Stage 01 specialist intake adaptation is missing." in line:
