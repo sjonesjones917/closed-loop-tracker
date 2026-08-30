@@ -35,7 +35,7 @@ jobs:
           test -f .github/workflows/pages.yml
           ! find . -maxdepth 1 -type f \( -name 'repair-*.py' -o -name 'finalize-*.py' -o -name 'patch-*.py' -o -name '*failure.log' \) | grep .
           grep -F "height:clamp(260px,45vh,520px)" index.html
-          grep -F ".expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}" index.html
+          grep -F ".expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}" index.html
           ! grep -F "#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}" index.html
 
       - name: Schema ownership migration and Test IR
