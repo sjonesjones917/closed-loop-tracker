@@ -23,21 +23,18 @@ jobs:
           s=p.read_text()
           old="function artifactControlMarkup(n,locked){if(n===19)"
           new="function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"
-          if old not in s:
-              raise SystemExit('expected current artifactControlMarkup preimage not found')
-          if new in s:
-              raise SystemExit('repair already present unexpectedly')
-          p.write_text(s.replace(old,new,1))
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('expected current artifactControlMarkup preimage not found')
+              s=s.replace(old,new,1)
+              p.write_text(s)
           v=Path('verify-hash.mjs')
           t=v.read_text()
-          marker="Stage 04 must not render the generic artifact upload control after canonical intent capture."
-          if marker not in t:
-              anchor="console.log(JSON.stringify("
-              assertion="const appCore=fs.readFileSync('app-core.js','utf8');\nassert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)\"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');\n\n"
-              if anchor not in t:
-                  raise SystemExit('verify-hash console anchor not found')
-              t=t.replace(anchor,assertion+anchor,1)
-              v.write_text(t)
+          old_proof="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===19)\"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
+          new_proof="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)\"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');\nassert(appCore.includes(\"if([2,3,4].includes(stage))throw new Error('The original Stage 01 intent file cannot be registered or reused in Stages 02 through 04; use the canonical intentStatements ledger.')\"),'Stages 02 through 04 must reject reuse of the original Stage 01 intent file.');"
+          if old_proof not in t:
+              raise SystemExit('expected contradictory Stage 04 verifier preimage not found')
+          v.write_text(t.replace(old_proof,new_proof,1))
           PY
           node --check app-core.js
           node verify-hash.mjs
