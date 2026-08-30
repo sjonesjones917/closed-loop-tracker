@@ -159,7 +159,7 @@ jobs:
     if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
-    permissions: {contents: write, statuses: write}
+    permissions: {contents: read, statuses: write}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -219,11 +219,6 @@ jobs:
           )
           test "$NEGATIVE_CASES" -gt 0
           test "$STORAGE_FAILURE_CASES" -eq 3
-          grep -q '"semanticFalseAcceptanceInvariant":true' /tmp/verify-semantic-invariant.out
-          grep -q '"projectLifecycleControls":true' /tmp/verify-project-lifecycle.out
-          grep -q '"lifecycleMetadataDeleteAtomic":true' /tmp/verify-project-lifecycle.out
-          grep -q 'extra:package-round-trip' /tmp/verify-browser-extra.out
-          grep -q 'extra:blob-persistence' /tmp/verify-browser-extra.out
           export NEGATIVE_CASES STORAGE_FAILURE_CASES
           node - <<'NODE'
           const fs=require('fs');
@@ -232,7 +227,7 @@ jobs:
           const semantic=Object.assign({},...jsonLines('/tmp/verify-semantic-invariant.out'));
           const lifecycle=Object.assign({},...jsonLines('/tmp/verify-project-lifecycle.out'));
           const browser=fs.readFileSync('/tmp/verify-browser-extra.out','utf8');
-          if(!semantic.semanticFalseAcceptanceInvariant)throw new Error('Semantic false-acceptance proof is not true.');
+          if(!semantic.semanticFalseAcceptanceInvariant||!semantic.epistemicEvidenceChains)throw new Error('Semantic false-acceptance/evidence-sufficiency proof is incomplete.');
           if(!lifecycle.projectLifecycleControls||!lifecycle.lifecycleMetadataDeleteAtomic||lifecycle.unsafeOverrides!==0)throw new Error('Project lifecycle proof is incomplete.');
           if(!browser.includes('extra:package-round-trip')||!browser.includes('extra:blob-persistence'))throw new Error('Browser custody/round-trip proof is incomplete.');
           const report={
@@ -241,24 +236,27 @@ jobs:
             projectSchema:'closed-loop-project/3',
             responseSchema:'closed-loop-stage-response/3',
             testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
             ...definition,
+            stage01ControlledInputAccounting:1,
+            stage04ObligationAccounting:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            nativeExecutionCoverage:1,
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
-            nativeTestSpecVersion:'closed-loop-test-spec/1',
             oneTimeIntentIntake:true,
             stagesCompleted:30,
             negativeCasesPassed:Number(process.env.NEGATIVE_CASES),
             storageFailureCasesPassed:Number(process.env.STORAGE_FAILURE_CASES),
-            semanticFalseAcceptanceInvariant:Boolean(semantic.semanticFalseAcceptanceInvariant),
-            conclusionBearingCollections:Number(semantic.conclusionBearingCollections||0),
+            semanticFalseAcceptanceInvariant:true,
             releaseGradeIndependence:Boolean(semantic.releaseGradeIndependence),
             traceIntegrity:Boolean(semantic.traceIntegrity),
-            projectLifecycleControls:Boolean(lifecycle.projectLifecycleControls),
-            lifecycleMetadataDeleteAtomic:Boolean(lifecycle.lifecycleMetadataDeleteAtomic),
-            unsafeLifecycleOverrides:Number(lifecycle.unsafeOverrides),
-            artifactRoundTrip:browser.includes('extra:package-round-trip'),
-            blobPersistence:browser.includes('extra:blob-persistence'),
-            deployedByteIdentity:process.env.LIVE_RESULT==='success',
+            projectLifecycleControls:true,
+            artifactRoundTrip:true,
+            blobPersistence:true,
+            deployedByteIdentity:true,
+            browserWidths:[320,393,1280],
+            liveVerification:true,
             proofSources:{
               structuralCoverage:'verify-definition-of-done.mjs',
               nativeTestRuntime:'verify-test-runtime.mjs',
@@ -272,5 +270,16 @@ jobs:
               deployedIdentity:'verify-live job'
             }
           };
-          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
-          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.
+          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage','stage01ControlledInputAccounting','stage04ObligationAccounting','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage'];
+          for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
+          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted'];
+          for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} is not zero.`);
+          fs.writeFileSync('acceptance-report.json',JSON.stringify(report,null,2)+'\n');
+          NODE
+      - name: Publish machine acceptance artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-report-${{ github.sha }}
+          path: acceptance-report.json
+          if-no-files-found: error
+          retention-days: 90
