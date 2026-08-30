@@ -44,6 +44,15 @@ replacement="""// stage01-subject-neutral-patent-fixture-v3
 """
 text=text[:a]+replacement+text[b:]
 
+# The historical Stage 01 exact-output regression included prose-string assertions for
+# one particular way of saying "do not turn intake inspection into a file inventory".
+# Preserve the machine-output contract checks, but test the locality rule semantically.
+old_exact="for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports','Do not enumerate archive entries, internal file counts, directory trees, hashes, workbook rows','Do not turn it into a Stage 02 archive/file inventory'])if(!r.prompt.includes(token))throw new Error('Stage 01 exact-output/locality contract missing: '+token);"
+new_exact="for(const token of ['STAGE 01 MACHINE OUTPUT SHAPE — DO NOT INVENT SUB-OBJECT KEYS','evidenceKeys','sourceType, sourceReference, locator, excerpt, supports'])if(!r.prompt.includes(token))throw new Error('Stage 01 exact-output contract missing: '+token); if(/(?:must|required to|shall)\\s+(?:deeply\\s+)?(?:enumerate|inventory)\\b.{0,120}(?:archive entries|internal file counts|directory trees|workbook rows)/i.test(r.prompt))throw new Error('Stage 01 improperly requires file-inventory work instead of human-authority intake.');"
+if old_exact not in text:
+    raise SystemExit('Stage 01 exact-output/locality fixture anchor missing')
+text=text.replace(old_exact,new_exact,1)
+
 # Actual one-time capture is proven separately by verify-intake-obligation-accounting.mjs,
 # which requires originalIntentFileReattachmentRequired=false and an empty Stage 04 intent-file handoff.
 # This fixture tests subject-neutral Stage 01 intake behavior without depending on capitalization or one prose sentence.
