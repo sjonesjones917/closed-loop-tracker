@@ -29,7 +29,7 @@ helper=anchor+"""function prepareStage4Prerequisites(p){
   p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false,RESEARCH_GAPS_AND_BLOCKERS:'NONE'};
   p.stages[3].acceptedData={...p.stages[3].agentData};
   engine.recalculate(p);
-  if(p.stages[1].status!=='COMPLETE'||p.stages[3].status!=='COMPLETE')throw new Error('Stage 4 prerequisite fixture did not become gate-complete.');
+  if(p.stages[1].status!=='COMPLETE'||p.stages[3].status!=='COMPLETE')throw new Error('Stage 4 prerequisite fixture did not become gate-complete: '+JSON.stringify({stage1:{status:p.stages[1].status,gate:p.stages[1].gate},stage3:{status:p.stages[3].status,gate:p.stages[3].gate}}));
   return p;
 }
 """
