@@ -6,31 +6,71 @@ new="""    if count is not None and found<count:\n        raise SystemExit(f'gua
 if old not in t: raise SystemExit('repair helper guard source not found')
 t=t.replace(old,new,1)
 t=t.replace("${show(j.EXACT_DELIVERABLE_REQUESTED)}\\n\\n${stage>1?`PERSISTED PROJECT INPUT", "${show(j.EXACT_DELIVERABLE_REQUESTED)}\\n\\n${stage>1?`ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT")
-old_ingest='''replace('response-ingestion.js',"  const errors=issues.filter(item=>item.severity!==\'WARNING\');", "  validateAccountingClosure(project,envelope,stageNumber,issues);\\n  const errors=issues.filter(item=>item.severity!==\'WARNING\');",1)'''
-new_ingest='''replace('response-ingestion.js',"  return {valid:issues.every(item=>item.severity!==\'ERROR\')", "  validateAccountingClosure(project,envelope,stageNumber,issues);\\n  return {valid:issues.every(item=>item.severity!==\'ERROR\')",1)'''
+old_ingest='''replace('response-ingestion.js',"  const errors=issues.filter(item=>item.severity!==\\'WARNING\\');", "  validateAccountingClosure(project,envelope,stageNumber,issues);\\n  const errors=issues.filter(item=>item.severity!==\\'WARNING\\');",1)'''
+new_ingest='''replace('response-ingestion.js',"  return {valid:issues.every(item=>item.severity!==\\'ERROR\\')", "  validateAccountingClosure(project,envelope,stageNumber,issues);\\n  return {valid:issues.every(item=>item.severity!==\\'ERROR\\')",1)'''
 if old_ingest not in t: raise SystemExit('ingestion insertion transform not found')
 t=t.replace(old_ingest,new_ingest,1)
 p.write_text(t)
 exec(compile(t,str(p),'exec'),{'__file__':str(p),'__name__':'__main__'})
+
+# Complete the accounting fields across the authoritative workbook field inventory and closed schema.
+wp=Path('workbook.js');w=wp.read_text()
+old_stage1="'INPUT_SET_VERSION','INPUT_SET_CONTENTS','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE']"
+new_stage1="'INPUT_SET_VERSION','INPUT_SET_CONTENTS','INTAKE_ACCOUNTING','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE']"
+if w.count(old_stage1)!=1: raise SystemExit(f'Stage 1 field inventory guard mismatch: {w.count(old_stage1)}')
+w=w.replace(old_stage1,new_stage1,1)
+old_stage4="'OPTIONAL_REQUIREMENTS','BLOCKED_REQUIREMENTS','STAGE_DECISION','DECISION_EVIDENCE']"
+new_stage4="'OPTIONAL_REQUIREMENTS','BLOCKED_REQUIREMENTS','OBLIGATION_ACCOUNTING','STAGE_DECISION','DECISION_EVIDENCE']"
+if w.count(old_stage4)!=1: raise SystemExit(f'Stage 4 field inventory guard mismatch: {w.count(old_stage4)}')
+w=w.replace(old_stage4,new_stage4,1)
+wp.write_text(w)
+
+sp=Path('workflow-schema.js');s=sp.read_text()
+old_overrides="""const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
+  '1':Object.freeze({DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null})}),
+  '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})})
+});"""
+new_overrides="""const STAGE_FIELD_TYPE_OVERRIDES=Object.freeze({
+  '1':Object.freeze({
+    DESIRED_SOURCE_COUNT:Object.freeze({valueType:'INTEGER',enumValues:Object.freeze([]),nullable:true,normalizerKey:null,closedProperties:null}),
+    INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['items'])})
+  }),
+  '2':Object.freeze({SOURCE_APPLICABILITY_DETERMINATION:Object.freeze({valueType:'STRING',enumValues:Object.freeze(['APPLICABLE_SOURCES_ESTABLISHED','NO_APPLICABLE_EXTERNAL_SOURCE','UNDETERMINED']),nullable:false,normalizerKey:null,closedProperties:null})}),
+  '4':Object.freeze({
+    OBLIGATION_ACCOUNTING:Object.freeze({valueType:'OBJECT',enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:Object.freeze(['items'])})
+  })
+});"""
+if s.count(old_overrides)!=1: raise SystemExit(f'accounting type override guard mismatch: {s.count(old_overrides)}')
+s=s.replace(old_overrides,new_overrides,1)
+sp.write_text(s)
+
+# The generated worker opener is normalized after generation.
 wp=Path('test-worker.js')
 w=wp.read_text();bad="\\'use strict\\';"
 if w.startswith(bad): w="'use strict';"+w[len(bad):]
 elif not w.startswith("'use strict';"): raise SystemExit('generated test-worker.js has an unexpected opener')
 wp.write_text(w)
+
+# Keep execution-package identity caller-controlled when supplied, otherwise derive it from canonical project state.
 sp=Path('project-store.js');s=sp.read_text()
 old_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');const engine=globalThis.closedLoopWorkflowEngine,jobId=projectIdentity(project),ids="
 new_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');jobId=jobId||projectIdentity(project);const engine=globalThis.closedLoopWorkflowEngine,ids="
 if s.count(old_decl)!=1: raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
 sp.write_text(s.replace(old_decl,new_decl,1))
+
+# Bind prompt accounting to the actual canonical state object passed into body().
 pp=Path('prompt-engine.js');ps=pp.read_text()
 if '${accountingPromptBlock(stage,project)}' not in ps: raise SystemExit('prompt accounting state binding anchor missing')
 pp.write_text(ps.replace('${accountingPromptBlock(stage,project)}','${accountingPromptBlock(stage,state)}',1))
+
+# Correct acceptance assertions to the actual workbook API and the controlling visible Stage 16 label.
 vp=Path('verify-bundle-v3.mjs');v=vp.read_text();old_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].name,'CORRECT THE ROOT CAUSE');";new_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].title,'CORRECT THE ROOT CAUSE');"
 if old_assert not in v: raise SystemExit('v3 stage-title proof anchor missing')
 vp.write_text(v.replace(old_assert,new_assert,1))
 for name in ['verify.mjs','verify-complete.mjs','verify-definition-of-done.mjs','verify-prompt-semantics.mjs','verify-ingestion.mjs']:
     fp=Path(name)
     if fp.exists(): fp.write_text(fp.read_text().replace('Revise the Responsible Layer','Correct the Root Cause').replace('REVISE THE RESPONSIBLE LAYER','CORRECT THE ROOT CAUSE'))
+
 # Existing ingestion fixtures must satisfy the new closed accounting contract; do not weaken product validation.
 ip=Path('verify-ingestion.mjs');iv=ip.read_text()
 anchor="  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  const records={};"
