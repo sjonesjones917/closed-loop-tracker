@@ -11,6 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
+      - name: Correct accounting repair metadata
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.repair-accounting-closure.py'); s=p.read_text()
+          s=s.replace("  'INTENT-STATEMENT':Object.freeze({\n    INPUT_UNIT_ID:","  'INTENT-STATEMENT':Object.freeze({\n    INTENT_STATEMENT_ID:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    INPUT_UNIT_ID:",1)
+          s=s.replace("  'OBLIGATION-DISPOSITION':Object.freeze({\n    OBLIGATION_ID:","  'OBLIGATION-DISPOSITION':Object.freeze({\n    DISPOSITION_ID:Object.freeze({valueType:VALUE_TYPES.STRING,enumValues:Object.freeze([]),nullable:false,normalizerKey:null,closedProperties:null}),\n    OBLIGATION_ID:",1)
+          p.write_text(s)
+          PY
       - name: Apply accounting repair
         run: python3 .repair-accounting-closure.py
       - name: Prove schema, ingestion, prompt memory and visuals
