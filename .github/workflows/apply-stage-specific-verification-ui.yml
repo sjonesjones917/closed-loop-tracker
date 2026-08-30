@@ -1,0 +1,79 @@
+name: Apply stage-specific verification UI routing
+on:
+  push:
+    branches: [fix/stage-specific-verification-ui-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage-specific-verification-ui-20260830
+          fetch-depth: 0
+      - name: Apply source correction
+        shell: python
+        run: |
+          from pathlib import Path
+
+          app = Path('app-core.js')
+          text = app.read_text()
+
+          anchor = "function nativeStage22Tests(){"
+          helper = "function stagePlanItems(stage=current.activeStage,operation=selectedOperation(stage)){const n=Number(stage),items=engine.testExecutionPlan(current).items;if(n===22)return items.filter(item=>item.testType==='DETERMINISTIC');if(n===23)return items.filter(item=>item.testType==='MEANING');if(n===24)return items.filter(item=>item.testType==='ADVERSARIAL');return items;}\n"
+          if helper not in text:
+              if anchor not in text: raise SystemExit('native Stage 22 anchor not found')
+              text = text.replace(anchor, helper + anchor, 1)
+
+          old = "return engine.testExecutionPlan(current).items.filter(item=>item.executionMode==='APPLICATION_DETERMINISTIC'"
+          new = "return stagePlanItems(22,'COMPLETE').filter(item=>item.executionMode==='APPLICATION_DETERMINISTIC'"
+          if old in text: text = text.replace(old,new,1)
+          elif new not in text: raise SystemExit('native Stage 22 plan target not found')
+
+          old = "action=displayedStageAction(stage),plan=engine.testExecutionPlan(current),operatorAction=({AI_REVIEW:'SEND_TO_INDEPENDENT_REVIEWER',EXTERNAL_AGENT_TOOL:'SEND_TO_TOOL_AGENT',EXTERNAL_SYSTEM:'USE_EXTERNAL_SYSTEM',HUMAN_INSPECTION:'HUMAN_INSPECTION'})[action.actionType]||null,ids=plan.items.filter"
+          new = "action=displayedStageAction(stage),planItems=stagePlanItems(stage,operation),operatorAction=({AI_REVIEW:'SEND_TO_INDEPENDENT_REVIEWER',EXTERNAL_AGENT_TOOL:'SEND_TO_TOOL_AGENT',EXTERNAL_SYSTEM:'USE_EXTERNAL_SYSTEM',HUMAN_INSPECTION:'HUMAN_INSPECTION'})[action.actionType]||null,ids=planItems.filter"
+          if old in text: text = text.replace(old,new,1)
+          elif new not in text: raise SystemExit('execution package plan target not found')
+
+          old = "const plan=engine.testExecutionPlan(current);if(!plan.total&&n!==6)return '';\n  const actionRows=plan.items.map"
+          new = "const plan=engine.testExecutionPlan(current),planItems=stagePlanItems(n,operation);if(!planItems.length&&n!==6)return '';\n  const actionRows=planItems.map"
+          if old in text: text = text.replace(old,new,1)
+          elif new not in text: raise SystemExit('verification guidance plan target not found')
+
+          text = text.replace("blocked=plan.items.filter(x=>!x.executableNow),next=blocked[0]||plan.items.find(x=>x.operatorAction!=='NO_ACTION')||plan.items[0]||null", "blocked=planItems.filter(x=>!x.executableNow),next=blocked[0]||planItems.find(x=>x.operatorAction!=='NO_ACTION')||planItems[0]||null", 1)
+
+          old = "${plan.unsupportedApplicationTestIds.length?`<div class=\"notice danger\"><strong>Invalid application executor claim.</strong><br>No registered application-native executor exists for ${esc(plan.unsupportedApplicationTestIds.join(', '))}. Request a corrected Stage 6 test definition; do not substitute or fabricate native execution.</div>`:''}"
+          new = "${planItems.filter(item=>item.executionMode==='APPLICATION_DETERMINISTIC'&&!item.applicationExecutorSupported).length?`<div class=\"notice danger\"><strong>Invalid application executor claim.</strong><br>No registered application-native executor exists for ${esc(planItems.filter(item=>item.executionMode==='APPLICATION_DETERMINISTIC'&&!item.applicationExecutorSupported).map(item=>item.testId).join(', '))}. Request a corrected Stage 6 test definition; do not substitute or fabricate native execution.</div>`:''}"
+          if old in text: text = text.replace(old,new,1)
+
+          old = "external=engine.testExecutionPlan(current).items.some(item=>item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&item.operatorAction!=='BLOCKED')"
+          new = "external=stagePlanItems(n,selectedOperation(n)).some(item=>item.executionMode!=='APPLICATION_DETERMINISTIC'&&item.operatorAction!=='NO_ACTION'&&item.operatorAction!=='BLOCKED')"
+          if old in text: text = text.replace(old,new,1)
+          elif new not in text: raise SystemExit('stage purpose external-plan target not found')
+
+          old = "if($('#run-native-tests'))$('#run-native-tests').onclick=()=>{current.activeStage=22;return runNativeStage22Tests();};"
+          new = "if($('#run-native-tests'))$('#run-native-tests').onclick=()=>{if(Number(current.activeStage)!==22){announce('native execution blocked for this stage');alert('This stage does not have a valid application-owned native result commit path. Use the exact current stage action instead; the application will not write a Stage 22 result into another stage.');return;}return runNativeStage22Tests();};"
+          if old in text: text = text.replace(old,new,1)
+          elif new not in text: raise SystemExit('native test click target not found')
+
+          app.write_text(text)
+
+          engine = Path('workflow-engine.js')
+          text = engine.read_text()
+          old = "const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,items=testStages?testExecutionPlan(project).items.filter(i=>!ids||ids.has(i.testId)):[],send=new Map()"
+          new = "const op=String(operation||'').toUpperCase(),testStages=stage===12||[22,23,24].includes(stage)||(stage===17&&['VERIFY','REGRESSION'].includes(op))||(stage===19&&['VERIFY','REGRESSION_VERIFY'].includes(op)),ids=testIds?new Set(testIds.map(String)):null,allItems=testExecutionPlan(project).items,stageItems=stage===22?allItems.filter(i=>i.testType==='DETERMINISTIC'):stage===23?allItems.filter(i=>i.testType==='MEANING'):stage===24?allItems.filter(i=>i.testType==='ADVERSARIAL'):allItems,items=testStages?stageItems.filter(i=>!ids||ids.has(i.testId)):[],send=new Map()"
+          if old in text: text = text.replace(old,new,1)
+          elif new not in text: raise SystemExit('executionHandoff stage filtering target not found')
+          engine.write_text(text)
+
+          Path('.github/workflows/apply-stage-specific-verification-ui.yml').unlink()
+      - name: Commit source correction to feature branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js workflow-engine.js .github/workflows/apply-stage-specific-verification-ui.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "Use stage-specific verification plans in operator flow"
+          git push origin HEAD:fix/stage-specific-verification-ui-20260830
