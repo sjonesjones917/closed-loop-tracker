@@ -915,11 +915,12 @@ const TEST_IR=Object.freeze({
   version:'closed-loop-test-spec/1',
   capability:'CLOSED_LOOP_TEST_IR',
   executableKinds:Object.freeze(['NONE','TEST_IR']),
-  operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','SELECT_JSON_PATH','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','BYTE_COMPARE','ASSERT_EXISTS','ASSERT_TYPE','ASSERT_EQ','ASSERT_NE','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']),
-  limits:Object.freeze({maxSteps:64,maxTextBytes:16777216,maxCollectionItems:100000,maxRegexLength:2000,maxCsvCells:250000})
+  operations:Object.freeze(['LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML','SELECT_JSON_PATH','SELECT_XML','COUNT','SUM','MIN','MAX','SORT','UNIQUE','HASH_SHA256','REGEX','COMPARE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL','BYTE_COMPARE','ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE']),
+  limits:Object.freeze({maxTotalInputBytes:33554432,maxTextBytes:16777216,maxDecompressedBytes:67108864,maxSteps:128,maxSelectorDepth:32,maxParsedDepth:64,maxParsedNodes:250000,maxCollectionItems:100000,maxRegexPatternBytes:2048,maxRegexLength:2000,maxRegexInputBytes:2097152,maxCsvCells:250000,maxXmlNodes:100000,workerTimeoutMs:5000,maxArchiveExpansionBytes:67108864})
 });
 const TEST_IR_FORBIDDEN_STEP_KEYS=Object.freeze(['code','javascript','python','shell','command','eval','function','script']);
 function validateTestIRSpec(spec){
+  const runtime=globalThis.closedLoopTestRuntime;if(runtime?.validateSpec)return runtime.validateSpec(spec);
   const issues=[];
   if(!spec||typeof spec!=='object'||Array.isArray(spec))issues.push('EXECUTABLE_SPEC must be an object.');
   if(spec?.version!==TEST_IR.version)issues.push(`EXECUTABLE_SPEC.version must be ${TEST_IR.version}.`);
@@ -934,6 +935,7 @@ function validateTestIRSpec(spec){
   return {valid:issues.length===0,issues};
 }
 function validateTestIRBindings(bindings){
+  const runtime=globalThis.closedLoopTestRuntime;if(runtime?.validateBindings)return runtime.validateBindings(bindings);
   const issues=[];
   if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))return {valid:false,issues:['EXECUTABLE_INPUT_BINDINGS must be an object.']};
   for(const [name,binding] of Object.entries(bindings)){
