@@ -5,7 +5,7 @@ vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
 const h=globalThis.closedLoopHash;
 const assert=(ok,msg)=>{if(!ok)throw new Error(msg);};
 const reject=(name,make)=>{let ok=false;try{h.stableStringify(make());}catch(e){ok=e instanceof TypeError;}assert(ok,`${name} must be rejected.`);};
-assert(h.sha256Text('')==='e3b0c44298fc1c149afbf4c09ef7cbfd2d0f369700ac4c8de6bc044da447e6'.replace('4c09ef7cbfd2d0f369700ac4c8de6bc044da447e6','e4649b934ca495991b7852b855'),'empty SHA-256 vector failed');
+assert(h.sha256Text('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855','empty SHA-256 vector failed');
 assert(h.sha256Text('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad','abc SHA-256 vector failed');
 assert(h.stableStringify({b:1,a:2})===h.stableStringify({a:2,b:1}),'object key ordering is not canonical');
 for(const [name,make] of [
