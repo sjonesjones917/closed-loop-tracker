@@ -41,8 +41,33 @@ jobs:
           node --check verify-definition-of-done.mjs
           node --check verify-project-lifecycle.mjs
           node --check verify-test-runtime.mjs
-      - name: Verify generic deterministic Test IR runtime
-        run: node verify-test-runtime.mjs
+          node --check verify-test-runtime-v3.mjs
+          node --check verify-test-runtime-limits.mjs
+          node --check verify-v3-contract.mjs
+          node --check verify-v3-migration.mjs
+          node --check verify-intake-obligation-accounting.mjs
+          node --check verify-exhaustive-stage1-stage3-stage4.mjs
+      - name: Verify generic deterministic Test IR runtime and security boundaries
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-exhaustive-stage1-stage3-stage4.mjs
+      - name: Verify v3 schema, ownership, and accounting contracts
+        run: |
+          node verify-v3-contract.mjs
+          node verify-intake-obligation-accounting.mjs
+          node verify-exhaustive-stage1-stage3-stage4.mjs
+      - name: Verify deterministic v2-to-v3 migration
+        run: node verify-v3-migration.mjs
+      - name: Verify Test IR validation, security, limits, and deterministic runtime
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
       - name: Verify canonical serialization and SHA-256
         run: node verify-hash.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
@@ -58,7 +83,9 @@ jobs:
       - name: Prove semantic false-acceptance invariant
         run: node verify-semantic-invariant.mjs
       - name: Derive definition-of-done coverage metrics
-        run: node verify-definition-of-done.mjs
+        run: |
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
       - name: Prove compact rigorous project lifecycle controls
         run: node verify-project-lifecycle.mjs
       - name: Enforce one application shell and responsible layers
@@ -76,7 +103,7 @@ jobs:
           ! grep -R "document.write" --include='*.js' --include='*.html' .
           node - <<'NODE'
           const fs=require('fs'),html=fs.readFileSync('index.html','utf8');
-          const expected=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
           const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
           if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
           const tokens=new Set();
@@ -117,7 +144,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - run: node build-test-project.mjs && node verify-v3-contract.mjs && node verify-v3-migration.mjs && node verify-intake-obligation-accounting.mjs && node verify-exhaustive-stage1-stage3-stage4.mjs && node verify-test-runtime.mjs && node verify-test-runtime-v3.mjs && node verify-test-runtime-limits.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -170,12 +197,19 @@ jobs:
           test "$TEST_RESULT" = success
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
+          node verify-v3-contract.mjs > /tmp/verify-v3-contract.out
+          node verify-v3-migration.mjs > /tmp/verify-v3-migration.out
+          node verify-intake-obligation-accounting.mjs > /tmp/verify-intake-accounting.out
+          node verify-exhaustive-stage1-stage3-stage4.mjs > /tmp/verify-exhaustive-intake.out
           node verify-test-runtime.mjs > /tmp/verify-test-runtime.out
+          node verify-test-runtime-v3.mjs > /tmp/verify-test-runtime-v3.out
+          node verify-test-runtime-limits.mjs > /tmp/verify-test-runtime-limits.out
           node verify-ingestion.mjs > /tmp/verify-ingestion.out
           node verify.mjs > /tmp/verify-source.out
           node verify-complete.mjs > /tmp/verify-complete.out
           node verify-semantic-invariant.mjs > /tmp/verify-semantic-invariant.out
           node verify-definition-of-done.mjs > /tmp/verify-definition-of-done.out
+          node verify-v3-definition-of-done.mjs > /tmp/verify-v3-definition-of-done.out
           node verify-project-lifecycle.mjs > /tmp/verify-project-lifecycle.out
           grep -q 'verify-test-runtime: PASS' /tmp/verify-test-runtime.out
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
@@ -233,8 +267,18 @@ jobs:
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
-            projectSchema:'closed-loop-project/2',
-            responseSchema:'closed-loop-stage-response/2',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+  testIrSchema:'closed-loop-test-spec/1',
+  verificationPackageSchema:'closed-loop-verification-package/1',
+  stage01IntakeCoverage:1,
+  stage04ObligationCoverage:1,
+  mandatoryEvidenceSufficiencyCoverage:1,
+  nativeExecutionCoverage:1,
+  unsupportedTestIrTreatedAsExecutable:0,
+  externalAssertionsOverridingApplicationProof:0,
+  nativeExecutionReceiptsFabricatedExternally:0,
+  releaseAcceptedWithContradiction:0,
             ...definition,
             nativeTestRuntime:true,
             nativeTestRuntimeVersion:'closed-loop-test-runtime/1',
@@ -264,9 +308,9 @@ jobs:
               deployedIdentity:'verify-live job'
             }
           };
-          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','releaseArtifactIdentityCoverage'];
+          const coverageKeys=['fieldOwnershipCoverage','applicationDerivationCoverage','typedRelationshipCoverage','stage01IntakeCoverage','stage04ObligationCoverage','acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage','exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainCoverage','mandatoryEvidenceSufficiencyCoverage','releaseArtifactIdentityCoverage','nativeExecutionCoverage'];
           for(const key of coverageKeys)if(report[key]!==1)throw new Error(`${key} is not 100%.`);
-          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven'];
+          const zeroKeys=['unauthorizedFieldMutationsAccepted','canonicalMutationsBeforeAcceptance','partialCommitsAfterInjectedFailure','staleProposalsAccepted','crossProjectRelationshipsAccepted','historicalScopeSatisfyingCurrentGates','unmatchedDeliveryFilesAuthorized','appendOnlyHistoryRewritesAccepted','favorableAgentVerdictsOverridingContradictoryObservations','structurallyInsufficientEvidenceProducingMandatorySatisfaction','externallySupportedUnestablishedIndependenceTreatedAsProven','unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof','nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'];
           for(const key of zeroKeys)if(report[key]!==0)throw new Error(`${key} must be zero.`);
           if(!report.nativeTestRuntime||!report.deployedByteIdentity||!report.semanticFalseAcceptanceInvariant||!report.projectLifecycleControls||!report.lifecycleMetadataDeleteAtomic||report.unsafeLifecycleOverrides!==0||!report.artifactRoundTrip||!report.blobPersistence)throw new Error('Acceptance report proof reduction is incomplete.');
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
