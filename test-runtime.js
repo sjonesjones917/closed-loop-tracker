@@ -61,7 +61,7 @@ function validateBindings(bindings){
 function supports(test){
   if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
   if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='CUSTOM_PIPELINE')return false;
+  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!=='TEST_IR')return false;
   if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
   return validateSpec(field(test,'EXECUTABLE_SPEC')).valid&&validateBindings(field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
 }
