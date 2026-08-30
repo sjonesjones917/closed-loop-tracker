@@ -1,4 +1,5 @@
 name: Repair Stage 01 migration and prove exact app once
+# trigger: browser-seed-stage1-accounting
 on:
   push:
     branches: [implementation/closed-loop-v3]
