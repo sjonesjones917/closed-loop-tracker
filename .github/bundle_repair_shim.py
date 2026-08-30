@@ -13,32 +13,27 @@ t=t.replace(old_ingest,new_ingest,1)
 p.write_text(t)
 exec(compile(t,str(p),'exec'),{'__file__':str(p),'__name__':'__main__'})
 wp=Path('test-worker.js')
-w=wp.read_text()
-bad="\\'use strict\\';"
-if w.startswith(bad):
-    w="'use strict';"+w[len(bad):]
-elif not w.startswith("'use strict';"):
-    raise SystemExit('generated test-worker.js has an unexpected opener')
+w=wp.read_text();bad="\\'use strict\\';"
+if w.startswith(bad): w="'use strict';"+w[len(bad):]
+elif not w.startswith("'use strict';"): raise SystemExit('generated test-worker.js has an unexpected opener')
 wp.write_text(w)
-sp=Path('project-store.js')
-s=sp.read_text()
+sp=Path('project-store.js');s=sp.read_text()
 old_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');const engine=globalThis.closedLoopWorkflowEngine,jobId=projectIdentity(project),ids="
 new_decl="if(!project||typeof project!=='object')throw new Error('A canonical project is required for an execution package.');jobId=jobId||projectIdentity(project);const engine=globalThis.closedLoopWorkflowEngine,ids="
-if s.count(old_decl)!=1:
-    raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
-s=s.replace(old_decl,new_decl,1)
-sp.write_text(s)
-pp=Path('prompt-engine.js')
-ps=pp.read_text()
+if s.count(old_decl)!=1: raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
+sp.write_text(s.replace(old_decl,new_decl,1))
+pp=Path('prompt-engine.js');ps=pp.read_text()
 if '${accountingPromptBlock(stage,project)}' not in ps: raise SystemExit('prompt accounting state binding anchor missing')
-ps=ps.replace('${accountingPromptBlock(stage,project)}','${accountingPromptBlock(stage,state)}',1)
-pp.write_text(ps)
-vp=Path('verify-bundle-v3.mjs')
-v=vp.read_text()
-old_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].name,'CORRECT THE ROOT CAUSE');"
-new_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].title,'CORRECT THE ROOT CAUSE');"
+pp.write_text(ps.replace('${accountingPromptBlock(stage,project)}','${accountingPromptBlock(stage,state)}',1))
+vp=Path('verify-bundle-v3.mjs');v=vp.read_text();old_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].name,'CORRECT THE ROOT CAUSE');";new_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].title,'CORRECT THE ROOT CAUSE');"
 if old_assert not in v: raise SystemExit('v3 stage-title proof anchor missing')
 vp.write_text(v.replace(old_assert,new_assert,1))
 for name in ['verify.mjs','verify-complete.mjs','verify-definition-of-done.mjs','verify-prompt-semantics.mjs','verify-ingestion.mjs']:
     fp=Path(name)
     if fp.exists(): fp.write_text(fp.read_text().replace('Revise the Responsible Layer','Correct the Root Cause').replace('REVISE THE RESPONSIBLE LAYER','CORRECT THE ROOT CAUSE'))
+# Existing ingestion fixtures must satisfy the new closed accounting contract; do not weaken product validation.
+ip=Path('verify-ingestion.mjs');iv=ip.read_text()
+anchor="  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  const records={};"
+replacement="  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n  if(stage===1){const m=engine.currentIntakeCoverageManifest(p);stageData.INTAKE_ACCOUNTING={items:m.units.map(u=>({unitId:u.unitId,disposition:'INCORPORATED'}))};}\n  if(stage===4){const m=engine.currentObligationManifest(p);stageData.OBLIGATION_ACCOUNTING={items:m.items.map(o=>({obligationId:o.obligationId,disposition:'RETAINED_CONTEXT'}))};}\n  const records={};"
+if iv.count(anchor)!=1: raise SystemExit(f'ingestion fixture accounting anchor mismatch: {iv.count(anchor)}')
+ip.write_text(iv.replace(anchor,replacement,1))
