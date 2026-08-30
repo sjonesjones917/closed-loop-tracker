@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const core=globalThis.closedLoopCore;
+const engine=globalThis.closedLoopWorkflowEngine;
+const prompts=globalThis.closedLoopPromptEngine;
+const p=core.createBlankState('JOB-STAGE4-INTENT-CAPTURE');
+engine.ensureShape(p);
+Object.assign(p.job,{JOB_ID:'JOB-STAGE4-INTENT-CAPTURE',JOB_TITLE:'Intent capture regression',EXACT_USER_OBJECTIVE_VERBATIM:'Create the requested product from the supplied intent.',SUPPLIED_MATERIALS_INVENTORY:'[{"type":"FILE","filename":"intent.pdf"}]',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'NOT APPLICABLE'});
+p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Requested product',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({capturedHumanAuthority:[{statementId:'INPUT-UNIT-0001',source:'intent.pdf p.1',statement:'The product must preserve the stated interface constraint.'}]})};
+p.stages[1].acceptedData={...p.stages[1].agentData};
+p.stages[1].status='COMPLETE';
+p.stages[2].status='COMPLETE';
+p.stages[3].status='COMPLETE';
+const prompt=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'}).prompt;
+if(!prompt.includes('STAGE 01 CAPTURED HUMAN-AUTHORITY INTAKE'))throw new Error('Stage 04 prompt does not carry forward accepted Stage 01 human-authority capture.');
+if(!prompt.includes('The product must preserve the stated interface constraint.'))throw new Error('Stage 04 prompt lost captured human intent content.');
+for(const forbidden of ['operator must attach or provide it with this Stage 04 instruction','ask the human conversationally to attach or provide the original','Do not assume access to any file, link, package, or conversation used for an earlier stage'])if(prompt.includes(forbidden))throw new Error('Stage 04 still requires duplicate intent-file attachment: '+forbidden);
+const stage1=prompts.buildPromptRecord(1,p,{operation:'COMPLETE'}).prompt;
+if(!stage1.includes('CAPTURE SUPPLIED HUMAN AUTHORITY ONCE'))throw new Error('Stage 01 does not require durable one-time capture of supplied human authority.');
+if(!stage1.includes('INPUT_SET_CONTENTS'))throw new Error('Stage 01 capture has no durable canonical carrier.');
+console.log('Stage 04 canonical intent carry-forward regression passed.');
