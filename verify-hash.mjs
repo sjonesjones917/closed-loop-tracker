@@ -34,7 +34,7 @@ const workerSource=fs.readFileSync('test-worker.js','utf8');
 assert(runtimeSource.includes('new Worker(`test-worker.js${BUILD_QUERY}`)'),'Worker URL must inherit the exact runtime build query.');
 assert(workerSource.includes("const runtimeQuery=self.location?.search||'';")&&workerSource.includes('importScripts(`test-runtime.js${runtimeQuery}`)'),'Worker runtime import must inherit the exact worker build query.');
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
-assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
+assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';if(n===19)"),'Stage 04 must not render the generic artifact upload control after canonical intent capture.');
+assert(appCore.includes("if([2,3,4].includes(stage))throw new Error('The original Stage 01 intent file cannot be registered or reused in Stages 02 through 04; use the canonical intentStatements ledger.')"),'Stages 02 through 04 must reject reuse of the original Stage 01 intent file.');
 
 console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,runtimeBuildIdentity,runtimeGraphFiles,stage04RepeatAttachmentControlAbsent:true}));
