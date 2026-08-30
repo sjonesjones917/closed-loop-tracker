@@ -1,0 +1,48 @@
+name: Restore prompt box size
+on:
+  push:
+    branches:
+      - fix/restore-prompt-box-size
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore original prompt preview height only
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          text=p.read_text()
+          exact='  #prompt-heading .expandable-prompt:not(.expanded){max-height:88px}\n'
+          if exact not in text:
+              raise SystemExit('Expected 88px prompt override not found; no changes made.')
+          text=text.replace(exact,'',1)
+          p.write_text(text)
+          PY
+          git diff --check
+          test "$(git diff --numstat -- index.html | awk '{print $1+$2}')" = "1"
+          ! grep -q '#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}' index.html
+          grep -q '.expandable-prompt{max-height:280px}' index.html
+      - name: Commit only the one-line reversal and remove this temporary workflow
+        shell: bash
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git rm .github/workflows/restore-prompt-box-size.yml
+          git add index.html
+          git diff --cached --check
+          git commit -m "Restore prompt box size"
+          git push origin HEAD:fix/restore-prompt-box-size
+      - name: Open minimal pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh pr create --base main --head fix/restore-prompt-box-size --title "Restore prompt box size" --body "One-line UI reversal only: remove the mobile 88px prompt-preview cap so the existing 280px prompt box behavior is restored. No workflow, schema, routing, ingestion, or other UI behavior is changed in the final diff." || true
