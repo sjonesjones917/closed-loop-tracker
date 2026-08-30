@@ -91,3 +91,5 @@ jobs:
           git add -A
           git commit -m "Close Stage 01 intake and Stage 04 obligation accounting"
           git push origin HEAD:implementation/closed-loop-v3
+
+# one-time trigger for the permanent Stage 01/04 accounting closure
