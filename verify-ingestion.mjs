@@ -62,6 +62,10 @@ function validEnvelope(p,stage,promptRecord){
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
   }
+  if(stage===4){
+    const obligationManifest=engine.stage04ObligationManifest(p);
+    stageData.OBLIGATION_ACCOUNTING=(obligationManifest.entries||[]).map(entry=>({obligationId:String(entry.obligationId||''),disposition:'RETAINED_NONNORMATIVE_CONTEXT',requirementTempKeys:[],reason:'Synthetic ingestion fixture retains this application-enumerated obligation as controlling context.'}));
+  }
   return {
     schema:schema.RESPONSE_SCHEMA,
     jobId:p.job.JOB_ID,
