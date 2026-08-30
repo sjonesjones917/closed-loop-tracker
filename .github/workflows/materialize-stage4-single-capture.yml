@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   materialize:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,21 +31,29 @@ jobs:
           Path('/tmp/materialize-stage4.js').write_text('\n'.join(lines) + '\n')
           PY
           node /tmp/materialize-stage4.js
+          git restore .github/workflows/pages.yml .github/workflows/materialize-stage4-single-capture.yml
+          cat >> verify-complete.mjs <<'NODE'
+          
+          const {execFileSync:runStage4Regression}=await import('node:child_process');
+          runStage4Regression(process.execPath,['verify-stage4-intent-reuse.mjs'],{stdio:'inherit'});
+          NODE
           node --check workflow-schema.js
           node --check response-ingestion.js
           node --check workflow-engine.js
           node --check prompt-engine.js
           node --check app-core.js
           node --check verify-stage4-intent-reuse.mjs
+          node --check verify-complete.mjs
           node verify-stage4-intent-reuse.mjs
           node verify-ingestion.mjs
           node verify-complete.mjs
-      - name: Commit the verified permanent repair
+      - name: Commit the verified source repair
         shell: bash
         run: |
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add -A
+          git add workflow-schema.js response-ingestion.js workflow-engine.js prompt-engine.js app-core.js verify-stage4-intent-reuse.mjs verify-complete.mjs
+          test -z "$(git diff --cached --name-only | grep '^.github/' || true)"
           git diff --cached --check
           git commit -m "Fix Stage 04 by enforcing single-capture intent reuse"
           git push origin HEAD:fix/stage4-single-capture
