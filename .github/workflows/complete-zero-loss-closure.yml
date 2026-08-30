@@ -21,6 +21,7 @@ jobs:
           python3 finalize-zero-loss.py
           python3 patch-browser-extra-v3.py
           python3 patch-all-stage-audit-v2.py
+          python3 patch-complete-30-stage-prompts.py
           python3 patch-stage01-operator.py
           python3 - <<'PY'
           from pathlib import Path
@@ -75,7 +76,7 @@ jobs:
         run: |
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git rm -f repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-stage01-operator.py .github/workflows/complete-zero-loss-closure.yml zero-loss-failure.log || true
+          git rm -f repair-zero-loss.py finalize-zero-loss.py patch-browser-extra-v3.py patch-all-stage-audit-v2.py patch-complete-30-stage-prompts.py patch-stage01-operator.py .github/workflows/complete-zero-loss-closure.yml zero-loss-failure.log || true
           git add workflow-engine.js workflow-schema.js prompt-engine.js response-ingestion.js app-core.js verify-browser.mjs verify-browser-extra.mjs verify-zero-loss-accounting.mjs verify-all-stage-prompts.mjs
           git commit -m "Make all 30 stage prompts explicit and context-complete [zero-loss-closure-applied]"
           git push origin HEAD:fix/closed-loop-v3-final-20260830
