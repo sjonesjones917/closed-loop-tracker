@@ -1,0 +1,22 @@
+name: Apply one-time intent verifier correction
+on:
+  push:
+    branches:
+      - fix/final-all-stage-prompts-20260830
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-all-stage-prompts-20260830
+      - run: python3 adjust-verifier.py
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-hash.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Verify canonical one-time intent reuse"
+          git push origin HEAD:fix/final-all-stage-prompts-20260830
