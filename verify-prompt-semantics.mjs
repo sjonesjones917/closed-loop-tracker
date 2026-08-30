@@ -54,6 +54,10 @@ function semanticIssues(record){
     if(!record.prompt.includes('If a material is named in SUPPLIED_MATERIALS_INVENTORY but its bytes are not available')||!record.prompt.includes('Do not ask the human to describe or re-enter its contents during Stage 01')||!record.prompt.includes('never infer substantive facts merely from the filename'))issues.push('STAGE01_MISSING_SUPPLIED_BYTES_RULE_MISSING');
     if(!record.prompt.includes('do not require the human to know those formats in advance')||!record.prompt.includes('absence of a downstream authoring, viewing, compiling, importing, simulation, manufacturing, filing, deployment, or other consuming system is not by itself a reason to downgrade an artifact to prose')||!record.prompt.includes('Only propose an implementation-ready'))issues.push('STAGE01_ARTIFACT_GENERATION_BOUNDARY_MISSING');
   }
+  if(record.stage===4){
+    if(!record.prompt.includes('Stage 04 is a compilation stage, not a second source-inspection or file-handoff stage')||!record.prompt.includes('return BLOCKED with INADEQUATE_PRIOR_OUTPUT'))issues.push('STAGE04_CANONICAL_COMPILATION_BOUNDARY_MISSING');
+    for(const leaked of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','The prompt does not include those materials'])if(record.prompt.includes(leaked))issues.push('STAGE04_ORIGINAL_MATERIAL_HANDOFF_LEAK');
+  }
   if(record.stage===6){
     for(const mode of ['APPLICATION_DETERMINISTIC','EXTERNAL_AGENT_TOOL','INDEPENDENT_AGENT_REVIEW','HUMAN_INSPECTION','EXTERNAL_SYSTEM','UNAVAILABLE'])if(!record.prompt.includes(mode))issues.push(`TEST_EXECUTION_MODE_MISSING_${mode}`);
     if(!record.prompt.includes('A TEST record is a verification specification')||!record.prompt.includes('Generating an executable or input test artifact and executing that artifact are separate boundaries')||!record.prompt.includes('return the actual artifact even if the downstream runner or verification tool is unavailable')||!record.prompt.includes('a filename, claimed hash, repository path, or code block is not possession of a file'))issues.push('TEST_DEFINITION_ARTIFACT_BOUNDARY_MISSING');
@@ -422,23 +426,28 @@ console.log(JSON.stringify({reliabilityV2PromptIsolation:true},null,2));
 console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorConclusionIsolation:true,stage12PriorSummaryIsolation:true},null,2));
 
 
-// stage04-stage-prompt-material-regression-v3
+// stage04-canonical-context-regression-v4
 {
   const p=baseProject();
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
-  const withoutAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  for(const token of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','design-input.pdf','These materials are not embedded in the prompt','Attach or provide them in the agent conversation where this Stage 04 instruction is run','Do not assume access to any earlier stage conversation','Do not ask the human to retype or summarize its contents','Do not infer contents from a filename'])if(!withoutAppCopy.prompt.includes(token))throw new Error('Stage 04 prompt-material handoff missing: '+token);
-  if(!withoutAppCopy.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 material handoff is not bound to prompt context identity.');
-  for(const prohibited of ['No second upload into the application is required','already attached and readable in this external conversation','Continue in the external agent conversation that already has','Required input file is missing'])if(withoutAppCopy.prompt.includes(prohibited))throw new Error('Stage 04 prompt still assumes prior-conversation continuity or discusses irrelevant app upload: '+prohibited);
-  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-OPTIONAL',stage:1,active:true,scope:{inputVersion:p.job.CURRENT_INPUT_VERSION},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-OPTIONAL',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+  const sourceScope={inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'};
+  const source={id:'SOURCE-STAGE04-CANONICAL',stage:2,active:true,scope:{...sourceScope},fields:{SOURCE_ID:'SOURCE-STAGE04-CANONICAL',TITLE:'CANONICAL-SOURCE-MARKER'}};
+  const research={id:'RESEARCH-STAGE04-CANONICAL',stage:3,active:true,scope:{...sourceScope},fields:{RESEARCH_ID:'RESEARCH-STAGE04-CANONICAL',SOURCE_ID:'SOURCE-STAGE04-CANONICAL',SOURCE_EVIDENCE:'CANONICAL-RESEARCH-MARKER'},relationships:{SOURCE_ID:'SOURCE-STAGE04-CANONICAL'}};
+  const candidate={id:'CANDIDATE-REQ-STAGE04-CANONICAL',stage:3,active:true,scope:{...sourceScope},fields:{CANDIDATE_REQ_ID:'CANDIDATE-REQ-STAGE04-CANONICAL',SOURCE_ID:'SOURCE-STAGE04-CANONICAL',CANDIDATE_OBLIGATION:'CANONICAL-CANDIDATE-MARKER'},relationships:{SOURCE_ID:'SOURCE-STAGE04-CANONICAL'}};
+  p.projectData.sources.push(source);p.projectData.research.push(research);p.projectData.candidateRequirements.push(candidate);
+  const record=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  for(const token of ['CANONICAL-SOURCE-MARKER','CANONICAL-RESEARCH-MARKER','CANONICAL-CANDIDATE-MARKER','Stage 04 is a compilation stage, not a second source-inspection or file-handoff stage','Do not request or re-inspect original project files merely because they appear in SUPPLIED_MATERIALS_INVENTORY','return BLOCKED with INADEQUATE_PRIOR_OUTPUT'])if(!record.prompt.includes(token))throw new Error('Stage 04 canonical-context prompt missing: '+token);
+  for(const prohibited of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Attach or provide them in the agent conversation where this Stage 04 instruction is run','The prompt does not include those materials','operator must attach or provide'])if(record.prompt.includes(prohibited))throw new Error('Stage 04 prompt still instructs original-material transport: '+prohibited);
+  if(record.contextManifest.executionHandoff?.conversationMaterials?.length)throw new Error('Stage 04 original materials remain bound as a prompt handoff.');
+  p.projectData.artifacts.push({id:'ARTIFACT-STAGE04-OPTIONAL',stage:1,active:true,scope:{inputVersion:'INPUT-v001'},fields:{ARTIFACT_ID:'ARTIFACT-STAGE04-OPTIONAL',FILENAME:'design-input.pdf',BYTE_SIZE:4,SHA256:'b'.repeat(64),ROLE:'SUPPLIED_PROJECT_INPUT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
   const withOptionalAppCopy=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(withOptionalAppCopy.prompt.includes('FILES YOU MUST RECEIVE'))throw new Error('An application-stored copy became a mandatory Stage 04 external handoff.');
-  for(const token of ['MATERIALS TO SEND WITH THIS STAGE 04 INSTRUCTION','Do not assume access to any earlier stage conversation'])if(!withOptionalAppCopy.prompt.includes(token))throw new Error('Optional browser custody weakened the Stage 04 prompt-material instruction: '+token);
-  p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'revised-design-input.pdf'}]);
+  if(withOptionalAppCopy.contextManifest.executionHandoff?.conversationMaterials?.length||withOptionalAppCopy.contextManifest.executionHandoff?.send?.length)throw new Error('Optional browser custody became a Stage 04 handoff requirement.');
+  const before=withOptionalAppCopy.contextSignature;
+  candidate.fields.CANDIDATE_OBLIGATION='CANONICAL-CANDIDATE-MARKER-REVISED';
   const revised=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(revised.bodySha256===withoutAppCopy.bodySha256||revised.contextSignature===withoutAppCopy.contextSignature)throw new Error('A changed Stage 04 material reference did not change prompt identity.');
+  if(revised.contextSignature===before||!revised.prompt.includes('CANONICAL-CANDIDATE-MARKER-REVISED'))throw new Error('A changed accepted Stage 03 candidate obligation did not change Stage 04 prompt identity/context.');
 }
-console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+console.log(JSON.stringify({stage04CanonicalContext:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
 {
   const p=baseProject();

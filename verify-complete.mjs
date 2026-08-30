@@ -321,22 +321,23 @@ assert(JSON.stringify(schema.STAGE_OPERATIONS[19])===JSON.stringify(['CONFIRM_FR
 console.log(JSON.stringify({stage22ProductHandoff:true,epistemicEffectiveEvidence:true,releaseContradictions:true},null,2));
 
 
-// stage04-stage-prompt-material-regression-v3
+// stage04-canonical-context-regression-v4
 {
-  const p=project('JOB-STAGE04-PROMPT-MATERIAL');
+  const p=project('JOB-STAGE04-CANONICAL-CONTEXT');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'design-input.pdf'}]);
   const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});
-  assert(handoff.conversationMaterials.length===1&&handoff.conversationMaterials[0].label==='design-input.pdf','Stage 04 did not derive the material that must accompany its instruction.');
-  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 input material incorrectly became a returned-file or canonical-artifact transport contract.');
+  assert(handoff.conversationMaterials.length===0,'Stage 04 incorrectly created an original-material conversation handoff.');
+  assert(handoff.send.length===0&&handoff.expectBack.length===0,'Stage 04 incorrectly became a file-transfer or returned-file contract.');
   const next=engine.operationalNextAction(p,4);
-  assert(next.includes('Send the Stage 04 instruction with design-input.pdf'),'Stage 04 next action does not identify the exact material to send with the prompt.');
-  assert(next.includes('The prompt does not include those materials'),'Stage 04 next action does not explain that copying the prompt does not transfer the file.');
+  assert(next.includes('It already contains the accepted Stage 03 findings and current User Job Input'),'Stage 04 next action does not explain its canonical input boundary.');
+  assert(!next.includes('design-input.pdf')&&!/attach|provide with the instruction|prompt does not include those materials/i.test(next),'Stage 04 next action still tells the operator to transport original project files.');
   const appSource=fs.readFileSync('app-core.js','utf8');
-  assert(appSource.includes('Send the Stage 04 instruction with the required material.'),'Stage 04 UI does not use the existing interaction notice for the concise handoff instruction.');
-  assert(!appSource.includes('stage04-material-handoff')&&!appSource.includes('No upload to this application is required.')&&!appSource.includes('Optional application file custody'),'Stage 04 still contains the redundant app-upload panel or self-directed upload warnings.');
-  assert(!appSource.includes('Required input file is missing. Add and verify'),'The rejected Stage 04 browser-upload hard block returned.');
+  assert(appSource.includes('The agent converts the accepted Stage 03 findings and current User Job Input into atomic, independently testable requirements.'),'Stage 04 purpose does not describe canonical compilation.');
+  assert(appSource.includes('Use the Stage 04 instruction as shown.'),'Stage 04 does not provide the concise current operator action.');
+  assert(appSource.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 still renders unrelated application file controls.');
+  for(const prohibited of ['Send the Stage 04 instruction with the required material.','Attach or provide with the instruction:','The prompt does not include those materials.'])assert(!appSource.includes(prohibited),'Stage 04 retained obsolete file-handoff UI: '+prohibited);
 }
-console.log(JSON.stringify({stage04PromptMaterialHandoff:true}));
+console.log(JSON.stringify({stage04CanonicalContextOnly:true}));
 {
   const p=project('JOB-EXECUTION-ROUTING-HARDENING');
   Object.assign(p.job,{CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',CURRENT_PRODUCT_ID:'PRODUCT-ROUTE'});
