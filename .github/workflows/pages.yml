@@ -1,4 +1,5 @@
 name: Verify and deploy
+# Single controlling verification and deployment workflow.
 
 on:
   push:
