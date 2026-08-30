@@ -18,9 +18,62 @@ jobs:
         run: |
           node - <<'NODE'
           const fs=require('fs');
+          const mustReplace=(text,from,to,label)=>{if(!text.includes(from))throw new Error(`Missing ${label}`);return text.replace(from,to);};
+
           let runtime=fs.readFileSync('test-runtime.js','utf8');
           runtime=runtime.replace('approximate comparison requires a positive absoluteTolerance or relativeTolerance.','approximate comparison requires a positive tolerance: absoluteTolerance or relativeTolerance.');
           fs.writeFileSync('test-runtime.js',runtime);
+
+          let engine=fs.readFileSync('workflow-engine.js','utf8');
+          engine=mustReplace(engine,
+            "const currentInput=String(currentScope(project).inputVersion||''),activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput);",
+            "const activeArtifacts=records(project,'artifacts').filter(a=>Number(a.stage||a.lineage?.stage||0)<=1&&upper(recordValue(a,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED');",
+            'Stage 04 current-input artifact filter');
+          engine=mustReplace(engine,
+`      conversationMaterials.push({
+        label:reference.label,
+        type:reference.type,
+        transferMode:reference.transferMode,
+        externalAccessStatus:'NOT_OBSERVABLE_BY_APPLICATION',
+        operatorAction:reference.transferMode==='AUTHORIZED_REFERENCE'?'Provide this reference with the Stage 04 instruction.':'Attach or provide the original material with the Stage 04 instruction.',
+        applicationUploadRequired:false,
+        optionalApplicationArtifactId:copy?.artifactId||null
+      });`,
+`      conversationMaterials.push({
+        label:reference.label,
+        type:reference.type,
+        transferMode:reference.transferMode,
+        externalAccessStatus:copy?'STORED_IN_APPLICATION_EXTERNAL_ACCESS_NOT_AUTOMATIC':'NOT_OBSERVABLE_BY_APPLICATION',
+        operatorAction:copy
+          ?'The application already has this verified artifact. Do not upload it to the application again. Send the stored copy to this external Stage 04 agent only when the agent must inspect the original bytes.'
+          :reference.transferMode==='AUTHORIZED_REFERENCE'
+            ?'Provide this reference to the external Stage 04 agent when it is needed.'
+            :'The application does not possess a verified stored copy. Provide the original material to the external Stage 04 agent if Stage 04 cannot establish the obligation universe without those bytes.',
+        applicationUploadRequired:false,
+        optionalApplicationArtifactId:copy?.artifactId||null
+      });`,
+            'Stage 04 material handoff');
+          engine=mustReplace(engine,
+            "if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}",
+            "if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials,missing=materials.filter(item=>item.transferMode!=='AUTHORIZED_REFERENCE'&&!item.optionalApplicationArtifactId);if(missing.length)return 'Stage 04 needs original bytes that are not in verified application custody: '+missing.map(item=>item.label).join(', ')+'. Provide those original bytes to the external Stage 04 agent. Do not re-upload any artifact the application already stores.';if(materials.length)return 'No application re-upload is required. Stage 04 reuses the job information and verified artifacts already captured. If the external agent must inspect original bytes, send the stored copies listed in the handoff; do not attach them to this application again. When the agent finishes, paste its final JSON response here.';}",
+            'Stage 04 next action');
+          fs.writeFileSync('workflow-engine.js',engine);
+
+          let prompt=fs.readFileSync('prompt-engine.js','utf8');
+          prompt=mustReplace(prompt,
+            'Do not assume access to any file, link, package, or conversation used for an earlier stage.',
+            'Use the current canonical User Job Input and the application-provided Stage 04 context as the retained semantic input universe; do not make the human re-supply information already captured. Browser-local custody does not automatically transfer original bytes into this external conversation.',
+            'Stage 04 prior-file assumption');
+          prompt=mustReplace(prompt,
+            'When a listed non-inline material is needed for Stage 04, the operator must attach or provide it with this Stage 04 instruction in the agent conversation where this stage is run.',
+            'When original bytes are genuinely needed to establish an obligation that is not already captured in the Stage 04 context, the operator sends the exact stored artifact to this external agent conversation. This is an executor handoff, not a second upload into the application.',
+            'Stage 04 transfer sentence');
+          prompt=mustReplace(prompt,
+            'If a required material is not actually available, ask the human conversationally to attach or provide the original before final JSON.',
+            'If required original bytes are genuinely unavailable to this executor, ask the operator to provide the exact original to this external conversation; never ask the human to upload again to the application when verified application custody already exists.',
+            'Stage 04 missing-material sentence');
+          fs.writeFileSync('prompt-engine.js',prompt);
+
           let p=fs.readFileSync('verify-prompt-semantics.mjs','utf8');
           for(const line of [
             "  if(!record.prompt.includes('PATENT / REGULATED FILING'))issues.push('PATENT_DOMAIN_RULE_MISSING');\n",
@@ -40,16 +93,33 @@ jobs:
             "  {...original,prompt:original.prompt.replace('SUBJECT-NEUTRAL DELIVERABLE ADAPTATION','TOOL POSSESSION CONTROLS ARTIFACT GENERATION')},\n  {...original,prompt:original.prompt.replace('Do not use or infer a hard-coded project-subject mode.','Infer a project-subject mode from keywords.')},\n  {...original,prompt:original.prompt.replace('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE','HUMAN COLLABORATION DISABLED')},");
           if(p.includes('PATENT_DOMAIN_RULE_MISSING')||p.includes('STAGE01_DOMAIN_INTAKE_BOUNDARY_MISSING'))throw new Error('Obsolete subject-specific acceptance assertions remain.');
           fs.writeFileSync('verify-prompt-semantics.mjs',p);
+
+          fs.writeFileSync('verify-stage4-retained-intent.mjs',`import fs from 'node:fs';\nimport vm from 'node:vm';\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine;\nconst assert=(value,message)=>{if(!value)throw new Error(message);};\nconst project=core.createBlankState('JOB-STAGE4-RETAINED-INTENT');engine.ensureShape(project);\nproject.job.EXACT_USER_OBJECTIVE_VERBATIM='Build exactly what the intent file requires.';\nproject.job.SUPPLIED_MATERIALS_INVENTORY='intent.txt';\nproject.job.CURRENT_INPUT_VERSION='INPUT-v001';\nproject.projectData.artifacts.push({id:'ARTIFACT-INTENT',stage:1,active:true,scope:{inputVersion:'INPUT-v001'},fields:{ARTIFACT_ID:'ARTIFACT-INTENT',FILENAME:'intent.txt',TYPE:'text/plain',VERSION:'1',BYTE_SIZE:17,SHA256:'a'.repeat(64),ROLE:'USER_SUPPLIED_INPUT',STORAGE_REFERENCE:'indexeddb://artifact/ARTIFACT-INTENT',AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED',NOTES:'captured once'},relationships:{},evidenceRefs:[]});\nconst material=()=>engine.executionHandoff(project,{stage:4,operation:'COMPLETE'}).conversationMaterials.find(item=>item.label==='intent.txt');\nlet item=material();assert(item?.optionalApplicationArtifactId==='ARTIFACT-INTENT','Initial Stage 04 handoff did not resolve the captured intent artifact.');assert(item.applicationUploadRequired===false,'Stage 04 requested a second application upload.');assert(/Do not upload it to the application again/.test(item.operatorAction),'Stage 04 does not explicitly prevent repeat application upload.');\nproject.job.CURRENT_INPUT_VERSION='INPUT-v002';item=material();assert(item?.optionalApplicationArtifactId==='ARTIFACT-INTENT','Clarification INPUT-v002 made the captured intent artifact disappear.');assert(item.applicationUploadRequired===false,'INPUT-v002 requested repeat application upload.');\nproject.job.CURRENT_INPUT_VERSION='INPUT-v003';item=material();assert(item?.optionalApplicationArtifactId==='ARTIFACT-INTENT','Clarification INPUT-v003 made the captured intent artifact disappear.');\nconst action=engine.operationalNextAction(project,4);assert(/No application re-upload is required/.test(action),'Stage 04 next action does not preserve first-capture reuse.');\nproject.projectData.artifacts[0].fields.AVAILABILITY='UNAVAILABLE';item=material();assert(!item?.optionalApplicationArtifactId,'Unavailable bytes were falsely treated as verified custody.');assert(/does not possess a verified stored copy/.test(item.operatorAction),'Byte-loss recovery is not explicit.');\nconst source=fs.readFileSync('workflow-engine.js','utf8');assert(!source.includes(\"activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput)\"),'Legacy Stage 04 input-version equality filter remains.');\nconst prompt=fs.readFileSync('prompt-engine.js','utf8');assert(/do not make the human re-supply information already captured/.test(prompt),'Stage 04 prompt does not preserve captured semantic input.');assert(/not a second upload into the application/.test(prompt),'Stage 04 prompt still conflates external handoff with application upload.');\nconsole.log(JSON.stringify({stage4RetainedIntentAcrossInputRevisions:true,noRepeatApplicationUpload:true,firstCaptureSemanticReuse:true,byteLossFailsClosed:true}));\n`);
+
+          let pages=fs.readFileSync('.github/workflows/pages.yml','utf8');
+          if(!pages.includes('node verify-stage4-retained-intent.mjs')){
+            pages=mustReplace(pages,'          node verify-full-cycle.mjs\n','          node verify-full-cycle.mjs\n          node verify-stage4-retained-intent.mjs\n','Stage 04 CI insertion');
+            pages=mustReplace(pages,'          node verify-project-lifecycle.mjs\n      - uses: actions/configure-pages@v5','          node verify-project-lifecycle.mjs\n          node verify-stage4-retained-intent.mjs\n      - uses: actions/configure-pages@v5','Stage 04 deploy proof insertion');
+          }
+          fs.writeFileSync('.github/workflows/pages.yml',pages);
           NODE
-          rm -f .diag-trigger .github/workflows/diag-ingestion.yml
+          rm -f .diag-trigger .github/workflows/diag-ingestion.yml .github/workflows/diag-gates.yml
       - name: Verify corrections before commit
         run: |
           node --check test-runtime.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
           node --check verify-prompt-semantics.mjs
+          node --check verify-stage4-retained-intent.mjs
           node verify.mjs
           node verify-v3-contract.mjs
           node verify-test-runtime-v3.mjs
+          node verify-stage4-retained-intent.mjs
           node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-v3-definition-of-done.mjs
       - name: Commit and remove one-time machinery
         run: |
           rm -f .github/workflows/fix-final-source.yml
@@ -57,5 +127,5 @@ jobs:
           git config user.email closed-loop-finalizer@users.noreply.github.com
           git add -A
           git diff --cached --quiet && exit 0
-          git commit -m 'Finish subject-neutral verification and Test IR diagnostics'
+          git commit -m 'Fix Stage 4 retained intent capture and reuse'
           git push origin HEAD:implementation/closed-loop-v3
