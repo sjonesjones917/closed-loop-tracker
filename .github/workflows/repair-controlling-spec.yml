@@ -1,3 +1,4 @@
+# rerun-after-stage4-fixture-repair
 name: One-time controlling specification materializer
 on:
   push:
