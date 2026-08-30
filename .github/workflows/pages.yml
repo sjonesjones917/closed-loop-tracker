@@ -17,7 +17,13 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "application deployment ready"
+      - uses: actions/checkout@v4
+      - name: Verify runtime JavaScript parses before deployment
+        run: |
+          set -euo pipefail
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            node --check "$file"
+          done
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
