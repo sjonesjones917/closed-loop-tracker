@@ -1,0 +1,39 @@
+name: Temporary Stage 4 token materializer
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tmp-stage4-token-materialize-20260830
+          fetch-depth: 0
+      - name: Apply exact prompt correction and cache identity
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old1="handoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds});if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';"
+          new1="rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:ids,runIds}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff;if(!handoff.send.length&&!handoff.withhold.length&&!handoff.expectBack.length)return '';"
+          old2="handoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}"
+          new2="rawHandoff=workflow.executionHandoff(state,{stage,operation,testIds:batchPlan?.triples?.map(item=>item.testId),runIds:batchPlan?.triples?.map(item=>item.runId)}),handoff=stage===4?{...rawHandoff,send:[]}:rawHandoff,promptHandoff={send:handoff.send,withhold:handoff.withhold,expectBack:handoff.expectBack}"
+          assert s.count(old1)==1
+          assert s.count(old2)==1
+          p.write_text(s.replace(old1,new1).replace(old2,new2))
+          p=Path('index.html')
+          s=p.read_text()
+          old='runtime-16a196a012385188'
+          new='runtime-c7f405d04aaeaf6c'
+          assert s.count(old)>0, s.count(old)
+          p.write_text(s.replace(old,new))
+          PY
+          git config user.name closed-loop-prompt-fix
+          git config user.email actions@users.noreply.github.com
+          git add prompt-engine.js index.html
+          git commit -m 'Materialize Stage 4 prompt fix and cache token'
+          git push origin HEAD:tmp-stage4-token-materialize-20260830
