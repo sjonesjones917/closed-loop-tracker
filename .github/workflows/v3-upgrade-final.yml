@@ -22,12 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply pending transformations in controlling order
-        run: |
-          if [ -f upgrade-v3.mjs ]; then node upgrade-v3.mjs; fi
-          if [ -f upgrade-v3-compat.mjs ]; then node upgrade-v3-compat.mjs; fi
-          if [ -f upgrade-v3-corrections.mjs ]; then node upgrade-v3-corrections.mjs; fi
-          node upgrade-v3-final.mjs
+      - name: Apply pending final transformation only
+        run: node upgrade-v3-final.mjs
       - name: Syntax
         run: for file in *.js *.mjs; do node --check "$file"; done
       - name: Schema and ownership architecture
@@ -77,4 +73,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Implement complete closed-loop v3 deterministic reliability contract"
           git push origin HEAD:implementation/closed-loop-v3
-# trigger: 2026-08-30 authoritative closure
