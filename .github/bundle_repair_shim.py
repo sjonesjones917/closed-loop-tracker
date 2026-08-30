@@ -28,3 +28,12 @@ if s.count(old_decl)!=1:
     raise SystemExit(f'generated project-store.js job identity guard mismatch: {s.count(old_decl)}')
 s=s.replace(old_decl,new_decl,1)
 sp.write_text(s)
+vp=Path('verify-bundle-v3.mjs')
+v=vp.read_text()
+old_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].name,'CORRECT THE ROOT CAUSE');"
+new_assert="assert.equal(core.STAGES.length,30);assert.equal(core.STAGES[15].title,'CORRECT THE ROOT CAUSE');"
+if old_assert not in v: raise SystemExit('v3 stage-title proof anchor missing')
+vp.write_text(v.replace(old_assert,new_assert,1))
+for name in ['verify.mjs','verify-complete.mjs','verify-definition-of-done.mjs','verify-prompt-semantics.mjs','verify-ingestion.mjs']:
+    fp=Path(name)
+    if fp.exists(): fp.write_text(fp.read_text().replace('Revise the Responsible Layer','Correct the Root Cause').replace('REVISE THE RESPONSIBLE LAYER','CORRECT THE ROOT CAUSE'))
