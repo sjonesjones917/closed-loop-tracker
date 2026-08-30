@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js']){
   vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 }
 const core=globalThis.closedLoopCore;
@@ -61,6 +61,7 @@ function validEnvelope(p,stage,promptRecord){
     if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
     records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];
   }
+  const accounting=stage===1?(()=>{const manifest=engine.intakeCoverageManifest(p);return {manifestId:manifest.manifestId,entries:manifest.units.map(unit=>({inputId:unit.unitId,disposition:'INCORPORATED',reason:'Controlled fixture accounts for this supplied input unit.'}))};})():stage===4?(()=>{const manifest=engine.obligationManifest(p),keys=(records.requirements||[]).map(x=>x.tempKey);return {manifestId:manifest.manifestId,entries:manifest.items.map(item=>({inputId:item.obligationId,disposition:keys.length?'REQUIREMENT':'RETAINED_CONTEXT',requirementTempKeys:keys.length?keys:undefined,reason:'Controlled fixture accounts for this obligation.'}))};})():undefined;
   return {
     schema:schema.RESPONSE_SCHEMA,
     jobId:p.job.JOB_ID,
@@ -69,7 +70,7 @@ function validEnvelope(p,stage,promptRecord){
     responseType:'DATA_PROPOSAL',
     humanInputRequests:[],stageData,records,
     evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verification fixture',content:`stage-${stage}-evidence`}],
-    unresolved:[],warnings:[],attachments:[]
+    unresolved:[],warnings:[],attachments:[],...(accounting?{accounting}:{})
   };
 }
 function blockedEnvelope(p,stage,promptRecord){return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:{...promptRecord.scope},responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'u-1',kind:'MISSING_CAPABILITY',description:'Controlled blocked fixture',whyBlocking:'Scope identity validation fixture.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};}
@@ -140,6 +141,9 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
   if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact smart-quoted raw response was not preserved unchanged.');
   if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state before operator acceptance.');
 }
+negativeAt('Stage 01 incomplete intake accounting',1,(e)=>{e.accounting.entries.pop();},'INCOMPLETE_ACCOUNTING');
+negativeAt('Stage 04 incomplete obligation accounting',4,(e)=>{e.accounting.entries.pop();},'INCOMPLETE_ACCOUNTING');
+negativeAt('Stage 04 wrong accounting manifest',4,(e)=>{e.accounting.manifestId='OBLIGATION-STALE';},'WRONG_ACCOUNTING_MANIFEST');
 negative('empty response',()=>'', 'EMPTY_RESPONSE');
 negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
 negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/3"','TRUNCATED_RESPONSE');
