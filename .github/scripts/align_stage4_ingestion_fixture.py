@@ -23,4 +23,13 @@ new="""  if(stage===1){
 if old not in data:
     raise SystemExit('expected Stage 01 ingestion fixture was not found')
 path.write_text(data.replace(old,new,1))
+
+runtime=Path('verify-test-runtime.mjs')
+runtime_data=runtime.read_text()
+old_assert="const nextAction=String(engine.operationalNextAction(project,4)||'');assert.ok(nextAction.includes('canonical Stage 01 intent-statement ledger')&&nextAction.includes('Do not attach, resend, reopen, or otherwise reuse the original intent file.'),'Stage 04 next action must identify canonical intent reuse and prohibit original-file reuse.');"
+new_assert="const nextAction=String(engine.operationalNextAction(project,4)||'');assert.ok(nextAction.includes('complete current obligation manifest')&&nextAction.includes('Do not attach, resend, reopen, or otherwise reuse the original intent file.'),'Stage 04 next action must identify application-owned obligation reuse and prohibit original-file reuse.');"
+if old_assert not in runtime_data:
+    raise SystemExit('expected legacy Stage 04 next-action assertion was not found')
+runtime.write_text(runtime_data.replace(old_assert,new_assert,1))
+
 Path(__file__).unlink(missing_ok=True)
