@@ -28,12 +28,17 @@
 === node --check verify.mjs ===
 === node build-test-project.mjs ===
 Committed retained project requires no source materialization.
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:35
-for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources','Research only the current accepted Stage 02 independent external source set'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
-                                                                                                                                                                                                                                                                     ^
+workflow-schema.js:998
+  if(union.length!==fields.length||new Set(union).size!==fields.length||fields.some(name=>!union.includes(name)))throw new Error(`Ownership partition for ${title} is incomplete or overlapping.`);
+                                                                                                                 ^
 
-Error: Canonical prompt contract missing: Research only the current accepted Stage 02 independent external source set
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:35:262
+Error: Ownership partition for Verification tests is incomplete or overlapping.
+    at recordSchema (workflow-schema.js:998:120)
+    at workflow-schema.js:1028:9
+    at workflow-schema.js:1233:3
+    at Script.runInThisContext (node:vm:137:12)
+    at Object.runInThisContext (node:vm:317:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:42:170
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
