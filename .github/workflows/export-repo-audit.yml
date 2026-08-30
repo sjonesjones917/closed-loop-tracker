@@ -1,0 +1,19 @@
+name: Export repository for zero-loss audit
+on:
+  push:
+    branches: [fix/controlling-bundle-zero-loss-20260830]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package repository
+        run: |
+          tar --exclude=.git -czf /tmp/closed-loop-repo.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-repo
+          path: /tmp/closed-loop-repo.tgz
+          if-no-files-found: error
