@@ -26,7 +26,6 @@ jobs:
           git show refs/remotes/origin/fix/stage-input-once:verify-stage-input-once.mjs > verify-stage-input-once.mjs
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           def replace_once(path, old, new):
               target = Path(path)
@@ -54,11 +53,11 @@ jobs:
           if html.count(shrink) != 1:
               raise SystemExit(f'index.html: expected one unauthorized 88px prompt override, found {html.count(shrink)}')
           html = html.replace(shrink, '', 1)
-          script_pattern = r'(src="(?:workbook|hash|workflow-schema|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\\s*></script>)'
-          html, replacements = re.subn(script_pattern, r'\1runtime-5d3e83b9f3a14b72\2', html)
-          if replacements != 8:
-              raise SystemExit(f'index.html: expected eight shared runtime-token replacements, found {replacements}')
-          index.write_text(html)
+          old_token = 'runtime-866c62b3484bca56'
+          new_token = 'runtime-5d3e83b9f3a14b72'
+          if html.count(old_token) != 8:
+              raise SystemExit(f'index.html: expected eight copies of {old_token}, found {html.count(old_token)}')
+          index.write_text(html.replace(old_token, new_token))
 
           mobile = Path('verify-mobile-stage-action.mjs')
           text = mobile.read_text()
