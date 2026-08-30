@@ -9,8 +9,7 @@ if "INTAKE_ACCOUNTING:Object.freeze({valueType:'OBJECT_ARRAY'" not in s or "OBLI
     raise SystemExit('accounting type correction did not materialize')
 p.write_text(s)
 
-# Keep verify.mjs aligned with the /3 runtime contract. This block is idempotent
-# because the branch may already contain some of these corrections.
+# Keep verify.mjs aligned with the /3 runtime contract. This block is idempotent.
 p=Path('verify.mjs');s=p.read_text()
 for old,new in [
     ("'workflow-schema.js','workflow-engine.js'","'workflow-schema.js','test-runtime.js','workflow-engine.js'"),
@@ -46,6 +45,17 @@ if old in s:
 elif new not in s:
     raise SystemExit('Stage 01 envelope anchor missing')
 s=s.replace("'{\"schema\":\"closed-loop-stage-response/2\"'","'{\"schema\":\"closed-loop-stage-response/3\"'")
+
+# The generic next-stage assertion must respect the Stage 04 hard prerequisite.
+# First prove an incomplete Stage 01/03 state is rejected; only then create the
+# complete synthetic upstream state used to verify the Stage 04 prompt body.
+old="  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
+new="  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{};let promptState=reloaded;if(nextStage===4){let blocked=false;try{prompts.buildPromptRecord(4,promptState,nextOptions);}catch(error){blocked=/Stage 04 prompt generation blocked: current Stage 01|Stage 04 prompt generation blocked: current Stage 03/.test(String(error?.message||error));}if(!blocked)throw new Error('Stage 04 next-prompt verifier accepted incomplete upstream state.');promptState=JSON.parse(JSON.stringify(reloaded));engine.ensureShape(promptState);promptState.stages[1].status='COMPLETE';promptState.stages[1].gate={...(promptState.stages[1].gate||{}),complete:true};promptState.stages[3].status='COMPLETE';promptState.stages[3].gate={...(promptState.stages[3].gate||{}),complete:true};}const nextPrompt=prompts.buildPromptRecord(nextStage,promptState,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
+if old in s:
+    s=s.replace(old,new,1)
+elif "Stage 04 next-prompt verifier accepted incomplete upstream state." not in s:
+    raise SystemExit('next-stage prompt anchor missing')
+
 anchor="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');"
 extra="negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');\nnegativeAt('incomplete Stage 01 intake accounting',1,(e)=>{e.stageData.INTAKE_ACCOUNTING=e.stageData.INTAKE_ACCOUNTING.slice(1);},'INCOMPLETE_INTAKE_ACCOUNTING');"
 if "incomplete Stage 01 intake accounting" not in s:
