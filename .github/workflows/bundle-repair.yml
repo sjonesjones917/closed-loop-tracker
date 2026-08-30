@@ -21,7 +21,17 @@ jobs:
         with:
           node-version: '22'
       - name: Apply guarded repair
-        run: python .github/bundle_repair_shim.py
+        run: |
+          set -o pipefail
+          python .github/bundle_repair_shim.py 2>&1 | tee .github/bundle-repair-failure.log
+      - name: Preserve failure diagnostic only
+        if: failure()
+        run: |
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add .github/bundle-repair-failure.log
+          git commit -m "Record guarded repair failure diagnostic" || true
+          git push origin HEAD:fix/full-controlling-bundle-20260830
       - name: Verify syntax and controlling contracts
         run: |
           node --check workbook.js
@@ -39,6 +49,7 @@ jobs:
           node verify-complete.mjs
       - name: Remove one-time repair infrastructure
         run: |
+          rm -f .github/bundle-repair-failure.log
           rm .github/bundle_repair.py
           rm .github/bundle_repair_shim.py
           rm .github/workflows/bundle-repair.yml
