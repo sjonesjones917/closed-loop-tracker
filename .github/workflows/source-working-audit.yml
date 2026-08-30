@@ -1,0 +1,29 @@
+name: Temporary working source audit
+on:
+  push:
+    branches: [fix/stage4-canonical-reuse-v3]
+    paths:
+      - '.github/workflows/source-working-audit.yml'
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect source
+        run: |
+          mkdir -p audit-source
+          find . -maxdepth 2 -type f \
+            ! -path './.git/*' \
+            ! -path './audit-source/*' \
+            ! -name '*.png' ! -name '*.jpg' ! -name '*.jpeg' ! -name '*.gif' ! -name '*.zip' \
+            -print0 | while IFS= read -r -d '' f; do
+              mkdir -p "audit-source/$(dirname "$f")"
+              cp "$f" "audit-source/$f"
+            done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: working-source-audit
+          path: audit-source
+          retention-days: 1
