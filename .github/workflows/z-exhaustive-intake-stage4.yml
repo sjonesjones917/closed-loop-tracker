@@ -17,14 +17,15 @@ jobs:
         with:
           node-version: '22'
       - name: Apply exhaustive implementation
-        run: python3 exhaustive-bootstrap.py
+        run: |
+          python3 exhaustive-bootstrap.py
+          python3 fix-accounting-verifier.py
       - name: Align acceptance report with controlling schemas and metrics
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('.github/workflows/pages.yml'); text=p.read_text()
           text=text.replace("projectSchema:'closed-loop-project/2'","projectSchema:'closed-loop-project/3'")
           text=text.replace("responseSchema:'closed-loop-stage-response/2'","responseSchema:'closed-loop-stage-response/3'")
@@ -48,7 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f exhaustive-bootstrap.py .github/workflows/z-exhaustive-intake-stage4.yml
+          rm -f exhaustive-bootstrap.py fix-accounting-verifier.py .github/workflows/z-exhaustive-intake-stage4.yml
           for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-exhaustive-stage1-stage3-stage4.mjs; do node --check "$f"; done
           node build-test-project.mjs
           node verify-v3-contract.mjs
