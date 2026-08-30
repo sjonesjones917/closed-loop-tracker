@@ -1,0 +1,50 @@
+name: Apply controlling bundle repair
+
+on:
+  push:
+    branches:
+      - fix/complete-spec-stage4-prompts-20260830
+    paths:
+      - repair-controlling-bundle.mjs
+      - .github/workflows/apply-controlling-bundle-repair.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/complete-spec-stage4-prompts-20260830
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic repository repair
+        run: node repair-controlling-bundle.mjs
+      - name: Syntax checks
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check verify-stage01-stage04-exhaustion.mjs
+      - name: Stage 01 and Stage 04 zero-loss regression
+        run: node verify-stage01-stage04-exhaustion.mjs
+      - name: Diff integrity
+        run: git diff --check
+      - name: Commit repaired implementation
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add workbook.js workflow-schema.js workflow-engine.js prompt-engine.js response-ingestion.js verify-stage01-stage04-exhaustion.mjs
+          git commit -m 'Implement exhaustive Stage 1-4 accounting and v3 prompt contracts'
+          git push origin HEAD:fix/complete-spec-stage4-prompts-20260830
