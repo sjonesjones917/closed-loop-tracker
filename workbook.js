@@ -11,9 +11,9 @@ const results=[
 'Create the controlling job record before substantive production work begins.','Identify every source that may control, inform, or prove correctness and establish the authority hierarchy.','Analyze every canonical Stage 01 intent statement and every accepted external source without reusing the original intent file, preserving each statement and source role.','Map every requirement-relevant canonical intent statement and researched external obligation into atomic, independently testable requirement records.','Detect and resolve defects inside the requirement set before any production instruction is written.','Define at least one verification procedure, execution responsibility, required capability, artifact requirement, and evidence requirement for every mandatory requirement before production instructions are authored.','Prove that validators reject known-invalid cases.','Write the production instruction from the verified requirement registry with explicit operations, decisions, outputs, and failure handling.','Inspect the production instruction sentence-by-sentence without executing the target work and remove every known material instruction defect.','Freeze the exact candidate components that every execution and reviewer will use during the iteration batch.','Execute the same frozen production candidate ten times in independent fresh contexts and preserve every output separately.','Apply every applicable current test independently to every mandatory requirement in every run, producing the complete REQ_ID × RUN_ID × TEST_ID matrix.','Compare all ten verified executions requirement-by-requirement and treat correctness-affecting variance as a defect.','Identify the earliest layer at which every material defect became incorrect.','Convert every confirmed defect into a permanent regression test that demonstrably fails before correction; later corrected iterations must execute it successfully.','Correct the earliest defective layer, propagate the change through all dependent artifacts, and create new versions.','Freeze the corrected candidate and perform a new complete batch of ten independent executions.','Calculate convergence metrics after each iteration and prevent baseline freeze until every acceptance threshold is simultaneously satisfied.','Confirm stability by rerunning ten independent executions with absolutely no change after the first converged iteration.','Create the immutable approved production baseline only after unchanged confirmation succeeds.','Generate the actual requested deliverable in a fresh context using only the approved baseline materials.','Run every applicable deterministic test against the actual generated artifact and reject any mandatory failure.','Have an independent evaluator compare the actual product meaning against every applicable requirement and its source evidence.','Deliberately attempt to disprove product correctness and return every discovered defect to root-cause analysis.','Inspect the exact files and rendered representations that will be delivered, including every material transformation and every packaged artifact.','Establish process correctness and product correctness independently, then reconcile both bodies of evidence.','Assign exactly one release state using the verified requirement, test, defect, blocker, and evidence records.','Prove that every file being delivered is byte-for-byte identical to the exact file that completed final verification.','Prove and preserve every mandatory traceability link from governing source through release decision for each mandatory requirement.','Maintain a permanent defect and regression registry so every confirmed failure remains reproducible, detectable, and release-blocking if it reappears.'];
 const roles=['Job-control analyst','Source-authority analyst','Requirements-research analyst','Requirement-specification engineer','Requirement-resolution reviewer','Verification architect','Adversarial test designer','Production-instruction engineer','Independent preflight reviewer','Configuration-control reviewer','Independent production execution agent','Independent run verifier','Cross-run comparison analyst','Root-cause analyst','Regression-test engineer','Change-control engineer','New-iteration controller','Convergence reviewer','Unchanged-confirmation reviewer','Baseline configuration controller','Final production execution agent','Deterministic product verifier','Independent meaning evaluator','Independent adversarial reviewer','Final-representation inspector','Release-evidence reconciler','Release-gate reviewer','Artifact-identity reviewer','Traceability evidence custodian','Permanent defect-registry custodian'];
 const gate={
-1:['Exact user objective preserved verbatim','Every atomic statement from the original intent file is captured in the canonical intentStatements ledger','Explicit requirements and assumptions separated','Complete input set has a controlled identity and the original file is not needed later'],2:['Every accepted independent external source has a complete record','Every relied-upon supplied file was inspected','Authority and evidentiary roles are recorded','Every controlling conflict is resolved or blocked'],3:['Every current accepted Stage 02 source has a research record','Every requirement-relevant canonical intent statement has a candidate requirement','Conflict, restriction, and exception pass complete','Latest complete pass found no new material requirement category'],4:['Every requirement-relevant canonical intent statement maps to at least one atomic requirement','Every requirement has observable satisfaction and failure conditions','Every external requirement traces to exact evidence and every user-derived requirement traces to an exact STATEMENT_ID','Requirement registry has a controlled identity'],5:['Every requirement-set defect category checked','Every detected defect resolved or blocked','Every requirement has determinable applicability and a verification path','Changed requirements received a new controlled identity'],6:['Every mandatory requirement has a ready test definition','Every test declares execution responsibility, required capability, artifact requirements, and evidence','Unavailable mandatory execution capability blocks completion','Mandatory test coverage equals 1.00 or stage is blocked','Test suite has a controlled identity'],7:['Every active requirement has a failure analysis','Every applicable validator executed against invalid fixtures','No accepted invalid fixture remains without a validator defect','Failure fixtures are preserved'],8:['Every mandatory requirement is implemented by the instruction','Every operation has ordered inputs, tools, outputs, dependencies, and failure handling','Output contract and completion criteria are exact','Every material instruction traces to a requirement or control'],9:['Reviewer independent from instruction author','Every sentence and material clause evaluated','Every correction caused a full repeated review','No known material instruction defect remains'],10:['Every required component has an exact version','Tool configuration and immutable identities recorded','All ten runs receive identical frozen materials','Candidate and iteration identifiers are assigned'],11:['Exactly ten fresh contexts used','Every run received the identical frozen package','No run saw another run output or reviewer feedback','Ten outputs and run records are preserved separately'],12:['Every applicable current REQ_ID × RUN_ID × TEST_ID triple has exactly one verification record','No generator validated its own output','Every result has evidence','Verification matrix count reconciles exactly'],13:['Every requirement compared across all ten runs','Every correctness-affecting variance has a defect record','Repeated and unique failures are separated','No run or evidence discarded'],14:['Every material defect has a backward trace','Each root cause identifies the earliest defective layer with evidence','Every correction and downstream invalidation identified','Unknown root cause remains blocked'],15:['Every confirmed defect has a permanent regression record','Every regression has an actual pre-correction execution that demonstrates failure','No applicable regression is deleted','Post-correction success is established only by a later corrected execution'],16:['Every confirmed root cause has a correction or blocker','No version modified in place','Every invalidated artifact and required rerun identified','Execution-only defects do not cause unsupported instruction changes'],17:['New candidate and iteration created','Ten new contexts used and no old conversation continued','Identical corrected package used for all ten runs','Complete execution and correction loop repeated'],18:['Every metric calculated from identified records','All nine convergence conditions evaluated','Numerators and denominators reconcile','Converged only when all conditions are true'],19:['Every component version and available hash unchanged','Ten new independent contexts used','Complete test and regression suites ran','No new material defect, requirement, missed failure, or unexplained variance remains'],20:['Unchanged confirmation succeeded','Every approved component has exact version and immutable identity','Baseline package separated from working files','Any changed component automatically loses baseline status'],21:['Fresh production context used only approved baseline materials','Every requested output exists with controlled identity','Every output hash is recorded','No uncontrolled edit occurred'],22:['Every applicable mandatory deterministic test ran against actual product bytes','Every result has objective evidence and exact input identity','Any mandatory failure rejected the product','Test counts reconcile'],23:['Evaluator independent from product generation','Every applicable meaning requirement has product-location and source evidence','Every determination is evidence-supported','Every violation or mandatory unknown has a defect or blocker'],24:['Independent adversarial review covered every applicable attack category','Historical regression patterns tested','Counterexamples and findings have evidence','Every mandatory finding routes to root-cause analysis'],25:['Every delivery artifact and transformation identified','Every required page, view, and packaged file inspected','Every packaged file was opened or tested','No unresolved critical, major, or mandatory representation unknown remains'],26:['Process and product determinations are separate','Every required process and product fact is established','Every discrepancy, missing link, defect, and blocker recorded','No mandatory process or product fact remains unknown'],27:['Every mandatory requirement and validator accounted for','Exactly one release state selected using an explicit rule','Acceptance has affirmative evidence for every mandatory requirement','Delivery is not authorized before Stage 28'],28:['Release gate accepted','Every release artifact rehashed immediately before delivery','Every release hash and byte size exactly matches audited values','Authorization names only exact matching artifacts'],29:['One evidence-chain record exists for every mandatory requirement','Every required link uses exact identifiers and preserved evidence','Mandatory evidence-chain coverage equals 100 percent','Accepted release files link to audited and release hashes'],30:['Every defect has a stable permanent identifier','Every confirmed defect has a reproducible permanent regression','Every applicable regression ran successfully before baseline approval','Historical records are append-only']};
+1:['Exact user objective preserved verbatim','Every application-enumerated human-input unit has exactly one accepted intake disposition and maps to the canonical intentStatements ledger','Every atomic statement from the original intent file is captured in the canonical intentStatements ledger','Explicit requirements and assumptions separated','Complete input set has a controlled identity and the original file is not needed later'],2:['Every possible controlling independent external source has been analyzed to the extent required by the job','At least one legitimate inspected external authority exists or an evidence-supported NO_APPLICABLE_EXTERNAL_SOURCE determination exists','Authority, applicability, currency, supersession, and evidentiary roles are recorded','Every controlling source conflict is resolved or blocked; supplied project material is not misclassified as independent authority'],3:['Every current accepted Stage 02 source has a research record','Every requirement-relevant canonical intent statement has a candidate requirement','Conflict, restriction, and exception pass complete','Latest complete pass found no new material requirement category'],4:['Every obligation in the application-generated Stage 04 obligation manifest has exactly one valid disposition and none disappears','Every resulting requirement is atomic enough to test and preserves conditions, exceptions, dependencies, prohibitions, and normative force','Every requirement has provenance plus observable satisfaction and failure conditions','Every external requirement traces to exact evidence and every user-derived requirement traces to its canonical Stage 01 identity','Requirement registry has a controlled identity'],5:['Every requirement-set defect category checked','Every detected defect resolved or blocked','Every requirement has determinable applicability and a verification path','Changed requirements received a new controlled identity'],6:['Every current active mandatory requirement has at least one complete ready test','Every test declares verification semantics, execution route, required capability, required inputs/artifacts, expected result, failure condition, and evidence requirements','Every native deterministic test uses only valid supported current Test IR and bindings','Every mandatory requirement includes false-positive analysis covering boundaries, partial success, stale state, malformed state, wrong authority, wrong artifact, and capability substitution','Unavailable mandatory capability blocks completion','Exact mandatory test coverage equals 1.00','Test suite has a controlled identity'],7:['Every applicable requirement has appropriate failure or mutation analysis','Every applicable fixture is identifiable and was actually executed through a capable route','Expected rejection and actual rejection are both recorded and agree','Every execution has sufficient evidence','Every accepted invalid fixture has a linked validator defect','Failure fixtures are preserved'],8:['Every mandatory requirement is implemented by the instruction','Every operation has ordered inputs, tools, outputs, dependencies, and failure handling','Output contract and completion criteria are exact','Every material instruction traces to a requirement or control'],9:['Reviewer independence from the instruction author is established to the extent observable','Every sentence and material clause is evaluated for ambiguity, conflicts, dependencies, capability, order, verification, traceability, and failure behavior','Every correction creates a new instruction version and causes complete repeated preflight','No known material instruction finding remains unresolved'],10:['Every required component has an exact version','Tool configuration and immutable identities recorded','All ten runs receive identical frozen materials','Candidate and iteration identifiers are assigned'],11:['Exactly ten current reserved run and context identities exist and every run response is accepted','All ten contexts are distinct and satisfy observable independence rules','Every run received the same current candidate identity and identical component hashes/package','No run received another run output, verifier conclusion, reviewer feedback, failure explanation, or proposed correction','Contamination is absent and all ten outputs, raw responses, artifacts, and receipts are preserved separately'],12:['Every required current REQ_ID × RUN_ID × TEST_ID triple has exactly one valid verification record','Every verifier is independent under the current context rules and no generator self-validates','Every result has evidence sufficient to establish its proposition','Every relationship, run, test, requirement, version, iteration, and scope is current and exact','Expected and actual matrix counts reconcile with no duplicate or missing cell'],13:['Every mandatory requirement has one comparison covering all ten current runs','All-ten satisfaction, any violation, any undetermined, agreement, stability, repeated-defect, unique-defect, and new-defect-by-run facts reconcile with current run results','Every correctness-affecting variance has a defect record','No current run, determination, defect, or evidence is discarded'],14:['Every current material defect has exactly one evidence-supported backward trace through every applicable upstream layer','Each root cause identifies the earliest defective layer rather than only the final symptom','Required correction layer and downstream invalidation are identified','Every unknown or unsupported root cause remains blocked'],15:['Every confirmed defect has a permanent regression definition with preserved failure fixture, reproduction procedure, and detection method','Every regression has an actual pre-correction execution that demonstrates the original failure with sufficient evidence','The pre-correction execution cannot count as post-correction success','Later correction success may be established only by a distinct later current-scope execution with sufficient evidence','No applicable regression history is deleted or rewritten'],16:['Every confirmed root cause has a correction or blocker','No version modified in place','Every invalidated artifact and required rerun identified','Execution-only defects do not cause unsupported instruction changes'],17:['A new corrected iteration and candidate exist with new immutable identities where required','Ten new independent contexts are used; old conversations and prior outputs are withheld','All ten runs receive the identical corrected package','The shared repeated-iteration evaluator proves execution, complete verification, comparison, RCA, regression execution, and required correction behavior'],18:['Every convergence and stability metric is calculated only from the latest completed current iteration','Mandatory requirement coverage, mandatory verification coverage, and applicable regression success each equal 1.0','Critical defects, major defects, mandatory unresolved unknowns, correctness-affecting contradictions, correctness-affecting ambiguities, and unexplained correctness-affecting variance are all zero simultaneously','Numerators, denominators, run counts, and stability diagnostics reconcile','Convergence is false whenever any required condition is not simultaneously true'],19:['Semantic freeze confirmation proves every candidate version and available component hash is unchanged','Ten new independent contexts use the same frozen package with prohibited prior context withheld','The complete current verification matrix and every applicable regression execute again','No new critical or major defect, requirement, missed failure, contradiction, or unexplained correctness-affecting variance remains','All unchanged-confirmation completion facts are application-derived from current records'],20:['Unchanged confirmation succeeded','Every approved component has exact version and immutable identity','Baseline package separated from working files','Any changed component automatically loses baseline status'],21:['Fresh production context used only approved baseline materials','Every requested output exists with controlled identity','Every output hash is recorded','No uncontrolled edit occurred'],22:['The application calculates the exact current applicable mandatory deterministic test set','Every ready native Test IR test runs in the application worker against the exact bound product/artifact bytes and produces application-owned evidence','Every supported external deterministic route has the exact required capability, files, returned evidence, and application-normalized result','Every mandatory deterministic result has sufficient current evidence and exact input/test/product identity','Any mandatory violation rejects the product; execution failure and undetermined remain distinct and cannot pass','Expected, executed, satisfied, violated, undetermined, and missing counts reconcile exactly'],23:['Evaluator independence from Stage 21 product generation is established to the extent observable and prohibited context is withheld','Every applicable meaning requirement has exactly one current review with product location, required meaning, observed meaning, evidence-based comparison, and source evidence when source-derived','Every determination has sufficient evidence for the semantic proposition','No mandatory meaning review remains violated or undetermined without a defect or blocker'],24:['Reviewer independence is established to the extent observable and generator reasoning/self-evaluation is withheld','Every applicable attack category and every active authorized historical regression/failure pattern is actually tested','Every attack finding and counterexample has sufficient evidence and exact product/test/regression identity','Every unresolved mandatory adversarial finding has a defect or blocker and requires return to root-cause analysis'],25:['Every current product and selected delivery artifact plus every required transformation, page, view, representation, and packaged file is identified','Every required page/view is inspected and every required packaged file is opened or tested through the correct authority','Objective file identity, size, hash, and transformation facts are application-derived from verified bytes','Irreducible representation judgments use the correct human or reviewer authority with sufficient evidence','No unresolved critical defect, major defect, or mandatory representation unknown remains'],26:['Current process correctness and current product correctness are evaluated as separate propositions','All required current process and product identities, evidence, audits, defects, blockers, and contradictions are reconciled','Every discrepancy and missing evidence link is recorded and either resolved or blocking','No release-material contradiction or mandatory unknown is hidden by aggregate counts','Both bodies of current sufficient evidence support progression'],27:['Stage 26 reconciliation is current and complete','The application accounts for every mandatory requirement, applicable validator/result, regression, blocker, defect, contradiction, baseline identity, product identity, and evidence-sufficiency state','The application creates exactly one idempotent ACCEPTED, REJECTED, or BLOCKED release state from the controlling rule; agent and human do not set it','ACCEPTED requires affirmative current sufficient noncontradictory evidence for every mandatory requirement','Any changed release evidence supersedes prior release and revokes downstream delivery authorization','Delivery is not authorized before Stage 28'],28:['Current Stage 27 release state is ACCEPTED','Every required delivery artifact has exactly one audited identity and exactly one selected delivery identity independent of array order','Application-computed current byte size and SHA-256 of every delivery artifact exactly match audited values and authorized filename/identity','Missing, extra, duplicate, multiply matched, stale, renamed without authorization, or modified artifacts block authorization','Delivery authorization names only exact matching current artifacts'],29:['One application-generated current evidence graph exists for every mandatory requirement','Every required authority, requirement, instruction, execution/product, test, result, evidence, release, and applicable artifact-identity link resolves by exact canonical identity','Every evidence item is sufficient to establish the proposition it supports; structural completeness alone is insufficient','Every link is current-scope and release artifacts match current audited identity','Mandatory evidence-chain structural coverage and evidence-sufficiency coverage both equal 100 percent'],30:['Defect and regression histories are append-only and every correction is a new superseding record','Every confirmed defect has a stable permanent identity and permanent reproducible regression definition','Every applicable regression preserves its pre-correction failure execution and later correction execution history','The latest applicable regression execution succeeded with sufficient evidence before baseline approval','No historical defect, regression, or regression execution is rewritten or deleted']};
 const fields={
-1:['JOB_ID','JOB_TITLE','DATE_OPENED','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','EXACT_DELIVERABLE_REQUESTED','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_VERSION','INPUT_SET_CONTENTS','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE'],2:['SOURCE_SET_VERSION','AUTHORITY_HIERARCHY','SOURCE_APPLICABILITY_DETERMINATION','SOURCE_RECORDS','SOURCE_CONFLICT_RECORDS','KNOWN_CONTROLLING_SOURCES_EXAMINED','UNRESOLVED_CONTROLLING_CONFLICTS','STAGE_DECISION','DECISION_EVIDENCE'],3:['RESEARCH_VERSION','SOURCE_RESEARCH_RECORDS','CANDIDATE_REQUIREMENT_RECORDS','EXCEPTIONS_AND_EDGE_CONDITIONS','CONFLICTING_OR_INVALIDATING_MATERIAL','RESEARCH_GAPS_AND_BLOCKERS','ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED','SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','LATEST_PASS_NUMBER','NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS','STAGE_DECISION','DECISION_EVIDENCE'],4:['REQUIREMENTS_VERSION','REQUIREMENT_RECORDS','ATOMICITY_REVIEW_RESULTS','DEFINED_TERM_GAPS','TOTAL_REQUIREMENTS','MANDATORY_REQUIREMENTS','CONDITIONAL_REQUIREMENTS','OPTIONAL_REQUIREMENTS','BLOCKED_REQUIREMENTS','OBLIGATION_ACCOUNTING','STAGE_DECISION','DECISION_EVIDENCE'],5:['INPUT_REQUIREMENTS_VERSION','OUTPUT_REQUIREMENTS_VERSION','REQUIREMENT_DEFECT_RECORDS','DUPLICATES_REMAINING','UNRESOLVED_CONFLICTS','IMPOSSIBLE_COMBINATIONS','UNDEFINED_TERMS','CIRCULAR_DEPENDENCIES','MISSING_PREREQUISITES','UNSUPPORTED_REQUIREMENTS','APPLICABILITY_UNDETERMINED','REQUIREMENTS_WITHOUT_VERIFICATION_PATH','MANDATORY_BLOCKERS','STAGE_DECISION','DECISION_EVIDENCE'],6:['TEST_SUITE_VERSION','TEST_RECORDS','COVERAGE_RECORDS','TOTAL_ACTIVE_MANDATORY_REQUIREMENTS','ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST','MANDATORY_TEST_COVERAGE','BLOCKED_MANDATORY_REQUIREMENTS','STAGE_DECISION','DECISION_EVIDENCE'],7:['MUTATION_SUITE_VERSION','FAILURE_TEST_RECORDS','ACTIVE_REQUIREMENTS','REQUIREMENTS_WITH_AT_LEAST_ONE_FAILURE_TEST','FAILURE_TEST_COVERAGE','INVALID_FIXTURES_ACCEPTED','DEFECTIVE_VALIDATORS','STAGE_DECISION','DECISION_EVIDENCE'],8:['DRAFT_INSTRUCTION_VERSION','OBJECTIVE','AUTHORIZED_INPUTS','INPUT_FAILURE_RULES','SOURCE_AUTHORITY','SCOPE','DEFINED_TERMS','REQUIRED_PROCEDURE_IN_ORDER','DECISION_RULES','TOOL_RULES','OUTPUT_CONTRACT','VERIFICATION_AND_FAILURE_HANDLING','COMPLETION_CRITERIA','INSTRUCTION_TRACE_RECORDS','STAGE_DECISION','DECISION_EVIDENCE'],9:['INPUT_INSTRUCTION_VERSION','OUTPUT_INSTRUCTION_VERSION','PREFLIGHT_REVIEWER_ID','REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR','SENTENCE_REVIEW_RECORDS','PREFLIGHT_ITERATION_RECORDS','EVERY_SENTENCE_REVIEWED','KNOWN_MATERIAL_AMBIGUITIES','KNOWN_MATERIAL_CONFLICTS','UNAVAILABLE_REQUIRED_CAPABILITIES','UNVERIFIABLE_INSTRUCTIONS','STAGE_DECISION','DECISION_EVIDENCE'],10:['CANDIDATE_ID','ITERATION_ID','FREEZE_DATE','FREEZE_OWNER','FROZEN_COMPONENT_RECORDS','TOOL_CONFIGURATION_RECORDS','ALL_REQUIRED_COMPONENTS_PRESENT','HASHES_RECORDED_WHERE_PRACTICAL','ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS','CHANGES_ALLOWED_DURING_BATCH','STAGE_DECISION','DECISION_EVIDENCE'],11:['ITERATION_ID','CANDIDATE_ID','FROZEN_EXECUTION_PACKAGE','RUN_RECORDS','FRESH_CONTEXTS_CREATED','RUNS_RECEIVING_EXACT_PACKAGE','CONTAMINATED_RUNS','OUTPUTS_SAVED_SEPARATELY','STAGE_DECISION','DECISION_EVIDENCE'],12:['ITERATION_ID','REQUIREMENTS_VERSION','TEST_SUITE_VERSION','VERIFICATION_RECORDS','ACTIVE_MANDATORY_REQUIREMENTS','RUNS','EXPECTED_MANDATORY_RECORDS','ACTUAL_MANDATORY_RECORDS','MISSING_RECORDS','SATISFIED_RECORDS','VIOLATED_RECORDS','UNDETERMINED_RECORDS','SELF_VALIDATED_RECORDS','STAGE_DECISION','DECISION_EVIDENCE'],13:['ITERATION_ID','COMPARISON_VERSION','REQUIREMENT_COMPARISON_RECORDS','REQUIREMENTS_SATISFIED_BY_ALL_TEN','REQUIREMENTS_WITH_AT_LEAST_ONE_VIOLATION','REQUIREMENTS_WITH_AT_LEAST_ONE_UNDETERMINED','CORRECTNESS_AFFECTING_DISAGREEMENTS','PROHIBITED_OUTPUT_VARIANCES','INCONCLUSIVE_TESTS','REPEATED_FAILURE_GROUPS','UNIQUE_FAILURES','STAGE_DECISION','DECISION_EVIDENCE'],14:['ROOT_CAUSE_ANALYSIS_VERSION','DEFECT_ROOT_CAUSE_RECORDS','TOTAL_MATERIAL_DEFECTS','CONFIRMED_ROOT_CAUSES','UNDETERMINED_ROOT_CAUSES','BLOCKED_ANALYSES','STAGE_DECISION','DECISION_EVIDENCE'],15:['INPUT_TEST_SUITE_VERSION','OUTPUT_TEST_SUITE_VERSION','REGRESSION_FIXTURE_VERSION','REGRESSION_RECORDS','CONFIRMED_DEFECTS','CONFIRMED_DEFECTS_WITH_REGRESSION_TEST','PRE_CORRECTION_FAILURES_PROVEN','UNCONVERTED_CONFIRMED_DEFECTS','STAGE_DECISION','DECISION_EVIDENCE'],16:['CHANGE_SET_ID','TRIGGERING_DEFECT_IDS','RCA_VERSION','DATE','ARTIFACT_CHANGE_RECORDS','INSTRUCTION_CHANGED','IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED','PREFLIGHT_REPEATED_IF_CHANGED','ARTIFACTS_CHANGED','NEW_VERSIONS_CREATED','IN_PLACE_MODIFICATIONS','DOWNSTREAM_VERIFICATIONS_INVALIDATED','STAGE_DECISION','DECISION_EVIDENCE'],17:['PREVIOUS_ITERATION_ID','NEW_ITERATION_ID','PREVIOUS_CANDIDATE_ID','NEW_CANDIDATE_ID','CHANGESET_ID','NEW_FROZEN_VERSIONS','OLD_CONVERSATIONS_CONTINUED','TEN_NEW_CONTEXTS_CREATED','RUN_NAMESPACE','IDENTICAL_PACKAGE_CONFIRMED_FOR_ALL_RUNS','PRIOR_OUTPUTS_WITHHELD','EXECUTE_COMPLETED','VERIFY_COMPLETED','COMPARE_COMPLETED','ROOT_CAUSE_COMPLETED','REGRESSION_TESTS_ADDED','CORRECTIONS_COMPLETED','STAGE_DECISION','DECISION_EVIDENCE'],18:['ITERATION_ID','METRICS_VERSION','TOTAL_MANDATORY_REQUIREMENTS','MANDATORY_REQUIREMENTS_WITH_COMPLETE_SPECIFICATION_AND_APPLICABILITY','MANDATORY_REQUIREMENT_COVERAGE','MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_APPLICABLE_VERIFICATION','MANDATORY_VERIFICATION_COVERAGE','TOTAL_STILL_APPLICABLE_REGRESSION_TESTS','SUCCESSFUL_REGRESSION_TESTS','REGRESSION_TEST_SUCCESS','CRITICAL_DEFECTS','MAJOR_DEFECTS','MANDATORY_UNRESOLVED_UNKNOWNS','KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS','KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES','UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE','ALL_CONDITIONS_SIMULTANEOUSLY_TRUE','FAILED_CONDITIONS','RETURN_STAGE_FOR_EACH_FAILURE','STAGE_DECISION','DECISION_EVIDENCE'],19:['SOURCE_CONVERGED_ITERATION','CONFIRMATION_ITERATION_ID','ZERO_CHANGE_AUDIT','TEN_NEW_CONTEXTS_CREATED','SAME_FROZEN_PACKAGE_USED','RUNS_COMPLETED','COMPLETE_TEST_SUITE_RUN','ALL_REGRESSION_TESTS_RUN','CROSS_RUN_COMPARISON_COMPLETED','NEW_CRITICAL_DEFECTS','NEW_MAJOR_DEFECTS','NEW_REQUIREMENTS_DISCOVERED','INJECTED_DEFECTS_NOT_DETECTED','NEW_CORRECTNESS_AFFECTING_VARIANCE','CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED','REQUIRED_RETURN_STAGE','STAGE_DECISION','DECISION_EVIDENCE'],20:['BASELINE_ID','BASELINE_APPROVAL_DATE','SUPPORTING_CONFIRMATION_ITERATION','BASELINE_OWNER','APPROVED_VERSIONS','BASELINE_FILE_RECORDS','UNCHANGED_CONFIRMATION_SUCCEEDED','ALL_APPROVED_COMPONENTS_PRESENT','ALL_IMMUTABLE_FILES_HASHED','BASELINE_PACKAGE_SEPARATED_FROM_WORKING_FILES','ANY_CHANGED_COMPONENT_RETAINS_BASELINE_STATUS','STAGE_DECISION','DECISION_EVIDENCE'],21:['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_REFERENCE','FRESH_CONTEXT','BASELINE_MATERIALS_SUPPLIED','EXECUTION_RECORD','OUTPUT_FILE_RECORDS','EDITED_OUTSIDE_CONTROLLED_WORKFLOW','EDIT_REQUIRED','IF_YES_NEW_PRODUCT_VERSION_CREATED','AFFECTED_VALIDATION_IDENTIFIED','STAGE_DECISION','DECISION_EVIDENCE'],22:['PRODUCT_ID','PRODUCT_VERSION','PRODUCT_HASHES_BEFORE_TEST','TEST_SUITE_VERSION','VALIDATOR_VERSION','DETERMINISTIC_TEST_RESULTS','APPLICABLE_MANDATORY_DETERMINISTIC_TESTS','EXECUTED','SATISFIED','VIOLATED','UNDETERMINED','MISSING_TEST_RESULTS','PRODUCT_REJECTED_BY_MANDATORY_FAILURE','STAGE_DECISION','DECISION_EVIDENCE'],23:['PRODUCT_ID','PRODUCT_VERSION','REQUIREMENTS_VERSION','MEANING_RUBRIC_VERSION','EVALUATOR_ID','EVALUATOR_INDEPENDENT_FROM_GENERATOR','MEANING_REQUIREMENT_RECORDS','ACTIVE_MEANING_REQUIREMENTS','MEANING_RECORDS_COMPLETED','SATISFIED','VIOLATED','UNDETERMINED','UNSUPPORTED_BARE_CONCLUSIONS','STAGE_DECISION','DECISION_EVIDENCE'],24:['PRODUCT_ID','PRODUCT_VERSION','ADVERSARIAL_REVIEW_VERSION','REVIEWER_ID','REVIEWER_INDEPENDENT','ADVERSARIAL_CHECK_RECORDS','ATTACKS_EXECUTED','MANDATORY_DEFECTS_FOUND','CRITICAL_DEFECTS_FOUND','MAJOR_DEFECTS_FOUND','UNDETERMINED_ATTACKS','REGRESSIONS_FOUND','RETURN_TO_ROOT_CAUSE_REQUIRED','STAGE_DECISION','DECISION_EVIDENCE'],25:['PRODUCT_ID','PRODUCT_VERSION','REPRESENTATION_REVIEW_VERSION','APPROVED_BASELINE_ID','DELIVERY_ARTIFACT_INVENTORY','TRANSFORMATION_CHAIN_RECORDS','PAGE_OR_VIEW_INSPECTION_RECORDS','PACKAGE_INSPECTION_RECORDS','TOTAL_DELIVERY_ARTIFACTS','TOTAL_PAGES_OR_VIEWS_REQUIRED','TOTAL_PAGES_OR_VIEWS_INSPECTED','TOTAL_PACKAGED_FILES_REQUIRED','TOTAL_PACKAGED_FILES_OPENED_OR_TESTED','UNRESOLVED_CRITICAL_DEFECTS','UNRESOLVED_MAJOR_DEFECTS','UNRESOLVED_REPRESENTATION_UNKNOWNS','FINAL_REPRESENTATION_DETERMINATION','CONTROLLING_EVIDENCE'],26:['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','REVIEW_VERSION','PROCESS_REVIEW','PROCESS_CORRECTNESS_DETERMINATION','PROCESS_EVIDENCE','PRODUCT_REVIEW','PRODUCT_CORRECTNESS_DETERMINATION','PRODUCT_EVIDENCE','PROCESS_PRODUCT_DISCREPANCIES','MISSING_EVIDENCE_LINKS','RECONCILIATION_DEFECT_IDS','RECONCILIATION_BLOCKER_IDS','RECONCILED_DETERMINATION','CONTROLLING_REASON','CONTROLLING_EVIDENCE'],27:['RELEASE_GATE_ID','DATE_AND_TIME','PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','RECONCILED_REVIEW_VERSION','TOTAL_MANDATORY_REQUIREMENTS','MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE','MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED','MANDATORY_REQUIREMENTS_NOT_ESTABLISHED','TOTAL_MANDATORY_VALIDATORS','MANDATORY_VALIDATORS_SUCCEEDED','MANDATORY_VALIDATORS_FAILED','MANDATORY_VALIDATORS_UNDETERMINED_OR_NOT_RUN','UNRESOLVED_CRITICAL_DEFECTS','UNRESOLVED_MAJOR_DEFECTS','BLOCKING_REQUIREMENT_IDS','VIOLATED_REQUIREMENT_IDS','FAILED_TEST_IDS','UNDETERMINED_OR_MISSING_TEST_IDS','UNRESOLVED_DEFECT_IDS','BLOCKER_IDS','SELECTED_RELEASE_STATE','CONTROLLING_DECISION_RULE','CONTROLLING_REASON','AFFIRMATIVE_EVIDENCE'],28:['HASH_REVIEW_ID','RELEASE_GATE_ID','RELEASE_GATE_STATE','HASH_ALGORITHM','HASH_TOOL_AND_VERSION','HASH_OPERATOR','ARTIFACT_HASH_RECORDS','TOTAL_ARTIFACTS_REQUIRED_FOR_RELEASE','TOTAL_ARTIFACTS_WITH_AUDITED_HASH','TOTAL_ARTIFACTS_REHASHED_IMMEDIATELY_BEFORE_DELIVERY','TOTAL_EXACT_HASH_MATCHES','TOTAL_HASH_MISMATCHES','TOTAL_UNKNOWN_HASH_COMPARISONS','ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES','ANY_POST_REVIEW_MODIFICATION','DELIVERY_AUTHORIZATION','EXACT_AUTHORIZED_ARTIFACT_IDS','EXACT_AUTHORIZED_FILENAMES','AUTHORIZATION_EVIDENCE','AUTHORIZED_BY','AUTHORIZATION_DATE_AND_TIME'],29:['EVIDENCE_CHAIN_VERSION','JOB_ID','PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','RELEASE_GATE_ID','HASH_REVIEW_ID','MANDATORY_REQUIREMENT_EVIDENCE_CHAIN_RECORDS','TOTAL_MANDATORY_REQUIREMENTS','TOTAL_MANDATORY_REQUIREMENTS_WITH_COMPLETE_CHAINS','TOTAL_MANDATORY_REQUIREMENTS_WITH_INCOMPLETE_CHAINS','TOTAL_MANDATORY_REQUIREMENTS_WITH_UNKNOWN_CHAIN_LINKS','MANDATORY_EVIDENCE_CHAIN_COVERAGE','ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE','INCOMPLETE_CHAIN_REQ_IDS','UNKNOWN_CHAIN_REQ_IDS','EVIDENCE_REPOSITORY_LOCATION','REPRODUCTION_INSTRUCTIONS','FINAL_EVIDENCE_CHAIN_DETERMINATION','CONTROLLING_EVIDENCE'],30:['DEFECT_REGISTRY_VERSION','REGRESSION_REGISTRY_VERSION','REGISTRY_STORAGE_LOCATION','REGISTRY_RETENTION_RULE','REGISTRY_IS_APPEND_ONLY','DEFECT_RECORDS','REGRESSION_RECORDS','FUTURE_BASELINE_REGRESSION_EXECUTION_RECORDS','TOTAL_DEFECT_RECORDS','TOTAL_CONFIRMED_DEFECTS_WITH_REGRESSION_TESTS','TOTAL_ACTIVE_REGRESSION_TESTS','TOTAL_RETIRED_REGRESSION_TESTS','DEFECT_RECORDS_MISSING_REQUIRED_FIELDS','CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS','REGISTRY_HASH_OR_INTEGRITY_EVIDENCE','FINAL_REGISTRY_DETERMINATION','CONTROLLING_EVIDENCE']};
+1:['JOB_ID','JOB_TITLE','DATE_OPENED','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','EXACT_DELIVERABLE_REQUESTED','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS','ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_VERSION','INPUT_SET_CONTENTS','INTAKE_ACCOUNTING','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE'],2:['SOURCE_SET_VERSION','AUTHORITY_HIERARCHY','SOURCE_APPLICABILITY_DETERMINATION','SOURCE_RECORDS','SOURCE_CONFLICT_RECORDS','KNOWN_CONTROLLING_SOURCES_EXAMINED','UNRESOLVED_CONTROLLING_CONFLICTS','STAGE_DECISION','DECISION_EVIDENCE'],3:['RESEARCH_VERSION','SOURCE_RESEARCH_RECORDS','CANDIDATE_REQUIREMENT_RECORDS','EXCEPTIONS_AND_EDGE_CONDITIONS','CONFLICTING_OR_INVALIDATING_MATERIAL','RESEARCH_GAPS_AND_BLOCKERS','ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED','SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED','LATEST_PASS_NUMBER','NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS','STAGE_DECISION','DECISION_EVIDENCE'],4:['REQUIREMENTS_VERSION','REQUIREMENT_RECORDS','ATOMICITY_REVIEW_RESULTS','DEFINED_TERM_GAPS','TOTAL_REQUIREMENTS','MANDATORY_REQUIREMENTS','CONDITIONAL_REQUIREMENTS','OPTIONAL_REQUIREMENTS','BLOCKED_REQUIREMENTS','OBLIGATION_ACCOUNTING','STAGE_DECISION','DECISION_EVIDENCE'],5:['INPUT_REQUIREMENTS_VERSION','OUTPUT_REQUIREMENTS_VERSION','REQUIREMENT_DEFECT_RECORDS','DUPLICATES_REMAINING','UNRESOLVED_CONFLICTS','IMPOSSIBLE_COMBINATIONS','UNDEFINED_TERMS','CIRCULAR_DEPENDENCIES','MISSING_PREREQUISITES','UNSUPPORTED_REQUIREMENTS','APPLICABILITY_UNDETERMINED','REQUIREMENTS_WITHOUT_VERIFICATION_PATH','MANDATORY_BLOCKERS','STAGE_DECISION','DECISION_EVIDENCE'],6:['TEST_SUITE_VERSION','TEST_RECORDS','COVERAGE_RECORDS','TOTAL_ACTIVE_MANDATORY_REQUIREMENTS','ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST','MANDATORY_TEST_COVERAGE','BLOCKED_MANDATORY_REQUIREMENTS','STAGE_DECISION','DECISION_EVIDENCE'],7:['MUTATION_SUITE_VERSION','FAILURE_TEST_RECORDS','ACTIVE_REQUIREMENTS','REQUIREMENTS_WITH_AT_LEAST_ONE_FAILURE_TEST','FAILURE_TEST_COVERAGE','INVALID_FIXTURES_ACCEPTED','DEFECTIVE_VALIDATORS','STAGE_DECISION','DECISION_EVIDENCE'],8:['DRAFT_INSTRUCTION_VERSION','OBJECTIVE','AUTHORIZED_INPUTS','INPUT_FAILURE_RULES','SOURCE_AUTHORITY','SCOPE','DEFINED_TERMS','REQUIRED_PROCEDURE_IN_ORDER','DECISION_RULES','TOOL_RULES','OUTPUT_CONTRACT','VERIFICATION_AND_FAILURE_HANDLING','COMPLETION_CRITERIA','INSTRUCTION_TRACE_RECORDS','STAGE_DECISION','DECISION_EVIDENCE'],9:['INPUT_INSTRUCTION_VERSION','OUTPUT_INSTRUCTION_VERSION','PREFLIGHT_REVIEWER_ID','REVIEW_CONTEXT_INDEPENDENT_FROM_AUTHOR','SENTENCE_REVIEW_RECORDS','PREFLIGHT_ITERATION_RECORDS','EVERY_SENTENCE_REVIEWED','KNOWN_MATERIAL_AMBIGUITIES','KNOWN_MATERIAL_CONFLICTS','UNAVAILABLE_REQUIRED_CAPABILITIES','UNVERIFIABLE_INSTRUCTIONS','STAGE_DECISION','DECISION_EVIDENCE'],10:['CANDIDATE_ID','ITERATION_ID','FREEZE_DATE','FREEZE_OWNER','FROZEN_COMPONENT_RECORDS','TOOL_CONFIGURATION_RECORDS','ALL_REQUIRED_COMPONENTS_PRESENT','HASHES_RECORDED_WHERE_PRACTICAL','ALL_RUNS_WILL_RECEIVE_IDENTICAL_FROZEN_MATERIALS','CHANGES_ALLOWED_DURING_BATCH','STAGE_DECISION','DECISION_EVIDENCE'],11:['ITERATION_ID','CANDIDATE_ID','FROZEN_EXECUTION_PACKAGE','RUN_RECORDS','FRESH_CONTEXTS_CREATED','RUNS_RECEIVING_EXACT_PACKAGE','CONTAMINATED_RUNS','OUTPUTS_SAVED_SEPARATELY','STAGE_DECISION','DECISION_EVIDENCE'],12:['ITERATION_ID','REQUIREMENTS_VERSION','TEST_SUITE_VERSION','VERIFICATION_RECORDS','ACTIVE_MANDATORY_REQUIREMENTS','RUNS','EXPECTED_MANDATORY_RECORDS','ACTUAL_MANDATORY_RECORDS','MISSING_RECORDS','SATISFIED_RECORDS','VIOLATED_RECORDS','UNDETERMINED_RECORDS','SELF_VALIDATED_RECORDS','STAGE_DECISION','DECISION_EVIDENCE'],13:['ITERATION_ID','COMPARISON_VERSION','REQUIREMENT_COMPARISON_RECORDS','REQUIREMENTS_SATISFIED_BY_ALL_TEN','REQUIREMENTS_WITH_AT_LEAST_ONE_VIOLATION','REQUIREMENTS_WITH_AT_LEAST_ONE_UNDETERMINED','CORRECTNESS_AFFECTING_DISAGREEMENTS','PROHIBITED_OUTPUT_VARIANCES','INCONCLUSIVE_TESTS','REPEATED_FAILURE_GROUPS','UNIQUE_FAILURES','STAGE_DECISION','DECISION_EVIDENCE'],14:['ROOT_CAUSE_ANALYSIS_VERSION','DEFECT_ROOT_CAUSE_RECORDS','TOTAL_MATERIAL_DEFECTS','CONFIRMED_ROOT_CAUSES','UNDETERMINED_ROOT_CAUSES','BLOCKED_ANALYSES','STAGE_DECISION','DECISION_EVIDENCE'],15:['INPUT_TEST_SUITE_VERSION','OUTPUT_TEST_SUITE_VERSION','REGRESSION_FIXTURE_VERSION','REGRESSION_RECORDS','CONFIRMED_DEFECTS','CONFIRMED_DEFECTS_WITH_REGRESSION_TEST','PRE_CORRECTION_FAILURES_PROVEN','UNCONVERTED_CONFIRMED_DEFECTS','STAGE_DECISION','DECISION_EVIDENCE'],16:['CHANGE_SET_ID','TRIGGERING_DEFECT_IDS','RCA_VERSION','DATE','ARTIFACT_CHANGE_RECORDS','INSTRUCTION_CHANGED','IF_EXECUTION_ONLY_DEFECT_WAS_INSTRUCTION_PRESERVED','PREFLIGHT_REPEATED_IF_CHANGED','ARTIFACTS_CHANGED','NEW_VERSIONS_CREATED','IN_PLACE_MODIFICATIONS','DOWNSTREAM_VERIFICATIONS_INVALIDATED','STAGE_DECISION','DECISION_EVIDENCE'],17:['PREVIOUS_ITERATION_ID','NEW_ITERATION_ID','PREVIOUS_CANDIDATE_ID','NEW_CANDIDATE_ID','CHANGESET_ID','NEW_FROZEN_VERSIONS','OLD_CONVERSATIONS_CONTINUED','TEN_NEW_CONTEXTS_CREATED','RUN_NAMESPACE','IDENTICAL_PACKAGE_CONFIRMED_FOR_ALL_RUNS','PRIOR_OUTPUTS_WITHHELD','EXECUTE_COMPLETED','VERIFY_COMPLETED','COMPARE_COMPLETED','ROOT_CAUSE_COMPLETED','REGRESSION_TESTS_ADDED','CORRECTIONS_COMPLETED','STAGE_DECISION','DECISION_EVIDENCE'],18:['ITERATION_ID','METRICS_VERSION','TOTAL_MANDATORY_REQUIREMENTS','MANDATORY_REQUIREMENTS_WITH_COMPLETE_SPECIFICATION_AND_APPLICABILITY','MANDATORY_REQUIREMENT_COVERAGE','MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_APPLICABLE_VERIFICATION','MANDATORY_VERIFICATION_COVERAGE','TOTAL_STILL_APPLICABLE_REGRESSION_TESTS','SUCCESSFUL_REGRESSION_TESTS','REGRESSION_TEST_SUCCESS','CRITICAL_DEFECTS','MAJOR_DEFECTS','MANDATORY_UNRESOLVED_UNKNOWNS','KNOWN_CORRECTNESS_AFFECTING_CONTRADICTIONS','KNOWN_CORRECTNESS_AFFECTING_AMBIGUITIES','UNEXPLAINED_CORRECTNESS_AFFECTING_EXECUTION_VARIANCE','ALL_CONDITIONS_SIMULTANEOUSLY_TRUE','FAILED_CONDITIONS','RETURN_STAGE_FOR_EACH_FAILURE','STAGE_DECISION','DECISION_EVIDENCE'],19:['SOURCE_CONVERGED_ITERATION','CONFIRMATION_ITERATION_ID','ZERO_CHANGE_AUDIT','TEN_NEW_CONTEXTS_CREATED','SAME_FROZEN_PACKAGE_USED','RUNS_COMPLETED','COMPLETE_TEST_SUITE_RUN','ALL_REGRESSION_TESTS_RUN','CROSS_RUN_COMPARISON_COMPLETED','NEW_CRITICAL_DEFECTS','NEW_MAJOR_DEFECTS','NEW_REQUIREMENTS_DISCOVERED','INJECTED_DEFECTS_NOT_DETECTED','NEW_CORRECTNESS_AFFECTING_VARIANCE','CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED','REQUIRED_RETURN_STAGE','STAGE_DECISION','DECISION_EVIDENCE'],20:['BASELINE_ID','BASELINE_APPROVAL_DATE','SUPPORTING_CONFIRMATION_ITERATION','BASELINE_OWNER','APPROVED_VERSIONS','BASELINE_FILE_RECORDS','UNCHANGED_CONFIRMATION_SUCCEEDED','ALL_APPROVED_COMPONENTS_PRESENT','ALL_IMMUTABLE_FILES_HASHED','BASELINE_PACKAGE_SEPARATED_FROM_WORKING_FILES','ANY_CHANGED_COMPONENT_RETAINS_BASELINE_STATUS','STAGE_DECISION','DECISION_EVIDENCE'],21:['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','EXECUTION_ID','PRODUCTION_CONTEXT_REFERENCE','FRESH_CONTEXT','BASELINE_MATERIALS_SUPPLIED','EXECUTION_RECORD','OUTPUT_FILE_RECORDS','EDITED_OUTSIDE_CONTROLLED_WORKFLOW','EDIT_REQUIRED','IF_YES_NEW_PRODUCT_VERSION_CREATED','AFFECTED_VALIDATION_IDENTIFIED','STAGE_DECISION','DECISION_EVIDENCE'],22:['PRODUCT_ID','PRODUCT_VERSION','PRODUCT_HASHES_BEFORE_TEST','TEST_SUITE_VERSION','VALIDATOR_VERSION','DETERMINISTIC_TEST_RESULTS','APPLICABLE_MANDATORY_DETERMINISTIC_TESTS','EXECUTED','SATISFIED','VIOLATED','UNDETERMINED','MISSING_TEST_RESULTS','PRODUCT_REJECTED_BY_MANDATORY_FAILURE','STAGE_DECISION','DECISION_EVIDENCE'],23:['PRODUCT_ID','PRODUCT_VERSION','REQUIREMENTS_VERSION','MEANING_RUBRIC_VERSION','EVALUATOR_ID','EVALUATOR_INDEPENDENT_FROM_GENERATOR','MEANING_REQUIREMENT_RECORDS','ACTIVE_MEANING_REQUIREMENTS','MEANING_RECORDS_COMPLETED','SATISFIED','VIOLATED','UNDETERMINED','UNSUPPORTED_BARE_CONCLUSIONS','STAGE_DECISION','DECISION_EVIDENCE'],24:['PRODUCT_ID','PRODUCT_VERSION','ADVERSARIAL_REVIEW_VERSION','REVIEWER_ID','REVIEWER_INDEPENDENT','ADVERSARIAL_CHECK_RECORDS','ATTACKS_EXECUTED','MANDATORY_DEFECTS_FOUND','CRITICAL_DEFECTS_FOUND','MAJOR_DEFECTS_FOUND','UNDETERMINED_ATTACKS','REGRESSIONS_FOUND','RETURN_TO_ROOT_CAUSE_REQUIRED','STAGE_DECISION','DECISION_EVIDENCE'],25:['PRODUCT_ID','PRODUCT_VERSION','REPRESENTATION_REVIEW_VERSION','APPROVED_BASELINE_ID','DELIVERY_ARTIFACT_INVENTORY','TRANSFORMATION_CHAIN_RECORDS','PAGE_OR_VIEW_INSPECTION_RECORDS','PACKAGE_INSPECTION_RECORDS','TOTAL_DELIVERY_ARTIFACTS','TOTAL_PAGES_OR_VIEWS_REQUIRED','TOTAL_PAGES_OR_VIEWS_INSPECTED','TOTAL_PACKAGED_FILES_REQUIRED','TOTAL_PACKAGED_FILES_OPENED_OR_TESTED','UNRESOLVED_CRITICAL_DEFECTS','UNRESOLVED_MAJOR_DEFECTS','UNRESOLVED_REPRESENTATION_UNKNOWNS','FINAL_REPRESENTATION_DETERMINATION','CONTROLLING_EVIDENCE'],26:['PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','REVIEW_VERSION','PROCESS_REVIEW','PROCESS_CORRECTNESS_DETERMINATION','PROCESS_EVIDENCE','PRODUCT_REVIEW','PRODUCT_CORRECTNESS_DETERMINATION','PRODUCT_EVIDENCE','PROCESS_PRODUCT_DISCREPANCIES','MISSING_EVIDENCE_LINKS','RECONCILIATION_DEFECT_IDS','RECONCILIATION_BLOCKER_IDS','RECONCILED_DETERMINATION','CONTROLLING_REASON','CONTROLLING_EVIDENCE'],27:['RELEASE_GATE_ID','DATE_AND_TIME','PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','RECONCILED_REVIEW_VERSION','TOTAL_MANDATORY_REQUIREMENTS','MANDATORY_REQUIREMENTS_WITH_AFFIRMATIVE_SUPPORTING_EVIDENCE','MANDATORY_REQUIREMENTS_DEMONSTRABLY_VIOLATED','MANDATORY_REQUIREMENTS_NOT_ESTABLISHED','TOTAL_MANDATORY_VALIDATORS','MANDATORY_VALIDATORS_SUCCEEDED','MANDATORY_VALIDATORS_FAILED','MANDATORY_VALIDATORS_UNDETERMINED_OR_NOT_RUN','UNRESOLVED_CRITICAL_DEFECTS','UNRESOLVED_MAJOR_DEFECTS','BLOCKING_REQUIREMENT_IDS','VIOLATED_REQUIREMENT_IDS','FAILED_TEST_IDS','UNDETERMINED_OR_MISSING_TEST_IDS','UNRESOLVED_DEFECT_IDS','BLOCKER_IDS','SELECTED_RELEASE_STATE','CONTROLLING_DECISION_RULE','CONTROLLING_REASON','AFFIRMATIVE_EVIDENCE'],28:['HASH_REVIEW_ID','RELEASE_GATE_ID','RELEASE_GATE_STATE','HASH_ALGORITHM','HASH_TOOL_AND_VERSION','HASH_OPERATOR','ARTIFACT_HASH_RECORDS','TOTAL_ARTIFACTS_REQUIRED_FOR_RELEASE','TOTAL_ARTIFACTS_WITH_AUDITED_HASH','TOTAL_ARTIFACTS_REHASHED_IMMEDIATELY_BEFORE_DELIVERY','TOTAL_EXACT_HASH_MATCHES','TOTAL_HASH_MISMATCHES','TOTAL_UNKNOWN_HASH_COMPARISONS','ALL_RELEASE_HASHES_EQUAL_AUDITED_HASHES','ANY_POST_REVIEW_MODIFICATION','DELIVERY_AUTHORIZATION','EXACT_AUTHORIZED_ARTIFACT_IDS','EXACT_AUTHORIZED_FILENAMES','AUTHORIZATION_EVIDENCE','AUTHORIZED_BY','AUTHORIZATION_DATE_AND_TIME'],29:['EVIDENCE_CHAIN_VERSION','JOB_ID','PRODUCT_ID','PRODUCT_VERSION','BASELINE_ID','RELEASE_GATE_ID','HASH_REVIEW_ID','MANDATORY_REQUIREMENT_EVIDENCE_CHAIN_RECORDS','TOTAL_MANDATORY_REQUIREMENTS','TOTAL_MANDATORY_REQUIREMENTS_WITH_COMPLETE_CHAINS','TOTAL_MANDATORY_REQUIREMENTS_WITH_INCOMPLETE_CHAINS','TOTAL_MANDATORY_REQUIREMENTS_WITH_UNKNOWN_CHAIN_LINKS','MANDATORY_EVIDENCE_CHAIN_COVERAGE','ALL_MANDATORY_EVIDENCE_CHAINS_COMPLETE','INCOMPLETE_CHAIN_REQ_IDS','UNKNOWN_CHAIN_REQ_IDS','EVIDENCE_REPOSITORY_LOCATION','REPRODUCTION_INSTRUCTIONS','FINAL_EVIDENCE_CHAIN_DETERMINATION','CONTROLLING_EVIDENCE'],30:['DEFECT_REGISTRY_VERSION','REGRESSION_REGISTRY_VERSION','REGISTRY_STORAGE_LOCATION','REGISTRY_RETENTION_RULE','REGISTRY_IS_APPEND_ONLY','DEFECT_RECORDS','REGRESSION_RECORDS','FUTURE_BASELINE_REGRESSION_EXECUTION_RECORDS','TOTAL_DEFECT_RECORDS','TOTAL_CONFIRMED_DEFECTS_WITH_REGRESSION_TESTS','TOTAL_ACTIVE_REGRESSION_TESTS','TOTAL_RETIRED_REGRESSION_TESTS','DEFECT_RECORDS_MISSING_REQUIRED_FIELDS','CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS','REGISTRY_HASH_OR_INTEGRITY_EVIDENCE','FINAL_REGISTRY_DETERMINATION','CONTROLLING_EVIDENCE']};
 const STAGE_OWNERSHIP=Object.freeze({
   "1": {
     "human": [
@@ -35,7 +35,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "EXACT_DELIVERABLE_REQUESTED",
       "ASSUMPTIONS",
       "UNKNOWN_INFORMATION",
-      "INPUT_SET_CONTENTS"
+      "INPUT_SET_CONTENTS",
+      "INTAKE_ACCOUNTING"
     ],
     "application": [
       "JOB_ID",
@@ -88,9 +89,6 @@ const STAGE_OWNERSHIP=Object.freeze({
     "humanDecision": [],
     "agent": [
       "DEFINED_TERM_GAPS",
-      "CONDITIONAL_REQUIREMENTS",
-      "OPTIONAL_REQUIREMENTS",
-      "BLOCKED_REQUIREMENTS",
       "OBLIGATION_ACCOUNTING"
     ],
     "application": [
@@ -100,7 +98,10 @@ const STAGE_OWNERSHIP=Object.freeze({
       "TOTAL_REQUIREMENTS",
       "MANDATORY_REQUIREMENTS",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "CONDITIONAL_REQUIREMENTS",
+      "OPTIONAL_REQUIREMENTS",
+      "BLOCKED_REQUIREMENTS"
     ]
   },
   "5": {
@@ -129,9 +130,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "6": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "BLOCKED_MANDATORY_REQUIREMENTS"
-    ],
+    "agent": [],
     "application": [
       "TEST_SUITE_VERSION",
       "TEST_RECORDS",
@@ -140,7 +139,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "ACTIVE_MANDATORY_REQUIREMENTS_WITH_AT_LEAST_ONE_READY_TEST",
       "MANDATORY_TEST_COVERAGE",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "BLOCKED_MANDATORY_REQUIREMENTS"
     ]
   },
   "7": {
@@ -246,9 +246,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "12": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "RUNS"
-    ],
+    "agent": [],
     "application": [
       "ITERATION_ID",
       "REQUIREMENTS_VERSION",
@@ -263,14 +261,14 @@ const STAGE_OWNERSHIP=Object.freeze({
       "UNDETERMINED_RECORDS",
       "SELF_VALIDATED_RECORDS",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "RUNS"
     ]
   },
   "13": {
     "human": [],
     "humanDecision": [],
     "agent": [
-      "REQUIREMENTS_SATISFIED_BY_ALL_TEN",
       "CORRECTNESS_AFFECTING_DISAGREEMENTS",
       "PROHIBITED_OUTPUT_VARIANCES",
       "INCONCLUSIVE_TESTS",
@@ -284,31 +282,29 @@ const STAGE_OWNERSHIP=Object.freeze({
       "REQUIREMENTS_WITH_AT_LEAST_ONE_VIOLATION",
       "REQUIREMENTS_WITH_AT_LEAST_ONE_UNDETERMINED",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "REQUIREMENTS_SATISFIED_BY_ALL_TEN"
     ]
   },
   "14": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "CONFIRMED_ROOT_CAUSES",
-      "UNDETERMINED_ROOT_CAUSES",
-      "BLOCKED_ANALYSES"
-    ],
+    "agent": [],
     "application": [
       "ROOT_CAUSE_ANALYSIS_VERSION",
       "DEFECT_ROOT_CAUSE_RECORDS",
       "TOTAL_MATERIAL_DEFECTS",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "CONFIRMED_ROOT_CAUSES",
+      "UNDETERMINED_ROOT_CAUSES",
+      "BLOCKED_ANALYSES"
     ]
   },
   "15": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "UNCONVERTED_CONFIRMED_DEFECTS"
-    ],
+    "agent": [],
     "application": [
       "INPUT_TEST_SUITE_VERSION",
       "OUTPUT_TEST_SUITE_VERSION",
@@ -318,7 +314,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "CONFIRMED_DEFECTS_WITH_REGRESSION_TEST",
       "PRE_CORRECTION_FAILURES_PROVEN",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "UNCONVERTED_CONFIRMED_DEFECTS"
     ]
   },
   "16": {
@@ -346,7 +343,16 @@ const STAGE_OWNERSHIP=Object.freeze({
   "17": {
     "human": [],
     "humanDecision": [],
-    "agent": [
+    "agent": [],
+    "application": [
+      "PREVIOUS_ITERATION_ID",
+      "NEW_ITERATION_ID",
+      "PREVIOUS_CANDIDATE_ID",
+      "NEW_CANDIDATE_ID",
+      "CHANGESET_ID",
+      "TEN_NEW_CONTEXTS_CREATED",
+      "STAGE_DECISION",
+      "DECISION_EVIDENCE",
       "NEW_FROZEN_VERSIONS",
       "OLD_CONVERSATIONS_CONTINUED",
       "RUN_NAMESPACE",
@@ -358,16 +364,6 @@ const STAGE_OWNERSHIP=Object.freeze({
       "ROOT_CAUSE_COMPLETED",
       "REGRESSION_TESTS_ADDED",
       "CORRECTIONS_COMPLETED"
-    ],
-    "application": [
-      "PREVIOUS_ITERATION_ID",
-      "NEW_ITERATION_ID",
-      "PREVIOUS_CANDIDATE_ID",
-      "NEW_CANDIDATE_ID",
-      "CHANGESET_ID",
-      "TEN_NEW_CONTEXTS_CREATED",
-      "STAGE_DECISION",
-      "DECISION_EVIDENCE"
     ]
   },
   "18": {
@@ -402,17 +398,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "19": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "COMPLETE_TEST_SUITE_RUN",
-      "CROSS_RUN_COMPARISON_COMPLETED",
-      "NEW_CRITICAL_DEFECTS",
-      "NEW_MAJOR_DEFECTS",
-      "NEW_REQUIREMENTS_DISCOVERED",
-      "INJECTED_DEFECTS_NOT_DETECTED",
-      "NEW_CORRECTNESS_AFFECTING_VARIANCE",
-      "CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED",
-      "REQUIRED_RETURN_STAGE"
-    ],
+    "agent": [],
     "application": [
       "SOURCE_CONVERGED_ITERATION",
       "CONFIRMATION_ITERATION_ID",
@@ -422,7 +408,16 @@ const STAGE_OWNERSHIP=Object.freeze({
       "RUNS_COMPLETED",
       "ALL_REGRESSION_TESTS_RUN",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "COMPLETE_TEST_SUITE_RUN",
+      "CROSS_RUN_COMPARISON_COMPLETED",
+      "NEW_CRITICAL_DEFECTS",
+      "NEW_MAJOR_DEFECTS",
+      "NEW_REQUIREMENTS_DISCOVERED",
+      "INJECTED_DEFECTS_NOT_DETECTED",
+      "NEW_CORRECTNESS_AFFECTING_VARIANCE",
+      "CONFIRMATION_ACCEPTANCE_CRITERIA_SATISFIED",
+      "REQUIRED_RETURN_STAGE"
     ]
   },
   "20": {
@@ -473,10 +468,7 @@ const STAGE_OWNERSHIP=Object.freeze({
   "22": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "APPLICABLE_MANDATORY_DETERMINISTIC_TESTS",
-      "PRODUCT_REJECTED_BY_MANDATORY_FAILURE"
-    ],
+    "agent": [],
     "application": [
       "PRODUCT_ID",
       "PRODUCT_VERSION",
@@ -490,16 +482,15 @@ const STAGE_OWNERSHIP=Object.freeze({
       "UNDETERMINED",
       "MISSING_TEST_RESULTS",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "APPLICABLE_MANDATORY_DETERMINISTIC_TESTS",
+      "PRODUCT_REJECTED_BY_MANDATORY_FAILURE"
     ]
   },
   "23": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "EVALUATOR_INDEPENDENT_FROM_GENERATOR",
-      "UNSUPPORTED_BARE_CONCLUSIONS"
-    ],
+    "agent": [],
     "application": [
       "PRODUCT_ID",
       "PRODUCT_VERSION",
@@ -513,19 +504,15 @@ const STAGE_OWNERSHIP=Object.freeze({
       "VIOLATED",
       "UNDETERMINED",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "EVALUATOR_INDEPENDENT_FROM_GENERATOR",
+      "UNSUPPORTED_BARE_CONCLUSIONS"
     ]
   },
   "24": {
     "human": [],
     "humanDecision": [],
-    "agent": [
-      "REVIEWER_INDEPENDENT",
-      "ATTACKS_EXECUTED",
-      "UNDETERMINED_ATTACKS",
-      "REGRESSIONS_FOUND",
-      "RETURN_TO_ROOT_CAUSE_REQUIRED"
-    ],
+    "agent": [],
     "application": [
       "PRODUCT_ID",
       "PRODUCT_VERSION",
@@ -536,7 +523,12 @@ const STAGE_OWNERSHIP=Object.freeze({
       "CRITICAL_DEFECTS_FOUND",
       "MAJOR_DEFECTS_FOUND",
       "STAGE_DECISION",
-      "DECISION_EVIDENCE"
+      "DECISION_EVIDENCE",
+      "REVIEWER_INDEPENDENT",
+      "ATTACKS_EXECUTED",
+      "UNDETERMINED_ATTACKS",
+      "REGRESSIONS_FOUND",
+      "RETURN_TO_ROOT_CAUSE_REQUIRED"
     ]
   },
   "25": {
@@ -594,8 +586,6 @@ const STAGE_OWNERSHIP=Object.freeze({
     "human": [],
     "humanDecision": [],
     "agent": [
-      "CONTROLLING_DECISION_RULE",
-      "CONTROLLING_REASON",
       "AFFIRMATIVE_EVIDENCE"
     ],
     "application": [
@@ -621,7 +611,9 @@ const STAGE_OWNERSHIP=Object.freeze({
       "UNDETERMINED_OR_MISSING_TEST_IDS",
       "UNRESOLVED_DEFECT_IDS",
       "BLOCKER_IDS",
-      "SELECTED_RELEASE_STATE"
+      "SELECTED_RELEASE_STATE",
+      "CONTROLLING_DECISION_RULE",
+      "CONTROLLING_REASON"
     ]
   },
   "28": {
@@ -687,7 +679,6 @@ const STAGE_OWNERSHIP=Object.freeze({
     "agent": [
       "REGISTRY_STORAGE_LOCATION",
       "REGISTRY_RETENTION_RULE",
-      "DEFECT_RECORDS_MISSING_REQUIRED_FIELDS",
       "REGISTRY_HASH_OR_INTEGRITY_EVIDENCE",
       "CONTROLLING_EVIDENCE"
     ],
@@ -703,7 +694,8 @@ const STAGE_OWNERSHIP=Object.freeze({
       "TOTAL_ACTIVE_REGRESSION_TESTS",
       "TOTAL_RETIRED_REGRESSION_TESTS",
       "CONFIRMED_DEFECTS_MISSING_REGRESSION_TESTS",
-      "FINAL_REGISTRY_DETERMINATION"
+      "FINAL_REGISTRY_DETERMINATION",
+      "DEFECT_RECORDS_MISSING_REQUIRED_FIELDS"
     ]
   }
 });
