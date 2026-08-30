@@ -1,5 +1,5 @@
 name: Repair Stage 01 migration and prove exact app once
-# trigger: retained-intake-manifest-initialization
+# trigger: response-schema-v3-browser-proof
 on:
   push:
     branches: [implementation/closed-loop-v3]
