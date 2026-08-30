@@ -42,34 +42,35 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
       - name: Apply prepared v3 source transformation
+        run: python3 .github/apply-v3-phase1.py
+      - name: Syntax and focused deterministic proofs
         run: |
           set +e
-          python3 .github/apply-v3-phase1.py > /tmp/v3-phase1.out 2>&1
+          {
+            node --check workbook.js &&
+            node --check workflow-schema.js &&
+            node --check test-runtime.js &&
+            node --check test-worker.js &&
+            node --check workflow-engine.js &&
+            node --check prompt-engine.js &&
+            node --check response-ingestion.js &&
+            node --check project-store.js &&
+            node --check app-core.js &&
+            node verify-test-runtime.mjs &&
+            node verify-hash.mjs &&
+            node verify.mjs
+          } > /tmp/v3-focused.out 2>&1
           status=$?
           set -e
           if [ "$status" -ne 0 ]; then
-            cp /tmp/v3-phase1.out .github/v3-phase1-error.txt
+            cp /tmp/v3-focused.out .github/v3-phase1-error.txt
             git config user.name github-actions[bot]
             git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add .github/v3-phase1-error.txt
-            git commit -m "Capture v3 phase 1 transform failure [v3-debug]"
+            git add -A
+            git commit -m "Capture transformed v3 phase 1 failure [v3-debug]"
             git push origin HEAD:implement-v3-reliability-bundle
             exit "$status"
           fi
-      - name: Syntax and focused deterministic proofs
-        run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check test-runtime.js
-          node --check test-worker.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node --check project-store.js
-          node --check app-core.js
-          node verify-test-runtime.mjs
-          node verify-hash.mjs
-          node verify.mjs
       - name: Run current full deterministic suite
         run: |
           node build-test-project.mjs
