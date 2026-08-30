@@ -21,93 +21,98 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Configure repository
+      - name: Apply remaining controlling corrections
         run: |
           set -euo pipefail
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git fetch origin main implementation/full-spec-repair144
-      - name: Restore functional v3 base and existing visual shell
-        run: |
-          set -euo pipefail
-          git show origin/main:index.html > /tmp/index-main.html
-          for f in README.md app-core.js build-test-project.mjs project-store.js prompt-engine.js response-ingestion.js test-runtime.js test-worker.js verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js .github/workflows/pages.yml; do
-            git checkout origin/implementation/full-spec-repair144 -- "$f"
-          done
-          cp /tmp/index-main.html index.html
-      - name: Apply exhaustive capture-once repair
-        run: |
-          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('tools/finalize_intent_capture.py')
-          t=p.read_text()
-          old="out,count=re.subn(pattern,repl,src,count=1)"
-          new="out,count=re.subn(pattern,lambda m:m.group(1)+str(n)+\":'\"+escaped+\"',\\n\"+str(n+1)+\":'\",src,count=1)"
-          if old not in t: raise SystemExit('repair-script regex anchor missing')
-          p.write_text(t.replace(old,new,1))
+          def require(c,m):
+              if not c: raise SystemExit(m)
+          def rw(path,fn):
+              p=Path(path);p.write_text(fn(p.read_text()))
+          def schema_fix(t):
+              old='''      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC",\n      "EXECUTABLE_INPUT_BINDINGS"\n    ],\n    "application": [\n      "TEST_ID",\n      "REQ_ID",\n      "STATUS"\n    ]'''
+              new='''      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC",\n      "EXECUTABLE_INPUT_BINDINGS"\n    ],\n    "application": [\n      "TEST_ID",\n      "REQ_ID",\n      "STATUS",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256"\n    ]'''
+              require(old in t,'tests ownership anchor missing')
+              return t.replace(old,new,1)
+          rw('workflow-schema.js',schema_fix)
+          def engine_fix(t):
+              if "'intakeArtifactSnapshots'" not in t:
+                  anchor="  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures'"
+                  require(anchor in t,'infrastructure collection anchor missing')
+                  t=t.replace(anchor,"  'history','newJobResets','reviews','recoveredProjects','responseDispositions','executionFailures','intakeArtifactSnapshots'",1)
+              old="""  for(const artifact of records(project,'artifacts',{active:true}).filter(a=>String(recordValue(a,'ROLE')||recordValue(a,'role')||'').toUpperCase().includes('INPUT')||String(recordValue(a,'ROLE')||recordValue(a,'role')||'').toUpperCase().includes('INTENT'))){
+    const artifactId=recordId(artifact,'artifacts'),value={artifactId,filename:recordValue(artifact,'FILENAME')||recordValue(artifact,'filename')||'',sha256:recordValue(artifact,'SHA256')||recordValue(artifact,'sha256')||'',availability:recordValue(artifact,'AVAILABILITY')||recordValue(artifact,'availability')||''},sourceLocation='artifact.'+artifactId,rawValueHash=hash.sha256Value(value);
+    units.push({inputUnitId:manifestUnitId('INPUT-UNIT',{inputVersion,sourceLocation,rawValueHash}),sourceLocation,rawValueHash,value});
+  }
+  return {schema:'closed-loop-intake-manifest/1'"""
+              new="""  for(const snapshot of safe(project.projectData.intakeArtifactSnapshots).filter(x=>!x.invalidatedBy&&String(x.inputVersion||inputVersion)===inputVersion)){
+    for(const unit of safe(snapshot.units)){const sourceLocation=String(unit.sourceLocation||('artifact.'+snapshot.artifactId)),value=unit.exactText,rawValueHash=String(unit.rawValueHash||hash.sha256Value(value));units.push({inputUnitId:manifestUnitId('INPUT-UNIT',{inputVersion,sourceLocation,rawValueHash}),sourceLocation,rawValueHash,value,artifactId:String(snapshot.artifactId||''),artifactSha256:String(snapshot.artifactSha256||''),capturedFromBytes:true});}
+  }
+  for(const artifact of records(project,'artifacts',{active:true}).filter(a=>String(recordValue(a,'ROLE')||recordValue(a,'role')||'').toUpperCase().includes('INPUT')||String(recordValue(a,'ROLE')||recordValue(a,'role')||'').toUpperCase().includes('INTENT'))){
+    const artifactId=recordId(artifact,'artifacts');if(safe(project.projectData.intakeArtifactSnapshots).some(x=>String(x.artifactId)===artifactId&&!x.invalidatedBy))continue;const value={artifactId,filename:recordValue(artifact,'FILENAME')||recordValue(artifact,'filename')||'',sha256:recordValue(artifact,'SHA256')||recordValue(artifact,'sha256')||'',availability:recordValue(artifact,'AVAILABILITY')||recordValue(artifact,'availability')||''},sourceLocation='artifact.'+artifactId,rawValueHash=hash.sha256Value(value);
+    units.push({inputUnitId:manifestUnitId('INPUT-UNIT',{inputVersion,sourceLocation,rawValueHash}),sourceLocation,rawValueHash,value});
+  }
+  return {schema:'closed-loop-intake-manifest/1'"""
+              require(old in t,'Stage 01 artifact manifest anchor missing')
+              t=t.replace(old,new,1)
+              if 'function registerIntakeArtifactSnapshot(project' not in t:
+                  anchor="function registerArtifactBytes(project,{stage=project.activeStage,artifactId,filename,mediaType,byteSize,sha256,lineage={},role='STAGE_ARTIFACT'}={}){"
+                  require(anchor in t,'artifact register anchor missing')
+                  helper="""function registerIntakeArtifactSnapshot(project,{artifactId,artifactSha256,filename,mediaType,text}={}){
+  ensureShape(project);const id=String(artifactId||''),sha=String(artifactSha256||'').toLowerCase(),exact=String(text??'');if(!id||!/^[a-f0-9]{64}$/.test(sha))throw new Error('Verified Stage 01 artifact identity is required before capturing intent text.');const artifact=records(project,'artifacts').find(r=>recordId(r,'artifacts')===id&&String(recordValue(r,'SHA256')||'').toLowerCase()===sha);if(!artifact)throw new Error('Stage 01 intent snapshot must bind to current verified canonical artifact bytes.');const existing=safe(project.projectData.intakeArtifactSnapshots).find(x=>String(x.artifactId)===id&&!x.invalidatedBy);if(existing){if(String(existing.artifactSha256)!==sha||String(existing.fullTextSha256)!==hash.sha256Value(exact))throw new Error('A captured intent artifact cannot be rebound to different content.');return existing;}const lines=exact.replace(/\\r\\n?/g,'\\n').split('\\n'),units=[];for(let index=0;index<lines.length;index++){const exactText=lines[index];if(!exactText.trim())continue;units.push({sourceLocation:`artifact.${id}:line:${index+1}`,lineNumber:index+1,exactText,rawValueHash:hash.sha256Value(exactText)});}const snapshot={snapshotId:allocateInfrastructureId(project,'INTAKE-SNAPSHOT','intakeArtifactSnapshots'),artifactId:id,artifactSha256:sha,filename:String(filename||recordValue(artifact,'FILENAME')||id),mediaType:String(mediaType||recordValue(artifact,'TYPE')||'text/plain'),inputVersion:String(project.job.CURRENT_INPUT_VERSION||'UNVERSIONED'),fullTextSha256:hash.sha256Value(exact),unitCount:units.length,units,createdAt:now(),active:true};project.projectData.intakeArtifactSnapshots.push(snapshot);addHistory(project,'INTAKE_ARTIFACT_CAPTURED',{snapshotId:snapshot.snapshotId,artifactId:id,artifactSha256:sha,inputVersion:snapshot.inputVersion,unitCount:units.length,fullTextSha256:snapshot.fullTextSha256});recalculate(project);return snapshot;
+}
+"""
+                  t=t.replace(anchor,helper+anchor,1)
+              export_anchor='registerFreshContext,reserveRunBatch,registerArtifactBytes,'
+              if 'registerIntakeArtifactSnapshot,' not in t:
+                  require(export_anchor in t,'engine command export anchor missing')
+                  t=t.replace(export_anchor,'registerFreshContext,reserveRunBatch,registerIntakeArtifactSnapshot,registerArtifactBytes,',1)
+              return t
+          rw('workflow-engine.js',engine_fix)
+          def app_fix(t):
+              old="""async function storeArtifactFile(file,stage=current.activeStage,lineage={}){const artifactId=artifactIdFor(),filename=logicalFilePath(file),blob=file.slice(0,file.size,file.type||'application/octet-stream'),stored=await projectStore.putArtifact({artifactId,jobId:current.job.JOB_ID,blob,filename,mediaType:file.type||'application/octet-stream',lineage:{stage,role:core.STAGES[stage-1]?.role||'UNKNOWN',logicalPath:filename,...lineage}});return {stored,view:{artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,stage:`STAGE ${String(stage).padStart(2,'0')}`,role:core.STAGES[stage-1]?.role||'UNKNOWN',retainedBytes:true,availability:'IndexedDB Blob bytes persisted and rehashed on read-back.',addedAt:new Date().toISOString()}};}"""
+              new="""async function storeArtifactFile(file,stage=current.activeStage,lineage={}){const artifactId=artifactIdFor(),filename=logicalFilePath(file),blob=file.slice(0,file.size,file.type||'application/octet-stream'),stored=await projectStore.putArtifact({artifactId,jobId:current.job.JOB_ID,blob,filename,mediaType:file.type||'application/octet-stream',lineage:{stage,role:core.STAGES[stage-1]?.role||'UNKNOWN',logicalPath:filename,...lineage}});let intakeText=null;if(Number(stage)===1){const textual=/^(text\\/|application\\/(json|xml|csv)(?:$|;))/i.test(String(file.type||''))||/\\.(txt|md|json|csv|xml|yaml|yml|log)$/i.test(filename);if(textual){try{intakeText=new TextDecoder('utf-8',{fatal:true}).decode(await blob.arrayBuffer());}catch(error){throw new Error(`Stage 01 intent file ${filename} is declared textual but is not valid UTF-8: ${error.message||error}`);}}}return {stored,intakeText,view:{artifactId,name:stored.filename,type:stored.mediaType,size:stored.byteSize,sha256:stored.sha256,stage:`STAGE ${String(stage).padStart(2,'0')}`,role:core.STAGES[stage-1]?.role||'UNKNOWN',retainedBytes:true,availability:'IndexedDB Blob bytes persisted and rehashed on read-back.',addedAt:new Date().toISOString()}};}"""
+              require(old in t,'storeArtifactFile anchor missing')
+              t=t.replace(old,new,1)
+              old2="for(const item of created){const stored=item.stored;engine.registerArtifactBytes(next,{stage,artifactId:stored.artifactId,filename:stored.filename,mediaType:stored.mediaType,byteSize:stored.byteSize,sha256:stored.sha256,lineage:stored.lineage});next.stages[stage].authorizedFiles.push(item.view);}await persistReplacement(next);"
+              new2="for(const item of created){const stored=item.stored;engine.registerArtifactBytes(next,{stage,artifactId:stored.artifactId,filename:stored.filename,mediaType:stored.mediaType,byteSize:stored.byteSize,sha256:stored.sha256,lineage:stored.lineage,role:Number(stage)===1?'INPUT_INTENT_ARTIFACT':'STAGE_ARTIFACT'});if(Number(stage)===1&&item.intakeText!==null)engine.registerIntakeArtifactSnapshot(next,{artifactId:stored.artifactId,artifactSha256:stored.sha256,filename:stored.filename,mediaType:stored.mediaType,text:item.intakeText});next.stages[stage].authorizedFiles.push(item.view);}await persistReplacement(next);"
+              require(old2 in t,'registerStageFiles loop anchor missing')
+              return t.replace(old2,new2,1)
+          rw('app-core.js',app_fix)
+          def pages_fix(t):
+              if 'node verify-intent-capture.mjs' in t:return t
+              anchor='      - name: Verify generic deterministic Test IR runtime\n'
+              require(anchor in t,'Pages test insertion anchor missing')
+              return t.replace(anchor,"      - name: Verify exhaustive one-time intent capture and Stage 04 reuse\n        run: node verify-intent-capture.mjs\n"+anchor,1)
+          rw('.github/workflows/pages.yml',pages_fix)
+          def regression_fix(t):
+              insert="""a(e.includes('function registerIntakeArtifactSnapshot(project'),'Stage 01 byte-content snapshot command missing');
+a(e.includes("'intakeArtifactSnapshots'"),'durable intake artifact snapshot storage missing');
+a(app.includes("new TextDecoder('utf-8',{fatal:true})"),'Stage 01 does not decode textual intent bytes exactly once');
+a(app.includes("role:Number(stage)===1?'INPUT_INTENT_ARTIFACT':'STAGE_ARTIFACT'"),'Stage 01 intent artifact role is not preserved');
+a(s.includes('"EXECUTABLE_SPEC_VERSION",\\n      "EXECUTABLE_SPEC_SHA256"'),'Test IR version/hash are not application-owned');
+"""
+              anchor="a(p.includes('APPLICATION INTAKE COVERAGE MANIFEST — ACCOUNT FOR EVERY ID'),'Stage 01 manifest absent');\n"
+              require(anchor in t,'intent regression insertion anchor missing')
+              return t.replace(anchor,insert+anchor,1)
+          rw('verify-intent-capture.mjs',regression_fix)
           PY
-          python3 tools/finalize_intent_capture.py
-      - name: Preserve visual baseline and runtime wiring only
+      - name: Validate targeted repairs
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib,re
-          baseline=Path('/tmp/index-main.html').read_text()
-          html=Path('index.html').read_text()
-          if "worker-src 'self'" not in html:
-              html=html.replace("connect-src 'self'; object-src", "connect-src 'self'; worker-src 'self'; object-src")
-          srcs=re.findall(r'<script\s+defer\s+src="([^"]+)"\s*></script>',html)
-          token=next((re.search(r'[?&]v=([^&\"]+)',s).group(1) for s in srcs if re.search(r'[?&]v=([^&\"]+)',s)),'runtime')
-          order=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
-          first=html.index('<script defer src="')
-          last=html.rindex('</script>')+len('</script>')
-          html=html[:first]+'\n'.join(f'<script defer src="{x}?v={token}"></script>' for x in order)+html[last:]
-          base_css=re.search(r'<style>(.*?)</style>',baseline,re.S).group(1)
-          new_css=re.search(r'<style>(.*?)</style>',html,re.S).group(1)
-          if hashlib.sha256(base_css.encode()).hexdigest()!=hashlib.sha256(new_css.encode()).hexdigest():
-              raise SystemExit('visual CSS changed from main baseline')
-          if '.expandable-prompt{max-height:280px}' not in html:
-              raise SystemExit('prompt box baseline size is not 280px')
-          Path('index.html').write_text(html)
-          PY
-      - name: Add permanent capture-once regression
-        run: |
-          cat > verify-intent-capture.mjs <<'EOF'
-          import fs from 'node:fs';
-          const r=f=>fs.readFileSync(f,'utf8');
-          const a=(v,m)=>{if(!v)throw new Error(m)};
-          const p=r('prompt-engine.js'),e=r('workflow-engine.js'),i=r('response-ingestion.js'),app=r('app-core.js'),h=r('index.html'),s=r('workflow-schema.js'),w=r('workbook.js');
-          a(w.includes('closed-loop-project/3'),'project /3 missing');
-          a(s.includes('closed-loop-stage-response/3'),'response /3 missing');
-          a(e.includes('function stage1IntakeManifest(project)'),'intake manifest missing');
-          a(e.includes('function stage4ObligationManifest(project)'),'obligation manifest missing');
-          a(e.includes('validateStage1IntakeAccounting'),'Stage 01 closure validator missing');
-          a(e.includes('validateStage4ObligationAccounting'),'Stage 04 closure validator missing');
-          a(i.includes('INCOMPLETE_STAGE_01_INTAKE_ACCOUNTING'),'Stage 01 ingestion closure missing');
-          a(i.includes('INCOMPLETE_STAGE_04_OBLIGATION_ACCOUNTING'),'Stage 04 ingestion closure missing');
-          a(p.includes('APPLICATION INTAKE COVERAGE MANIFEST — ACCOUNT FOR EVERY ID'),'Stage 01 manifest absent');
-          a(p.includes('STAGE 04 COMPLETE CANONICAL INPUT UNION — DO NOT ASK THE USER TO RESUPPLY IT'),'Stage 04 union absent');
-          a(p.includes('NEVER ask the human to reattach, resend, retype, restate, reconstruct, or summarize'),'repeat-input prohibition absent');
-          a(p.includes('Exhaustively research every current accepted Stage 02'),'Stage 03 exhaustion absent');
-          a(app.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 upload control remains');
-          a(h.includes('.expandable-prompt{max-height:280px}'),'prompt box size changed');
-          console.log('intent capture and Stage 04 capture-once regression passed');
-          EOF
-      - name: Validate repaired files
-        run: |
-          set -euo pipefail
-          node --check workbook.js
           node --check workflow-schema.js
           node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
           node --check app-core.js
           node verify-intent-capture.mjs
-      - name: Commit implementation
+          node verify.mjs
+          node verify-test-runtime.mjs
+      - name: Commit and remove one-time repair infrastructure
         run: |
           set -euo pipefail
-          git add README.md app-core.js build-test-project.mjs project-store.js prompt-engine.js response-ingestion.js test-runtime.js test-worker.js verify-browser.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-intent-capture.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime.mjs verify.mjs workbook.js workflow-engine.js workflow-schema.js index.html .github/workflows/pages.yml tools/finalize_intent_capture.py
-          git commit -m 'Finish exhaustive intent capture and Stage 04 capture-once flow'
+          git add workflow-schema.js workflow-engine.js app-core.js verify-intent-capture.mjs .github/workflows/pages.yml
+          git rm .github/workflows/finalize-intent-capture.yml tools/finalize_intent_capture.py
+          git commit -m 'Close durable intent capture and Test IR authority gaps'
           git push origin HEAD:fix/controlling-spec-zero-loss-20260830
