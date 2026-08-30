@@ -1,0 +1,141 @@
+name: Materialize full controlling-spec implementation
+on:
+  push:
+    branches: [fix/controlling-spec-full-20260830]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/controlling-spec-full-20260830
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Materialize controlling implementation onto current main lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin implementation/full-spec-repair165
+          source_ref=origin/implementation/full-spec-repair165
+          files=(
+            .github/workflows/pages.yml
+            README.md
+            app-core.js
+            build-test-project.mjs
+            index.html
+            project-store.js
+            prompt-engine.js
+            response-ingestion.js
+            test-runtime.js
+            test-worker.js
+            verify-browser.mjs
+            verify-complete.mjs
+            verify-definition-of-done.mjs
+            verify-full-cycle.mjs
+            verify-hash.mjs
+            verify-ingestion.mjs
+            verify-project-lifecycle.mjs
+            verify-prompt-semantics.mjs
+            verify-semantic-invariant.mjs
+            verify-single-supply-prompts.mjs
+            verify-test-runtime-limits.mjs
+            verify-test-runtime-v3.mjs
+            verify-test-runtime.mjs
+            verify-v3-contract.mjs
+            verify-v3-definition-of-done.mjs
+            verify-v3-migration.mjs
+            verify.mjs
+            workbook.js
+            workflow-engine.js
+            workflow-schema.js
+          )
+          git checkout "$source_ref" -- "${files[@]}"
+
+          # Exact visual preservation: the stylesheet remains byte-for-byte the established pre-repair baseline.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          base=subprocess.check_output(['git','show','4d292331a925667924ddb1f122e52310295f248c:index.html'],text=True)
+          cur=Path('index.html').read_text()
+          b=re.search(r'<style>.*?</style>',base,re.S); c=re.search(r'<style>.*?</style>',cur,re.S)
+          if not b or not c: raise SystemExit('style block missing')
+          cur=cur[:c.start()]+b.group(0)+cur[c.end():]
+          Path('index.html').write_text(cur)
+          if '.expandable-prompt{max-height:280px}' not in cur: raise SystemExit('established prompt preview size missing')
+          if '.expandable-prompt:not(.expanded){height:88px' in cur: raise SystemExit('unauthorized prompt-box size override remains')
+          PY
+
+          # One-time repair/materialization files are prohibited from the final implementation.
+          rm -f .gate-diag-trigger finalize-v3-accounting.mjs patch-accounting-regression-fixtures.mjs run-v3-accounting-finalize.mjs
+          rm -f .github/workflows/materialize-stage01-stage04-once.yml
+
+          # Source-level invariants that are direct controlling requirements.
+          node - <<'NODE'
+          const fs=require('fs');
+          const need=(x,m)=>{if(!x)throw new Error(m)};
+          const wb=fs.readFileSync('workbook.js','utf8'), sc=fs.readFileSync('workflow-schema.js','utf8'), pe=fs.readFileSync('prompt-engine.js','utf8'), app=fs.readFileSync('app-core.js','utf8'), html=fs.readFileSync('index.html','utf8');
+          need(wb.includes("const WORKFLOW_ID='mobile-closed-loop/30'")&&wb.includes("const PROJECT_SCHEMA='closed-loop-project/3'")&&wb.includes('const STAGE_COUNT=30'),'identity mismatch');
+          need(sc.includes("const RESPONSE_SCHEMA='closed-loop-stage-response/3'")&&sc.includes('closed-loop-test-spec/1')&&sc.includes('closed-loop-verification-package/1'),'schema identity mismatch');
+          need(pe.includes('The application has already captured and versioned the human-authority information supplied earlier. Use that project memory.'),'Stage 04 canonical reuse instruction missing');
+          need(pe.includes('DO NOT ask the human to attach, reattach, resend, retype, restate, summarize, reconstruct, or otherwise supply again the original intent file'),'Stage 04 repeat-input prohibition missing');
+          need(pe.includes('Never make the human repair application memory by supplying the same information again.'),'application-memory fail-closed rule missing');
+          for(const bad of ['Send the Stage 04 instruction with the required material.','Attach or provide with the instruction:'])need(!app.includes(bad),'legacy Stage 04 re-supply UI remains: '+bad);
+          need(/worker-src\s+'self'/.test(html),'same-origin worker CSP missing');
+          const scripts=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(x=>x[1].split('?')[0]);
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          need(JSON.stringify(scripts)===JSON.stringify(expected),'runtime order mismatch '+JSON.stringify(scripts));
+          NODE
+
+      - name: Syntax
+        run: for file in *.js *.mjs; do node --check "$file"; done
+      - name: Schema ownership and migration
+        run: |
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+      - name: Test IR validation security and deterministic runtime
+        run: |
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+      - name: Ingestion workflow prompt and definition-of-done
+        run: |
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-single-supply-prompts.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Local Chromium acceptance
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for script in verify-browser.mjs verify-browser-extra.mjs; do
+            success=false
+            for attempt in 1 2 3; do
+              if node "$script"; then success=true; break; fi
+              sleep 1
+            done
+            test "$success" = true
+          done
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit only after all proofs pass
+        run: |
+          rm -f .github/workflows/materialize-full-spec.yml
+          git config user.name "closed-loop-spec-repair"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Implement complete controlling /3 reliability specification"
+          git push origin HEAD:fix/controlling-spec-full-20260830
