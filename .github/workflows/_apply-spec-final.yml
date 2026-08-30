@@ -1,0 +1,35 @@
+name: Apply controlling specification repair
+on:
+  push:
+    branches: [fix/spec-conformance-final]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/spec-conformance-final}
+      - run: |
+          python _patch1.py
+          python _patch2.py
+          python _patch3.py
+          python _patch4.py
+          python _patch5.py
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check app-core.js
+          node verify-test-runtime.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          rm _patch1.py _patch2.py _patch3.py _patch4.py _patch5.py .github/workflows/_apply-spec-final.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          git commit -m 'Implement exhaustive intent and obligation accounting'
+          git push origin HEAD:fix/spec-conformance-final
