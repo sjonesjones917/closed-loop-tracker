@@ -1,0 +1,82 @@
+name: Temporary deterministic full-spec retry
+on:
+  push:
+    branches: [fix/full-spec-conformance]
+permissions:
+  contents: write
+concurrency:
+  group: full-spec-retry-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/full-spec-conformance
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reapply source repair and close ownership partition structurally
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          wf=Path('.github/workflows/full-spec-repair.yml').read_text()
+          marker="          python3 - <<'PY'\n"
+          start=wf.index(marker)+len(marker)
+          end=wf.index("          PY\n",start)
+          block=wf[start:end]
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in block.splitlines())
+          exec(compile(script,'full-spec-repair-extracted.py','exec'),{})
+
+          p=Path('workflow-schema.js')
+          t=p.read_text()
+          start=t.index('  "tests": {')
+          end=t.index('  "failureTests": {',start)
+          block=t[start:end]
+          block=block.replace('      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC",','      "EXECUTABLE_KIND",\n      "EXECUTABLE_SPEC",')
+          block=block.replace('      "TEST_ID",\n      "REQ_ID",\n      "STATUS"\n','      "TEST_ID",\n      "REQ_ID",\n      "STATUS",\n      "EXECUTABLE_SPEC_VERSION",\n      "EXECUTABLE_SPEC_SHA256"\n')
+          if '"EXECUTABLE_SPEC_VERSION"' not in block or block.count('"EXECUTABLE_SPEC_VERSION"')!=1 or block.count('"EXECUTABLE_SPEC_SHA256"')!=1:
+              raise SystemExit('Test ownership partition repair did not produce exactly one application-owned version/hash field.')
+          t=t[:start]+block+t[end:]
+          p.write_text(t)
+          PY
+          git diff --check
+      - name: Remove all temporary workflows before proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          find .github/workflows -maxdepth 1 -type f ! -name pages.yml -print -delete
+          test "$(find .github/workflows -maxdepth 1 -type f -printf '%f\n' | sort)" = "pages.yml"
+      - name: Run complete deterministic proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-controlling-spec.mjs verify-one-time-intent-intake.mjs verify-test-runtime.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs; do node --check "$f"; done
+          node verify-controlling-spec.mjs
+          node verify-test-runtime.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit permanent conformance tree only after green
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Implement controlling closed-loop v3 specification"
+          git push origin HEAD:fix/full-spec-conformance
