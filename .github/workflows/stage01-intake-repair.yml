@@ -24,20 +24,40 @@ jobs:
       - name: Apply repair
         run: node repair-stage01-intake-closure.mjs
       - name: Syntax and focused regression
+        id: focused
+        continue-on-error: true
         run: |
-          node --check workbook.js
-          node --check workflow-schema.js
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check response-ingestion.js
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-test-runtime.mjs
+          set +e
+          {
+            node --check workbook.js
+            node --check workflow-schema.js
+            node --check workflow-engine.js
+            node --check prompt-engine.js
+            node --check response-ingestion.js
+            node verify-stage01-intake-closure.mjs
+            node verify-one-time-intent-intake.mjs
+            node verify-test-runtime.mjs
+          } > repair-failure.log 2>&1
+          status=$?
+          cat repair-failure.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+      - name: Persist failure diagnostics
+        if: steps.focused.outputs.status != '0'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add repair-failure.log
+          git commit -m "Capture Stage 01 repair regression failure"
+          git push origin HEAD:fix/stage01-intake-closure-20260830
+          exit 1
       - name: Remove one-time repair infrastructure
+        if: steps.focused.outputs.status == '0'
         run: |
+          rm repair-failure.log
           rm repair-stage01-intake-closure.mjs
           rm .github/workflows/stage01-intake-repair.yml
       - name: Commit repaired source
+        if: steps.focused.outputs.status == '0'
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
