@@ -4,7 +4,7 @@ on:
   pull_request: {branches: [main]}
   workflow_dispatch:
 permissions: {contents: write, pages: write, id-token: write, statuses: write}
-concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: false}
+concurrency: {group: 'pages-${{ github.ref }}', cancel-in-progress: true}
 
 jobs:
   test:
