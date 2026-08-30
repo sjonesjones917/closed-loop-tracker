@@ -1,3 +1,4 @@
+# temporary one-shot repair; removed by successful repair
 name: Apply controlling spec fix
 
 on:
