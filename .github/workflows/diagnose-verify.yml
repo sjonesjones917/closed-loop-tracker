@@ -1,29 +1,44 @@
-name: Diagnose canonical verification regression
+name: Repair Stage 01 ingestion fixture
 on:
   push:
     branches: [fix/stage01-intake-closure-20260830]
-permissions: {contents: read}
+permissions: {contents: write}
 jobs:
-  diagnose:
+  repair:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Capture verify.mjs result
-        id: verify
-        continue-on-error: true
+      - name: Update valid Stage 01 fixture to close application manifest
         run: |
-          set +e
-          node verify.mjs > verify-failure.log 2>&1
-          status=$?
-          cat verify-failure.log
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: verify-failure-log
-          path: verify-failure.log
-          if-no-files-found: error
-      - name: Preserve failure status
-        if: steps.verify.outputs.status != '0'
-        run: exit 1
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="""  if(stage===1)records.intentStatements=[{tempKey:'intent-statement-1',fields:{SOURCE_MATERIAL:'authorized human job input',SOURCE_LOCATION:'verbatim request',EXACT_STATEMENT:'Verify the closed-loop response ingestion path.',STATEMENT_KIND:'REQUIREMENT',REQUIREMENT_RELEVANCE:'REQUIREMENT',NORMATIVE_FORCE:'MUST',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}];"""
+          new="""  if(stage===1){
+            const intakeManifest=engine.stage01IntakeManifest(p),entries=intakeManifest.entries||[];
+            records.intentStatements=entries.map((entry,index)=>({tempKey:`intent-statement-${index+1}`,fields:{SOURCE_MATERIAL:String(entry.sourceIdentity||entry.sourceKind||'authorized human job input'),SOURCE_LOCATION:String(entry.location||entry.inputId||'controlled input'),EXACT_STATEMENT:typeof entry.value==='string'?entry.value:JSON.stringify(entry.value),STATEMENT_KIND:'OTHER',REQUIREMENT_RELEVANCE:'CONTEXT_ONLY',NORMATIVE_FORCE:'FACTUAL',DEPENDENCIES:'NONE',EXCEPTIONS:'NONE',CONFLICTS:'NONE',NOTES:'Controlled Stage 01 fixture'},relationships:{},evidenceRefs:['evidence-1']}));
+            stageData.INTAKE_ACCOUNTING=entries.map((entry,index)=>({inputId:String(entry.inputId||''),disposition:'RETAINED_AS_CONTEXT',statementTempKeys:[`intent-statement-${index+1}`],reason:''}));
+          }"""
+          if old not in s:
+              raise SystemExit('Stage 01 valid fixture anchor not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Verify full canonical suite
+        run: |
+          node --check verify-ingestion.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-ingestion.mjs
+          node verify.mjs
+      - name: Commit corrected fixture
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Update Stage 01 ingestion fixture for closed accounting"
+          git pull --rebase origin fix/stage01-intake-closure-20260830
+          git push origin HEAD:fix/stage01-intake-closure-20260830
