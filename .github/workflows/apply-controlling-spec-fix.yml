@@ -86,20 +86,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set +e
+          set -euo pipefail
+          git checkout HEAD -- .github/workflows/pages.yml || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git status --short
+          git add workbook.js workflow-schema.js test-runtime.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html verify-capture-once.mjs
+          git diff --cached --check
           git commit -m "Implement capture-once Stage 4 and /3 controlling contracts"
-          commit_rc=$?
-          if [ "$commit_rc" -ne 0 ]; then
-            echo "::error title=Repair commit failed::git commit returned $commit_rc"
-            exit "$commit_rc"
-          fi
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
-          push_rc=$?
-          if [ "$push_rc" -ne 0 ]; then
-            echo "::error title=Repair push failed::git push returned $push_rc"
-            exit "$push_rc"
-          fi
