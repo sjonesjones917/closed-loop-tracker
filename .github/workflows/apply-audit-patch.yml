@@ -18,10 +18,16 @@ jobs:
           set -euo pipefail
           echo 'e02bc24c3c304f4710ff6d8dc35df39e47a27d0a2198cf5d2add64be7a559756  .audit-patch-v2/chunk-00' | sha256sum -c -
           echo '7917e8d9934cf1a893eb31d5a73829629caa9e4c966065fb9d029c325ff68cf7  .audit-patch-v2/chunk-01' | sha256sum -c -
-          echo 'f56a7ee390c240425d41d77d2c6d5573877bff9ba022e4b693f5ca04e73fec8d  .audit-patch-v2/chunk-02' | sha256sum -c -
+          echo '9bffd181fa1e2967e487b20906a0d515d32a3ff56fcbd5dad376914d5270e19d  .audit-patch-v2/chunk02-parts/part-00' | sha256sum -c -
+          echo '1a2526dae95ec97865148420fca9bde3efc65c47ba51747328ec80256e136856  .audit-patch-v2/chunk02-parts/part-01' | sha256sum -c -
+          echo '65c90f8b0bb3f9fcfeccc25ca5b30a0416eb549a0a2ba62474a7b517b7b6d896  .audit-patch-v2/chunk02-parts/part-02' | sha256sum -c -
+          echo 'b13ccdf99566c612c4e7a33e31d7824344f8be44c28a2bc194f7763add25bf24  .audit-patch-v2/chunk02-parts/part-03' | sha256sum -c -
+          echo 'b30cfdba526fed22569438a78fb553f9503182fbe6f4a20ed6e77e4b9bf4933b  .audit-patch-v2/chunk02-parts/part-04' | sha256sum -c -
+          cat .audit-patch-v2/chunk02-parts/part-* > /tmp/chunk-02.correct
+          echo 'f56a7ee390c240425d41d77d2c6d5573877bff9ba022e4b693f5ca04e73fec8d  /tmp/chunk-02.correct' | sha256sum -c -
           echo 'fe61b119f00818184665bc3d1a82dd786da2d262fc62b55ebb569aa29087418f  .audit-patch-v2/chunk-03' | sha256sum -c -
           echo '5ee081cc2336d94418e603ea10d550cc1afcb8ce1cae346dd07059db794919cf  .audit-patch-v2/chunk-04' | sha256sum -c -
-          cat .audit-patch-v2/chunk-* > /tmp/audit-v2.patch.b64
+          cat .audit-patch-v2/chunk-00 .audit-patch-v2/chunk-01 /tmp/chunk-02.correct .audit-patch-v2/chunk-03 .audit-patch-v2/chunk-04 > /tmp/audit-v2.patch.b64
           echo 'c9a4f6f8756e5fd7ad6c1afbb4e3390f0336cc70eef18dcc0204bacb7a65e634  /tmp/audit-v2.patch.b64' | sha256sum -c -
           base64 -d /tmp/audit-v2.patch.b64 | gzip -d > /tmp/audit-v2.patch
           echo 'ca732383add18b4ee9951bcf6e4fa5982582d240894f103875f98a3da7f28f7d  /tmp/audit-v2.patch' | sha256sum -c -
