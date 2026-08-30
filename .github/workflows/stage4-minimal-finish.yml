@@ -42,13 +42,16 @@ jobs:
             "CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\n${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY",
             "CURRENT AGENT-NORMALIZED DELIVERABLE (when already accepted; otherwise UNKNOWN):\n${show(j.EXACT_DELIVERABLE_REQUESTED)}\n\n${stage===4?`ACCEPTED STAGE 01 JOB DEFINITION — CURRENT CANONICAL VALUES\nASSUMPTIONS:\n${show(j.ASSUMPTIONS)}\n\nUNKNOWN_INFORMATION:\n${show(j.UNKNOWN_INFORMATION)}\n\nINPUT_SET_CONTENTS:\n${show(j.INPUT_SET_CONTENTS)}`:''}\n\n${stage===1?`STAGE 01 DOMAIN INTAKE ADAPTATION — CLARIFY AND NORMALIZE ONLY")
 
-          # Focused runtime regression: Stage 04 sends/withholds no original-file artifact; the prompt and canonical ledger carry the information.
+          # Focused runtime regressions: Stage 04 sends/withholds no original-file artifact; the prompt and canonical ledger carry the information.
           replace_exact('verify-test-runtime.mjs',
             "assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,1);assert.equal(stage4Handoff.withhold[0]?.artifactIdOrCategory,'original Stage 01 intent file');assert.equal(stage4Handoff.expectBack.length,0);",
             "assert.equal(stage4Handoff.send.length,0,'Stage 04 must not infer an outgoing byte handoff from a filename in supplied-material inventory.');assert.equal(stage4Handoff.withhold.length,0,'Stage 04 must not turn the original intent file into another handoff item.');assert.equal(stage4Handoff.expectBack.length,0);")
           replace_exact('verify-one-time-intent-intake.mjs',
             "assert(handoff.withhold.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'),'Stage 04 does not explicitly withhold the original intent file.');",
             "assert(handoff.withhold.length===0,'Stage 04 still turns the original intent file into a later-stage handoff item.');")
+          replace_exact('verify-prompt-semantics.mjs',
+            "  if(!handoff?.withhold?.some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 does not explicitly withhold the original intent file.');",
+            "  if((handoff?.withhold||[]).some(item=>item.artifactIdOrCategory==='original Stage 01 intent file'))throw new Error('Stage 04 still turns the original intent file into a later-stage handoff item.');")
 
           # Existing complete-suite fixture must model the new canonical statement ledger and current next-action wording.
           vc=Path('verify-complete.mjs'); text=vc.read_text()
@@ -61,6 +64,15 @@ jobs:
           if text.count(old2)!=1: raise SystemExit('verify-complete: next-action anchor mismatch')
           text=text.replace(old2,new2)
           vc.write_text(text)
+
+          # Remove the obsolete one-time materializer job from the permanent Pages workflow.
+          pages=Path('.github/workflows/pages.yml'); pages_text=pages.read_text()
+          cleaned,n=re.subn(r'\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)', '', pages_text, count=1)
+          if n != 1:
+              raise SystemExit(f'pages.yml: expected one Stage 04 materializer job, removed {n}')
+          if 'materialize-stage4-intent-reuse:' in cleaned:
+              raise SystemExit('pages.yml: Stage 04 materializer still present')
+          pages.write_text(cleaned)
 
           # Refresh the one shared runtime cache identity after runtime byte changes.
           runtime=['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js']
@@ -83,6 +95,7 @@ jobs:
           node --check verify-test-runtime.mjs
           node --check verify-one-time-intent-intake.mjs
           node --check verify-complete.mjs
+          node --check verify-prompt-semantics.mjs
           node verify-test-runtime.mjs
           node verify-hash.mjs
           node verify.mjs
@@ -90,11 +103,13 @@ jobs:
           node verify-complete.mjs
           node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
-      - name: Remove materializer and commit final tree
+      - name: Remove materializers and commit final tree
         run: |
           rm .github/workflows/stage4-minimal-finish.yml
+          rm -f .github/workflows/stage4-finalize.yml
           git config user.name closed-loop-repair
           git config user.email actions@users.noreply.github.com
-          git add workflow-engine.js prompt-engine.js verify-test-runtime.mjs verify-one-time-intent-intake.mjs verify-complete.mjs index.html .github/workflows/stage4-minimal-finish.yml
+          git add workflow-engine.js prompt-engine.js verify-test-runtime.mjs verify-one-time-intent-intake.mjs verify-complete.mjs verify-prompt-semantics.mjs index.html .github/workflows/pages.yml .github/workflows/stage4-minimal-finish.yml .github/workflows/stage4-finalize.yml
+          git diff --cached --check
           git commit -m 'Finish Stage 04 one-time intent reuse'
           git push origin HEAD:fix/stage4-intent-reuse-current-main
