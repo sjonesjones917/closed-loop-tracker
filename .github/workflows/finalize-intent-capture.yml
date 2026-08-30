@@ -36,7 +36,18 @@ jobs:
           done
           cp /tmp/index-main.html index.html
       - name: Apply exhaustive capture-once repair
-        run: python3 tools/finalize_intent_capture.py
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tools/finalize_intent_capture.py')
+          t=p.read_text()
+          old="out,count=re.subn(pattern,repl,src,count=1)"
+          new="out,count=re.subn(pattern,lambda m:m.group(1)+str(n)+\":'\"+escaped+\"',\\n\"+str(n+1)+\":'\",src,count=1)"
+          if old not in t: raise SystemExit('repair-script regex anchor missing')
+          p.write_text(t.replace(old,new,1))
+          PY
+          python3 tools/finalize_intent_capture.py
       - name: Preserve visual baseline and runtime wiring only
         run: |
           set -euo pipefail
