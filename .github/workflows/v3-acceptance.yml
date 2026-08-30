@@ -1,0 +1,39 @@
+name: V3 behavioral acceptance
+on:
+  push:
+    branches: [fix/closed-loop-v3-current-20260830]
+    paths: [.github/workflows/v3-acceptance.yml, verify-v3-intake-obligation.mjs]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: fix/closed-loop-v3-current-20260830}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Syntax
+        run: |
+          node --check workbook.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check test-runtime.js
+          node --check app-core.js
+          git diff --check
+      - name: V3 intake and obligation closure
+        run: node verify-v3-intake-obligation.mjs
+      - name: Existing one-time intent regression
+        run: node verify-one-time-intent-intake.mjs
+      - name: Prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Ingestion
+        run: node verify-ingestion.mjs
+      - name: Test runtime
+        run: node verify-test-runtime.mjs
+      - name: Core verification
+        run: node verify.mjs
+      - name: Complete verification
+        run: node verify-complete.mjs
