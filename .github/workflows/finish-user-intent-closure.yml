@@ -1,0 +1,104 @@
+name: Finish user-intent closure
+on:
+  push:
+    branches: [closed-loop-v3-completion]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !startsWith(github.event.head_commit.message, '[intent-closure]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: closed-loop-v3-completion
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Repair Stage 01, Stage 03, Stage 04 and restore prompt visual
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text, old, new, label):
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {text.count(old)}')
+              return text.replace(old,new,1)
+
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="1:'Perform complete human-authority intake only. Read every accessible supplied material deeply enough to capture every human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome. Do not do source research, requirement atomization, test design, production, filing, simulation, manufacturing, or product verification. Do not ask the human to repeat information already present in supplied material. Classify every APPLICATION INTAKE MANIFEST unit exactly once. INPUT_SET_CONTENTS must be a JSON string whose root is {\"units\":[]} and contains one entry for every manifest unit. Each entry must contain sourceUnitId, disposition, and extractedStatements. extractedStatements must capture all materially relevant human-authority statements from that unit; each statement must have statementKey, text, and statementClass. Allowed unit dispositions are incorporated into the job definition, retained as context, unresolved human-only, later-resolvable, or inapplicable with reason. This structured capture is the durable meaning-preserving handoff to later stages so the original intent file is not repeatedly required.'"
+          new="1:'Perform complete human-authority intake only. Your job is to understand the human requested project completely before this stage may finish. Exhaust the current user request, every accessible supplied material, and every current human-authority field. Capture every materially relevant human-supplied fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue relevant to defining the requested outcome. Preserve the exact objective and determine the exact deliverable without narrowing, substituting, simplifying, or silently dropping any compatible instruction. For every unresolved issue, classify it as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE. BLOCKING_NOW must be asked and answered before completion. ASK_NOW_NONBLOCKING must be asked before submission, but the human may answer unknown or deferred. LATER_RESOLVABLE must not be asked now when supplied material, authorized research, or a later stage can resolve it. Never ask the human to repeat information already supplied or available in accessible project material. When an accessible supplied artifact contains human-authority information, inspect it deeply enough to extract that information now; do not infer substantive content from a filename when bytes are unavailable. Do not do source research, external-authority analysis, requirement atomization, test design, production, filing, simulation, manufacturing, or product verification. Classify every APPLICATION INTAKE MANIFEST unit exactly once. INPUT_SET_CONTENTS must be a JSON string whose root is {\"units\":[]} and contains one entry for every manifest unit. Each entry must contain sourceUnitId, disposition, and extractedStatements. extractedStatements must exhaust all materially relevant human-authority statements from that unit; each statement must have statementKey, text, and statementClass. Allowed unit dispositions are incorporated into the job definition, retained as context, unresolved human-only, later-resolvable, or inapplicable with reason. Before returning final JSON, verify that objective and intended deliverable are defined, every controlled input unit is accounted for, every foreseeable human-only issue was supplied or actually asked and answered/deferred as allowed, and no later-stage substantive work was performed. This structured capture is the durable meaning-preserving handoff to every later stage so project information supplied once is never requested again merely because the workflow advanced.'"
+          s=replace_once(s,old,new,'Stage 01 prompt semantics')
+          old3="3:'Research only the current accepted Stage 02 independent external source set, source-by-source and pass-by-pass. Preserve mandatory statements, recommendations, optional practices, examples, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, and candidate obligations. Cover every current Stage 02 source unless Stage 02 established no applicable source.'"
+          new3="3:'Exhaust the current accepted Stage 02 independent external source set before this stage may finish. Research every current source source-by-source and pass-by-pass, inspecting every applicable portion needed to discover obligations or material that can change applicability or meaning. Extract and preserve mandatory statements, recommendations, optional practices, examples, explanatory material, prohibitions, exceptions, dependencies, applicability facts, restrictions, invalidating material, and candidate obligations. Perform a second conflict-and-exception pass after the initial extraction. Do not declare completion while any current source lacks coverage, while a known controlling portion remains unexamined, while a research gap or blocker remains unresolved, or while the latest pass discovered a new material category that has not itself been exhausted. Cover every current Stage 02 source unless Stage 02 validly established no applicable external source. The result must be exhaustive enough that Stage 04 can consume the complete accepted research without rediscovering the source universe.'"
+          s=replace_once(s,old3,new3,'Stage 03 prompt semantics')
+          p.write_text(s)
+
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old4="""  if(stage===4){
+    const currentInput=String(currentScope(project).inputVersion||''),activeArtifacts=records(project,'artifacts').filter(a=>!a.scope?.inputVersion||String(a.scope.inputVersion)===currentInput);
+    const basename=value=>String(value||'').trim().split(/[\\\\/]/).pop().toLowerCase();
+    for(const reference of suppliedMaterialReferences(project)){
+      if(reference.transferMode==='INLINE_JOB_INPUT')continue;
+      const key=basename(reference.label),matches=activeArtifacts.filter(a=>basename(recordValue(a,'FILENAME'))===key),verified=matches.map(exactArtifact).filter(Boolean),copy=verified.length===1?verified[0]:null;
+      conversationMaterials.push({
+        label:reference.label,
+        type:reference.type,
+        transferMode:reference.transferMode,
+        externalAccessStatus:'NOT_OBSERVABLE_BY_APPLICATION',
+        operatorAction:reference.transferMode==='AUTHORIZED_REFERENCE'?'Provide this reference with the Stage 04 instruction.':'Attach or provide the original material with the Stage 04 instruction.',
+        applicationUploadRequired:false,
+        optionalApplicationArtifactId:copy?.artifactId||null
+      });
+      if(copy)optionalApplicationCopies.set(copy.artifactId,copy);
+    }
+  }
+"""
+          s=replace_once(s,old4,'','remove Stage 04 repeat attachment handoff')
+          oldnext="if(stage===4){const handoff=executionHandoff(project,{stage:4,operation:'COMPLETE'}),materials=handoff.conversationMaterials.map(item=>item.label);if(materials.length)return 'Send the Stage 04 instruction with '+materials.join(', ')+'. The prompt does not include those materials. When the agent finishes, paste its final JSON response here.';}"
+          newnext="if(stage===4)return 'Use the current Stage 04 instruction. The application has already carried forward the complete accepted Stage 01 human-authority capture and current Stage 03 research into the Stage 04 obligation universe. Do not reattach or re-enter project information already supplied. Return the final structured JSON when requirement compilation is complete.';"
+          s=replace_once(s,oldnext,newnext,'Stage 04 next action')
+          oldgate="requireCount('research',1);const researched=new Set(collection('research').map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);break;"
+          newgate="requireCount('research',1);const researchRows=collection('research'),researched=new Set(researchRows.map(record=>String(recordValue(record,'SOURCE_ID')||record.relationships?.SOURCE_ID||''))),missing=sourceIds.filter(id=>!researched.has(id));if(missing.length)reasons.push(`Research is missing for source(s): ${missing.join(', ')}.`);const stageData=project.stages[3]?.agentData||{};if(!truth(stageData.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED))reasons.push('Stage 03 has not established that all known controlling sources were examined.');if(!truth(stageData.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED))reasons.push('Stage 03 requires a completed second conflict-and-exception pass.');if(Number(stageData.LATEST_PASS_NUMBER||0)<2)reasons.push('Stage 03 requires at least two completed research passes.');if(truth(stageData.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS))reasons.push('Stage 03 cannot complete while the latest pass found a new material category; research must continue until the latest pass finds no new material category.');if(!adjudicationEmpty(stageData.RESEARCH_GAPS_AND_BLOCKERS))reasons.push('Stage 03 cannot complete while research gaps or blockers remain.');for(const row of researchRows){const id=recordId(row,'research');if(adjudicationEmpty(recordValue(row,'EXACT_PORTION_EXAMINED')))reasons.push(id+': exact source portion examined is missing.');if(adjudicationEmpty(recordValue(row,'FINDING_CLASSIFICATION')))reasons.push(id+': finding classification is missing.');if(adjudicationEmpty(recordValue(row,'SOURCE_EVIDENCE')))reasons.push(id+': source evidence is missing.');}break;"
+          s=replace_once(s,oldgate,newgate,'Stage 03 exhaustion gate')
+          p.write_text(s)
+
+          p=Path('index.html'); s=p.read_text()
+          s=replace_once(s,'.prompt{height:clamp(260px,45vh,520px);max-height:80vh;','.prompt{height:auto;max-height:80vh;','restore prompt box sizing')
+          p.write_text(s)
+
+          p=Path('verify-stage01-stage03-exhaustion.mjs')
+          p.write_text(r'''import fs from 'node:fs';
+import vm from 'node:vm';
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const file of ['workbook.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
+const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;const assert=(v,m)=>{if(!v)throw new Error(m);};
+const p=core.createBlankState('JOB-EXHAUSTION-PROOF');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Create the requested deliverable without losing any project requirement.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001'});engine.ensureShape(p);
+const s1=prompts.buildPromptRecord(1,p).prompt;for(const text of ['fact','requirement','constraint','decision','prohibition','requested output','acceptance condition','material reference','unresolved human-only issue'])assert(s1.toLowerCase().includes(text),`Stage 01 prompt does not explicitly require capture of ${text}.`);assert(s1.includes('BLOCKING_NOW')&&s1.includes('ASK_NOW_NONBLOCKING')&&s1.includes('LATER_RESOLVABLE'),'Stage 01 prompt does not enforce the three-way question classification.');assert(s1.includes('every controlled input unit'),'Stage 01 prompt does not require closure of every controlled input unit.');
+p.projectData.sources.push({id:'SOURCE-000001',stage:2,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{SOURCE_ID:'SOURCE-000001',TITLE:'Authority',ISSUING_ORGANIZATION_OR_AUTHOR:'Issuer',SOURCE_TYPE:'PRIMARY',PUBLICATION_ORIGIN:'Official',URL_REFERENCE:'https://example.invalid/authority',AUTHORITY_LEVEL:'CONTROLLING',AUTHORITY_ROLE:'REQUIREMENT_AUTHORITY',RELEVANCE:'Current project',APPLICABLE_PORTIONS:'All applicable portions',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING'}});
+const s3=prompts.buildPromptRecord(3,p).prompt;for(const text of ['mandatory statements','recommendations','optional practices','examples','explanatory material','prohibitions','exceptions','dependencies','applicability facts','restrictions','invalidating material','candidate obligations'])assert(s3.toLowerCase().includes(text),`Stage 03 prompt does not explicitly require ${text}.`);assert(s3.toLowerCase().includes('every current stage 02')||s3.toLowerCase().includes('every current source'),'Stage 03 prompt does not require complete current Stage 02 source coverage.');assert(s3.toLowerCase().includes('second conflict-and-exception pass'),'Stage 03 prompt does not require the second conflict/exception pass.');
+const source=engine.records(p,'sources')[0];p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'FALSE',LATEST_PASS_NUMBER:1,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'TRUE',RESEARCH_GAPS_AND_BLOCKERS:'OPEN'};p.projectData.research.push({id:'RESEARCH-000001',stage:3,active:true,scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001'},fields:{RESEARCH_ID:'RESEARCH-000001',SOURCE_ID:'SOURCE-000001',PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'portion',FINDING_CLASSIFICATION:'MANDATORY',SOURCE_EVIDENCE:'evidence'},relationships:{SOURCE_ID:'SOURCE-000001'}});p.projectData.acceptedChanges.push({changeId:'CHANGE-3',stage:3,status:'COMMITTED',responseType:'DATA_PROPOSAL'});engine.recalculate(p);assert(p.stages[3].status!=='COMPLETE','Stage 03 completed without exhaustion.');
+const handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});assert(handoff.conversationMaterials.length===0,'Stage 04 still asks for original supplied material to be attached again.');assert(!engine.operationalNextAction(p,4).toLowerCase().includes('reattach'),'Stage 04 next action still asks for reattachment.');
+const css=fs.readFileSync('index.html','utf8');assert(css.includes('.prompt{height:auto;max-height:80vh;'),'Prompt box sizing was not restored.');
+console.log('verify-stage01-stage03-exhaustion: PASS');
+''')
+          PY
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check response-ingestion.js
+          node --check app-core.js
+          node verify-stage01-stage03-exhaustion.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage04-intake-accounting.mjs
+      - name: Commit repair
+        shell: bash
+        run: |
+          rm -f .github/workflows/finish-user-intent-closure.yml
+          git config user.name "closed-loop-repair"
+          git config user.email "closed-loop-repair@users.noreply.github.com"
+          git add -A
+          git commit -m "[intent-closure] exhaust Stage 01 and 03 before Stage 04"
+          git push origin HEAD:closed-loop-v3-completion
