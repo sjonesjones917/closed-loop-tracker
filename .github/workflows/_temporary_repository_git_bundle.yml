@@ -1,0 +1,25 @@
+name: Temporary full-history audit bundle
+
+on:
+  push:
+    branches:
+      - repair/intent-exhaustion-stage4-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create exact repository bundle
+        run: git bundle create repository.bundle --all
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repository-git-bundle
+          path: repository.bundle
+          if-no-files-found: error
+          retention-days: 1
