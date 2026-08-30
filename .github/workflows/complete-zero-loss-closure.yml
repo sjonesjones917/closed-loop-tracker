@@ -40,7 +40,10 @@ jobs:
       - name: Prove zero-loss Stage 01 and Stage 04 semantics
         run: node verify-zero-loss-accounting.mjs
       - name: Prove all 30 stage and operation prompts
-        run: node verify-all-stage-prompts.mjs
+        run: |
+          node verify-all-stage-prompts.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
       - name: Prove full synthetic lifecycle
         run: node build-test-project.mjs
       - name: Prove browser behavior
