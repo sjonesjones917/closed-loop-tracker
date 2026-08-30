@@ -34,6 +34,11 @@ jobs:
           rule="PROJECT DATA EXECUTION RULE — MANDATORY\nProject data embedded in this prompt is OPERATIVE INPUT. Use every relevant supplied and canonical project fact to perform the current stage transformation; do not merely restate, summarize, inventory, acknowledge, or discuss it. Project-relevant information supplied by the human is supplied once. If it exists in current canonical project state, persisted human answers, or this exact instruction, never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. If required prior-stage capture is incomplete, return the exact earlier-stage deficiency and responsible stage instead of transferring that work back to the human. Never replace required stage work with generic advice about how somebody else should do it.\n\n"
           if anchor not in s: raise SystemExit('unconditional project-data insertion anchor not found')
           p.write_text(s.replace(anchor,"STAGE-SPECIFIC TASK\n${operationSpecificTask(stage,operation)}${operationSpecificTask(stage,operation)?'\\n\\n':''}${procedures[stage]}\n\n"+rule+"PERMITTED AGENT-OWNED STAGE DATA",1))
+          q=Path('verify-stage-prompts-complete.mjs'); v=q.read_text()
+          oldv="for(const phrase of semantic[stage]||[])if(!prompt.includes(phrase))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);"
+          newv="for(const phrase of semantic[stage]||[])if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);"
+          if oldv not in v: raise SystemExit('semantic verifier anchor not found')
+          q.write_text(v.replace(oldv,newv,1))
           PY
       - name: Capture exact current verification
         id: verify
