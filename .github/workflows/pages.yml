@@ -1,41 +1,80 @@
-name: Deploy application
+name: Apply application repair
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches: [fix/one-time-intake-all-prompts-20260830]
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  contents: write
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - run: echo "application deployment ready"
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - run: echo "application repair ready"
+  repair:
     needs: test
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build static application
-        run: |
-          rm -rf _site
-          mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-      - name: Deploy application
-        id: deployment
-        uses: actions/deploy-pages@v4
+          ref: fix/one-time-intake-all-prompts-20260830
+          fetch-depth: 1
+      - name: Apply exact repair
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              if new in s:
+                  return False
+              if old not in s:
+                  raise SystemExit(f"Expected source not found in {path}")
+              p.write_text(s.replace(old, new, 1))
+              return True
+
+          changed = False
+          changed |= replace(
+              'workflow-engine.js',
+              "  const current=currentScope(project),runExecution=stage===11||(stage===17&&op==='EXECUTE_RUN')||(stage===19&&op==='EXECUTE_RUN');",
+              "  const current=currentScope(project),runExecution=stage===11||(stage===17&&op==='EXECUTE_RUN')||(stage===19&&op==='EXECUTE_RUN');\n  if(stage===1){for(const file of safe(project?.stages?.[1]?.authorizedFiles)){const id=String(file?.artifactId||file?.id||'').trim();if(id)addArtifact(artifactsById.get(id));}}"
+          )
+          changed |= replace(
+              'app-core.js',
+              "if(n===3||n===4)return files.length?",
+              "if([2,3,4].includes(n))return files.length?"
+          )
+          changed |= replace(
+              'prompt-engine.js',
+              "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/33';",
+              "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/34';"
+          )
+
+          p = Path('index.html')
+          s = p.read_text()
+          old_token = 'runtime-d191e02783e883df'
+          new_token = 'runtime-20260830-prompt-authority-34'
+          if old_token in s:
+              s = s.replace(old_token, new_token)
+              changed = True
+          elif new_token not in s:
+              raise SystemExit('Expected runtime cache token not found')
+
+          old_css = ".expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}"
+          new_css = ".expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}"
+          if old_css in s:
+              s = s.replace(old_css, new_css, 1)
+              changed = True
+          elif new_css not in s:
+              raise SystemExit('Expected prompt-size CSS not found')
+          p.write_text(s)
+          print('changed', changed)
+          PY
+      - name: Commit repair
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js app-core.js prompt-engine.js index.html
+          git commit -m "Complete one-time intake handoff and restore prompt surface"
+          git push origin HEAD:fix/one-time-intake-all-prompts-20260830
