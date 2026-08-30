@@ -45,7 +45,7 @@ jobs:
       - name: Verify generic deterministic Test IR runtime
         run: node verify-test-runtime.mjs
       - name: Verify one-time exhaustive intent capture and Stage 04 canonical reuse
-        run: node verify-one-time-intent-intake.mjs
+        run: node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs
       - name: Verify canonical serialization and SHA-256
         run: node verify-hash.mjs
       - name: Verify canonical workflow, persistence, ownership, and non-circularity
@@ -120,7 +120,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
+      - run: node build-test-project.mjs && node verify-test-runtime.mjs && node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs && node verify-hash.mjs && node verify.mjs && node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs && node verify-prompt-semantics.mjs && node verify-semantic-invariant.mjs && node verify-definition-of-done.mjs && node verify-project-lifecycle.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with: {path: .}
@@ -174,7 +174,7 @@ jobs:
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
           node verify-test-runtime.mjs > /tmp/verify-test-runtime.out
-          node verify-one-time-intent-intake.mjs > /tmp/verify-one-time-intent-intake.out
+          node verify-one-time-intent-intake.mjs && node verify-stage01-intake-closure.mjs > /tmp/verify-one-time-intent-intake.out
           node verify-ingestion.mjs > /tmp/verify-ingestion.out
           node verify.mjs > /tmp/verify-source.out
           node verify-complete.mjs > /tmp/verify-complete.out
