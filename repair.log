@@ -1,16 +1,14 @@
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/repair-controlling-bundle.mjs:50
-  if(Array.isArray(value)){value.forEach((item,index)=>accountingLeafUnits(item,`${path}[${index}]`,out));return out;}
-                                                                                 ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/repair-controlling-bundle-v2.mjs:4
+function one(text,from,to,label){const i=text.indexOf(from);if(i<0)throw new Error('Missing patch target: '+label);if(text.indexOf(from,i+1)>=0)throw new Error('Ambiguous patch target: '+label);return text.slice(0,i)+to+text.slice(i+from.length);}
+                                                                         ^
 
-SyntaxError: Unexpected identifier '$'
-    at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
-    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)
-    at #translate (node:internal/modules/esm/loader:559:20)
-    at afterLoad (node:internal/modules/esm/loader:612:29)
-    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:617:12)
-    at #createModuleJob (node:internal/modules/esm/loader:640:36)
-    at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
-    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)
+Error: Missing patch target: Stage1 accounting field
+    at one (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/repair-controlling-bundle-v2.mjs:4:74)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/repair-controlling-bundle-v2.mjs:11:4
+    at edit (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/repair-controlling-bundle-v2.mjs:6:54)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/repair-controlling-bundle-v2.mjs:8:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
 
 Node.js v22.23.2
