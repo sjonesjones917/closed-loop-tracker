@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 let s=fs.readFileSync('workflow-engine.js','utf8');
 const anchor='function obligationFragments(value){';
 const insert=`function migrateLegacyStage01Accounting(project){
@@ -45,5 +46,12 @@ const old="for(const source of legacy){const project=core.migrateState(clone(sou
 const neu="for(const source of legacy){const project=core.migrateState(clone(source));engine.ensureShape(project);if(typeof engine.migrateLegacyStage01Accounting==='function')engine.migrateLegacyStage01Accounting(project);engine.recalculate(project);assertProjectIntegrity(project,{verifyDerived:true});";
 if(!s.includes(old))throw new Error('store migration anchor missing');
 fs.writeFileSync('project-store.js',s.replace(old,neu));
+const runtimeFiles=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+const blobSha=file=>{const b=fs.readFileSync(file);return createHash('sha1').update(`blob ${b.length}\0`).update(b).digest('hex');};
+const manifest=runtimeFiles.map(file=>`${file}:${blobSha(file)}\n`).join('');
+const token='runtime-'+createHash('sha256').update(manifest).digest('hex').slice(0,16);
+s=fs.readFileSync('index.html','utf8');
+s=s.replace(/\?v=runtime-[a-f0-9]{16}/g,'?v='+token);
+fs.writeFileSync('index.html',s);
 fs.rmSync('.patch-stage1.mjs');
 fs.rmSync('.github/workflows/browser-proof-once.yml');
