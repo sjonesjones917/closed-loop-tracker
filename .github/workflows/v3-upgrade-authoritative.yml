@@ -92,4 +92,4 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Implement complete closed-loop v3 deterministic reliability contract"
           git push origin HEAD:implementation/closed-loop-v3
-# rerun after nine-script verifier repair
+# rerun after semantic-proof correction
