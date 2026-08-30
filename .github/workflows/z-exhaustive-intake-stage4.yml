@@ -37,6 +37,7 @@ jobs:
           python3 fix-stage3-prompt.py
           python3 fix-subject-neutral-prompt-tests.py
           python3 fix-stage1-deliverable-boundary.py
+          python3 fix-pages-v3-proof.py
       - name: Align acceptance report with controlling schemas and metrics
         shell: bash
         run: |
@@ -67,7 +68,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f exhaustive-bootstrap.py fix-accounting-verifier.py fix-stage1-input-version.py fix-stage3-prompt.py fix-stage4-accounting-contract.py fix-subject-neutral-prompt-tests.py fix-stage1-deliverable-boundary.py fix-runtime-token.py .github/workflows/z-exhaustive-intake-stage4.yml
+          rm -f exhaustive-bootstrap.py fix-accounting-verifier.py fix-stage1-input-version.py fix-stage3-prompt.py fix-stage4-accounting-contract.py fix-subject-neutral-prompt-tests.py fix-stage1-deliverable-boundary.py fix-pages-v3-proof.py fix-runtime-token.py .github/workflows/z-exhaustive-intake-stage4.yml
           for f in workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify-exhaustive-stage1-stage3-stage4.mjs; do node --check "$f"; done
           node build-test-project.mjs
           node verify-v3-contract.mjs
@@ -96,7 +97,7 @@ jobs:
           git config user.email actions@users.noreply.github.com
           git add workbook.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js index.html .github/workflows/pages.yml \
             build-test-project.mjs verify-complete.mjs verify-definition-of-done.mjs verify-full-cycle.mjs verify-hash.mjs verify-ingestion.mjs verify-intake-obligation-accounting.mjs verify-project-lifecycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-test-runtime-limits.mjs verify-test-runtime-v3.mjs verify-test-runtime.mjs verify-v3-contract.mjs verify-v3-definition-of-done.mjs verify-v3-migration.mjs verify.mjs verify-exhaustive-stage1-stage3-stage4.mjs
-          git add -u -- exhaustive-bootstrap.py fix-accounting-verifier.py fix-stage1-input-version.py fix-stage3-prompt.py fix-stage4-accounting-contract.py fix-subject-neutral-prompt-tests.py fix-stage1-deliverable-boundary.py fix-runtime-token.py .github/workflows/z-exhaustive-intake-stage4.yml
+          git add -u -- exhaustive-bootstrap.py fix-accounting-verifier.py fix-stage1-input-version.py fix-stage3-prompt.py fix-stage4-accounting-contract.py fix-subject-neutral-prompt-tests.py fix-stage1-deliverable-boundary.py fix-pages-v3-proof.py fix-runtime-token.py .github/workflows/z-exhaustive-intake-stage4.yml
           git diff --cached --check
           git commit -m 'Enforce exhaustive Stage 01 and Stage 03 input closure for Stage 04'
           git push origin HEAD:fix/exhaustive-intake-stage3-stage4-20260830
