@@ -152,57 +152,6 @@ jobs:
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
 
-  materialize-stage4-intent-reuse:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'Install one-time Stage 04 materializer')
-    needs: test
-    runs-on: ubuntu-latest
-    permissions: {contents: write, pull-requests: write}
-    steps:
-      - uses: actions/checkout@v4
-        with: {fetch-depth: 0}
-      - uses: actions/setup-node@v4
-        with: {node-version: '22'}
-      - name: Apply minimal Stage 01 and Stage 04 repair
-        shell: bash
-        run: |
-          node <<'NODE'
-          const fs=require('fs');
-          let prompt=fs.readFileSync('prompt-engine.js','utf8');
-          const oldVersion="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/25';";
-          const newVersion="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/26';";
-          if(!prompt.includes(oldVersion))throw new Error('Prompt engine version anchor not found.');
-          prompt=prompt.replace(oldVersion,newVersion);
-          const oldGuidance='INPUT_SET_CONTENTS should identify the top-level supplied human inputs and attached materials available to this job. Do not turn it into a Stage 02 archive/file inventory. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.';
-          const newGuidance='INPUT_SET_CONTENTS must preserve a concise semantic capture of every material human-authority statement that Stage 01 actually read from the current human input and any supplied material bytes available in the executing context, together with the top-level material references. It must be sufficient for later stages to reuse that captured meaning without asking the human to attach, resend, retype, or summarize the same intent material. Do not copy an entire file or turn it into a Stage 02 archive/file inventory. If bytes were unavailable, preserve only the material reference and do not infer contents. UNKNOWN_INFORMATION should carry nonblocking later-needed facts. ASSUMPTIONS must contain only assumptions, not unknowns or application-derived identity facts.';
-          if(!prompt.includes(oldGuidance))throw new Error('Stage 01 INPUT_SET_CONTENTS anchor not found.');
-          prompt=prompt.replace(oldGuidance,newGuidance);
-          fs.writeFileSync('prompt-engine.js',prompt);
-          fs.writeFileSync('verify-stage4-intent-reuse.mjs',`import fs from 'node:fs';\nimport vm from 'node:vm';\nimport assert from 'node:assert/strict';\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});\nconst core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;\nconst p=core.createBlankState('JOB-STAGE04-INTENT-REUSE');\nObject.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested product from the supplied intent.',SUPPLIED_MATERIALS_INVENTORY:JSON.stringify([{type:'FILE',exactNameOrReference:'intent.pdf'}]),CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',EXACT_DELIVERABLE_REQUESTED:'Requested product',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:'Captured human authority: preserve the supplied safety constraint and acceptance condition.'});\nengine.ensureShape(p);engine.recalculate(p);\nconst stage1=prompts.buildPromptRecord(1,p).prompt;\nassert.match(stage1,/INPUT_SET_CONTENTS must preserve a concise semantic capture of every material human-authority statement/i);\nconst stage4=prompts.buildPromptRecord(4,p).prompt;\nassert.match(stage4,/ACCEPTED STAGE 01 JOB DEFINITION — CANONICAL INPUT, DO NOT ASK THE HUMAN TO RESEND IT/i);\nassert.match(stage4,/Captured human authority: preserve the supplied safety constraint and acceptance condition\./);\nassert.match(stage4,/Do not ask the human to attach, resend, retype, or summarize the original intent file/i);\nconst handoff=engine.executionHandoff(p,{stage:4,operation:'COMPLETE'});\nassert.equal(handoff.send.length,0);\nassert.equal(handoff.conversationMaterials.length,0);\nconsole.log(JSON.stringify({stage01SemanticCaptureRequired:true,stage04ReusesCapturedIntent:true,stage04IntentFileReattachmentRequired:false,promptEngineVersion:prompts.version},null,2));\n`);
-          let workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
-          workflow=workflow.replace(/\n  materialize-stage4-intent-reuse:[\s\S]*?(?=\n  publish-status:)/,'');
-          workflow=workflow.replace('          node --check verify-test-runtime.mjs\n','          node --check verify-test-runtime.mjs\n          node --check verify-stage4-intent-reuse.mjs\n');
-          workflow=workflow.replace('          node verify-complete.mjs\n','          node verify-complete.mjs\n          node verify-stage4-intent-reuse.mjs\n');
-          workflow=workflow.replace('node verify-ingestion.mjs && node verify-complete.mjs && node verify-full-cycle.mjs','node verify-ingestion.mjs && node verify-complete.mjs && node verify-stage4-intent-reuse.mjs && node verify-full-cycle.mjs');
-          fs.writeFileSync('.github/workflows/pages.yml',workflow);
-          NODE
-          node --check prompt-engine.js
-          node verify-stage4-intent-reuse.mjs
-          node verify-complete.mjs
-      - name: Open exact minimal repair pull request
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          BRANCH=fix/stage4-intent-reuse-actual
-          git config user.name closed-loop-repair
-          git config user.email actions@users.noreply.github.com
-          git checkout -b "$BRANCH"
-          git add prompt-engine.js verify-stage4-intent-reuse.mjs .github/workflows/pages.yml
-          git diff --cached --check
-          git commit -m "Fix Stage 04 intent reuse without repeated attachment"
-          git push -u origin "$BRANCH"
-          gh pr create --base main --head "$BRANCH" --title "Fix Stage 04 intent reuse without repeated attachment" --body "Minimal permanent repair only: Stage 01 now stores the semantic human-authority content it actually reads in existing INPUT_SET_CONTENTS, saved prompts are invalidated by the prompt-engine version bump, Stage 04 reuses the accepted Stage 01 capture, and a focused regression proves the original intent file is not requested again. The one-time materializer removes itself from pages.yml in this PR."
-
   publish-status:
     if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: [test, deploy, verify-live]
