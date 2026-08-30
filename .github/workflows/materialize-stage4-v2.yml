@@ -1,0 +1,64 @@
+name: Materialize Stage 4 canonical obligation accounting v2
+
+on:
+  push:
+    branches:
+      - fix/stage4-canonical-obligation-accounting-v2
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage4-canonical-obligation-accounting-v2
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Configure git
+        run: |
+          git config user.name "closed-loop-repair"
+          git config user.email "actions@users.noreply.github.com"
+      - name: Materialize current-main repair
+        run: python3 .github/scripts/materialize_stage4_v2.py
+      - name: Syntax checks
+        run: |
+          node --check app-core.js
+          node --check hash.js
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check response-ingestion.js
+          node --check project-store.js
+          node --check workbook.js
+          node --check test-runtime.js
+          node --check test-worker.js
+          node --check verify-one-time-intent-intake.mjs
+          node --check verify-prompt-semantics.mjs
+          node --check verify-ingestion.mjs
+          node --check verify-test-runtime.mjs
+          node --check verify-hash.mjs
+          node --check verify.mjs
+      - name: Targeted Stage 01 and Stage 04 mutation proof
+        run: node verify-one-time-intent-intake.mjs
+      - name: Prompt, ingestion, runtime, hash, and lifecycle proof
+        run: |
+          node verify-prompt-semantics.mjs
+          node verify-ingestion.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Commit tested repair
+        run: |
+          git add -A
+          git commit -m "Close Stage 4 obligation accounting on current main"
+          git push origin HEAD:fix/stage4-canonical-obligation-accounting-v2
