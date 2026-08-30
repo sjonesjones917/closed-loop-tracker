@@ -356,7 +356,7 @@ import fsStageBoundary from 'node:fs';
  const s2=capture(2,3);
  const forbidden1=[/supplied-material inventory/i,/inspection state/i,/build .*source inventory/i,/discover independent external sources/i,/establish source identity/i,/authority hierarchy/i,/source conflicts/i,/research requirements/i];
  for(const re of forbidden1)if(re.test(s1))throw new Error('Stage 01 leaks Stage 02/03 work: '+re);
- const required1=[/job definition and clarification only/i,/authorized human job input/i,/limited intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
+ const required1=[/job definition and clarification only/i,/authorized human job input/i,/complete meaning-preserving intake inspection is Stage 01 job-definition work/i,/do not classify, validate, rank, establish provenance for, or determine authority\/currency\/conflicts among supplied materials here/i];
  for(const re of required1)if(!re.test(s1))throw new Error('Stage 01 missing locality boundary: '+re);
  const required2=[/Stage 02 is not a supplied-project-material inventory stage/i,/Missing project-material bytes do not by themselves block Stage 02/i,/Do not perform Stage 03 substantive source research or derive requirements yet/i];
  for(const re of required2)if(!re.test(s2))throw new Error('Stage 02 missing ownership boundary: '+re);
@@ -374,7 +374,7 @@ import fsStageBoundary from 'node:fs';
  const required=[
   'do not ask the human to re-enter facts that are already present in those materials',
   'Do not block Stage 01 merely because information will be needed by a later',
-  'Stage 01 does not require every fact needed to execute later stages',
+  'Stage 01 must capture every materially relevant human-authority statement currently supplied; facts that genuinely require later research may remain identified as later-resolvable',
   'A request such as "prepare a patent application for this project" is sufficient to define a patent-application drafting job at Stage 01',
   'Do not make jurisdiction, filing route, inventorship, ownership, priority/continuity, disclosure history, filing deadline, or counsel-review-versus-filing-ready choices automatic Stage-01 blockers',
   'Stage 01 also owns proactive human intake: before finalizing Stage 01, collect the human-specific facts and decisions that are already foreseeable as necessary to achieve the requested outcome',
@@ -439,7 +439,11 @@ console.log(JSON.stringify({stage23PriorConclusionIsolation:true,stage24PriorCon
   if(record.contextManifest.executionHandoff?.conversationMaterials)throw new Error('Obsolete Stage 04 conversation-material state remains in prompt identity.');
   p.job.SUPPLIED_MATERIALS_INVENTORY=JSON.stringify([{type:'FILE',exactNameOrReference:'renamed-design-input.pdf'}]);
   const renamed=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
-  if(renamed.bodySha256===record.bodySha256)throw new Error('Current human input change did not change the Stage 04 instruction body.');
+  if(renamed.bodySha256!==record.bodySha256)throw new Error('Changing only the original intake filename incorrectly changed the Stage 04 instruction body.');
+  for(const filename of ['design-input.pdf','renamed-design-input.pdf'])if(record.prompt.includes(filename)||renamed.prompt.includes(filename))throw new Error('Stage 04 exposed an original intake filename: '+filename);
+  p.job.INPUT_SET_CONTENTS='CANONICAL-STAGE-01-INTENT-CAPTURE-CHANGED';
+  const canonicalChanged=prompts.buildPromptRecord(4,p,{operation:'COMPLETE'});
+  if(canonicalChanged.bodySha256===record.bodySha256)throw new Error('Changing canonical Stage 01 intake did not change the Stage 04 instruction body.');
 }
 console.log(JSON.stringify({stage04CanonicalInputReuse:true}));
 // Independent final-product review prompts carry the application-selected reviewer context identity.
