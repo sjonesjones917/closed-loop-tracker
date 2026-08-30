@@ -54,6 +54,8 @@ jobs:
           git add repair-failure.log
           git commit -m "Record controlling-spec repair diagnostic" || true
           git push origin HEAD:fix/controlling-spec-20260830-0716 || true
+      - name: Remove one-time scaffolding before repository proofs
+        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml repair-failure.log
       - name: Build architecture proof
         run: node build-test-project.mjs
       - name: Existing Test IR runtime proof
@@ -66,8 +68,6 @@ jobs:
         run: node verify-ingestion.mjs
       - name: Existing prompt semantics proof
         run: node verify-prompt-semantics.mjs
-      - name: Remove one-time repair machinery
-        run: rm -f .repair-controlling-spec.py .repair-post.py .github/workflows/_apply-controlling-spec.yml repair-failure.log
       - name: Commit verified repair
         run: |
           git config user.name github-actions[bot]
