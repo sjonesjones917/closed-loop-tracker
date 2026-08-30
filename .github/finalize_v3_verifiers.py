@@ -82,10 +82,15 @@ if stale_specialist in s:s=s.replace(stale_specialist,neutral_specialist,1)
 elif prior_neutral_specialist in s:s=s.replace(prior_neutral_specialist,neutral_specialist,1)
 elif neutral_specialist not in s:raise SystemExit('Stage 01 specialist verifier anchor missing')
 
-# Replace stale practical token assertions individually; do not depend on exact list formatting.
-s=s.replace("'Ask only what must come from the human'","'Ask only for facts or choices that must come from the human'")
-s=s.replace("'Do not block Stage 01 merely because information will be needed by a later'","'Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority'")
-if 'Ask only what must come from the human' in s or 'Do not block Stage 01 merely because information will be needed by a later' in s:raise SystemExit('stale Stage 01 practical verifier wording remains')
+# Replace all obsolete Stage 01 practical assertions with controlling current semantics.
+replacements={
+"Ask only what must come from the human":"Ask only for facts or choices that must come from the human",
+"Do not block Stage 01 merely because information will be needed by a later":"Use LATER_RESOLVABLE only when the fact can be established from accessible supplied material, authorized research, or a later deterministic stage without human authority",
+"Stage 01 does not require every fact needed to execute later stages":"Stage 01 requires every foreseeable genuinely human-only fact or decision relevant to the requested outcome to be supplied, asked and answered, or asked and explicitly deferred before DATA_PROPOSAL"
+}
+for old,new in replacements.items():s=s.replace(old,new)
+for old in replacements:
+    if old in s:raise SystemExit('stale Stage 01 practical verifier wording remains: '+old)
 
 old_mutants="""const mutants=[
   {...original,contextManifest:{...original.contextManifest,readCollections:{verification:[]}}},
