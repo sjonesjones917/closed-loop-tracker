@@ -28,6 +28,7 @@ function record(stage,operation){
 }
 function has(text,...tokens){for(const token of tokens)assert(text.includes(token),`Prompt missing controlling semantic: ${token}`);}
 function lacks(text,...tokens){for(const token of tokens)assert(!text.includes(token),`Prompt contains prohibited semantic: ${token}`);}
+function readCollections(r){return new Set(Object.keys(r.contextManifest?.readCollections||{}));}
 
 let operationCount=0;
 for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_OPERATIONS[stage]){
@@ -81,22 +82,28 @@ for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_OPERATIONS
   const r=record(8,'COMPLETE').prompt;has(r,'Distinguish artifact creation from downstream use');
 }
 {
-  const r=record(11,'COMPLETE').prompt;lacks(r,'prior-run output','reviewer feedback');
+  const r=record(11,'COMPLETE'),reads=readCollections(r);
+  has(r.prompt,'reviewer feedback');
+  for(const forbidden of ['verification','comparisons','rootCauses','changes'])assert(!reads.has(forbidden),`Stage 11 leaked ${forbidden} into selected context.`);
 }
 {
-  const r=record(12,'COMPLETE').prompt;has(r,'Respect each test’s EXECUTION_MODE');lacks(r,'Stage 13 comparison','proposed corrections');
+  const r=record(12,'COMPLETE'),reads=readCollections(r);
+  has(r.prompt,'Respect each test’s EXECUTION_MODE');
+  for(const forbidden of ['comparisons','rootCauses','changes'])assert(!reads.has(forbidden),`Stage 12 leaked ${forbidden} into selected context.`);
 }
 {
   const r=record(21,'COMPLETE').prompt;has(r,'Generate the complete approved deliverable and every required actual artifact whenever this environment can reliably construct the artifact bytes');
 }
 {
-  const r=record(23,'COMPLETE').prompt;lacks(r,'generator’s claim that the product is correct','adversarial findings');
+  const r=record(23,'COMPLETE'),reads=readCollections(r);
+  for(const forbidden of ['adversarialResults'])assert(!reads.has(forbidden),`Stage 23 leaked ${forbidden} into selected context.`);
 }
 {
-  const r=record(24,'COMPLETE').prompt;lacks(r,'generator self-evaluation','prior reviewer conclusions');
+  const r=record(24,'COMPLETE'),reads=readCollections(r);
+  assert(!reads.has('meaningResults'),`Stage 24 leaked prior meaning-review conclusions into selected context.`);
 }
 
 assert(JSON.stringify(engine.applicationTestCapabilities())===JSON.stringify(['CLOSED_LOOP_TEST_IR']),'Application-native capability registry must contain only CLOSED_LOOP_TEST_IR.');
 const test=schema.RECORD_SCHEMAS.tests;
 assert(JSON.stringify(test.fieldDefinitions.EXECUTION_MODE.enumValues)===JSON.stringify(['APPLICATION_DETERMINISTIC','EXTERNAL_AGENT_TOOL','INDEPENDENT_AGENT_REVIEW','HUMAN_INSPECTION','EXTERNAL_SYSTEM','UNAVAILABLE']),'Execution-mode enum changed.');
-console.log(JSON.stringify({stageOperationsSemanticallyChecked:operationCount,domainNeutralPrompts:true,stage1ExhaustiveIntake:true,stage3ExhaustiveResearch:true,stage4ClosedSingleSupply:true,applicationNativeCapabilityRegistry:true},null,2));
+console.log(JSON.stringify({stageOperationsSemanticallyChecked:operationCount,domainNeutralPrompts:true,stage1ExhaustiveIntake:true,stage3ExhaustiveResearch:true,stage4ClosedSingleSupply:true,contextIsolationByManifest:true,applicationNativeCapabilityRegistry:true},null,2));
