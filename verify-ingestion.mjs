@@ -17,7 +17,7 @@ if(core.STAGES.length!==30)throw new Error(`Expected 30 stages; found ${core.STA
 function prepareStage4Upstream(p){
   const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
   p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
-  Object.assign(p.stages[1].agentData,{EXACT_DELIVERABlE_REQUESTED:'Controlled verification deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'});
+  Object.assign(p.stages[1].agentData,{EXACT_DELIVERABLE_REQUESTED:'Controlled verification deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE'});
   p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
   p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
   p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};

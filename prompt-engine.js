@@ -32,6 +32,7 @@ function stageOneConversationBlock(state){
   return `STAGE 01 HUMAN CONVERSATION — THIS OCCURS BEFORE ANY FINAL JSON
 You are speaking directly with the human who requested the project. You are not responding to an API, filling a form, or producing a report for a machine.
 The user supplies project information once. Capture it completely, preserve it as durable project authority, and reuse it instead of asking for it again.
+Exhaust the human-authority intake before finalizing Stage 01.
 Classify every APPLICATION INTAKE MANIFEST unit exactly once.
 INPUT_SET_CONTENTS must preserve the complete durable meaning needed by later stages.
 DO NOT return final JSON, a JSON skeleton, a job packet, or a proposed completion at the beginning of the conversation merely because a response schema appears later in this instruction.
