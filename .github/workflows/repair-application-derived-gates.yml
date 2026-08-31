@@ -1,0 +1,71 @@
+name: Repair application-derived stage gates
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+          fetch-depth: 0
+      - name: Correct authoritative stage gating and regression fixtures
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new, expected=1):
+              p=Path(path); s=p.read_text(); n=s.count(old)
+              if n != expected:
+                  raise SystemExit(f'{path}: expected {expected}, found {n}: {old[:120]!r}')
+              p.write_text(s.replace(old,new))
+
+          replace_exact('workflow-engine.js',
+            "  const requireAccepted=()=>{if(!hasAccepted)reasons.push('No validated agent response has been accepted for this stage.');};",
+            "  const stageContract=schema.STAGE_CONTRACTS?.[Number(stage)]||{},agentStageFields=safe(stageContract.allowedStageData).filter(name=>schema.STAGE_FIELDS?.[Number(stage)]?.[name]?.producer===schema.PRODUCER.AGENT),agentCollections=new Set();for(const operation of safe(stageContract.operations)){const contract=schema.operationContract(Number(stage),operation);for(const collectionName of safe(contract?.agentWritableCollections))agentCollections.add(collectionName);}const requiresAcceptedAgentResponse=agentStageFields.length>0||agentCollections.size>0;\n  const requireAccepted=()=>{if(requiresAcceptedAgentResponse&&!hasAccepted)reasons.push('No validated agent response has been accepted for this stage.');};")
+
+          p=Path('verify-complete.mjs'); s=p.read_text()
+          marker='// Formal-state meanings remain exact and no Stage 31 exists.\n'
+          regression="""// Application-derived stages must not require a fabricated external-agent response.\n{\n  for(const stage of [10,28]){const p=project(`JOB-NO-AGENT-${stage}`);if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}const g=engine.gate(stage,p);assert(!g.reasons.includes('No validated agent response has been accepted for this stage.'),`Stage ${stage} incorrectly requires an external-agent response despite having no agent-writable surface.`);}\n  const p=project('JOB-AGENT-STAGE-STILL-REQUIRED');p.stages[7].status='COMPLETE';p.stages[7].gate={complete:true,blocked:false,reasons:[]};assert(engine.gate(8,p).reasons.includes('No validated agent response has been accepted for this stage.'),'Agent-writable Stage 08 stopped requiring a validated agent response.');\n}\n\n"""
+          if regression not in s:
+              if s.count(marker)!=1: raise SystemExit('verify-complete formal-state marker changed')
+              s=s.replace(marker,regression+marker)
+          old="const replacement=prompts.buildPromptRecord(2,p);assert(replacement.prompt.includes(reason)"
+          new="p.stages[1].status='COMPLETE';p.stages[1].gate={...(p.stages[1].gate||{}),complete:true,blocked:false,reasons:[]};const replacement=prompts.buildPromptRecord(2,p);assert(replacement.prompt.includes(reason)"
+          if s.count(old)!=1: raise SystemExit('verify-complete refinement prompt marker changed')
+          s=s.replace(old,new)
+          old="const acceptLane=(slot,label)=>{const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}}),generatedAt:new Date().toISOString()};"
+          new="const acceptLane=(slot,label)=>{p.stages[10].status='COMPLETE';p.stages[10].gate={...(p.stages[10].gate||{}),complete:true,blocked:false,reasons:[]};const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}}),generatedAt:new Date().toISOString()};"
+          if s.count(old)!=1: raise SystemExit('verify-complete scoped run marker changed')
+          s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          node --check workflow-engine.js
+          node verify-complete.mjs
+          node verify-v3-migration.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-v3-definition-of-done.mjs
+      - name: Commit correction and remove one-time workflow
+        shell: bash
+        run: |
+          rm .github/workflows/repair-application-derived-gates.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Align application-derived stages with producer authority'
+          git push origin HEAD:finish/live-human-gate-20260830
