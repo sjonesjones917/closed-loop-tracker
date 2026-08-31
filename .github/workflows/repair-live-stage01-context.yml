@@ -54,6 +54,9 @@ jobs:
           assert old in s
           new="const scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']));"
           s=s.replace(old,new)
+          old="const r=prompts.buildPromptRecord(s,state,{operation:op,scope});"
+          assert old in s
+          s=s.replace(old,"console.log('PROMPT_FIXTURE_STAGE',s,op,JSON.stringify(scope));const r=prompts.buildPromptRecord(s,state,{operation:op,scope});",1)
           regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert(source.includes('contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>'),'Persisted prompt context selector omitted the active operation.');\n}\n"""
           if regression.strip() not in s:
               s += regression
