@@ -24,6 +24,7 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           def replace_once(path, old, new):
               p=Path(path)
@@ -79,22 +80,22 @@ jobs:
             'Nothing below is canonical until you accept the complete validated proposal.</p>',
             'Nothing below is canonical until you accept the complete validated proposal. The proposal diff shows the current value beside the proposed value.</p>')
 
-          # One cache/build identity for the complete runtime graph.
-          old='runtime-20260831-live-operator-60'
+          # Normalize every runtime entry to one shared cache/build identity.
           new='runtime-20260831-reliability-62'
-          changed=[]
-          for p in Path('.').iterdir():
-              if not p.is_file() or p.suffix not in {'.js','.mjs','.html'}:
-                  continue
+          for path in ('app-core.js','test-runtime.js'):
+              p=Path(path)
               s=p.read_text()
-              if old in s:
-                  p.write_text(s.replace(old,new))
-                  changed.append(p.name)
-          if not changed:
-              raise SystemExit('No runtime build identity was updated.')
-          required={'index.html','app-core.js','test-runtime.js'}
-          if not required.issubset(set(changed)):
-              raise SystemExit(f'Runtime identity did not cover required files: changed={changed}')
+              s,count=re.subn(r"const RUNTIME_BUILD_ID='[^']+';",f"const RUNTIME_BUILD_ID='{new}';",s,count=1)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one RUNTIME_BUILD_ID declaration, found {count}')
+              p.write_text(s)
+          p=Path('index.html')
+          s=p.read_text()
+          pattern=r'(<script\s+defer\s+src="(?:workbook|hash|workflow-schema|test-runtime|workflow-engine|prompt-engine|response-ingestion|project-store|app-core)\.js\?v=)[^"]+("\s*></script>)'
+          s,count=re.subn(pattern,lambda match:match.group(1)+new+match.group(2),s)
+          if count != 9:
+              raise SystemExit(f'index.html: expected nine runtime script build identities, found {count}')
+          p.write_text(s)
           PY
 
       - name: Prove the focused correction before committing
