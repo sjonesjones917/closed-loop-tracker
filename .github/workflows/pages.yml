@@ -18,16 +18,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+      - name: Syntax and schema architecture
         run: |
           set -euo pipefail
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
             node --check "$file"
           done
+          node verify-spec3-contract.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+      - name: Test IR validation security and deterministic runtime
+        run: |
+          set -euo pipefail
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+      - name: Ingestion workflow gates and prompt semantics
+        run: |
+          set -euo pipefail
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-full-cycle.mjs
+          node verify-project-lifecycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs > acceptance-source.json
+      - name: Local Chromium operator workflow
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep .1; done
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-human-stage-walkthrough.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-mobile-stage-action.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-acceptance
+          path: acceptance-source.json
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -45,3 +87,23 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+  live:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact deployed bytes and deployed Chromium workflow
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          node verify-live.mjs > acceptance-live.json
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deployed-acceptance
+          path: acceptance-live.json
