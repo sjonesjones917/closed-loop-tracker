@@ -16,13 +16,26 @@ const server=http.createServer((req,res)=>{
   res.end(fs.readFileSync(absolute));
 });
 await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve).once('error',reject));
-const remotePort=9800+Math.floor(Math.random()*500),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
-const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${remotePort}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+const profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
+const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function poll(fn,timeout=20000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
 async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
+async function waitForDevToolsPort(timeout=20000){
+  const activePortFile=path.join(profile,'DevToolsActivePort'),end=Date.now()+timeout;
+  while(Date.now()<end){
+    if(child.exitCode!==null)throw new Error(`Chrome exited before DevTools became ready (exit ${child.exitCode}).`);
+    try{
+      const [portText]=fs.readFileSync(activePortFile,'utf8').trim().split(/\r?\n/),port=Number(portText);
+      if(Number.isInteger(port)&&port>0&&port<=65535)return port;
+    }catch{}
+    await sleep(120);
+  }
+  throw new Error('Chrome DevToolsActivePort was not created before timeout.');
+}
 let ws;
 try{
+  const remotePort=await waitForDevToolsPort();
   await poll(()=>getJson(`http://127.0.0.1:${remotePort}/json/version`));
   const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
@@ -59,8 +72,8 @@ try{
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker cannot traverse all 30 stages in order.');
     picker.value='2';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,100));
     const promptElement=document.querySelector('.prompt');if(!promptElement)throw new Error('Rendered prompt display is missing from the Workflow UI.');
-    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\\n');
-    const compact=css.replace(/\\s+/g,' ');
+    const css=[...document.styleSheets].flatMap(sheet=>{try{return [...sheet.cssRules].map(rule=>rule.cssText)}catch{return []}}).join('\n');
+    const compact=css.replace(/\s+/g,' ');
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
