@@ -13,35 +13,30 @@ jobs:
         with:
           ref: repair/spec3-proof-gate
           fetch-depth: 0
-      - name: Align Stage 04 declared reads and close static Stage 01 fixture
+      - name: Make Stage 04 obligation manifest authority explicit
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('workflow-schema.js')
+          p=Path('prompt-engine.js')
           s=p.read_text()
-          old="4:['research','candidateRequirements','sources','evidenceRecords']"
-          new="4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/57';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/58';"
           if old in s:s=s.replace(old,new,1)
-          elif new not in s:raise SystemExit('Stage 04 READ_COLLECTIONS entry not found')
+          elif new not in s:raise SystemExit('Prompt engine version marker not found')
+          old2="APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION"
+          new2="APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION"
+          if old2 in s:s=s.replace(old2,new2,1)
+          elif new2 not in s:raise SystemExit('Stage 04 obligation manifest heading not found')
           p.write_text(s)
-
-          q=Path('verify-stage-prompts-complete.mjs')
-          t=q.read_text()
-          old2="engine.ensureShape(p);engine.recalculate(p);for(let stage=1;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}"
-          new2="engine.ensureShape(p);engine.recalculate(p);const intakePrompt=prompts.buildPromptRecord(1,p),intakeManifest=intakePrompt.contextManifest.intakeCoverageManifest;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intakeManifest.inputVersion,manifestSha256:intakeManifest.manifestSha256,units:intakeManifest.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'Static all-stage prompt audit fixture.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';for(let stage=1;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}"
-          if old2 in t:t=t.replace(old2,new2,1)
-          elif new2 not in t:raise SystemExit('Static all-stage prompt fixture initialization not found')
-          q.write_text(t)
           PY
       - name: Commit controlled repair
         run: |
-          node --check workflow-schema.js
-          node --check verify-stage-prompts-complete.mjs
+          node --check prompt-engine.js
           git config user.name closed-loop-repair
           git config user.email closed-loop-repair@users.noreply.github.com
-          git add workflow-schema.js verify-stage-prompts-complete.mjs
+          git add prompt-engine.js
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Align Stage 04 declared source conflict context'
+          git commit -m 'Make Stage 04 obligation authority explicit'
           git push origin HEAD:repair/spec3-proof-gate
       - name: Expose next ordered prompt proof failure
         run: node verify-stage-prompts-complete.mjs
