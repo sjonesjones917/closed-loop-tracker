@@ -12,6 +12,21 @@ function project(jobId='JOB-FINAL-VERIFY'){
   const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Final verification fixture';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Synthetic implementation-verification project only.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;
 }
 function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}
+function acceptStage1Fixture(p){
+  const stage=1,pr=prompt(p,stage),manifest=pr.contextManifest.intakeCoverageManifest;
+  const capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Accepted Stage 01 prerequisite fixture preserves current human authority.',extractedStatements:[{statementKey:'STAGE1-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+  const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Verify accepted response refinement.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'stage1-evidence',kind:'INTAKE',description:'Accepted Stage 01 fixture evidence',authorityType:'AGENT_CLAIM',location:'verify-complete.mjs',content:'Every controlled Stage 01 input unit is accounted for.'}],unresolved:[],warnings:[],attachments:[]};
+  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:pr});
+  assert(prepared.validation.valid,`Accepted Stage 01 fixture response rejected: ${JSON.stringify(prepared.validation.issues)}`);
+  assert(prepared.proposal?.status==='PENDING_OPERATOR_REVIEW','Accepted Stage 01 fixture did not create a reviewable proposal.');
+  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reviewNote:'Establish the real Stage 01 prerequisite for Stage 02 refinement.'});
+  const next=committed.project,acceptedChange=committed.acceptedChange;
+  assert(acceptedChange?.changeId&&engine.acceptedChanges(next,1).length===1,'Accepted Stage 01 fixture did not create one canonical Stage 01 change.');
+  next.projectData.stageConfirmations.push({confirmationId:'CONFIRM-STAGE1-REFINEMENT',stage:1,acceptedChangeId:acceptedChange.changeId,inputVersion:next.job.CURRENT_INPUT_VERSION,confirmed:true,operator:'VERIFY',deviceTimestamp:new Date().toISOString()});
+  engine.recalculate(next);
+  assert(next.stages[1].status==='COMPLETE'&&engine.evaluateIntakeAccounting(next).complete,'Accepted Stage 01 fixture did not remain complete after recalculation.');
+  return next;
+}
 
 // Formal-state meanings remain exact and no Stage 31 exists.
 assert(JSON.stringify(engine.STAGE_STATES)===JSON.stringify(['NOT STARTED','IN PROGRESS','BLOCKED','READY','COMPLETE']),'Stage tracker states changed.');
@@ -179,7 +194,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Accepted-response refinement removes all current same-stage canonical authority.
 {
-  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');
+  const p=acceptStage1Fixture(project('JOB-REFINEMENT-CANONICAL')),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');
   p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
   source.sourceProposalId='PROPOSAL-REFINE';source.rawResponseId='RAW-REFINE';source.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.sources.push(source);
   p.projectData.acceptedChanges.push({changeId:'CHANGE-REFINE',stage,status:'COMMITTED',responseType:'DATA_PROPOSAL',proposalId:'PROPOSAL-REFINE',rawResponseId:'RAW-REFINE',promptId:'INSTRUCTION-REFINE',operation:'COMPLETE',scope:{},canonicalRecordIds:['SOURCE-REFINE']});
