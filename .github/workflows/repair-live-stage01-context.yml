@@ -1,0 +1,72 @@
+name: Repair live Stage01 and prompt context binding
+on:
+  push:
+    branches: [fix/live-stage01-context-binding-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[repair-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/live-stage01-context-binding-20260831
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal source corrections
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';"
+          assert old in s
+          s=s.replace(old,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/55';",1)
+          old="contextRecordsFor(state,collection,scope,batchPlan,stage).map(record=>"
+          assert old in s
+          s=s.replace(old,"contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>",1)
+          p.write_text(s)
+
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="const RUNTIME_BUILD_ID='runtime-20260830-live-operator-59';"
+          assert old in s
+          s=s.replace(old,"const RUNTIME_BUILD_ID='runtime-20260831-live-operator-60';",1)
+          old="stageOneAccounting=safe(p.envelope?.stageData?.INTAKE_ACCOUNTING),stageOneIntents=safe(p.envelope?.records?.intentStatements),stageOneSummary=stageOne?"
+          assert old in s
+          new="stageOneCaptured=engine.parseCapturedInputSet({agentData:p.envelope?.stageData||{}}),stageOneAccounting=safe(stageOneCaptured?.units),stageOneIntents=safe(stageOneCaptured?.extractedStatements),stageOneSummary=stageOne?"
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('verify-all-stage-prompts.mjs')
+          s=p.read_text()
+          marker="console.log('verify-all-stage-prompts: PASS');"
+          assert marker in s
+          regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert.match(source,/contextRecordsFor\\(state,collection,scope,batchPlan,stage,operation\\)\\.map\\(record=>/);\n}\n"""
+          s=s.replace(marker,regression+'\n'+marker,1)
+          p.write_text(s)
+
+          p=Path('verify-browser.mjs')
+          s=p.read_text()
+          marker="console.log('verify-browser: PASS');"
+          assert marker in s
+          regression="""\n// Permanent regression: Stage 01 proposal summary reads the current /3 INPUT_SET_CONTENTS contract.\n{\n  const source=fs.readFileSync(new URL('./app-core.js',import.meta.url),'utf8');\n  assert.match(source,/parseCapturedInputSet\\(\\{agentData:p\\.envelope\\?\\.stageData\\|\\|\\{\\}\\}\\)/);\n  assert.doesNotMatch(source,/stageData\\?\\.INTAKE_ACCOUNTING/);\n  assert.doesNotMatch(source,/records\\?\\.intentStatements/);\n}\n"""
+          s=s.replace(marker,regression+'\n'+marker,1)
+          p.write_text(s)
+      - name: Verify repaired sources
+        run: |
+          node --check prompt-engine.js
+          node --check app-core.js
+          node verify-all-stage-prompts.mjs
+          node verify-browser.mjs
+      - name: Commit integrated repair and remove one-time workflow
+        run: |
+          rm .github/workflows/repair-live-stage01-context.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js app-core.js verify-all-stage-prompts.mjs verify-browser.mjs .github/workflows/repair-live-stage01-context.yml
+          git commit -m 'Fix Stage 01 proposal accounting and operation-bound prompt context [repair-applied]'
+          git push origin HEAD:fix/live-stage01-context-binding-20260831
