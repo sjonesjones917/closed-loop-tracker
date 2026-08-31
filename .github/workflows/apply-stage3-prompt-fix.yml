@@ -34,15 +34,23 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          path=Path('workbook.js')
-          source=path.read_text()
-          old="'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'"
-          new="'Research only the current accepted Stage 02 independent external source set. Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from that source set while preserving each source role.'"
-          if new not in source:
+
+          def replace_once(path, old, new):
+              file=Path(path)
+              source=file.read_text()
+              if new in source:
+                  return
               count=source.count(old)
               if count != 1:
-                  raise SystemExit(f'Expected exactly one Stage 03 result boundary, found {count}')
-              path.write_text(source.replace(old,new))
+                  raise SystemExit(f'{path}: expected exactly one correction target, found {count}')
+              file.write_text(source.replace(old,new))
+
+          replace_once('prompt-engine.js',
+            '"3":"Research only the complete current accepted Stage 02 independent external source set supplied in this prompt, using the accepted Stage 01 human-authority capture',
+            '"3":"Research only the current accepted Stage 02 independent external source set supplied in this prompt. Treat it as the complete current source set for this stage, using the accepted Stage 01 human-authority capture')
+          replace_once('workbook.js',
+            "'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'",
+            "'Research only the current accepted Stage 02 independent external source set. Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from that source set while preserving each source role.'")
           PY
           node build-test-project.mjs
 
@@ -51,6 +59,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check workbook.js
+          node --check prompt-engine.js
           node verify-monotonic-pass.mjs
           node verify-all-stage-prompts.mjs
           node verify-stage-prompts-complete.mjs
