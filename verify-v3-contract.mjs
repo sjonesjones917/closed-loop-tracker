@@ -80,8 +80,8 @@ for(const field of [
   'nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'
 ])assert.match(workflow,new RegExp(`\\b${field}\\b`),`acceptance report must identify ${field}`);
 assert.match(workflow,/final-acceptance\.json/,'post-deploy machine acceptance artifact is required');
-assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
-assert.match(workflow,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
+assert.match(workflow,reportField('deployedByteIdentity','true'),'post-deploy acceptance must record byte identity only after proof');
+assert.match(workflow,reportField('liveBrowserVerification','true'),'post-deploy acceptance must record live browser verification only after proof');
 
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
