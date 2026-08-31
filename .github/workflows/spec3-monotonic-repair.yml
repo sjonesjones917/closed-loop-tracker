@@ -1,15 +1,15 @@
-name: Spec3 pinpoint remaining failures
+name: Spec3 monotonic candidate
 on:
   push:
     branches: [spec3-monotonic-20260831]
 permissions:
   contents: write
 jobs:
-  diagnose:
+  candidate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply proven candidate plus diagnostic instrumentation
+      - name: Apply candidate
         shell: bash
         run: |
           set -euo pipefail
@@ -20,8 +20,7 @@ jobs:
           s=s.replace("  5:'Resolve the current job requirement set exhaustively. After each semantic correction, repeat the defect review against the resulting current requirement set until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',","  4:'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST is the controlling application-owned representation of the APPLICATION OBLIGATION MANIFEST.',\n  5:'Resolve the current job’s requirement set exhaustively. After each semantic correction, repeat the review against the resulting requirement set from the beginning until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',",1)
           s=s.replace("'Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.'","'never ask the human to repeat, retype, summarize, resend, reopen, or reattach it when project-relevant information is already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.'",1)
           s=s.replace('every application-enumerated input unit must be classified exactly once, every materially relevant','every application-enumerated input unit must be classified exactly once and every inputId exactly once, every materially relevant',1)
-          s=s.replace("Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass","Stage 03 is exhaustive source research: every current accepted Stage 02 source has current research coverage, the conflict/exception pass",1)
-          s=s.replace("Stage 03 must not complete while the latest complete pass finds a new material requirement category.');","Stage 03 must not complete while the latest complete pass finds a new material requirement category; never ask the user to repeat available project facts, and never ask the user to reattach the original Stage 01 intent file solely to rediscover captured semantics.');",1)
+          s=s.replace("Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category.');","Stage 03 is exhaustive source research: every current accepted Stage 02 source has current research coverage. Perform a distinct conflict/exception/saturation pass and a second complete pass; Stage 03 must not complete while the latest complete pass finds a new material requirement category. Never ask the user to repeat available project facts, and never ask the user to reattach the original Stage 01 intent file solely to rediscover captured semantics.');",1)
           s=s.replace('HUMAN COLLABORATION MODE — APPLIES TO EVERY EXTERNAL-AGENT STAGE','HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE',1)
           s=s.replace('function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}','function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}',1)
           p.write_text(s)
@@ -36,12 +35,17 @@ jobs:
 
           v=Path('verify-complete.mjs'); z=v.read_text()
           z=z.replace("  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);","  const p=project('JOB-BAD-REL'),stage=3; p.stages[2].status='COMPLETE'; p.stages[2].gate={complete:true,blocked:false,reasons:[]}; const pr=prompt(p,stage);",1)
-          z=z.replace("  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');","  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE'); p.stages[1].status='COMPLETE'; p.stages[1].gate={complete:true,blocked:false,reasons:[]};",1)
+          needle="engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});"
+          if needle not in z: raise SystemExit('refinement invalidation fixture missing')
+          z=z.replace(needle,needle+"p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};",1)
           v.write_text(z)
 
           a=Path('verify-all-stage-prompts.mjs'); q=a.read_text()
-          q=q.replace("state.stages[3].status='COMPLETE';state.stages[3].gate={complete:true};","state.stages[3].status='COMPLETE';state.stages[3].gate={complete:true};for(let completedStage=4;completedStage<=30;completedStage++){state.stages[completedStage].status='COMPLETE';state.stages[completedStage].gate={complete:true,blocked:false,reasons:[]};}",1)
-          q=q.replace("const scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{};const r=prompts.buildPromptRecord(s,state,{operation:op,scope});","const scope={runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT',iterationId:'ITER-AUDIT',candidateId:'CAND-AUDIT',baselineId:'BASE-AUDIT',productId:'PROD-AUDIT'};let r;try{r=prompts.buildPromptRecord(s,state,{operation:op,scope});}catch(error){throw new Error(`Stage ${s}/${op} prompt generation failed: ${error?.stack||error}`);}",1)
+          marker="state.stages[3].status='COMPLETE';state.stages[3].gate={complete:true};"
+          audit_state="state.projectData.iterations.push({id:'ITER-AUDIT',stage:10,active:true,scope:{inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-AUDIT',candidateId:'CAND-AUDIT'},fields:{ITERATION_ID:'ITER-AUDIT',CANDIDATE_ID:'CAND-AUDIT',STATUS:'FROZEN'},ITERATION_ID:'ITER-AUDIT',CANDIDATE_ID:'CAND-AUDIT',STATUS:'FROZEN'});state.job.CURRENT_ITERATION='ITER-AUDIT';for(let completedStage=4;completedStage<=30;completedStage++){state.stages[completedStage].status='COMPLETE';state.stages[completedStage].gate={complete:true,blocked:false,reasons:[]};}"
+          if marker not in q: raise SystemExit('all-stage marker missing')
+          q=q.replace(marker,marker+audit_state,1)
+          q=q.replace("const scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{};const r=prompts.buildPromptRecord(s,state,{operation:op,scope});","const scope={runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT',iterationId:'ITER-AUDIT',candidateId:'CAND-AUDIT',baselineId:'BASE-AUDIT',productId:'PROD-AUDIT'};const r=prompts.buildPromptRecord(s,state,{operation:op,scope});",1)
           q=q.replace("const op=schema.STAGE_CONTRACTS[s].operations[0],scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{},text=prompts.buildPromptRecord(s,state,{operation:op,scope}).prompt;","const op=schema.STAGE_CONTRACTS[s].operations[0],scope={runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT',iterationId:'ITER-AUDIT',candidateId:'CAND-AUDIT',baselineId:'BASE-AUDIT',productId:'PROD-AUDIT'},text=prompts.buildPromptRecord(s,state,{operation:op,scope}).prompt;",1)
           a.write_text(q)
 
@@ -50,22 +54,30 @@ jobs:
           q=q.replace('engine.ensureShape(p);engine.recalculate(p);','engine.ensureShape(p);engine.recalculate(p);for(let completedStage=1;completedStage<=30;completedStage++){p.stages[completedStage].status=\'COMPLETE\';p.stages[completedStage].gate={complete:true,blocked:false,reasons:[]};}',1)
           c.write_text(q)
           PY
-      - name: Run pinpoint tests
+      - name: Verify targeted candidate
         shell: bash
         run: |
           set +e
-          : > spec3-pinpoint.txt
-          for t in verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-complete.mjs verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs; do
-            echo "=== $t ===" >> spec3-pinpoint.txt
-            node "$t" >> spec3-pinpoint.txt 2>&1
-            echo "exit=$?" >> spec3-pinpoint.txt
-          done
-          cat spec3-pinpoint.txt
-      - name: Persist diagnostic only
+          : > spec3-candidate-result.txt
+          status=0
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$f" >> spec3-candidate-result.txt 2>&1 || status=1; done
+          for t in verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-complete.mjs verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs; do echo "=== $t ===" >> spec3-candidate-result.txt; node "$t" >> spec3-candidate-result.txt 2>&1 || status=1; done
+          echo "FINAL_STATUS=$status" >> spec3-candidate-result.txt
+          cat spec3-candidate-result.txt
+          echo "$status" > .candidate-status
+      - name: Retain only if all targeted checks pass
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add spec3-pinpoint.txt
-          git commit -m "Record pinpointed remaining candidate failures" || true
+          if [ "$(cat .candidate-status)" = "0" ]; then
+            rm -f .github/workflows/spec3-monotonic-repair.yml spec3-pinpoint.txt spec3-diagnostic.txt spec3-source-diagnostic.txt spec3-candidate-result.txt
+            git add -A
+            git commit -m "Strengthen prompt closure and Stage 6 byte readiness"
+          else
+            git checkout -- prompt-engine.js workflow-engine.js index.html verify-complete.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs
+            git add spec3-candidate-result.txt
+            git commit -m "Record remaining monotonic candidate failures" || true
+          fi
           git push origin HEAD:spec3-monotonic-20260831
