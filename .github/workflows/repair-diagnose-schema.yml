@@ -1,4 +1,4 @@
-name: Repair deterministic project v2 migration
+name: Capture migration repair failure
 
 on:
   push:
@@ -8,40 +8,51 @@ permissions:
   contents: write
 
 jobs:
-  repair:
+  diagnose:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Repair /2 to /3 migration and remove diagnostics
+      - name: Patch in workspace and capture exact result
         shell: bash
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
+          set +e
+          : > .repair-migration-diagnostic.txt
+          python3 - <<'PY' >> .repair-migration-diagnostic.txt 2>&1
           from pathlib import Path
           p=Path('workbook.js')
           s=p.read_text()
           old="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
           new="""  const sourceSchema=String(p.schema||'');\n  if(!['human-project/30','closed-loop-project/2'].includes(sourceSchema))throw new Error(`Unsupported project schema: ${sourceSchema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
-          if new not in s:
-              if s.count(old)!=1: raise SystemExit('migration entry target not unique')
-              s=s.replace(old,new,1)
-          s=s.replace("{kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:","{kind:'LEGACY_STAGE_RECORDS',schema:sourceSchema,records:",1)
-          s=s.replace("{kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:","{kind:'MIGRATION_SOURCE',schema:sourceSchema,preservedAt:",1)
+          print('ENTRY_TARGET_COUNT',s.count(old))
+          if s.count(old)==1:s=s.replace(old,new,1)
+          a="{kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:"
+          b="{kind:'LEGACY_STAGE_RECORDS',schema:sourceSchema,records:"
+          print('STAGE_RECORD_TARGET_COUNT',s.count(a))
+          s=s.replace(a,b,1)
+          a="{kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:"
+          b="{kind:'MIGRATION_SOURCE',schema:sourceSchema,preservedAt:"
+          print('MIGRATION_SOURCE_TARGET_COUNT',s.count(a))
+          s=s.replace(a,b,1)
           p.write_text(s)
           PY
-          rm -f .repair-schema-diagnostic.txt
-          rm -f .github/workflows/repair-diagnose-schema.yml
-          node --check workbook.js
-          node verify-spec3-contract.mjs
-          git diff --check
+          printf '\n===== syntax =====\n' >> .repair-migration-diagnostic.txt
+          node --check workbook.js >> .repair-migration-diagnostic.txt 2>&1
+          printf 'EXIT=%s\n' "$?" >> .repair-migration-diagnostic.txt
+          printf '\n===== verify-spec3 =====\n' >> .repair-migration-diagnostic.txt
+          node verify-spec3-contract.mjs >> .repair-migration-diagnostic.txt 2>&1
+          printf 'EXIT=%s\n' "$?" >> .repair-migration-diagnostic.txt
+          printf '\n===== migration excerpt =====\n' >> .repair-migration-diagnostic.txt
+          sed -n '760,785p' workbook.js >> .repair-migration-diagnostic.txt
+          git checkout -- workbook.js
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A workbook.js .repair-schema-diagnostic.txt .github/workflows/repair-diagnose-schema.yml
-          git commit -m "Support deterministic project v2 migration"
+          git add .repair-migration-diagnostic.txt
+          git commit -m "Record migration repair diagnostic"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
