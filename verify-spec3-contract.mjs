@@ -62,9 +62,9 @@ for(let stage=1;stage<=3;stage++){
 }
 project.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
 
-const intake=engine.stage01IntakeManifest(project);
-const obligations=engine.stage04ObligationManifest(project);
-assert(intake.entries.length>=3);
+const intake=engine.intakeCoverageManifest(project);
+const obligations=engine.obligationManifest(project);
+assert(intake.units.length>=3);
 assert(obligations.entries.some(entry=>String(entry.value).includes('Never ask me')));
 const stage04Prompt=prompts.buildPromptRecord(4,project).prompt;
 for(const token of ['PROJECT DATA EXECUTION RULE — MANDATORY','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Never ask the human','Never ask me for the same project data twice'])assert(stage04Prompt.includes(token),token);
@@ -73,7 +73,7 @@ console.log(JSON.stringify({
   projectSchema:core.PROJECT_SCHEMA,
   responseSchema:schema.RESPONSE_SCHEMA,
   stageCount:core.STAGE_COUNT,
-  intake:intake.entries.length,
+  intake:intake.units.length,
   obligations:obligations.entries.length,
   visualBaselineRestored:true,
   testRuntimeLoaded:true,
