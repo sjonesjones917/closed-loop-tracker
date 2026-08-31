@@ -39,8 +39,8 @@ jobs:
         run: |
           from pathlib import Path
           files=['index.html','app-core.js','test-runtime.js']
-          old='runtime-20260830-live-operator-56'
-          new='runtime-20260830-live-operator-57'
+          old='runtime-20260830-live-operator-57'
+          new='runtime-20260830-live-operator-58'
           for name in files:
               p=Path(name); s=p.read_text()
               if old not in s: raise SystemExit(f'{name}: cache token target not found')
