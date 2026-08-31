@@ -1,4 +1,4 @@
-name: Apply Stage 06 repair
+name: Apply proposal current-value repair
 on: push
 permissions:
   contents: write
@@ -10,39 +10,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/restore-controlling-verification-20260831b
-      - name: Patch Stage 06 custody gate and downstream fixtures
+      - name: Make proposal current-value field explicit
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('workflow-engine.js')
-          s = p.read_text()
-          old = "      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.\n      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.\n      break;"
-          new = "      const mandatoryTestIds=new Set(mandatoryTests.map(test=>recordId(test,'tests'))),custodyFailures=testExecutionPlan(project).items.filter(item=>mandatoryTestIds.has(item.testId)&&item.artifactIds.length>0&&!item.artifactReady);\n      if(custodyFailures.length)reasons.push(`${custodyFailures.length} mandatory test definition(s) have required exact artifact bytes missing or no longer application-verified.`);\n      // Future artifact identities may remain declarative before they exist, but bytes already bound as current test inputs must remain application-verified.\n      break;"
-          if old not in s: raise SystemExit('Stage 06 gate target not found')
-          p.write_text(s.replace(old, new, 1))
-
-          p = Path('verify-complete.mjs')
-          s = p.read_text()
-          replacements = [
-            ("  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);", "  const p=project('JOB-BAD-REL'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=prompt(p,stage);"),
-            ("  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');", "  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"),
-            ("engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});\n  assert(engine.records(p,'sources',{stage:2}).length===0", "engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  assert(engine.records(p,'sources',{stage:2}).length===0"),
-            (" const acceptLane=(slot,label)=>{const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}})", " const acceptLane=(slot,label)=>{p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}})")
-          ]
-          for old,new in replacements:
-              if old not in s: raise SystemExit('complete-contract fixture target not found: '+old[:80])
-              s = s.replace(old,new,1)
-          p.write_text(s)
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="field:c.canonicalField||c.canonicalRelationship||'',currentValue:(()=>{"
+          new="field:c.canonicalField||c.canonicalRelationship||'','current value':(()=>{"
+          if old not in s: raise SystemExit('proposal current-value target not found')
+          p.write_text(s.replace(old,new,1))
           PY
-      - name: Verify complete-contract regression
+      - name: Verify v3 UI contract
         run: |
-          node --check workflow-engine.js
-          node --check verify-complete.mjs
-          node verify-complete.mjs
+          node --check app-core.js
+          node verify-v3-contract.mjs
       - name: Commit repair
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js verify-complete.mjs
-          git commit -m "Enforce Stage 06 artifact readiness in complete contracts"
+          git add app-core.js
+          git commit -m "Show explicit current value in proposal diff"
           git push origin HEAD:fix/restore-controlling-verification-20260831b
