@@ -19,4 +19,6 @@ def blob(path):
 token='runtime-'+hashlib.sha256(''.join(f'{f}:{blob(f)}\n' for f in files).encode()).hexdigest()[:16]
 p=Path('index.html');h=p.read_text();h2=re.sub(r'(?<=\?v=)runtime-[A-Za-z0-9-]+',token,h)
 if h2==h:raise SystemExit('build token unchanged')
-p.write_text(h2);print(token)
+p.write_text(h2)
+Path('.github/workflows/current-scope-route-repair.yml').unlink(missing_ok=True)
+print(token)
