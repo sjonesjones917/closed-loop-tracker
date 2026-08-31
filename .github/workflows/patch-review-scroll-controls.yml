@@ -2,7 +2,8 @@ name: Patch proposal review scroll controls
 
 on:
   push:
-    branches: [finish/live-human-gate-20260830]
+    branches:
+      - finish/live-human-gate-20260830
 
 permissions:
   contents: write
@@ -23,12 +24,12 @@ jobs:
           from pathlib import Path
           path=Path('app-core.js')
           text=path.read_text()
-          old="""    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);
-    const reviewActive=Boolean(longReview&&reviewBounds.active);
-    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);"""
-          new="""    const longReview=Boolean(review&&reviewBounds.active);
-    const reviewActive=longReview;
-    const reviewPast=Boolean(review&&reviewRect&&reviewRect.height>innerHeight&&reviewRect.bottom<=0);"""
+          old=("    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);\n"
+               "    const reviewActive=Boolean(longReview&&reviewBounds.active);\n"
+               "    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);")
+          new=("    const longReview=Boolean(review&&reviewBounds.active);\n"
+               "    const reviewActive=longReview;\n"
+               "    const reviewPast=Boolean(review&&reviewRect&&reviewRect.height>innerHeight&&reviewRect.bottom<=0);")
           if old not in text:
               raise SystemExit('Review scroll-control target was not found')
           path.write_text(text.replace(old,new,1))
