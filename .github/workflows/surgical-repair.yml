@@ -1,0 +1,33 @@
+name: One-time full-cycle fixture repair
+on:
+  push:
+    branches: [fix/restore-full-acceptance-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-full-acceptance-20260831
+      - name: Add the declared fixture capability to the operator environment
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'"
+          new="EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'"
+          if s.count(old)!=1:
+              raise SystemExit(f'expected exactly one target, found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          node --check verify-full-cycle.mjs
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-full-cycle.mjs
+          git commit -m "Make Stage 07 full-cycle fixture executable"
+          git push origin HEAD:fix/restore-full-acceptance-20260831
