@@ -1,0 +1,32 @@
+name: Apply verifier agent-field fixture fix
+on:
+  push:
+    branches: [fix/restore-controlling-verification-20260831b]
+    paths: [.github/workflows/apply-verifier-agent-field-fix.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-verification-20260831b
+      - name: Select only agent-owned synthetic stage fields
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
+          new="  const stageData={};\n  const agentStageField=stageFields.find(name=>schema.STAGE_FIELDS[stage]?.[name]?.producer===schema.PRODUCER.AGENT);\n  if(agentStageField)stageData[agentStageField]=safeValue(agentStageField);"
+          if old not in s: raise SystemExit('expected synthetic stageData source not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit minimal fixture correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Restrict ingestion fixtures to agent-owned stage fields"
+          git push origin HEAD:fix/restore-controlling-verification-20260831b
