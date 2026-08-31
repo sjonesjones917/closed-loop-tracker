@@ -44,6 +44,14 @@ jobs:
               (
                 "data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});engine.freezeCandidate",
                 "engine.freezeCandidate"
+              ),
+              (
+                "data(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:'TRUE'}});",
+                "data(17,{operation:'ROOT_CAUSE'});"
+              ),
+              (
+                "data(17,{operation:'CORRECT',stageData:{CORRECTIONS_COMPLETED:'TRUE'}});",
+                "data(17,{operation:'CORRECT'});"
               )
             ],
             'workflow-engine.js':[
@@ -92,5 +100,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-engine.js verify-full-cycle.mjs .github/workflows/targeted-cycle-fixture-repair.yml
-          git commit -m "Preserve initial verification and comparison gates during corrected iterations"
+          git commit -m "Preserve initial gates and application-owned iteration state"
           git push origin HEAD:fix/restore-full-acceptance-20260831
