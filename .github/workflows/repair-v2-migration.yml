@@ -15,20 +15,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply narrow v2 migration and Stage 04 authority corrections
+      - name: Apply narrow migration prompt and composite-context corrections
         shell: python
         run: |
           from pathlib import Path
+
           p=Path('workbook.js'); s=p.read_text()
           old="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n"""
           new="""  if(p.schema==='closed-loop-project/2'){\n    if(p.workflow!==WORKFLOW_ID||Number(p.stageCount)!==STAGE_COUNT)throw new Error('Project /2 migration requires mobile-closed-loop/30 with exactly 30 stages.');\n    const migrated=JSON.parse(JSON.stringify(p)),original=JSON.parse(JSON.stringify(p));\n    migrated.schema=PROJECT_SCHEMA;\n    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};\n    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];\n    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];\n    migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'closed-loop-project/2',preservedAt:new Date().toISOString(),nonOperational:true,payload:original});\n    restoreLegacyStage01AcceptedCapture(migrated,original);\n    if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Project /2 migration requires exactly 30 stages.');\n    return migrated;\n  }\n  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n"""
           assert old in s
           p.write_text(s.replace(old,new,1))
+
           p=Path('prompt-engine.js'); s=p.read_text()
           old="STAGE 04 ACCOUNTING OUTPUT\\nEvery obligationId in APPLICATION OBLIGATION MANIFEST"
           new="STAGE 04 ACCOUNTING OUTPUT\\nAPPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\\nEvery obligationId in APPLICATION OBLIGATION MANIFEST"
           assert old in s
           p.write_text(s.replace(old,new,1))
+
+          p=Path('workflow-schema.js'); s=p.read_text()
+          replacements=[
+            ("FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions']", "FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','instructions','requirements','tests','regressions','regressionExecutions','artifacts']"),
+            ("CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations']", "CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','requirements','tests','artifacts']"),
+            ("REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs']", "REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','requirements','tests','artifacts']"),
+            ("CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','regressions'", "CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','requirements','tests','regressions'")
+          ]
+          for old,new in replacements:
+            assert old in s, old
+            s=s.replace(old,new,1)
+          p.write_text(s)
+
           p=Path('verify-stage-prompts-complete.mjs'); s=p.read_text()
           old="'every inputId exactly once'"
           new="'Every unitId in APPLICATION INTAKE MANIFEST must appear exactly once'"
@@ -47,15 +62,33 @@ jobs:
           assert old in s
           s=s.replace(old,new,1)
           p.write_text(s)
-      - name: Verify migration and existing live path
+      - name: Verify corrected source and operator path
         run: |
           set -euo pipefail
-          node --check workbook.js
-          node --check prompt-engine.js
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            node --check "$file"
+          done
+          node verify-hash.mjs
           node verify-spec3-contract.mjs
           node verify-v3-contract.mjs
-          node verify-hash.mjs
+          node verify-v3-migration.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-ingestion.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
           node verify-stage-prompts-complete.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-full-cycle.mjs
+          node verify-complete.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
@@ -63,12 +96,16 @@ jobs:
             if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
             sleep 0.1
           done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-mobile-stage-action.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-human-stage-walkthrough.mjs
       - name: Commit accepted repair
         run: |
           rm -f .github/workflows/repair-v2-migration.yml .stage04-repair-trigger
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m 'Support /2 migration and explicit Stage 04 manifest authority [v2-migration-repair-applied]'
+          git commit -m 'Support /2 migration and complete composite iteration context [v2-migration-repair-applied]'
           git push origin HEAD:ci/pages-zero-loss-proof-20260831
