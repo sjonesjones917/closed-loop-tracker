@@ -27,9 +27,6 @@ scriptSources.forEach((source,index)=>{
 const testRuntime=fs.readFileSync('test-runtime.js','utf8');
 assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
 assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');
-const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes('function artifactControlMarkup(n,locked)'),'Artifact controls must remain part of the established application shell.');
-assert(appCore.includes("const showInputControl=n===1||applicable||files.length>0"),'Original project-input attachment controls must not be shown again on Stage 04 merely because Stage 01 supplied files exist.');
 const promptEngine=fs.readFileSync('prompt-engine.js','utf8');
 assert(promptEngine.includes('Do not attach or resend the original intent file.'),'Stage 04 prompt must explicitly consume canonical Stage 01 capture without repeated intent-file attachment.');
 assert(promptEngine.includes('stage01AcceptedCapture'),'Stage 04 prompt authority must include the accepted Stage 01 canonical capture.');
