@@ -1,0 +1,39 @@
+name: Repair Stage 17 ownership fixture
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+      - name: Remove application-owned fields from external Stage 17 fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs'); s=p.read_text()
+          replacements={
+            "data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});":"data(17,{operation:'FREEZE'});",
+            "data(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:'TRUE'}});":"data(17,{operation:'ROOT_CAUSE'});",
+            "data(17,{operation:'CORRECT',stageData:{CORRECTIONS_COMPLETED:'TRUE'}});":"data(17,{operation:'CORRECT'});"
+          }
+          changed=False
+          for old,new in replacements.items():
+              if old in s:
+                  s=s.replace(old,new,1); changed=True
+              elif new not in s:
+                  raise SystemExit('Stage 17 fixture target not found: '+old)
+          if changed:p.write_text(s)
+          PY
+          git rm .github/workflows/repair-stage17-owned-fields.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-full-cycle.mjs
+          git commit -m "Keep Stage 17 application-owned fields out of external responses"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
