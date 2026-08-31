@@ -1,4 +1,4 @@
-name: Repair isolated Stage 06 fixture
+name: Repair isolated ingestion fixtures
 
 on:
   push:
@@ -20,25 +20,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Correct Stage 06 and execution-lane ingestion fixtures
+      - name: Correct generic ingestion fixtures and remove workflow
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          old="  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};"
-          new="  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:[9,12,23,24].includes(stage)?{scope:{contextId:`CONTEXT-INGESTION-FIXTURE-${String(stage).padStart(2,'0')}`}}:{};"
-          if new not in s:
-              if s.count(old)!=1:
-                  raise SystemExit(f'Expected one savePrompt scope target; found {s.count(old)}')
+          replacements=[
+          ("  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};",
+           "  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:[9,12,23,24].includes(stage)?{scope:{contextId:`CONTEXT-INGESTION-FIXTURE-${String(stage).padStart(2,'0')}`}}:{};"),
+          ("  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);",
+           "  const stageData={},agentStageFields=stageFields.filter(name=>schema.stageFieldDefinition(stage,name).producer===schema.PRODUCER.AGENT);\n  if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);"),
+          ("    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];",
+           "    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TOOL';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='NONE';fields.EXECUTABLE_SPEC=null;fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];")]
+          for old,new in replacements:
+              if new in s: continue
+              if s.count(old)!=1: raise SystemExit(f'Expected fixture target once; found {s.count(old)} for {old[:60]}')
               s=s.replace(old,new)
-          old2="    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
-          new2="    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TOOL';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='NONE';fields.EXECUTABLE_SPEC=null;fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
-          if new2 not in s:
-              if s.count(old2)!=1:
-                  raise SystemExit(f'Expected one Stage 06 fixture insertion target; found {s.count(old2)}')
-              s=s.replace(old2,new2)
           p.write_text(s)
           PY
           node --check verify-ingestion.mjs
@@ -50,5 +49,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A verify-ingestion.mjs .github/workflows
-          git commit -m "Correct ingestion execution-lane fixtures"
+          git commit -m "Correct generic ingestion fixture authority"
           git push origin HEAD:fix/zero-loss-controller-20260831
