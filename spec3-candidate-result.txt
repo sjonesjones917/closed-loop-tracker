@@ -9,29 +9,29 @@
 === node --check project-store.js ===
 === node --check app-core.js ===
 === verify-all-stage-prompts.mjs ===
-prompt-engine.js:146
-    const error=new Error(`Stage ${String(stage).padStart(2,'0')} controlling instruction cannot be generated until Stage ${String(stage-1).padStart(2,'0')} is complete. Missing upstream work must be completed at its responsible stage; the human must not be asked to repeat or resupply captured project information.`);
-                ^
+prompt-engine.js:103
+function assertRequiredPromptScope(stage,operation,scope){const required=schema.operationContract(stage,operation)?.scopeRequirements||[],missing=required.filter(key=>['runId','contextId'].includes(key)&&placeholder(scope?.[key]));if(missing.length){const error=new Error(`Controlling instruction cannot be created until application execution-lane identity exists for: ${missing.join(', ')}.`);error.code='MISSING_REQUIRED_PROMPT_SCOPE';error.missingScope=missing;throw error;}return scope;}
+                                                                                                                                                                                                                                                                      ^
 
-Error: Stage 05 controlling instruction cannot be generated until Stage 04 is complete. Missing upstream work must be completed at its responsible stage; the human must not be asked to repeat or resupply captured project information.
-    at assertPromptPrerequisites (prompt-engine.js:146:17)
-    at Object.buildPromptRecord (prompt-engine.js:164:258)
+Error: Controlling instruction cannot be created until application execution-lane identity exists for: contextId.
+    at assertRequiredPromptScope (prompt-engine.js:103:263)
+    at Object.buildPromptRecord (prompt-engine.js:164:849)
     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-all-stage-prompts.mjs:16:162
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
-  code: 'UPSTREAM_STAGE_INCOMPLETE',
-  upstreamStage: 4
+  code: 'MISSING_REQUIRED_PROMPT_SCOPE',
+  missingScope: [ 'contextId' ]
 }
 
 Node.js v22.23.2
 === verify-stage-prompts-complete.mjs ===
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50
-    for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
-                                                                                               ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:57
+    for(const phrase of semantic[stage]||[])if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);
+                                                                                                                  ^
 
-Error: Stage 2 COMPLETE missing required read collection intentStatements.
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50:96
+Error: Stage 2 COMPLETE missing stage-semantic instruction: until no new applicable controlling or correctness-relevant external source category is found
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:57:115
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
