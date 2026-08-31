@@ -1,0 +1,35 @@
+name: Repair full-cycle Stage 10 application action
+on:
+  push:
+    branches: [fix/required-full-commit-gates-20260830]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'Use application freeze directly at Stage 10') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/required-full-commit-gates-20260830
+      - name: Remove fake empty external Stage 10 response
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="data(10);engine.freezeCandidate"
+          new="engine.freezeCandidate"
+          if s.count(old)!=1:
+              raise SystemExit(f'Expected one Stage 10 empty external response, found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          git diff --check
+          git diff -- verify-full-cycle.mjs
+      - name: Commit fixture repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-full-cycle.mjs
+          git commit -m 'Use application freeze directly at Stage 10'
+          git push origin HEAD:fix/required-full-commit-gates-20260830
