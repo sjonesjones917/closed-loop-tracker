@@ -1,53 +1,25 @@
-name: Repair ingestion fixture patch application
+name: Repair ingestion fixture
 on:
   push:
-    branches: [fix/deployment-proof-v3-20260830]
+    branches:
+      - fix/deployment-proof-v3-20260830
 permissions:
   contents: write
 jobs:
   repair:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/deployment-proof-v3-20260830
           fetch-depth: 0
-      - shell: bash
+      - name: Restore and patch verifier
         run: |
           git checkout 65f3e14159b525d858bf4664105b44e08863cabf -- verify-ingestion.mjs
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify-ingestion.mjs')
-          s=p.read_text()
-          old="""function savePrompt(p,stage){
-  if(stage===4)prepareStage4Upstream(p);
-  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
-"""
-          new="""function preparePromptPrerequisites(p,stage){
-  for(let prior=1;prior<Number(stage);prior++){
-    p.stages[prior].status='COMPLETE';
-    p.stages[prior].gate={complete:true,blocked:false,reasons:[]};
-  }
-  if(stage>=3&&!p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-  return p;
-}
-function savePrompt(p,stage){
-  preparePromptPrerequisites(p,stage);
-  if(stage===4)prepareStage4Upstream(p);
-  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
-"""
-          if old not in s: raise SystemExit('savePrompt anchor not found')
-          s=s.replace(old,new,1)
-          old2="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions="
-          new2="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);else preparePromptPrerequisites(reloaded,nextStage);const nextOptions="
-          if old2 not in s: raise SystemExit('next-stage anchor not found')
-          s=s.replace(old2,new2,1)
-          p.write_text(s)
-          PY
-          rm -f .github/workflows/repair-ingestion-fixture.yml
+          python3 -c "from pathlib import Path; p=Path('verify-ingestion.mjs'); s=p.read_text(); old=\"function savePrompt(p,stage){\\n  if(stage===4)prepareStage4Upstream(p);\\n\"; new=\"function preparePromptPrerequisites(p,stage){\\n  for(let prior=1;prior<Number(stage);prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}\\n  if(stage>=3&&!p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';\\n  return p;\\n}\\nfunction savePrompt(p,stage){\\n  preparePromptPrerequisites(p,stage);\\n  if(stage===4)prepareStage4Upstream(p);\\n\"; assert old in s; s=s.replace(old,new,1); old2=\"if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=\"; new2=\"if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);else preparePromptPrerequisites(reloaded,nextStage);const nextOptions=\"; assert old2 in s; p.write_text(s.replace(old2,new2,1))"
+          rm -f .github/workflows/repair-ingestion-fixture.yml .repair-trigger
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add verify-ingestion.mjs .github/workflows/repair-ingestion-fixture.yml
+          git add -A
           git commit -m "Keep ingestion fixtures behind completed upstream stages"
           git push origin HEAD:fix/deployment-proof-v3-20260830
