@@ -1,0 +1,30 @@
+name: Diagnose ingestion failure
+on:
+  push:
+    branches: [fix/restore-v3-verification-20260831]
+    paths: [.github/workflows/diagnose-ingestion.yml]
+permissions: {contents: read}
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Run ingestion contracts
+        id: ingestion
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node verify-ingestion.mjs >/tmp/verify-ingestion.log 2>&1
+          status=$?
+          message="$(grep -E 'Error: ' /tmp/verify-ingestion.log | tail -1 | sed -E 's/.*Error: //' | tr '\r\n' ' ' | head -c 200)"
+          if [ -z "$message" ]; then message="$(tail -1 /tmp/verify-ingestion.log | tr '\r\n' ' ' | head -c 200)"; fi
+          if [ -z "$message" ]; then message="exit-$status"; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "message=$message" >> "$GITHUB_OUTPUT"
+          exit "$status"
+      - name: Ingestion failure — ${{ steps.ingestion.outputs.message }}
+        if: steps.ingestion.outcome == 'failure'
+        run: exit 1
