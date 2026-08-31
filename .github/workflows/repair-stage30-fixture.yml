@@ -1,0 +1,55 @@
+name: Correct Stage 30 ownership fixture
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact Stage 30 fixture correction
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="data(30,{stageData:{REGISTRY_STORAGE_LOCATION:'Canonical project',REGISTRY_RETENTION_RULE:'APPEND_ONLY',DEFECT_RECORDS_MISSING_REQUIRED_FIELDS:'NONE',REGISTRY_HASH_OR_INTEGRITY_EVIDENCE:'Canonical hashes',CONTROLLING_EVIDENCE:'Permanent history'}});"
+          new="data(30,{stageData:{REGISTRY_STORAGE_LOCATION:'Canonical project',REGISTRY_RETENTION_RULE:'APPEND_ONLY',REGISTRY_HASH_OR_INTEGRITY_EVIDENCE:'Canonical hashes',CONTROLLING_EVIDENCE:'Permanent history'}});"
+          if old not in s:
+              if new in s: raise SystemExit(0)
+              raise SystemExit('Stage 30 fixture pattern missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Prove ownership regression
+        run: |
+          node --check verify-full-cycle.mjs
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
+          globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+          for(const f of ['workbook.js','hash.js','workflow-schema.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+          const s=globalThis.closedLoopWorkflowSchema;
+          if(s.STAGE_FIELDS[30].DEFECT_RECORDS_MISSING_REQUIRED_FIELDS.producer!=='APPLICATION')throw new Error('Stage 30 missing-field count must remain APPLICATION-owned');
+          const text=fs.readFileSync('verify-full-cycle.mjs','utf8');
+          const stage30=text.slice(text.indexOf('data(30,'),text.indexOf('complete(30);')+13);
+          if(stage30.includes('DEFECT_RECORDS_MISSING_REQUIRED_FIELDS'))throw new Error('Stage 30 external fixture still submits application-owned missing-field count');
+          console.log(JSON.stringify({stage30MissingFieldCountApplicationOwned:true,stage30FixtureDoesNotSubmitIt:true}));
+          NODE
+      - name: Commit correction and remove one-shot workflow
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/repair-stage30-fixture.yml
+          git add verify-full-cycle.mjs
+          git diff --cached --check
+          git commit -m "Keep Stage 30 registry counts application-owned"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
