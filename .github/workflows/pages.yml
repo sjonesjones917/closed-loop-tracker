@@ -63,9 +63,8 @@ jobs:
             tokens.add(token);
           });
           if(tokens.size!==1)throw new Error('Runtime scripts use mixed build tokens');
-          const token=[...tokens][0];
           const runtime=fs.readFileSync('test-runtime.js','utf8');
-          if(!runtime.includes(`test-worker.js?v=${token}`))throw new Error('Worker URL does not use the runtime build token');
+          if(!runtime.includes('const RUNTIME_SCRIPT_URL=')||!runtime.includes('url.search=new URL(RUNTIME_SCRIPT_URL).search'))throw new Error('Worker URL does not preserve the loaded runtime build identity');
           NODE
 
       - name: Verify schemas, ownership, migration, Stage 01, and Stage 04
@@ -84,6 +83,7 @@ jobs:
           node verify-test-runtime.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
+          node verify-worker-build-identity.mjs
           node verify-hash.mjs
 
       - name: Verify ingestion, workflow gates, and the complete lifecycle
