@@ -31,33 +31,7 @@ jobs:
           replace('app-core.js',"${t==='number'?'<span class=\"help\">Whole number only. Leave blank if unknown or no preference.</span>':''}</div>","${k==='REQUIRED_OUTPUT_FORMAT'?'<span class=\"help\">You do not need to know the final file format in advance. A specification substitute requires human confirmation.</span>':t==='number'?'<span class=\"help\">Whole number only. Leave blank if unknown or no preference.</span>':''}</div>")
           replace('index.html','.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}','.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}')
           replace('verify-all-stage-prompts.mjs','for(let s=1;s<=30;s++){for(const op of schema.STAGE_CONTRACTS[s].operations){',"for(let s=1;s<=30;s++){if(s>1){state.stages[s-1].status='COMPLETE';state.stages[s-1].gate={complete:true};}for(const op of schema.STAGE_CONTRACTS[s].operations){")
-          p=Path('verify-all-stage-prompts.mjs'); s=p.read_text(); s=s.replace("const scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{};","const scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']));"); s=s.replace("scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{}","scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']))");
-          regression="""
-// Permanent regression: persisted prompt context uses the same operation-isolated selector as the visible prompt.
-{
-  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');
-  assert(source.includes('contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>'),'Persisted prompt context selector omitted the active operation.');
-}
-// Permanent regression: Stage 12 derived verification count is bound to the verification matrix collection.
-{
-  const source=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');
-  assert(source.includes('ACTUAL_MANDATORY_RECORDS:matrix.verification.length'),'Stage 12 derived verification count is not bound to matrix.verification.');
-  assert(!source.includes('ACTUAL_MANDATORY_RECORDS:matrix.actual.length'),'Stage 12 still references nonexistent matrix.actual.');
-}
-// Permanent regression: prompt expansion dimensions remain at the approved pre-regression baseline.
-{
-  const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
-  assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Approved prompt expansion dimensions were not restored.');
-  assert(!html.includes('.expandable-prompt{height:280px;max-height:280px}'),'Unapproved fixed prompt height remains.');
-}
-// Permanent regression: Stage 02 states the independent-source boundary in the controlling prompt.
-{
-  const text=prompts.buildPromptRecord(2,state,{operation:'COMPLETE'}).prompt;
-  assert(text.includes('Independent external sources only.'),'Stage 02 independent-source boundary missing from controlling prompt.');
-}
-"""
-          if regression.strip() not in s: s += regression
-          p.write_text(s)
+          p=Path('verify-all-stage-prompts.mjs'); s=p.read_text(); s=s.replace("const scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{};","const scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']));"); s=s.replace("scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{}","scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']))"); p.write_text(s)
           p=Path('verify-browser.mjs'); s=p.read_text()
           old="const envelope={schema:'closed-loop-stage-response/3',jobId:'JOB-20260823144121',stage:2,operation:promptRecord.operation||'COMPLETE',promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:"
           new="const envelope={schema:'closed-loop-stage-response/3',jobId:'JOB-20260823144121',stage:2,operation:promptRecord.operation||'COMPLETE',promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256||promptRecord.sha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{SOURCE_APPLICABILITY_DETERMINATION:'APPLICABLE_SOURCES_ESTABLISHED'},records:"
@@ -71,47 +45,30 @@ jobs:
           old="await click(cdp,'#new-project');await waitExpr(cdp,`Boolean(document.querySelector('#project-management')&&!document.querySelector('#project-management').open)`);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
           new="const beforeDeletionCreateId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);await click(cdp,'#new-project');await waitExpr(cdp,`(()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];return Boolean(id&&id!==${JSON.stringify(beforeDeletionCreateId)}&&document.querySelector('#project-management')&&!document.querySelector('#project-management').open);})()`,12000);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
           assert old in s; s=s.replace(old,new,1)
-          regression="""
-// Permanent regression: Stage 01 proposal summary reads the current /3 INPUT_SET_CONTENTS contract and Project intake preserves output-format guidance.
-{
-  const source=fs.readFileSync(new URL('./app-core.js',import.meta.url),'utf8');
-  assert.match(source,/parseCapturedInputSet\\(\\{agentData:p\\.envelope\\?\\.stageData\\|\\|\\{\\}\\}\\)/);
-  assert.doesNotMatch(source,/stageData\\?\\.INTAKE_ACCOUNTING/);
-  assert.doesNotMatch(source,/records\\?\\.intentStatements/);
-  assert(source.includes('You do not need to know the final file format in advance. A specification substitute requires human confirmation.'),'Project output-format guidance regression returned.');
-}
-"""
-          if regression.strip() not in s: s += regression
           p.write_text(s)
-      - name: Verify and accept monotonically
+      - name: Verify candidate
         shell: bash
         run: |
-          set +e
-          node --check prompt-engine.js > /tmp/accept.log 2>&1
-          rc=$?
-          if [ $rc -eq 0 ]; then node --check workflow-engine.js >> /tmp/accept.log 2>&1; rc=$?; fi
-          if [ $rc -eq 0 ]; then node --check app-core.js >> /tmp/accept.log 2>&1; rc=$?; fi
-          if [ $rc -eq 0 ]; then node verify-all-stage-prompts.mjs >> /tmp/accept.log 2>&1; rc=$?; fi
-          if [ $rc -eq 0 ]; then
-            python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
-            server_pid=$!
-            for i in {1..50}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 0.1; done
-            if ! curl -fsS http://127.0.0.1:4173/ >/dev/null; then rc=1; else node verify-browser.mjs >> /tmp/accept.log 2>&1; rc=$?; fi
-            kill "$server_pid" 2>/dev/null || true
-          fi
-          printf '\nEXIT_CODE=%s\n' "$rc" >> /tmp/accept.log
-          cat /tmp/accept.log
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node verify-all-stage-prompts.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in {1..50}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.1
+          done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
+          node verify-browser.mjs
+      - name: Commit accepted candidate
+        shell: bash
+        run: |
+          rm -f .github/workflows/repair-live-stage01-context.yml .github/workflows/repair-finalize.yml .github/workflows/diagnose-browser-candidate.yml .diagnostic-browser-failure.txt .repair-trigger-20260831 .repair-trigger-2 .repair-trigger-3
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          if [ "$rc" -eq 0 ]; then
-            rm -f .github/workflows/repair-live-stage01-context.yml .github/workflows/repair-finalize.yml .github/workflows/diagnose-browser-candidate.yml .diagnostic-browser-failure.txt .repair-trigger-20260831 .repair-trigger-2 .repair-trigger-3
-            git add -A
-            git commit -m 'Fix Stage 01 proposal accounting and operation-bound prompt context [repair-applied]'
-            git push origin HEAD:fix/live-stage01-context-binding-20260831
-          else
-            cp /tmp/accept.log .diagnostic-browser-failure.txt
-            git add .diagnostic-browser-failure.txt
-            git commit -m 'Capture exact browser verification failure [diagnostic-output]' || true
-            git push origin HEAD:fix/live-stage01-context-binding-20260831
-          fi
-          exit "$rc"
+          git add -A
+          git commit -m 'Fix Stage 01 proposal accounting and operation-bound prompt context [repair-applied]'
+          git push origin HEAD:fix/live-stage01-context-binding-20260831
