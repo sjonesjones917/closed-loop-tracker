@@ -1,0 +1,120 @@
+name: Controlled repair
+on:
+  push:
+    branches: [fix/restore-monotonic-proof-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-monotonic-proof-20260831
+          fetch-depth: 0
+      - name: Apply exact zero-loss corrections
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def rep(path, old, new, count=1):
+              p=Path(path); s=p.read_text(); n=s.count(old)
+              if n==0 and new in s:
+                  print(path, 'already corrected'); return
+              if n!=count: raise SystemExit(f'{path}: expected {count} sentinel(s), found {n}: {old[:100]}')
+              p.write_text(s.replace(old,new)); print(path, 'replaced', n)
+
+          # Stage 01: canonical /3 accounting dispositions and fail-closed blocked material.
+          rep('workflow-engine.js',
+              "const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);",
+              "const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']);")
+          rep('workflow-engine.js',
+              "const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);\n    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;",
+              "const disposition=String(unit?.disposition||'').trim().toUpperCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and cannot satisfy intake completion.`);\n    const statements=safe(unit?.extractedStatements),statementRequired=['EXTRACTED_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE'].includes(disposition);if(statementRequired&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;")
+          rep('workflow-engine.js',
+              "if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);",
+              "if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&disposition!=='INACCESSIBLE_OR_BLOCKED'&&statementsValid&&(!statementRequired||statements.length>0))accounted.add(id);")
+
+          # Human inspection: canonical human-owned observation is valid even when not created by the dedicated helper.
+          rep('workflow-engine.js',
+              "const human=humanEvidence.some(e=>e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim());",
+              "const human=evidence.some(e=>(e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim())||(upper(recordValue(e,'AUTHORITY_TYPE'))==='HUMAN_OBSERVATION'&&String(recordValue(e,'CONTENT')||recordValue(e,'DESCRIPTION')||'').trim()));")
+
+          # Preserve Stage 04 artifact controls; repeat-input prevention is data-flow logic, not UI suppression.
+          rep('app-core.js',
+              "const applicable=[1,10,17,20,21,25].includes(n)",
+              "const applicable=[1,4,10,17,20,21,25].includes(n)")
+
+          # Proposal review source and rendered column explicitly carry the mandatory label.
+          rep('app-core.js',
+              "field:c.canonicalField||c.canonicalRelationship||'',currentValue:(()=>{",
+              "field:c.canonicalField||c.canonicalRelationship||'','Current value':(()=>{")
+
+          # Stage 01 prompt: explicit first semantic reader, two-pass omission challenge, and exact no-repeat invariant.
+          rep('prompt-engine.js',
+              '"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.',
+              '"1":"Perform complete human-authority intake only. You are the first semantic reader of the complete user request and every supplied file made available to you; do not assume another agent already extracted their meaning. This is an actual conversational intake, not a JSON-form-filling exercise. Exhaust the human-authority intake. Pass 1 — exhaustive extraction: read the complete request and every accessible supplied artifact from beginning to end and extract every distinct project-relevant human-origin statement. Pass 2 — omission challenge: compare the extracted ledger back against every raw input unit and search specifically for omitted qualifiers, exceptions, dependencies, negative requirements, do-not-change statements, visual constraints, temporal constraints, acceptance conditions, authority statements, tool restrictions, file references, output-format requirements, corrections, and later statements that override earlier statements; resolve every omission before final JSON. Project information already captured is reusable canonical context: never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. ')
+          rep('prompt-engine.js',
+              'Never ask the human to repeat available project facts or reattach the original Stage 01 intent file.',
+              'never ask the user to repeat available project facts or reattach the original Stage 01 intent file.')
+
+          # Stage 04 context manifest names and preserves the complete source categories explicitly.
+          old="contextManifest={stage,operation,scope,blindAliasMap:blindAliasMap.map(x=>({...x})),intakeCoverageManifest:stage===1?intakeCoverageManifest(state):null,obligationManifest:stage===4?obligationManifest(state):null,stage4ExhaustedInputs:stage===4?stage4ExhaustedInputs(state):null,verificationBatchPlan:batchPlan"
+          new="contextManifest={stage,operation,scope,blindAliasMap:blindAliasMap.map(x=>({...x})),intakeCoverageManifest:stage===1?intakeCoverageManifest(state):null,obligationManifest:stage===4?obligationManifest(state):null,stage4ExhaustedInputs:stage===4?stage4ExhaustedInputs(state):null,currentUserJobInput:stage===4?Object.fromEntries(Object.entries(schema.JOB_FIELDS||{}).filter(([,d])=>['HUMAN','HUMAN_DECISION'].includes(d?.producer)).map(([k])=>[k,state?.job?.[k]])):null,originalUserEntered:stage===4?JSON.parse(JSON.stringify(state?.projectData?.userEntered||{})):null,applicableSources:stage===4?workflow.recordsForCurrentScope(state,'sources').map(r=>({id:recordId(r,'sources'),fields:recordFields(r)})):null,applicableEvidence:stage===4?workflow.recordsForCurrentScope(state,'evidenceRecords').filter(r=>[2,3].includes(Number(r.stage))).map(r=>({id:recordId(r,'evidenceRecords'),fields:recordFields(r)})):null,verificationBatchPlan:batchPlan"
+          rep('prompt-engine.js',old,new)
+
+          # Modernize current Stage 01 verifier fixtures to the controlling /3 disposition vocabulary.
+          for path in ['verify-zero-loss-accounting.mjs','verify-one-time-intent-intake.mjs']:
+              p=Path(path); s=p.read_text();
+              s=s.replace("disposition:'retained as context'","disposition:'RETAINED_AS_CONTEXT'")
+              s=s.replace("disposition:'incorporated into the job definition'","disposition:'EXTRACTED_RELEVANT_INFORMATION'")
+              p.write_text(s)
+
+          # Stage 01 closure verifier follows the single canonical intake store rather than inventing intentStatements.
+          p=Path('verify-stage01-intake-closure.mjs'); s=p.read_text()
+          s=s.replace("const manifest=engine.stage01IntakeManifest(p);assert(manifest.entries.some(x=>x.sourceKind==='SUPPLIED_ARTIFACT'&&x.sourceIdentity==='ARTIFACT-INTENT-001'),'Stage 01 intake manifest does not bind supplied artifact identity.');",
+                      "const manifest=engine.intakeCoverageManifest(p);assert(manifest.units.some(x=>x.artifactId==='ARTIFACT-INTENT-001'),'Stage 01 intake manifest does not bind supplied artifact identity.');")
+          s=s.replace("for(const entry of manifest.entries)assert(prompt.prompt.includes(entry.inputId),`Prompt 01 omitted ${entry.inputId}.`);assert(prompt.prompt.includes('stageData.INTAKE_ACCOUNTING'),'Prompt 01 does not command closed intake accounting.');",
+                      "for(const entry of manifest.units)assert(prompt.prompt.includes(entry.unitId),`Prompt 01 omitted ${entry.unitId}.`);assert(prompt.prompt.includes('INPUT_SET_CONTENTS'),'Prompt 01 does not command closed intake accounting.');")
+          start="const evidence=[{temporaryKey:'evidence-1'"
+          end="console.log('verify-stage01-intake-closure: PASS');"
+          a=s.index(start); b=s.index(end)
+          replacement="""const evidence=[{temporaryKey:'evidence-1',kind:'HUMAN_INPUT',description:'Stage 01 intake evidence',authorityType:'HUMAN',location:'AUTHORIZED USER JOB INPUT',content:'Controlled human input'}];
+const capture=entries=>({schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:entries.map((entry,index)=>({sourceUnitId:entry.unitId,sourceRawValueSha256:entry.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Preserved current human authority.',extractedStatements:[]}))});
+const envelope=units=>({schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:prompt.operation,promptIdentity:{instructionId:prompt.instructionId,bodySha256:prompt.bodySha256,contractSha256:prompt.contractSha256,contextSignature:prompt.contextSignature},scope:prompt.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Exact requested product',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture(units))},records:{},evidence,unresolved:[],warnings:[],attachments:[]});
+let prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope(manifest.units.slice(0,-1))),promptRecord:prompt});assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='INCOMPLETE_INTAKE_ACCOUNTING'),'Stage 01 accepted incomplete intake accounting.');prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope(manifest.units)),promptRecord:prompt});assert(prepared.validation.valid,`Stage 01 complete intake closure rejected: ${JSON.stringify(prepared.validation.issues)}`);"""
+          s=s[:a]+replacement+s[b:]
+          p.write_text(s)
+
+          # Spec3 fixture uses the actual engine-owned intake/obligation APIs.
+          p=Path('verify-spec3-contract.mjs'); s=p.read_text().replace('engine.stage01IntakeManifest(p)','engine.intakeCoverageManifest(p)').replace('engine.stage04ObligationManifest(p)','engine.obligationManifest(p)').replace('intake.entries.length','intake.units.length'); p.write_text(s)
+
+          # Scoped Stage 11 refinement fixture must bind to the Stage 10 freeze it just created.
+          p=Path('verify-complete.mjs'); s=p.read_text(); old="const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');\n const slots=engine.reserveRunBatch"; new="const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true};\n const slots=engine.reserveRunBatch"; n=s.count(old)
+          if n==1:s=s.replace(old,new)
+          elif n==0 and new in s:pass
+          else:raise SystemExit(f'verify-complete Stage11 sentinel count {n}')
+          p.write_text(s)
+          PY
+          for f in workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-spec3-contract.mjs verify-complete.mjs; do node --check "$f"; done
+      - name: Run focused corrected regressions
+        run: |
+          set -euo pipefail
+          node verify-complete.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-semantic-invariant.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-spec3-contract.mjs
+          node verify-v3-contract.mjs
+          node verify-user-prompt-invariants.mjs
+      - name: Commit exact corrections
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-spec3-contract.mjs verify-complete.mjs
+          git commit -m 'Correct Stage 01 accounting, evidence, context, and operator regressions'
+          git push origin HEAD:fix/restore-monotonic-proof-20260831
