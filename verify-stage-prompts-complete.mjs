@@ -15,7 +15,7 @@ const requiredReads={
 const semantic={
   1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every application-enumerated input unit must be classified exactly once'],
   2:['until no new applicable controlling or correctness-relevant external source category is found','Do not stop at the first plausible source'],
-  3:['Every current Stage 02 source must receive current research coverage','distinct conflict/exception/saturation pass'],
+  3:['Every current Stage 02 source must receive current research coverage','required conflict-and-exception pass','Repeat until the latest complete pass finds no new material'],
   4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Every obligationId'],
   5:['Resolve the current job’s requirement set exhaustively','repeat the review against the resulting requirement set'],
   6:['closed-loop-test-spec/1','TEST_IR','how a defective product could falsely appear compliant'],
