@@ -41,6 +41,20 @@ old="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream
 new="if(stage<30){reloaded.stages[stage].status='COMPLETE';reloaded.stages[stage].gate={complete:true,blocked:false,reasons:[]};const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
 if old not in text:
     raise AssertionError('The ingestion downstream prompt fixture was not found.')
+text=text.replace(old,new,1)
+
+# A generated valid response fixture must use values permitted by the declared
+# closed schema. Keep the source-specific fixture values, but derive every enum
+# value from the authoritative field definition instead of inventing placeholders.
+old="for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}"
+new="for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT){const definition=def.fieldDefinitions[name];fields[name]=definition?.enumValues?.length?definition.enumValues[0]:safeValue(name);}}"
+if old not in text:
+    raise AssertionError('The ingestion required-field fixture generator was not found.')
+text=text.replace(old,new,1)
+old="if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}"
+new="if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField){const definition=def.fieldDefinitions[agentField];fields[agentField]=definition?.enumValues?.length?definition.enumValues[0]:safeValue(agentField);}}"
+if old not in text:
+    raise AssertionError('The ingestion fallback field fixture generator was not found.')
 path.write_text(text.replace(old,new,1))
 
-print('Aligned prompt and ingestion regressions with generated behavior and legal stage prerequisites.')
+print('Aligned prompt and ingestion regressions with generated behavior, legal stage prerequisites, and declared enum contracts.')
