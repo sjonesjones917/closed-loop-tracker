@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const RUNTIME_BUILD_ID='runtime-20260830-live-operator-66';
+const RUNTIME_BUILD_ID='runtime-20260830-live-operator-67';
 const $=s=>document.querySelector(s),safe=v=>Array.isArray(v)?v:[],clone=v=>v===undefined?undefined:JSON.parse(JSON.stringify(v)),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const views=['Overview','Project','Workflow','Records','Files','Release'];
 let core,schema,engine,ingestion,projectStore,projects=[],current,projectUi={},projectStorage={artifactCount:0,byteSize:0,integrity:'NOT CHECKED',lastVerifiedAt:null,lastBackup:null,mismatches:[]};
