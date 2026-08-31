@@ -77,6 +77,12 @@ jobs:
           if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
           NODE
 
+      - name: Complete 30-stage canonical data-route closure
+        run: |
+          set -euo pipefail
+          node verify-data-route-closure.mjs
+          node verify-infrastructure-route-closure.mjs
+
       - name: Migration and v3 contracts
         run: |
           set -euo pipefail
@@ -264,6 +270,8 @@ jobs:
           node verify-stage01-intake-closure.mjs > /tmp/stage01.out
           node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
           node verify-full-cycle.mjs > /tmp/full-cycle.json
+          node verify-data-route-closure.mjs > /tmp/data-route.json
+          node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -271,6 +279,8 @@ jobs:
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
           const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
           const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
+          const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
+          const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -278,6 +288,8 @@ jobs:
           const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
           const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
+          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
+          if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
@@ -288,6 +300,32 @@ jobs:
             stageCount:30,
             ...definition,
             ...v3,
+            dataRouteClosure:dataRoute.dataRouteClosure,
+            infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
+            routeOperationsChecked:dataRoute.operationsChecked,
+            routeCanonicalFamilies:dataRoute.canonicalFamilies,
+            routeReadEdgesChecked:dataRoute.readEdgesChecked,
+            routeWritableCollectionsChecked:dataRoute.writableCollectionsChecked,
+            routeWritableFieldsChecked:dataRoute.writableFieldsChecked,
+            routeRelationshipDefinitionsChecked:dataRoute.relationshipDefinitionsChecked,
+            routeInvalidationStagesChecked:dataRoute.invalidationStagesChecked,
+            routeCurrentScopeStaleExclusion:dataRoute.currentScopeStaleExclusion,
+            routePromptReadSerialization:dataRoute.promptReadSerialization,
+            routeResponseAuthorizationClosure:dataRoute.responseAuthorizationClosure,
+            routeProvenanceContractClosure:dataRoute.provenanceContractClosure,
+            routeDownstreamForwardingClosure:dataRoute.downstreamForwardingClosure,
+            routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
+            routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
+            routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
+            infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
+            infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
+            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
+            infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
+            infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
+            infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
+            infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
+            infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
+            infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
             currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
             exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
             applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
@@ -322,6 +360,8 @@ jobs:
             jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT},
             proofSources:{
               ownership:'verify.mjs',
+              canonicalDataRoutes:'verify-data-route-closure.mjs',
+              infrastructureRoutes:'verify-infrastructure-route-closure.mjs',
               migration:'verify-v3-migration.mjs',
               stage01:'verify-stage01-intake-closure.mjs',
               stage01Reuse:'verify-one-time-intent-intake.mjs',
