@@ -1,0 +1,38 @@
+name: One-time earliest fixture repair
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 0
+      - name: Repair only the invalid Stage 02 refinement fixture and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('verify-complete.mjs')
+          text = path.read_text()
+          old = "  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');\n  source.sourceProposalId='PROPOSAL-REFINE';"
+          new = "  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  source.sourceProposalId='PROPOSAL-REFINE';"
+          if old not in text:
+              raise SystemExit('Target fixture text not found exactly; refusing broad edit.')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          rm .github/workflows/repair-earliest-fixture.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Repair Stage 02 refinement prerequisite fixture"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
