@@ -17,29 +17,31 @@ jobs:
         with:
           ref: fix/monotonic-reliability-pass-20260831
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Apply exact prompt-authority correction and remove this workflow
+      - name: Apply exact prompt correction and remove temporary workflows
         run: |
           set -euo pipefail
           node --input-type=module - <<'NODE'
           import fs from 'node:fs';
           const path='prompt-engine.js';
           let s=fs.readFileSync(path,'utf8');
-          const old='"3":"Research only the complete current accepted Stage 02 independent external source set supplied in this prompt,';
-          const replacement='"3":"Research only the current accepted Stage 02 independent external source set. Research only the complete current accepted Stage 02 independent external source set supplied in this prompt,';
-          if(!s.includes(old)) throw new Error('Expected Stage 03 prompt sentence not found.');
-          if(s.includes('Research only the current accepted Stage 02 independent external source set.')) throw new Error('Stage 03 prompt boundary already present; refusing duplicate mutation.');
-          s=s.replace(old,replacement);
-          fs.writeFileSync(path,s);
+          const required='Research only the current accepted Stage 02 independent external source set.';
+          if(!s.includes(required)) {
+            const old='"3":"Research only the complete current accepted Stage 02 independent external source set supplied in this prompt,';
+            const replacement='"3":"Research only the current accepted Stage 02 independent external source set. Research only the complete current accepted Stage 02 independent external source set supplied in this prompt,';
+            if(!s.includes(old)) throw new Error('Expected Stage 03 prompt sentence not found.');
+            s=s.replace(old,replacement);
+            fs.writeFileSync(path,s);
+          }
           NODE
-          rm .github/workflows/repair-stage03-prompt-boundary.yml
+          rm -f .github/workflows/repair-stage03-prompt-boundary.yml
+          rm -f .github/workflows/apply-stage3-prompt-fix.yml
+          rm -f .github/workflows/diagnose-schema-gate.yml
           node --check prompt-engine.js
-          node build-test-project.mjs
           git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js TEST_PROJECT.json .github/workflows/repair-stage03-prompt-boundary.yml
-          git commit -m "Clarify Stage 03 accepted-source research boundary"
+          git add -A prompt-engine.js .github/workflows
+          git commit -m "Clarify Stage 03 source boundary and remove temporary workflows"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
