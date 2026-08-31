@@ -14,7 +14,7 @@ jobs:
           ref: fix/restore-full-acceptance-20260831
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Correct the earliest full-cycle runtime and authority failures
+      - name: Diagnose Stage 16 state after Stage 17 freeze
         shell: bash
         run: |
           python3 - <<'PY'
@@ -44,6 +44,10 @@ jobs:
               (
                 "data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});engine.freezeCandidate",
                 "engine.freezeCandidate"
+              ),
+              (
+                "purpose:'CORRECTED'});const iter17=",
+                "purpose:'CORRECTED'});console.log('STAGE16_AFTER_FREEZE '+JSON.stringify({status:p.stages[16].status,storedGate:p.stages[16].gate,liveGate:engine.gate(16,p),accepted:p.projectData.acceptedChanges.filter(c=>Number(c.stage)===16).map(c=>({id:c.changeId,status:c.status,invalidatedBy:c.invalidatedBy,scope:c.scope})),records:p.projectData.changes.filter(c=>Number(c.stage)===16).map(c=>({id:c.id,active:c.active,invalidatedBy:c.invalidatedBy,scope:c.scope}))}));const iter17="
               )
             ],
             'workflow-engine.js':[
