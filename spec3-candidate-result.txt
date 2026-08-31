@@ -9,12 +9,12 @@
   "visualsPreserved": true
 }
 === verify-stage-prompts-complete.mjs ===
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50
-    for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
-                                                                                               ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:57
+    for(const phrase of semantic[stage]||[])if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);
+                                                                                                                  ^
 
-Error: Stage 6 COMPLETE missing required read collection sources.
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50:96
+Error: Stage 7 COMPLETE missing stage-semantic instruction: Generating an invalid fixture and executing that fixture are separate boundaries
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:57:115
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
