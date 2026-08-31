@@ -40,6 +40,20 @@ if old_matrix_count not in engine_source:
     raise SystemExit('Stage 12 actual matrix count defect anchor was not found.')
 engine.write_text(engine_source.replace(old_matrix_count, new_matrix_count, 1))
 
+schema = Path('workflow-schema.js')
+schema_source = schema.read_text()
+context_replacements = {
+    "FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions']": "FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','requirements','instructions','tests','failureTests','regressions','regressionExecutions','artifacts']",
+    "CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations']": "CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','requirements','instructions','tests','artifacts']",
+    "REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs']": "REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','tests','requirements','artifacts','evidenceRecords']",
+    "CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords']": "CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','requirements','tests','regressions','regressionExecutions','candidateFreezes','artifacts','defects','blockers','evidenceRecords']"
+}
+for before, after in context_replacements.items():
+    if before not in schema_source:
+        raise SystemExit(f'Composite operation context anchor was not found: {before[:48]}')
+    schema_source = schema_source.replace(before, after, 1)
+schema.write_text(schema_source)
+
 walkthrough = Path('verify-human-stage-walkthrough.mjs')
 walk = walkthrough.read_text()
 start = walk.find("    const checked=[],lane={")
