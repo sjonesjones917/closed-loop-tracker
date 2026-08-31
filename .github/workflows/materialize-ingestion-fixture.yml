@@ -1,0 +1,34 @@
+name: Materialize ingestion prompt fixture
+on:
+  push:
+    branches: [fix/restore-v3-verification-20260831]
+    paths: [.github/workflows/materialize-ingestion-fixture.yml]
+permissions: {contents: write}
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-v3-verification-20260831
+          fetch-depth: 0
+      - name: Make ingestion prompt fixtures prerequisite-aware
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('node:fs');
+          const path='verify-ingestion.mjs';
+          let source=fs.readFileSync(path,'utf8');
+          const oldText="function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};";
+          const newText="function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  else for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};";
+          if(source.includes(oldText))source=source.replace(oldText,newText);
+          else if(!source.includes(newText))throw new Error('savePrompt fixture marker missing');
+          fs.writeFileSync(path,source);
+          NODE
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify-ingestion.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Make ingestion prompt fixtures prerequisite-aware'
+          git push origin HEAD:fix/restore-v3-verification-20260831
