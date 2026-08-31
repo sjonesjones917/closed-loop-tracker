@@ -1,0 +1,44 @@
+name: Correct definition-of-done deployed proof assertion
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct stale deployed-byte CI assertion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-definition-of-done.mjs')
+          s=p.read_text()
+          old="assert(workflowSource.includes('Verify exact deployed source identity'),'Exact deployed-byte verification is not in CI.');"
+          new="assert(workflowSource.includes('Exact deployed-byte verification')&&workflowSource.includes('run: node verify-live.mjs'),'Exact deployed-byte verification is not in CI.');"
+          if old not in s:
+              if new in s: raise SystemExit(0)
+              raise SystemExit('stale deployed-proof assertion pattern missing')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Prove corrected acceptance assertion
+        run: |
+          node --check verify-definition-of-done.mjs
+          node verify-definition-of-done.mjs
+      - name: Commit correction and remove one-shot workflow
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/repair-dod-deployed-proof.yml
+          git add verify-definition-of-done.mjs
+          git diff --cached --check
+          git commit -m "Bind deployed-byte acceptance to live verifier execution"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
