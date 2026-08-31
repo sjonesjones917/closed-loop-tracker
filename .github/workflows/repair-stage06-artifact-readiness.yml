@@ -14,7 +14,6 @@ concurrency:
 
 jobs:
   repair:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -35,15 +34,17 @@ jobs:
           path=Path('workflow-engine.js')
           text=path.read_text(encoding='utf-8')
 
-          gate_old="""      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
-      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.
-      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.
-"""
-          gate_new="""      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
-      const executionPlan=testExecutionPlan(project),missingCurrentArtifacts=executionPlan.items.filter(item=>mandatoryIds.has(item.requirementId)&&item.artifactRequired&&item.artifactIds.length>0&&!item.artifactReady);
-      if(missingCurrentArtifacts.length)reasons.push(`${missingCurrentArtifacts.length} mandatory test definition(s) depend on exact artifact bytes that are missing or no longer application-verified.`);
-      // Stage 06 does not require future product outputs that cannot yet exist, but an exact canonical artifact dependency must remain currently verified.
-"""
+          gate_old=(
+              "      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);\n"
+              "      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.\n"
+              "      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.\n"
+          )
+          gate_new=(
+              "      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);\n"
+              "      const executionPlan=testExecutionPlan(project),missingCurrentArtifacts=executionPlan.items.filter(item=>mandatoryIds.has(item.requirementId)&&item.artifactRequired&&item.artifactIds.length>0&&!item.artifactReady);\n"
+              "      if(missingCurrentArtifacts.length)reasons.push(`${missingCurrentArtifacts.length} mandatory test definition(s) depend on exact artifact bytes that are missing or no longer application-verified.`);\n"
+              "      // Stage 06 does not require future product outputs that cannot yet exist, but an exact canonical artifact dependency must remain currently verified.\n"
+          )
           if gate_new not in text:
               if text.count(gate_old)!=1:
                   raise SystemExit(f'Stage 06 gate repair boundary count: {text.count(gate_old)}')
@@ -93,7 +94,6 @@ jobs:
           console.log(JSON.stringify({stage06CurrentArtifactReadiness:true,missingBlocked:true,metadataBlocked:true,verifiedRestored:true}));
           NODE
           node verify-complete.mjs || {
-            status=$?
             echo "verify-complete exposed a later independent failure after the Stage 06 regression passed; preserving this correction." >&2
             exit 0
           }
