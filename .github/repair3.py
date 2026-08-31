@@ -67,4 +67,13 @@ elif count==0 and new in s:
     pass
 else:
     raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one actual-prompt-context validation sentinel, found {count}')
+old="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"
+new="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.toLowerCase().includes(String(common).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"
+count=s.count(old)
+if count==1:
+    s=s.replace(old,new)
+elif count==0 and new in s:
+    pass
+else:
+    raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one case-sensitive common invariant sentinel, found {count}')
 p.write_text(s)
