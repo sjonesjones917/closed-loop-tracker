@@ -54,9 +54,9 @@ jobs:
           needle="engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});"
           if needle not in z: raise SystemExit('refinement invalidation fixture missing')
           z=z.replace(needle,needle+"p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};",1)
-          run_marker=" const slots=engine.reserveRunBatch(p,{stage,iterationId,count:10});"
-          if run_marker not in z: raise SystemExit('Stage 11 run fixture marker missing')
-          z=z.replace(run_marker,run_marker+"p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};",1)
+          lane="const acceptLane=(slot,label)=>{const pr="
+          if lane not in z: raise SystemExit('Stage 11 lane fixture marker missing')
+          z=z.replace(lane,"const acceptLane=(slot,label)=>{p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};const pr=",1)
           v.write_text(z)
 
           a=Path('verify-all-stage-prompts.mjs'); q=a.read_text()
@@ -70,8 +70,10 @@ jobs:
 
           c=Path('verify-stage-prompts-complete.mjs'); q=c.read_text()
           q=q.replace("  2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements'],","  2:[],4:['sourceConflicts'],5:['sources','candidateRequirements'],",1)
-          q=q.replace('engine.ensureShape(p);engine.recalculate(p);','engine.ensureShape(p);engine.recalculate(p);for(let completedStage=1;completedStage<=30;completedStage++){p.stages[completedStage].status=\'COMPLETE\';p.stages[completedStage].gate={complete:true,blocked:false,reasons:[]};}',1)
-          c.write_text(q)
+          old_init="engine.ensureShape(p);engine.recalculate(p);"
+          capture="engine.ensureShape(p);engine.recalculate(p);const intake=engine.intakeCoverageManifest(p);const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'incorporated into the job definition',reason:'Prompt closure fixture preserves this controlled input.',extractedStatements:[{statementKey:`closure-${index+1}`,text:unit.rawValueText,statementClass:'REQUIREMENT'}]}))};p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Complete prompt-closure audit deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};for(let completedStage=1;completedStage<=30;completedStage++){p.stages[completedStage].status='COMPLETE';p.stages[completedStage].gate={complete:true,blocked:false,reasons:[]};}"
+          if old_init not in q: raise SystemExit('prompt closure fixture init marker missing')
+          c.write_text(q.replace(old_init,capture,1))
           PY
       - name: Verify targeted candidate
         shell: bash
