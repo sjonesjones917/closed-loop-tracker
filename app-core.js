@@ -399,9 +399,9 @@ if(typeof document!=='undefined'){
     const review=document.getElementById('proposal-heading');
     const reviewRect=review?.getBoundingClientRect();
     const reviewBounds=scrollJumpBounds(reviewRect);
-    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);
-    const reviewActive=Boolean(longReview&&reviewBounds.active);
-    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);
+    const longReview=Boolean(review&&reviewBounds.active);
+    const reviewActive=longReview;
+    const reviewPast=Boolean(review&&reviewRect&&reviewRect.height>innerHeight&&reviewRect.bottom<=0);
     const promptActive=Boolean(prompt?.classList.contains('expanded')&&promptBounds.active&&!reviewActive&&!reviewPast);
     activeLongSection=!reviewActive&&!promptActive?visibleLongSection():null;
     const sectionBounds=scrollJumpBounds(activeLongSection?.getBoundingClientRect());
