@@ -1,0 +1,36 @@
+name: Repair full-cycle capability fixture
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+      - name: Patch fixture and remove repair workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'"
+          new="EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'"
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('target full-cycle fixture not found')
+              s=s.replace(old,new,1)
+              p.write_text(s)
+          PY
+          git rm .github/workflows/repair-full-cycle-capability.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-full-cycle.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Make full-cycle external test capability explicit"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
