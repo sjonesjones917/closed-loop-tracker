@@ -35,6 +35,7 @@ jobs:
           s=s.replace("{id:'SOURCE-000001',active:true,stage:2,fields:","{id:'SOURCE-000001',active:true,stage:2,"+scope+"fields:")
           s=s.replace("{id:'RESEARCH-000001',active:true,stage:3,fields:","{id:'RESEARCH-000001',active:true,stage:3,"+scope+"fields:")
           s=s.replace("{id:'CANDIDATE-REQ-000001',active:true,stage:3,fields:","{id:'CANDIDATE-REQ-000001',active:true,stage:3,"+scope+"fields:")
+          s=s.replace("blocked=e.code==='STAGE4_UPSTREAM_INCOMPLETE';","blocked=['STAGE4_UPSTREAM_INCOMPLETE','UPSTREAM_STAGE_INCOMPLETE'].includes(e.code);",2)
           p.write_text(s)
           PY
           node --check prompt-engine.js
