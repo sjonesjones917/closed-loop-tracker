@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/51';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/52';
 if(!core||!schema||!hash||!workflow||!testRuntime)throw new Error('workbook.js, hash.js, workflow-schema.js, test-runtime.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=value=>{if(value===undefined||value===null||value==='')return 'UNKNOWN';if(Array.isArray(value)&&!value.length)return 'NONE';if(typeof value==='object')return JSON.stringify(value,null,2);return String(value);};
 const safe=value=>Array.isArray(value)?value:[];
@@ -88,7 +88,7 @@ function projectAuthorityBasis(state,stage,operation,scope={}){
   const job=state?.job||{},stageOne=state?.stages?.[1]||{},batchPlan=verificationBatchPlan(stage,state,operation,scope),allowedCollections=new Set(promptReadCollections(stage,operation)),isolatedReviewer=[12,23,24].includes(Number(stage));
   const humanFieldNames=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name);
   const reviewerHumanFields=new Set(['EXACT_USER_OBJECTIVE_VERBATIM','PROHIBITED_ACTIONS']);
-  const carryForwardHumanFields=new Set(['JOB_TITLE','JOB_OWNER','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','AVAILABLE_TOOLS','PROHIBITED_ACTIONS']);
+  const carryForwardHumanFields=new Set(humanFieldNames);
   const humanAuthority=Object.fromEntries(humanFieldNames.filter(name=>isolatedReviewer?reviewerHumanFields.has(name):(Number(stage)<=3?false:carryForwardHumanFields.has(name))).map(name=>[name,job?.[name]??null]));
   const selected=(collection)=>allowedCollections.has(collection)?contextRecordsFor(state,collection,scope,batchPlan,stage,operation).filter(record=>workflow.isActiveRecord(record)):[];
   const sources=selected('sources').map(record=>({sourceId:recordId(record,'sources'),title:recordValue(record,'TITLE')||null,authorityLevel:recordValue(record,'AUTHORITY_LEVEL')||null,authorityRole:recordValue(record,'AUTHORITY_ROLE')||null,controllingState:recordValue(record,'CONTROLLING_STATE')||null}));
