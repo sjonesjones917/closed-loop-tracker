@@ -18,37 +18,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Syntax and schema architecture
+      - name: Runtime syntax
         run: |
           set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
-            node --check "$file"
-          done
-          node verify-spec3-contract.mjs
-          node verify-v3-contract.mjs
-          node verify-v3-migration.mjs
-      - name: Test IR validation security and deterministic runtime
-        run: |
-          set -euo pipefail
-          node verify-test-runtime.mjs
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-      - name: Ingestion workflow gates and prompt semantics
-        run: |
-          set -euo pipefail
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-semantic-invariant.mjs
-          node verify-prompt-semantics.mjs
-          node verify-all-stage-prompts.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-user-prompt-invariants.mjs
-          node verify-full-cycle.mjs
-          node verify-project-lifecycle.mjs
-          node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs > acceptance-source.json
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done
+      - name: Current v3 contract
+        run: node verify-spec3-contract.mjs
+      - name: V3 ownership and schema contract
+        run: node verify-v3-contract.mjs
+      - name: Migration contract
+        run: node verify-v3-migration.mjs
+      - name: Test IR deterministic runtime
+        run: node verify-test-runtime.mjs
+      - name: Test IR v3 semantics
+        run: node verify-test-runtime-v3.mjs
+      - name: Test IR limits and isolation
+        run: node verify-test-runtime-limits.mjs
+      - name: Raw-first ingestion
+        run: node verify-ingestion.mjs
+      - name: Workflow gate closure
+        run: node verify-complete.mjs
+      - name: Semantic authority invariants
+        run: node verify-semantic-invariant.mjs
+      - name: Prompt semantics
+        run: node verify-prompt-semantics.mjs
+      - name: Every stage prompt
+        run: node verify-all-stage-prompts.mjs
+      - name: Stage prompt completeness
+        run: node verify-stage-prompts-complete.mjs
+      - name: Stage 01 intake closure
+        run: node verify-stage01-intake-closure.mjs
+      - name: One-time intent intake
+        run: node verify-one-time-intent-intake.mjs
+      - name: User prompt invariants
+        run: node verify-user-prompt-invariants.mjs
+      - name: Full 30-stage cycle
+        run: node verify-full-cycle.mjs
+      - name: Project lifecycle
+        run: node verify-project-lifecycle.mjs
+      - name: Definition of done
+        run: node verify-definition-of-done.mjs
+      - name: V3 definition of done
+        run: node verify-v3-definition-of-done.mjs > acceptance-source.json
       - name: Local Chromium operator workflow
         run: |
           set -euo pipefail
@@ -93,12 +104,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Exact deployed bytes and deployed Chromium workflow
+      - name: Exact deployed bytes
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: node verify-live.mjs > acceptance-live.json
+      - name: Deployed Chromium operator workflow
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
         run: |
           set -euo pipefail
-          node verify-live.mjs > acceptance-live.json
           node verify-browser.mjs
           node verify-browser-extra.mjs
           node verify-human-stage-walkthrough.mjs
