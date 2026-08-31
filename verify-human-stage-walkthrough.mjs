@@ -66,6 +66,9 @@ try{
     }
     const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await new Promise(r=>setTimeout(r,100));
     const picker=document.querySelector('#stage-picker');if(!picker)throw new Error('Stage picker is missing after opening Workflow.');
+    const operatorChecks=document.querySelector('#next-required-action .operator-checks');if(!operatorChecks)throw new Error('Current operator action does not expose the compact double-check guide.');
+    const checkSummary=operatorChecks.querySelector('summary');if(!checkSummary||!checkSummary.textContent.includes('Double-check before you continue'))throw new Error('Operator double-check guide is not clearly labeled.');
+    if(operatorChecks.open)throw new Error('Operator double-check guide must be collapsed by default to avoid visual overload.');
     const reached=[];for(let stage=1;stage<=30;stage++){picker.value=String(stage);picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,15));reached.push(Number(picker.value));}
     if(reached.length!==30||reached.some((value,index)=>value!==index+1))throw new Error('The UI stage picker cannot traverse all 30 stages in order.');
     picker.value='2';picker.dispatchEvent(new Event('change',{bubbles:true}));await new Promise(r=>setTimeout(r,100));
@@ -75,9 +78,9 @@ try{
     if(!compact.includes('height: clamp(260px, 45vh, 520px)'))throw new Error('Prompt box base height changed from the restored baseline.');
     if(!compact.includes('.expandable-prompt { max-height: 280px;'))throw new Error('Prompt preview height changed from the restored baseline.');
     if(compact.includes('.expandable-prompt { max-height: 88px;'))throw new Error('Obsolete 88px prompt height returned.');
-    return {stages:30,prompts:checked.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true};
+    return {stages:30,prompts:checked.length,first:checked[0],last:checked.at(-1),uiStagesReached:reached.length,oneTimeSupply:true,promptVisualBaseline:true,operatorDoubleCheckGuide:true};
   })()`);
-  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<30||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true)throw new Error('Sequential browser walkthrough did not establish the complete operator path.');
+  if(result?.stages!==30||result?.uiStagesReached!==30||result?.prompts<30||result?.oneTimeSupply!==true||result?.promptVisualBaseline!==true||result?.operatorDoubleCheckGuide!==true)throw new Error('Sequential browser walkthrough did not establish the complete operator path.');
   console.log(JSON.stringify({humanStageWalkthrough:true,...result}));
 }finally{
   try{ws?.close();}catch{}
