@@ -29,6 +29,8 @@ jobs:
             assert s.count(old)==1,(old[:40],s.count(old));s=s.replace(old,new)
           p.write_text(s)
 
+          p=Path('prompt-engine.js');s=p.read_text();old="Discover and inspect every reasonably possible controlling, governing, evidentiary, or informative external source needed for this project; distinguish authority level, role, applicability, currency, supersession, and conflicts.";new="Discover and inspect every reasonably possible controlling, governing, evidentiary, or informative external source needed for this project; distinguish authority level, role, applicability, currency, supersession, and conflicts. Continue complete source-discovery passes until no new applicable controlling or correctness-relevant external source category is found. Do not stop at the first plausible source.";assert s.count(old)==1,('stage2 saturation anchor',s.count(old));s=s.replace(old,new);p.write_text(s)
+
           p=Path('index.html');s=p.read_text();old='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}';new='.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}';assert s.count(old)==1,('prompt visual anchor',s.count(old));s=s.replace(old,new);p.write_text(s)
 
           p=Path('verify-v3-contract.mjs');s=p.read_text();old="assert.match(app,/current value/i,'proposal display must include current values');";new="assert.match(app,/currentValue|current value/i,'proposal display must include current values');";assert s.count(old)==1;s=s.replace(old,new);p.write_text(s)
@@ -67,6 +69,6 @@ jobs:
           rm .github/workflows/targeted-runtime-repair.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js index.html verify-v3-contract.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs .github/workflows/pages.yml .github/workflows/targeted-runtime-repair.yml
+          git add workflow-engine.js prompt-engine.js index.html verify-v3-contract.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs .github/workflows/pages.yml .github/workflows/targeted-runtime-repair.yml
           git commit -m "Repair current gates and acceptance contract"
           git push origin HEAD:fix/restore-full-acceptance-20260831
