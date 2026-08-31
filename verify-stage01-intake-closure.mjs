@@ -41,7 +41,7 @@ const captureFrom=units=>({
   units:units.map((unit,index)=>({
     sourceUnitId:unit.unitId,
     sourceRawValueSha256:unit.rawValueSha256,
-    disposition:'extracted relevant information',
+    disposition:'incorporated into the job definition',
     reason:'Inspected and preserved for downstream reuse.',
     extractedStatements:[{
       statementKey:`statement-${String(index+1).padStart(3,'0')}`,
