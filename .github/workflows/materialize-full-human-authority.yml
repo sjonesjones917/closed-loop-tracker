@@ -53,3 +53,4 @@ jobs:
           git add prompt-engine.js README.md index.html app-core.js test-runtime.js
           git commit -m 'Carry complete human authority through stage prompts'
           git push --force origin fix/full-human-authority-carry-forward-source-20260830
+# trigger materialization after required PR check
