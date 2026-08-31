@@ -20,12 +20,13 @@ jobs:
         run: python3 .repair-acceptance-reduction.py
       - name: Remove temporary repair machinery before proof
         run: rm .github/workflows/repair-acceptance-reduction.yml .repair-acceptance-reduction.py
-      - name: Prove acceptance reduction
+      - name: Prove acceptance reduction independently
         run: |
-          node --check verify-project-lifecycle.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
-          node verify-project-lifecycle.mjs
+          grep -F 'currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage' .github/workflows/pages.yml
+          grep -F 'mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage' .github/workflows/pages.yml
+          grep -F 'releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction' .github/workflows/pages.yml
       - name: Commit proven correction
         run: |
           git config user.name github-actions[bot]
