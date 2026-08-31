@@ -55,27 +55,16 @@ jobs:
           p.write_text(t,encoding='utf-8')
 
           p=Path('verify-full-cycle.mjs'); t=p.read_text(encoding='utf-8')
-          old="CURRENT_INPUT_VERSION:'INPUT-v001'}"
-          new="CURRENT_INPUT_VERSION:'INPUT-v001',AVAILABLE_TOOLS:'fixture-required_capability'}"
+          old="data(17,{operation:'FREEZE'});engine.freezeCandidate"
+          new="engine.freezeCandidate"
           if new not in t:
-              if t.count(old)!=1: raise SystemExit(f'full-cycle capability boundary count {t.count(old)}')
+              if t.count(old)!=1: raise SystemExit(f'Stage 17 FREEZE fixture boundary count {t.count(old)}')
               t=t.replace(old,new,1)
-          old="data(9,{records:{preflightRecords:["
-          new="engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'EXTERNAL-PREFLIGHT-CONTEXT',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'});const preflightContextId=rid('freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:["
+          old=";data(17,{operation:'ROOT_CAUSE'});data(17,{operation:'CORRECT'});complete(17);"
+          new=";complete(17);"
           if new not in t:
-              if t.count(old)!=1: raise SystemExit(f'preflight context boundary count {t.count(old)}')
+              if t.count(old)!=1: raise SystemExit(f'Stage 17 no-defect fixture boundary count {t.count(old)}')
               t=t.replace(old,new,1)
-          old="data(10,{stageData:{HASHES_RECORDED_WHERE_PRACTICAL:'TRUE',CHANGES_ALLOWED_DURING_BATCH:'NONE'}});engine.freezeCandidate"
-          if old in t: t=t.replace(old,"engine.freezeCandidate",1)
-          old="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:`VERIFY-${runId}-${currentTestId}`,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
-          new="function verifyBatch(stage,operation,slots){for(const {runId} of slots){engine.registerFreshContext(p,{stage,externalContextIdentifier:`EXTERNAL-VERIFY-${stage}-${runId}`,operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'});const contextId=rid('freshContexts'),verification=[];for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');verification.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:contextId,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,scope:{runId,contextId},records:{verification}});}}"
-          if new not in t:
-              if t.count(old)!=1: raise SystemExit(f'verifyBatch boundary count {t.count(old)}')
-              t=t.replace(old,new,1)
-          old="data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});engine.freezeCandidate"
-          if old in t: t=t.replace(old,"engine.freezeCandidate",1)
-          old=";data(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:'TRUE'}});data(17,{operation:'CORRECT',stageData:{CORRECTIONS_COMPLETED:'TRUE'}});complete(17);"
-          if old in t: t=t.replace(old,";complete(17);",1)
           p.write_text(t,encoding='utf-8')
           PY
           git diff --check
