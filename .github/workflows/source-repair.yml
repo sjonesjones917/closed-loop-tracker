@@ -1,0 +1,36 @@
+name: Controlled source repair
+on:
+  push:
+    branches:
+      - repair/spec3-proof-gate
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/spec3-proof-gate
+          fetch-depth: 0
+      - name: Align Stage 17 operation test with application ownership
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STAGE_OPERATION_FIELD_VIOLATION'))throw new Error('EXECUTE_RUN accepted VERIFY stageData.');negativeCount++;"
+          new="if(schema.operationContract(stage,'EXECUTE_RUN').allowedStageData.includes('VERIFY_COMPLETED'))throw new Error('EXECUTE_RUN contract exposes VERIFY_COMPLETED.');const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'&&i.path==='/stageData/VERIFY_COMPLETED'))throw new Error('External EXECUTE_RUN response was not rejected for application-owned VERIFY_COMPLETED.');negativeCount++;"
+          if old in s:s=s.replace(old,new,1)
+          elif new not in s:raise SystemExit('Stage 17 operation isolation assertion not found')
+          p.write_text(s)
+          PY
+      - name: Commit controlled repair
+        run: |
+          node --check verify-ingestion.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-ingestion.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Align Stage 17 operation test with application ownership'
+          git push origin HEAD:repair/spec3-proof-gate
