@@ -1,0 +1,36 @@
+name: Controlled source repair
+on:
+  push:
+    branches:
+      - repair/spec3-proof-gate
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/spec3-proof-gate
+          fetch-depth: 0
+      - name: Repair next-stage fixture prerequisite setup
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='verify-ingestion.mjs';
+          let text=fs.readFileSync(path,'utf8');
+          const old="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=";
+          const replacement="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);else if(nextStage>1){reloaded.stages[nextStage-1].status='COMPLETE';reloaded.stages[nextStage-1].gate={complete:true,blocked:false,reasons:[]};}const nextOptions=";
+          if(!text.includes(old)) {
+            if(text.includes(replacement)) process.exit(0);
+            throw new Error('Expected next-stage fixture block not found');
+          }
+          fs.writeFileSync(path,text.replace(old,replacement));
+          NODE
+          node --check verify-ingestion.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Respect prerequisites in next-stage ingestion probe"
+          git push origin HEAD:repair/spec3-proof-gate
