@@ -208,6 +208,23 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     if(tempKey)attachmentIndex.set(tempKey,{artifactId,file:match,path});
   });
 
+  if(object(envelope.records)&&Array.isArray(envelope.records.tests)){
+    const canonicalArtifacts=workflow.records(project,'artifacts',{active:true});
+    const canonicalHasBytes=required=>canonicalArtifacts.some(artifact=>{
+      const id=String(workflow.recordId(artifact,'artifacts')||'');
+      const filename=String(artifact?.fields?.FILENAME??artifact?.FILENAME??'');
+      const availability=upper(artifact?.fields?.AVAILABILITY??artifact?.AVAILABILITY??'');
+      return (required===id||required===filename)&&availability==='BYTES_PERSISTED_AND_VERIFIED';
+    });
+    const responseHasBytes=required=>[...attachmentIndex.values()].some(entry=>String(entry?.file?.name??entry?.file?.filename??'')===required);
+    envelope.records.tests.forEach((record,index)=>{
+      const raw=String(record?.fields?.ARTIFACT_REQUIREMENTS??'').trim();
+      if(!raw||['NONE','NOT APPLICABLE','N/A'].includes(upper(raw)))return;
+      const required=raw.split(/[;,\n]/).map(value=>value.trim()).filter(Boolean);
+      for(const name of required)if(!canonicalHasBytes(name)&&!responseHasBytes(name))issues.push(issue('MISSING_REQUIRED_TEST_ARTIFACT',`/records/tests/${index}/fields/ARTIFACT_REQUIREMENTS`,`Required test artifact ${name} is not backed by current application-verified bytes.`));
+    });
+  }
+
   const evidenceIndex=new Map();
   if(Array.isArray(envelope.evidence))envelope.evidence.forEach((evidence,index)=>{
     const path=`/evidence/${index}`;

@@ -406,8 +406,8 @@ function gate(stage,project){
       if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);
       const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!applicationTestSupported(test));
       if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
-      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.
-      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.
+      const plan=testExecutionPlan(project),missingBytes=new Set(plan.missingArtifactTestIds||[]),missingMandatory=mandatoryTests.map(test=>recordId(test,'tests')).filter(id=>missingBytes.has(id));
+      if(missingMandatory.length)reasons.push(`Mandatory tests have required artifact bytes that are missing or no longer application-verified: ${missingMandatory.join(', ')}.`);
       break;
     }
     case 7:{
