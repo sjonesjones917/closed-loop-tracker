@@ -1,0 +1,86 @@
+name: Repair Stage 17 application-owned operations
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair Stage 17 authority and initial-iteration isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          schema=Path('workflow-schema.js')
+          s=schema.read_text(encoding='utf-8')
+          replacements={
+            "allowedStageData:['NEW_FROZEN_VERSIONS','OLD_CONVERSATIONS_CONTINUED']":"allowedStageData:[]",
+            "allowedStageData:['ROOT_CAUSE_COMPLETED']":"allowedStageData:[]",
+            "allowedStageData:['CORRECTIONS_COMPLETED']":"allowedStageData:[]",
+          }
+          for old,new in replacements.items():
+            if old not in s:
+              raise SystemExit(f'Missing Stage 17 schema target: {old}')
+            s=s.replace(old,new,1)
+          schema.write_text(s,encoding='utf-8')
+
+          engine=Path('workflow-engine.js')
+          s=engine.read_text(encoding='utf-8')
+          old="case 12:{requireAccepted();const iteration=latestIteration(project,[10,17,19]);"
+          new="case 12:{requireAccepted();const iteration=latestIteration(project,[10]);"
+          if old not in s:
+            raise SystemExit('Missing Stage 12 initial-iteration target')
+          s=s.replace(old,new,1)
+          old="if(stage===13){const iteration=latestIteration(project,[10,17,19]),iterationId="
+          new="if(stage===13){const iteration=latestIteration(project,[10]),iterationId="
+          if old not in s:
+            raise SystemExit('Missing Stage 13 initial-iteration target')
+          s=s.replace(old,new,1)
+          old="  if(Number(stage)===19){const appIteration=records(project,'iterations').find(r=>Number(r.stage)===19&&isActiveRecord(r)&&upper(recordValue(r,'PURPOSE'))==='UNCHANGED_CONFIRMATION'&&(!scopeRule.iterationId||recordId(r,'iterations')===String(scopeRule.iterationId))&&(!scopeRule.candidateId||String(recordValue(r,'CANDIDATE_ID')||r.scope?.candidateId||'')===String(scopeRule.candidateId)));if(appIteration)out.add('CONFIRM_FREEZE');}\n  return out;"
+          new="  if(Number(stage)===17){const appIteration=records(project,'iterations').find(r=>Number(r.stage)===17&&isActiveRecord(r)&&(!scopeRule.iterationId||recordId(r,'iterations')===String(scopeRule.iterationId))&&(!scopeRule.candidateId||String(recordValue(r,'CANDIDATE_ID')||r.scope?.candidateId||'')===String(scopeRule.candidateId)));if(appIteration){const iterationId=recordId(appIteration,'iterations'),candidateId=String(recordValue(appIteration,'CANDIDATE_ID')||appIteration.scope?.candidateId||''),candidate=records(project,'candidateFreezes').find(r=>isActiveRecord(r)&&recordId(r,'candidateFreezes')===candidateId);if(candidate)out.add('FREEZE');const currentDefects=recordsForIteration(project,'defects',iterationId).filter(d=>['CONFIRMED','OPEN','ACTIVE'].includes(upper(recordValue(d,'STATUS')||'CONFIRMED'))),rcaRows=recordsForIteration(project,'rootCauses',iterationId);if(!currentDefects.length||currentDefects.every(d=>rcaRows.some(r=>String(recordValue(r,'DEFECT_ID')||r.relationships?.DEFECT_ID||'')===recordId(d,'defects')&&validateRootCauseRecord(r,project).valid)))out.add('ROOT_CAUSE');if(!currentDefects.length)out.add('CORRECT');}}\n  if(Number(stage)===19){const appIteration=records(project,'iterations').find(r=>Number(r.stage)===19&&isActiveRecord(r)&&upper(recordValue(r,'PURPOSE'))==='UNCHANGED_CONFIRMATION'&&(!scopeRule.iterationId||recordId(r,'iterations')===String(scopeRule.iterationId))&&(!scopeRule.candidateId||String(recordValue(r,'CANDIDATE_ID')||r.scope?.candidateId||'')===String(scopeRule.candidateId)));if(appIteration)out.add('CONFIRM_FREEZE');}\n  return out;"
+          if old not in s:
+            raise SystemExit('Missing application-operation completion target')
+          s=s.replace(old,new,1)
+          engine.write_text(s,encoding='utf-8')
+
+          cycle=Path('verify-full-cycle.mjs')
+          s=cycle.read_text(encoding='utf-8')
+          for old,new in [
+            ("data(17,{operation:'FREEZE'});engine.freezeCandidate","engine.freezeCandidate"),
+            (";data(17,{operation:'ROOT_CAUSE'});data(17,{operation:'CORRECT'});complete(17);",";complete(17);")
+          ]:
+            if old not in s:
+              raise SystemExit(f'Missing Stage 17 lifecycle target: {old}')
+            s=s.replace(old,new,1)
+          cycle.write_text(s,encoding='utf-8')
+          PY
+          node --check workflow-schema.js
+          node --check workflow-engine.js
+          node --check verify-full-cycle.mjs
+          node verify-complete.mjs
+          timeout 300s node verify-full-cycle.mjs
+      - name: Commit only the accepted repair and remove temporary triggers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-stage17-application-operations.yml
+          rm -f .acceptance-trigger
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Make Stage 17 application-owned operations authoritative"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
