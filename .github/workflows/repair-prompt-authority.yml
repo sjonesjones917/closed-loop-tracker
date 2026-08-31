@@ -111,6 +111,18 @@ jobs:
                   raise SystemExit(f'Stage {stage} bounded READ_COLLECTIONS match count {len(matches)}')
               reads=reads[:matches[0].start()]+replacement+reads[matches[0].end():]
           schema=schema[:begin]+reads+schema[end:]
+
+          operation_read_replacements={
+            "FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions']":"FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions','instructions','requirements','artifacts']",
+            "CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations']":"CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','requirements','tests','artifacts']",
+            "REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs']":"REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','tests','requirements','artifacts']",
+            "CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords']":"CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','requirements','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords']"
+          }
+          for old_read,new_read in operation_read_replacements.items():
+              if new_read not in schema:
+                  if schema.count(old_read)!=1:
+                      raise SystemExit(f'Operation read-contract insertion point count: {schema.count(old_read)} for {old_read[:45]!r}')
+                  schema=schema.replace(old_read,new_read,1)
           s.write_text(schema,encoding='utf-8')
 
           e=Path('workflow-engine.js')
