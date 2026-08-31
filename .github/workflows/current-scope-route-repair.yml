@@ -31,6 +31,7 @@ jobs:
           python3 .repair-current-scope-fixtures.py
           python3 .repair-current-scope-scope-test.py
           python3 .repair-current-scope-ci.py
+          rm .repair-current-scope-engine.py .repair-current-scope-prompt.py .repair-current-scope-route-test.py .repair-current-scope-fixtures.py .repair-current-scope-scope-test.py .repair-current-scope-ci.py
       - name: Prove fixed acceptance epoch
         run: |
           set -euo pipefail
@@ -64,9 +65,9 @@ jobs:
         run: |
           set -euo pipefail
           git rm .github/workflows/current-scope-route-repair.yml
-          git rm .repair-current-scope-engine.py .repair-current-scope-prompt.py .repair-current-scope-route-test.py .repair-current-scope-fixtures.py .repair-current-scope-scope-test.py .repair-current-scope-ci.py
           git config user.name closed-loop-reliability
           git config user.email actions@users.noreply.github.com
+          git add -u
           git add workflow-engine.js prompt-engine.js response-ingestion.js verify-data-route-closure.mjs verify-current-scope-regressions.mjs verify-user-prompt-invariants.mjs verify-complete.mjs .github/workflows/pages.yml index.html
           git diff --cached --check
           git commit -m 'Close current-scope data routes across the workflow'
