@@ -24,8 +24,21 @@ jobs:
           done
       - name: Verify canonical hashing
         run: node verify-hash.mjs
-      - name: Verify base repository contracts
-        run: node verify.mjs
+      - name: Run base repository contracts
+        id: verify_base
+        continue-on-error: true
+        run: |
+          set +e
+          node verify.mjs >/tmp/verify-base.log 2>&1
+          status=$?
+          message="$(grep -m1 -E 'Error: ' /tmp/verify-base.log | sed -E 's/.*Error: //' | tr '\r\n' ' ' | head -c 180)"
+          if [ -z "$message" ]; then message="exit-$status"; fi
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "message=$message" >> "$GITHUB_OUTPUT"
+          exit "$status"
+      - name: Base contract failure — ${{ steps.verify_base.outputs.message }}
+        if: steps.verify_base.outcome == 'failure'
+        run: exit 1
       - name: Verify transactional response ingestion
         run: node verify-ingestion.mjs
       - name: Verify complete application contracts
