@@ -63,6 +63,9 @@ jobs:
           replace_once('verify-stage-prompts-complete.mjs',
             "'every inputId exactly once'",
             "'every application-enumerated intake unit is accounted for'")
+          replace_once('verify-stage-prompts-complete.mjs',
+            "2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements']",
+            "2:[],4:['sourceConflicts'],5:['sources','candidateRequirements']")
           PY
           node build-test-project.mjs
 
