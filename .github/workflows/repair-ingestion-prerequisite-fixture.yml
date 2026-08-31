@@ -51,6 +51,10 @@ jobs:
             for(let prior=4;prior<stage;prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
             return p;
           }
+          function fixtureBuildPrompt(stage,p,options){
+            preparePromptPrerequisites(p,stage);
+            return prompts.buildPromptRecord(stage,p,options);
+          }
           function fixturePromptOperation(stage){
             return stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0];
           }
@@ -97,6 +101,12 @@ jobs:
               if rejection_needle not in text:
                   raise SystemExit('Expected rejection fixture boundary not found; no change made.')
               text = text.replace(rejection_needle, rejection_replacement, 1)
+
+          if 'fixtureBuildPrompt(stage,p,options)' not in text:
+              raise SystemExit('Fixture prompt wrapper was not installed.')
+          text = text.replace('prompts.buildPromptRecord(', 'fixtureBuildPrompt(')
+          text = text.replace('const intake=fixtureBuildPrompt(1,p)', 'const intake=prompts.buildPromptRecord(1,p)')
+          text = text.replace('return fixtureBuildPrompt(stage,p,options);', 'return prompts.buildPromptRecord(stage,p,options);')
 
           path.write_text(text, encoding='utf-8')
           Path('.github/workflows/repair-ingestion-prerequisite-fixture.yml').unlink()
