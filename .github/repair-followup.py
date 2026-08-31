@@ -32,13 +32,14 @@ old="""function savePrompt(p,stage){
 new="""function savePrompt(p,stage){
   if(stage===4)prepareStage4Upstream(p);
   else if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}
-  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
+  const independent=[9,12,23,24].includes(stage);
+  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:independent?{scope:{contextId:`CONTEXT-INGESTION-STAGE-${String(stage).padStart(2,'0')}`}}:{};
 """
 if old not in text:
     raise AssertionError('The ingestion prompt fixture helper was not found.')
 text=text.replace(old,new,1)
-old="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
-new="if(stage<30){reloaded.stages[stage].status='COMPLETE';reloaded.stages[stage].gate={complete:true,blocked:false,reasons:[]};const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
+old="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{}"
+new="if(stage<30){reloaded.stages[stage].status='COMPLETE';reloaded.stages[stage].gate={complete:true,blocked:false,reasons:[]};const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:[9,12,23,24].includes(nextStage)?{scope:{contextId:`CONTEXT-NEXT-STAGE-${String(nextStage).padStart(2,'0')}`}}:{}"
 if old not in text:
     raise AssertionError('The ingestion downstream prompt fixture was not found.')
 text=text.replace(old,new,1)
@@ -67,4 +68,4 @@ if old not in text:
     raise AssertionError('The ingestion record fixture insertion point was not found.')
 path.write_text(text.replace(old,new,1))
 
-print('Aligned prompt and ingestion regressions with generated behavior, legal stage prerequisites, declared enum contracts, and valid Stage 06 routing.')
+print('Aligned prompt and ingestion regressions with generated behavior, legal stage prerequisites, declared enum contracts, valid Stage 06 routing, and explicit independent context identities.')
