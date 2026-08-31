@@ -32,10 +32,28 @@ function project(jobId='JOB-INGESTION-TEST'){
   engine.recalculate(p);
   return p;
 }
+function syntheticPromptOptions(stage,p){
+  const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0],scope={};
+  for(const key of schema.operationContract(stage,operation).scopeRequirements){
+    if(key==='projectRevision')scope[key]=Number(p.revision||0);
+    else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;
+    else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';
+    else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';
+    else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';
+    else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';
+    else if(key==='iterationId')scope[key]='ITERATION-000001';
+    else if(key==='candidateId')scope[key]='CANDIDATE-000001';
+    else if(key==='runId')scope[key]='RUN-INGESTION-FIXTURE';
+    else if(key==='contextId')scope[key]='CONTEXT-INGESTION-FIXTURE';
+    else if(key==='baselineId')scope[key]='BASELINE-000001';
+    else if(key==='productId')scope[key]='PRODUCT-000001';
+  }
+  return {operation,scope};
+}
 function savePrompt(p,stage){
   if(stage===4)prepareStage4Upstream(p);
   else for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}
-  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
+  const options=syntheticPromptOptions(stage,p);
   const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
   return record;
