@@ -41,7 +41,7 @@ function makeStage4Reachable(p){
 }
 function sourceProposal(tempKey='source-1',overrides={}){return {tempKey,fields:{TITLE:'Web Content Accessibility Guidelines (WCAG) 2.2',ISSUING_ORGANIZATION_OR_AUTHOR:'World Wide Web Consortium',SOURCE_TYPE:'OFFICIAL_STANDARD',PUBLICATION_ORIGIN:'W3C Recommendation',URL_REFERENCE:'https://www.w3.org/TR/WCAG22/',PUBLICATION_UPDATE_DATE:'2024-12-12',RETRIEVAL_DATE:'2026-08-31',AUTHORITY_LEVEL:'PRIMARY TECHNICAL AUTHORITY',AUTHORITY_ROLE:'GOVERNING WHERE APPLICABLE',RELEVANCE:'Independent accessibility authority',APPLICABLE_PORTIONS:'Conformance requirements',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'CONTROLLING WHERE APPLICABLE',NOTES:'Controlled fixture',...overrides},relationships:{},evidenceRefs:['evidence-1']};}
 function envelope(p,stage,pr,{records,stageData,evidence,attachments}={}){
-  return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:stageData||{},records:records||{},evidence:evidence||[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verify-ingestion-current.mjs',content:`stage-${stage}-evidence`}],unresolved:[],warnings:[],attachments:attachments||[]};
+  return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:{...pr.scope},responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:stageData||{},records:records||{},evidence:evidence||[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Controlled verification evidence',location:'verify-ingestion-current.mjs',content:`stage-${stage}-evidence`}],unresolved:[],warnings:[],attachments:attachments||[]};
 }
 function stage2Fixture(jobId='JOB-STAGE2-FIXTURE'){
   const p=makeStage1Complete(project(jobId)),pr=persistPrompt(p,2),e=envelope(p,2,pr,{records:{sources:[sourceProposal()]}});return {p,pr,e};
@@ -57,7 +57,6 @@ function rejectCase(name,mutate,expectedCode){
   negativeCount++;
 }
 
-// Reachable happy path: raw capture -> validation -> proposal -> explicit commit -> durable reload.
 {
   let {p,pr,e}=stage2Fixture('JOB-INGEST-HAPPY');const prepared=prepare(p,2,pr,e);
   assert(prepared.validation.valid,`Valid Stage 02 response rejected: ${JSON.stringify(prepared.validation.issues)}`);
@@ -70,7 +69,6 @@ function rejectCase(name,mutate,expectedCode){
   assert(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse===JSON.stringify(e),'Exact raw response did not survive reload.');
 }
 
-// Closed-schema and identity failures.
 rejectCase('empty response',()=>'', 'EMPTY_RESPONSE');
 rejectCase('malformed JSON',()=>'{"schema":}', 'MALFORMED_JSON');
 rejectCase('truncated JSON',()=>'{"schema":"closed-loop-stage-response/3"', 'TRUNCATED_RESPONSE');
@@ -101,25 +99,20 @@ rejectCase('target plus temp key',e=>{e.records.sources[0].targetId='SOURCE-0000
 rejectCase('missing provenance',e=>{e.evidence=[];},'MISSING_PROVENANCE');
 rejectCase('bad evidence ref',e=>{e.records.sources[0].evidenceRefs=['missing'];},'UNRESOLVED_EVIDENCE_REFERENCE');
 rejectCase('fabricated source authority',e=>{Object.assign(e.records.sources[0].fields,{TITLE:'Current application repository',ISSUING_ORGANIZATION_OR_AUTHOR:'Project repository',SOURCE_TYPE:'repository source code',PUBLICATION_ORIGIN:'current application',URL_REFERENCE:'https://github.com/sjonesjones917/closed-loop-tracker',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'target product',APPLICABLE_PORTIONS:'app-core.js',CONTROLLING_STATE:'CONTROLLING'});},'INVALID_EXTERNAL_SOURCE');
-
-// Resource limits fail before canonical mutation.
 rejectCase('oversized raw response',()=> 'x'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxRawResponseBytes+1),'OVERSIZED_RESPONSE');
 rejectCase('excessive JSON depth',()=> '['.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1)+'0'+']'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1),'EXCESSIVE_JSON_DEPTH');
 
-// Human-input fallback is closed and typed.
 {
-  const p=project('JOB-HUMAN-INPUT-CLOSED'),pr=persistPrompt(p,1),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true,unexpected:'forbidden'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
+  const p=project('JOB-HUMAN-INPUT-CLOSED'),pr=persistPrompt(p,1),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:{...pr.scope},responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true,unexpected:'forbidden'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
   const result=prepare(p,1,pr,e);assert(!result.validation.valid&&result.validation.issues.some(i=>i.code==='UNKNOWN_PROPERTY'),'Unknown humanInputRequests property was accepted.');assert(result.project.projectData.acceptedChanges.length===0,'Invalid human-input request mutated canonical state.');negativeCount++;
 }
 
-// Smart punctuation is normalized for parse while exact raw bytes/text remain preserved.
 {
   const {p,pr,e}=stage2Fixture('JOB-SMART-QUOTE');const canonical=JSON.stringify(e);let smart='',inside=false;
   for(let i=0;i<canonical.length;i++){const c=canonical[i];if(!inside&&c==='"'){smart+='“';inside=true;continue;}if(inside&&c==='"'){smart+='”';inside=false;continue;}smart+=c;}
   const result=prepare(p,2,pr,smart);assert(result.validation.valid,`Smart-quoted JSON rejected: ${JSON.stringify(result.validation.issues)}`);assert(result.validation.issues.some(i=>i.code==='JSON_TYPOGRAPHY_NORMALIZED'&&i.severity==='WARNING'),'Smart-quote normalization was not auditable.');assert(result.rawRecord.completeRawResponse===smart,'Smart-quote normalization changed preserved raw response.');assert(result.project.projectData.acceptedChanges.length===0,'Smart-quote parsing mutated canonical state before acceptance.');
 }
 
-// Attachment claims require matching application-known bytes identity.
 {
   const exact={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
   const make=job=>{const f=stage2Fixture(job);f.e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];f.e.evidence[0].attachmentRef={tempKey:'attachment-1'};return f;};
@@ -127,24 +120,18 @@ rejectCase('excessive JSON depth',()=> '['.repeat(schema.DEFAULT_RESOURCE_LIMITS
   for(const [label,files,change,code] of [['missing',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],['filename',[exact],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],['size',[exact],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],['hash',[exact],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']]){const {p,pr,e}=make(`JOB-ATTACH-${label}`);change(e);const result=prepare(p,2,pr,e,files);assert(!result.validation.valid&&result.validation.issues.some(i=>i.code===code),`${label}: expected ${code}.`);assert(result.project.projectData.acceptedChanges.length===0,`${label}: attachment failure mutated canonical state.`);negativeCount++;}
 }
 
-// Stage 04 schema-valid omission must still fail closed against the application obligation manifest.
 {
   const p=makeStage4Reachable(project('JOB-STAGE4-OMISSION')),pr=persistPrompt(p,4),manifest=pr.contextManifest.obligationManifest;
-  assert(manifest.items.length>0,'Stage 04 fixture has no obligation universe.');
-  const reqDef=schema.RECORD_SCHEMAS.requirements;
+  assert(manifest.items.length>0,'Stage 04 fixture has no obligation universe.');const reqDef=schema.RECORD_SCHEMAS.requirements;
   const makeReq=(item,index)=>{const fields={};for(const name of reqDef.required)if(reqDef.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT){const d=reqDef.fieldDefinitions[name];fields[name]=d.enumValues?.[0]??(d.valueType==='BOOLEAN'?true:d.valueType==='INTEGER'?1:d.valueType==='NUMBER'?1:d.valueType==='STRING_ARRAY'||d.valueType==='REFERENCE_ARRAY'?['fixture']:d.valueType==='OBJECT'?{}:`verified-${name.toLowerCase()}`);}fields.USER_INPUT_RELATIONSHIP=item.obligationId;return {tempKey:`req-${index}`,fields,relationships:{},evidenceRefs:['evidence-1']};};
-  const all=manifest.items.map(makeReq),complete=envelope(p,4,pr,{records:{requirements:all}}),completeResult=prepare(p,4,pr,complete);
-  assert(completeResult.validation.valid,`Complete Stage 04 accounting rejected: ${JSON.stringify(completeResult.validation.issues)}`);
-  const omitted=envelope(p,4,pr,{records:{requirements:all.slice(0,-1)}}),omittedResult=prepare(p,4,pr,omitted);
-  assert(!omittedResult.validation.valid,'Stage 04 accepted an omitted obligation.');assert(omittedResult.project.projectData.acceptedChanges.length===0,'Stage 04 omission partially mutated canonical state.');negativeCount++;
+  const all=manifest.items.map(makeReq),complete=envelope(p,4,pr,{records:{requirements:all}}),completeResult=prepare(p,4,pr,complete);assert(completeResult.validation.valid,`Complete Stage 04 accounting rejected: ${JSON.stringify(completeResult.validation.issues)}`);
+  const omitted=envelope(p,4,pr,{records:{requirements:all.slice(0,-1)}}),omittedResult=prepare(p,4,pr,omitted);assert(!omittedResult.validation.valid,'Stage 04 accepted an omitted obligation.');assert(omittedResult.project.projectData.acceptedChanges.length===0,'Stage 04 omission partially mutated canonical state.');negativeCount++;
 }
 
-// Duplicate semantic response returns the existing raw/proposal/receipt lane instead of duplicating state.
 {
   const {p,pr,e}=stage2Fixture('JOB-DUPLICATE-SEMANTIC'),first=prepare(p,2,pr,e);assert(first.validation.valid,'Duplicate fixture first response invalid.');const second=prepare(first.project,2,pr,JSON.stringify(e,null,2));assert(second.duplicate,'Whitespace-only duplicate was not recognized semantically.');assert(second.rawRecord.rawResponseId===first.rawRecord.rawResponseId,'Duplicate response created a second raw identity.');negativeCount++;
 }
 
-// A stale proposal cannot commit after revision changes.
 {
   const {p,pr,e}=stage2Fixture('JOB-STALE-PROPOSAL'),prepared=prepare(p,2,pr,e);assert(prepared.validation.valid,'Stale proposal fixture invalid.');prepared.project.revision=Number(prepared.project.revision||0)+1;let blocked=false;try{ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'INGESTION_REGRESSION'});}catch(error){blocked=error.code==='STALE_PROPOSAL';}assert(blocked,'Stale proposal was accepted.');assert(prepared.project.projectData.acceptedChanges.length===0,'Stale proposal mutated canonical state.');negativeCount++;
 }
