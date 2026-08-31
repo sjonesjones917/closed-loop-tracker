@@ -1,0 +1,32 @@
+name: Apply refinement-loop fixture fix
+on:
+  push:
+    branches: [fix/restore-controlling-verification-20260831b]
+    paths: [.github/workflows/apply-refinement-fixture-fix.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-verification-20260831b
+      - name: Test rejected-response refinement without fabricated upstream completion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});"
+          new="{let p=project('JOB-REFINEMENT-LOOP'),stage=1,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});"
+          if old not in s: raise SystemExit('expected refinement-loop fixture not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit minimal fixture correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Test refinement loop without fabricated upstream completion"
+          git push origin HEAD:fix/restore-controlling-verification-20260831b
