@@ -78,6 +78,9 @@ jobs:
           replace_once('verify-stage-prompts-complete.mjs',
             "'distinct conflict/exception/saturation pass'",
             "'the required conflict-and-exception pass','Repeat until the latest complete pass finds no new material'")
+          replace_once('verify-stage-prompts-complete.mjs',
+            "'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST'",
+            "'APPLICATION OBLIGATION MANIFEST'")
           PY
           node build-test-project.mjs
 
