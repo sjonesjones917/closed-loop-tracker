@@ -45,7 +45,7 @@ jobs:
             verify-test-runtime.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs \
             verify-prompt-semantics.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs \
             verify-user-prompt-invariants.mjs verify-human-stage-walkthrough.mjs \
-            verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs \
+            verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-stage01-conversation-first.mjs \
             verify-zero-loss-accounting.mjs verify-spec3-contract.mjs verify-v3-contract.mjs \
             verify-v3-migration.mjs verify-v3-definition-of-done.mjs verify-semantic-invariant.mjs \
             verify-full-cycle.mjs verify-project-lifecycle.mjs verify-definition-of-done.mjs \
@@ -71,6 +71,7 @@ jobs:
           node verify-human-stage-walkthrough.mjs
           node verify-one-time-intent-intake.mjs
           node verify-stage01-intake-closure.mjs
+          node verify-stage01-conversation-first.mjs
           node verify-zero-loss-accounting.mjs
           node verify-spec3-contract.mjs
           node verify-v3-contract.mjs
