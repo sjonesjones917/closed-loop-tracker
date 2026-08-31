@@ -183,20 +183,35 @@ jobs:
             verificationPackageSchema:'closed-loop-verification-package/1',
             ...definition,
             ...v3,
+            stage01IntakeCoverage:v3.stage01IntakeCoverage??definition.stage01IntakeCoverage,
+            stage04ObligationCoverage:v3.stage04ObligationCoverage??definition.stage04ObligationCoverage,
+            mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage??definition.mandatoryEvidenceSufficiencyCoverage,
+            nativeExecutionCoverage:v3.nativeExecutionCoverage??definition.nativeExecutionCoverage,
+            acceptedAgentValueExtractionCoverage:v3.acceptedAgentValueExtractionCoverage??definition.acceptedAgentValueExtractionCoverage,
+            acceptedRelationshipProvenanceCoverage:v3.acceptedRelationshipProvenanceCoverage??definition.acceptedRelationshipProvenanceCoverage,
+            currentScopeSelectorCoverage:v3.currentScopeSelectorCoverage??definition.currentScopeSelectorCoverage,
+            exactReqRunTestCoverage:v3.exactReqRunTestCoverage??definition.exactReqRunTestCoverage,
+            applicableCurrentRegressionSuccess:v3.applicableCurrentRegressionSuccess??definition.applicableCurrentRegressionSuccess,
+            mandatoryEvidenceChainStructuralCoverage:v3.mandatoryEvidenceChainStructuralCoverage??definition.mandatoryEvidenceChainCoverage,
+            releaseArtifactIdentityCoverage:v3.releaseArtifactIdentityCoverage??definition.releaseArtifactIdentityCoverage,
+            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable??definition.unsupportedTestIrTreatedAsExecutable,
+            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof??definition.externalAssertionsOverridingApplicationProof,
+            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally??definition.nativeExecutionReceiptsFabricatedExternally,
+            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction??definition.releaseAcceptedWithContradiction,
             stagesCompleted:30,
             deployedByteIdentity:true,
+            liveBrowserVerification:true,
             browserWidths:[320,393,'desktop'],
-            liveVerification:true,
             androidChromeAcceptance:false,
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false
           };
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          fs.writeFileSync('final-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - uses: actions/upload-artifact@v4
         with:
           name: closed-loop-acceptance-${{ github.sha }}
-          path: closed-loop-acceptance.json
+          path: final-acceptance.json
       - name: Create acceptance tag after deployed proof
         run: |
           set -euo pipefail
