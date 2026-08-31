@@ -37,27 +37,35 @@ jobs:
           cat repair.log
           exit $status
       - name: Verify repaired runtime and regressions
+        id: verify
         if: steps.apply.outcome == 'success'
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
-            node --check "$file"
-          done
-          node verify-stage01-user-experience.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-prompt-semantics.mjs
-          node verify-user-prompt-invariants.mjs
+          set +e
+          {
+            set -euo pipefail
+            for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+              node --check "$file"
+            done
+            node verify-stage01-user-experience.mjs
+            node verify-one-time-intent-intake.mjs
+            node verify-prompt-semantics.mjs
+            node verify-user-prompt-invariants.mjs
+          } > verify.log 2>&1
+          status=$?
+          cat verify.log
+          exit $status
       - name: Commit verified repair and remove one-time files
-        if: steps.apply.outcome == 'success'
+        if: steps.apply.outcome == 'success' && steps.verify.outcome == 'success'
         run: |
           set -euo pipefail
-          rm -f apply-stage01-ux-repair.mjs .github/workflows/apply-stage01-ux-repair.yml repair.log
+          rm -f apply-stage01-ux-repair.mjs .github/workflows/apply-stage01-ux-repair.yml repair.log verify.log .stage01-repair-trigger
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "Restore Stage 01 conversation and fail-closed intake"
           git push origin HEAD:fix/restore-stage01-user-experience-20260830
-      - name: Commit exact diagnostic on failure
+      - name: Commit exact apply diagnostic
         if: steps.apply.outcome == 'failure'
         run: |
           set -euo pipefail
@@ -65,5 +73,15 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add repair.log
           git commit -m "Record Stage 01 repair diagnostic"
+          git push origin HEAD:fix/restore-stage01-user-experience-20260830
+          exit 1
+      - name: Commit exact verification diagnostic
+        if: steps.apply.outcome == 'success' && steps.verify.outcome == 'failure'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add verify.log
+          git commit -m "Record Stage 01 verification diagnostic"
           git push origin HEAD:fix/restore-stage01-user-experience-20260830
           exit 1
