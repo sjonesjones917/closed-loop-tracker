@@ -20,8 +20,14 @@ jobs:
           s=p.read_text()
           old="await openStage(cdp,9);assert(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`),'Fresh Context control is not rendered at an applicable stage.');assert(await evalValue(cdp,`document.querySelector('#add-fresh-context').disabled===true`),'Fresh Context control must remain gated while prerequisite stages are incomplete.');"
           new="await openStage(cdp,9);assert(await evalValue(cdp,`document.querySelector('#next-required-action')?.innerText.includes('not ready')||document.querySelector('#next-required-action')?.innerText.includes('prerequisite')`),'Locked Stage 09 did not present the prerequisite blocker as the only current action.');assert(!(await evalValue(cdp,`Boolean(document.querySelector('#add-fresh-context'))`)),'Locked Stage 09 exposed a premature fresh-context action instead of only the prerequisite blocker.');"
-          if old not in s: raise SystemExit('stale fresh-context assertion anchor not found')
-          p.write_text(s.replace(old,new,1))
+          if old in s: p.write_text(s.replace(old,new,1))
+          w=Path('verify-human-stage-walkthrough.mjs')
+          s=w.read_text()
+          old="const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});"
+          new="const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(process.env.PAGE_URL+'?walkthrough='+Date.now())}`,{method:'PUT'});"
+          if old not in s: raise SystemExit('live walkthrough target anchor not found')
+          w.write_text(s.replace(old,new,1))
           PY
           node verify-browser-extra.mjs
           node verify-mobile-stage-action.mjs
+          node verify-human-stage-walkthrough.mjs
