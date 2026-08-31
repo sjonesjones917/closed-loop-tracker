@@ -16,6 +16,14 @@ if old_css not in markup:
     raise SystemExit('Established prompt preview CSS repair anchor was not found.')
 html.write_text(markup.replace(old_css, new_css, 1))
 
+engine = Path('workflow-engine.js')
+engine_source = engine.read_text()
+old_matrix_count = 'ACTUAL_MANDATORY_RECORDS:matrix.actual.length'
+new_matrix_count = 'ACTUAL_MANDATORY_RECORDS:matrix.verification.length'
+if old_matrix_count not in engine_source:
+    raise SystemExit('Stage 12 actual matrix count defect anchor was not found.')
+engine.write_text(engine_source.replace(old_matrix_count, new_matrix_count, 1))
+
 walkthrough = Path('verify-human-stage-walkthrough.mjs')
 walk = walkthrough.read_text()
 start = walk.find("    const checked=[],lane={")
