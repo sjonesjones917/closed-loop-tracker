@@ -6,7 +6,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
   statuses: write
@@ -14,43 +14,6 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  repair-stage04:
-    if: github.event_name == 'pull_request' && github.head_ref == 'fix/restore-controlling-verification-20260831b'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-      - name: Apply the demonstrated Stage 04 visual regression correction
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('app-core.js')
-          s=p.read_text()
-          old="const applicable=[1,10,17,20,21,25].includes(n)"
-          if old in s:
-              s=s.replace(old,"const applicable=[1,4,10,17,20,21,25].includes(n)",1)
-          old="fileLocked=locked||!productReady||(n===1&&current.stages[1].status==='COMPLETE');"
-          if old in s:
-              s=s.replace(old,"fileLocked=locked||!productReady||n===4||(n===1&&current.stages[1].status==='COMPLETE');",1)
-          p.write_text(s)
-          p=Path('verify-hash.mjs')
-          s=p.read_text()
-          old="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===19)\"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
-          if old in s:
-              new="assert(appCore.includes(\"const applicable=[1,4,10,17,20,21,25].includes(n)\"),'Stage 04 must retain the established artifact-control panel in the rendered workflow.');\nassert(appCore.includes(\"fileLocked=locked||!productReady||n===4||(n===1&&current.stages[1].status==='COMPLETE');\"),'Stage 04 must preserve the panel without asking the operator to reselect already-stored intent bytes.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
-              s=s.replace(old,new,1)
-          p.write_text(s)
-          PY
-          if git diff --quiet -- app-core.js verify-hash.mjs; then
-            echo "Stage 04 correction already present."
-            exit 0
-          fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js verify-hash.mjs
-          git commit -m "Restore Stage 04 visual baseline without repeated file selection"
-          git push origin HEAD:${{ github.head_ref }}
   test:
     name: test
     runs-on: ubuntu-latest
