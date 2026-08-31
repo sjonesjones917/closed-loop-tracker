@@ -51,6 +51,13 @@ jobs:
             for(let prior=4;prior<stage;prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
             return p;
           }
+          function fixturePromptOptions(stage,operation='COMPLETE'){
+            const required=schema.operationContract(stage,operation)?.scopeRequirements||[];
+            const scope={};
+            if(required.includes('runId'))scope.runId=`RUN-${stage}-${operation}-FIXTURE`;
+            if(required.includes('contextId'))scope.contextId=`CONTEXT-${stage}-${operation}-FIXTURE`;
+            return {operation,...(Object.keys(scope).length?{scope}:{})};
+          }
           function savePrompt(p,stage){
             preparePromptPrerequisites(p,stage);
             if(stage===4)prepareStage4Upstream(p);"""
@@ -59,8 +66,15 @@ jobs:
                   raise SystemExit('Expected savePrompt fixture boundary not found; no change made.')
               text = text.replace(save_needle, save_replacement, 1)
 
-          next_needle = "if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
-          next_replacement = "if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);"
+          options_needle = "  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};"
+          options_replacement = "  const operation=stage===19?'COMPARE':'COMPLETE';\n  const options=fixturePromptOptions(stage,operation);"
+          if options_replacement not in text:
+              if options_needle not in text:
+                  raise SystemExit('Expected savePrompt options boundary not found; no change made.')
+              text = text.replace(options_needle, options_replacement, 1)
+
+          next_needle = "if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt"
+          next_replacement = "if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=fixturePromptOptions(nextStage,'COMPLETE'),nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt"
           if next_replacement not in text:
               if next_needle not in text:
                   raise SystemExit('Expected downstream prompt fixture boundary not found; no change made.')
