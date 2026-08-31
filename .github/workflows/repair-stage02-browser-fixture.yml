@@ -1,0 +1,37 @@
+name: Repair Stage 02 browser fixture
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+      - name: Bind the Stage 02 fixture to its completion determination
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('verify-browser.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "humanInputRequests:[],stageData:{},records:{sources:"
+          new = "humanInputRequests:[],stageData:{SOURCE_APPLICABILITY_DETERMINATION:'APPLICABLE_SOURCES_ESTABLISHED'},records:{sources:"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one incomplete Stage 02 fixture, found {text.count(old)}.')
+          if new in text:
+              raise SystemExit('Fixture is already corrected.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          node --check verify-browser.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-browser.mjs
+          git commit -m "Complete the Stage 02 browser fixture before testing Stage 03"
+          git push origin HEAD:finish/live-human-gate-20260830
