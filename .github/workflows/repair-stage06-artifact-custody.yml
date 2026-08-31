@@ -1,4 +1,4 @@
-name: Repair Stage 06 artifact custody
+name: Persist proven workflow regression fixtures
 on:
   push:
     branches: [fix/monotonic-zero-loss-20260831]
@@ -17,22 +17,39 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply bounded correction
-        run: node repair-stage06-artifact-custody.mjs
-      - name: Prove regression and affected routing
+      - name: Apply already-proven fixture corrections
+        shell: bash
         run: |
           set -euo pipefail
-          node --check workflow-engine.js
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-complete.mjs'); text=p.read_text(encoding='utf-8')
+          repairs=[
+            ("  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);","  const p=project('JOB-BAD-REL');p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};const stage=3,pr=prompt(p,stage);"),
+            ("  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');","  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"),
+            ("engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});\n  assert(engine.records(p,'sources',{stage:2}).length===0,","engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  assert(engine.records(p,'sources',{stage:2}).length===0,"),
+            (" const acceptLane=(slot,label)=>{const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}}),generatedAt:new Date().toISOString()};"," const acceptLane=(slot,label)=>{p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:slot.runId,contextId:slot.contextId}}),generatedAt:new Date().toISOString()};")
+          ]
+          for old,new in repairs:
+              if new in text: continue
+              count=text.count(old)
+              if count != 1: raise SystemExit(f'Expected one fixture target, found {count}: {old[:60]}')
+              text=text.replace(old,new,1)
+          p.write_text(text,encoding='utf-8')
+          PY
+      - name: Prove persisted regression suite
+        run: |
+          set -euo pipefail
           node verify-complete.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
-      - name: Commit correction and remove repair machinery
+      - name: Commit fixtures and remove one-time workflow
         run: |
           set -euo pipefail
-          rm -f repair-stage06-artifact-custody.mjs .github/workflows/repair-stage06-artifact-custody.yml
+          rm -f .github/workflows/repair-stage06-artifact-custody.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js verify-complete.mjs repair-stage06-artifact-custody.mjs .github/workflows/repair-stage06-artifact-custody.yml
+          git add verify-complete.mjs .github/workflows/repair-stage06-artifact-custody.yml
           git diff --cached --check
-          git commit -m "Fail Stage 06 closed on lost bound artifact bytes"
+          git commit -m "Preserve workflow prerequisite regressions"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
