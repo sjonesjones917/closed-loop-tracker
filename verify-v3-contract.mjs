@@ -12,6 +12,7 @@ const store=read('./project-store.js');
 const app=read('./app-core.js');
 const html=read('./index.html');
 const workflow=read('./.github/workflows/pages.yml');
+const acceptanceBuilder=read('./build-machine-acceptance.mjs');
 
 const requiredRuntimeOps=[
   'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML',
@@ -66,21 +67,23 @@ assert.equal(new Set(scriptTokens).size,1,'all runtime scripts must share one bu
 assert.match(html,/worker-src\s+'self'/,'CSP must permit only the same-origin worker');
 assert.doesNotMatch(html,/worker-src[^;]*(?:\*|https?:|blob:|data:)/,'CSP must not open arbitrary worker sources');
 
+const acceptanceSource=workflow+'\n'+acceptanceBuilder;
 const reportField=(name,valuePattern)=>new RegExp(`(?:['\"])?${name}(?:['\"])?\\s*:\\s*${valuePattern}`);
-assert.match(workflow,reportField('projectSchema',"['\"]closed-loop-project\\/3['\"]"),'acceptance report must identify project schema /3');
-assert.match(workflow,reportField('responseSchema',"['\"]closed-loop-stage-response\\/3['\"]"),'acceptance report must identify response schema /3');
-assert.match(workflow,reportField('testIrSchema',"['\"]closed-loop-test-spec\\/1['\"]"),'acceptance report must identify the Test IR schema');
-assert.match(workflow,reportField('verificationPackageSchema',"['\"]closed-loop-verification-package\\/1['\"]"),'acceptance report must identify the verification-package schema');
+assert.match(acceptanceSource,reportField('projectSchema',"['\"]closed-loop-project\\/3['\"]"),'acceptance report must identify project schema /3');
+assert.match(acceptanceSource,reportField('responseSchema',"['\"]closed-loop-stage-response\\/3['\"]"),'acceptance report must identify response schema /3');
+assert.match(acceptanceSource,reportField('testIrSchema',"['\"]closed-loop-test-spec\\/1['\"]"),'acceptance report must identify the Test IR schema');
+assert.match(acceptanceSource,reportField('verificationPackageSchema',"['\"]closed-loop-verification-package\\/1['\"]"),'acceptance report must identify the verification-package schema');
 for(const field of [
   'stage01IntakeCoverage','stage04ObligationCoverage','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage',
   'acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage',
   'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainStructuralCoverage','releaseArtifactIdentityCoverage',
   'unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof',
   'nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'
-])assert.match(workflow,new RegExp(`\\b${field}\\b`),`acceptance report must identify ${field}`);
+])assert.match(acceptanceBuilder,new RegExp(`\\b${field}\\b`),`final acceptance must identify ${field}`);
 assert.match(workflow,/final-acceptance\.json/,'post-deploy machine acceptance artifact is required');
-assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
-assert.match(workflow,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
+assert.match(acceptanceBuilder,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
+assert.match(acceptanceBuilder,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
+assert.match(workflow,/Exact deployed bytes[\s\S]*Deployed Chromium operator workflow[\s\S]*Build final machine acceptance/,'final acceptance must be constructed only after exact live bytes and deployed browser operation succeed');
 
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
