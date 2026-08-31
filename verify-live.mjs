@@ -14,5 +14,5 @@ const active=deployed.filter(f=>/\.(?:js|html)$/.test(f)).map(f=>fs.readFileSync
 if(/MutationObserver/.test(active))throw new Error('Obsolete patch-style runtime behavior is deployed.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.stringify(project)))throw new Error('Unauthorized product content is deployed.');
 if(/human-project\/31|Stage 31|Operation 31|31 operations/i.test(active))throw new Error('Prohibited Stage/Operation 31 is deployed.');
-if(!active.includes('closed-loop-stage-response/2')||!active.includes('PENDING_OPERATOR_REVIEW')||!active.includes('ACCEPTED_DATA_CHANGE'))throw new Error('Structured response ingestion controls are missing from deployed source.');
-console.log(JSON.stringify({liveSourceIdentity:true,filesCompared:deployed.length,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',responseSchema:'closed-loop-stage-response/2',oneApplication:true},null,2));
+for(const token of ['closed-loop-project/3','closed-loop-stage-response/3','closed-loop-test-spec/1','PENDING_OPERATOR_REVIEW','ACCEPTED_DATA_CHANGE'])if(!active.includes(token))throw new Error(`Required deployed contract/runtime token is missing: ${token}`);
+console.log(JSON.stringify({liveSourceIdentity:true,filesCompared:deployed.length,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',oneApplication:true},null,2));
