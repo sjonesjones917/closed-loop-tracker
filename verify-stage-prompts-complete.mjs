@@ -26,7 +26,7 @@ const semantic={
   4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Every obligationId'],
   5:['Resolve the current job’s requirement set exhaustively','repeat the review against the resulting requirement set'],
   6:['closed-loop-test-spec/1','TEST_IR','how a defective product could falsely appear compliant'],
-  7:['Generating an invalid fixture and executing that fixture are separate boundaries','actual observed result and evidence are required'],
+  7:['Fixture definition is not execution','actual observed result and evidence are required'],
   8:['production instruction only from the resolved current requirement set and verification architecture','requirement traceability'],
   9:['re-review the entire current instruction from the beginning','Do not execute target production during preflight'],
   10:['human selects authorized canonical components','Do not assign candidate identity'],
