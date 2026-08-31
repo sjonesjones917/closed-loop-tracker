@@ -18,12 +18,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+      - name: Verify runtime JavaScript parses
         run: |
           set -euo pipefail
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
             node --check "$file"
           done
+      - name: Verify architecture, migration, intake, accounting, runtime, ingestion, prompts, workflow, and definition of done
+        run: |
+          set -euo pipefail
+          node verify.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-ingestion.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-full-cycle.mjs
+          node verify-complete.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Verify local Chromium operator path
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for i in $(seq 1 50); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            sleep 0.1
+          done
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
@@ -37,7 +75,7 @@ jobs:
         run: |
           rm -rf _site
           mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -45,3 +83,16 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify exact deployed bytes
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node verify-live.mjs
+      - name: Verify deployed Chromium operator path
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
