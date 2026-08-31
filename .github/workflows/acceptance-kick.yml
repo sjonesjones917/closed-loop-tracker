@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   acceptance:
-    if: ${{ !contains(github.event.head_commit.message, '[accepted-stage04-heading]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[accepted-prompt-authority]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply minimal prompt-authority correction
+      - name: Apply minimal prompt-authority corrections
         shell: bash
         run: |
           set -euo pipefail
@@ -29,12 +29,20 @@ jobs:
           from pathlib import Path
           path=Path('prompt-engine.js')
           text=path.read_text(encoding='utf-8')
-          old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
-          new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
-          count=text.count(old)
-          if count != 1:
-              raise SystemExit(f'Expected exactly one Stage 04 manifest heading insertion point; found {count}.')
-          path.write_text(text.replace(old,new,1),encoding='utf-8')
+
+          stage1_old='"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
+          stage1_new='"1":"Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage. Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
+          if text.count(stage1_old) != 1:
+              raise SystemExit(f'Expected exactly one Stage 01 semantic-reader insertion point; found {text.count(stage1_old)}.')
+          text=text.replace(stage1_old,stage1_new,1)
+
+          stage4_old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
+          stage4_new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
+          if text.count(stage4_old) != 1:
+              raise SystemExit(f'Expected exactly one Stage 04 manifest heading insertion point; found {text.count(stage4_old)}.')
+          text=text.replace(stage4_old,stage4_new,1)
+
+          path.write_text(text,encoding='utf-8')
           PY
       - name: Test the corrected clean final tree
         shell: bash
@@ -93,7 +101,7 @@ jobs:
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
           cp /tmp/acceptance-kick.yml .github/workflows/acceptance-kick.yml
-      - name: Commit only the accepted production correction
+      - name: Commit only accepted production corrections
         shell: bash
         run: |
           set -euo pipefail
@@ -102,5 +110,5 @@ jobs:
           git add prompt-engine.js
           git diff --cached --quiet && exit 0
           test "$(git diff --cached --name-only)" = "prompt-engine.js"
-          git commit -m "Make Stage 04 manifest ownership explicit [accepted-stage04-heading]"
+          git commit -m "Clarify Stage 01 and Stage 04 prompt authority [accepted-prompt-authority]"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
