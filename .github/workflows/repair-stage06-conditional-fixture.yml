@@ -1,0 +1,44 @@
+name: Repair Stage 06 conditional Test IR fixture
+
+on:
+  push:
+    branches: [fix/monotonic-reliability-pass-20260831]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair conditional Test IR fixture and prove ingestion
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="""    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"""
+          new="""    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    if(collection==='tests'&&fields.EXECUTION_MODE==='APPLICATION_DETERMINISTIC'){fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"""
+          if s.count(old)!=1:
+              raise SystemExit(f'Expected exactly one conditional fixture insertion point; found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/repair-stage06-conditional-fixture.yml
+          node --check verify-ingestion.mjs
+          node verify-ingestion.mjs
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A verify-ingestion.mjs .github/workflows
+          git commit -m "Make Stage 06 ingestion fixture conditionally valid"
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
