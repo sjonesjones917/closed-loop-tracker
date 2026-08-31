@@ -1,0 +1,34 @@
+name: Apply current iterative verifier isolation
+on:
+  push:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Bound Stage 17 and 19 verifier authority projection
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/53';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';",1)
+          old="isolatedReviewer=[12,23,24].includes(Number(stage));"
+          new="isolatedReviewer=[12,23,24].includes(Number(stage))||([17,19].includes(Number(stage))&&String(operation||'').toUpperCase()==='VERIFY');"
+          if old not in s: raise SystemExit('isolated reviewer selector not found')
+          s=s.replace(old,new,1); p.write_text(s)
+          for name in ['index.html','app-core.js']:
+              q=Path(name); t=q.read_text()
+              if 'runtime-20260830-live-operator-59' not in t: raise SystemExit(name+': runtime 59 not found')
+              q.write_text(t.replace('runtime-20260830-live-operator-59','runtime-20260830-live-operator-60'))
+          PY
+          rm -f .github/workflows/apply-iterative-verifier-current.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js index.html app-core.js .github/workflows
+          git commit -m "Isolate iterative verifier prompt authority context"
+          git push origin HEAD:fix/iterative-verifier-isolation-current-20260830
