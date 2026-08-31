@@ -1,0 +1,54 @@
+name: Repair prompt authority
+on:
+  push:
+    branches: [fix/monotonic-zero-loss-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded correction
+        run: python3 .repair-prompt-authority.py
+      - name: Prove prompt and read contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check workflow-schema.js
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-repair-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit accepted correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .repair-prompt-authority.py
+          rm .github/workflows/repair-prompt-authority.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js workflow-schema.js .repair-prompt-authority.py .github/workflows/repair-prompt-authority.yml
+          git diff --cached --check
+          git commit -m "Complete prompt and stage-read authority contracts [repair-applied]"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
