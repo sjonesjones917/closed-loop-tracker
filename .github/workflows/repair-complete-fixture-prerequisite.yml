@@ -1,0 +1,72 @@
+name: Repair complete-verifier prerequisite fixture
+
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-complete-fixture-prerequisite-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct the Stage 03 relationship fixture prerequisite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-complete.mjs')
+          text=path.read_text(encoding='utf-8')
+          old="  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);"
+          new="  const p=project('JOB-BAD-REL'),stage=3;p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};const pr=prompt(p,stage);"
+          if new not in text:
+              if text.count(old)!=1:
+                  raise SystemExit(f'Expected one JOB-BAD-REL fixture boundary; found {text.count(old)}')
+              text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          PY
+          rm .github/workflows/repair-complete-fixture-prerequisite.yml
+      - name: Prove the fixture reaches relationship validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check verify-complete.mjs
+          set +e
+          node verify-complete.mjs > /tmp/verify-complete.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/verify-complete.log
+          if grep -Fq 'Stage 03 controlling instruction cannot be generated until Stage 02 is complete' /tmp/verify-complete.log; then
+            echo 'The corrected relationship fixture still fails at its upstream prerequisite.' >&2
+            exit 1
+          fi
+          if grep -Fq 'Invalid relationship was not rejected' /tmp/verify-complete.log; then
+            echo 'The fixture reached relationship validation but the production ingestion boundary failed.' >&2
+            exit 1
+          fi
+          echo "verify-complete advanced beyond the corrected fixture with status ${status}."
+      - name: Commit the accepted fixture correction and remove the runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-complete.mjs .github/workflows/repair-complete-fixture-prerequisite.yml
+          git diff --cached --check
+          git commit -m 'Establish Stage 02 prerequisite for relationship rejection fixture'
+          git push origin HEAD:fix/zero-loss-controlled-20260831
