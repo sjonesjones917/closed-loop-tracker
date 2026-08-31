@@ -51,6 +51,13 @@ jobs:
           s=s.replace(old,new,1)
           p.write_text(s)
 
+          p=Path('index.html')
+          s=p.read_text()
+          old='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          assert old in s
+          s=s.replace(old,'.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}',1)
+          p.write_text(s)
+
           p=Path('verify-all-stage-prompts.mjs')
           s=p.read_text()
           old="for(let s=1;s<=30;s++){for(const op of schema.STAGE_CONTRACTS[s].operations){"
@@ -65,7 +72,7 @@ jobs:
           assert old in s
           new="scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']))"
           s=s.replace(old,new)
-          regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert(source.includes('contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>'),'Persisted prompt context selector omitted the active operation.');\n}\n// Permanent regression: Stage 12 derived verification count uses the verification matrix collection and never an undefined matrix.actual member.\n{\n  const source=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');\n  assert(source.includes('ACTUAL_MANDATORY_RECORDS:matrix.verification.length'),'Stage 12 derived verification count is not bound to matrix.verification.');\n  assert(!source.includes('ACTUAL_MANDATORY_RECORDS:matrix.actual.length'),'Stage 12 still references nonexistent matrix.actual.');\n}\n"""
+          regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert(source.includes('contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>'),'Persisted prompt context selector omitted the active operation.');\n}\n// Permanent regression: Stage 12 derived verification count uses the verification matrix collection and never an undefined matrix.actual member.\n{\n  const source=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');\n  assert(source.includes('ACTUAL_MANDATORY_RECORDS:matrix.verification.length'),'Stage 12 derived verification count is not bound to matrix.verification.');\n  assert(!source.includes('ACTUAL_MANDATORY_RECORDS:matrix.actual.length'),'Stage 12 still references nonexistent matrix.actual.');\n}\n// Permanent regression: prompt expansion dimensions remain at the approved pre-regression baseline.\n{\n  const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');\n  assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Approved prompt expansion dimensions were not restored.');\n  assert(!html.includes('.expandable-prompt{height:280px;max-height:280px}'),'Unapproved fixed prompt height remains.');\n}\n"""
           if regression.strip() not in s:
               s += regression
           p.write_text(s)
