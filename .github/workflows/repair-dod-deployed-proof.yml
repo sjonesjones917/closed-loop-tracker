@@ -29,15 +29,16 @@ jobs:
               raise SystemExit('stale deployed-proof assertion pattern missing')
           p.write_text(s.replace(old,new,1))
           PY
-      - name: Prove corrected acceptance assertion
+      - name: Prove corrected acceptance assertion without temporary workflow
         run: |
+          rm .github/workflows/repair-dod-deployed-proof.yml
           node --check verify-definition-of-done.mjs
           node verify-definition-of-done.mjs
-      - name: Commit correction and remove one-shot workflow
+      - name: Commit correction and removed one-shot workflow
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm .github/workflows/repair-dod-deployed-proof.yml
+          git add -u .github/workflows/repair-dod-deployed-proof.yml
           git add verify-definition-of-done.mjs
           git diff --cached --check
           git commit -m "Bind deployed-byte acceptance to live verifier execution"
