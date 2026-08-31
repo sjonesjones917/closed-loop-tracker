@@ -32,7 +32,8 @@ jobs:
           done
       - name: Run deterministic architecture, migration, intake, Test IR, ingestion, prompt, gate, and lifecycle proofs
         run: |
-          set -euo pipefail
+          set -u
+          status=0
           for script in \
             verify-hash.mjs \
             verify-spec3-contract.mjs \
@@ -56,8 +57,12 @@ jobs:
             verify-v3-definition-of-done.mjs \
             verify.mjs; do
               echo "==> $script"
-              node "$script"
+              if ! node "$script"; then
+                echo "FAILED: $script"
+                status=1
+              fi
           done
+          exit "$status"
       - name: Enforce the single runtime architecture
         run: |
           set -euo pipefail
