@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/monotonic-zero-loss-20260831
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -30,8 +30,10 @@ jobs:
 
           path = Path('verify-ingestion.mjs')
           text = path.read_text(encoding='utf-8')
-          needle = "function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);"
-          replacement = """function preparePromptPrerequisites(p,stage){
+
+          helper_marker = 'function preparePromptPrerequisites(p,stage)'
+          save_needle = "function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);"
+          save_replacement = """function preparePromptPrerequisites(p,stage){
             if(stage<=1)return p;
             const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;
             p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});
@@ -44,11 +46,19 @@ jobs:
           function savePrompt(p,stage){
             preparePromptPrerequisites(p,stage);
             if(stage===4)prepareStage4Upstream(p);"""
-          if needle not in text:
-              raise SystemExit('Expected savePrompt fixture boundary not found; no change made.')
-          if 'function preparePromptPrerequisites' in text:
-              raise SystemExit('Fixture prerequisite helper already exists; refusing duplicate insertion.')
-          path.write_text(text.replace(needle, replacement, 1), encoding='utf-8')
+          if helper_marker not in text:
+              if save_needle not in text:
+                  raise SystemExit('Expected savePrompt fixture boundary not found; no change made.')
+              text = text.replace(save_needle, save_replacement, 1)
+
+          next_needle = "if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
+          next_replacement = "if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);"
+          if next_replacement not in text:
+              if next_needle not in text:
+                  raise SystemExit('Expected downstream prompt fixture boundary not found; no change made.')
+              text = text.replace(next_needle, next_replacement, 1)
+
+          path.write_text(text, encoding='utf-8')
           Path('.github/workflows/repair-ingestion-prerequisite-fixture.yml').unlink()
           PY
       - name: Prove the corrected fixture and affected downstream suites
