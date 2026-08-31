@@ -1,0 +1,47 @@
+name: Apply Stage 01 prompt invariant repair
+on:
+  push:
+    branches: [fix/complete-closed-loop-spec-20260831]
+    paths: [.github/workflows/apply-next-repair.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/complete-closed-loop-spec-20260831
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore exact invariant and fixture spelling
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          needle='The user supplies project information once. Capture it completely, preserve it as durable project authority, and reuse it instead of asking for it again.\n'
+          replacement=needle+'Exhaust the human-authority intake before finalizing Stage 01.\n'
+          if 'Exhaust the human-authority intake' not in s:
+              if needle not in s: raise SystemExit('Stage 01 conversation anchor not found')
+              s=s.replace(needle,replacement,1)
+          p.write_text(s)
+          p=Path('verify-ingestion.mjs'); s=p.read_text().replace('EXACT_DELIVERABlE_REQUESTED','EXACT_DELIVERABLE_REQUESTED'); p.write_text(s)
+          PY
+          node --check prompt-engine.js
+          node --check verify-ingestion.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-ingestion.mjs
+      - name: Commit repair and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js verify-ingestion.mjs
+          git rm .github/workflows/apply-next-repair.yml
+          git commit -m 'Restore Stage 01 intake exhaustion invariant'
+          git push origin HEAD:fix/complete-closed-loop-spec-20260831
