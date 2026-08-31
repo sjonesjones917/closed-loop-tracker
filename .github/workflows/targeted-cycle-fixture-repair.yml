@@ -14,7 +14,7 @@ jobs:
           ref: fix/restore-full-acceptance-20260831
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Correct the earliest full-cycle runtime and authority failures
+      - name: Diagnose the earliest corrected-iteration prerequisite failure
         shell: bash
         run: |
           python3 - <<'PY'
@@ -44,6 +44,10 @@ jobs:
               (
                 "data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});engine.freezeCandidate",
                 "engine.freezeCandidate"
+              ),
+              (
+                "purpose:'CORRECTED'});const iter17=",
+                "purpose:'CORRECTED'});console.log('POST_STAGE17_FREEZE '+JSON.stringify(Object.fromEntries([12,13,14,15,16].map(stage=>[stage,{storedStatus:p.stages[stage].status,storedGate:p.stages[stage].gate,liveGate:engine.gate(stage,p)}]))));const iter17="
               )
             ],
             'workflow-engine.js':[
