@@ -52,3 +52,5 @@ jobs:
           git add -A verify.mjs .github/workflows
           git commit -m "Align verifier fixtures with prompt prerequisites"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
+
+# Triggered after the fail-closed prerequisite regression was reproduced.
