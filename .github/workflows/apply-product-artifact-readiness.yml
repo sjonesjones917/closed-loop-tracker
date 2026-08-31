@@ -1,0 +1,33 @@
+name: Resolve canonical product artifacts for external verification
+on:
+  push:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use current product bytes without reattachment
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); s=p.read_text()
+          old="""const items=recordsForCurrentScope(project,'tests').map(test=>{const mode=upper(recordValue(test,'EXECUTION_MODE'))||'UNSPECIFIED',requiredCapability=String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),artifactRequirements=String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim(),artifactRequired=Boolean(artifactRequirements&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(artifactRequirements))),evidenceIds=safe(test.evidenceRefs).map(String),evidenceArtifactIds=evidenceIds.map(id=>evidenceById.get(id)).map(item=>String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim()).filter(Boolean),bindings=mode==='APPLICATION_DETERMINISTIC'?bindingArtifacts(test):{artifactIds:[],issues:[]},artifactIds=[...new Set([...evidenceArtifactIds,...bindings.artifactIds])],missingArtifactIds=artifactIds.filter(id=>!artifactsById.has(id)),unverifiedArtifactIds=artifactIds.filter(id=>{const artifact=artifactsById.get(id);return artifact&&upper(recordValue(artifact,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED';}),bindingReady=mode!=='APPLICATION_DETERMINISTIC'||activeStage<22||(!bindings.issues.length&&bindings.artifactIds.length>0&&!missingArtifactIds.length&&!unverifiedArtifactIds.length),artifactReady=(!artifactRequired||(artifactIds.length>0&&!missingArtifactIds.length&&!unverifiedArtifactIds.length))&&bindingReady,"""
+          new="""const items=recordsForCurrentScope(project,'tests').map(test=>{const mode=upper(recordValue(test,'EXECUTION_MODE'))||'UNSPECIFIED',requiredCapability=String(recordValue(test,'REQUIRED_CAPABILITY')||'').trim(),artifactRequirements=String(recordValue(test,'ARTIFACT_REQUIREMENTS')||'').trim(),artifactRequired=Boolean(artifactRequirements&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(artifactRequirements))),evidenceIds=safe(test.evidenceRefs).map(String),evidenceArtifactIds=evidenceIds.map(id=>evidenceById.get(id)).map(item=>String(recordValue(item,'ATTACHMENT_ID')||item?.relationships?.ATTACHMENT_ID||'').trim()).filter(Boolean),bindings=mode==='APPLICATION_DETERMINISTIC'?bindingArtifacts(test):{artifactIds:[],issues:[]},productArtifacts=currentProductId&&activeStage>=22&&activeStage<=24?currentArtifacts.filter(a=>String(a.scope?.productId||'')===currentProductId):[],artifactReferenceText=JSON.stringify([artifactRequirements,recordValue(test,'INPUTS'),recordValue(test,'PROCEDURE'),recordValue(test,'EVIDENCE_TO_PRESERVE')]),explicitProductArtifactIds=[...new Set(artifactReferenceText.match(/ARTIFACT-[A-Za-z0-9-]+/g)||[])].filter(id=>productArtifacts.some(a=>recordId(a,'artifacts')===id),namedProductArtifactIds=productArtifacts.filter(a=>{const filename=String(recordValue(a,'FILENAME')||'').trim();return filename&&artifactReferenceText.includes(filename);}).map(a=>recordId(a,'artifacts')),inferredProductArtifactIds=mode!=='APPLICATION_DETERMINISTIC'&&artifactRequired&&productArtifacts.length?(explicitProductArtifactIds.length?explicitProductArtifactIds:namedProductArtifactIds.length?[...new Set(namedProductArtifactIds)]:productArtifacts.map(a=>recordId(a,'artifacts'))):[],artifactIds=[...new Set([...evidenceArtifactIds,...bindings.artifactIds,...inferredProductArtifactIds])],missingArtifactIds=artifactIds.filter(id=>!artifactsById.has(id)),unverifiedArtifactIds=artifactIds.filter(id=>{const artifact=artifactsById.get(id);return artifact&&upper(recordValue(artifact,'AVAILABILITY'))!=='BYTES_PERSISTED_AND_VERIFIED';}),bindingReady=mode!=='APPLICATION_DETERMINISTIC'||activeStage<22||(!bindings.issues.length&&bindings.artifactIds.length>0&&!missingArtifactIds.length&&!unverifiedArtifactIds.length),artifactReady=(!artifactRequired||(artifactIds.length>0&&!missingArtifactIds.length&&!unverifiedArtifactIds.length))&&bindingReady,"""
+          if old not in s: raise SystemExit('testExecutionPlan artifact resolution target not found')
+          s=s.replace(old,new,1); p.write_text(s)
+          for name in ['index.html','app-core.js']:
+              q=Path(name); t=q.read_text()
+              if 'runtime-20260830-live-operator-60' not in t: raise SystemExit(name+': runtime 60 not found')
+              q.write_text(t.replace('runtime-20260830-live-operator-60','runtime-20260830-live-operator-61'))
+          PY
+          rm -f .github/workflows/apply-product-artifact-readiness.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workflow-engine.js index.html app-core.js .github/workflows
+          git commit -m "Reuse canonical product bytes for external verification"
+          git push origin HEAD:fix/iterative-verifier-isolation-current-20260830
