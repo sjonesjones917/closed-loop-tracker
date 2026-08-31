@@ -21,23 +21,19 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          p=Path('workflow-engine.js')
-          s=p.read_text()
+          p=Path('workflow-engine.js'); s=p.read_text()
           old="if(test&&['INDEPENDENT_AGENT_REVIEW','EXTERNAL_AGENT_TOOL','HUMAN_INSPECTION','EXTERNAL_SYSTEM'].includes(mode)&&!contextId)reasons.push('Execution/reviewer context identity is not established.');"
           new="if(test&&['INDEPENDENT_AGENT_REVIEW','EXTERNAL_AGENT_TOOL','EXTERNAL_SYSTEM'].includes(mode)&&!contextId)reasons.push('Execution/reviewer context identity is not established.');if(test&&mode==='HUMAN_INSPECTION'&&!evidence.some(item=>upper(recordValue(item,'AUTHORITY_TYPE'))==='HUMAN_OBSERVATION'))reasons.push('Human inspection requires explicit human-owned observation evidence.');"
-          assert s.count(old)==1, s.count(old)
-          s=s.replace(old,new)
+          assert s.count(old)==1, ('human evidence anchor',s.count(old)); s=s.replace(old,new)
           old2="if(stage===4){const accounting=evaluateObligationAccounting(project);if(!accounting.complete)add(accounting.reasons);}"
           new2="if(stage===4){const accounting=evaluateObligationAccounting(project);if(!accounting.complete)add(accounting.reasons);}if(stage===6){const plan=testExecutionPlan(project);for(const item of safe(plan?.items)){if(item.artifactReady===false)add([`${item.testId||'UNKNOWN TEST'}: required artifact bytes are missing or no longer application-verified.`]);if(item.capabilityReady===false)add([`${item.testId||'UNKNOWN TEST'}: required execution capability is unavailable.`]);if(item.executionRoute==='BLOCKED'||item.operatorAction==='BLOCKED')add([`${item.testId||'UNKNOWN TEST'}: verification route is blocked${item.blockingReason?` — ${item.blockingReason}`:''}.`]);}}"
-          assert s.count(old2)==1, s.count(old2)
-          s=s.replace(old2,new2)
-          p.write_text(s)
+          assert s.count(old2)==1, ('stage6 anchor',s.count(old2)); s=s.replace(old2,new2); p.write_text(s)
 
-          p=Path('verify-v3-contract.mjs'); s=p.read_text(); old="assert.match(appCore,/current value/i,'proposal display must include current values');"; new="assert.match(appCore,/currentValue|current value/i,'proposal display must include current values');"; assert s.count(old)==1,s.count(old); p.write_text(s.replace(old,new))
+          p=Path('verify-v3-contract.mjs'); s=p.read_text(); old="assert.match(app,/current value/i,'proposal display must include current values');"; new="assert.match(app,/currentValue|current value/i,'proposal display must include current values');"; assert s.count(old)==1,('proposal test anchor',s.count(old)); p.write_text(s.replace(old,new))
 
-          p=Path('verify-all-stage-prompts.mjs'); s=p.read_text(); old="assert(text.includes('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE'),`Stage ${s}/${op} omitted universal no-repeat human collaboration contract.`);"; new="assert(/HUMAN COLLABORATION MODE — APPLIES TO EVERY(?: EXTERNAL-AGENT)? STAGE/.test(text)&&/human supplies project information once/i.test(text)&&/never ask the human to .*repeat.*reattach/i.test(text),`Stage ${s}/${op} omitted universal no-repeat human collaboration contract.`);"; assert s.count(old)==1,s.count(old); p.write_text(s.replace(old,new))
+          p=Path('verify-all-stage-prompts.mjs'); s=p.read_text(); old="assert(text.includes('HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE'),`Stage ${s}/${op} omitted universal no-repeat human collaboration contract.`);"; new="assert(/HUMAN COLLABORATION MODE — APPLIES TO EVERY(?: EXTERNAL-AGENT)? STAGE/.test(text)&&/human supplies project information once/i.test(text)&&/never ask the human to .*repeat.*reattach/i.test(text),`Stage ${s}/${op} omitted universal no-repeat human collaboration contract.`);"; assert s.count(old)==1,('all-stage test anchor',s.count(old)); p.write_text(s.replace(old,new))
 
-          p=Path('verify-stage-prompts-complete.mjs'); s=p.read_text(); old="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"; new="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);if(!/never ask the human to .*repeat.*(?:resend|reattach)/i.test(prompt))throw new Error(`Stage ${stage} ${operation} missing semantic no-repeat/no-reattach invariant.`);"; assert s.count(old)==1,s.count(old); p.write_text(s.replace(old,new))
+          p=Path('verify-stage-prompts-complete.mjs'); s=p.read_text(); old="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"; new="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);if(!/never ask the human to .*repeat.*(?:resend|reattach)/i.test(prompt))throw new Error(`Stage ${stage} ${operation} missing semantic no-repeat/no-reattach invariant.`);"; assert s.count(old)==1,('stage prompt test anchor',s.count(old)); p.write_text(s.replace(old,new))
           PY
       - name: Prove targeted corrections
         run: |
