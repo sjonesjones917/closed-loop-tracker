@@ -14,7 +14,7 @@ jobs:
           ref: fix/restore-full-acceptance-20260831
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Bind full-cycle verification prompts to a canonical verifier context
+      - name: Bind full-cycle external-review prompts to canonical contexts
         shell: bash
         run: |
           python3 - <<'PY'
@@ -22,6 +22,10 @@ jobs:
           p=Path('verify-full-cycle.mjs')
           s=p.read_text()
           replacements=[
+            (
+              "data(9,{records:{preflightRecords:",
+              "engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'PREFLIGHT-CONTEXT-1',operatorLabel:'FULL_CYCLE'});const preflightContextId=rid('freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:"
+            ),
             (
               "function verifyBatch(stage,operation,slots){const records=[];",
               "function verifyBatch(stage,operation,slots){engine.registerFreshContext(p,{stage,externalContextIdentifier:`VERIFY-CONTEXT-${stage}-${operation}`,operatorLabel:'FULL_CYCLE'});const verifierContextId=rid('freshContexts');const records=[];"
@@ -51,5 +55,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add verify-full-cycle.mjs .github/workflows/targeted-cycle-fixture-repair.yml
-          git commit -m "Bind full-cycle verification to canonical context"
+          git commit -m "Bind full-cycle reviewers to canonical contexts"
           git push origin HEAD:fix/restore-full-acceptance-20260831
