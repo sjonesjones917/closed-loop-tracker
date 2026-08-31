@@ -1,0 +1,341 @@
+
+===== build-test-project =====
+Committed retained project requires no source materialization.
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:8
+for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
+                                                         ^
+
+Error: Missing AUTHORIZED_OPERATION_01.txt
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/build-test-project.mjs:8:58
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+EXIT=1
+
+===== test-project-diff =====
+EXIT=0
+
+===== verify =====
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:8
+for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
+                                                      ^
+
+Error: Missing AUTHORIZED_OPERATION_01.txt
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify.mjs:8:55
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+EXIT=1
+
+===== verify-spec3 =====
+workbook.js:764
+  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
+                                         ^
+
+Error: Unsupported project schema: closed-loop-project/2
+    at Object.migrateState (workbook.js:764:42)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-spec3-contract.mjs:1:1590
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+EXIT=1
+
+===== verify-v3 =====
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: acceptance report must identify stage01IntakeCoverage
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-v3-contract.mjs:80:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'name: Deploy application\n' +
+    '\n' +
+    'on:\n' +
+    '  push:\n' +
+    '    branches: [main]\n' +
+    '  pull_request:\n' +
+    '    branches: [main]\n' +
+    '  workflow_dispatch:\n' +
+    '\n' +
+    'permissions:\n' +
+    '  contents: read\n' +
+    '  pages: write\n' +
+    '  id-token: write\n' +
+    '\n' +
+    'concurrency:\n' +
+    '  group: pages-${{ github.workflow }}-${{ github.ref }}\n' +
+    '  cancel-in-progress: false\n' +
+    '\n' +
+    'jobs:\n' +
+    '  test:\n' +
+    '    name: test\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 60\n' +
+    '    steps:\n' +
+    '      - uses: actions/checkout@v4\n' +
+    '      - uses: actions/setup-node@v4\n' +
+    '        with:\n' +
+    "          node-version: '22'\n" +
+    '\n' +
+    '      - name: Materialize the exact retained Stage 01 output\n' +
+    '        run: |\n' +
+    "          node --input-type=module - <<'NODE'\n" +
+    "          import fs from 'node:fs';\n" +
+    "          const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));\n" +
+    "          const output=String(project.stageRecords?.['1']?.output||'');\n" +
+    "          if(!output||project.generatedOutputs?.[0]?.output!==output)throw new Error('Canonical retained Stage 01 output is missing or inconsistent.');\n" +
+    "          fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);\n" +
+    '          NODE\n' +
+    '\n' +
+    '      - name: Syntax\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          for file in *.js *.mjs; do node --check "$file"; done\n' +
+    '\n' +
+    '      - name: Schema and ownership architecture\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node build-test-project.mjs\n' +
+    '          git diff --exit-code -- TEST_PROJECT.json\n' +
+    '          node verify.mjs\n' +
+    '          node verify-spec3-contract.mjs\n' +
+    '          node verify-v3-contract.mjs\n' +
+    `          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1\n` +
+    '          test ! -f app.js\n' +
+    `          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"\n` +
+    `          ! grep -R "document.write" --include='*.js' --include='*.html' .\n` +
+    `          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .\n` +
+    `          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .\n` +
+    "          node - <<'NODE'\n" +
+    "          const fs=require('fs'),html=fs.readFileSync('index.html','utf8');\n" +
+    "          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];\n" +
+    '          const src=[...html.matchAll(/<script\\s+defer\\s+src="([^"]+)"\\s*><\\/script>/g)].map(match=>match[1]);\n' +
+    '          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);\n' +
+    '          const tokens=new Set();\n' +
+    '          expected.forEach((file,index)=>{\n' +
+    "            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);\n" +
+    "            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not unique`);\n" +
+    "            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');\n" +
+    '            if(!token)throw new Error(`${file} lacks build token`);\n' +
+    '            tokens.add(token);\n' +
+    '          });\n' +
+    "          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');\n" +
+    "          if(!/worker-src\\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');\n" +
+    '          NODE\n' +
+    '\n' +
+    '      - name: Migration\n' +
+    '        run: node verify-v3-migration.mjs\n' +
+    '\n' +
+    '      - name: Stage 01 raw intake and semantic accounting\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-one-time-intent-intake.mjs\n' +
+    '          node verify-stage01-intake-closure.mjs\n' +
+    '          node verify-zero-loss-accounting.mjs\n' +
+    '\n' +
+    '      - name: Stage 04 obligation accounting\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-stage-prompts-complete.mjs\n' +
+    '          node verify-zero-loss-accounting.mjs\n' +
+    '\n' +
+    '      - name: Test IR validation and security\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-v3-contract.mjs\n' +
+    '          node verify-test-runtime-v3.mjs\n' +
+    '          node verify-test-runtime-limits.mjs\n' +
+    '\n' +
+    '      - name: Deterministic runtime\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-test-runtime.mjs\n' +
+    '          node verify-test-runtime-v3.mjs\n' +
+    '          node verify-test-runtime-limits.mjs\n' +
+    '          node verify-hash.mjs\n' +
+    '\n' +
+    '      - name: Raw-first ingestion\n' +
+    '        run: node verify-ingestion.mjs\n' +
+    '\n' +
+    '      - name: Workflow and gates\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-complete.mjs\n' +
+    '          node verify-project-lifecycle.mjs\n' +
+    '\n' +
+    '      - name: Prompt semantics and context leakage\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-all-stage-prompts.mjs\n' +
+    '          node verify-stage-prompts-complete.mjs\n' +
+    '          node verify-prompt-semantics.mjs\n' +
+    '          node verify-semantic-invariant.mjs\n' +
+    '          node verify-user-prompt-invariants.mjs\n' +
+    '          node verify-monotonic-pass.mjs\n' +
+    '\n' +
+    '      - name: Full-cycle verification and definition of done\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          node verify-full-cycle.mjs\n' +
+    '          node verify-definition-of-done.mjs\n' +
+    '          node verify-v3-definition-of-done.mjs\n' +
+    '\n' +
+    '      - name: Local Chromium operator path\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"\n' +
+    '          test -n "$BROWSER"\n' +
+    '          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &\n' +
+    '          SERVER_PID=$!\n' +
+    `          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT\n` +
+    '          for attempt in $(seq 1 50); do\n' +
+    '            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi\n' +
+    '            sleep 0.2\n' +
+    '          done\n' +
+    '          run_browser_verifier() {\n' +
+    '            script="$1"\n' +
+    '            for attempt in 1 2 3; do\n' +
+    '              log="/tmp/${script}.${attempt}.log"\n' +
+    '              if PAGE_URL=http://127.0.0.1:4173/ node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi\n' +
+    '              cat "$log"\n' +
+    `              if ! grep -Eq 'ECONNREFUSED 127\\.0\\.0\\.1:[0-9]+' "$log"; then return 1; fi\n` +
+    '              test "$attempt" -lt 3 || return 1\n' +
+    '            done\n' +
+    '          }\n' +
+    '          run_browser_verifier verify-browser.mjs\n' +
+    '          run_browser_verifier verify-browser-extra.mjs\n' +
+    '          node verify-human-stage-walkthrough.mjs\n' +
+    '          node verify-mobile-stage-action.mjs\n' +
+    '\n' +
+    '  deploy:\n' +
+    '    name: deploy\n' +
+    "    if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n" +
+    '    needs: test\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 45\n' +
+    '    environment:\n' +
+    '      name: github-pages\n' +
+    '      url: ${{ steps.deployment.outputs.page_url }}\n' +
+    '    outputs:\n' +
+    '      page_url: ${{ steps.deployment.outputs.page_url }}\n' +
+    '    steps:\n' +
+    '      - uses: actions/checkout@v4\n' +
+    '      - uses: actions/setup-node@v4\n' +
+    '        with:\n' +
+    "          node-version: '22'\n" +
+    '\n' +
+    '      - name: Materialize the exact retained Stage 01 output\n' +
+    '        run: |\n' +
+    "          node --input-type=module - <<'NODE'\n" +
+    "          import fs from 'node:fs';\n" +
+    "          const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));\n" +
+    "          const output=String(project.stageRecords?.['1']?.output||'');\n" +
+    "          if(!output||project.generatedOutputs?.[0]?.output!==output)throw new Error('Canonical retained Stage 01 output is missing or inconsistent.');\n" +
+    "          fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);\n" +
+    '          NODE\n' +
+    '\n' +
+    '      - name: Re-prove exact source before upload\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"\n' +
+    '          node verify-monotonic-pass.mjs\n' +
+    '          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done\n' +
+    '\n' +
+    '      - name: Build static application\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          rm -rf _site\n' +
+    '          mkdir _site\n' +
+    '          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/\n' +
+    '\n' +
+    '      - uses: actions/configure-pages@v5\n' +
+    '      - uses: actions/upload-pages-artifact@v3\n' +
+    '        with:\n' +
+    '          path: _site\n' +
+    '      - name: Deploy application\n' +
+    '        id: deployment\n' +
+    '        uses: actions/deploy-pages@v4\n' +
+    '\n' +
+    '  verify-live:\n' +
+    '    name: verify-live\n' +
+    "    if: github.event_name == 'push' && github.ref == 'refs/heads/main'\n" +
+    '    needs: [test, deploy]\n' +
+    '    runs-on: ubuntu-latest\n' +
+    '    timeout-minutes: 45\n' +
+    '    env:\n' +
+    '      PAGE_URL: ${{ needs.deploy.outputs.page_url }}\n' +
+    '    steps:\n' +
+    '      - uses: actions/checkout@v4\n' +
+    '      - uses: actions/setup-node@v4\n' +
+    '        with:\n' +
+    "          node-version: '22'\n" +
+    '\n' +
+    '      - name: Materialize the exact retained Stage 01 output\n' +
+    '        run: |\n' +
+    "          node --input-type=module - <<'NODE'\n" +
+    "          import fs from 'node:fs';\n" +
+    "          const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));\n" +
+    "          const output=String(project.stageRecords?.['1']?.output||'');\n" +
+    "          if(!output||project.generatedOutputs?.[0]?.output!==output)throw new Error('Canonical retained Stage 01 output is missing or inconsistent.');\n" +
+    "          fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);\n" +
+    '          NODE\n' +
+    '\n' +
+    '      - name: Verify exact deployed bytes and /3 runtime identity\n' +
+    '        run: node verify-live.mjs\n' +
+    '\n' +
+    '      - name: Use the deployed application through Chromium\n' +
+    '        run: |\n' +
+    '          set -euo pipefail\n' +
+    '          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"\n' +
+    '          test -n "$BROWSER"\n' +
+    '          run_browser_verifier() {\n' +
+    '            script="$1"\n' +
+    '            for attempt in 1 2 3; do\n' +
+    '              log="/tmp/${script}.${attempt}.log"\n' +
+    '              if node "$script" >"$log" 2>&1; then cat "$log"; return 0; fi\n' +
+    '              cat "$log"\n' +
+    `              if ! grep -Eq 'ECONNREFUSED 127\\.0\\.0\\.1:[0-9]+' "$log"; then return 1; fi\n` +
+    '              test "$attempt" -lt 3 || return 1\n' +
+    '            done\n' +
+    '          }\n' +
+    '          run_browser_verifier verify-browser.mjs\n' +
+    '          run_browser_verifier verify-browser-extra.mjs\n' +
+    '\n' +
+    '  publish-status:\n' +
+    '    name: publish-status\n' +
+    "    if: always() && github.event_name == 'push' && githu"... 6621 more characters,
+  expected: /\bstage01IntakeCoverage\b/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v22.23.2
+EXIT=1
+
+===== html-count =====
+EXIT=0
+
+===== no-app-js =====
+EXIT=0
+
+===== no-repair-root =====
+EXIT=0
+
+===== no-document-write =====
+EXIT=0
+
+===== no-mutation-observer =====
+EXIT=0
+
+===== no-stage31 =====
+EXIT=0
