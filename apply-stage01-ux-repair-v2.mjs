@@ -25,3 +25,11 @@ if (!promptSource.includes(legacyPhrase)) {
   promptSource = promptSource.replace(insertionPoint, 'common domain knowledge, canonical context, or authorized research/tools; never ask the user to repeat available project facts.');
   fs.writeFileSync(promptPath, promptSource, 'utf8');
 }
+
+const semanticsPath = 'verify-prompt-semantics.mjs';
+let semantics = fs.readFileSync(semanticsPath, 'utf8');
+const brittlePreviewCheck = "assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt preview/collapse sizing changed.');";
+const semanticPreviewCheck = "assert(/\\.expandable-prompt\\{[^}]*max-height:280px[^}]*\\}/.test(html)&&/\\.expandable-prompt\\.expanded\\{[^}]*max-height:none[^}]*\\}/.test(html),'Prompt preview/collapse sizing changed.');";
+if (!semantics.includes(brittlePreviewCheck)) throw new Error('Brittle prompt-preview check not found.');
+semantics = semantics.replace(brittlePreviewCheck, semanticPreviewCheck);
+fs.writeFileSync(semanticsPath, semantics, 'utf8');
