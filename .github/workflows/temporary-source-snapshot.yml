@@ -1,0 +1,22 @@
+name: Temporary source snapshot
+
+on:
+  push:
+    branches:
+      - tmp/source-snapshot-pr722-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package exact branch source
+        run: tar --exclude=.git -czf closed-loop-pr722-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-pr722-source
+          path: closed-loop-pr722-source.tar.gz
+          retention-days: 1
