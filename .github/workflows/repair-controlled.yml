@@ -17,6 +17,7 @@ jobs:
           set -euo pipefail
           python3 .github/repair.py
           python3 .github/repair2.py
+          python3 .github/repair3.py
       - name: Syntax check affected files
         run: |
           set -euo pipefail
