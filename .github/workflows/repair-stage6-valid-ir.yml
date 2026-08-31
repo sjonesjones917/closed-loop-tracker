@@ -1,4 +1,4 @@
-name: One-time Stage 06 valid Test IR fixture repair
+name: One-time ingestion fixture contract repair
 on:
   push:
     branches:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Repair Stage 06 valid ingestion fixture
+      - name: Repair verifier fixtures against current contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -25,11 +25,16 @@ jobs:
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          old="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
-          new="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
-          if s.count(old)!=1:
-              raise SystemExit('Stage 06 fixture insertion target not found exactly once.')
-          p.write_text(s.replace(old,new))
+          old_scope="""  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};\n"""
+          new_scope="""  const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0];\n  const scope={};\n  for(const key of schema.operationContract(stage,operation)?.scopeRequirements||[]){\n    if(key==='projectRevision')scope[key]=Number(p.revision||0);\n    else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;\n    else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';\n    else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';\n    else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';\n    else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';\n    else if(key==='iterationId')scope[key]='ITERATION-INGESTION-FIXTURE';\n    else if(key==='candidateId')scope[key]='CANDIDATE-INGESTION-FIXTURE';\n    else if(key==='runId')scope[key]='RUN-INGESTION-FIXTURE';\n    else if(key==='contextId')scope[key]='CONTEXT-INGESTION-FIXTURE';\n    else if(key==='baselineId')scope[key]='BASELINE-INGESTION-FIXTURE';\n    else if(key==='productId')scope[key]='PRODUCT-INGESTION-FIXTURE';\n  }\n  const options={operation,scope};\n"""
+          if s.count(old_scope)!=1:
+              raise SystemExit('Prompt scope fixture target not found exactly once.')
+          s=s.replace(old_scope,new_scope)
+          old_ir="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
+          new_ir="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
+          if s.count(old_ir)!=1:
+              raise SystemExit('Stage 06 Test IR fixture target not found exactly once.')
+          p.write_text(s.replace(old_ir,new_ir))
           PY
           node verify-ingestion.mjs
           git diff --check
@@ -41,5 +46,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/repair-stage6-valid-ir.yml
           git add verify-ingestion.mjs
-          git commit -m "Fix Stage 06 valid Test IR ingestion fixture"
+          git commit -m "Align ingestion fixtures with current contracts"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
