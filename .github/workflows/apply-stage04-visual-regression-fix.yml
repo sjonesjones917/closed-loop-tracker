@@ -12,19 +12,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/restore-controlling-verification-20260831b
-      - name: Remove obsolete duplicate Stage 01 authorization-file dependency
+      - name: Make synthetic prompt fixtures satisfy production prerequisites
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify.mjs')
           s=p.read_text()
-          old="const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];"
-          new="const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];"
-          if old not in s: raise SystemExit('expected obsolete file dependency not found')
-          s=s.replace(old,new,1)
-          old="const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();\nif(retained.generatedOutputs?.[0]?.output!==operation01||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Authorized Operation 01 output was not preserved exactly.');"
-          new="const operation01=String(retained.generatedOutputs?.[0]?.output||'');\nif(!operation01.trim()||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Retained Stage 01 output is missing or inconsistent across preserved history.');"
-          if old not in s: raise SystemExit('expected obsolete Stage 01 duplicate comparison not found')
+          old="for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);if(stage===4)prepareStage4(p);const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));"
+          new="for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);if(stage===4)prepareStage4(p);else for(let prior=1;prior<stage;prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));"
+          if old not in s: raise SystemExit('expected synthetic prompt loop not found')
           p.write_text(s.replace(old,new,1))
           PY
       - name: Commit minimal correction
@@ -32,5 +28,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add verify.mjs
-          git commit -m "Remove obsolete Stage 01 authorization-file test dependency"
+          git commit -m "Prepare prerequisite state in synthetic prompt verification"
           git push origin HEAD:fix/restore-controlling-verification-20260831b
