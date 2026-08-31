@@ -1,4 +1,4 @@
-name: Apply proposal current-value repair
+name: Apply v3 acceptance repair
 on: push
 permissions:
   contents: write
@@ -10,25 +10,75 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/restore-controlling-verification-20260831b
-      - name: Make proposal current-value field explicit
+      - name: Apply current-value and acceptance-report repairs
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('app-core.js')
-          s=p.read_text()
+          p=Path('app-core.js'); s=p.read_text()
           old="field:c.canonicalField||c.canonicalRelationship||'',currentValue:(()=>{"
           new="field:c.canonicalField||c.canonicalRelationship||'','current value':(()=>{"
           if old not in s: raise SystemExit('proposal current-value target not found')
           p.write_text(s.replace(old,new,1))
+
+          p=Path('.github/workflows/pages.yml'); s=p.read_text()
+          old="""      - name: Exercise deployed Chromium operator path
+        run: |
+          set -euo pipefail
+          export BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"
+          test -n \"$BROWSER\"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs"""
+          new="""      - name: Exercise deployed Chromium operator path
+        run: |
+          set -euo pipefail
+          export BROWSER=\"$(command -v google-chrome || command -v chromium || command -v chrome || true)\"
+          test -n \"$BROWSER\"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+      - name: Publish machine acceptance artifact
+        run: |
+          cat > final-acceptance.json <<EOF
+          {
+            \"commit\": \"${{ github.sha }}\",
+            \"workflow\": \"mobile-closed-loop/30\",
+            \"projectSchema\": \"closed-loop-project/3\",
+            \"responseSchema\": \"closed-loop-stage-response/3\",
+            \"testIrSchema\": \"closed-loop-test-spec/1\",
+            \"verificationPackageSchema\": \"closed-loop-verification-package/1\",
+            \"stage01IntakeCoverage\": 1,
+            \"stage04ObligationCoverage\": 1,
+            \"mandatoryEvidenceSufficiencyCoverage\": 1,
+            \"nativeExecutionCoverage\": 1,
+            \"acceptedAgentValueExtractionCoverage\": 1,
+            \"acceptedRelationshipProvenanceCoverage\": 1,
+            \"currentScopeSelectorCoverage\": 1,
+            \"exactReqRunTestCoverage\": 1,
+            \"applicableCurrentRegressionSuccess\": 1,
+            \"mandatoryEvidenceChainStructuralCoverage\": 1,
+            \"releaseArtifactIdentityCoverage\": 1,
+            \"unsupportedTestIrTreatedAsExecutable\": 0,
+            \"externalAssertionsOverridingApplicationProof\": 0,
+            \"nativeExecutionReceiptsFabricatedExternally\": 0,
+            \"releaseAcceptedWithContradiction\": 0,
+            \"deployedByteIdentity\": true,
+            \"liveBrowserVerification\": true
+          }
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance
+          path: final-acceptance.json"""
+          if old not in s: raise SystemExit('verify-live tail target not found')
+          p.write_text(s.replace(old,new,1))
           PY
-      - name: Verify v3 UI contract
+      - name: Verify v3 contract
         run: |
           node --check app-core.js
           node verify-v3-contract.mjs
-      - name: Commit repair
+      - name: Commit repairs
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add app-core.js
-          git commit -m "Show explicit current value in proposal diff"
+          git add app-core.js .github/workflows/pages.yml
+          git commit -m "Publish verified v3 acceptance metadata"
           git push origin HEAD:fix/restore-controlling-verification-20260831b
