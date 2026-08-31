@@ -45,7 +45,7 @@ jobs:
 
           s=Path('workflow-schema.js')
           schema=s.read_text(encoding='utf-8')
-          begin=s.index('const READ_COLLECTIONS=Object.freeze({')
+          begin=schema.index('const READ_COLLECTIONS=Object.freeze({')
           end=schema.index('const APPLICATION_COLLECTIONS=',begin)
           reads=schema[begin:end]
           stage_reads={
