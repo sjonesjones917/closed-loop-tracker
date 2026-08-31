@@ -55,7 +55,9 @@ jobs:
           ("  let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';p.job.CURRENT_BASELINE_ID='BASELINE-000001';",
            "  let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';preparePromptPrerequisites(p,stage);p.job.CURRENT_BASELINE_ID='BASELINE-000001';"),
           ("  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push",
-           "  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';preparePromptPrerequisites(p,stage);p.projectData.runs.push")]
+           "  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';preparePromptPrerequisites(p,stage);p.projectData.runs.push"),
+          ("  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p),e=validEnvelope(p,stage,pr);let rejected=false;",
+           "  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2;preparePromptPrerequisites(p,stage);const pr=prompts.buildPromptRecord(stage,p),e=validEnvelope(p,stage,pr);let rejected=false;")]
           for old,new in replacements:
               if new in s: continue
               if s.count(old)!=1: raise SystemExit(f'Expected fixture target once; found {s.count(old)} for {old[:70]}')
