@@ -37,6 +37,13 @@ jobs:
                   raise SystemExit(f'Expected exactly one Stage 01 insertion point; found {text.count(stage1_old)}')
               text=text.replace(stage1_old,stage1_new,1)
 
+          stage2_old='Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'
+          stage2_new='Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found. Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'
+          if stage2_new not in text:
+              if text.count(stage2_old) != 1:
+                  raise SystemExit(f'Expected exactly one Stage 02 insertion point; found {text.count(stage2_old)}')
+              text=text.replace(stage2_old,stage2_new,1)
+
           stage4_old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
           stage4_new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
           if stage4_new not in text:
@@ -68,5 +75,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add prompt-engine.js .github/workflows/repair-prompt-authority.yml
           git diff --cached --check
-          git commit -m "Clarify Stage 01 and Stage 04 prompt authority [repair-applied]"
+          git commit -m "Complete Stage 01-04 prompt authority semantics [repair-applied]"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
