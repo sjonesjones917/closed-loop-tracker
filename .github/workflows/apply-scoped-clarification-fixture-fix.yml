@@ -28,7 +28,8 @@ jobs:
             ("let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';p.job.CURRENT_BASELINE_ID","let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}p.job.CURRENT_BASELINE_ID"),
             ("let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push","let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}p.projectData.runs.push"),
             ("const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p)","const p=project('JOB-UNPERSISTED-PROMPT'),stage=2;p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};const pr=prompts.buildPromptRecord(stage,p)"),
-            ("const p=project('JOB-READABLE-CLARIFICATION'),stage=3,pr=savePrompt(p,stage)","const p=project('JOB-READABLE-CLARIFICATION'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=savePrompt(p,stage)")
+            ("const p=project('JOB-READABLE-CLARIFICATION'),stage=3,pr=savePrompt(p,stage)","const p=project('JOB-READABLE-CLARIFICATION'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=savePrompt(p,stage)"),
+            ("fields.ARTIFACT_REQUIREMENTS='fixture.js';","fields.ARTIFACT_REQUIREMENTS='fixture.js';\n  fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';")
           ]
           for old,new in replacements:
               if old not in s: raise SystemExit('expected fixture target not found: '+old[:80])
