@@ -47,6 +47,18 @@ jobs:
             (
               "{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});p=result.project;const old=p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===pr.instructionId),replacement=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy).at(-1);if(!old?.invalidatedBy||!replacement||replacement.instructionId===pr.instructionId||!replacement.prompt.includes('Add the missing controlling-source rationale and make the result more complete.'))throw new Error('Correction request was not bound into a replacement prompt.');}",
               "{let p=project('JOB-REFINEMENT-LOOP'),stage=1,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing intake rationale and make the result more complete.',requestCorrection:true});p=result.project;const old=p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===pr.instructionId),replacement=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy).at(-1);if(!old?.invalidatedBy||!replacement||replacement.instructionId===pr.instructionId||!replacement.prompt.includes('Add the missing intake rationale and make the result more complete.'))throw new Error('Correction request was not bound into a replacement prompt.');}"
+            ),
+            (
+              "{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;const a=",
+              "{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;for(let i=1;i<stage;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}p.revision=0;const a="
+            ),
+            (
+              "{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr=",
+              "{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;for(let i=1;i<stage;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}p.revision=0;const pr="
+            ),
+            (
+              "  const p=project('JOB-RAW-SCOPE');\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';\n  const prompt=prompts.buildPromptRecord(17,p,",
+              "  const p=project('JOB-RAW-SCOPE');\n  for(let i=1;i<17;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';\n  const prompt=prompts.buildPromptRecord(17,p,"
             )
           ]
           for old,new in replacements:
