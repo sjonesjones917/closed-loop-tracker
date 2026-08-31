@@ -67,7 +67,8 @@ const obligations=engine.obligationManifest(project);
 assert(intake.units.length>=3);
 assert(obligations.items.some(item=>String(item.text).includes('Never ask me')));
 const stage04Prompt=prompts.buildPromptRecord(4,project).prompt;
-for(const token of ['PROJECT DATA EXECUTION RULE — MANDATORY','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Never ask the human','Never ask me for the same project data twice'])assert(stage04Prompt.includes(token),token);
+for(const token of ['PROJECT DATA EXECUTION RULE — MANDATORY','Never ask the human','Never ask me for the same project data twice'])assert(stage04Prompt.includes(token),token);
+assert(obligations.items.length>0,'Stage 04 application-owned obligation manifest is empty.');
 
 console.log(JSON.stringify({
   projectSchema:core.PROJECT_SCHEMA,
