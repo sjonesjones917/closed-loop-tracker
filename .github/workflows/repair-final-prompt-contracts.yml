@@ -67,6 +67,11 @@ jobs:
           if new not in text:
               if text.count(old)!=1: raise SystemExit(f'Stage 04 heading count {text.count(old)}')
               text=text.replace(old,new,1)
+          union='EXHAUSTIVE CURRENT STAGE 01 + STAGE 03 INPUT UNION'
+          if union not in text:
+              marker='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
+              if text.count(marker)!=1: raise SystemExit(f'Stage 04 union insertion count {text.count(marker)}')
+              text=text.replace(marker,union+'\\n'+marker,1)
           operation_line='CURRENT DECLARED OPERATION: ${operation||contract.operations[0]}'
           if operation_line not in text:
               state_line="CURRENT_STATE: ${job.CURRENT_STATE||'UNKNOWN'}"
