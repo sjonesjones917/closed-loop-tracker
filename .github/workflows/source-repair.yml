@@ -1,0 +1,38 @@
+name: Controlled source repair
+on:
+  push:
+    branches:
+      - repair/spec3-proof-gate
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/spec3-proof-gate
+          fetch-depth: 0
+      - name: Make generic ingestion fixture honor declared enums
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}
+    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}
+"""
+          new="""    for(const name of def.required){const fieldDef=def.fieldDefinitions[name];if(fieldDef?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(fieldDef);}
+    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=valueForDefinition(def.fieldDefinitions[agentField]);}
+"""
+          if old not in s:
+              if new in s: raise SystemExit(0)
+              raise SystemExit('expected fixture block not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node --check verify-ingestion.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m 'Make ingestion fixture honor declared enums'
+          git push origin HEAD:repair/spec3-proof-gate
