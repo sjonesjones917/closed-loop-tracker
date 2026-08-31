@@ -21,8 +21,9 @@ assert.match(prompt,/originalUserEntered\s*:\s*state\?\.projectData\?\.userEnter
 assert.ok(prompt.includes('if(stage===4)assertStage4UpstreamExhausted(state);assertPromptPrerequisites(stage,state);'),'Stage 04 exhaustion must be checked before generic prompt prerequisites.');
 assert.match(prompt,/never ask the user to repeat available project facts/i,'Prompts must prohibit repeated user-intent transcription in ordinary operator language.');
 
-assert.match(ingestionVerifier,/name==='TEST_TYPE'\)return '(?:DETERMINISTIC|MEANING|ADVERSARIAL)'/,'Stage 06 ingestion fixture must use a valid TEST_TYPE enum.');
-assert.match(ingestionVerifier,/name==='EXECUTION_MODE'\)return '(?:APPLICATION_DETERMINISTIC|EXTERNAL_AGENT_TOOL|INDEPENDENT_AGENT_REVIEW|HUMAN_INSPECTION|EXTERNAL_SYSTEM|UNAVAILABLE)'/,'Stage 06 ingestion fixture must use a valid EXECUTION_MODE enum.');
+assert.match(ingestionVerifier,/name==='TEST_TYPE'\)return 'DETERMINISTIC'/,'Stage 06 ingestion fixture must use the deterministic test semantic enum.');
+assert.ok(ingestionVerifier.includes("fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL'"),'Stage 06 ingestion fixture must use an external-tool route unless it supplies complete valid native Test IR.');
+assert.ok(ingestionVerifier.includes("fields.EXECUTABLE_KIND='NONE'"),'External Stage 06 ingestion fixture must not claim native Test IR.');
 
 assert.match(engine,/missingBoundArtifacts\s*=\s*executionPlan\.items\.filter/,'Stage 06 must block mandatory tests whose exact bound artifact bytes are unavailable.');
 assert.ok(engine.includes('plans=testExecutionPlan(project).items.filter('),'Evidence evaluation must consume the single execution-plan item set.');
@@ -73,7 +74,7 @@ console.log(JSON.stringify({
   stage03SourceBoundaryPreserved:true,
   stage04CurrentInputPreserved:true,
   stage05ExhaustiveResolutionPreserved:true,
-  stage06FixtureEnumsPreserved:true,
+  stage06ExternalFixturePreserved:true,
   missingByteGatePreserved:true,
   humanEvidenceAuthorityPreserved:true,
   promptBoxBaselinePreserved:true,
