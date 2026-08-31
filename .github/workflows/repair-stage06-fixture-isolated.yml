@@ -42,6 +42,8 @@ jobs:
            "{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;preparePromptPrerequisites(p,stage);p.revision=0;"),
           ("{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;",
            "{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;preparePromptPrerequisites(p,stage);p.revision=0;"),
+          ("const request=p.projectData.humanInputRequests.at(-1);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;",
+           "const request=p.projectData.humanInputRequests.at(-1);preparePromptPrerequisites(p,stage);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;"),
           ("  const p=project('JOB-RAW-SCOPE');\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';",
            "  const p=project('JOB-RAW-SCOPE');\n  preparePromptPrerequisites(p,17);\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';"),
           ("  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};",
