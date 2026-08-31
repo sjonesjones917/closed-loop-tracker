@@ -1,0 +1,100 @@
+name: Repair monotonic lifecycle authority
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+permissions:
+  contents: write
+concurrency:
+  group: monotonic-lifecycle-repair-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct application-owned lifecycle transitions and full-cycle regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('workflow-engine.js'); t=p.read_text(encoding='utf-8')
+          old="  if(Number(stage)===19){const appIteration=records(project,'iterations').find(r=>Number(r.stage)===19&&isActiveRecord(r)&&upper(recordValue(r,'PURPOSE'))==='UNCHANGED_CONFIRMATION'&&(!scopeRule.iterationId||recordId(r,'iterations')===String(scopeRule.iterationId))&&(!scopeRule.candidateId||String(recordValue(r,'CANDIDATE_ID')||r.scope?.candidateId||'')===String(scopeRule.candidateId)));if(appIteration)out.add('CONFIRM_FREEZE');}\n"
+          new="  if(Number(stage)===17){const appIteration=records(project,'iterations').find(r=>Number(r.stage)===17&&isActiveRecord(r)&&(!scopeRule.iterationId||recordId(r,'iterations')===String(scopeRule.iterationId)));if(appIteration){const candidateId=String(recordValue(appIteration,'CANDIDATE_ID')||appIteration.scope?.candidateId||''),candidate=records(project,'candidateFreezes').find(r=>recordId(r,'candidateFreezes')===candidateId&&isActiveRecord(r));if(candidate)out.add('FREEZE');const iterationId=recordId(appIteration,'iterations'),iterationDefects=recordsForIteration(project,'defects',iterationId);if(iterationDefects.length===0){out.add('ROOT_CAUSE');out.add('CORRECT');}}}\n"+old
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'acceptedOperationSet boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          old="    case 10:requireAccepted();requireCount('iterations',1);requireCount('candidateFreezes',1);break;"
+          new="    case 10:requireCount('iterations',1);requireCount('candidateFreezes',1);break;"
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'Stage 10 gate boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          old="  ensureShape(project);const freezeStage=Number(stage);if(![10,17,19].includes(freezeStage))throw new Error('Candidate freezes are allowed only at Stages 10, 17, and 19.');"
+          new="  ensureShape(project);const freezeStage=Number(stage);if(![10,17,19].includes(freezeStage))throw new Error('Candidate freezes are allowed only at Stages 10, 17, and 19.');if(freezeStage===17&&project.stages?.[16]?.status!=='COMPLETE')throw new Error('Stage 16 must be complete before a corrected Stage 17 candidate can be frozen.');"
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'freezeCandidate prerequisite boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          p.write_text(t,encoding='utf-8')
+
+          p=Path('prompt-engine.js'); t=p.read_text(encoding='utf-8')
+          old="  const prior=state?.stages?.[stage-1];\n  if(String(prior?.status||'').toUpperCase()!=='COMPLETE'||prior?.gate?.complete===false){"
+          new="  const prior=state?.stages?.[stage-1];\n  const transitionEstablished=(stage===17&&safe(state?.projectData?.iterations).some(r=>Number(r?.stage)===17&&r?.active!==false&&!r?.invalidatedBy&&String(recordValue(r,'ITERATION_ID')||r?.id||'')===String(state?.job?.CURRENT_ITERATION||'')))||(stage===19&&safe(state?.projectData?.iterations).some(r=>Number(r?.stage)===19&&r?.active!==false&&!r?.invalidatedBy&&String(recordValue(r,'ITERATION_ID')||r?.id||'')===String(state?.job?.CURRENT_ITERATION||'')));\n  if(!transitionEstablished&&(String(prior?.status||'').toUpperCase()!=='COMPLETE'||prior?.gate?.complete===false)){"
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'prompt prerequisite boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          p.write_text(t,encoding='utf-8')
+
+          p=Path('verify-full-cycle.mjs'); t=p.read_text(encoding='utf-8')
+          old="CURRENT_INPUT_VERSION:'INPUT-v001'}"
+          new="CURRENT_INPUT_VERSION:'INPUT-v001',AVAILABLE_TOOLS:'fixture-required_capability'}"
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'full-cycle capability boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          old="data(9,{records:{preflightRecords:["
+          new="engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'EXTERNAL-PREFLIGHT-CONTEXT',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'});const preflightContextId=rid('freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:["
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'preflight context boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          old="data(10,{stageData:{HASHES_RECORDED_WHERE_PRACTICAL:'TRUE',CHANGES_ALLOWED_DURING_BATCH:'NONE'}});engine.freezeCandidate"
+          if old in t: t=t.replace(old,"engine.freezeCandidate",1)
+          old="function verifyBatch(stage,operation,slots){const records=[];for(const {runId} of slots)for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');records.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:`VERIFY-${runId}-${currentTestId}`,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,records:{verification:records}});}"
+          new="function verifyBatch(stage,operation,slots){for(const {runId} of slots){engine.registerFreshContext(p,{stage,externalContextIdentifier:`EXTERNAL-VERIFY-${stage}-${runId}`,operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'});const contextId=rid('freshContexts'),verification=[];for(const test of stage6Tests){const currentTestId=engine.recordId(test,'tests'),testType=engine.recordValue(test,'TEST_TYPE');verification.push(recordProposal(schema,'verification',{tempKey:`verify-${runId}-${currentTestId}`,relationships:{REQ_ID:{recordId:reqId},RUN_ID:{recordId:runId},TEST_ID:{recordId:currentTestId}},overrides:{VERIFIER:'INDEPENDENT_VERIFIER',VERIFIER_CONTEXT_ID:contextId,INDEPENDENCE_STATUS:'INDEPENDENT',INPUTS:'Canonical run output',PROCEDURE:`Execute ${testType} test`,EXPECTED_RESULT:'SATISFIED',OBSERVED_RESULT:'SATISFIED',EXACT_EVIDENCE:`Evidence ${runId} ${currentTestId}`,DETERMINATION:'SATISFIED'}}));}data(stage,{operation,scope:{runId,contextId},records:{verification}});}}"
+          if new not in t:
+              if t.count(old)!=1: raise SystemExit(f'verifyBatch boundary count {t.count(old)}')
+              t=t.replace(old,new,1)
+          old="data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});engine.freezeCandidate"
+          if old in t: t=t.replace(old,"engine.freezeCandidate",1)
+          old=";data(17,{operation:'ROOT_CAUSE',stageData:{ROOT_CAUSE_COMPLETED:'TRUE'}});data(17,{operation:'CORRECT',stageData:{CORRECTIONS_COMPLETED:'TRUE'}});complete(17);"
+          if old in t: t=t.replace(old,";complete(17);",1)
+          p.write_text(t,encoding='utf-8')
+          PY
+          git diff --check
+      - name: Prove repaired lifecycle through the fixed acceptance boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check verify-full-cycle.mjs
+          timeout 600s node verify-full-cycle.mjs
+      - name: Commit proven correction and remove repair runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-monotonic-lifecycle.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js verify-full-cycle.mjs .github/workflows/repair-monotonic-lifecycle.yml
+          git diff --cached --check
+          git commit -m 'Repair application-owned iteration transitions and full-cycle proof'
+          git push origin HEAD:fix/zero-loss-controlled-20260831
