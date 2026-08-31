@@ -20,6 +20,21 @@ if old not in text:
     raise AssertionError('The stale Stage 04 source-name heuristic was not found.')
 path.write_text(text.replace(old,new,1))
 
+# Stage 17 stage-data fields are application-derived. An operation contract must
+# never expose them as external-agent writable simply because the operation reads
+# or writes related canonical records.
+path=Path('workflow-schema.js')
+text=path.read_text()
+for old,new in [
+    ("allowedStageData:['NEW_FROZEN_VERSIONS','OLD_CONVERSATIONS_CONTINUED']", "allowedStageData:[]"),
+    ("allowedStageData:['ROOT_CAUSE_COMPLETED']", "allowedStageData:[]"),
+    ("allowedStageData:['CORRECTIONS_COMPLETED']", "allowedStageData:[]"),
+]:
+    if old not in text:
+        raise AssertionError(f'Stage 17 application-owned operation field exposure was not found: {old}')
+    text=text.replace(old,new,1)
+path.write_text(text)
+
 # Ingestion tests exercise stages independently. Their prompt fixtures must still
 # obey the production prerequisite gate; no test may generate a later prompt from
 # an illegal predecessor state.
@@ -68,4 +83,16 @@ if old not in text:
     raise AssertionError('The ingestion record fixture insertion point was not found.')
 path.write_text(text.replace(old,new,1))
 
-print('Aligned prompt and ingestion regressions with generated behavior, legal stage prerequisites, declared enum contracts, valid Stage 06 routing, and explicit independent context identities.')
+# Permanent regression: every operation-level stageData exposure must resolve to
+# a field statically owned by AGENT. This catches the Stage 17 FREEZE defect and
+# any recurrence in another stage or operation.
+path=Path('verify-stage-prompts-complete.mjs')
+text=path.read_text()
+marker="const opNeed={"
+regression="""for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){const c=schema.operationContract(stage,operation);for(const fieldName of c.allowedStageData){const definition=schema.STAGE_FIELDS[stage]?.[fieldName];if(!definition||definition.producer!==schema.PRODUCER.AGENT)throw new Error(`Stage ${stage} ${operation} exposes non-agent-owned stageData field ${fieldName}.`);}}
+const opNeed={"""
+if marker not in text:
+    raise AssertionError('Operation-authority regression insertion point was not found.')
+path.write_text(text.replace(marker,regression,1))
+
+print('Aligned prompt and ingestion regressions and removed application-owned Stage 17 fields from external-agent operation contracts.')
