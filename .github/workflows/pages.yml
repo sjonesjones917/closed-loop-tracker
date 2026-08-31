@@ -30,13 +30,13 @@ jobs:
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
-        run: tar --exclude=.git -czf /tmp/pr746-source.tar.gz .
+        run: tar --exclude=.git -czf /tmp/pr-source.tar.gz .
       - name: Preserve exact PR source workspace
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: pr746-source-${{ github.sha }}
-          path: /tmp/pr746-source.tar.gz
+          name: pr-source-${{ github.event.pull_request.number }}-${{ github.sha }}
+          path: /tmp/pr-source.tar.gz
           if-no-files-found: error
           retention-days: 1
 
