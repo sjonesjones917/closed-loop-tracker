@@ -34,17 +34,23 @@ jobs:
 
           prompt_path=Path('prompt-engine.js')
           prompt_source=prompt_path.read_text()
-          marker=',"21":'
-          start=prompt_source.find(marker)
-          end=prompt_source.find(',"22":',start+len(marker))
-          if start<0 or end<0:
-              raise SystemExit('Stage 21 prompt-procedure boundary was not found.')
-          value_start=start+len(marker)
-          procedure=json.loads(prompt_source[value_start:end])
-          addition=' Use only approved baseline materials in the fresh production context. Generate and return the actual output bytes for every required finished-product artifact whenever the executing environment can create them. Preserve the exact output-file inventory, application-verifiable byte identity, hashes from transferred bytes, baseline lineage, and production-context relationship. A prose description, filename, path, code block, or hash claim is not a substitute for the actual finished-product bytes.'
-          if 'actual output bytes' not in procedure:
-              procedure=procedure+addition
-          prompt_source=prompt_source[:value_start]+json.dumps(procedure,ensure_ascii=False)+prompt_source[end:]
+
+          def append_stage(stage,next_stage,required,addition):
+              global prompt_source
+              marker=f',"{stage}":'
+              end_marker=f',"{next_stage}":'
+              start=prompt_source.find(marker)
+              end=prompt_source.find(end_marker,start+len(marker))
+              if start<0 or end<0:
+                  raise SystemExit(f'Stage {stage} prompt-procedure boundary was not found.')
+              value_start=start+len(marker)
+              procedure=json.loads(prompt_source[value_start:end])
+              if required not in procedure:
+                  procedure=procedure+addition
+              prompt_source=prompt_source[:value_start]+json.dumps(procedure,ensure_ascii=False)+prompt_source[end:]
+
+          append_stage(21,22,'actual output bytes',' Use only approved baseline materials in the fresh production context. Generate and return the actual output bytes for every required finished-product artifact whenever the executing environment can create them. Preserve the exact output-file inventory, application-verifiable byte identity, hashes from transferred bytes, baseline lineage, and production-context relationship. A prose description, filename, path, code block, or hash claim is not a substitute for the actual finished-product bytes.')
+          append_stage(22,23,'application is running all mechanical tests',' The application is running all mechanical tests that its registered deterministic runtime can faithfully execute against the exact finished-product bytes. Native Test IR tests run automatically in the application worker and create application-owned observations, evidence, receipts, normalized results, counts, and gate state. Do not ask an external agent to imitate, assert, or fabricate application-native execution. Unsupported deterministic tests route to the exact capable external tool or system and remain BLOCKED or EXECUTION_FAILED when the required capability or exact bytes are unavailable. Never claim an unexecuted deterministic check ran. Preserve exact product identity, Test IR identity, runtime identity, input-artifact identities and hashes, observations, result, and evidence.')
           prompt_path.write_text(prompt_source)
 
           path=Path('verify-stage-prompts-complete.mjs')
@@ -82,4 +88,4 @@ jobs:
           git commit -m "Restore Stage 01 human conversation and required file intake"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
 
-# Stage 21 requires the actual finished-product bytes and only approved baseline materials.
+# Stage 22 now preserves application-owned native execution and exact external routing boundaries.
