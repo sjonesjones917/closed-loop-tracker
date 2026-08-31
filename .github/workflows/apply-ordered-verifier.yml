@@ -1,0 +1,108 @@
+name: Apply ordered permanent verifier repair
+
+on:
+  push:
+    branches: [fix/complete-closed-loop-spec-20260831]
+    paths: [.github/workflows/apply-ordered-verifier.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/complete-closed-loop-spec-20260831
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Make verify.mjs honor the ordered workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs')
+          s=p.read_text()
+          start=s.find('const generated=[];')
+          end=s.find('\n\nclass MemoryStorage',start)
+          if start<0 or end<0:
+              raise SystemExit('verify.mjs prompt-fixture block was not found')
+          replacement=r'''function preparePromptStage(p,targetStage){
+  Object.assign(p.job,{
+    CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',
+    CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',
+    CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',
+    CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001',
+    CURRENT_ITERATION:'ITERATION-000001',
+    CURRENT_BASELINE_ID:'BASELINE-000001',
+    CURRENT_PRODUCT_ID:'PRODUCT-000001'
+  });
+  if(targetStage<=1)return p;
+  const intakeRecord=prompts.buildPromptRecord(1,p,syntheticPromptOptions(1,p));
+  const intake=intakeRecord.contextManifest.intakeCoverageManifest;
+  p.stages[1].agentData={
+    EXACT_DELIVERABLE_REQUESTED:'Complete controlled verification deliverable.',
+    ASSUMPTIONS:'NONE',
+    UNKNOWN_INFORMATION:'NONE',
+    INPUT_SET_CONTENTS:JSON.stringify({
+      schema:'closed-loop-stage01-capture/1',
+      inputVersion:intake.inputVersion,
+      manifestSha256:intake.manifestSha256,
+      units:intake.units.map((u,i)=>({
+        sourceUnitId:u.unitId,
+        sourceRawValueSha256:u.rawValueSha256,
+        disposition:'incorporated into the job definition',
+        reason:'Captured once for the ordered prompt fixture.',
+        extractedStatements:[{statementKey:'PROMPT-'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]
+      }))
+    })
+  };
+  p.stages[1].status='COMPLETE';
+  p.stages[1].gate={complete:true,blocked:false,reasons:[]};
+  for(let prior=2;prior<targetStage;prior++){
+    if(prior===2)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
+    if(prior===3)Object.assign(p.stages[3].agentData,{
+      ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,
+      SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,
+      NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false
+    });
+    p.stages[prior].status='COMPLETE';
+    p.stages[prior].gate={complete:true,blocked:false,reasons:[]};
+  }
+  return p;
+}
+const generated=[];
+for(let stage=1;stage<=30;stage++){
+  const p=preparePromptStage(blank(`JOB-PROMPT-${stage}`),stage);
+  const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));
+  generated.push(record.prompt);
+  for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/3','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);
+  if(stage===1&&record.prompt.indexOf('STAGE 01 HUMAN CONVERSATION')>record.prompt.indexOf('STRICT RESPONSE CONTRACT'))throw new Error('Stage 01 machine contract precedes the human conversation.');
+  if(stage===2&&!record.prompt.includes('independent external sources'))throw new Error('Stage 02 non-circular authority rule missing.');
+  if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');
+}
+if(new Set(generated).size!==30)throw new Error('Prompts are not stage-specific.');
+const projectA=preparePromptStage(blank('JOB-A'),2),projectB=preparePromptStage(blank('JOB-B'),2);
+const pa=prompts.buildPromptRecord(2,projectA,syntheticPromptOptions(2,projectA)).prompt,pb=prompts.buildPromptRecord(2,projectB,syntheticPromptOptions(2,projectB)).prompt;
+if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');'''
+          p.write_text(s[:start]+replacement+s[end:])
+          PY
+          node --check verify.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-stage01-conversation-first.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+      - name: Commit ordered verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify.mjs
+          git commit -m 'Run permanent prompt verification in workflow order'
+          git push origin HEAD:fix/complete-closed-loop-spec-20260831
