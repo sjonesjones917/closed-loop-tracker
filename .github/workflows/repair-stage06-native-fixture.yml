@@ -1,4 +1,4 @@
-name: Repair Stage 06 native fixture
+name: Repair ingestion fixture routing and scope
 
 on:
   push:
@@ -17,22 +17,26 @@ jobs:
         with:
           ref: fix/monotonic-reliability-pass-20260831
           fetch-depth: 0
-      - name: Correct Stage 06 native fixture and remove workflow
+      - name: Align fixture with external route and application-reserved scope
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          old="    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
-          new="    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EXISTS'}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
+          old="  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+          new="  const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0];\n  const scope=Object.fromEntries((schema.operationContract(stage,operation)?.scopeRequirements||[]).map(key=>[key,`${key.toUpperCase()}-INGESTION-FIXTURE`]));\n  const options={operation,scope};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
           if new not in s:
-              if s.count(old)!=1:
-                  raise SystemExit(f'Expected one Stage 06 fixture insertion target; found {s.count(old)}')
+              if s.count(old)!=1: raise SystemExit(f'Expected one savePrompt options target; found {s.count(old)}')
               s=s.replace(old,new)
+          target="    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
+          replacement="    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='controlled external verification tool';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='NONE';delete fields.EXECUTABLE_SPEC;delete fields.EXECUTABLE_INPUT_BINDINGS;}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
+          if replacement not in s:
+              if s.count(target)!=1: raise SystemExit(f'Expected one Stage 06 record target; found {s.count(target)}')
+              s=s.replace(target,replacement,1)
           p.write_text(s)
           PY
-          rm -f .github/workflows/repair-stage06-native-fixture.yml
+          rm -f .github/workflows/repair-stage06-native-fixture.yml .github/workflows/repair-stage06-complete-test-ir.yml .github/workflows/repair-stage06-ingestion-fixture.yml
           node --check verify-ingestion.mjs
           node verify-ingestion.mjs
           git diff --check
@@ -41,5 +45,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A verify-ingestion.mjs .github/workflows
-          git commit -m "Use valid native Test IR in Stage 06 ingestion fixture"
+          git commit -m "Align ingestion fixture routing and execution-lane scope"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
