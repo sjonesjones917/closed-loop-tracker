@@ -17,14 +17,34 @@ jobs:
       - name: Apply repair
         run: python3 .github/scripts/apply-one-time-intent-persistence.py
       - name: Prove repaired paths
+        id: prove
+        shell: bash
         run: |
-          set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done
-          node verify-one-time-intent-intake.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-all-stage-prompts.mjs
-          node verify-complete.mjs
+          set +e
+          : > repair-proof.log
+          status=0
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            echo "===== node --check $file =====" | tee -a repair-proof.log
+            node --check "$file" 2>&1 | tee -a repair-proof.log
+            code=${PIPESTATUS[0]}
+            if [ "$code" -ne 0 ]; then status="$code"; fi
+          done
+          for test in verify-one-time-intent-intake.mjs verify-stage-prompts-complete.mjs verify-all-stage-prompts.mjs verify-complete.mjs; do
+            echo "===== node $test =====" | tee -a repair-proof.log
+            node "$test" 2>&1 | tee -a repair-proof.log
+            code=${PIPESTATUS[0]}
+            if [ "$code" -ne 0 ]; then status="$code"; fi
+          done
+          exit "$status"
+      - name: Preserve proof output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-time-intent-repair-proof
+          path: repair-proof.log
+          if-no-files-found: error
       - name: Commit repair
+        if: steps.prove.outcome == 'success'
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
