@@ -5,7 +5,7 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const hash=globalThis.closedLoopHash;
 const workflow=globalThis.closedLoopWorkflowEngine;
 const testRuntime=globalThis.closedLoopTestRuntime;
-const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/53';
+const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';
 if(!core||!schema||!hash||!workflow||!testRuntime)throw new Error('workbook.js, hash.js, workflow-schema.js, test-runtime.js, and workflow-engine.js must load before prompt-engine.js.');
 const show=value=>{if(value===undefined||value===null||value==='')return 'UNKNOWN';if(Array.isArray(value)&&!value.length)return 'NONE';if(typeof value==='object')return JSON.stringify(value,null,2);return String(value);};
 const safe=value=>Array.isArray(value)?value:[];
@@ -85,7 +85,7 @@ const PROMPT_CONTEXT_ADDITIONS=Object.freeze({
 const PROMPT_OPERATION_CONTEXT_ADDITIONS=Object.freeze({17:Object.freeze({FREEZE:Object.freeze(['instructions','preflightRecords','failureTests','artifacts','requirements','requirementResolutions']),EXECUTE_RUN:Object.freeze(['instructions','artifacts']),VERIFY:Object.freeze(['sources','research','evidenceRecords','artifacts']),COMPARE:Object.freeze(['tests']),ROOT_CAUSE:Object.freeze(['requirements','tests','instructions','runs','sources','research','candidateRequirements','requirementResolutions','failureTests','preflightRecords','artifacts','evidenceRecords','changes']),REGRESSION:Object.freeze(['requirements','tests','artifacts','evidenceRecords','runs']),CORRECT:Object.freeze(['requirements','requirementResolutions','instructions','tests','failureTests','artifacts','evidenceRecords'])}),19:Object.freeze({CONFIRM_FREEZE:Object.freeze(['requirements','tests','artifacts','instructions']),EXECUTE_RUN:Object.freeze(['instructions','artifacts']),VERIFY:Object.freeze(['sources','research','evidenceRecords','artifacts']),COMPARE:Object.freeze(['tests']),REGRESSION_VERIFY:Object.freeze(['requirements','tests','artifacts','evidenceRecords','candidateFreezes']),CONFIRM:Object.freeze(['requirements','tests','defects','rootCauses','evidenceRecords','blockers'])})});
 function promptReadCollections(stage,operation){const op=schema.operationContract(stage,operation||schema.STAGE_CONTRACTS[stage].operations[0]);return [...new Set([...(op?.readCollections||schema.STAGE_CONTRACTS[stage].readCollections||[]),...(PROMPT_CONTEXT_ADDITIONS[stage]||[]),...(PROMPT_OPERATION_CONTEXT_ADDITIONS[stage]?.[operation]||[])])];}
 function projectAuthorityBasis(state,stage,operation,scope={}){
-  const job=state?.job||{},stageOne=state?.stages?.[1]||{},batchPlan=verificationBatchPlan(stage,state,operation,scope),allowedCollections=new Set(promptReadCollections(stage,operation)),isolatedReviewer=[12,23,24].includes(Number(stage));
+  const job=state?.job||{},stageOne=state?.stages?.[1]||{},batchPlan=verificationBatchPlan(stage,state,operation,scope),allowedCollections=new Set(promptReadCollections(stage,operation)),isolatedReviewer=[12,23,24].includes(Number(stage))||([17,19].includes(Number(stage))&&String(operation||'').toUpperCase()==='VERIFY');
   const humanFieldNames=Object.entries(schema.JOB_FIELDS||{}).filter(([,definition])=>['HUMAN','HUMAN_DECISION'].includes(definition?.producer)).map(([name])=>name);
   const reviewerHumanFields=new Set(['EXACT_USER_OBJECTIVE_VERBATIM','PROHIBITED_ACTIONS']);
   const carryForwardHumanFields=new Set(humanFieldNames);
