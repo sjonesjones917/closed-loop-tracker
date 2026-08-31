@@ -68,12 +68,17 @@ elif count==0 and new in s:
 else:
     raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one actual-prompt-context validation sentinel, found {count}')
 old="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"
-new="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.toLowerCase().includes(String(common).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"
+new="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"
 count=s.count(old)
 if count==1:
     s=s.replace(old,new)
-elif count==0 and new in s:
-    pass
+elif count==0:
+    old_ci="for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.toLowerCase().includes(String(common).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);"
+    count_ci=s.count(old_ci)
+    if count_ci==1:
+        s=s.replace(old_ci,new)
+    elif new not in s:
+        raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one common invariant sentinel, found {count} canonical and {count_ci} case-insensitive')
 else:
-    raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one case-sensitive common invariant sentinel, found {count}')
+    raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one common invariant sentinel, found {count}')
 p.write_text(s)
