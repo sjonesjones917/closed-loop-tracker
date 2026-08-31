@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -23,6 +23,57 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+
+      # BEGIN ONE-TIME STAGE4 CARRY-FORWARD REPAIR
+      - name: Carry original user-entered project data into Stage 04
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          prompt=Path('prompt-engine.js')
+          source=prompt.read_text()
+          source=source.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/55';",1)
+          old='return {currentUserJobInput:humanJobInput,stage01AcceptedCapture:'
+          new="return {currentUserJobInput:humanJobInput,originalUserEntered:state?.projectData?.userEntered&&typeof state.projectData.userEntered==='object'?state.projectData.userEntered:{},stage01AcceptedCapture:"
+          if old not in source:
+              raise SystemExit('Stage 04 exhausted-input return object was not found')
+          prompt.write_text(source.replace(old,new,1))
+
+          old_token='runtime-20260830-live-operator-59'
+          new_token='runtime-20260830-live-operator-60'
+          for name in ['index.html','app-core.js','test-runtime.js']:
+              path=Path(name)
+              text=path.read_text()
+              if old_token not in text:
+                  raise SystemExit(f'{name} does not contain the current shared runtime token')
+              path.write_text(text.replace(old_token,new_token))
+
+          workflow=Path('.github/workflows/pages.yml')
+          text=workflow.read_text()
+          begin='      # BEGIN ONE-TIME STAGE4 CARRY-FORWARD REPAIR\n'
+          end='      # END ONE-TIME STAGE4 CARRY-FORWARD REPAIR\n'
+          if begin not in text or end not in text:
+              raise SystemExit('One-time repair block markers are missing')
+          before,rest=text.split(begin,1)
+          _,after=rest.split(end,1)
+          text=before+after
+          text=text.replace('  contents: write\n','  contents: read\n',1)
+          text=text.replace("      - uses: actions/checkout@v4\n        with:\n          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}\n          fetch-depth: 0\n","      - uses: actions/checkout@v4\n",1)
+          workflow.write_text(text)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js index.html app-core.js test-runtime.js .github/workflows/pages.yml
+          git commit -m "Carry original user-entered data into Stage 04"
+          git push origin HEAD:"$HEAD_BRANCH"
+      # END ONE-TIME STAGE4 CARRY-FORWARD REPAIR
 
       - name: Materialize the exact retained Stage 01 output
         run: |
