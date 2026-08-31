@@ -1,0 +1,18 @@
+name: Live operator verification
+on:
+  push:
+    branches: [verify/live-operator-20260830]
+permissions:
+  contents: read
+jobs:
+  live-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use deployed application through Chromium controls
+        env:
+          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+        run: |
+          set -euo pipefail
+          node verify-browser-extra.mjs
+          node verify-mobile-stage-action.mjs
