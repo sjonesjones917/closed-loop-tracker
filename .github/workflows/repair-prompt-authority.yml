@@ -48,6 +48,7 @@ jobs:
               text=text[:start]+phrase+' '+text[start:]
 
           prepend(1, 'Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage.')
+          prepend(1, 'Exhaust the human-authority intake.')
           prepend(2, 'Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found.')
           prepend(3, 'Every current accepted Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform a distinct conflict/exception/saturation pass over the complete current source set.')
           prepend(5, 'Resolve the current job’s requirement set exhaustively. After every correction, repeat the review against the resulting requirement set.')
