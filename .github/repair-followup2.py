@@ -32,6 +32,10 @@ replacements = [
         "  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';",
         "  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};",
     ),
+    (
+        "  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p)",
+        "  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2;p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};const pr=prompts.buildPromptRecord(stage,p)",
+    ),
 ]
 
 for old, new in replacements:
@@ -52,4 +56,4 @@ if old not in text:
 text = text.replace(old, new, 1)
 
 path.write_text(text)
-print('Bound all direct Stage 11, Stage 17, and Stage 21 ingestion fixtures to completed predecessor stages and aligned the Stage 17 ownership assertion.')
+print('Bound direct Stage 02, Stage 11, Stage 17, and Stage 21 ingestion fixtures to completed predecessor stages and aligned Stage 17 ownership enforcement.')
