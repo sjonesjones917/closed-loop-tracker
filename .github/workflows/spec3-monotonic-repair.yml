@@ -1,0 +1,57 @@
+name: Spec3 monotonic prompt repair
+on:
+  push:
+    branches: [spec3-monotonic-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply minimal prompt corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';"
+          new="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/55';"
+          if old not in s:
+              raise SystemExit('prompt engine version marker not found')
+          s=s.replace(old,new,1)
+          if 'APPLICATION OBLIGATION MANIFEST' in s:
+              s=s.replace('APPLICATION OBLIGATION MANIFEST','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST')
+          old5='Do not design tests or production instructions. The application owns resulting version identity, counts, status, invalidation, and gate calculations.'
+          new5='Do not design tests or production instructions. Resolve the current job’s requirement set exhaustively. After every proposed resolution, repeat the review against the resulting requirement set from the beginning for duplication, conflict, impossible combinations, undefined terms, circular dependencies, missing prerequisites, unsupported propositions, indeterminate applicability, non-atomic wording, and absence of a verification path. Continue until a complete repeat review finds no new requirement defect, or block every remaining mandatory defect with exact evidence. The application owns resulting version identity, counts, status, invalidation, and gate calculations.'
+          if old5 not in s:
+              raise SystemExit('Stage 05 target text not found')
+          s=s.replace(old5,new5,1)
+          p.write_text(s)
+          PY
+      - name: Verify candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            node --check "$file"
+          done
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-complete.mjs
+      - name: Retain candidate only after verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/spec3-monotonic-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js .github/workflows/spec3-monotonic-repair.yml
+          git commit -m "Strengthen Stage 4 and Stage 5 prompt closure"
+          git push origin HEAD:spec3-monotonic-20260831
