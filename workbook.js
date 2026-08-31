@@ -761,16 +761,17 @@ function migrateState(p){
     if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
     return migrated;
   }
-  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
+  if(!['human-project/30','closed-loop-project/2'].includes(p.schema))throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
+  const sourceSchema=p.schema;
   const migrated=JSON.parse(JSON.stringify(p));
   const original=JSON.parse(JSON.stringify(p));
   migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;
   migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
   migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
   migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
-  if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});delete migrated.projectData.stageRecords;}
+  if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:sourceSchema,records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});delete migrated.projectData.stageRecords;}
   if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length)delete migrated.projectData.fullProject;
-  migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:new Date().toISOString(),payload:original});
+  migrated.projectData.migrationArchives.push({kind:'MIGRATION_SOURCE',schema:sourceSchema,preservedAt:new Date().toISOString(),payload:original});
   restoreLegacyStage01AcceptedCapture(migrated,original);
   if(!migrated.stages||Object.keys(migrated.stages).length!==STAGE_COUNT)throw new Error('Legacy project migration requires exactly 30 stages.');
   return migrated;
