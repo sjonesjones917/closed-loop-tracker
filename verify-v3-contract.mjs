@@ -12,6 +12,8 @@ const store=read('./project-store.js');
 const app=read('./app-core.js');
 const html=read('./index.html');
 const workflow=read('./.github/workflows/pages.yml');
+const definitionProof=read('./verify-definition-of-done.mjs');
+const v3Proof=read('./verify-v3-definition-of-done.mjs');
 
 const requiredRuntimeOps=[
   'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML',
@@ -50,7 +52,7 @@ assert.match(store,/\bcreateExecutionPackage\b/,'project store must construct ex
 assert.match(store,/closed-loop-verification-package\/1/,'execution package must use the controlling package schema');
 assert.match(app,/RUN_APP_TESTS/,'primary UI must support native application tests');
 assert.match(app,/canonical state changed/i,'UI must report canonical-change certainty');
-assert.match(app,/current value/i,'proposal display must include current values');
+assert.match(app,/\bcurrentValue\s*:/,'proposal display must bind every diff row to its current canonical value before rendering');
 assert.match(prompt,/FILES YOU MUST RECEIVE/,'prompt handoff must name files to receive');
 assert.match(prompt,/FILES YOU MUST NOT RECEIVE/,'prompt handoff must name withheld material');
 assert.match(prompt,/FILES OR EVIDENCE YOU MUST RETURN/,'prompt handoff must name required returns');
@@ -71,16 +73,22 @@ assert.match(workflow,reportField('projectSchema',"['\"]closed-loop-project\\/3[
 assert.match(workflow,reportField('responseSchema',"['\"]closed-loop-stage-response\\/3['\"]"),'acceptance report must identify response schema /3');
 assert.match(workflow,reportField('testIrSchema',"['\"]closed-loop-test-spec\\/1['\"]"),'acceptance report must identify the Test IR schema');
 assert.match(workflow,reportField('verificationPackageSchema',"['\"]closed-loop-verification-package\\/1['\"]"),'acceptance report must identify the verification-package schema');
+assert.match(workflow,/node verify-definition-of-done\.mjs/,'publish job must execute the deterministic definition-of-done proof');
+assert.match(workflow,/node verify-v3-definition-of-done\.mjs/,'publish job must execute the v3 definition-of-done proof');
+assert.match(workflow,/\.\.\.definition/,'acceptance report must include the executed definition-of-done result');
+assert.match(workflow,/\.\.\.v3/,'acceptance report must include the executed v3 result');
+const proofSource=definitionProof+'\n'+v3Proof;
 for(const field of [
   'stage01IntakeCoverage','stage04ObligationCoverage','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage',
   'acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage',
-  'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainStructuralCoverage','releaseArtifactIdentityCoverage',
+  'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','releaseArtifactIdentityCoverage',
   'unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof',
   'nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'
-])assert.match(workflow,new RegExp(`\\b${field}\\b`),`acceptance report must identify ${field}`);
-assert.match(workflow,/final-acceptance\.json/,'post-deploy machine acceptance artifact is required');
+])assert.match(proofSource,new RegExp(`\\b${field}\\b`),`executed acceptance proof must identify ${field}`);
+assert.match(definitionProof,/\bmandatoryEvidenceChainCoverage\b/,'executed acceptance proof must identify mandatory evidence-chain structural coverage');
+assert.match(workflow,/closed-loop-acceptance\.json/,'post-deploy machine acceptance artifact is required');
 assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
-assert.match(workflow,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
+assert.match(workflow,/(?:deployedChromiumAcceptance|liveBrowserVerification)\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
 
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
