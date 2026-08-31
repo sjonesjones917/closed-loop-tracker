@@ -1,0 +1,99 @@
+name: Repair refinement fixture with accepted Stage 01 intake
+
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-refinement-stage01-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real Stage 01 acceptance in the refinement fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path=Path('verify-complete.mjs')
+          text=path.read_text(encoding='utf-8')
+
+          helper_marker='function acceptStage1Fixture(p)'
+          insertion="""function acceptStage1Fixture(p){
+            const stage=1,pr=prompt(p,stage),manifest=pr.contextManifest.intakeCoverageManifest;
+            const capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Accepted Stage 01 prerequisite fixture preserves current human authority.',extractedStatements:[{statementKey:'STAGE1-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+            const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Verify accepted response refinement.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'stage1-evidence',kind:'INTAKE',description:'Accepted Stage 01 fixture evidence',authorityType:'AGENT_CLAIM',location:'verify-complete.mjs',content:'Every controlled Stage 01 input unit is accounted for.'}],unresolved:[],warnings:[],attachments:[]};
+            const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord:pr});
+            assert(prepared.validation.valid,`Accepted Stage 01 fixture response rejected: ${JSON.stringify(prepared.validation.issues)}`);
+            assert(prepared.proposal?.status==='PENDING_OPERATOR_REVIEW','Accepted Stage 01 fixture did not create a reviewable proposal.');
+            const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reviewNote:'Establish the real Stage 01 prerequisite for Stage 02 refinement.'});
+            const next=committed.project;
+            assert(engine.acceptedChanges(next,1).length===1,'Accepted Stage 01 fixture did not create one canonical Stage 01 change.');
+            assert(next.stages[1].status==='COMPLETE'&&engine.evaluateIntakeAccounting(next).complete,'Accepted Stage 01 fixture did not remain complete after recalculation.');
+            return next;
+          }
+"""
+          anchor="function prompt(p,stage){const r={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(r);return r;}\n"
+          if helper_marker not in text:
+              if text.count(anchor)!=1:
+                  raise SystemExit(f'Prompt helper insertion boundary count: {text.count(anchor)}')
+              text=text.replace(anchor,anchor+insertion,1)
+
+          old="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');"
+          new="  const p=acceptStage1Fixture(project('JOB-REFINEMENT-CANONICAL')),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');"
+          if new not in text:
+              if text.count(old)!=1:
+                  raise SystemExit(f'Accepted-refinement fixture boundary count: {text.count(old)}')
+              text=text.replace(old,new,1)
+
+          path.write_text(text,encoding='utf-8')
+          PY
+          rm .github/workflows/repair-refinement-stage01-acceptance.yml
+      - name: Prove refinement survives recalculation with accepted Stage 01 authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check verify-complete.mjs
+          set +e
+          node verify-complete.mjs > /tmp/verify-complete.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/verify-complete.log
+          for forbidden in \
+            'Stage 02 controlling instruction cannot be generated until Stage 01 is complete' \
+            'Accepted Stage 01 fixture response rejected' \
+            'Accepted Stage 01 fixture did not create one canonical Stage 01 change' \
+            'Accepted Stage 01 fixture did not remain complete after recalculation' \
+            'Replacement prompt omitted accepted-result refinement reason'; do
+            if grep -Fq "$forbidden" /tmp/verify-complete.log; then
+              echo "The accepted-refinement fixture failed its intended boundary: $forbidden" >&2
+              exit 1
+            fi
+          done
+          echo "verify-complete advanced beyond the accepted Stage 01 refinement boundary with status ${status}."
+      - name: Commit the accepted fixture correction and remove the runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-complete.mjs .github/workflows/repair-refinement-stage01-acceptance.yml
+          git diff --cached --check
+          git commit -m 'Use canonical Stage 01 acceptance in refinement regression'
+          git push origin HEAD:fix/zero-loss-controlled-20260831
