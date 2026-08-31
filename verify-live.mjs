@@ -60,7 +60,8 @@ expected.forEach((file,index)=>{
 });
 if(tokens.size!==1)throw new Error('Deployed runtime scripts use mixed build tokens.');
 const buildToken=[...tokens][0];
-if(!fs.readFileSync('test-runtime.js','utf8').includes(`test-worker.js?v=${buildToken}`))throw new Error('Deployed worker URL does not share the runtime build identity.');
+const runtimeSource=fs.readFileSync('test-runtime.js','utf8');
+if(!runtimeSource.includes('const RUNTIME_SCRIPT_URL=')||!runtimeSource.includes('url.search=new URL(RUNTIME_SCRIPT_URL).search'))throw new Error('Deployed worker URL does not preserve the loaded runtime build identity.');
 
 console.log(JSON.stringify({
   liveSourceIdentity:true,

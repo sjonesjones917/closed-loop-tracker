@@ -2,6 +2,7 @@
 'use strict';
 
 const root=globalThis;
+const RUNTIME_SCRIPT_URL=typeof document!=='undefined'?document.currentScript?.src||null:null;
 const VERSION='closed-loop-test-runtime/1';
 const RUNTIME_BUILD_ID='runtime-20260830-live-operator-59';
 const SPEC_VERSION='closed-loop-test-spec/1';
@@ -382,7 +383,7 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
 }
 
 function workerUrl(){
-  const source=typeof document!=='undefined'?document.currentScript?.src:null;const base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);if(source)url.search=new URL(source).search;return url.href;
+  const base=RUNTIME_SCRIPT_URL||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);if(RUNTIME_SCRIPT_URL)url.search=new URL(RUNTIME_SCRIPT_URL).search;return url.href;
 }
 function executionFailure(test,startedAtDeviceTime,error){
   const disposition=error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED;
