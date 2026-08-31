@@ -21,24 +21,30 @@ jobs:
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
           marker="function prepareStage4Upstream(p){\n"
-          helper="function prepareStage1Upstream(p){\n  if(String(p.stages?.[1]?.status||'').toUpperCase()==='COMPLETE')return p;\n  const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;\n  p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Controlled ingestion-verification deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for ingestion verification.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))})};\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  return p;\n}\n"
-          if helper not in s:
+          helper="function prepareStage1Upstream(p){\n  if(String(p.stages?.[1]?.status||'').toUpperCase()==='COMPLETE')return p;\n  const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;\n  p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Controlled ingestion-verification deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Preserved for ingestion verification.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))})};\n  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  return p;\n}\nfunction prepareDirectPromptPrerequisites(p,stage){\n  if(stage>1)prepareStage1Upstream(p);\n  for(let n=2;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}\n  return p;\n}\n"
+          if 'function prepareStage1Upstream(p){' not in s:
               if marker not in s: raise SystemExit('prepareStage4 marker missing')
               s=s.replace(marker,helper+marker,1)
           old="function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);"
           new="function savePrompt(p,stage){\n  if(stage>1)prepareStage1Upstream(p);\n  if(stage===4)prepareStage4Upstream(p);"
-          if old not in s: raise SystemExit('savePrompt target missing')
-          s=s.replace(old,new,1)
-          if 'for(let stage=1;stage<=30;stage++){' not in s: raise SystemExit('all-stage loop target missing')
-          s=s.replace('for(let stage=1;stage<=30;stage++){','for(let stage=1;stage<=9;stage++){',1)
+          if old in s:s=s.replace(old,new,1)
+          if 'for(let stage=1;stage<=30;stage++){' in s:s=s.replace('for(let stage=1;stage<=30;stage++){','for(let stage=1;stage<=9;stage++){',1)
           old="  if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
           new="  if(stage<9){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,{}).prompt;if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
-          if old not in s: raise SystemExit('next-stage prompt target missing')
-          s=s.replace(old,new,1)
+          if old in s:s=s.replace(old,new,1)
           old="for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',10,'iterationId'],['candidate',10,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',20,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);"
           new="for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion']])scopeNegative(name,stage,key);"
-          if old not in s: raise SystemExit('scope-negative matrix target missing')
-          s=s.replace(old,new,1)
+          if old in s:s=s.replace(old,new,1)
+          replacements={
+          "let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}})":"let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;prepareDirectPromptPrerequisites(p,stage);const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}})",
+          "let p=project('JOB-NEG-RESERVED-TEMPKEY'),stage=21;p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID='PRODUCT-000001';const pr={...prompts.buildPromptRecord(stage,p)":"let p=project('JOB-NEG-RESERVED-TEMPKEY'),stage=21;prepareDirectPromptPrerequisites(p,stage);p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID='PRODUCT-000001';const pr={...prompts.buildPromptRecord(stage,p)",
+          "let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID=productId;":"let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';prepareDirectPromptPrerequisites(p,stage);p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID=productId;",
+          "let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push":"let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';prepareDirectPromptPrerequisites(p,stage);p.projectData.runs.push",
+          "const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p)":"const p=project('JOB-UNPERSISTED-PROMPT'),stage=2;prepareStage1Upstream(p);const pr=prompts.buildPromptRecord(stage,p)"
+          }
+          for old,new in replacements.items():
+              if old not in s: raise SystemExit('direct fixture target missing: '+old[:60])
+              s=s.replace(old,new,1)
           p.write_text(s)
           PY
           node --check verify-ingestion.mjs
