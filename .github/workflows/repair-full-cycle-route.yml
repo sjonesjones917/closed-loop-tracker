@@ -30,7 +30,7 @@ jobs:
             ("data(9,{records:{preflightRecords:[recordProposal(schema,'preflightRecords'",
              "const preflightContext=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'PREFLIGHT-REVIEW-CONTEXT-1',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'}),preflightContextId=engine.recordId(preflightContext,'freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:[recordProposal(schema,'preflightRecords'"),
             ("data(10,{stageData:{HASHES_RECORDED_WHERE_PRACTICAL:'TRUE',CHANGES_ALLOWED_DURING_BATCH:'NONE'}});engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE'});",
-             "engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE'});")
+             "data(10,{});engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE'});")
           ]
           for old,new in repairs:
               count=text.count(old)
