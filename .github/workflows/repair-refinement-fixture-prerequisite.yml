@@ -33,7 +33,7 @@ jobs:
           path=Path('verify-complete.mjs')
           text=path.read_text(encoding='utf-8')
           old="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');"
-          new="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"
+          new="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');const intake=engine.intakeCoverageManifest(p),capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Accepted-refinement fixture preserves current human authority.',extractedStatements:[{statementKey:'REFINE-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Verify accepted response refinement.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};engine.recalculate(p);assert(engine.evaluateIntakeAccounting(p).complete,'Accepted-refinement fixture failed to establish Stage 01 semantic accounting.');"
           if new not in text:
               if text.count(old)!=1:
                   raise SystemExit(f'Expected one accepted-refinement fixture boundary; found {text.count(old)}')
@@ -55,6 +55,10 @@ jobs:
             echo 'The corrected accepted-refinement fixture still fails at Stage 01 prerequisite.' >&2
             exit 1
           fi
+          if grep -Fq 'Accepted-refinement fixture failed to establish Stage 01 semantic accounting' /tmp/verify-complete.log; then
+            echo 'The fixture did not establish real Stage 01 accounting.' >&2
+            exit 1
+          fi
           if grep -Fq 'Replacement prompt omitted accepted-result refinement reason' /tmp/verify-complete.log; then
             echo 'The fixture reached replacement prompting but the production refinement context failed.' >&2
             exit 1
@@ -68,5 +72,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add verify-complete.mjs .github/workflows/repair-refinement-fixture-prerequisite.yml
           git diff --cached --check
-          git commit -m 'Establish Stage 01 prerequisite for accepted refinement fixture'
+          git commit -m 'Establish durable Stage 01 intake for accepted refinement fixture'
           git push origin HEAD:fix/zero-loss-controlled-20260831
