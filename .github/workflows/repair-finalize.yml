@@ -68,6 +68,9 @@ jobs:
           old="await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`,8000);await positionNode(cdp,'#proposal-heading','top');"
           new="await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`,8000);await evalValue(cdp,`(()=>{let spacer=document.querySelector('#browser-review-test-spacer');if(!spacer){spacer=document.createElement('div');spacer.id='browser-review-test-spacer';spacer.style.height='1200px';document.querySelector('#proposal-heading')?.after(spacer);}return true;})()`);await positionNode(cdp,'#proposal-heading','top');"
           assert old in s; s=s.replace(old,new,1)
+          old="await click(cdp,'#new-project');await waitExpr(cdp,`Boolean(document.querySelector('#project-management')&&!document.querySelector('#project-management').open)`);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
+          new="const beforeDeletionCreateId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);await click(cdp,'#new-project');await waitExpr(cdp,`(()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];return Boolean(id&&id!==${JSON.stringify(beforeDeletionCreateId)}&&document.querySelector('#project-management')&&!document.querySelector('#project-management').open);})()`,12000);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
+          assert old in s; s=s.replace(old,new,1)
           regression="""
 // Permanent regression: Stage 01 proposal summary reads the current /3 INPUT_SET_CONTENTS contract.
 {
