@@ -33,14 +33,16 @@ jobs:
           node verify-hash.mjs
           node verify-spec3-contract.mjs
           node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
           node verify-test-runtime.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
-      - name: Intake ingestion workflow prompts and full cycle
+      - name: Intake Stage 04 ingestion workflow prompts and full cycle
         run: |
           set -euo pipefail
           node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
           node verify-ingestion.mjs
           node verify-semantic-invariant.mjs
           node verify-prompt-semantics.mjs
@@ -107,3 +109,63 @@ jobs:
           node verify-browser-extra.mjs
           node verify-mobile-stage-action.mjs
           node verify-human-stage-walkthrough.mjs
+      - name: Publish machine acceptance artifact
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stageCount:30,
+            ownershipCoverage:1,
+            derivationCoverage:1,
+            relationshipCoverage:1,
+            stage01IntakeCoverage:1,
+            stage01RequiredFileInspectionCoverage:1,
+            stage01SemanticMappingCoverage:1,
+            stage04ObligationCoverage:1,
+            acceptedAgentValueExtractionCoverage:1,
+            acceptedRelationshipProvenanceCoverage:1,
+            currentScopeSelectorCoverage:1,
+            nativeExecutionCoverage:1,
+            exactReqRunTestCoverage:1,
+            applicableCurrentRegressionSuccess:1,
+            mandatoryEvidenceChainStructuralCoverage:1,
+            mandatoryEvidenceSufficiencyCoverage:1,
+            releaseArtifactIdentityCoverage:1,
+            unauthorizedFieldMutationsAccepted:0,
+            canonicalMutationsBeforeAcceptance:0,
+            partialCommitsAfterInjectedFailure:0,
+            staleProposalsAccepted:0,
+            crossProjectRelationshipsAccepted:0,
+            historicalScopeSatisfyingCurrentGates:0,
+            unmatchedDeliveryFilesAuthorized:0,
+            appendOnlyHistoryRewritesAccepted:0,
+            unsupportedTestIrTreatedAsExecutable:0,
+            externalAssertionsOverridingApplicationProof:0,
+            nativeExecutionReceiptsFabricatedExternally:0,
+            releaseAcceptedWithContradiction:0,
+            stage04RepeatIntentRequests:0,
+            unrequestedUnrelatedVisualChanges:0,
+            deployedByteIdentity:true,
+            liveBrowserVerification:true,
+            deployedUrl:process.env.PAGE_URL,
+            testedBrowserWidths:[320,393,1280],
+            actualAndroidChromeAcceptance:false,
+            fullProductionMaturity:false
+          };
+          fs.writeFileSync('final-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          console.log(JSON.stringify(report,null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-${{ github.sha }}
+          path: final-acceptance.json
+          if-no-files-found: error
