@@ -50,7 +50,8 @@ assert.match(store,/\bcreateExecutionPackage\b/,'project store must construct ex
 assert.match(store,/closed-loop-verification-package\/1/,'execution package must use the controlling package schema');
 assert.match(app,/RUN_APP_TESTS/,'primary UI must support native application tests');
 assert.match(app,/canonical state changed/i,'UI must report canonical-change certainty');
-assert.match(app,/current value/i,'proposal display must include current values');
+assert.match(app,/\bcurrentValue\b/,'proposal display must include the current-value field rendered by the shared label formatter');
+assert.match(app,/\bproposedValue\b/,'proposal display must include the proposed-value field');
 assert.match(prompt,/FILES YOU MUST RECEIVE/,'prompt handoff must name files to receive');
 assert.match(prompt,/FILES YOU MUST NOT RECEIVE/,'prompt handoff must name withheld material');
 assert.match(prompt,/FILES OR EVIDENCE YOU MUST RETURN/,'prompt handoff must name required returns');
