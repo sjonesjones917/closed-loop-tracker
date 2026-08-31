@@ -1,46 +1,32 @@
-name: Apply Stage 06 artifact-readiness repair
-on:
-  push:
-    branches: [fix/restore-controlling-verification-20260831b]
-    paths: [.github/workflows/apply-scoped-clarification-fixture-fix.yml]
+name: Apply Stage 06 repair
+on: push
 permissions:
   contents: write
 jobs:
   apply:
+    if: github.ref == 'refs/heads/fix/restore-controlling-verification-20260831b'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/restore-controlling-verification-20260831b
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Wire existing execution-plan custody into Stage 06
+      - name: Patch Stage 06 custody gate
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('workflow-engine.js')
-          s=p.read_text()
-          old="""      const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!applicationTestSupported(test));
-      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
-      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.
-      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.
-      break;"""
-          new="""      const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!applicationTestSupported(test));
-      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
-      const mandatoryTestIds=new Set(mandatoryTests.map(test=>recordId(test,'tests'))),custodyFailures=testExecutionPlan(project).items.filter(item=>mandatoryTestIds.has(item.testId)&&item.artifactIds.length>0&&!item.artifactReady);
-      if(custodyFailures.length)reasons.push(`${custodyFailures.length} mandatory test definition(s) have required exact artifact bytes missing or no longer application-verified.`);
-      // Future artifact identities may remain declarative before they exist, but bytes already bound as current test inputs must remain application-verified.
-      break;"""
+          p = Path('workflow-engine.js')
+          s = p.read_text()
+          old = "      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.\n      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.\n      break;"
+          new = "      const mandatoryTestIds=new Set(mandatoryTests.map(test=>recordId(test,'tests'))),custodyFailures=testExecutionPlan(project).items.filter(item=>mandatoryTestIds.has(item.testId)&&item.artifactIds.length>0&&!item.artifactReady);\n      if(custodyFailures.length)reasons.push(`${custodyFailures.length} mandatory test definition(s) have required exact artifact bytes missing or no longer application-verified.`);\n      // Future artifact identities may remain declarative before they exist, but bytes already bound as current test inputs must remain application-verified.\n      break;"
           if old not in s:
               raise SystemExit('Stage 06 gate target not found')
-          p.write_text(s.replace(old,new,1))
+          p.write_text(s.replace(old, new, 1))
           PY
-      - name: Run regression and downstream complete-contract suite
+      - name: Verify Stage 06 regression
         run: |
           node --check workflow-engine.js
           node verify-complete.mjs
-      - name: Commit minimal production correction
+      - name: Commit repair
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
