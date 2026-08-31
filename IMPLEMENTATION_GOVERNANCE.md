@@ -107,3 +107,7 @@ Every implementation agent is instructed:
 10. Treat repository advancement after packet issuance as making the result stale until revalidated.
 
 Agents MUST NOT create competing implementation PRs unless explicitly assigned an isolated experiment; redefine acceptance criteria to make an implementation pass; claim tests, deployment, byte identity, or live correctness without execution evidence; treat agreement as proof; merge because a candidate merely appears better; modify unrelated architecture or visuals; or continue from a superseded repository state without revalidation.
+
+## Permanent convergence regressions
+
+Repository governance records demonstrated convergence failures that must remain covered by executable tests. The current permanent set includes the Stage 25 dual-semantics defect in which aggregate final-representation coverage required strict structured `OBSERVATIONS` JSON while effective result adjudication still interpreted only legacy prose such as `NO DEFECTS`. The repaired invariant is: aggregate Stage 25 coverage and Stage 25 effective determination SHALL consume the same strict structured coverage semantics; malformed or incomplete coverage remains fail-closed, and a favorable submitted determination cannot override the application-derived result.
