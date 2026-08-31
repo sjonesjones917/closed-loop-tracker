@@ -102,6 +102,14 @@ jobs:
                   raise SystemExit('Expected rejection fixture boundary not found; no change made.')
               text = text.replace(rejection_needle, rejection_replacement, 1)
 
+          answer_marker = "preparePromptPrerequisites(p,stage);p=ingestion.answerHumanInput"
+          answer_needle = "const request=p.projectData.humanInputRequests.at(-1);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;"
+          answer_replacement = "const request=p.projectData.humanInputRequests.at(-1);preparePromptPrerequisites(p,stage);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;"
+          if answer_marker not in text:
+              if answer_needle not in text:
+                  raise SystemExit('Expected scoped clarification fixture boundary not found; no change made.')
+              text = text.replace(answer_needle, answer_replacement, 1)
+
           if 'fixtureBuildPrompt(stage,p,options)' not in text:
               raise SystemExit('Fixture prompt wrapper was not installed.')
           text = text.replace('prompts.buildPromptRecord(', 'fixtureBuildPrompt(')
