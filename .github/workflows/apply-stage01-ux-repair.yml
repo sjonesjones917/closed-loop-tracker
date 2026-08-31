@@ -1,0 +1,40 @@
+name: Apply Stage 01 user-experience repair
+
+on:
+  push:
+    branches:
+      - fix/restore-stage01-user-experience-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-stage01-user-experience-20260830
+          fetch-depth: 0
+      - name: Apply exact repair
+        run: node apply-stage01-ux-repair.mjs
+      - name: Verify repaired runtime and regressions
+        run: |
+          set -euo pipefail
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            node --check "$file"
+          done
+          node verify-stage01-user-experience.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+      - name: Commit verified repair and remove one-time files
+        run: |
+          set -euo pipefail
+          rm -f apply-stage01-ux-repair.mjs .github/workflows/apply-stage01-ux-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Restore Stage 01 conversation and fail-closed intake"
+          git push origin HEAD:fix/restore-stage01-user-experience-20260830
