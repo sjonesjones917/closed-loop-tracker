@@ -1,0 +1,58 @@
+name: Repair Stage 09 reviewer-context gating
+
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-stage09-context-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Narrow locked reviewer-context rendering to Stage 09
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="function reviewerContextMarkup(n,locked){if(!reviewerOperation(n))return '';"
+          new="function reviewerContextMarkup(n,locked){if(!reviewerOperation(n)||(locked&&n!==9))return '';"
+          if s.count(old)!=1:
+            raise SystemExit(f'Expected one repair anchor, found {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node --check app-core.js
+      - name: Replay both controlling browser invariants
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Remove one-shot machinery and commit proven correction
+        run: |
+          rm .github/workflows/repair-stage09-context.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js .github/workflows/repair-stage09-context.yml
+          git diff --cached --check
+          git commit -m "Gate reviewer context by current operator need"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
