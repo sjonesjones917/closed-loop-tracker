@@ -14,25 +14,21 @@ jobs:
           ref: repair/spec3-proof-gate
           fetch-depth: 0
       - name: Correct Stage 06 artifact-boundary regression fixture
+        env:
+          OLD_B64: ICBjb25zdCBkZWY9c2NoZW1hLlJFQ09SRF9TQ0hFTUFTLnRlc3RzLGZpZWxkcz17fTsKICBmb3IoY29uc3QgbmFtZSBvZiBkZWYucmVxdWlyZWQpaWYoZGVmLmZpZWxkRGVmaW5pdGlvbnNbbmFtZV0/LnByb2R1Y2VyPT09c2NoZW1hLlBST0RVQ0VSLkFHRU5UKWZpZWxkc1tuYW1lXT12YWx1ZUZvckRlZmluaXRpb24oZGVmLmZpZWxkRGVmaW5pdGlvbnNbbmFtZV0pOwogIGZpZWxkcy5BUlRJRkFDVF9SRVFVSVJFTUVOVFM9J2ZpeHR1cmUuanMnOwogIGUuc3RhZ2VEYXRhPXt9O2UucmVjb3Jkcz17dGVzdHM6W3t0ZW1wS2V5Oid0ZXN0LWFydGlmYWN0LXJlY29yZCcsZmllbGRzLHJlbGF0aW9uc2hpcHM6e30sZXZpZGVuY2VSZWZzOlsnZXZpZGVuY2UtMSddfV19OwogIGxldCBwcmVwYXJlZD1pbmdlc3Rpb24ucHJlcGFyZShwLHtzdGFnZSx0ZXh0OkpTT04uc3RyaW5naWZ5KGUpLHByb21wdFJlY29yZDpwcn0pOwogIGlmKCFwcmVwYXJlZC52YWxpZGF0aW9uLmlzc3Vlcy5zb21lKGl0ZW09Pml0ZW0uY29kZT09PSdNSVNTSU5HX1JFUVVJUkVEX1RFU1RfQVJUSUZBQ1QnKSl0aHJvdyBuZXcgRXJyb3IoJ0EgVEVTVCByZXF1aXJpbmcgYW4gYXJ0aWZhY3Qgd2FzIG5vdCByZWplY3RlZCB3aXRob3V0IGJ5dGUtYmFja2VkIGFydGlmYWN0IGV2aWRlbmNlLicpOwo=
+          NEW_B64: ICBjb25zdCBmaWVsZHM9ey4uLmUucmVjb3Jkcy50ZXN0c1swXS5maWVsZHMsQVJUSUZBQ1RfUkVRVUlSRU1FTlRTOidmaXh0dXJlLmpzJ307CiAgZS5zdGFnZURhdGE9e307ZS5yZWNvcmRzPXt0ZXN0czpbe3RlbXBLZXk6J3Rlc3QtYXJ0aWZhY3QtcmVjb3JkJyxmaWVsZHMscmVsYXRpb25zaGlwczp7fSxldmlkZW5jZVJlZnM6WydldmlkZW5jZS0xJ119XX07CiAgbGV0IHByZXBhcmVkPWluZ2VzdGlvbi5wcmVwYXJlKHAse3N0YWdlLHRleHQ6SlNPTi5zdHJpbmdpZnkoZSkscHJvbXB0UmVjb3JkOnByfSk7CiAgaWYoIXByZXBhcmVkLnZhbGlkYXRpb24udmFsaWQpdGhyb3cgbmV3IEVycm9yKCdTdGFnZSAwNiByZWplY3RlZCBhIGRlY2xhcmF0aXZlIGZ1dHVyZSBhcnRpZmFjdCByZXF1aXJlbWVudCBiZWZvcmUgZXhlY3V0aW9uIHJlYWRpbmVzczogJytKU09OLnN0cmluZ2lmeShwcmVwYXJlZC52YWxpZGF0aW9uLmlzc3VlcykpOwo=
         run: |
           python3 - <<'PY'
+          import base64, os
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          old="""  const def=schema.RECORD_SCHEMAS.tests,fields={};
-  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
-  fields.ARTIFACT_REQUIREMENTS='fixture.js';
-  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
-  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
-  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');
-"""
-          new="""  const fields={...e.records.tests[0].fields,ARTIFACT_REQUIREMENTS:'fixture.js'};
-  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
-  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
-  if(!prepared.validation.valid)throw new Error('Stage 06 rejected a declarative future artifact requirement before execution readiness: '+JSON.stringify(prepared.validation.issues));
-"""
-          if old in s:s=s.replace(old,new,1)
-          elif new not in s:raise SystemExit('Stage 06 artifact-boundary fixture not found')
+          old=base64.b64decode(os.environ['OLD_B64']).decode()
+          new=base64.b64decode(os.environ['NEW_B64']).decode()
+          if old in s:
+              s=s.replace(old,new,1)
+          elif new not in s:
+              raise SystemExit('Stage 06 artifact-boundary fixture not found')
           p.write_text(s)
           PY
       - name: Commit controlled repair
