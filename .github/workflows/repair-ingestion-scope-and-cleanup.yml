@@ -1,0 +1,59 @@
+name: Repair ingestion scope fixture
+
+on:
+  push:
+    branches: [fix/monotonic-reliability-pass-20260831]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair fixture at prompt-scope boundary and prove ingestion
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};"
+          new="const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0],requiredScope=schema.operationContract(stage,operation)?.scopeRequirements||[],syntheticScope={};if(requiredScope.includes('runId'))syntheticScope.runId='RUN-INGESTION-FIXTURE';if(requiredScope.includes('contextId'))syntheticScope.contextId='CONTEXT-INGESTION-FIXTURE';const options={operation,...(Object.keys(syntheticScope).length?{scope:syntheticScope}:{})};"
+          if new not in s:
+              if s.count(old)!=1: raise SystemExit(f'Expected one savePrompt scope target; found {s.count(old)}')
+              s=s.replace(old,new,1)
+          # The generic ingestion fixture tests transport/ownership, not native Test IR runtime semantics.
+          # Keep native Test IR behavior in dedicated runtime verifiers and make this generic fixture a valid external-tool definition.
+          replacements={
+            "if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';":"if(name==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';",
+            "if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';":"if(name==='REQUIRED_CAPABILITY')return 'CONTROLLED_EXTERNAL_TOOL';\n  if(name==='EXECUTABLE_KIND')return 'NONE';\n  if(name==='EXECUTABLE_SPEC'||name==='EXECUTABLE_INPUT_BINDINGS')return {};\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';"
+          }
+          for old2,new2 in replacements.items():
+              if new2 not in s:
+                  if s.count(old2)!=1: raise SystemExit(f'Expected one fixture target: {old2}; found {s.count(old2)}')
+                  s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/repair-stage06-conditional-fixture.yml \
+                .github/workflows/repair-stage06-generic-fixture.yml \
+                .github/workflows/repair-stage06-native-fixture.yml \
+                .github/workflows/repair-ingestion-scope-and-cleanup.yml
+          node --check verify-ingestion.mjs
+          node verify-ingestion.mjs
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A verify-ingestion.mjs .github/workflows
+          git commit -m "Fix ingestion execution-lane fixture scope"
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
