@@ -85,10 +85,19 @@ jobs:
           p.write_text(s)
       - name: Verify repaired sources
         run: |
+          set -euo pipefail
           node --check prompt-engine.js
           node --check workflow-engine.js
           node --check app-core.js
           node verify-all-stage-prompts.mjs
+          python3 -m http.server 4173 > /tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in {1..50}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.1
+          done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
           node verify-browser.mjs
       - name: Commit integrated repair and remove one-time workflow
         run: |
