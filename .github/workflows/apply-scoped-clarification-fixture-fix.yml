@@ -34,11 +34,16 @@ jobs:
               if old not in s: raise SystemExit('expected fixture target not found: '+old[:80])
               s=s.replace(old,new,1)
           p.write_text(s)
+
           p=Path('response-ingestion.js'); s=p.read_text()
           old="if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));\n      else if(!allowedStageData.has(name))issues.push(issue('STAGE_OPERATION_FIELD_VIOLATION',path,`${name} is not writable by operation ${expectedOperation}.`));"
           new="if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));\n      if(!allowedStageData.has(name))issues.push(issue('STAGE_OPERATION_FIELD_VIOLATION',path,`${name} is not writable by operation ${expectedOperation}.`));"
           if old not in s: raise SystemExit('ingestion authority/operation target not found')
-          p.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          marker="    // Stage 06 defines tests before candidate/product bytes necessarily exist.\n    // Artifact availability is execution readiness owned by testExecutionPlan()/workflow gates.\n    // Explicit current artifactId bindings are still validated above; future CURRENT_PRODUCT/CURRENT_SCOPE bindings stay declarative until execution."
+          check="    if(collection==='tests'){const requirement=String(record?.fields?.ARTIFACT_REQUIREMENTS||'').trim(),namedArtifactRequired=Boolean(requirement&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(requirement)));if(namedArtifactRequired){const backed=safe(record.evidenceRefs).some(ref=>{const entry=evidenceIndex.get(String(ref)),attachmentRef=entry?.evidence?.attachmentRef;if(attachmentRef?.tempKey)return attachmentIndex.has(String(attachmentRef.tempKey));if(attachmentRef?.recordId){const artifact=workflow.records(project,'artifacts',{active:true}).find(item=>workflow.recordId(item,'artifacts')===String(attachmentRef.recordId));return Boolean(artifact&&upper(workflow.recordValue(artifact,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED');}return false;});if(!backed)issues.push(issue('MISSING_REQUIRED_TEST_ARTIFACT',`${path}/evidenceRefs`,`Test artifact requirement ${requirement} is not backed by application-verified artifact bytes.`));}}\n    // Future CURRENT_PRODUCT/CURRENT_SCOPE Test IR bindings may remain declarative until their product bytes exist; explicit named artifact requirements require verified custody now."
+          if marker not in s: raise SystemExit('test artifact custody marker not found')
+          p.write_text(s.replace(marker,check,1))
           PY
       - name: Syntax and targeted regression
         run: |
@@ -50,5 +55,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add response-ingestion.js verify-ingestion.mjs
-          git commit -m "Reject operation-scoped fields independently of ownership"
+          git commit -m "Enforce operation scope and byte-backed test artifacts"
           git push origin HEAD:fix/restore-controlling-verification-20260831b
