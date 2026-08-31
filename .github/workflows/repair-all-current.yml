@@ -1,0 +1,113 @@
+name: Apply current zero-loss production corrections
+on:
+  push:
+    branches: [fix/monotonic-zero-loss-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply production corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('prompt-engine.js'); text=p.read_text(encoding='utf-8')
+          additions={
+            1:'Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage.',
+            2:'Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found.',
+            3:'Every current accepted Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform a distinct conflict/exception/saturation pass over the complete current source set.',
+            5:'Resolve the current job’s requirement set exhaustively. After every correction, repeat the review against the resulting requirement set.',
+            7:'Generating an invalid fixture and executing that fixture are separate boundaries. The actual observed result and evidence are required.',
+            8:'Build the production instruction only from the resolved current requirement set and verification architecture, preserving complete requirement traceability.',
+            9:'Re-review the entire current instruction from the beginning after any correction. Do not execute target production during preflight.',
+            10:'The human selects authorized canonical components. Do not assign candidate identity.',
+            11:'This prompt authorizes exactly one reserved RUN_ID and CONTEXT_ID. Do not perform another run.',
+            12:'Complete the exact REQ_ID × RUN_ID × TEST_ID verification cell or cells authorized by this prompt. Never substitute a different executor.',
+            13:'Compare all ten executions. Never discard a run.',
+            14:'Perform RCA by tracing backward through product/output, execution, instruction, requirement, research, source, user input, tool, and audit. Examine tool/configuration, artifact, and audit/evidence to identify the earliest defective layer.',
+            15:'Require an actual pre-correction regression execution. Do not claim post-correction success at Stage 15.',
+            16:'Correct the responsible earliest defective layer. Never overwrite a controlled version in place.',
+            18:'The application calculates mandatory requirement coverage. Do not set or override those application-derived values.',
+            20:'The human authorizes the baseline. Do not assign baseline identity.',
+            21:'Produce the job’s approved deliverable. Generate the complete approved deliverable.',
+            22:'Never claim an unexecuted deterministic check ran.',23:'Perform independent meaning/content verification using source evidence where applicable.',24:'Perform adversarial verification. Do not claim attacks that were not actually executed.',25:'Inspect the exact final delivered representation and package.',26:'Reconcile process evidence and product evidence as two separate propositions.',27:'Do not set a release state. The application evaluates the complete current evidence.',28:'The application performs the authoritative immediate pre-release byte comparison.',29:'Preserve and investigate the complete evidence graph for every mandatory requirement. Do not fabricate a link.',30:'Preserve failures permanently with append-only defect and regression history. Do not rewrite history.'}
+          for stage,phrase in additions.items():
+              if phrase not in text:
+                  marker=f'"{stage}":"'
+                  if text.count(marker)!=1: raise SystemExit(f'stage marker {stage}: {text.count(marker)}')
+                  text=text.replace(marker,marker+phrase+' ',1)
+          old='APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'; new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
+          if new not in text:
+              if text.count(old)!=1: raise SystemExit('stage4 heading mismatch')
+              text=text.replace(old,new,1)
+          op='CURRENT DECLARED OPERATION: ${operation||contract.operations[0]}'; state="CURRENT_STATE: ${job.CURRENT_STATE||'UNKNOWN'}"
+          if op not in text:
+              if text.count(state)!=1: raise SystemExit('operation insertion mismatch')
+              text=text.replace(state,op+'\\n'+state,1)
+          p.write_text(text,encoding='utf-8')
+
+          s=Path('workflow-schema.js'); schema=s.read_text(encoding='utf-8')
+          begin=schema.index('const READ_COLLECTIONS=Object.freeze({'); end=schema.index('const APPLICATION_COLLECTIONS=',begin); reads=schema[begin:end]
+          stage_reads={4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords'],5:['requirements','research','sources','sourceConflicts','candidateRequirements','evidenceRecords'],6:['requirements','requirementResolutions','artifacts','sources','research'],8:['requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts'],9:['instructions','instructionTraces','requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts'],18:['iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','blockers','requirements','tests','rootCauses','changes'],20:['confirmationRecords','candidateFreezes','iterations','artifacts'],23:['products','requirements','tests','sources','research','evidenceRecords'],24:['products','requirements','tests','failureTests','regressions','regressionExecutions','defects','sources','research','artifacts','evidenceRecords'],26:['products','baselines','requirements','instructions','tests','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','confirmationRecords','defects','blockers','evidenceRecords'],27:['requirements','tests','products','baselines','confirmationRecords','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','defects','blockers','regressionExecutions','evidenceRecords'],29:['sources','requirements','instructions','instructionTraces','runs','products','baselines','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','regressionExecutions','releaseRecords','artifactIdentities','evidenceRecords','evidenceChains'],30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines','requirements','evidenceRecords']}
+          for stage,items in stage_reads.items():
+              replacement=f"{stage}:["+','.join(repr(x) for x in items)+"]"; pattern=rf"(?<!\d){stage}:\[[^\]]*\]"; matches=list(re.finditer(pattern,reads))
+              if len(matches)!=1: raise SystemExit(f'read stage {stage}: {len(matches)}')
+              reads=reads[:matches[0].start()]+replacement+reads[matches[0].end():]
+          schema=schema[:begin]+reads+schema[end:]
+          op_reads={
+            "FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions']":"FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions','instructions','requirements','artifacts']",
+            "CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations']":"CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','requirements','tests','artifacts']",
+            "REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs']":"REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','tests','requirements','artifacts']",
+            "CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords']":"CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords','requirements']"}
+          for old,new in op_reads.items():
+              if new not in schema:
+                  if schema.count(old)!=1: raise SystemExit(f'op read mismatch {old[:30]}')
+                  schema=schema.replace(old,new,1)
+          s.write_text(schema,encoding='utf-8')
+          e=Path('workflow-engine.js'); eng=e.read_text(encoding='utf-8'); bad='plans=testExecutionPlan(project).filter(item=>'; good='plans=testExecutionPlan(project).items.filter(item=>'
+          if good not in eng:
+              if eng.count(bad)!=1: raise SystemExit('stage07 plan mismatch')
+              eng=eng.replace(bad,good,1)
+          e.write_text(eng,encoding='utf-8')
+          PY
+      - name: Verify before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js; node --check workflow-schema.js; node --check workflow-engine.js
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/repair-all-http.log 2>&1 & SERVER_PID=$!; trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in {1..100}; do curl -fsS http://127.0.0.1:4173/ >/dev/null 2>&1 && break; sleep 0.1; done
+          PAGE_URL=http://127.0.0.1:4173/ node verify-stage-prompts-complete.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-user-prompt-invariants.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-prompt-semantics.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-semantic-invariant.mjs
+          kill "$SERVER_PID" 2>/dev/null || true; trap - EXIT
+      - name: Commit accepted production corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/repair-all-current.yml .github/workflows/repair-composite-read-contracts.yml .github/workflows/repair-prompt-authority.yml .github/workflows/apply-prompt-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js workflow-schema.js workflow-engine.js .github/workflows
+          git diff --cached --check
+          git commit -m "Integrate current zero-loss production corrections"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
