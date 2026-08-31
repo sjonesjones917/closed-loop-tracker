@@ -90,6 +90,14 @@ jobs:
                   raise SystemExit('Expected downstream prompt fixture boundary not found; no change made.')
               text = text.replace(next_needle, next_replacement, 1)
 
+          rejection_marker = "preparePromptPrerequisites(prepared.project,stage);const result=ingestion.reject"
+          rejection_needle = "prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});"
+          rejection_replacement = "prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});preparePromptPrerequisites(prepared.project,stage);const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});"
+          if rejection_marker not in text:
+              if rejection_needle not in text:
+                  raise SystemExit('Expected rejection fixture boundary not found; no change made.')
+              text = text.replace(rejection_needle, rejection_replacement, 1)
+
           path.write_text(text, encoding='utf-8')
           Path('.github/workflows/repair-ingestion-prerequisite-fixture.yml').unlink()
           PY
