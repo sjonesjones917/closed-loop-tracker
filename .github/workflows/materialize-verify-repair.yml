@@ -1,0 +1,59 @@
+name: Materialize retained-project verifier correction
+
+on:
+  push:
+    branches: [fix/restore-controlling-proof-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-proof-20260830
+          fetch-depth: 0
+      - name: Apply exact verifier correction and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path=Path('verify.mjs')
+          text=path.read_text()
+
+          replacements=[
+            (
+              "const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];",
+              "const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];"
+            ),
+            (
+              "const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();\nif(retained.generatedOutputs?.[0]?.output!==operation01||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Authorized Operation 01 output was not preserved exactly.');",
+              "const operation01=String(retained.userJobInput?.authorizedOperation01||'').trim();\nif(!operation01)throw new Error('Retained human-authority Operation 01 content is missing.');\nif(retained.generatedOutputs?.[0]?.output!==operation01||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Authorized Operation 01 output was not preserved exactly.');"
+            ),
+            (
+              "Research only the current accepted Stage 02 independent external source set",
+              "Research only the complete current accepted Stage 02 independent external source set"
+            )
+          ]
+
+          for old,new in replacements:
+            if old in text:
+              text=text.replace(old,new,1)
+            elif new not in text:
+              raise SystemExit(f'Expected verifier source was not found: {old[:100]}')
+
+          path.write_text(text)
+          Path('.github/workflows/materialize-verify-repair.yml').unlink()
+          PY
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add verify.mjs .github/workflows/materialize-verify-repair.yml
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Repair retained-project verifier without duplicate source artifact'
+          git push origin HEAD:fix/restore-controlling-proof-20260830
