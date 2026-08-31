@@ -1,0 +1,37 @@
+name: Controlled source repair
+on:
+  push:
+    branches:
+      - repair/spec3-proof-gate
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/spec3-proof-gate
+          fetch-depth: 0
+      - name: Align Stage 04 declared reads with prompt context
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-schema.js')
+          s=p.read_text()
+          old="4:['research','candidateRequirements','sources','evidenceRecords']"
+          new="4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
+          if old in s:s=s.replace(old,new,1)
+          elif new not in s:raise SystemExit('Stage 04 READ_COLLECTIONS entry not found')
+          p.write_text(s)
+          PY
+      - name: Commit controlled repair
+        run: |
+          node --check workflow-schema.js
+          node verify-stage-prompts-complete.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add workflow-schema.js
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Align Stage 04 declared source conflict context'
+          git push origin HEAD:repair/spec3-proof-gate
