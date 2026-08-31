@@ -52,3 +52,5 @@ jobs:
           git add prompt-engine.js workflow-engine.js index.html verify-stage01-conversation-first.mjs verify-human-stage-walkthrough.mjs verify-live.mjs .github/workflows/pages.yml
           git commit -m "Restore Stage 01 human conversation and required file intake"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
+
+# Re-run after replacing the obsolete Stage 01 closure fixture with the canonical capture path.
