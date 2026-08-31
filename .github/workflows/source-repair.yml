@@ -1,0 +1,46 @@
+name: Controlled source repair
+on:
+  push:
+    branches:
+      - repair/spec3-proof-gate
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/spec3-proof-gate
+          fetch-depth: 0
+      - name: Correct Stage 06 artifact-boundary regression fixture
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="""  const def=schema.RECORD_SCHEMAS.tests,fields={};
+  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
+  fields.ARTIFACT_REQUIREMENTS='fixture.js';
+  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');
+"""
+          new="""  const fields={...e.records.tests[0].fields,ARTIFACT_REQUIREMENTS:'fixture.js'};
+  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.valid)throw new Error('Stage 06 rejected a declarative future artifact requirement before execution readiness: '+JSON.stringify(prepared.validation.issues));
+"""
+          if old in s:s=s.replace(old,new,1)
+          elif new not in s:raise SystemExit('Stage 06 artifact-boundary fixture not found')
+          p.write_text(s)
+          PY
+      - name: Commit controlled repair
+        run: |
+          node --check verify-ingestion.mjs
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-ingestion.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Correct Stage 06 artifact boundary fixture'
+          git push origin HEAD:repair/spec3-proof-gate
