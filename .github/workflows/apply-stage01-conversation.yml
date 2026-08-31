@@ -26,6 +26,16 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/apply-stage01-conversation.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old='Never ask the human to repeat information already supplied anywhere in the current conversation or current authorized project input.'
+          new='Never solve a missing-input question by asking the human to repeat information already present or already supplied anywhere in the current conversation or current authorized project input.'
+          if old not in s:
+              raise SystemExit('One-time input wording anchor was not found.')
+          p.write_text(s.replace(old,new,1))
+          PY
           node --check prompt-engine.js
           node --check verify-stage01-conversation-first.mjs
           node --check verify-live.mjs
