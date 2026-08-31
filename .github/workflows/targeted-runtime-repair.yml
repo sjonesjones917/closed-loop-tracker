@@ -1,0 +1,37 @@
+name: Targeted monotonic runtime repair
+on:
+  push:
+    branches: [fix/restore-full-acceptance-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-full-acceptance-20260831
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply candidate
+        run: python3 .github/monotonic-repair.py
+      - name: Prove candidate
+        run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node verify-v3-contract.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-complete.mjs
+          node verify-semantic-invariant.mjs
+          node verify-full-cycle.mjs
+      - name: Retain only if improved
+        shell: bash
+        run: |
+          rm .github/monotonic-repair.py .github/workflows/targeted-runtime-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Repair current gates and acceptance contract"
+          git push origin HEAD:fix/restore-full-acceptance-20260831
