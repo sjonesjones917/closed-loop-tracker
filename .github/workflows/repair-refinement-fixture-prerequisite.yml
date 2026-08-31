@@ -1,0 +1,72 @@
+name: Repair accepted-refinement prerequisite fixture
+
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-refinement-fixture-prerequisite-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct the Stage 02 refinement fixture prerequisite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-complete.mjs')
+          text=path.read_text(encoding='utf-8')
+          old="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');"
+          new="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"
+          if new not in text:
+              if text.count(old)!=1:
+                  raise SystemExit(f'Expected one accepted-refinement fixture boundary; found {text.count(old)}')
+              text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          PY
+          rm .github/workflows/repair-refinement-fixture-prerequisite.yml
+      - name: Prove refinement reaches its intended acceptance boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check verify-complete.mjs
+          set +e
+          node verify-complete.mjs > /tmp/verify-complete.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/verify-complete.log
+          if grep -Fq 'Stage 02 controlling instruction cannot be generated until Stage 01 is complete' /tmp/verify-complete.log; then
+            echo 'The corrected accepted-refinement fixture still fails at Stage 01 prerequisite.' >&2
+            exit 1
+          fi
+          if grep -Fq 'Replacement prompt omitted accepted-result refinement reason' /tmp/verify-complete.log; then
+            echo 'The fixture reached replacement prompting but the production refinement context failed.' >&2
+            exit 1
+          fi
+          echo "verify-complete advanced beyond the accepted-refinement fixture with status ${status}."
+      - name: Commit the accepted fixture correction and remove the runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-complete.mjs .github/workflows/repair-refinement-fixture-prerequisite.yml
+          git diff --cached --check
+          git commit -m 'Establish Stage 01 prerequisite for accepted refinement fixture'
+          git push origin HEAD:fix/zero-loss-controlled-20260831
