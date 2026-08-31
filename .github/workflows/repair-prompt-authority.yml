@@ -170,6 +170,13 @@ jobs:
               if engine.count(bad)!=1:
                   raise SystemExit(f'Stage 07 execution-plan repair point count: {engine.count(bad)}')
               engine=engine.replace(bad,good,1)
+
+          human_old="if(mode==='HUMAN_INSPECTION'){requiredEvidenceClasses.push('HUMAN_OBSERVATION');const human=humanEvidence.some(e=>e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim());if(!human)reasons.push('Human inspection requires an explicit human-owned observation recorded through the application; an agent-labelled HUMAN evidence claim is insufficient.');}"
+          human_new="if(mode==='HUMAN_INSPECTION'){requiredEvidenceClasses.push('HUMAN_OBSERVATION');const human=evidence.some(e=>{const authority=upper(e?.source||recordValue(e,'AUTHORITY_TYPE')||recordValue(e,'APPLICATION_EVIDENCE_KIND')||recordValue(e,'KIND')),content=String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||recordValue(e,'CONTENT')||recordValue(e,'APPLICATION_EVIDENCE_DESCRIPTION')||recordValue(e,'DESCRIPTION')||'').trim(),applicationRecorded=e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED',canonicalHuman=authority==='HUMAN_OBSERVATION';return Boolean(content&&(applicationRecorded||canonicalHuman));});if(!human)reasons.push('Human inspection requires an explicit human-owned observation recorded through the application; an agent-labelled HUMAN evidence claim is insufficient.');}"
+          if human_new not in engine:
+              if engine.count(human_old)!=1:
+                  raise SystemExit(f'Human-observation sufficiency repair point count: {engine.count(human_old)}')
+              engine=engine.replace(human_old,human_new,1)
           e.write_text(engine,encoding='utf-8')
           PY
           rm -f .github/workflows/apply-prompt-repair.yml
