@@ -18,6 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Capture exact source workspace for controlled implementation
+        run: |
+          set -euo pipefail
+          tar --exclude=.git -czf ../source-workspace-pass2.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-workspace-pass2
+          path: ../source-workspace-pass2.tar.gz
+          retention-days: 1
       - name: Verify runtime JavaScript parses before deployment
         run: |
           set -euo pipefail
