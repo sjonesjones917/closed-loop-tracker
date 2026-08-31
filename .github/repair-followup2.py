@@ -55,5 +55,56 @@ if old not in text:
     raise AssertionError('The obsolete Stage 17 operation-field rejection assertion was not found.')
 text = text.replace(old, new, 1)
 
+old = """// Final boundary: naming a required executable/input artifact is not possession of its bytes.
+{
+  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
+  const def=schema.RECORD_SCHEMAS.tests,fields={};
+  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
+  fields.ARTIFACT_REQUIREMENTS='fixture.js';
+  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');
+  const sha='a'.repeat(64);
+  e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
+  e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
+  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
+  if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
+  if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
+  const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
+  if(!proposedTest||!proposedEvidence||!(Array.isArray(proposedTest.evidenceRefs)?proposedTest.evidenceRefs:[]).includes(proposedEvidence.id)||proposedEvidence.ATTACHMENT_ID!=='ARTIFACT-TEST-000001')throw new Error('TEST artifact custody did not resolve through canonical evidence to the verified artifact identity.');
+}
+"""
+new = """// Final boundary: declared attachment metadata is not possession of its bytes.
+// Stage 06 may define future product/input artifact requirements before those
+// future bytes exist; an attachment declared as present in the current response,
+// however, must resolve to exact application-verified supplied bytes.
+{
+  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
+  if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
+  const def=schema.RECORD_SCHEMAS.tests,fields={};
+  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
+  fields.TEST_TYPE='DETERMINISTIC';
+  fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';
+  fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TEST_TOOL';
+  fields.ARTIFACT_REQUIREMENTS='fixture.js';
+  delete fields.EXECUTABLE_KIND;delete fields.EXECUTABLE_SPEC;delete fields.EXECUTABLE_INPUT_BINDINGS;
+  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
+  const sha='a'.repeat(64);
+  e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
+  e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
+  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
+  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_ATTACHMENT'))throw new Error('Declared TEST attachment metadata was treated as possession without supplied verified bytes.');
+  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
+  if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_ATTACHMENT'))throw new Error('Byte-backed TEST attachment did not satisfy artifact custody validation.');
+  if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
+  const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
+  if(!proposedTest||!proposedEvidence||!(Array.isArray(proposedTest.evidenceRefs)?proposedTest.evidenceRefs:[]).includes(proposedEvidence.id)||proposedEvidence.ATTACHMENT_ID!=='ARTIFACT-TEST-000001')throw new Error('TEST artifact custody did not resolve through canonical evidence to the verified artifact identity.');
+}
+"""
+if old not in text:
+    raise AssertionError('The obsolete Stage 06 artifact-possession regression was not found.')
+text = text.replace(old, new, 1)
+
 path.write_text(text)
-print('Bound direct Stage 02, Stage 11, Stage 17, and Stage 21 ingestion fixtures to completed predecessor stages and aligned Stage 17 ownership enforcement.')
+print('Bound direct later-stage fixtures to valid predecessors, aligned Stage 17 ownership enforcement, and tested declared attachment metadata against exact verified bytes.')
