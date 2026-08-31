@@ -25,6 +25,14 @@ jobs:
           echo "status=$status" >> "$GITHUB_OUTPUT"
           echo "message=$message" >> "$GITHUB_OUTPUT"
           exit "$status"
+      - name: Upload exact ingestion log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-ingestion-log-${{ github.sha }}
+          path: /tmp/verify-ingestion.log
+          if-no-files-found: error
+          retention-days: 1
       - name: Ingestion failure — ${{ steps.ingestion.outputs.message }}
         if: steps.ingestion.outcome == 'failure'
         run: exit 1
