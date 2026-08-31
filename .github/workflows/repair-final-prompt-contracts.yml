@@ -34,7 +34,7 @@ jobs:
               if text.count(marker)!=1: raise SystemExit(f'stage marker {stage} count {text.count(marker)}')
               text=text.replace(marker,marker+phrase+' ',1)
           phrases={
-            1:'Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage.',
+            1:'Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage. Exhaust human-authority intake before Stage 01 completion.',
             2:'Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found.',
             3:'Every current accepted Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform a distinct conflict/exception/saturation pass over the complete current source set.',
             5:'Resolve the current job’s requirement set exhaustively. After every correction, repeat the review against the resulting requirement set.',
@@ -146,7 +146,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/repair-final-prompt-contracts.yml .github/workflows/repair-composite-read-contracts.yml .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-authority.yml
+          rm -f .github/workflows/repair-final-prompt-contracts.yml .github/workflows/repair-composite-read-contracts.yml .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-authority.yml .github/workflows/repair-all-current.yml .github/workflows/apply-prompt-repair.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add prompt-engine.js workflow-schema.js workflow-engine.js .github/workflows
