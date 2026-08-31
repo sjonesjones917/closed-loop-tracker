@@ -1,4 +1,4 @@
-name: Deploy application
+name: Verify and deploy the single reliability app
 on:
   push:
     branches: [main]
@@ -12,28 +12,87 @@ permissions:
 concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
+
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify retained project and single application architecture
+        run: node build-test-project.mjs
+      - name: Syntax checks
         run: |
           set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-fixtures.mjs verify-hash.mjs verify.mjs verify-ingestion.mjs verify-complete.mjs verify-test-runtime.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-one-time-intent-intake.mjs verify-live.mjs verify-browser.mjs verify-browser-extra.mjs verify-semantic-invariant.mjs verify-definition-of-done.mjs verify-project-lifecycle.mjs; do
             node --check "$file"
           done
+      - name: Verify deterministic runtime and one-time intake
+        run: |
+          node verify-test-runtime.mjs
+          node verify-one-time-intent-intake.mjs
+      - name: Verify hashes, schema, ownership, ingestion, gates, prompts, lifecycle
+        run: |
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-full-cycle.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Enforce one shell and runtime graph
+        run: |
+          set -euo pipefail
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f -iname '*repair*' -print -quit)"
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -REi "human-project/31|Stage 31|Operation 31|31 operations" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct deferred scripts; found ${src.length}`);
+          const tokens=new Set();
+          expected.forEach((file,index)=>{
+            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong script order at ${file}`);
+            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
+            if(!token)throw new Error(`${file} lacks build token`);
+            tokens.add(token);
+          });
+          if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
+          NODE
+      - name: Exercise local Chromium operator path and responsive behavior
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build static application
+      - name: Build exact static application
         run: |
           rm -rf _site
           mkdir _site
@@ -45,3 +104,89 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact deployed bytes and /3 contracts
+        run: node verify-live.mjs
+      - name: Exercise deployed Chromium operator path
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+  publish-status:
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require complete proof chain
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
+        run: |
+          test "$TEST_RESULT" = success
+          test "$DEPLOY_RESULT" = success
+          test "$LIVE_RESULT" = success
+      - name: Build machine acceptance report
+        run: |
+          node verify-definition-of-done.mjs > /tmp/definition.json
+          node verify-ingestion.mjs > /tmp/ingestion.out
+          node - <<'NODE'
+          const fs=require('fs');
+          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
+          const ingestion=fs.readFileSync('/tmp/ingestion.out','utf8');
+          const matches=[...ingestion.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
+          if(!matches.length)throw new Error('No negative-case count published.');
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            ...definition,
+            stagesCompleted:30,
+            negativeCasesPassed:Number(matches.at(-1)[1]),
+            deployedByteIdentity:true,
+            browserWidths:[320,393,1280],
+            liveVerification:true,
+            actualAndroidChrome:false,
+            productionMaturity:false
+          };
+          fs.writeFileSync('acceptance-report.json',JSON.stringify(report,null,2)+'\n');
+          NODE
+      - name: Publish machine acceptance artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-report-${{ github.sha }}
+          path: acceptance-report.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Create post-proof release tag
+        run: |
+          set -euo pipefail
+          TAG="verified-${GITHUB_SHA::12}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Verified deployed closed-loop reliability application $GITHUB_SHA"
+          git push origin "$TAG"
