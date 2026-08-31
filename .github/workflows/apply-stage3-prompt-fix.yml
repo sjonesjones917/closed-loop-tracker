@@ -75,6 +75,9 @@ jobs:
           replace_once('verify-stage-prompts-complete.mjs',
             "'every current accepted Stage 02 source has current research coverage'",
             "'Every current Stage 02 source must receive current research coverage'")
+          replace_once('verify-stage-prompts-complete.mjs',
+            "'distinct conflict/exception/saturation pass'",
+            "'complete the required second conflict-and-exception pass'")
           PY
           node build-test-project.mjs
 
