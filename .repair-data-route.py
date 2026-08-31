@@ -11,7 +11,7 @@ new="function confirmedDefects(project,{allScopes=false}={}){\n  const source=al
 if old not in s: raise SystemExit('confirmedDefects target not found')
 s=s.replace(old,new,1)
 for old,new in [
-("const defects=confirmedDefects(project),baselineEvent=history.find", "const defects=confirmedDefects(project,{allScopes:true}),baselineEvent=history.find"),
+("defects=confirmedDefects(project),baselineEvent=history.find", "defects=confirmedDefects(project,{allScopes:true}),baselineEvent=history.find"),
 ("case 30:{requireAccepted();const defects=confirmedDefects(project),regs=records(project,'regressions')", "case 30:{requireAccepted();const defects=confirmedDefects(project,{allScopes:true}),regs=records(project,'regressions')"),
 ("case 30:{const defects=records(project,'defects',{active:false}),confirmed=confirmedDefects(project),regs=records(project,'regressions',{active:false})", "case 30:{const defects=records(project,'defects',{active:false}),confirmed=confirmedDefects(project,{allScopes:true}),regs=records(project,'regressions',{active:false})")]:
     if old not in s: raise SystemExit('all-scope defect target not found: '+old[:50])
