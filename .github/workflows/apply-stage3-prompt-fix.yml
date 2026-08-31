@@ -69,6 +69,9 @@ jobs:
           replace_once('verify-stage-prompts-complete.mjs',
             "engine.ensureShape(p);engine.recalculate(p);",
             "engine.ensureShape(p);engine.recalculate(p);\nconst intake=prompts.intakeCoverageManifest(p);\np.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Prompt closure deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+i,text:u.rawValueText||('captured '+u.label),statementClass:'CONTEXT'}]}))})};\np.stages[1].status='COMPLETE';p.stages[1].gate={complete:true};\np.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true};\np.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false};p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true};\nfor(let stage=4;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true};}")
+          replace_once('prompt-engine.js',
+            "function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}",
+            "function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}")
           PY
           node build-test-project.mjs
 
