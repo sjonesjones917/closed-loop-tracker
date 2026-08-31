@@ -30,6 +30,11 @@ jobs:
           if s.count(old_scope)!=1:
               raise SystemExit(f'savePrompt target count {s.count(old_scope)}; expected 1')
           s=s.replace(old_scope,new_scope)
+          old_stage_data="""  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);\n"""
+          new_stage_data="""  const stageData={};\n  const agentStageField=stageFields.find(name=>schema.STAGE_FIELDS[stage]?.[name]?.producer===schema.PRODUCER.AGENT);\n  if(agentStageField)stageData[agentStageField]=safeValue(agentStageField);\n"""
+          if s.count(old_stage_data)!=1:
+              raise SystemExit(f'stageData target count {s.count(old_stage_data)}; expected 1')
+          s=s.replace(old_stage_data,new_stage_data)
           old_ir="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
           new_ir="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EXISTS'}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
           if s.count(old_ir)!=1:
