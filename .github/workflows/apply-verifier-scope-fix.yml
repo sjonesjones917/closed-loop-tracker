@@ -1,0 +1,32 @@
+name: Apply verifier scope fixture fix
+on:
+  push:
+    branches: [fix/restore-controlling-verification-20260831b]
+    paths: [.github/workflows/apply-verifier-scope-fix.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-verification-20260831b
+      - name: Derive synthetic ingestion prompt scope from operation contracts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  else for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+          new="function syntheticPromptOptions(stage,p){\n  const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0],scope={};\n  for(const key of schema.operationContract(stage,operation).scopeRequirements){\n    if(key==='projectRevision')scope[key]=Number(p.revision||0);\n    else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;\n    else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';\n    else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';\n    else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';\n    else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';\n    else if(key==='iterationId')scope[key]='ITERATION-000001';\n    else if(key==='candidateId')scope[key]='CANDIDATE-000001';\n    else if(key==='runId')scope[key]='RUN-INGESTION-FIXTURE';\n    else if(key==='contextId')scope[key]='CONTEXT-INGESTION-FIXTURE';\n    else if(key==='baselineId')scope[key]='BASELINE-000001';\n    else if(key==='productId')scope[key]='PRODUCT-000001';\n  }\n  return {operation,scope};\n}\nfunction savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  else for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}\n  const options=syntheticPromptOptions(stage,p);\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};"
+          if old not in s: raise SystemExit('expected savePrompt source not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit minimal fixture correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Derive ingestion fixture scope from operation contracts"
+          git push origin HEAD:fix/restore-controlling-verification-20260831b
