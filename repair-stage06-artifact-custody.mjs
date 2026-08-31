@@ -31,7 +31,8 @@ const testPath='verify-complete.mjs';
 let test=fs.readFileSync(testPath,'utf8');
 const fixtureRepairs=[
   ["  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);","  const p=project('JOB-BAD-REL');p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};const stage=3,pr=prompt(p,stage);"],
-  ["  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');","  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"]
+  ["  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');","  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"],
+  ["engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});\n  assert(engine.records(p,'sources',{stage:2}).length===0,","engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n  assert(engine.records(p,'sources',{stage:2}).length===0,"]
 ];
 for(const [stale,current] of fixtureRepairs){
   if(test.includes(current))continue;
