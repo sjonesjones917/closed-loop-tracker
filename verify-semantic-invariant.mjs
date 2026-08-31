@@ -31,6 +31,22 @@ for(const [collection,row] of cases)notSatisfied(collection,row,collection==='pr
 // Claimed success can expose a contradiction, but can never establish success without the application's evidence contract.
 for(const [collection,row] of cases){if(collection==='products'||collection==='regressionExecutions'||collection==='failureTests')continue;const claim=collection==='processAudits'?row.fields.PROCESS_DETERMINATION:collection==='productAudits'?row.fields.PRODUCT_DETERMINATION:row.fields.DETERMINATION;if(String(claim||'').toUpperCase()==='SATISFIED'){const contradictions=engine.detectCurrentContradictions({...p,projectData:{...p.projectData,[collection]:[row]}});assert(Array.isArray(contradictions),`${collection} contradiction scan failed`);}}
 
+// Stage 25 uses one strict structured coverage semantics for both aggregate coverage and effective determination.
+{
+ const representationScope={...scope,productId:'PRODUCT-REP'};
+ p.job.CURRENT_PRODUCT_ID='PRODUCT-REP';
+ p.projectData.artifacts.push({id:'ART-REP',stage:25,active:true,scope:representationScope,fields:{ARTIFACT_ID:'ART-REP',FILENAME:'delivery.pdf',SHA256:'b'.repeat(64),AVAILABILITY:'BYTES_PERSISTED_AND_VERIFIED'}});
+ p.projectData.evidenceRecords.push({id:'EVIDENCE-REP',stage:25,active:true,scope:representationScope,fields:{EVIDENCE_ID:'EVIDENCE-REP',KIND:'REPRESENTATION_INSPECTION',AUTHORITY_TYPE:'INDEPENDENT_REVIEWER',DESCRIPTION:'Representation opened and inspected.',CONTENT:'All contracted views and packaged files were inspected.'}});
+ const structuredObservation=JSON.stringify({requiredPageOrViewIds:['VIEW-1'],inspectedPageOrViewIds:['VIEW-1'],requiredPackagedFileIds:['FILE-1'],openedOrTestedPackagedFileIds:['FILE-1'],requiredTransformationIds:['TRANSFORM-1'],inspectedTransformationIds:['TRANSFORM-1'],observation:'No material representation defect observed.'});
+ const good=record('representationInspections',{ARTIFACT_ID:'ART-REP',OBSERVATIONS:structuredObservation,RENDERING_OPENING_EVIDENCE:'EVIDENCE-REP',DETERMINATION:'SATISFIED'},{stage:25,scope:{productId:'PRODUCT-REP'},evidenceRefs:['EVIDENCE-REP']});
+ good.id='INSPECTION-REP-GOOD';good.relationships={ARTIFACT_ID:'ART-REP'};p.projectData.representationInspections.push(good);
+ const effective=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(effective.determination==='SATISFIED','Strict Stage 25 coverage JSON was not accepted by effective determination');
+ const aggregate=engine.representationInspectionCoverage(p);assert(aggregate.complete,'Strict Stage 25 coverage JSON was not accepted by aggregate coverage');
+ good.fields.OBSERVATIONS=JSON.stringify({...JSON.parse(structuredObservation),inspectedPageOrViewIds:[]});
+ const broken=engine.evaluateResultConsistency('representationInspections',good,null,p);assert(broken.determination!=='SATISFIED','Incomplete Stage 25 structured coverage was accepted by effective determination');
+ p.projectData.representationInspections.pop();p.projectData.evidenceRecords.pop();p.projectData.artifacts.pop();delete p.job.CURRENT_PRODUCT_ID;
+}
+
 // Trace integrity is fail-closed: missing evidence/identity/layer linkage cannot pass RCA or changeset validation.
 const badRca=record('rootCauses',{DEFECT_ID:'DEFECT-X',LAYER_TRACE:'x',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'claim',DOWNSTREAM_INVALIDATION:'17+'});assert(!engine.validateTraceIntegrity('RCA',badRca,p).valid,'Unresolved RCA trace passed');
 const badChange=record('changes',{TRIGGERING_DEFECT_IDS:'DEFECT-X',RESPONSIBLE_LAYER:'INSTRUCTION',OLD_ARTIFACT_VERSION:'v1',EXACT_MODIFICATION:'x',NEW_ARTIFACT_VERSION:'v2',DOWNSTREAM_INVALIDATION:'17+',REQUIRED_RERUNS:'all'});assert(!engine.validateTraceIntegrity('CHANGESET',badChange,p).valid&&!engine.validateTraceIntegrity('CHANGE',badChange,p).valid,'Unresolved changeset trace passed');
