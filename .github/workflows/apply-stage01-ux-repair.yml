@@ -17,6 +17,16 @@ jobs:
         with:
           ref: fix/restore-stage01-user-experience-20260830
           fetch-depth: 0
+      - name: Correct repair-script YAML newline matching
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('apply-stage01-ux-repair.mjs')
+          source = path.read_text()
+          marker = "replaceOnce(\n  '.github/workflows/pages.yml',"
+          start = source.index(marker)
+          path.write_text(source[:start] + source[start:].replace('\\\\n', '\\n'))
+          PY
       - name: Apply exact repair
         id: apply
         continue-on-error: true
