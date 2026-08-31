@@ -18,10 +18,11 @@ jobs:
           python3 .github/repair.py
           python3 .github/repair2.py
           python3 .github/repair3.py
+          python3 .github/repair4.py
       - name: Syntax check affected files
         run: |
           set -euo pipefail
-          for file in workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-spec3-contract.mjs verify-complete.mjs; do
+          for file in workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-stage-prompts-complete.mjs verify-spec3-contract.mjs verify-complete.mjs; do
             node --check "$file"
           done
       - name: Run focused regressions
@@ -44,6 +45,6 @@ jobs:
           fi
           git config user.name 'closed-loop-repair'
           git config user.email 'closed-loop-repair@users.noreply.github.com'
-          git add workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-spec3-contract.mjs verify-complete.mjs
-          git commit -m 'Correct Stage 01 accounting, Stage 10 control, evidence, context, and operator regressions'
+          git add workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-stage-prompts-complete.mjs verify-spec3-contract.mjs verify-complete.mjs
+          git commit -m 'Correct Stage 01 accounting, prompt authority, evidence, context, and operator regressions'
           git push origin HEAD:fix/restore-monotonic-proof-20260831
