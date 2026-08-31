@@ -55,6 +55,16 @@ old="if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(c
 new="if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField){const definition=def.fieldDefinitions[agentField];fields[agentField]=definition?.enumValues?.length?definition.enumValues[0]:safeValue(agentField);}}"
 if old not in text:
     raise AssertionError('The ingestion fallback field fixture generator was not found.')
+text=text.replace(old,new,1)
+
+# The first EXECUTION_MODE enum is APPLICATION_DETERMINISTIC, which legally
+# requires a complete Test IR program. This generic ingestion fixture is not a
+# native-runtime fixture, so route its deterministic proposition through a
+# declared external tool instead of fabricating an incomplete native program.
+old="records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
+new="if(collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TEST_TOOL';fields.ARTIFACT_REQUIREMENTS='NONE';delete fields.EXECUTABLE_KIND;delete fields.EXECUTABLE_SPEC;delete fields.EXECUTABLE_INPUT_BINDINGS;}records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
+if old not in text:
+    raise AssertionError('The ingestion record fixture insertion point was not found.')
 path.write_text(text.replace(old,new,1))
 
-print('Aligned prompt and ingestion regressions with generated behavior, legal stage prerequisites, and declared enum contracts.')
+print('Aligned prompt and ingestion regressions with generated behavior, legal stage prerequisites, declared enum contracts, and valid Stage 06 routing.')
