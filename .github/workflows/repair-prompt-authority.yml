@@ -1,0 +1,72 @@
+name: Repair prompt authority marker
+
+on:
+  push:
+    branches:
+      - fix/monotonic-zero-loss-20260831
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimal prompt authority correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('prompt-engine.js')
+          text=path.read_text(encoding='utf-8')
+
+          stage1_old='"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
+          stage1_new='"1":"Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage. Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
+          if stage1_new not in text:
+              if text.count(stage1_old) != 1:
+                  raise SystemExit(f'Expected exactly one Stage 01 insertion point; found {text.count(stage1_old)}')
+              text=text.replace(stage1_old,stage1_new,1)
+
+          stage4_old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
+          stage4_new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
+          if stage4_new not in text:
+              if text.count(stage4_old) != 1:
+                  raise SystemExit(f'Expected exactly one Stage 04 insertion point; found {text.count(stage4_old)}')
+              text=text.replace(stage4_old,stage4_new,1)
+
+          path.write_text(text,encoding='utf-8')
+          PY
+          rm .github/workflows/repair-prompt-authority.yml
+      - name: Prove corrected prompt authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+      - name: Commit accepted correction and remove runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js .github/workflows/repair-prompt-authority.yml
+          git diff --cached --check
+          git commit -m "Clarify Stage 01 and Stage 04 prompt authority [repair-applied]"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
