@@ -33,7 +33,9 @@ function project(jobId='JOB-INGESTION-TEST'){
   return p;
 }
 function savePrompt(p,stage){
-  if(stage===4)prepareStage4Upstream(p);
+  if(stage>=4)prepareStage4Upstream(p);
+  for(let i=1;i<stage;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}
+  if(stage>=3)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
   const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
   const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
