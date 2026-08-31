@@ -386,7 +386,7 @@ function gate(stage,project){
       if(!['APPLICATION_ESTABLISHED','EXTERNALLY_SUPPORTED'].includes(preflightIndependence.determination))reasons.push('Preflight reviewer independence is not established: '+preflightIndependence.reasons.join(' '));
       break;
     }
-    case 10:requireAccepted();requireCount('iterations',1);requireCount('candidateFreezes',1);break;
+    case 10:requireCount('iterations',1);requireCount('candidateFreezes',1);break;
     case 11:{requireAccepted();const iteration=latestIteration(project,[10,11]);const ev=evaluateIteration(project,recordId(iteration,'iterations'),'INITIAL');if(!ev.complete)reasons.push(...ev.reasons);break;}
     case 12:{requireAccepted();const iteration=latestIteration(project,[10,17,19]);const m=verificationMatrix(project,recordId(iteration,'iterations'));if(m.runs.length!==10)reasons.push('The current verification batch does not contain exactly ten runs.');if(m.expected.length===0||m.coverage!==1)reasons.push('REQ × RUN × TEST verification coverage is not 100%.');if(m.duplicates.length)reasons.push('Duplicate verification triples exist.');if(m.invalid.length)reasons.push('A verification triple lacks independently established/supported verification or sufficient evidence.');break;}
     case 13:{
