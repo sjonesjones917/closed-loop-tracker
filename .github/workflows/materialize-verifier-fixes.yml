@@ -1,0 +1,42 @@
+name: Materialize verifier fixes
+on:
+  push:
+    branches: [fix/stage01-stage04-zero-loss-runtime-20260831]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Remove absent historical-file dependency from verifier
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs'); s=p.read_text()
+          old="const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];"
+          new="const files=['index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];"
+          if old not in s: raise SystemExit('required-file target missing')
+          s=s.replace(old,new,1)
+          old="const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();\nif(retained.generatedOutputs?.[0]?.output!==operation01||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Authorized Operation 01 output was not preserved exactly.');"
+          new="const operation01=retained.generatedOutputs?.[0]?.output;\nif(typeof operation01!=='string'||!operation01.trim()||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Retained Stage 01 output history is internally inconsistent.');"
+          if old not in s: raise SystemExit('operation01 target missing')
+          s=s.replace(old,new,1)
+          old="if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');"
+          new="if(stage===3&&!/Research only the (?:complete )?current accepted Stage 02 independent external source set/i.test(record.prompt))throw new Error('Stage 03 external-source research boundary missing.');"
+          if old not in s: raise SystemExit('Stage 03 prompt assertion target missing')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          node --check verify.mjs
+          node verify.mjs
+      - name: Commit verifier correction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify.mjs
+          git commit -m 'Remove invented historical verifier dependency'
+          git push origin HEAD:${GITHUB_REF_NAME}
