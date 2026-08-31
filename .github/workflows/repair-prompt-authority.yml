@@ -80,6 +80,15 @@ jobs:
               if text.count(old)!=1:
                   raise SystemExit(f'Stage 04 manifest heading insertion point count: {text.count(old)}')
               text=text.replace(old,new,1)
+
+          if 'CURRENT DECLARED OPERATION: ${operation}' not in text:
+              matches=list(re.finditer(r'function procedureFor\(stage,operation\)\{return ([^;]+);\}',text))
+              if len(matches)!=1:
+                  raise SystemExit(f'procedureFor boundary count: {len(matches)}')
+              match=matches[0]
+              expression=match.group(1)
+              replacement="function procedureFor(stage,operation){const procedure="+expression+";return (stage===17||stage===19)?`CURRENT DECLARED OPERATION: ${operation}\\n${procedure}`:procedure;}"
+              text=text[:match.start()]+replacement+text[match.end():]
           p.write_text(text,encoding='utf-8')
 
           s=Path('workflow-schema.js')
