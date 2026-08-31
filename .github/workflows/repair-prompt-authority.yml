@@ -90,6 +90,13 @@ jobs:
               expression=match.group(1)
               replacement="function procedureFor(stage,operation){const procedure="+expression+";return (stage===17||stage===19)?`CURRENT DECLARED OPERATION: ${operation}\\n${procedure}`:procedure;}"
               text=text[:match.start()]+replacement+text[match.end():]
+
+          prerequisite_old='assertPromptPrerequisites(stage,state);if(stage===4)assertStage4UpstreamExhausted(state);'
+          prerequisite_new='if(stage===4)assertStage4UpstreamExhausted(state);assertPromptPrerequisites(stage,state);'
+          if prerequisite_new not in text:
+              if text.count(prerequisite_old)!=1:
+                  raise SystemExit(f'Stage 04 prerequisite-order boundary count: {text.count(prerequisite_old)}')
+              text=text.replace(prerequisite_old,prerequisite_new,1)
           p.write_text(text,encoding='utf-8')
 
           s=Path('workflow-schema.js')
