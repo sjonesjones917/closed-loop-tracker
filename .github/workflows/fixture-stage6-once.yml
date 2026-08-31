@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Correct Stage 06 valid fixture
+      - name: Correct ingestion fixture
         shell: bash
         run: |
           set -euo pipefail
@@ -25,10 +25,14 @@ jobs:
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          old="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
-          new="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EXISTS'}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
-          if s.count(old)!=1: raise SystemExit(f'Stage 06 fixture target count {s.count(old)}; expected 1')
-          p.write_text(s.replace(old,new,1))
+          old_scope="""  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};\n"""
+          new_scope="""  const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0];\n  const scope=Object.fromEntries((schema.operationContract(stage,operation)?.scopeRequirements||[]).map(key=>[key,`${key.toUpperCase()}-INGESTION-FIXTURE`]));\n  const options={operation,scope};\n  const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};\n"""
+          if s.count(old_scope)!=1: raise SystemExit(f'Prompt scope target count {s.count(old_scope)}; expected 1')
+          s=s.replace(old_scope,new_scope,1)
+          old_ir="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
+          new_ir="""    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EXISTS'}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"""
+          if s.count(old_ir)!=1: raise SystemExit(f'Stage 06 fixture target count {s.count(old_ir)}; expected 1')
+          p.write_text(s.replace(old_ir,new_ir,1))
           PY
           node verify-ingestion.mjs
           git diff --check
@@ -40,5 +44,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/fixture-stage6-once.yml
           git add verify-ingestion.mjs
-          git commit -m "Fix Stage 06 ingestion fixture"
+          git commit -m "Fix ingestion verification fixture"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
