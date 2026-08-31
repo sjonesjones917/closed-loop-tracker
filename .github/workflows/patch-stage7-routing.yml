@@ -1,0 +1,36 @@
+name: Apply isolated Stage 07 routing repair
+on:
+  push:
+    branches: [fix/required-full-commit-gates-20260830]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'Fix only Stage 07 routing caller') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/required-full-commit-gates-20260830
+      - name: Patch one caller only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="plans=testExecutionPlan(project).filter(item=>String(item.requirementId||'')===reqId)"
+          new="plans=testExecutionPlan(project).items.filter(item=>String(item.requirementId||'')===reqId)"
+          if s.count(old)!=1:
+              raise SystemExit(f'Expected one obsolete Stage 07 caller, found {s.count(old)}')
+          p.write_text(s.replace(old,new))
+          PY
+          git diff --check
+          git diff --stat
+          git diff -- workflow-engine.js
+      - name: Commit one-line repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js
+          git commit -m 'Fix only Stage 07 routing caller'
+          git push origin HEAD:fix/required-full-commit-gates-20260830
