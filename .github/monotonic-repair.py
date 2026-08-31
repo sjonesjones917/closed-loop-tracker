@@ -49,6 +49,7 @@ replace_once('verify-stage-prompts-complete.mjs',
 'complete prompt no-repeat proof')
 replace_once('verify-stage-prompts-complete.mjs',"1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every inputId exactly once']","1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','Classify every APPLICATION INTAKE MANIFEST unit exactly once']",'Stage 1 manifest wording')
 replace_once('verify-stage-prompts-complete.mjs',"2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements']","5:['sources','candidateRequirements']",'remove obsolete/redundant read assertions')
+replace_once('verify-stage-prompts-complete.mjs',"4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','exactly one disposition']","4:['application-enumerated obligation universe','Process every obligationId exactly once','No obligation may disappear']",'Stage 4 semantic proof')
 replace_once('verify-stage-prompts-complete.mjs',"for(let stage=1;stage<=30;stage++){\n  const contract=schema.STAGE_CONTRACTS[stage];","for(let stage=1;stage<=30;stage++){\n  if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};}\n  const contract=schema.STAGE_CONTRACTS[stage];",'sequential complete prompt fixture')
 
 replace_once('.github/workflows/pages.yml',
