@@ -28,6 +28,8 @@ jobs:
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
           replacements=[
+          ("function savePrompt(p,stage){\n  if(stage>=4)prepareStage4Upstream(p);\n  for(let i=1;i<stage;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}\n  if(stage>=3)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';",
+           "function preparePromptPrerequisites(p,stage){\n  if(stage>=4)prepareStage4Upstream(p);\n  for(let i=1;i<stage;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}\n  if(stage>=3)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';\n  return p;\n}\nfunction savePrompt(p,stage){\n  preparePromptPrerequisites(p,stage);"),
           ("  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};",
            "  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:[9,12,23,24].includes(stage)?{scope:{contextId:`CONTEXT-INGESTION-FIXTURE-${String(stage).padStart(2,'0')}`}}:{};"),
           ("  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);",
@@ -35,7 +37,15 @@ jobs:
           ("    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];",
            "    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TOOL';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='NONE';fields.EXECUTABLE_SPEC=null;fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"),
           ("{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});",
-           "{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});prepared.project.stages[1].status='COMPLETE';prepared.project.stages[1].gate={complete:true,blocked:false,reasons:[]};const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});")]
+           "{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});prepared.project.stages[1].status='COMPLETE';prepared.project.stages[1].gate={complete:true,blocked:false,reasons:[]};const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});"),
+          ("{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;",
+           "{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;preparePromptPrerequisites(p,stage);p.revision=0;"),
+          ("{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;",
+           "{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;preparePromptPrerequisites(p,stage);p.revision=0;"),
+          ("  const p=project('JOB-RAW-SCOPE');\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';",
+           "  const p=project('JOB-RAW-SCOPE');\n  preparePromptPrerequisites(p,17);\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';"),
+          ("  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};",
+           "  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;preparePromptPrerequisites(p,stage);const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};")]
           for old,new in replacements:
               if new in s: continue
               if s.count(old)!=1: raise SystemExit(f'Expected fixture target once; found {s.count(old)} for {old[:70]}')
