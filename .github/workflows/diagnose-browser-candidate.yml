@@ -28,6 +28,7 @@ jobs:
           replace('workflow-engine.js','ACTUAL_MANDATORY_RECORDS:matrix.actual.length','ACTUAL_MANDATORY_RECORDS:matrix.verification.length')
           replace('app-core.js',"const RUNTIME_BUILD_ID='runtime-20260830-live-operator-59';","const RUNTIME_BUILD_ID='runtime-20260831-live-operator-60';")
           replace('app-core.js','stageOneAccounting=safe(p.envelope?.stageData?.INTAKE_ACCOUNTING),stageOneIntents=safe(p.envelope?.records?.intentStatements),stageOneSummary=stageOne?','stageOneCaptured=engine.parseCapturedInputSet({agentData:p.envelope?.stageData||{}}),stageOneAccounting=safe(stageOneCaptured?.units),stageOneIntents=safe(stageOneCaptured?.extractedStatements),stageOneSummary=stageOne?')
+          replace('app-core.js',"${t==='number'?'<span class=\"help\">Whole number only. Leave blank if unknown or no preference.</span>':''}</div>","${k==='REQUIRED_OUTPUT_FORMAT'?'<span class=\"help\">You do not need to know the final file format in advance. A specification substitute requires human confirmation.</span>':t==='number'?'<span class=\"help\">Whole number only. Leave blank if unknown or no preference.</span>':''}</div>")
           replace('index.html','.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}','.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}')
           replace('verify-all-stage-prompts.mjs','for(let s=1;s<=30;s++){for(const op of schema.STAGE_CONTRACTS[s].operations){',"for(let s=1;s<=30;s++){if(s>1){state.stages[s-1].status='COMPLETE';state.stages[s-1].gate={complete:true};}for(const op of schema.STAGE_CONTRACTS[s].operations){")
           p=Path('verify-all-stage-prompts.mjs'); s=p.read_text(); s=s.replace("const scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{};","const scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']));"); s=s.replace("scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{}","scope=Object.fromEntries((schema.operationContract(s,op)?.scopeRequirements||[]).map(key=>[key,key.toUpperCase()+'-AUDIT']))"); p.write_text(s)
@@ -67,4 +68,4 @@ jobs:
           git commit -m 'Capture exact browser verification failure [diagnostic-output]' || true
           git push origin HEAD:fix/live-stage01-context-binding-20260831
           exit "$rc"
-# diagnostic trigger 2
+# diagnostic trigger 3
