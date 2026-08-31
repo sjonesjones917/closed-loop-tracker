@@ -1,0 +1,61 @@
+name: Repair Stage 04 manifest authority heading
+
+on:
+  push:
+    branches:
+      - fix/monotonic-zero-loss-20260831
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-stage4-manifest-heading
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply the minimal prompt-authority correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('prompt-engine.js')
+          text = path.read_text(encoding='utf-8')
+          old = 'APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
+          new = 'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one Stage 04 manifest heading; found {count}.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Prove the corrected contract and affected downstream prompts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node verify-spec3-contract.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage-prompts-complete.mjs
+      - name: Commit the accepted correction and remove this one-shot runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-stage4-manifest-heading.yml
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add prompt-engine.js .github/workflows/repair-stage4-manifest-heading.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'Clarify Stage 04 obligation manifest authority'
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
