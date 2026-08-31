@@ -41,6 +41,10 @@ function savePrompt(p,stage){
   return record;
 }
 function safeValue(name){
+  if(name==='TEST_TYPE')return 'MEANING';
+  if(name==='EXECUTION_MODE')return 'INDEPENDENT_AGENT_REVIEW';
+  if(name==='REQUIRED_CAPABILITY')return 'INDEPENDENT_MEANING_REVIEW';
+  if(name==='EXECUTABLE_KIND')return 'NONE';
   if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';
   if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';
   if(/SOURCE_TYPE/.test(name))return 'OFFICIAL_STANDARD';
