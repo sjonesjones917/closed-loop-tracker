@@ -1,40 +1,171 @@
-name: Deploy application
+name: Verify and deploy the single reliability app
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+  statuses: write
+
 concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build and verify the retained project
+        run: node build-test-project.mjs
+
+      - name: Syntax and static architecture checks
+        shell: bash
         run: |
           set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+          while IFS= read -r file; do
             node --check "$file"
-          done
+          done < <(find . -maxdepth 1 -type f \( -name '*.js' -o -name '*.mjs' \) -printf '%f\n' | sort)
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name pages.yml -print -quit)"
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+          ! grep -REi "human-project/31|Stage 31|Operation 31" --include='*.js' --include='*.html' --include='TEST_PROJECT.json' .
+          node - <<'NODE'
+          const fs=require('fs');
+          const html=fs.readFileSync('index.html','utf8');
+          const expected=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
+          const src=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
+          if(src.length!==expected.length)throw new Error(`Expected ${expected.length} direct runtime scripts; found ${src.length}`);
+          const tokens=new Set();
+          expected.forEach((file,index)=>{
+            if(src[index]?.split('?')[0]!==file)throw new Error(`Wrong runtime order at ${index}: expected ${file}, got ${src[index]}`);
+            if(src.filter(value=>value.split('?')[0]===file).length!==1)throw new Error(`${file} is not loaded exactly once`);
+            const token=new URLSearchParams(src[index].split('?')[1]||'').get('v');
+            if(!token)throw new Error(`${file} lacks the shared build token`);
+            tokens.add(token);
+          });
+          if(tokens.size!==1)throw new Error('Runtime scripts use mixed build tokens');
+          const token=[...tokens][0];
+          const runtime=fs.readFileSync('test-runtime.js','utf8');
+          if(!runtime.includes(`test-worker.js?v=${token}`))throw new Error('Worker URL does not use the runtime build token');
+          NODE
+
+      - name: Verify schemas, ownership, migration, Stage 01, and Stage 04
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+
+      - name: Verify Test IR validation, security, limits, and deterministic execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-hash.mjs
+
+      - name: Verify ingestion, workflow gates, and the complete lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-semantic-invariant.mjs
+          node verify-project-lifecycle.mjs
+
+      - name: Verify prompt semantics, context isolation, and all stage instructions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+
+      - name: Verify definition-of-done reductions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+
+      - name: Exercise the local operator path in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          run_browser_verifier() {
+            local script="$1"
+            local log
+            for attempt in 1 2 3; do
+              log="/tmp/${script}.${attempt}.log"
+              if PAGE_URL=http://127.0.0.1:4173/ node "$script" >"$log" 2>&1; then
+                cat "$log"
+                return 0
+              fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
+                return 1
+              fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-mobile-stage-action.mjs
+          run_browser_verifier verify-human-stage-walkthrough.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+
   deploy:
+    name: deploy
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build static application
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Rebuild the exact tested static application
+        shell: bash
         run: |
+          set -euo pipefail
+          node build-test-project.mjs
           rm -rf _site
           mkdir _site
           cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
@@ -45,3 +176,123 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live:
+    name: verify-live
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Rebuild local comparison bytes
+        run: node build-test-project.mjs
+      - name: Verify exact deployed bytes
+        run: node verify-live.mjs
+      - name: Exercise the deployed operator path in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          run_browser_verifier() {
+            local script="$1"
+            local log
+            for attempt in 1 2 3; do
+              log="/tmp/deployed-${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then
+                cat "$log"
+                return 0
+              fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
+                return 1
+              fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+
+  publish-status:
+    name: publish-status
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Publish the machine acceptance artifact
+        shell: bash
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
+        run: |
+          set -euo pipefail
+          test "$TEST_RESULT" = success
+          test "$DEPLOY_RESULT" = success
+          test "$LIVE_RESULT" = success
+          node verify-v3-definition-of-done.mjs > /tmp/v3-definition.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const proofText=fs.readFileSync('/tmp/v3-definition.json','utf8').trim();
+          const proof=proofText?JSON.parse(proofText):{};
+          const report={
+            schema:'closed-loop-acceptance/3',
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            exactStageCount:30,
+            testResult:process.env.TEST_RESULT,
+            deployResult:process.env.DEPLOY_RESULT,
+            liveResult:process.env.LIVE_RESULT,
+            deployedByteIdentity:true,
+            deployedBrowserAcceptance:true,
+            proof
+          };
+          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: closed-loop-acceptance.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish exact workflow status
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          LIVE_RESULT: ${{ needs.verify-live.result }}
+        run: |
+          set -euo pipefail
+          if [ "$TEST_RESULT" = success ] && [ "$DEPLOY_RESULT" = success ] && [ "$LIVE_RESULT" = success ]; then
+            STATE=success
+            DESCRIPTION='Source, browser, deployment-byte, and deployed-browser proofs passed'
+          else
+            STATE=failure
+            DESCRIPTION="Verification failed: test=$TEST_RESULT deploy=$DEPLOY_RESULT live=$LIVE_RESULT"
+          fi
+          test "$(printf '%s' "$DESCRIPTION" | wc -c)" -le 140
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data "{\"state\":\"$STATE\",\"context\":\"closed-loop-live-verification\",\"description\":\"$DESCRIPTION\",\"target_url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+          test "$STATE" = success
