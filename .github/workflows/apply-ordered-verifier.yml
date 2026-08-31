@@ -1,4 +1,4 @@
-name: Apply ordered permanent verifier repair
+name: Export repair branch source
 
 on:
   push:
@@ -6,39 +6,25 @@ on:
       - fix/complete-closed-loop-spec-20260831
     paths:
       - .github/workflows/apply-ordered-verifier.yml
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply:
-    if: github.actor != 'github-actions[bot]'
+  export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/complete-closed-loop-spec-20260831
-      - uses: actions/setup-node@v4
+      - name: Preserve the exact checked-out source
+        run: |
+          set -euo pipefail
+          zip -qr repair-branch-source.zip . -x '.git/*' 'repair-branch-source.zip'
+      - uses: actions/upload-artifact@v4
         with:
-          node-version: '22'
-      - name: Make verify.mjs honor the ordered workflow
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -c "import base64;exec(base64.b64decode('ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgndmVyaWZ5Lm1qcycpCnM9cC5yZWFkX3RleHQoKQpzdGFydD1zLmZpbmQoJ2NvbnN0IGdlbmVyYXRlZD1bXTsnKQplbmQ9cy5maW5kKCdcblxuY2xhc3MgTWVtb3J5U3RvcmFnZScsc3RhcnQpCmlmIHN0YXJ0PDAgb3IgZW5kPDA6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCd2ZXJpZnkubWpzIHByb21wdC1maXh0dXJlIGJsb2NrIHdhcyBub3QgZm91bmQnKQpyZXBsYWNlbWVudD1yJycnZnVuY3Rpb24gcHJlcGFyZVByb21wdFN0YWdlKHAsdGFyZ2V0U3RhZ2UpewogIE9iamVjdC5hc3NpZ24ocC5qb2IsewogICAgQ1VSUkVOVF9TT1VSQ0VfU0VUX1ZFUlNJT046J1NPVVJDRS1TRVQtdjAwMScsCiAgICBDVVJSRU5UX1JFUVVJUkVNRU5UU19WRVJTSU9OOidSRVFVSVJFTUVOVFMtdjAwMScsCiAgICBDVVJSRU5UX1RFU1RfU1VJVEVfVkVSU0lPTjonVEVTVC1TVUlURS12MDAxJywKICAgIENVUlJFTlRfSU5TVFJVQ1RJT05fVkVSU0lPTjonSU5TVFJVQ1RJT04tdjAwMScsCiAgICBDVVJSRU5UX0lURVJBVElPTjonSVRFUkFUSU9OLTAwMDAwMScsCiAgICBDVVJSRU5UX0JBU0VMSU5FX0lEOidCQVNFTElORS0wMDAwMDEnLAogICAgQ1VSUkVOVF9QUk9EVUNUX0lEOidQUk9EVUNULTAwMDAwMScKICB9KTsKICBpZih0YXJnZXRTdGFnZTw9MSlyZXR1cm4gcDsKICBjb25zdCBpbnRha2VSZWNvcmQ9cHJvbXB0cy5idWlsZFByb21wdFJlY29yZCgxLHAsc3ludGhldGljUHJvbXB0T3B0aW9ucygxLHApKTsKICBjb25zdCBpbnRha2U9aW50YWtlUmVjb3JkLmNvbnRleHRNYW5pZmVzdC5pbnRha2VDb3ZlcmFnZU1hbmlmZXN0OwogIHAuc3RhZ2VzWzFdLmFnZW50RGF0YT17CiAgICBFWEFDVF9ERUxJVkVSQUJMRV9SRVFVRVNURUQ6J0NvbXBsZXRlIGNvbnRyb2xsZWQgdmVyaWZpY2F0aW9uIGRlbGl2ZXJhYmxlLicsCiAgICBBU1NVTVBUSU9OUzonTk9ORScsCiAgICBVTktOT1dOX0lORk9STUFUSU9OOidOT05FJywKICAgIElOUFVUX1NFVF9DT05URU5UUzpKU09OLnN0cmluZ2lmeSh7CiAgICAgIHNjaGVtYTonY2xvc2VkLWxvb3Atc3RhZ2UwMS1jYXB0dXJlLzEnLAogICAgICBpbnB1dFZlcnNpb246aW50YWtlLmlucHV0VmVyc2lvbiwKICAgICAgbWFuaWZlc3RTaGEyNTY6aW50YWtlLm1hbmlmZXN0U2hhMjU2LAogICAgICB1bml0czppbnRha2UudW5pdHMubWFwKCh1LGkpPT4oewogICAgICAgIHNvdXJjZVVuaXRJZDp1LnVuaXRJZCwKICAgICAgICBzb3VyY2VSYXdWYWx1ZVNoYTI1Njp1LnJhd1ZhbHVlU2hhMjU2LAogICAgICAgIGRpc3Bvc2l0aW9uOidpbmNvcnBvcmF0ZWQgaW50byB0aGUgam9iIGRlZmluaXRpb24nLAogICAgICAgIHJlYXNvbjonQ2FwdHVyZWQgb25jZSBmb3IgdGhlIG9yZGVyZWQgcHJvbXB0IGZpeHR1cmUuJywKICAgICAgICBleHRyYWN0ZWRTdGF0ZW1lbnRzOlt7c3RhdGVtZW50S2V5OidQUk9NUFQtJytTdHJpbmcoaSsxKSx0ZXh0OnUucmF3VmFsdWVUZXh0fHwoJ0NhcHR1cmVkICcrdS5sYWJlbCksc3RhdGVtZW50Q2xhc3M6J0ZBQ1QnfV0KICAgICAgfSkpCiAgICB9KQogIH07CiAgcC5zdGFnZXNbMV0uc3RhdHVzPSdDT01QTEVURSc7CiAgcC5zdGFnZXNbMV0uZ2F0ZT17Y29tcGxldGU6dHJ1ZSxibG9ja2VkOmZhbHNlLHJlYXNvbnM6W119OwogIGZvcihsZXQgcHJpb3I9Mjtwcmlvcjx0YXJnZXRTdGFnZTtwcmlvcisrKXsKICAgIGlmKHByaW9yPT09MilwLnN0YWdlc1syXS5hZ2VudERhdGEuU09VUkNFX0FQUExJQ0FCSUxJVFlfREVURVJNSU5BVElPTj0nTk9fQVBQTElDQUJMRV9FWFRFUk5BTF9TT1VSQ0UnOwogICAgaWYocHJpb3I9PT0zKU9iamVjdC5hc3NpZ24ocC5zdGFnZXNbM10uYWdlbnREYXRhLHsKICAgICAgQUxMX0tOT1dOX0NPTlRST0xMSU5HX1NPVVJDRVNfRVhBTUlORUQ6dHJ1ZSwKICAgICAgU0VDT05EX0NPTkZMSUNUX0FORF9FWENFUFRJT05fUEFTU19DT01QTEVURUQ6dHJ1ZSwKICAgICAgTkVXX01BVEVSSUFMX0NBVEVHT1JZX0ZPVU5EX0lOX0xBVEVTVF9QQVNTOmZhbHNlCiAgICB9KTsKICAgIHAuc3RhZ2VzW3ByaW9yXS5zdGF0dXM9J0NPTVBMRVRFJzsKICAgIHAuc3RhZ2VzW3ByaW9yXS5nYXRlPXtjb21wbGV0ZTp0cnVlLGJsb2NrZWQ6ZmFsc2UscmVhc29uczpbXX07CiAgfQogIHJldHVybiBwOwp9CmNvbnN0IGdlbmVyYXRlZD1bXTsKZm9yKGxldCBzdGFnZT0xO3N0YWdlPD0zMDtzdGFnZSsrKXsKICBjb25zdCBwPXByZXBhcmVQcm9tcHRTdGFnZShibGFuayhgSk9CLVBST01QVC0ke3N0YWdlfWApLHN0YWdlKTsKICBjb25zdCByZWNvcmQ9cHJvbXB0cy5idWlsZFByb21wdFJlY29yZChzdGFnZSxwLHN5bnRoZXRpY1Byb21wdE9wdGlvbnMoc3RhZ2UscCkpOwogIGdlbmVyYXRlZC5wdXNoKHJlY29yZC5wcm9tcHQpOwogIGZvcihjb25zdCB0b2tlbiBvZiBbYEpPQl9JRDogJHtwLmpvYi5KT0JfSUR9YCwnUFJPSkVDVC1TQ09QRSBCT1VOREFS...TRUNCATED...'))"
-          node --check verify.mjs
-          node build-test-project.mjs
-          node verify.mjs
-          node verify-stage01-conversation-first.mjs
-          node verify-human-stage-walkthrough.mjs
-          node verify-all-stage-prompts.mjs
-          node verify-stage-prompts-complete.mjs
-      - name: Commit ordered verifier
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verify.mjs
-          git commit -m 'Run permanent prompt verification in workflow order'
-          git push origin HEAD:fix/complete-closed-loop-spec-20260831
+          name: repair-branch-source-${{ github.sha }}
+          path: repair-branch-source.zip
+          if-no-files-found: error
+          retention-days: 1
