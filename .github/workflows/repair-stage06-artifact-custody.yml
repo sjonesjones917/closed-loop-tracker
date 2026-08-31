@@ -1,0 +1,38 @@
+name: Repair Stage 06 artifact custody
+on:
+  push:
+    branches: [fix/monotonic-zero-loss-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded correction
+        run: node repair-stage06-artifact-custody.mjs
+      - name: Prove regression and affected routing
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node verify-complete.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+      - name: Commit correction and remove repair machinery
+        run: |
+          set -euo pipefail
+          rm -f repair-stage06-artifact-custody.mjs .github/workflows/repair-stage06-artifact-custody.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js repair-stage06-artifact-custody.mjs .github/workflows/repair-stage06-artifact-custody.yml
+          git diff --cached --check
+          git commit -m "Fail Stage 06 closed on lost bound artifact bytes"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
