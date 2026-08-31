@@ -435,12 +435,10 @@ console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationT
 {
   const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
   if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
-  const def=schema.RECORD_SCHEMAS.tests,fields={};
-  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
-  fields.ARTIFACT_REQUIREMENTS='fixture.js';
+  const fields={...e.records.tests[0].fields,ARTIFACT_REQUIREMENTS:'fixture.js'};
   e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
   let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
-  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');
+  if(!prepared.validation.valid)throw new Error('Stage 06 rejected a declarative future artifact requirement before execution readiness: '+JSON.stringify(prepared.validation.issues));
   const sha='a'.repeat(64);
   e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
   e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
