@@ -1,0 +1,70 @@
+name: Apply final gate closure
+on:
+  push:
+    branches: [fix/final-gate-closure-20260830]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/final-gate-closure-20260830
+      - name: Repair workflow engine placement and gate closure
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path=Path('workflow-engine.js')
+          s=path.read_text()
+          gate_start=s.index('function gate(stage,project){')
+          intake=s.index('const INTAKE_ACCOUNTING_DISPOSITIONS')
+          gate=s[gate_start:intake]
+
+          m2021=re.search(r"(case 20:\{const confirmation=.*?break;\}case 21:\{const product=.*?break;\})case 22:\{",gate,re.S)
+          if not m2021:
+              raise SystemExit('misplaced Stage 20/21 derivation block not found')
+          block2021=m2021.group(1)
+          gate=gate[:m2021.start()]+"case 22:{"+gate[m2021.end():]
+
+          m26=re.search(r"(case 26:\{const process=.*?break;\})case 27:\{",gate,re.S)
+          if not m26:
+              raise SystemExit('misplaced Stage 26 derivation block not found')
+          block26=m26.group(1)
+          gate=gate[:m26.start()]+"case 27:{"+gate[m26.end():]
+
+          s=s[:gate_start]+gate+s[intake:]
+          derive_start=s.index('function deriveStageData(project,stage)')
+          derive_end=s.index('function recalculate(project)',derive_start)
+          derive=s[derive_start:derive_end]
+          if 'BASELINE_APPROVAL_DATE' not in derive:
+              derive=derive.replace('case 22:{',block2021+'case 22:{',1)
+          if "REVIEW_VERSION:'RECONCILIATION-'" not in derive:
+              derive=derive.replace('case 27:',block26+'case 27:',1)
+          s=s[:derive_start]+derive+s[derive_end:]
+
+          anchor="  if(stage===9)for(const r of recordsForCurrentScope(project,'preflightRecords'))"
+          if anchor not in s:
+              raise SystemExit('Stage 09 adjudication anchor not found')
+          stage7_extra="""  if(stage===7){for(const mutation of recordsForCurrentScope(project,'failureTests')){const id=recordId(mutation,'failureTests'),reqId=String(recordValue(mutation,'REQ_ID')||mutation.relationships?.REQ_ID||''),evidence=evaluateEvidenceContract(null,mutation,null,project),plans=testExecutionPlan(project).filter(item=>String(item.requirementId||'')===reqId),capable=plans.some(item=>item.operatorAction!=='BLOCKED'&&item.executionRoute!=='BLOCKED'&&item.capabilityReady!==false);if(!evidence.sufficient)add(evidence.reasons.map(reason=>id+': '+reason));if(!capable)add([id+': no capable current execution route is established for the mutated requirement.']);if(adjudicationEmpty(recordValue(mutation,'FIXTURE')))add([id+': actual failure fixture is not identifiable.']);if(adjudicationEmpty(recordValue(mutation,'EXPECTED_REJECTION')))add([id+': expected rejection is missing.']);if(adjudicationEmpty(recordValue(mutation,'ACTUAL_RESULT')))add([id+': actual execution result is missing.']);}}\n"""
+          if 'no capable current execution route is established for the mutated requirement' not in s:
+              s=s.replace(anchor,stage7_extra+anchor,1)
+
+          anchor26="  if(stage>=27&&releaseMetrics(project).determination==='ACCEPTED'&&detectCurrentContradictions(project).length)add(['Release cannot be ACCEPTED while a adjudication contradiction exists.']);"
+          if anchor26 not in s:
+              raise SystemExit('release contradiction anchor not found')
+          extra="""  if(stage===26){const process=recordsForCurrentScope(project,'processAudits'),product=recordsForCurrentScope(project,'productAudits'),contradictions=detectCurrentContradictions(project);if(process.length!==1)add([`Exactly one current process audit is required; found ${process.length}.`]);if(product.length!==1)add([`Exactly one current product audit is required; found ${product.length}.`]);if(openBlockers(project,26).length)add(['Stage 26 has unresolved reconciliation blockers.']);if(contradictions.length)add(['Stage 26 cannot reconcile while current contradictions remain.']);}\n  if(stage===30){const baseline=recordsForCurrentScope(project,'baselines').at(-1),baselineTime=Date.parse(String(baseline?.createdAt||baseline?.deviceTimestamp||'')),active=activeRegressions(project);if(!baseline||!Number.isFinite(baselineTime))add(['Stage 30 requires the current approved baseline identity and approval time.']);for(const reg of active){const id=recordId(reg,'regressions'),allExec=records(project,'regressionExecutions').filter(e=>String(recordValue(e,'REG_ID')||e.relationships?.REG_ID||'')===id),pre=allExec.filter(e=>upper(recordValue(e,'PHASE'))==='PRE_CORRECTION'&&effectiveRegressionDetermination(project,e).determination==='SATISFIED'),post=allExec.filter(e=>upper(recordValue(e,'PHASE'))!=='PRE_CORRECTION').filter(e=>{const t=Date.parse(String(e.deviceTimestamp||e.createdAt||recordValue(e,'ENDED_AT_DEVICE_TIME')||''));return Number.isFinite(t)&&Number.isFinite(baselineTime)&&t<=baselineTime;}).sort((a,b)=>Date.parse(String(a.deviceTimestamp||a.createdAt||recordValue(a,'ENDED_AT_DEVICE_TIME')||''))-Date.parse(String(b.deviceTimestamp||b.createdAt||recordValue(b,'ENDED_AT_DEVICE_TIME')||'')));if(!pre.length)add([`Permanent regression ${id} lacks preserved pre-correction failure reproduction.`]);const latest=post.at(-1);if(!latest||effectiveRegressionDetermination(project,latest).determination!=='SATISFIED')add([`Permanent regression ${id} lacks a successful latest applicable execution before baseline approval.`]);}}\n"""
+          if 'Stage 30 requires the current approved baseline identity and approval time.' not in s:
+              s=s.replace(anchor26,extra+anchor26,1)
+
+          path.write_text(s)
+          PY
+          rm -f .github/workflows/apply-final-gate-closure.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workflow-engine.js .github/workflows/apply-final-gate-closure.yml
+          git commit -m "Close remaining stage gate gaps"
+          git push origin HEAD:fix/final-gate-closure-20260830
