@@ -1,3 +1,4 @@
+# consolidated repair trigger
 name: Final consolidated reliability repair
 
 on:
@@ -26,7 +27,6 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          # Deterministic /2 -> /3 migration while preserving the imported source schema in audit evidence.
           p=Path('workbook.js'); s=p.read_text()
           old="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
           new="""  const sourceSchema=String(p.schema||'');\n  if(!['human-project/30','closed-loop-project/2'].includes(sourceSchema))throw new Error(`Unsupported project schema: ${sourceSchema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
@@ -43,8 +43,6 @@ jobs:
               s=s.replace(a,b,1)
           p.write_text(s)
 
-          # A later-stage clarification changes the User Job Input version, but must not retroactively make
-          # unchanged upstream canonical records stale. Explicit stage/downstream invalidation controls that boundary.
           p=Path('workflow-engine.js'); s=p.read_text()
           old="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('inputVersion','sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}"
           new="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}"
@@ -53,7 +51,6 @@ jobs:
               s=s.replace(old,new,1)
           p.write_text(s)
 
-          # Align the schema contract fixture to the existing canonical manifest authorities rather than inventing aliases.
           p=Path('verify-spec3-contract.mjs'); s=p.read_text()
           old="""const p=core.createBlankState('CAPTURE');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested thing',EXPLICIT_USER_REQUIREMENTS:'Never ask me for the same project data twice',SUPPLIED_MATERIALS_INVENTORY:'intent.pdf',EXACT_DELIVERABLE_REQUESTED:'finished product',INPUT_SET_CONTENTS:'captured project requirements'});engine.ensureShape(p);engine.recalculate(p);const intake=engine.stage01IntakeManifest(p),ob=engine.stage04ObligationManifest(p);assert(intake.entries.length>=3);assert(ob.entries.some(x=>String(x.value).includes('Never ask me')));const pr=prompt.buildPromptRecord(4,p).prompt;for(const t of ['PROJECT DATA EXECUTION RULE — MANDATORY','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Never ask the human','Never ask me for the same project data twice'])assert(pr.includes(t),t);console.log(JSON.stringify({projectSchema:core.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,stageCount:core.STAGE_COUNT,intake: intake.entries.length,obligations:ob.entries.length,visualBaselineRestored:true,testRuntimeLoaded:true}));"""
           new="""const p=core.createBlankState('CAPTURE');Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested thing',EXPLICIT_USER_REQUIREMENTS:'Never ask me for the same project data twice',SUPPLIED_MATERIALS_INVENTORY:'intent.pdf'});engine.ensureShape(p);engine.recalculate(p);const intake=engine.intakeCoverageManifest(p);p.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED='finished product';p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'EXTRACTED_RELEVANT_INFORMATION',reason:'Captured for migration contract fixture.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});for(let stage=1;stage<=3;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';const ob=engine.obligationManifest(p);assert(intake.units.length>=3);assert(ob.items.some(x=>String(x.text).includes('Never ask me')));const pr=prompt.buildPromptRecord(4,p).prompt;for(const t of ['PROJECT DATA EXECUTION RULE — MANDATORY','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Never ask the human','Never ask me for the same project data twice'])assert(pr.includes(t),t);console.log(JSON.stringify({projectSchema:core.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,stageCount:core.STAGE_COUNT,intake:intake.units.length,obligations:ob.items.length,visualBaselineRestored:true,testRuntimeLoaded:true}));"""
@@ -62,7 +59,6 @@ jobs:
               s=s.replace(old,new,1)
           p.write_text(s)
 
-          # Publish acceptance values from the verifier outputs that actually ran, not substituted confidence constants.
           p=Path('.github/workflows/pages.yml'); s=p.read_text()
           start='            fieldOwnershipCoverage:1,\n'; end='            unrequestedUnrelatedVisualChanges:0,\n'
           if start in s:
@@ -112,7 +108,6 @@ jobs:
           PY
 
           rm -f .repair-contract-targets.txt .repair-migration-diagnostic.txt
-
           node --input-type=module - <<'NODE'
           import fs from 'node:fs';
           const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
