@@ -1,0 +1,60 @@
+name: Apply prompt execution contract v54
+on:
+  push:
+    branches:
+      - fix/prompt-execution-contract-v54
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch prompt engine without visual changes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('prompt-engine.js')
+          s = p.read_text()
+          s = s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/53';", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';", 1)
+          old = "HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE\\nAsk genuinely human-only questions conversationally in plain language before final JSON. Never ask the human to repeat information already present in authorized input, captured Stage 01 content, canonical context, or authorized research. humanInputRequests is only the structured fallback when a blocking human answer remains unavailable.\\n\\nROLE\\n"
+          lines = [
+            "HUMAN COLLABORATION MODE — APPLIES TO EVERY EXTERNAL-AGENT STAGE",
+            "CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION",
+            "- Treat this prompt as the complete instruction for performing the current stage, not merely as a schema for producing JSON. First do the stage work completely. The final JSON is only the machine handoff after that work is complete.",
+            "- Work with the human as a normal conversational agent. When a value, fact, preference, observation, authorization, or decision can only come from the human and is not already present in supplied current context, ask the human directly in concise plain language in this same conversation and wait for the answer. Do not emit final JSON in that turn.",
+            "- Continue the same conversation from each human answer until the current stage is semantically complete. Ask only genuinely useful human-only questions. Do not ask for facts already present in current canonical context, captured Stage 01 input, supplied material already inspected and captured, accepted prior-stage records, or information reliably obtainable through authorized research or tools.",
+            "- The human supplies project information once. Never ask the human to restate, retype, summarize, reconstruct, reformat, resend, reopen, or reattach information or material that the application has already captured and supplied in this prompt. Reuse the complete current canonical capture.",
+            "- If required upstream information is missing because the responsible earlier stage is incomplete, do not substitute a new human request at this stage. Remain blocked at the responsible upstream work unless the missing fact is genuinely new human-only authority that could not have been known earlier.",
+            "- If the human says an ask-now nonblocking item is unknown or deferred, preserve that fact exactly and continue when the stage can otherwise complete. Never silently invent an answer.",
+            "- humanInputRequests is not the normal conversation channel. It is only the strict final-response fallback for unresolved human input when the response contract requires it. Conversational questions are ordinary chat, not JSON.",
+            "- If a later stage discovers a genuinely new human-only fact or decision that could not have been known earlier, ask it at that later stage. Do not force the user to anticipate later discoveries.",
+            "- If this prompt lists files that you must receive, do not pretend you received or inspected them. Ask the human to attach or send the exact listed file only when those bytes are actually required in this external context and have not already been transferred there. Then inspect those bytes before proceeding.",
+            "- Do not confuse application-local custody with transfer to this conversation. A filename, artifact ID, metadata record, or hash is not the file bytes. Conversely, do not ask the human to reattach an original Stage 01 intent file merely because its materially relevant contents are already captured canonically for this stage.",
+            "- Do not prematurely produce a sparse or placeholder DATA_PROPOSAL merely because the JSON schema can be filled. Semantic completeness controls when final JSON is allowed.",
+            "- Before final JSON, re-read the complete current-stage instruction and authorized current context and verify that every required stage obligation has actually been performed, every required input has been used, every required item has been accounted for, and no prohibited later-stage work was performed.",
+            "- When the stage is ready, return exactly one complete strict JSON object and no surrounding prose. The human must never be asked to repair agent JSON. Use ASCII U+0022 double quotation marks, valid escaping, only contract-declared keys, and self-check that the final text parses as JSON before sending it.",
+            "",
+            "ROLE"
+          ]
+          new = "\\n".join(lines) + "\\n"
+          if old not in s:
+              raise SystemExit('universal collaboration marker not found')
+          s = s.replace(old, new, 1)
+          old_stage1 = "Perform complete human-authority intake only. Exhaust the human-authority intake before Stage 01 can complete: capture every materially relevant fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue present in current user input or accessible supplied materials."
+          new_stage1 = "Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise. Before final Stage 01 JSON, read the complete user request and all current Stage 01 context, determine the actual requested outcome and intended deliverable, identify every supplied material the human says exists, and conduct the necessary human conversation until the job definition is semantically complete. For every missing issue classify it as BLOCKING_NOW, ASK_NOW_NONBLOCKING, or LATER_RESOLVABLE. Ask every foreseeable genuinely human-only BLOCKING_NOW and ASK_NOW_NONBLOCKING issue in concise ordinary language before final JSON unless already answered; BLOCKING_NOW must be answered, ASK_NOW_NONBLOCKING may be answered unknown or deferred, and LATER_RESOLVABLE must not be asked when supplied material, authorized research/tools, or a later stage can establish it. Do not hide an unasked human-only issue in UNKNOWN_INFORMATION. If a named supplied material's bytes are actually required to define the objective, deliverable, constraints, acceptance conditions, or other human authority and those bytes have not been received in the external Stage 01 conversation, ask for that exact material and wait; do not proceed as though it was inspected. If its materially relevant contents are already captured and supplied by the application, reuse that capture and do not request the file again. Capture every materially relevant fact, requirement, constraint, decision, prohibition, requested output, acceptance condition, material reference, and unresolved human-only issue present in current user input or accessible supplied materials."
+          if old_stage1 not in s:
+              raise SystemExit('Stage 01 marker not found')
+          s = s.replace(old_stage1, new_stage1, 1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/apply-prompt-ux-restoration.yml .github/workflows/apply-prompt-contract-v54.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js .github/workflows
+          git commit -m "Restore complete prompt execution contract"
+          git push origin HEAD:${GITHUB_REF_NAME}
