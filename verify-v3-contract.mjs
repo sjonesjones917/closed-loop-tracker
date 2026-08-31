@@ -50,7 +50,7 @@ assert.match(store,/\bcreateExecutionPackage\b/,'project store must construct ex
 assert.match(store,/closed-loop-verification-package\/1/,'execution package must use the controlling package schema');
 assert.match(app,/RUN_APP_TESTS/,'primary UI must support native application tests');
 assert.match(app,/canonical state changed/i,'UI must report canonical-change certainty');
-assert.match(app,/current value/i,'proposal display must include current values');
+assert.match(app,/\bcurrentValue\b/,'proposal display must carry the current value for each proposed change');
 assert.match(prompt,/FILES YOU MUST RECEIVE/,'prompt handoff must name files to receive');
 assert.match(prompt,/FILES YOU MUST NOT RECEIVE/,'prompt handoff must name withheld material');
 assert.match(prompt,/FILES OR EVIDENCE YOU MUST RETURN/,'prompt handoff must name required returns');
@@ -88,7 +88,14 @@ console.log(JSON.stringify({
   responseSchema:'closed-loop-stage-response/3',
   testIrSchema:'closed-loop-test-spec/1',
   packageSchema:'closed-loop-verification-package/1',
-  stageCount:30,
-  runtimeOperations:requiredRuntimeOps.length,
-  centralizedLimits:requiredLimits.length
-}));
+  runtimeOps:requiredRuntimeOps.length,
+  runtimeLimits:requiredLimits.length,
+  workerIsolation:true,
+  singleRoutingAuthority:true,
+  structuredNextAction:true,
+  executionPackages:true,
+  exactRuntimeOrder:true,
+  sharedRuntimeBuildIdentity:true,
+  restrictiveWorkerCsp:true,
+  acceptanceReportContract:true
+},null,2));
