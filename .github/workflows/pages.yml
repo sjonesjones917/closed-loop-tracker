@@ -21,7 +21,7 @@ jobs:
       - name: Runtime syntax
         run: |
           set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js build-machine-acceptance.mjs; do node --check "$file"; done
       - name: Current v3 contract
         run: node verify-spec3-contract.mjs
       - name: V3 ownership and schema contract
@@ -104,6 +104,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: source-acceptance
       - name: Exact deployed bytes
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
@@ -117,7 +120,12 @@ jobs:
           node verify-browser-extra.mjs
           node verify-human-stage-walkthrough.mjs
           node verify-mobile-stage-action.mjs
+      - name: Build final machine acceptance
+        run: node build-machine-acceptance.mjs
       - uses: actions/upload-artifact@v4
         with:
-          name: deployed-acceptance
-          path: acceptance-live.json
+          name: final-acceptance
+          path: |
+            acceptance-source.json
+            acceptance-live.json
+            final-acceptance.json
