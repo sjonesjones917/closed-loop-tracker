@@ -39,12 +39,12 @@ jobs:
           node verify-test-runtime.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
-      - name: Stage 01 raw intake and semantic accounting
-        run: |
-          set -euo pipefail
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-zero-loss-accounting.mjs
+      - name: Stage 01 intake closure
+        run: node verify-stage01-intake-closure.mjs
+      - name: Stage 01 one-time intake
+        run: node verify-one-time-intent-intake.mjs
+      - name: Stage 01 and Stage 04 zero-loss accounting
+        run: node verify-zero-loss-accounting.mjs
       - name: Ingestion
         run: node verify-ingestion.mjs
       - name: Workflow gates and semantic evidence
