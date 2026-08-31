@@ -21,6 +21,7 @@ jobs:
       - run: |
           node --check workbook.js
           node --check workflow-engine.js
+          node --check prompt-engine.js
           node --check verify-spec3-contract.mjs
           node verify-spec3-contract.mjs
           node verify-ingestion.mjs
@@ -30,6 +31,6 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .repair-final.py .github/workflows/repair-final.yml
-          git add workbook.js workflow-engine.js verify-spec3-contract.mjs .github/workflows/pages.yml
-          git commit -m 'Correct migration clarification scope and acceptance proof'
+          git add workbook.js workflow-engine.js prompt-engine.js verify-spec3-contract.mjs .github/workflows/pages.yml
+          git commit -m 'Correct migration Stage 01 accounting and acceptance proof'
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
