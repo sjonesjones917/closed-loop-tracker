@@ -22,11 +22,11 @@ jobs:
           const fs=require('fs');
           const path='verify-ingestion.mjs';
           let text=fs.readFileSync(path,'utf8');
-          const replacements=[
-            ["function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};", "function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  else if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};"],
-            ["const aggregationProject=project('JOB-AGGREGATION'),aggregationPrompt=prompts.buildPromptRecord(2,aggregationProject);", "const aggregationProject=project('JOB-AGGREGATION');aggregationProject.stages[1].status='COMPLETE';aggregationProject.stages[1].gate={complete:true,blocked:false,reasons:[]};const aggregationPrompt=prompts.buildPromptRecord(2,aggregationProject);"]
-          ];
-          for(const [from,to] of replacements){const count=text.split(from).length-1;if(count!==1)throw new Error(`Expected exactly one fixture target; found ${count}: ${from.slice(0,100)}`);text=text.replace(from,to);}
+          const from="function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};";
+          const to="function savePrompt(p,stage){\n  if(stage===4)prepareStage4Upstream(p);\n  else if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}\n  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};";
+          const count=text.split(from).length-1;
+          if(count!==1)throw new Error(`Expected exactly one savePrompt fixture target; found ${count}.`);
+          text=text.replace(from,to);
           fs.writeFileSync(path,text);
           NODE
           node --check verify-ingestion.mjs
