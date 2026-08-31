@@ -34,6 +34,7 @@ function project(jobId='JOB-INGESTION-TEST'){
 }
 function savePrompt(p,stage){
   if(stage===4)prepareStage4Upstream(p);
+  else if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}
   const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
   const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
   p.projectData.generatedPrompts.push(record);
