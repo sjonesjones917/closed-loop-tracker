@@ -41,6 +41,20 @@ jobs:
             node --check "$file"
           done
 
+      - name: Verify /3 migration, intake, accounting, runtime, and prompt invariants
+        run: |
+          set -euo pipefail
+          node verify-v3-migration.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-v3-definition-of-done.mjs
+
       - name: Use every visible application surface through Chromium
         run: |
           set -euo pipefail
