@@ -1,0 +1,50 @@
+name: Apply Stage 01 conversation restoration
+
+on:
+  push:
+    branches: [fix/complete-closed-loop-spec-20260831]
+    paths:
+      - .github/workflows/apply-stage01-conversation.yml
+      - .github/apply-stage01-conversation.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/complete-closed-loop-spec-20260831
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore conversation-first Stage 01 prompt behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/apply-stage01-conversation.py
+          node --check prompt-engine.js
+          node --check verify-stage01-conversation-first.mjs
+          node --check verify-live.mjs
+          node build-test-project.mjs
+          node verify-stage01-conversation-first.mjs
+          node verify-prompt-semantics.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+      - name: Commit the runtime repair and remove one-time scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm -f .github/workflows/apply-stage01-conversation.yml .github/apply-stage01-conversation.py
+          git rm -f .github/workflows/apply-verify-op01.yml .github/apply-verify-op01.py AUTHORIZED_OPERATION_01.txt
+          git add prompt-engine.js verify-stage01-conversation-first.mjs verify-live.mjs .github/workflows/pages.yml
+          git commit -m "Restore Stage 01 human conversation and required file intake"
+          git push origin HEAD:fix/complete-closed-loop-spec-20260831
