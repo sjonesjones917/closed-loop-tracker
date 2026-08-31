@@ -1,0 +1,29 @@
+name: Apply Stage 26 reconciliation closure
+on:
+  push:
+    branches:
+      - fix/complete-closed-loop-spec-20260831
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/complete-closed-loop-spec-20260831
+          fetch-depth: 0
+      - run: python3 .github/apply-reconcile.py
+      - run: |
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node --check app-core.js
+          node --check test-runtime.js
+      - run: |
+          rm .github/apply-reconcile.py .github/workflows/apply-reconcile.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js prompt-engine.js index.html app-core.js test-runtime.js .github/apply-reconcile.py .github/workflows/apply-reconcile.yml
+          git commit -m "Make Stage 26 reconciliation application-controlled"
+          git push origin HEAD:fix/complete-closed-loop-spec-20260831
