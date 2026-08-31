@@ -1,0 +1,24 @@
+name: Materialize exact branch source
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+      - name: Create exact source bundle
+        run: tar --exclude=.git --exclude=closed-loop-source.tgz -czf closed-loop-source.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-source
+          path: closed-loop-source.tgz
+          if-no-files-found: error
+          retention-days: 1
