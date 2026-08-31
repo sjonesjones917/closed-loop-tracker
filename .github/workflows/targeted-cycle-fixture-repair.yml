@@ -14,7 +14,7 @@ jobs:
           ref: fix/restore-full-acceptance-20260831
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Diagnose Stage 16 state after Stage 17 freeze
+      - name: Correct the earliest full-cycle runtime and authority failures
         shell: bash
         run: |
           python3 - <<'PY'
@@ -44,10 +44,6 @@ jobs:
               (
                 "data(17,{operation:'FREEZE',stageData:{NEW_FROZEN_VERSIONS:'CURRENT',OLD_CONVERSATIONS_CONTINUED:'FALSE'}});engine.freezeCandidate",
                 "engine.freezeCandidate"
-              ),
-              (
-                "purpose:'CORRECTED'});const iter17=",
-                "purpose:'CORRECTED'});console.log('STAGE16_AFTER_FREEZE '+JSON.stringify({status:p.stages[16].status,storedGate:p.stages[16].gate,liveGate:engine.gate(16,p),accepted:p.projectData.acceptedChanges.filter(c=>Number(c.stage)===16).map(c=>({id:c.changeId,status:c.status,invalidatedBy:c.invalidatedBy,scope:c.scope})),records:p.projectData.changes.filter(c=>Number(c.stage)===16).map(c=>({id:c.id,active:c.active,invalidatedBy:c.invalidatedBy,scope:c.scope}))}));const iter17="
               )
             ],
             'workflow-engine.js':[
@@ -58,6 +54,14 @@ jobs:
               (
                 "ACTUAL_MANDATORY_RECORDS:matrix.actual.length",
                 "ACTUAL_MANDATORY_RECORDS:matrix.verification.length"
+              ),
+              (
+                "case 12:{requireAccepted();const iteration=latestIteration(project,[10,17,19]);",
+                "case 12:{requireAccepted();const iteration=latestIteration(project,[10,11]);"
+              ),
+              (
+                "case 12:{const iteration=latestIteration(project,[10,17,19]),",
+                "case 12:{const iteration=latestIteration(project,[10,11]),"
               )
             ]
           }
@@ -80,5 +84,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-engine.js verify-full-cycle.mjs .github/workflows/targeted-cycle-fixture-repair.yml
-          git commit -m "Preserve application ownership through Stage 17 freeze"
+          git commit -m "Preserve initial verification gates during corrected iterations"
           git push origin HEAD:fix/restore-full-acceptance-20260831
