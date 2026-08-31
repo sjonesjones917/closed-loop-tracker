@@ -26,8 +26,8 @@ jobs:
           if old_aug not in s: raise SystemExit('procedure augmentation marker missing')
           s=s.replace(old_aug,new_aug,1)
           old_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,procedureAugmentation[stage]?`${text} ${procedureAugmentation[stage]}`:text])));"
-          universal="Project-relevant information supplied by the human is supplied once; never ask the human to repeat, retype, summarize, resend, reopen, or reattach it."
-          new_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));"
+          sentence='Project-relevant information supplied by the human is supplied once; never ask the human to repeat, retype, summarize, resend, reopen, or reattach it.'
+          new_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} "+sentence+"`])));"
           if old_proc not in s: raise SystemExit('procedures marker missing')
           s=s.replace(old_proc,new_proc,1)
           p.write_text(s)
@@ -61,5 +61,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add spec3-candidate-result.txt
-          git commit -m "Record prompt and Stage 6 candidate result" || true
+          git commit -m "Record corrected prompt and Stage 6 candidate result" || true
           git push origin HEAD:spec3-monotonic-20260831
