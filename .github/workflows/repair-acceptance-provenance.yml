@@ -1,0 +1,55 @@
+name: Repair acceptance provenance and immutable tagging
+
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-acceptance-provenance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bind machine acceptance to executed proof outputs
+        run: python3 .repair-acceptance-provenance.py
+      - name: Remove one-shot files before final-tree proof
+        run: |
+          rm -f .repair-acceptance-provenance.py
+          rm -f .github/workflows/repair-acceptance-provenance.yml
+      - name: Prove the acceptance-layer correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F "const stage01RawInputAccounting=Number(Boolean(" .github/workflows/pages.yml
+          grep -F "stagesCompleted:Number(fullCycle.stagesCompleted||0)" .github/workflows/pages.yml
+          grep -F "Project lifecycle and application-owned controls" .github/workflows/pages.yml
+          ! grep -F "stage01RawInputAccounting:1" .github/workflows/pages.yml
+          ! grep -F "git tag -f" .github/workflows/pages.yml
+          ! grep -F "git push --force" .github/workflows/pages.yml
+          node verify-project-lifecycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+      - name: Commit accepted proof correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pages.yml .github/workflows/repair-acceptance-provenance.yml .repair-acceptance-provenance.py
+          git diff --cached --check
+          git commit -m "Bind machine acceptance to executed proof"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
