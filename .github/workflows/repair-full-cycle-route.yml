@@ -1,4 +1,4 @@
-name: Repair full-cycle Stage 07 route fixture
+name: Repair full-cycle independent-review fixtures
 on:
   push:
     branches: [fix/monotonic-zero-loss-20260831]
@@ -17,18 +17,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Correct full-cycle execution route fixture
+      - name: Correct full-cycle execution route and reviewer-context fixtures
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify-full-cycle.mjs'); text=p.read_text(encoding='utf-8')
-          old="overrides:{TEST_TYPE:'MEANING',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.'"
-          new="overrides:{TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_REVIEW',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.'"
-          if new not in text:
+          repairs=[
+            ("overrides:{TEST_TYPE:'MEANING',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.'",
+             "overrides:{TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_REVIEW',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.'"),
+            ("data(9,{records:{preflightRecords:[recordProposal(schema,'preflightRecords'",
+             "const preflightContext=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'PREFLIGHT-REVIEW-CONTEXT-1',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'}),preflightContextId=engine.recordId(preflightContext,'freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:[recordProposal(schema,'preflightRecords'")
+          ]
+          for old,new in repairs:
+              if new in text: continue
               count=text.count(old)
-              if count != 1: raise SystemExit(f'Expected exactly one meaning-test fixture target, found {count}')
+              if count != 1: raise SystemExit(f'Expected exactly one fixture target, found {count}: {old[:70]}')
               text=text.replace(old,new,1)
           p.write_text(text,encoding='utf-8')
           PY
@@ -47,5 +52,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add verify-full-cycle.mjs .github/workflows/repair-full-cycle-route.yml
           git diff --cached --check
-          git commit -m "Route full-cycle meaning verification independently"
+          git commit -m "Preserve full-cycle independent-review contracts"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
