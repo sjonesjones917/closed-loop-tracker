@@ -7,26 +7,15 @@
   "noGenericFallback": true,
   "visualsPreserved": true
 }
-node:internal/deps/undici/undici:15157
-      Error.captureStackTrace(err);
-            ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17
+async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
+                                                                                                                                ^
 
-TypeError: fetch failed
-    at node:internal/deps/undici/undici:15157:13
-    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async getJson (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:12:42)
+Error: Waiting: document.querySelector('#delete-project')?.disabled===false
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17:129
     at async poll (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:13:110)
-    at async main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:27:2)
-    at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:104:5 {
-  [cause]: Error: connect ECONNREFUSED 127.0.0.1:9599
-      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1638:16) {
-    errno: -111,
-    code: 'ECONNREFUSED',
-    syscall: 'connect',
-    address: '127.0.0.1',
-    port: 9599
-  }
-}
+    at async main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:97:63)
+    at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:104:5
 
 Node.js v22.23.2
 
