@@ -39,10 +39,14 @@ jobs:
           e.write_text(w)
 
           sc=Path('workflow-schema.js'); ss=sc.read_text()
-          old_reads="4:['research','candidateRequirements','sources','evidenceRecords']"
-          new_reads="4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
-          if old_reads not in ss: raise SystemExit('Stage 04 read contract marker missing')
-          sc.write_text(ss.replace(old_reads,new_reads,1))
+          old4="4:['research','candidateRequirements','sources','evidenceRecords']"
+          new4="4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
+          if old4 not in ss: raise SystemExit('Stage 04 read contract marker missing')
+          ss=ss.replace(old4,new4,1)
+          old5="5:['requirements','research','sources','sourceConflicts','evidenceRecords']"
+          new5="5:['requirements','research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
+          if old5 not in ss: raise SystemExit('Stage 05 read contract marker missing')
+          sc.write_text(ss.replace(old5,new5,1))
 
           h=Path('index.html'); x=h.read_text()
           old_css='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
