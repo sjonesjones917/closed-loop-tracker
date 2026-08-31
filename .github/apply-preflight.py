@@ -49,9 +49,9 @@ p.write_text(s)
 
 q=Path('prompt-engine.js')
 t=q.read_text()
-marker="if(stage===6)"
-if marker not in t: raise SystemExit('Stage 6 context marker missing')
-t=t.replace(marker,"if(stage===9)parts.push(`APPLICATION PREFLIGHT COVERAGE MANIFEST — REVIEW EVERY UNIT EXACTLY ONCE\\n${show(workflow.preflightCoverageManifest(state))}`);"+marker,1)
+marker=";const humanInspectionEvidence=workflow.recordsForCurrentScope(state,'evidenceRecords')"
+if marker not in t: raise SystemExit('generic context insertion marker missing')
+t=t.replace(marker,";if(stage===9)parts.push(`APPLICATION PREFLIGHT COVERAGE MANIFEST — REVIEW EVERY UNIT EXACTLY ONCE\\n${show(workflow.preflightCoverageManifest(state))}`)"+marker,1)
 marker2="${stage===4?`STAGE 04 ACCOUNTING OUTPUT"
 if marker2 not in t: raise SystemExit('Stage 4 output marker missing')
 insert2="${stage===9?`STAGE 09 PREFLIGHT COVERAGE OUTPUT\\nReview every unitId in APPLICATION PREFLIGHT COVERAGE MANIFEST exactly once. Each preflightRecords record must set CLAUSE to the exact application unitId and INSTRUCTION_ID to the current manifest instructionId. Do not combine multiple unitIds into one review, omit a unit, invent a unit, or substitute free-form clause text for the unitId. Use the manifest text/path as the content being reviewed. If any unit is defective, report the material finding and exact correction; a corrected instruction requires a new instruction version and a completely new preflight manifest/review.\\n\\n`:''}"
