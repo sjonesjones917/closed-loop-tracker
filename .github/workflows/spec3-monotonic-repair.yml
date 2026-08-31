@@ -33,10 +33,20 @@ jobs:
           if old_rule not in s: raise SystemExit('common no-repeat rule marker missing')
           s=s.replace(old_rule,new_rule,1)
 
+          old_stage1="if(stage===1)lines.push('Exhaust human-authority intake before Stage 01 completion: every application-enumerated input unit must be classified exactly once, every materially relevant human-authority statement must be preserved, and every foreseeable genuinely human-only BLOCKING_NOW or ASK_NOW_NONBLOCKING issue must be asked before final Stage 01 JSON unless already answered. Never silently move an unasked human-only issue into UNKNOWN_INFORMATION.');"
+          new_stage1="if(stage===1)lines.push('Exhaust human-authority intake before Stage 01 completion: every application-enumerated input unit must be classified exactly once and every inputId exactly once, every materially relevant human-authority statement must be preserved, and every foreseeable genuinely human-only BLOCKING_NOW or ASK_NOW_NONBLOCKING issue must be asked before final Stage 01 JSON unless already answered. Never silently move an unasked human-only issue into UNKNOWN_INFORMATION.');"
+          if old_stage1 not in s: raise SystemExit('Stage 01 rule marker missing')
+          s=s.replace(old_stage1,new_stage1,1)
+
           old_stage3="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category.');"
           new_stage3="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category; never ask the user to repeat available project facts, and never ask the user to reattach the original Stage 01 intent file solely to rediscover captured semantics.');"
           if old_stage3 not in s: raise SystemExit('Stage 03 rule marker missing')
           s=s.replace(old_stage3,new_stage3,1)
+
+          old_heading='HUMAN COLLABORATION MODE — APPLIES TO EVERY EXTERNAL-AGENT STAGE'
+          new_heading='HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE'
+          if old_heading not in s: raise SystemExit('human collaboration heading missing')
+          s=s.replace(old_heading,new_heading,1)
           p.write_text(s)
 
           e=Path('workflow-engine.js'); w=e.read_text()
@@ -55,7 +65,11 @@ jobs:
           old_fixture="  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);"
           new_fixture="  const p=project('JOB-BAD-REL'),stage=3; p.stages[2].status='COMPLETE'; p.stages[2].gate={complete:true,blocked:false,reasons:[]}; const pr=prompt(p,stage);"
           if old_fixture not in v: raise SystemExit('verify-complete Stage 3 fixture marker missing')
-          t.write_text(v.replace(old_fixture,new_fixture,1))
+          v=v.replace(old_fixture,new_fixture,1)
+          old_refine="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');"
+          new_refine="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE'); p.stages[1].status='COMPLETE'; p.stages[1].gate={complete:true,blocked:false,reasons:[]};"
+          if old_refine not in v: raise SystemExit('verify-complete refinement fixture marker missing')
+          t.write_text(v.replace(old_refine,new_refine,1))
           PY
       - name: Verify candidate
         shell: bash
