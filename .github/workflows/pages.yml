@@ -192,7 +192,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: Rebuild local comparison bytes
         run: node build-test-project.mjs
-      - name: Verify exact deployed bytes
+      - name: Verify exact deployed source identity
         run: node verify-live.mjs
       - name: Exercise the deployed operator path in Chromium
         shell: bash
@@ -243,11 +243,12 @@ jobs:
           test "$TEST_RESULT" = success
           test "$DEPLOY_RESULT" = success
           test "$LIVE_RESULT" = success
+          node verify-definition-of-done.mjs > /tmp/definition.json
           node verify-v3-definition-of-done.mjs > /tmp/v3-definition.json
           node - <<'NODE'
           const fs=require('fs');
-          const proofText=fs.readFileSync('/tmp/v3-definition.json','utf8').trim();
-          const proof=proofText?JSON.parse(proofText):{};
+          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
+          const v3=JSON.parse(fs.readFileSync('/tmp/v3-definition.json','utf8'));
           const report={
             schema:'closed-loop-acceptance/3',
             commit:process.env.GITHUB_SHA,
@@ -257,19 +258,41 @@ jobs:
             testIrSchema:'closed-loop-test-spec/1',
             verificationPackageSchema:'closed-loop-verification-package/1',
             exactStageCount:30,
+            fieldOwnershipCoverage:definition.fieldOwnershipCoverage,
+            applicationDerivationCoverage:definition.applicationDerivationCoverage,
+            typedRelationshipCoverage:definition.typedRelationshipCoverage,
+            stage01IntakeCoverage:v3.stage01IntakeCoverage,
+            stage04ObligationCoverage:v3.stage04ObligationCoverage,
+            mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage,
+            nativeExecutionCoverage:v3.nativeExecutionCoverage,
+            acceptedAgentValueExtractionCoverage:definition.acceptedAgentValueExtractionCoverage,
+            acceptedRelationshipProvenanceCoverage:definition.acceptedRelationshipProvenanceCoverage,
+            currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
+            exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
+            applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
+            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
+            releaseArtifactIdentityCoverage:definition.releaseArtifactIdentityCoverage,
+            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable,
+            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof,
+            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally,
+            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction,
             testResult:process.env.TEST_RESULT,
             deployResult:process.env.DEPLOY_RESULT,
             liveResult:process.env.LIVE_RESULT,
             deployedByteIdentity:true,
-            deployedBrowserAcceptance:true,
-            proof
+            liveBrowserVerification:true,
+            testedBrowserWidths:[320,393,'desktop'],
+            actualAndroidResult:'NOT_PERFORMED',
+            fullProductionMaturity:false,
+            definition,
+            v3
           };
-          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          fs.writeFileSync('final-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: closed-loop-acceptance-${{ github.sha }}
-          path: closed-loop-acceptance.json
+          name: final-acceptance-${{ github.sha }}
+          path: final-acceptance.json
           if-no-files-found: error
           retention-days: 90
       - name: Publish exact workflow status
