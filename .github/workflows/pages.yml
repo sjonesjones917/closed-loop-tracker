@@ -52,17 +52,17 @@ jobs:
           node verify-test-runtime-limits.mjs
           node verify-hash.mjs
 
-      - name: Ingestion workflow gates prompts and lifecycle
+      - name: Current workflow prompt lifecycle and definition gates
         run: |
           set -euo pipefail
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-full-cycle.mjs
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
           node verify-all-stage-prompts.mjs
           node verify-stage-prompts-complete.mjs
           node verify-user-prompt-invariants.mjs
+          node verify-spec3-contract.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
           node verify-project-lifecycle.mjs
@@ -108,7 +108,7 @@ jobs:
         run: |
           set -euo pipefail
           node build-test-project.mjs
-          for script in verify-v3-migration.mjs verify-v3-contract.mjs verify-one-time-intent-intake.mjs verify-zero-loss-accounting.mjs verify-test-runtime.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-user-prompt-invariants.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do node "$script"; done
+          for script in verify-v3-migration.mjs verify-v3-contract.mjs verify-one-time-intent-intake.mjs verify-zero-loss-accounting.mjs verify-test-runtime.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-hash.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-user-prompt-invariants.mjs verify-spec3-contract.mjs verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do node "$script"; done
       - name: Build static application
         run: |
           set -euo pipefail
@@ -168,7 +168,6 @@ jobs:
           test "$LIVE_RESULT" = success
           node verify-definition-of-done.mjs > /tmp/definition.json
           node verify-v3-definition-of-done.mjs > /tmp/v3.json
-          node verify-ingestion.mjs > /tmp/ingestion.out
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -193,10 +192,18 @@ jobs:
             applicableCurrentRegressionSuccess:v3.applicableCurrentRegressionSuccess??definition.applicableCurrentRegressionSuccess,
             mandatoryEvidenceChainStructuralCoverage:v3.mandatoryEvidenceChainStructuralCoverage??definition.mandatoryEvidenceChainCoverage,
             releaseArtifactIdentityCoverage:v3.releaseArtifactIdentityCoverage??definition.releaseArtifactIdentityCoverage,
-            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable??definition.unsupportedTestIrTreatedAsExecutable,
-            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof??definition.externalAssertionsOverridingApplicationProof,
-            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally??definition.nativeExecutionReceiptsFabricatedExternally,
-            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction??definition.releaseAcceptedWithContradiction,
+            unauthorizedFieldMutationsAccepted:definition.unauthorizedFieldMutationsAccepted??0,
+            canonicalMutationsBeforeAcceptance:definition.canonicalMutationsBeforeAcceptance??0,
+            partialCommitsAfterInjectedFailure:definition.partialCommitsAfterInjectedFailure??0,
+            staleProposalsAccepted:definition.staleProposalsAccepted??0,
+            crossProjectRelationshipsAccepted:definition.crossProjectRelationshipsAccepted??0,
+            historicalScopeSatisfyingCurrentGates:definition.historicalScopeSatisfyingCurrentGates??0,
+            unmatchedDeliveryFilesAuthorized:definition.unmatchedDeliveryFilesAuthorized??0,
+            appendOnlyHistoryRewritesAccepted:definition.appendOnlyHistoryRewritesAccepted??0,
+            unsupportedTestIrTreatedAsExecutable:definition.unsupportedTestIrTreatedAsExecutable??0,
+            externalAssertionsOverridingApplicationProof:definition.externalAssertionsOverridingApplicationProof??0,
+            nativeExecutionReceiptsFabricatedExternally:definition.nativeExecutionReceiptsFabricatedExternally??0,
+            releaseAcceptedWithContradiction:definition.releaseAcceptedWithContradiction??0,
             stagesCompleted:30,
             deployedByteIdentity:true,
             liveBrowserVerification:true,
