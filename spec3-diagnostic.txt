@@ -1,0 +1,89 @@
+=== node --check workbook.js ===
+exit=0
+=== node --check hash.js ===
+exit=0
+=== node --check workflow-schema.js ===
+exit=0
+=== node --check test-runtime.js ===
+exit=0
+=== node --check test-worker.js ===
+exit=0
+=== node --check workflow-engine.js ===
+exit=0
+=== node --check prompt-engine.js ===
+exit=0
+=== node --check response-ingestion.js ===
+exit=0
+=== node --check project-store.js ===
+exit=0
+=== node --check app-core.js ===
+exit=0
+=== verify-all-stage-prompts.mjs ===
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-all-stage-prompts.mjs:3
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+                                 ^
+
+Error: Stage 1/COMPLETE omitted universal no-repeat human collaboration contract.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-all-stage-prompts.mjs:3:34)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-all-stage-prompts.mjs:16:564
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+exit=1
+=== verify-stage-prompts-complete.mjs ===
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:54
+    for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
+                                                                                                                                                                                                                                                                                          ^
+
+Error: Stage 1 COMPLETE missing common prompt invariant: never ask the human to repeat, retype, summarize, resend, reopen, or reattach it
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:54:283
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+exit=1
+=== verify-one-time-intent-intake.mjs ===
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-one-time-intent-intake.mjs:12
+const assert=(value,message)=>{if(!value)throw new Error(message);};
+                                               ^
+
+Error: Stage 03 permits repeated project-data entry.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-one-time-intent-intake.mjs:12:48)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-one-time-intent-intake.mjs:125:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+exit=1
+=== verify-prompt-semantics.mjs ===
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:4
+const assert=(condition,message)=>{if(!condition)throw new Error(message);};
+                                                       ^
+
+Error: Prompt authority missing required behavior: APPLICATION OBLIGATION MANIFEST
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:4:56)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:39:3
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+exit=1
+=== verify-complete.mjs ===
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9
+const assert=(value,message)=>{if(!value)throw new Error(message);};
+                                               ^
+
+Error: Stage 06 did not fail closed after required artifact bytes became unavailable.
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:9:48)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:59:162
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+exit=1
