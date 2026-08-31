@@ -33,7 +33,12 @@ jobs:
           old="'every inputId exactly once'"
           new="'Every unitId in APPLICATION INTAKE MANIFEST must appear exactly once'"
           assert old in s
-          p.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          start=s.index('const requiredReads={')
+          end=s.index('};\nconst semantic=',start)+2
+          current_reads="const requiredReads={4:['research','candidateRequirements','sources','evidenceRecords'],5:['requirements','research','sources','sourceConflicts','evidenceRecords'],6:['requirements','requirementResolutions','artifacts'],7:['requirements','tests','artifacts','evidenceRecords'],8:['requirements','tests','failureTests','requirementResolutions','sources'],10:['instructions','preflightRecords','tests','failureTests','artifacts'],13:['verification','runs','requirements','tests'],14:['defects','comparisons','verification','requirements','tests','instructions','runs'],15:['defects','rootCauses','requirements','tests','artifacts','evidenceRecords'],16:['defects','rootCauses','regressions','regressionExecutions','requirements','instructions','tests','artifacts'],21:['baselines','instructions','artifacts','freshContexts'],23:['products','requirements','tests','sources','evidenceRecords'],24:['products','requirements','tests','regressions','regressionExecutions','evidenceRecords'],25:['products','artifacts','requirements'],26:['products','baselines','requirements','instructions','tests','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','defects','blockers','evidenceRecords'],27:['requirements','tests','products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressionExecutions','evidenceRecords'],29:['sources','requirements','instructions','instructionTraces','runs','products','baselines','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','regressionExecutions','releaseRecords','artifactIdentities','evidenceRecords'],30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines','evidenceRecords']};"
+          s=s[:start]+current_reads+s[end:]
+          p.write_text(s)
       - name: Verify migration and existing live path
         run: |
           set -euo pipefail
