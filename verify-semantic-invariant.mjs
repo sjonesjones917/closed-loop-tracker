@@ -62,11 +62,11 @@ const nakedVerification=record('verification',{REQ_ID:'REQ-1',RUN_ID:'RUN-X',TES
  assert(meaningEvidence.sufficient,'Complete evidence-backed meaning comparison did not repair semantic sufficiency');
 
  const humanTest=record('tests',{TEST_TYPE:'HUMAN_INSPECTION',EXECUTION_MODE:'HUMAN_INSPECTION',REQUIRED_CAPABILITY:'human observation',ARTIFACT_REQUIREMENTS:'NONE',PROCEDURE:'A human opens and inspects the representation.',EXPECTED_RESULT:'representation acceptable',EVIDENCE_TO_PRESERVE:'human-owned observation'});
- const agentOnlyHuman=record('verification',{EXACT_EVIDENCE:'An agent claims a human inspected it.'});
+ const agentOnlyHuman=record('verification',{EXACT_EVIDENCE:'An agent claims a human inspected it.',RUN_ID:'RUN-HUMAN-AGENT',CONTEXT_ID:'CTX-HUMAN-AGENT'});
  let humanEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:humanTest,result:agentOnlyHuman});
  assert(!humanEvidence.sufficient&&humanEvidence.requiredEvidenceClasses.includes('HUMAN_OBSERVATION'),'Agent assertion substituted for human-owned inspection evidence');
  p.projectData.evidenceRecords.push({id:'EVIDENCE-HUMAN',stage:25,active:true,scope:{...scope},fields:{EVIDENCE_ID:'EVIDENCE-HUMAN',KIND:'HUMAN_INSPECTION',AUTHORITY_TYPE:'HUMAN_OBSERVATION',DESCRIPTION:'Human-owned inspection record.',CONTENT:'The operator opened and inspected the representation.'}});
- const actualHuman=record('verification',{EXACT_EVIDENCE:'EVIDENCE-HUMAN'},{evidenceRefs:['EVIDENCE-HUMAN']});
+ const actualHuman=record('verification',{EXACT_EVIDENCE:'EVIDENCE-HUMAN',RUN_ID:'RUN-HUMAN-OBSERVED',CONTEXT_ID:'CTX-HUMAN-OBSERVED'},{evidenceRefs:['EVIDENCE-HUMAN']});
  humanEvidence=engine.evaluateEvidenceSufficiency(p,{requirement:req,test:humanTest,result:actualHuman});
  assert(humanEvidence.sufficient,'Human-owned observation did not repair human-inspection sufficiency');
 }
