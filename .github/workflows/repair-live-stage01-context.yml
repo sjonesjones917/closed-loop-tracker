@@ -46,6 +46,10 @@ jobs:
 
           p=Path('verify-all-stage-prompts.mjs')
           s=p.read_text()
+          old="for(let s=1;s<=30;s++){for(const op of schema.STAGE_CONTRACTS[s].operations){"
+          assert old in s
+          new="for(let s=1;s<=30;s++){if(s>1){state.stages[s-1].status='COMPLETE';state.stages[s-1].gate={complete:true};}for(const op of schema.STAGE_CONTRACTS[s].operations){"
+          s=s.replace(old,new,1)
           regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert(source.includes('contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>'),'Persisted prompt context selector omitted the active operation.');\n}\n"""
           if regression.strip() not in s:
               s += regression
