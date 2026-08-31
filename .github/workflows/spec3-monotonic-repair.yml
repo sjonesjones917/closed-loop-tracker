@@ -17,19 +17,26 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+
           p=Path('prompt-engine.js'); s=p.read_text()
           old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';"
           if old not in s: raise SystemExit('prompt version marker missing')
           s=s.replace(old,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/55';",1)
+
           old_aug="const procedureAugmentation=Object.freeze({\n  2:'Continue source discovery until no new applicable controlling or correctness-relevant external source category is found. Do not stop at the first plausible source or at an arbitrary source count; source count is a search target, never permission to omit stronger authority or invent weaker sources.',\n  5:'Resolve the current job requirement set exhaustively. After each semantic correction, repeat the defect review against the resulting current requirement set until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',"
-          new_aug="const procedureAugmentation=Object.freeze({\n  2:'Continue source discovery until no new applicable controlling or correctness-relevant external source category is found. Do not stop at the first plausible source or at an arbitrary source count; source count is a search target, never permission to omit stronger authority or invent weaker sources.',\n  4:'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST is the controlling application-owned form of the APPLICATION OBLIGATION MANIFEST.',\n  5:'Resolve the current job’s requirement set exhaustively. After each semantic correction, repeat the review against the resulting requirement set from the beginning until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',"
+          new_aug="const procedureAugmentation=Object.freeze({\n  2:'Continue source discovery until no new applicable controlling or correctness-relevant external source category is found. Do not stop at the first plausible source or at an arbitrary source count; source count is a search target, never permission to omit stronger authority or invent weaker sources.',\n  4:'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST is the controlling application-owned representation of the APPLICATION OBLIGATION MANIFEST.',\n  5:'Resolve the current job’s requirement set exhaustively. After each semantic correction, repeat the review against the resulting requirement set from the beginning until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',"
           if old_aug not in s: raise SystemExit('procedure augmentation marker missing')
           s=s.replace(old_aug,new_aug,1)
-          old_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,procedureAugmentation[stage]?`${text} ${procedureAugmentation[stage]}`:text])));"
-          sentence='Project-relevant information supplied by the human is supplied once; never ask the human to repeat, retype, summarize, resend, reopen, or reattach it.'
-          new_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} "+sentence+"`])));"
-          if old_proc not in s: raise SystemExit('procedures marker missing')
-          s=s.replace(old_proc,new_proc,1)
+
+          old_rule="'Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.'"
+          new_rule="'never ask the human to repeat, retype, summarize, resend, reopen, or reattach it when project-relevant information is already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.'"
+          if old_rule not in s: raise SystemExit('common no-repeat rule marker missing')
+          s=s.replace(old_rule,new_rule,1)
+
+          old_stage3="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category.');"
+          new_stage3="if(stage===3)lines.push('Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category; never ask the user to repeat available project facts, and never ask the user to reattach the original Stage 01 intent file solely to rediscover captured semantics.');"
+          if old_stage3 not in s: raise SystemExit('Stage 03 rule marker missing')
+          s=s.replace(old_stage3,new_stage3,1)
           p.write_text(s)
 
           e=Path('workflow-engine.js'); w=e.read_text()
@@ -37,6 +44,18 @@ jobs:
           new_gate="      const executionPlan=testExecutionPlan(project);\n      const missingArtifactTestIds=safe(executionPlan?.missingArtifactTestIds);\n      if(missingArtifactTestIds.length)reasons.push(`Required artifact bytes are missing or no longer application-verified for mandatory test(s): ${missingArtifactTestIds.join(', ')}.`);"
           if old_gate not in w: raise SystemExit('Stage 06 gate marker missing')
           e.write_text(w.replace(old_gate,new_gate,1))
+
+          h=Path('index.html'); x=h.read_text()
+          old_css='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          new_css='.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'
+          if old_css not in x: raise SystemExit('prompt expansion CSS marker missing')
+          h.write_text(x.replace(old_css,new_css,1))
+
+          t=Path('verify-complete.mjs'); v=t.read_text()
+          old_fixture="  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);"
+          new_fixture="  const p=project('JOB-BAD-REL'),stage=3; p.stages[2].status='COMPLETE'; p.stages[2].gate={complete:true,blocked:false,reasons:[]}; const pr=prompt(p,stage);"
+          if old_fixture not in v: raise SystemExit('verify-complete Stage 3 fixture marker missing')
+          t.write_text(v.replace(old_fixture,new_fixture,1))
           PY
       - name: Verify candidate
         shell: bash
@@ -45,6 +64,7 @@ jobs:
           : > spec3-candidate-result.txt
           status=0
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            echo "=== node --check $file ===" >> spec3-candidate-result.txt
             node --check "$file" >> spec3-candidate-result.txt 2>&1 || status=1
           done
           for test in verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs verify-complete.mjs; do
@@ -53,13 +73,22 @@ jobs:
           done
           echo "FINAL_STATUS=$status" >> spec3-candidate-result.txt
           cat spec3-candidate-result.txt
+          echo "$status" > .candidate-status
           exit 0
-      - name: Persist diagnostic only
+      - name: Retain only a passing candidate
         shell: bash
         run: |
           set -euo pipefail
+          status="$(cat .candidate-status)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add spec3-candidate-result.txt
-          git commit -m "Record corrected prompt and Stage 6 candidate result" || true
+          if [ "$status" = "0" ]; then
+            rm -f .github/workflows/spec3-monotonic-repair.yml spec3-diagnostic.txt spec3-source-diagnostic.txt spec3-candidate-result.txt
+            git add prompt-engine.js workflow-engine.js index.html verify-complete.mjs .github/workflows/spec3-monotonic-repair.yml spec3-diagnostic.txt spec3-source-diagnostic.txt spec3-candidate-result.txt
+            git commit -m "Strengthen prompt closure and Stage 6 byte readiness"
+          else
+            git checkout -- prompt-engine.js workflow-engine.js index.html verify-complete.mjs
+            git add spec3-candidate-result.txt
+            git commit -m "Record exact monotonic candidate failures" || true
+          fi
           git push origin HEAD:spec3-monotonic-20260831
