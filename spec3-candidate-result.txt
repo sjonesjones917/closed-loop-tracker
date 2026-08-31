@@ -1,0 +1,91 @@
+=== verify-all-stage-prompts.mjs ===
+prompt-engine.js:50
+const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));
+                                                                                                                                                                                          ^
+
+ReferenceError: universal is not defined
+    at prompt-engine.js:50:187
+    at Array.map (<anonymous>)
+    at prompt-engine.js:50:80
+    at prompt-engine.js:168:3
+    at Script.runInThisContext (node:vm:137:12)
+    at Object.runInThisContext (node:vm:317:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-all-stage-prompts.mjs:5:124
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+=== verify-stage-prompts-complete.mjs ===
+prompt-engine.js:50
+const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));
+                                                                                                                                                                                          ^
+
+ReferenceError: universal is not defined
+    at prompt-engine.js:50:187
+    at Array.map (<anonymous>)
+    at prompt-engine.js:50:80
+    at prompt-engine.js:168:3
+    at Script.runInThisContext (node:vm:137:12)
+    at Object.runInThisContext (node:vm:317:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:6:127
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+=== verify-one-time-intent-intake.mjs ===
+prompt-engine.js:50
+const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));
+                                                                                                                                                                                          ^
+
+ReferenceError: universal is not defined
+    at prompt-engine.js:50:187
+    at Array.map (<anonymous>)
+    at prompt-engine.js:50:80
+    at prompt-engine.js:168:3
+    at Script.runInThisContext (node:vm:137:12)
+    at Object.runInThisContext (node:vm:317:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-one-time-intent-intake.mjs:6:151
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+=== verify-prompt-semantics.mjs ===
+prompt-engine.js:50
+const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));
+                                                                                                                                                                                          ^
+
+ReferenceError: universal is not defined
+    at prompt-engine.js:50:187
+    at Array.map (<anonymous>)
+    at prompt-engine.js:50:80
+    at prompt-engine.js:168:3
+    at Script.runInThisContext (node:vm:137:12)
+    at Object.runInThisContext (node:vm:317:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-prompt-semantics.mjs:7:127
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+=== verify-complete.mjs ===
+prompt-engine.js:50
+const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));
+                                                                                                                                                                                          ^
+
+ReferenceError: universal is not defined
+    at prompt-engine.js:50:187
+    at Array.map (<anonymous>)
+    at prompt-engine.js:50:80
+    at prompt-engine.js:168:3
+    at Script.runInThisContext (node:vm:137:12)
+    at Object.runInThisContext (node:vm:317:38)
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:6:170
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+FINAL_STATUS=1
