@@ -44,4 +44,13 @@ if old_fixture not in verify:
     raise AssertionError('Human-inspection regression fixture was not found.')
 verify = verify.replace(old_fixture, new_fixture, 1)
 verify_path.write_text(verify)
-print('Aligned canonical human-observation evidence validation and regression with the application-owned human inspection command.')
+
+prompt_path = Path('prompt-engine.js')
+prompt = prompt_path.read_text()
+old_stage1 = '"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
+new_stage1 = '"1":"Perform complete human-authority intake only. Exhaust the human-authority intake. This is an actual conversational intake, not a JSON-form-filling exercise.'
+if old_stage1 not in prompt:
+    raise AssertionError('Stage 01 prompt authority prefix was not found.')
+prompt = prompt.replace(old_stage1, new_stage1, 1)
+prompt_path.write_text(prompt)
+print('Aligned canonical human-observation evidence and made the Stage 01 exhaustive-intake directive explicit.')
