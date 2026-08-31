@@ -1143,7 +1143,7 @@ const STAGE_COLLECTIONS=Object.freeze({
   2:['sources','sourceConflicts'],
   3:['research','candidateRequirements'],
   4:['requirements'],
-  5:['requirementResolutions'],
+  5:['requirements','requirementResolutions'],
   6:['tests'],
   7:['failureTests'],
   8:['instructions','instructionTraces'],

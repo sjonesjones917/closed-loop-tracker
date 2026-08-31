@@ -105,7 +105,7 @@ function nextVersion(current,prefix){
 // otherwise the accepted intake manifest instantly becomes stale and the user is asked to repeat information.
 const VERSION_BY_STAGE=Object.freeze({
   2:['CURRENT_SOURCE_SET_VERSION','SOURCE-SET'],3:['CURRENT_RESEARCH_VERSION','RESEARCH'],
-  4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
+  4:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],5:['CURRENT_REQUIREMENTS_VERSION','REQUIREMENTS'],6:['CURRENT_TEST_SUITE_VERSION','TEST-SUITE'],
   7:['CURRENT_MUTATION_SUITE_VERSION','MUTATION-SUITE'],8:['CURRENT_INSTRUCTION_VERSION','INSTRUCTION']
 });
 function versionCollections(stage){return schema.STAGE_CONTRACTS[stage]?.primaryCollections||[];}
@@ -117,6 +117,10 @@ function registerStageVersion(project,stage,acceptedChangeId){
   if(!config)return null;
   if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE'){project.job.CURRENT_SOURCE_SET_VERSION='NOT APPLICABLE';return null;}
   const [jobField,prefix]=config;
+  if(Number(stage)===5){
+    const accepted=safe(project.projectData.acceptedChanges).find(change=>change.changeId===acceptedChangeId),committedIds=new Set(safe(accepted?.canonicalRecordIds).map(String)),changedRequirements=records(project,'requirements').filter(record=>committedIds.has(recordId(record,'requirements')));
+    if(!changedRequirements.length){stampCurrentVersionMembership(project,5,project.job.CURRENT_REQUIREMENTS_VERSION);return null;}
+  }
   const payload={stage,collections:Object.fromEntries(versionCollections(stage).map(collection=>[collection,records(project,collection).map(record=>({id:recordId(record,collection),fields:recordFields(record),relationships:record.relationships||{},sha256:record.sha256||null}))])),acceptedData:project.stages[stage].acceptedData};
   const sha256=hash.sha256Value(payload);
   const latest=safe(project.projectData.artifactVersions).filter(item=>item.stage===stage&&item.kind===prefix).at(-1);
@@ -382,10 +386,14 @@ function gate(stage,project){
       }
       break;
     }
-    case 5:
+    case 5:{
       requireAccepted();
-      if(collection('requirementResolutions').some(record=>['OPEN','UNRESOLVED','BLOCKED','UNKNOWN'].includes(upper(recordValue(record,'STATUS')))))reasons.push('A requirement-set defect remains unresolved.');
+      const resolutions=collection('requirementResolutions'),stageFiveRequirements=collection('requirements'),changed=resolutions.filter(record=>{const refs=recordValue(record,'CHANGED_REQUIREMENT_REFS');return Array.isArray(refs)?refs.length>0:Boolean(String(refs||'').trim());});
+      if(resolutions.some(record=>['OPEN','UNRESOLVED','BLOCKED','UNKNOWN'].includes(upper(recordValue(record,'STATUS')))))reasons.push('A requirement-set defect remains unresolved.');
+      if(changed.length&&!stageFiveRequirements.length)reasons.push('Stage 05 identifies changed requirements but did not return the complete corrected current requirement set.');
+      if(stageFiveRequirements.length){for(const req of stageFiveRequirements)for(const name of schema.RECORD_SCHEMAS.requirements.required)if(!String(recordValue(req,name)||'').trim())reasons.push(`${recordId(req,'requirements')}: corrected requirement field ${name} is missing.`);}
       break;
+    }
     case 6:{
       requireAccepted();
       const metrics=coverageMetrics(project),mandatoryIds=new Set(mandatoryRequirements(project).map(requirementId)),mandatoryTests=collection('tests').filter(test=>mandatoryIds.has(testRequirementId(test)));
