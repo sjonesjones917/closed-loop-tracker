@@ -1,0 +1,40 @@
+name: Patch proposal review scroll controls
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+          fetch-depth: 0
+      - name: Bind review arrows to the actual long review container
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('app-core.js')
+          text=path.read_text()
+          old="""    const longReview=Boolean(review&&review.querySelector('details.record-card[open]')&&reviewRect?.height>innerHeight);
+    const reviewActive=Boolean(longReview&&reviewBounds.active);
+    const reviewPast=Boolean(longReview&&reviewRect&&reviewRect.bottom<=0);"""
+          new="""    const longReview=Boolean(review&&reviewBounds.active);
+    const reviewActive=longReview;
+    const reviewPast=Boolean(review&&reviewRect&&reviewRect.height>innerHeight&&reviewRect.bottom<=0);"""
+          if old not in text:
+              raise SystemExit('Review scroll-control target was not found')
+          path.write_text(text.replace(old,new,1))
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app-core.js
+          git commit -m "Keep proposal review scroll controls available for long reviews"
+          git push origin HEAD:finish/live-human-gate-20260830
