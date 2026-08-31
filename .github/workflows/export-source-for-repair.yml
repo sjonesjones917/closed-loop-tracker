@@ -1,0 +1,28 @@
+name: Export source for repair
+
+on:
+  push:
+    branches:
+      - repair/full-app-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Archive exact repository source
+        shell: bash
+        run: |
+          tar --exclude=.git --exclude=closed-loop-source.tgz -czf closed-loop-source.tgz .
+      - name: Upload exact source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: closed-loop-source-${{ github.sha }}
+          path: closed-loop-source.tgz
+          if-no-files-found: error
+          retention-days: 1
