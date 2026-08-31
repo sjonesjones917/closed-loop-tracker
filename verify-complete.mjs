@@ -180,6 +180,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 // Accepted-response refinement removes all current same-stage canonical authority.
 {
   const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');
+  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};
   source.sourceProposalId='PROPOSAL-REFINE';source.rawResponseId='RAW-REFINE';source.scope={inputVersion:p.job.CURRENT_INPUT_VERSION};p.projectData.sources.push(source);
   p.projectData.acceptedChanges.push({changeId:'CHANGE-REFINE',stage,status:'COMMITTED',responseType:'DATA_PROPOSAL',proposalId:'PROPOSAL-REFINE',rawResponseId:'RAW-REFINE',promptId:'INSTRUCTION-REFINE',operation:'COMPLETE',scope:{},canonicalRecordIds:['SOURCE-REFINE']});
   p.projectData.responseProposals.push({proposalId:'PROPOSAL-REFINE',stage,status:'COMMITTED',rawResponseId:'RAW-REFINE',promptId:'INSTRUCTION-REFINE',scope:{},envelope:{operation:'COMPLETE',scope:{}}});
