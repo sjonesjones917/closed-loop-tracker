@@ -32,15 +32,16 @@ assert(/function\s+artifactControlMarkup\s*\(n,locked\)\s*\{/.test(appCore),'Art
 assert(/if\s*\(n===19\)\s*return/.test(appCore),'Stage 19 unchanged-candidate artifact behavior is missing.');
 assert(!/if\s*\(n===4\)\s*return\s*['"]{2}/.test(appCore),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
 
-// Regression diagnostic: sparse later-stage state must never crash prompt-context derivation with an untyped runtime exception.
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,schema=globalThis.closedLoopWorkflowSchema;
+const sparseTypeErrors=[];
 for(let stage=5;stage<=30;stage++){
  const p=core.createBlankState(`JOB-SPARSE-${stage}`);p.job.JOB_ID=`JOB-SPARSE-${stage}`;p.job.EXACT_USER_OBJECTIVE_VERBATIM='Sparse-stage fail-closed diagnostic';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};
  const operation=schema.STAGE_CONTRACTS[stage].operations[0],scope={};for(const key of schema.operationContract(stage,operation).scopeRequirements){if(key==='projectRevision')scope[key]=Number(p.revision||0);else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';else if(key==='iterationId')scope[key]='ITERATION-000001';else if(key==='candidateId')scope[key]='CANDIDATE-000001';else if(key==='runId')scope[key]='RUN-000001';else if(key==='contextId')scope[key]='CONTEXT-000001';else if(key==='baselineId')scope[key]='BASELINE-000001';else if(key==='productId')scope[key]='PRODUCT-000001';}
- try{prompts.buildPromptRecord(stage,p,{operation,scope});console.log(`sparse-prompt-stage-${stage}: SAFE`);}catch(error){console.log(`sparse-prompt-stage-${stage}: ${error?.name||'Error'} ${error?.code||'NO_CODE'} ${error?.message||''}`);if(error instanceof TypeError)throw new Error(`Stage ${stage} sparse prompt derivation threw TypeError: ${error.message}`);}
+ try{prompts.buildPromptRecord(stage,p,{operation,scope});console.log(`sparse-prompt-stage-${stage}: SAFE`);}catch(error){console.log(`sparse-prompt-stage-${stage}: ${error?.name||'Error'} ${error?.code||'NO_CODE'} ${error?.message||''}`);console.log(error?.stack||'NO_STACK');if(error instanceof TypeError)sparseTypeErrors.push({stage,message:error.message,stack:error.stack});}
 }
+if(sparseTypeErrors.length)throw new Error(`Sparse-stage derivation TypeErrors: ${JSON.stringify(sparseTypeErrors)}`);
 
 console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true,sparsePromptDerivationNoTypeError:true}));
