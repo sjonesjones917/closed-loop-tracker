@@ -20,3 +20,15 @@ elif count2==0 and new2 in s:
 else:
     raise SystemExit(f'verify-complete.mjs: expected one Stage 10 scoped-lane prerequisite sentinel, found {count2}')
 p.write_text(s)
+
+p=Path('verify-stage-prompts-complete.mjs')
+s=p.read_text()
+old="1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every inputId exactly once']"
+new="1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','APPLICATION INTAKE MANIFEST unit exactly once']"
+count=s.count(old)
+if count==1:
+    p.write_text(s.replace(old,new))
+elif count==0 and new in s:
+    pass
+else:
+    raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one canonical Stage 01 phrase sentinel, found {count}')
