@@ -74,6 +74,13 @@ jobs:
               if text.count(old)!=1:
                   raise SystemExit(f'Stage 04 manifest heading insertion point count: {text.count(old)}')
               text=text.replace(old,new,1)
+
+          operation_line='CURRENT DECLARED OPERATION: ${operation||contract.operations[0]}'
+          if operation_line not in text:
+              state_line="CURRENT_STATE: ${job.CURRENT_STATE||'UNKNOWN'}"
+              if text.count(state_line)!=1:
+                  raise SystemExit(f'Prompt operation identity insertion point count: {text.count(state_line)}')
+              text=text.replace(state_line,operation_line+'\\n'+state_line,1)
           p.write_text(text,encoding='utf-8')
 
           s=Path('workflow-schema.js')
@@ -146,10 +153,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
+          rm -f .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml .github/workflows/apply-prompt-repair.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js workflow-schema.js workflow-engine.js .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
+          git add prompt-engine.js workflow-schema.js workflow-engine.js .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml .github/workflows/apply-prompt-repair.yml
           git diff --cached --check
           git commit -m "Integrate canonical prompt routing corrections"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
