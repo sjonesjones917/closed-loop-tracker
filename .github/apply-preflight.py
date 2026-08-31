@@ -49,13 +49,13 @@ p.write_text(s)
 
 q=Path('prompt-engine.js')
 t=q.read_text()
-short="""if(stage===4)parts.push(`APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION\n${show(obligationManifest(state))}`);"""
-if short not in t: raise SystemExit('short prompt context anchor missing')
-t=t.replace(short,short+"""if(stage===9)parts.push(`APPLICATION PREFLIGHT COVERAGE MANIFEST — REVIEW EVERY UNIT EXACTLY ONCE\n${show(workflow.preflightCoverageManifest(state))}`);""",1)
-needle="""${stage===4?`STAGE 04 ACCOUNTING OUTPUT\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted."""
-if needle not in t: raise SystemExit('prompt accounting anchor missing')
-replacement="""${stage===9?`STAGE 09 PREFLIGHT COVERAGE OUTPUT\nReview every unitId in APPLICATION PREFLIGHT COVERAGE MANIFEST exactly once. Each preflightRecords record must set CLAUSE to the exact application unitId and INSTRUCTION_ID to the current manifest instructionId. Do not combine multiple unitIds into one review, omit a unit, invent a unit, or substitute free-form clause text for the unitId. Use the manifest text/path as the content being reviewed. If any unit is defective, report the material finding and exact correction; a corrected instruction requires a new instruction version and a completely new preflight manifest/review.\n\n`:''}${stage===4?`STAGE 04 ACCOUNTING OUTPUT\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted."""
-t=t.replace(needle,replacement,1)
+marker="if(stage===6)"
+if marker not in t: raise SystemExit('Stage 6 context marker missing')
+t=t.replace(marker,"if(stage===9)parts.push(`APPLICATION PREFLIGHT COVERAGE MANIFEST — REVIEW EVERY UNIT EXACTLY ONCE\\n${show(workflow.preflightCoverageManifest(state))}`);"+marker,1)
+marker2="${stage===4?`STAGE 04 ACCOUNTING OUTPUT"
+if marker2 not in t: raise SystemExit('Stage 4 output marker missing')
+insert2="${stage===9?`STAGE 09 PREFLIGHT COVERAGE OUTPUT\\nReview every unitId in APPLICATION PREFLIGHT COVERAGE MANIFEST exactly once. Each preflightRecords record must set CLAUSE to the exact application unitId and INSTRUCTION_ID to the current manifest instructionId. Do not combine multiple unitIds into one review, omit a unit, invent a unit, or substitute free-form clause text for the unitId. Use the manifest text/path as the content being reviewed. If any unit is defective, report the material finding and exact correction; a corrected instruction requires a new instruction version and a completely new preflight manifest/review.\\n\\n`:''}"
+t=t.replace(marker2,insert2+marker2,1)
 q.write_text(t)
 for name in ['index.html','app-core.js','test-runtime.js']:
     f=Path(name); f.write_text(f.read_text().replace('runtime-20260830-live-operator-61','runtime-20260830-live-operator-62'))
