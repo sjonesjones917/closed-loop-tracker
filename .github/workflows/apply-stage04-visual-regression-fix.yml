@@ -1,31 +1,10 @@
-name: Apply retained verification correction
+name: Retained repair carrier disabled
 on:
-  push:
-    branches: [fix/restore-controlling-verification-20260831b]
-    paths: [.github/workflows/apply-stage04-visual-regression-fix.yml]
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: fix/restore-controlling-verification-20260831b
-      - name: Remove stale exact Stage 03 prompt wording assertion
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify.mjs')
-          s=p.read_text()
-          old="if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');"
-          if old not in s: raise SystemExit('expected stale Stage 03 wording assertion not found')
-          p.write_text(s.replace(old,'',1))
-          PY
-      - name: Commit minimal correction
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verify.mjs
-          git commit -m "Remove stale exact Stage 03 prompt wording assertion"
-          git push origin HEAD:fix/restore-controlling-verification-20260831b
+      - run: echo "One-time repair carrier is disabled pending final deletion."
