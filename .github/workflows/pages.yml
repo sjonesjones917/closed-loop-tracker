@@ -47,8 +47,8 @@ jobs:
             verify-v3-contract.mjs
             verify-test-runtime-v3.mjs
             verify-test-runtime-limits.mjs
-            verify-ingestion.mjs
             verify-full-cycle.mjs
+            verify-complete.mjs
             verify-semantic-invariant.mjs
             verify-definition-of-done.mjs
             verify-v3-definition-of-done.mjs
