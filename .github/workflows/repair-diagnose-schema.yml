@@ -1,4 +1,4 @@
-name: Apply consolidated schema contract corrections
+name: Capture consolidated repair failure
 
 on:
   push:
@@ -8,150 +8,37 @@ permissions:
   contents: write
 
 jobs:
-  repair:
+  diagnose:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: fix/monotonic-reliability-pass-20260831
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Apply minimal contract corrections and prove schema gate
+      - name: Capture exact patch target counts
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-
-          # Required deterministic /2 -> /3 migration while preserving source-schema audit identity.
-          p=Path('workbook.js'); s=p.read_text()
-          old="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
-          new="""  const sourceSchema=String(p.schema||'');\n  if(!['human-project/30','closed-loop-project/2'].includes(sourceSchema))throw new Error(`Unsupported project schema: ${sourceSchema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
-          if new not in s:
-              if s.count(old)!=1: raise SystemExit('migration entry target not unique')
-              s=s.replace(old,new,1)
-          s=s.replace("{kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:","{kind:'LEGACY_STAGE_RECORDS',schema:sourceSchema,records:",1)
-          s=s.replace("{kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:","{kind:'MIGRATION_SOURCE',schema:sourceSchema,preservedAt:",1)
-          p.write_text(s)
-
-          # Preserve upstream canonical scope across a later-stage human clarification.
-          p=Path('workflow-engine.js'); s=p.read_text()
-          old="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('inputVersion','sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}"
-          new="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}"
-          if new not in s:
-              if s.count(old)!=1: raise SystemExit('current-scope target not unique')
-              s=s.replace(old,new,1)
-          old="operationalNextAction,operationalMetrics,intakeCoverageManifest,parseCapturedInputSet,evaluateIntakeAccounting,obligationManifest,evaluateObligationAccounting,representationInspectionCoverage,gate"
-          new="operationalNextAction,operationalMetrics,intakeCoverageManifest,stage01IntakeManifest:intakeCoverageManifest,parseCapturedInputSet,evaluateIntakeAccounting,obligationManifest,stage04ObligationManifest:obligationManifest,evaluateObligationAccounting,representationInspectionCoverage,gate"
-          if new not in s:
-              if s.count(old)!=1: raise SystemExit('manifest export target not unique')
-              s=s.replace(old,new,1)
-          p.write_text(s)
-
-          # Machine acceptance fields must identify the exact proved metrics, not substitute constants.
-          p=Path('.github/workflows/pages.yml'); s=p.read_text()
-          old="""            ...definition,
-            ...v3,
-            fieldOwnershipCoverage:1,
-            applicationDerivationCoverage:1,
-            typedRelationshipCoverage:1,
-            stage01RawInputAccounting:1,
-            stage01RequiredFileInspectionAccounting:1,
-            stage01AcceptedSemanticMappingCoverage:1,
-            stage04ObligationAccounting:1,
-            acceptedAgentValueExtractionCoverage:1,
-            acceptedRelationshipProvenanceCoverage:1,
-            currentScopeSelectorCoverage:1,
-            reqRunTestCoverage:1,
-            applicableCurrentRegressionSuccess:1,
-            mandatoryEvidenceChainStructuralCoverage:1,
-            mandatoryEvidenceSufficiencyCoverage:1,
-            releaseArtifactIdentityCoverage:1,
-            nativeExecutionCoverage:1,
-            unauthorizedFieldMutationsAccepted:0,
-            canonicalMutationsBeforeAcceptance:0,
-            partialCommitsAfterInjectedFailure:0,
-            staleProposalsAccepted:0,
-            crossProjectRelationshipsAccepted:0,
-            historicalScopeSatisfyingCurrentGates:0,
-            unmatchedDeliveryFilesAuthorized:0,
-            appendOnlyHistoryRewritesAccepted:0,
-            unsupportedTestIrTreatedAsExecutable:0,
-            externalAssertionsOverridingApplicationProof:0,
-            nativeExecutionReceiptsFabricatedExternally:0,
-            releaseAcceptedWithContradiction:0,
-            stage04RequestsToRepeatAcceptedUserIntent:0,
-            unrequestedUnrelatedVisualChanges:0,"""
-          new="""            ...definition,
-            ...v3,
-            fieldOwnershipCoverage:definition.fieldOwnershipCoverage,
-            applicationDerivationCoverage:definition.applicationDerivationCoverage,
-            typedRelationshipCoverage:definition.typedRelationshipCoverage,
-            stage01IntakeCoverage:v3.stage01IntakeCoverage,
-            stage01RawInputAccounting:v3.stage01IntakeCoverage,
-            stage01RequiredFileInspectionAccounting:v3.stage01IntakeCoverage,
-            stage01AcceptedSemanticMappingCoverage:v3.stage01IntakeCoverage,
-            stage04ObligationCoverage:v3.stage04ObligationCoverage,
-            stage04ObligationAccounting:v3.stage04ObligationCoverage,
-            acceptedAgentValueExtractionCoverage:definition.acceptedAgentValueExtractionCoverage,
-            acceptedRelationshipProvenanceCoverage:definition.acceptedRelationshipProvenanceCoverage,
-            currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
-            exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
-            reqRunTestCoverage:definition.exactReqRunTestCoverage,
-            applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
-            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
-            mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage,
-            releaseArtifactIdentityCoverage:definition.releaseArtifactIdentityCoverage,
-            nativeExecutionCoverage:v3.nativeExecutionCoverage,
-            unauthorizedFieldMutationsAccepted:definition.unauthorizedFieldMutationsAccepted,
-            canonicalMutationsBeforeAcceptance:definition.canonicalMutationsBeforeAcceptance,
-            partialCommitsAfterInjectedFailure:definition.partialCommitsAfterInjectedFailure,
-            staleProposalsAccepted:definition.staleProposalsAccepted,
-            crossProjectRelationshipsAccepted:definition.crossProjectRelationshipsAccepted,
-            historicalScopeSatisfyingCurrentGates:definition.historicalScopeSatisfyingCurrentGates,
-            unmatchedDeliveryFilesAuthorized:definition.unmatchedDeliveryFilesAuthorized,
-            appendOnlyHistoryRewritesAccepted:definition.appendOnlyHistoryRewritesAccepted,
-            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable,
-            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof,
-            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally,
-            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction,
-            stage04RequestsToRepeatAcceptedUserIntent:0,
-            unrequestedUnrelatedVisualChanges:0,"""
-          if new not in s:
-              if s.count(old)!=1: raise SystemExit('acceptance metric target not unique')
-              s=s.replace(old,new,1)
-          s=s.replace("            liveVerification:true,","            liveVerification:true,\n            liveBrowserVerification:true,",1)
-          p.write_text(s)
+          out=[]
+          s=Path('workbook.js').read_text()
+          out.append('migration_old='+str(s.count("if(p.schema!=='human-project/30')throw new Error")))
+          out.append('migration_new='+str(s.count("const sourceSchema=String(p.schema||'');")))
+          s=Path('workflow-engine.js').read_text()
+          out.append('scope_old='+str(s.count("if(stage>=2)keys.push('inputVersion','sourceSetVersion')")))
+          out.append('scope_new='+str(s.count("if(stage>=2)keys.push('sourceSetVersion')")))
+          out.append('manifest_old='+str(s.count('operationalNextAction,operationalMetrics,intakeCoverageManifest,parseCapturedInputSet,evaluateIntakeAccounting,obligationManifest,evaluateObligationAccounting,representationInspectionCoverage,gate')))
+          out.append('manifest_new='+str(s.count('stage01IntakeManifest:intakeCoverageManifest')))
+          s=Path('.github/workflows/pages.yml').read_text()
+          out.append('pages_old_start='+str(s.count('            fieldOwnershipCoverage:1,\n            applicationDerivationCoverage:1,')))
+          out.append('pages_derived_start='+str(s.count('            fieldOwnershipCoverage:definition.fieldOwnershipCoverage,')))
+          out.append('liveVerification='+str(s.count('            liveVerification:true,')))
+          out.append('liveBrowserVerification='+str(s.count('            liveBrowserVerification:true,')))
+          Path('.repair-contract-targets.txt').write_text('\n'.join(out)+'\n')
           PY
-
-          rm -f .repair-migration-diagnostic.txt
-
-          # Reproduce the real schema gate setup before committing.
-          node --input-type=module - <<'NODE'
-          import fs from 'node:fs';
-          const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-          const output=String(project.stageRecords?.['1']?.output||'');
-          if(!output||project.generatedOutputs?.[0]?.output!==output)throw new Error('Canonical retained Stage 01 output is missing or inconsistent.');
-          fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);
-          NODE
-          node --check workbook.js
-          node --check workflow-engine.js
-          node build-test-project.mjs
-          git diff --exit-code -- TEST_PROJECT.json
-          node verify.mjs
-          node verify-spec3-contract.mjs
-          node verify-v3-contract.mjs
-          node verify-ingestion.mjs
-          node verify-monotonic-pass.mjs
-          git diff --check
-          rm -f AUTHORIZED_OPERATION_01.txt
-
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm .github/workflows/repair-diagnose-schema.yml
-          git add -A workbook.js workflow-engine.js .github/workflows/pages.yml .repair-migration-diagnostic.txt
-          git commit -m "Correct schema migration and acceptance contracts"
+          git add .repair-contract-targets.txt
+          git commit -m "Record consolidated repair targets"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
