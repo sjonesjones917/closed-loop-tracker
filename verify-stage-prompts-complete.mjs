@@ -9,24 +9,31 @@ if(!core||!schema||!engine||!prompts)throw new Error('Prompt audit runtime faile
 const p=core.createBlankState('JOB-PROMPT-CLOSURE');
 Object.assign(p.job,{JOB_ID:'JOB-PROMPT-CLOSURE',JOB_TITLE:'Prompt closure fixture',EXACT_USER_OBJECTIVE_VERBATIM:'Prove every stage prompt has the data and instructions needed for exactly its job.',EXPLICIT_USER_REQUIREMENTS:'Never ask the human to repeat project information already supplied.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITER-001',CURRENT_BASELINE_ID:'BASE-001',CURRENT_PRODUCT_ID:'PROD-001'});
 engine.ensureShape(p);engine.recalculate(p);
+const intake=engine.intakeCoverageManifest(p);
+const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Prompt closure fixture preserves current human authority.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Prompt closure fixture deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};
+p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};
+p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
+for(let stage=1;stage<30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+if(!engine.evaluateIntakeAccounting(p).complete)throw new Error('Prompt closure fixture failed to establish current Stage 01 accounting.');
 const requiredReads={
-  2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
+  4:['sourceConflicts'],5:['sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
 };
 const semantic={
-  1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every inputId exactly once'],
+  1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every application-enumerated input unit must be classified exactly once'],
   2:['until no new applicable controlling or correctness-relevant external source category is found','Do not stop at the first plausible source'],
   3:['every current accepted Stage 02 source has current research coverage','distinct conflict/exception/saturation pass'],
   4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Every obligationId'],
   5:['Resolve the current job’s requirement set exhaustively','repeat the review against the resulting requirement set'],
   6:['closed-loop-test-spec/1','TEST_IR','how a defective product could falsely appear compliant'],
-  7:['Generating an invalid fixture and executing that fixture are separate boundaries','actual observed result and evidence are required'],
+  7:['Fixture definition is not execution','actual observed result','evidence sufficient to prove the rejection behavior'],
   8:['production instruction only from the resolved current requirement set and verification architecture','requirement traceability'],
   9:['re-review the entire current instruction from the beginning','Do not execute target production during preflight'],
   10:['human selects authorized canonical components','Do not assign candidate identity'],
   11:['this prompt authorizes exactly one reserved RUN_ID and CONTEXT_ID','do not perform another run'],
   12:['REQ_ID × RUN_ID × TEST_ID','Never substitute a different executor'],
   13:['Compare all ten executions','Never discard a run'],
-  14:['tracing backward through product/output, execution, instruction, requirement, research, source, user input, tool, and audit','earliest defective layer'],
+  14:['tracing backward through product/output, execution, instruction, requirement, research, source, user input','tool/configuration, artifact, and audit/evidence','earliest defective layer'],
   15:['actual pre-correction regression execution','Do not claim post-correction success at Stage 15'],
   16:['responsible earliest defective layer','Never overwrite a controlled version in place'],
   18:['application calculates mandatory requirement coverage','Do not set or override those application-derived values'],
@@ -51,7 +58,7 @@ for(let stage=1;stage<=30;stage++){
     const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
     const prompt=prompts.buildPromptRecord(stage,p,{operation,scope}).prompt;
     promptsChecked++;
-    for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','never ask the human to repeat, retype, summarize, resend, reopen, or reattach it','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
+    for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
     if(stage>1&&!prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error(`Stage ${stage} ${operation} can regress to re-requesting original intent.`);
     if(prompt.includes('CUSTOM_PIPELINE'))throw new Error(`Stage ${stage} ${operation} still exposes prohibited CUSTOM_PIPELINE.`);
     for(const phrase of semantic[stage]||[])if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);
