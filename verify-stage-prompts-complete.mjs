@@ -13,7 +13,7 @@ const requiredReads={
   2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
 };
 const semantic={
-  1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every inputId exactly once'],
+  1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every application-enumerated input unit must be classified exactly once'],
   2:['until no new applicable controlling or correctness-relevant external source category is found','Do not stop at the first plausible source'],
   3:['every current accepted Stage 02 source has current research coverage','distinct conflict/exception/saturation pass'],
   4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Every obligationId'],
