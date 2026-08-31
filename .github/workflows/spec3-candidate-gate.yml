@@ -1,0 +1,33 @@
+name: Spec3 candidate gate
+on:
+  push:
+    branches: [spec3-monotonic-20260831]
+permissions:
+  contents: write
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply isolated candidate
+        run: python3 spec3_candidate_patch.py
+      - name: Run targeted acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$f"; done
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-complete.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-prompt-semantics.mjs
+      - name: Retain passing candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f spec3_candidate_patch.py .github/workflows/spec3-candidate-gate.yml spec3-candidate-result.txt spec3-pinpoint.txt spec3-diagnostic.txt spec3-source-diagnostic.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Strengthen prompt closure and Stage 6 byte readiness"
+          git push origin HEAD:spec3-monotonic-20260831
