@@ -1,0 +1,44 @@
+name: Apply Stage 04 visual regression fix
+on:
+  push:
+    branches: [fix/restore-controlling-verification-20260831b]
+    paths: [.github/workflows/apply-stage04-visual-regression-fix.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-verification-20260831b
+      - name: Restore Stage 04 panel without restoring repeated file selection
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="const applicable=[1,10,17,20,21,25].includes(n)"
+          new="const applicable=[1,4,10,17,20,21,25].includes(n)"
+          if old not in s: raise SystemExit('expected applicable-stage source not found')
+          s=s.replace(old,new,1)
+          old="fileLocked=locked||!productReady||(n===1&&current.stages[1].status==='COMPLETE');"
+          new="fileLocked=locked||!productReady||n===4||(n===1&&current.stages[1].status==='COMPLETE');"
+          if old not in s: raise SystemExit('expected fileLocked source not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('verify-hash.mjs')
+          s=p.read_text()
+          old="assert(appCore.includes(\"function artifactControlMarkup(n,locked){if(n===19)\"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
+          new="assert(appCore.includes(\"const applicable=[1,4,10,17,20,21,25].includes(n)\"),'Stage 04 must retain the established artifact-control panel in the rendered workflow.');\nassert(appCore.includes(\"fileLocked=locked||!productReady||n===4||(n===1&&current.stages[1].status==='COMPLETE');\"),'Stage 04 must preserve the panel without asking the operator to reselect already-stored intent bytes.');\nassert(!appCore.includes(\"function artifactControlMarkup(n,locked){if(n===4)return '';\"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');"
+          if old not in s: raise SystemExit('expected Stage 04 regression assertions not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit minimal correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js verify-hash.mjs
+          git commit -m "Restore Stage 04 visual baseline without repeated file selection"
+          git push origin HEAD:fix/restore-controlling-verification-20260831b
