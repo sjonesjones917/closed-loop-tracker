@@ -22,30 +22,48 @@ jobs:
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-fixtures.mjs verify*.mjs; do
             node --check "$file"
           done
-      - name: Verify deterministic repository contracts
-        run: |
-          set -euo pipefail
-          node verify-hash.mjs
-          node verify.mjs
-          node verify-ingestion.mjs
-          node verify-complete.mjs
-          node verify-v3-contract.mjs
-          node verify-spec3-contract.mjs
-          node verify-v3-migration.mjs
-          node verify-stage01-intake-closure.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-test-runtime.mjs
-          node verify-test-runtime-v3.mjs
-          node verify-test-runtime-limits.mjs
-          node verify-prompt-semantics.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-all-stage-prompts.mjs
-          node verify-user-prompt-invariants.mjs
-          node verify-semantic-invariant.mjs
-          node verify-full-cycle.mjs
-          node verify-project-lifecycle.mjs
-          node verify-definition-of-done.mjs
-          node verify-v3-definition-of-done.mjs
+      - name: Verify canonical hashing
+        run: node verify-hash.mjs
+      - name: Verify base repository contracts
+        run: node verify.mjs
+      - name: Verify transactional response ingestion
+        run: node verify-ingestion.mjs
+      - name: Verify complete application contracts
+        run: node verify-complete.mjs
+      - name: Verify v3 response and project contracts
+        run: node verify-v3-contract.mjs
+      - name: Verify controlling specification contracts
+        run: node verify-spec3-contract.mjs
+      - name: Verify deterministic v3 migration
+        run: node verify-v3-migration.mjs
+      - name: Verify Stage 01 intake closure
+        run: node verify-stage01-intake-closure.mjs
+      - name: Verify one-time intent intake and reuse
+        run: node verify-one-time-intent-intake.mjs
+      - name: Verify Test IR runtime
+        run: node verify-test-runtime.mjs
+      - name: Verify v3 Test IR contracts
+        run: node verify-test-runtime-v3.mjs
+      - name: Verify Test IR resource limits
+        run: node verify-test-runtime-limits.mjs
+      - name: Verify prompt semantics and isolation
+        run: node verify-prompt-semantics.mjs
+      - name: Verify complete stage prompt obligations
+        run: node verify-stage-prompts-complete.mjs
+      - name: Verify all stage prompts
+        run: node verify-all-stage-prompts.mjs
+      - name: Verify user-facing prompt invariants
+        run: node verify-user-prompt-invariants.mjs
+      - name: Verify semantic invariants
+        run: node verify-semantic-invariant.mjs
+      - name: Verify full-cycle behavior
+        run: node verify-full-cycle.mjs
+      - name: Verify project lifecycle
+        run: node verify-project-lifecycle.mjs
+      - name: Verify definition of done
+        run: node verify-definition-of-done.mjs
+      - name: Verify v3 definition of done
+        run: node verify-v3-definition-of-done.mjs
       - name: Enforce one application shell and responsible layers
         run: |
           set -euo pipefail
