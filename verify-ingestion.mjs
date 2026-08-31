@@ -379,7 +379,7 @@ console.log(JSON.stringify({operationStageDataIsolation:true,reservedTargetPolic
 
 // Additional fail-closed semantic boundaries found outside the prior matrix.
 {
-  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p),e=validEnvelope(p,stage,pr);let rejected=false;
+  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2;p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};const pr=prompts.buildPromptRecord(stage,p),e=validEnvelope(p,stage,pr);let rejected=false;
   try{ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});}catch(error){rejected=/controlling persisted prompt|unavailable/i.test(String(error.message||error));}
   if(!rejected)throw new Error('Caller-supplied prompt object was accepted without a persisted canonical prompt record.');negativeCount++;
 }
