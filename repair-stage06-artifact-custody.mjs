@@ -29,12 +29,15 @@ if(!text.includes(replacement)){
 
 const testPath='verify-complete.mjs';
 let test=fs.readFileSync(testPath,'utf8');
-const stale="  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);";
-const current="  const p=project('JOB-BAD-REL');p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};const stage=3,pr=prompt(p,stage);";
-if(!test.includes(current)){
+const fixtureRepairs=[
+  ["  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);","  const p=project('JOB-BAD-REL');p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};const stage=3,pr=prompt(p,stage);"],
+  ["  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');","  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};"]
+];
+for(const [stale,current] of fixtureRepairs){
+  if(test.includes(current))continue;
   const count=test.split(stale).length-1;
-  if(count!==1)throw new Error(`Expected exactly one stale Stage 03 fixture; found ${count}.`);
+  if(count!==1)throw new Error(`Expected exactly one stale prerequisite fixture; found ${count}.`);
   test=test.replace(stale,current);
-  fs.writeFileSync(testPath,test);
-  console.log('Updated Stage 03 negative fixture to satisfy its Stage 02 prerequisite.');
-}else console.log('Stage 03 prerequisite fixture already current.');
+}
+fs.writeFileSync(testPath,test);
+console.log('Updated stale prompt fixtures to satisfy their explicit upstream prerequisites.');
