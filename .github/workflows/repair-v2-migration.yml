@@ -42,6 +42,10 @@ jobs:
           new="    const exactProcedure=prompts.procedureFor(stage,operation);if(!exactProcedure||!prompt.includes(exactProcedure))throw new Error(`Stage ${stage} ${operation} did not embed the exact current prompt-authority procedure.`);"
           assert old in s
           s=s.replace(old,new,1)
+          old="    if((stage===17||stage===19)&&!prompt.includes(`CURRENT DECLARED OPERATION: ${operation}`))throw new Error(`Stage ${stage} ${operation} lacks exact operation-specific instruction.`);"
+          new="    if((stage===17||stage===19)&&!exactProcedure.toLowerCase().includes(`operation ${operation.toLowerCase()} only`))throw new Error(`Stage ${stage} ${operation} lacks operation-specific procedure semantics.`);"
+          assert old in s
+          s=s.replace(old,new,1)
           p.write_text(s)
       - name: Verify migration and existing live path
         run: |
