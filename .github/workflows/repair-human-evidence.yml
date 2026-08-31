@@ -1,0 +1,48 @@
+name: Repair human inspection evidence identity
+on:
+  push:
+    branches: [fix/monotonic-zero-loss-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply earliest responsible-layer correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js'); text=p.read_text(encoding='utf-8')
+          old="const executionId=resultExecutionIdentity(project,result),contextId=resultContextIdentity(project,result);"
+          new="const humanObservationEvidence=mode==='HUMAN_INSPECTION'?evidence.find(item=>upper(recordValue(item,'AUTHORITY_TYPE'))==='HUMAN_OBSERVATION'):null,executionId=resultExecutionIdentity(project,result)||(humanObservationEvidence?recordId(humanObservationEvidence,'evidenceRecords'):''),contextId=resultContextIdentity(project,result)||(humanObservationEvidence?'HUMAN_OBSERVATION:'+recordId(humanObservationEvidence,'evidenceRecords'):'');"
+          if new not in text:
+              if text.count(old)!=1: raise SystemExit(f'human evidence identity insertion count {text.count(old)}')
+              text=text.replace(old,new,1)
+          p.write_text(text,encoding='utf-8')
+          PY
+      - name: Prove human evidence fail-closed boundary
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node verify-semantic-invariant.mjs
+      - name: Commit accepted correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-human-evidence.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js .github/workflows/repair-human-evidence.yml
+          git diff --cached --check
+          git commit -m "Derive human inspection execution identity from canonical human evidence"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
