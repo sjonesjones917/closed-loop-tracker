@@ -308,7 +308,8 @@ function gate(stage,project){
   const hasAccepted=changes.length>0;
   const collection=name=>records(project,name,{stage});
   const all=name=>records(project,name);
-  const requireAccepted=()=>{if(!hasAccepted)reasons.push('No validated agent response has been accepted for this stage.');};
+  const stageContract=schema.STAGE_CONTRACTS?.[Number(stage)]||{},agentStageFields=safe(stageContract.allowedStageData).filter(name=>schema.STAGE_FIELDS?.[Number(stage)]?.[name]?.producer===schema.PRODUCER.AGENT),agentCollections=new Set();for(const operation of safe(stageContract.operations)){const contract=schema.operationContract(Number(stage),operation);for(const collectionName of safe(contract?.agentWritableCollections))agentCollections.add(collectionName);}const requiresAcceptedAgentResponse=agentStageFields.length>0||agentCollections.size>0;
+  const requireAccepted=()=>{if(requiresAcceptedAgentResponse&&!hasAccepted)reasons.push('No validated agent response has been accepted for this stage.');};
   const requireCount=(name,min,message)=>{if(collection(name).length<min)reasons.push(message||`${min} ${name} record${min===1?' is':'s are'} required.`);};
   const previousReasons=reasons.length;
 
