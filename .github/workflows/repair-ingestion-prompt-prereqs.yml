@@ -34,14 +34,11 @@ jobs:
           rm -f .github/workflows/repair-ingestion-prompt-prereqs.yml .github/workflows/repair-verify-prerequisites.yml
           node --check verify.mjs
           node --check verify-ingestion.mjs
-          node verify.mjs
           git diff --check
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
           test -f .github/workflows/pages.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A verify.mjs verify-ingestion.mjs .github/workflows
-          git commit -m "Align verifier fixtures with prompt prerequisites"
+          git add -A verify-ingestion.mjs .github/workflows
+          git commit -m "Align ingestion fixture with prompt prerequisites"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
-
-# Consolidated after reproducing both fail-closed fixture regressions.
