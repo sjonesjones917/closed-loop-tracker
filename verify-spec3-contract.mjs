@@ -30,12 +30,18 @@ assert.equal(migrated.schema,'closed-loop-project/3');
 assert.deepEqual(migrated.projectData.extensionX,{x:1});
 
 const p=core.createBlankState('CAPTURE');
-Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested thing',EXPLICIT_USER_REQUIREMENTS:'Never ask me for the same project data twice',SUPPLIED_MATERIALS_INVENTORY:'intent.pdf',EXACT_DELIVERABLE_REQUESTED:'finished product',INPUT_SET_CONTENTS:'captured project requirements'});
+Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested thing',EXPLICIT_USER_REQUIREMENTS:'Never ask me for the same project data twice',SUPPLIED_MATERIALS_INVENTORY:'intent.pdf',EXACT_DELIVERABLE_REQUESTED:'finished product'});
 engine.ensureShape(p);
 engine.recalculate(p);
-for(let stage=1;stage<=3;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,satisfied:true,reasons:[]};}
-const intake=engine.intakeCoverageManifest(p),ob=engine.obligationManifest(p);
+const intake=engine.intakeCoverageManifest(p);
 assert(intake.unitCount>=3);
+const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Preserved human authority for Stage 04 fixture.',extractedStatements:[{statementKey:`s-${index+1}`,text:unit.rawValueText,statementClass:'CONTEXT'}]}))};
+p.stages[1].agentData={...(p.stages[1].agentData||{}),EXACT_DELIVERABLE_REQUESTED:'finished product',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};
+p.stages[2].agentData={...(p.stages[2].agentData||{}),SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};
+for(let stage=1;stage<=3;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,satisfied:true,reasons:[]};}
+const accounting=engine.evaluateIntakeAccounting(p);
+assert(accounting.complete,accounting.reasons.join('; '));
+const ob=engine.obligationManifest(p);
 assert(ob.items.some(x=>String(x.text).includes('Never ask me')));
 const pr=prompt.buildPromptRecord(4,p).prompt;
 for(const t of ['PROJECT DATA EXECUTION RULE — MANDATORY','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Never ask the human','Never ask me for the same project data twice'])assert(pr.includes(t),t);
