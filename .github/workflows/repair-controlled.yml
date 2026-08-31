@@ -12,8 +12,11 @@ jobs:
         with:
           ref: fix/restore-monotonic-proof-20260831
           fetch-depth: 0
-      - name: Apply exact-sentinel repair
-        run: python3 .github/repair.py
+      - name: Apply exact-sentinel repairs
+        run: |
+          set -euo pipefail
+          python3 .github/repair.py
+          python3 .github/repair2.py
       - name: Syntax check affected files
         run: |
           set -euo pipefail
@@ -41,5 +44,5 @@ jobs:
           git config user.name 'closed-loop-repair'
           git config user.email 'closed-loop-repair@users.noreply.github.com'
           git add workflow-engine.js prompt-engine.js app-core.js verify-zero-loss-accounting.mjs verify-one-time-intent-intake.mjs verify-stage01-intake-closure.mjs verify-spec3-contract.mjs verify-complete.mjs
-          git commit -m 'Correct Stage 01 accounting, evidence, context, and operator regressions'
+          git commit -m 'Correct Stage 01 accounting, Stage 10 control, evidence, context, and operator regressions'
           git push origin HEAD:fix/restore-monotonic-proof-20260831
