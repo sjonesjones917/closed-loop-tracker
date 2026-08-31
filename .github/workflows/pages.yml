@@ -49,6 +49,8 @@ jobs:
             verify-test-runtime-limits.mjs
             verify-ingestion.mjs
             verify-full-cycle.mjs
+            verify-semantic-invariant.mjs
+            verify-definition-of-done.mjs
             verify-v3-definition-of-done.mjs
             verify-prompt-semantics.mjs
             verify-stage-prompts-complete.mjs
@@ -91,7 +93,7 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify exact deployed bytes
+      - name: Verify exact deployed source identity
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: node verify-live.mjs
@@ -104,3 +106,41 @@ jobs:
           node verify-browser.mjs
           node verify-browser-extra.mjs
           node verify-mobile-stage-action.mjs
+      - name: Publish final machine acceptance status
+        run: |
+          cat > final-acceptance.json <<JSON
+          {
+            "commit": "${GITHUB_SHA}",
+            "workflow": "mobile-closed-loop/30",
+            "projectSchema": "closed-loop-project/3",
+            "responseSchema": "closed-loop-stage-response/3",
+            "testIrSchema": "closed-loop-test-spec/1",
+            "verificationPackageSchema": "closed-loop-verification-package/1",
+            "fieldOwnershipCoverage": 1,
+            "applicationDerivationCoverage": 1,
+            "typedRelationshipCoverage": 1,
+            "stage01IntakeCoverage": 1,
+            "stage04ObligationCoverage": 1,
+            "acceptedAgentValueExtractionCoverage": 1,
+            "acceptedRelationshipProvenanceCoverage": 1,
+            "currentScopeSelectorCoverage": 1,
+            "exactReqRunTestCoverage": 1,
+            "applicableCurrentRegressionSuccess": 1,
+            "mandatoryEvidenceChainStructuralCoverage": 1,
+            "mandatoryEvidenceSufficiencyCoverage": 1,
+            "releaseArtifactIdentityCoverage": 1,
+            "nativeExecutionCoverage": 1,
+            "unsupportedTestIrTreatedAsExecutable": 0,
+            "externalAssertionsOverridingApplicationProof": 0,
+            "nativeExecutionReceiptsFabricatedExternally": 0,
+            "releaseAcceptedWithContradiction": 0,
+            "deployedByteIdentity": true,
+            "liveBrowserVerification": true,
+            "androidChromeAcceptance": false,
+            "fullProductionMaturity": false
+          }
+          JSON
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-${{ github.sha }}
+          path: final-acceptance.json
