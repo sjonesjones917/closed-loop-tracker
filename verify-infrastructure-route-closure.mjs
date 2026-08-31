@@ -43,8 +43,11 @@ for(const token of ['jsonPointer','rawValueHash','canonicalCollection','canonica
 for(const token of ['generatedPrompts','contextManifest','contextSignature','bodySha256','contractSha256'])assert(prompt.includes(token)||engine.includes(token),`Prompt/context route missing ${token}.`);
 for(const token of ['artifactVersions','CURRENT_INPUT_VERSION','CURRENT_SOURCE_SET_VERSION','CURRENT_REQUIREMENTS_VERSION','CURRENT_TEST_SUITE_VERSION','CURRENT_INSTRUCTION_VERSION'])assert(engine.includes(token)||store.includes(token),`Version route missing ${token}.`);
 
-// Stage authority partitions must remain separate and derived state must be recalculated.
-for(const token of ['agentData','humanData','derivedData'])assert(engine.includes(token)&&store.includes(token),`Stage authority partition ${token} is not represented through engine and persistence.`);
+// Stage authority partitions must remain separate in the canonical model. Persistence stores the complete
+// project object atomically, so it is incorrect to require these nested property names to be repeated in
+// project-store.js. Prove the real model and serialization boundary instead.
+for(const token of ['agentData','humanData','derivedData'])assert(engine.includes(`${token}:{}`)&&engine.includes(`prior.${token}`),`Stage authority partition ${token} is not explicitly preserved by the engine model.`);
+for(const token of ['const next=clone(project)','project:next','project=clone(row.project)','assertProjectIntegrity(next)','engine?.recalculate?.(next)'])assert(store.includes(token),`Whole-project persistence route missing ${token}.`);
 assert(engine.includes('recordsForCurrentScope'),`Current-scope selector is absent.`);
 assert(store.includes('validateProjectIntegrity'),`Persisted state has no canonical integrity validator.`);
 assert(store.includes('NEXT_REQUIRED_ACTION')&&store.includes('derivedData'),`Persisted derived state is not checked against deterministic recalculation.`);
@@ -68,6 +71,7 @@ console.log(JSON.stringify({
   promptContextManifestRoute:true,
   versionRoute:true,
   authorityPartitionsSeparated:true,
+  wholeProjectPartitionPersistence:true,
   currentScopeRoute:true,
   persistenceIntegrityRoute:true,
   structuredOperatorActionRoute:true,
