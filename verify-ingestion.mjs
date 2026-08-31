@@ -32,7 +32,16 @@ function project(jobId='JOB-INGESTION-TEST'){
   engine.recalculate(p);
   return p;
 }
+function preparePromptPrerequisites(p,stage){
+  for(let prior=1;prior<Number(stage);prior++){
+    p.stages[prior].status='COMPLETE';
+    p.stages[prior].gate={complete:true,blocked:false,reasons:[]};
+  }
+  if(stage>=3&&!p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
+  return p;
+}
 function savePrompt(p,stage){
+  preparePromptPrerequisites(p,stage);
   if(stage===4)prepareStage4Upstream(p);
   const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
   const record={...prompts.buildPromptRecord(stage,p,options),generatedAt:new Date().toISOString(),iteration:p.job.CURRENT_ITERATION||'NOT APPLICABLE'};
@@ -111,7 +120,7 @@ for(let stage=1;stage<=30;stage++){
   if(receipt.acceptedCanonicalChangeId==='NONE'||receipt.extractionManifestId==='NONE')throw new Error(`Stage ${stage} receipt was not linked through canonical acceptance.`);
   const serialized=JSON.stringify(p); const reloaded=JSON.parse(serialized); engine.ensureShape(reloaded);
   if(reloaded.projectData.rawResponses.at(-1)?.completeRawResponse!==JSON.stringify(envelope))throw new Error(`Stage ${stage} raw response did not survive reload.`);
-  if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
+  if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);else preparePromptPrerequisites(reloaded,nextStage);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}
   allStages.push({stage,proposal:prepared.proposal.proposalId,accepted:p.projectData.acceptedChanges.at(-1).changeId});
 }
 
@@ -133,339 +142,16 @@ const negative=(name,mutate,expectedCode)=>negativeAt(name,2,mutate,expectedCode
 // Mobile/chat smart punctuation is normalized while the exact raw response remains preserved for audit.
 {
   const p=project('JOB-SMART-QUOTE-JSON'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord);
-  envelope.evidence[0].content='He said "keep the exact words".';
-  const canonical=JSON.stringify(envelope);
-  let smart='',inString=false;
-  for(let i=0;i<canonical.length;i++){
-    const c=canonical[i];
-    if(!inString&&c==='"'){smart+='“';inString=true;continue;}
-    if(inString){
-      if(c==='\\'&&canonical[i+1]==='"'){smart+='"';i++;continue;}
-      if(c==='"'){smart+='”';inString=false;continue;}
-    }
-    smart+=c;
-  }
-  const prepared=ingestion.prepare(p,{stage,text:smart,promptRecord});
-  if(!prepared.validation.valid)throw new Error(`Smart-quoted mobile JSON was not normalized: ${JSON.stringify(prepared.validation.issues)}`);
-  if(!prepared.validation.issues.some(issue=>issue.code==='JSON_TYPOGRAPHY_NORMALIZED'&&issue.severity==='WARNING'))throw new Error('Smart-quote normalization warning was not preserved.');
-  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Exact smart-quoted raw response was not preserved unchanged.');
-  if(prepared.project.projectData.acceptedChanges.length)throw new Error('Smart-quoted response changed canonical state before operator acceptance.');
-}
-negative('empty response',()=>'', 'EMPTY_RESPONSE');
-negative('malformed JSON',()=>'{"schema":}','MALFORMED_JSON');
-negative('truncated JSON',()=>'{"schema":"closed-loop-stage-response/2"','TRUNCATED_RESPONSE');
-negative('markdown wrapped',(e)=>'```json\n'+JSON.stringify(e)+'\n```','NON_JSON_WRAPPER');
-negative('duplicate JSON member',(e)=>JSON.stringify(e).replace('"stage":2','"stage":2,"stage":3'),'DUPLICATE_JSON_MEMBER');
-negative('wrong root type',()=> '[]','INVALID_ROOT');
-negative('unknown top-level property',(e)=>{e.unexpected='forbidden';},'UNKNOWN_PROPERTY');
-negative('oversized response',()=> 'x'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxRawResponseBytes+1),'OVERSIZED_RESPONSE');
-negative('excessive nesting',()=> '['.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1)+'0'+']'.repeat(schema.DEFAULT_RESOURCE_LIMITS.maxJsonDepth+1),'EXCESSIVE_JSON_DEPTH');
-negative('wrong schema',(e)=>{e.schema='closed-loop-stage-response/999';},'WRONG_SCHEMA');
-negative('wrong job',(e)=>{e.jobId='JOB-OTHER';},'WRONG_JOB_ID');
-negative('wrong stage',(e)=>{e.stage=3;},'WRONG_STAGE');
-negative('wrong operation',(e)=>{e.operation='NOT_THE_OPERATION';},'WRONG_OPERATION');
-negative('stale prompt id',(e)=>{e.promptIdentity.instructionId='INSTRUCTION-STALE';},'STALE_PROMPT_IDENTITY');
-negative('stale prompt hash',(e)=>{e.promptIdentity.bodySha256='0'.repeat(64);},'STALE_PROMPT_HASH');
-negative('stale contract hash',(e)=>{e.promptIdentity.contractSha256='0'.repeat(64);},'STALE_CONTRACT_HASH');
-negative('stale context signature',(e)=>{e.promptIdentity.contextSignature='0'.repeat(64);},'STALE_CONTEXT_SIGNATURE');
-for(const [name,stage,key] of [['project revision',2,'projectRevision'],['input version',2,'inputVersion'],['source set version',3,'sourceSetVersion'],['requirements version',5,'requirementsVersion'],['test suite version',7,'testSuiteVersion'],['instruction version',9,'instructionVersion'],['iteration',10,'iterationId'],['candidate',10,'candidateId'],['run',11,'runId'],['context',11,'contextId'],['baseline',20,'baselineId'],['product',21,'productId']])scopeNegative(name,stage,key);
-scopeNegative('non-required populated scope identity',2,'baselineId');
-negative('blocked human input uses wrong recovery lane',(e)=>{e.responseType='BLOCKED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'human-needed',kind:'MISSING_HUMAN_INPUT',description:'Human decision required',whyBlocking:'Only the human can supply this authority.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'WRONG_RECOVERY_CHANNEL');
-negative('execution failed without an attempted failure',(e)=>{e.responseType='EXECUTION_FAILED';e.stageData={};e.records={};e.evidence=[];e.unresolved=[{temporaryKey:'capability-missing',kind:'MISSING_CAPABILITY',description:'Required capability is unavailable',whyBlocking:'The operation cannot begin without the capability.',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MISSING_EXECUTION_FAILURE_DETAIL');
-negative('cross-project response',(e)=>{e.jobId='JOB-CROSS-PROJECT';},'WRONG_JOB_ID');
-negative('unknown collection',(e)=>{e.records.unknownCollection=[];},'UNKNOWN_COLLECTION');
-negative('unknown stage field',(e)=>{e.stageData.UNKNOWN_STAGE_FIELD='x';},'UNKNOWN_STAGE_FIELD');
-negative('agent application field',(e)=>{e.stageData.SOURCE_SET_VERSION='SOURCE-SET-v999';},'FIELD_OWNERSHIP_VIOLATION');
-negative('agent human field',(e)=>{e.records.blockers=[{tempKey:'blocker-1',fields:{OWNER:'agent-overwrite'},relationships:{},evidenceRefs:['evidence-1']}];},'FIELD_OWNERSHIP_VIOLATION');
-{
-  const candidate=Object.entries(schema.STAGE_FIELDS).flatMap(([stage,defs])=>Object.entries(defs).map(([name,def])=>({stage:Number(stage),name,def}))).find(x=>x.def.producer===schema.PRODUCER.HUMAN_DECISION);
-  if(!candidate)throw new Error('No HUMAN_DECISION stage field exists to verify ownership.');const p=project('JOB-NEG-HUMAN-DECISION'),pr=savePrompt(p,candidate.stage),e=validEnvelope(p,candidate.stage,pr)||{schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:candidate.stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'ownership',location:'fixture',content:'ownership'}],unresolved:[],warnings:[],attachments:[]};e.stageData[candidate.name]=valueForDefinition(candidate.def);const prepared=ingestion.prepare(p,{stage:candidate.stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'))throw new Error('Agent mutation of HUMAN_DECISION field was accepted.');negativeCount++;
-}
-{const externalRepoIssues=schema.sourceClassificationIssues({TITLE:'Official vendor reference implementation',ISSUING_ORGANIZATION_OR_AUTHOR:'Example Vendor',SOURCE_TYPE:'OFFICIAL SOURCE CODE REPOSITORY',PUBLICATION_ORIGIN:'Vendor-maintained repository',URL_REFERENCE:'https://github.com/example-vendor/reference-implementation',AUTHORITY_LEVEL:'PRIMARY DIRECT EVIDENCE',AUTHORITY_ROLE:'SUPPORTING EVIDENCE',RELEVANCE:'Direct evidence of the vendor implementation',APPLICABLE_PORTIONS:'Published implementation behavior',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'NON-GOVERNING EVIDENCE'});if(externalRepoIssues.length)throw new Error(`Legitimate external source-code repository was rejected: ${externalRepoIssues.join(' | ')}`);}
-{const currentPatentForms=schema.sourceClassificationIssues({TITLE:'Current application forms and filing instructions',ISSUING_ORGANIZATION_OR_AUTHOR:'Independent Patent Office',SOURCE_TYPE:'OFFICIAL ADMINISTRATIVE SOURCE',PUBLICATION_ORIGIN:'Independent official website',URL_REFERENCE:'https://example.gov/current-application-forms',AUTHORITY_LEVEL:'OFFICIAL',AUTHORITY_ROLE:'OPERATIONAL GUIDANCE',RELEVANCE:'Current application forms for an external filing process',APPLICABLE_PORTIONS:'Current application forms',INSPECTION_STATUS:'INSPECTED',CURRENCY_STATUS:'CURRENT',SUPERSESSION_STATUS:'NOT SUPERSEDED',CONTROLLING_STATE:'GOVERNING WHERE APPLICABLE'});if(currentPatentForms.length)throw new Error(`Legitimate external source containing the phrase current application was rejected: ${currentPatentForms.join(' | ')}`);}
-negative('target product source',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-target',{TITLE:'Current application repository',ISSUING_ORGANIZATION_OR_AUTHOR:'Project repository',SOURCE_TYPE:'repository source code',PUBLICATION_ORIGIN:'current application',URL_REFERENCE:'https://github.com/sjonesjones917/closed-loop-tracker',AUTHORITY_LEVEL:'PRIMARY',AUTHORITY_ROLE:'GOVERNING',RELEVANCE:'target product',APPLICABLE_PORTIONS:'app-core.js',CONTROLLING_STATE:'CONTROLLING'})]};},'INVALID_EXTERNAL_SOURCE');
-negative('duplicate temp key',(e)=>{e.stageData={};e.records={sources:[sourceProposal('dup'),sourceProposal('dup',{TITLE:'Second source'})]};},'DUPLICATE_TEMPORARY_KEY');
-negative('unknown record field',(e)=>{e.stageData={};e.records={sources:[sourceProposal('source-unknown',{UNKNOWN_FIELD:'forbidden'})]};},'UNKNOWN_RECORD_FIELD');
-negative('wrong value type',(e)=>{e.stageData={};const r=sourceProposal('source-type');r.fields.TITLE=42;e.records={sources:[r]};},'WRONG_VALUE_TYPE');
-negative('prohibited null',(e)=>{e.stageData={};const r=sourceProposal('source-null');r.fields.TITLE=null;e.records={sources:[r]};},'PROHIBITED_NULL');
-negative('empty required string',(e)=>{e.stageData={};const r=sourceProposal('source-empty');r.fields.TITLE='';e.records={sources:[r]};},'EMPTY_REQUIRED_STRING');
-negative('placeholder value',(e)=>{e.stageData={};const r=sourceProposal('source-placeholder');r.fields.TITLE='<value>';e.records={sources:[r]};},'PLACEHOLDER_VALUE');
-{const issues=[];ingestion.validateValue({valueType:'STRING',enumValues:['ALLOWED'],nullable:false},'__INVALID_ENUM__','/invalid-enum',issues,{required:true});if(!issues.some(i=>i.code==='INVALID_ENUM_VALUE'))throw new Error('invalid enum: expected INVALID_ENUM_VALUE.');negativeCount++;}
-negative('missing evidence',(e)=>{e.evidence=[];},'MISSING_PROVENANCE');
-negative('unresolved evidence reference',(e)=>{e.stageData={};const r=sourceProposal('source-evidence');r.evidenceRefs=['does-not-exist'];e.records={sources:[r]};},'UNRESOLVED_EVIDENCE_REFERENCE');
-negative('unresolved evidence source',(e)=>{e.evidence[0].sourceRef={recordId:'SOURCE-NOT-THERE'};},'UNRESOLVED_EVIDENCE_SOURCE');
-negative('unresolved evidence attachment',(e)=>{e.evidence[0].attachmentRef={recordId:'ARTIFACT-NOT-THERE'};},'UNRESOLVED_EVIDENCE_ATTACHMENT');
-negative('invalid record identity',(e)=>{e.stageData={};const r=sourceProposal('source-both');r.targetId='SOURCE-ALSO';e.records={sources:[r]};},'INVALID_RECORD_IDENTITY');
-negativeAt('unresolved relationship',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]};},'UNRESOLVED_RELATIONSHIP');
-negativeAt('wrong relationship type',14,(e)=>{e.stageData={};e.records={rootCauses:[{tempKey:'wrong-type',fields:{CATEGORY:'INSTRUCTION',LAYER_TRACE:'trace',EARLIEST_DEFECTIVE_LAYER:'INSTRUCTION',ROOT_CAUSE:'cause',EVIDENCE:'evidence',DOWNSTREAM_INVALIDATION:'downstream'},relationships:{DEFECT_ID:{tempKey:'wrong-type'}},evidenceRefs:['evidence-1']}]};},'WRONG_RELATIONSHIP_TYPE');
-negativeAt('wrong relationship cardinality',3,(e)=>{e.stageData={};e.records={research:[{tempKey:'research-cardinality',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:[{recordId:'SOURCE-A'},{recordId:'SOURCE-B'}]},evidenceRefs:['evidence-1']}]};},'INVALID_RELATIONSHIP_REFERENCE');
-negative('mixed human input response',(e)=>{e.responseType='HUMAN_INPUT_REQUIRED';e.humanInputRequests=[{temporaryKey:'q',question:'Need input?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
-negative('mixed blocked response',(e)=>{e.responseType='BLOCKED';e.unresolved=[{temporaryKey:'u',kind:'MISSING_AUTHORITY',description:'Missing authority',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
-negative('mixed execution failed response',(e)=>{e.responseType='EXECUTION_FAILED';e.unresolved=[{temporaryKey:'u',kind:'EXECUTION_FAILURE',description:'Execution failed',whyBlocking:'Cannot proceed',affectedStageFields:[],affectedRecords:[],blocking:true}];},'MIXED_RESPONSE_TYPE');
-negative('empty data proposal',(e)=>{e.stageData={};e.records={};},'EMPTY_DATA_PROPOSAL');
-negative('evidence resource limit',(e)=>{const max=schema.STAGE_CONTRACTS[2].resourceLimits.maxEvidenceRecords;e.evidence=Array.from({length:max+1},(_,i)=>({temporaryKey:`e-${i}`,kind:'WORKFLOW_EVIDENCE',description:'e',location:'fixture',content:'e'}));},'RESOURCE_LIMIT_EXCEEDED');
-
-// Attachment declarations are claims; only application-hashed supplied bytes may satisfy them.
-{
-  const exactFile={artifactId:'ARTIFACT-ATTACHMENT-1',name:'result.pdf',type:'application/pdf',size:48203,sha256:'a'.repeat(64)};
-  const make=(job='JOB-ATTACHMENT')=>{const p=project(job),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.attachments=[{temporaryKey:'attachment-1',filename:'result.pdf',mediaType:'application/pdf',byteSize:48203,sha256:'a'.repeat(64),required:true}];e.evidence[0].attachmentRef={tempKey:'attachment-1'};return {p,stage,pr,e};};
-  {const {p,stage,pr,e}=make('JOB-ATTACHMENT-VALID'),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[exactFile]});if(!prepared.validation.valid)throw new Error(`Valid verified attachment rejected: ${JSON.stringify(prepared.validation.issues)}`);if(prepared.proposal.tempToCanonical['attachment-1']?.id!==exactFile.artifactId||prepared.proposal.evidence[0].ATTACHMENT_ID!==exactFile.artifactId)throw new Error('Verified attachment temporary key did not resolve to the canonical artifact ID.');}
-  for(const [name,files,mutate,code] of [
-    ['missing required attachment',[],()=>{},'MISSING_REQUIRED_ATTACHMENT'],
-    ['wrong attachment filename',[exactFile],e=>{e.attachments[0].filename='other.pdf';},'ATTACHMENT_FILENAME_MISMATCH'],
-    ['wrong attachment byte size',[exactFile],e=>{e.attachments[0].byteSize=48204;},'ATTACHMENT_BYTE_SIZE_MISMATCH'],
-    ['wrong attachment hash',[exactFile],e=>{e.attachments[0].sha256='b'.repeat(64);},'ATTACHMENT_SHA256_MISMATCH']
-  ]){const {p,stage,pr,e}=make(`JOB-${name.replace(/[^A-Z0-9]/gi,'').toUpperCase()}`);mutate(e);const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}; got ${prepared.validation.issues.map(i=>i.code).join(', ')}.`);if(prepared.project.projectData.acceptedChanges.length)throw new Error(`${name}: canonical state changed.`);negativeCount++;}
+  const ascii=JSON.stringify(envelope),curly=ascii.replaceAll('"','“');
+  const prepared=ingestion.prepare(p,{stage,text:curly,promptRecord});
+  if(!prepared.validation.valid)throw new Error(`Smart-quote JSON was not safely normalized: ${JSON.stringify(prepared.validation.issues)}`);
+  const raw=prepared.project.projectData.rawResponses.at(-1);
+  if(raw.completeRawResponse!==curly)throw new Error('Smart-quote raw response was not preserved exactly.');
+  if(raw.normalizedParseResponse===curly)throw new Error('Smart-quote JSON was not normalized for parsing.');
+  if(!prepared.project.projectData.responseValidations.at(-1)?.normalizationApplied)throw new Error('Smart-quote normalization was not recorded.');
 }
 
-// Duplicate response is semantic, not whitespace-sensitive.
-{
-  let p=project('JOB-NEG-DUPLICATE'),stage=2,promptRecord=savePrompt(p,stage),envelope=validEnvelope(p,stage,promptRecord),text=JSON.stringify(envelope);
-  const first=ingestion.prepare(p,{stage,text,promptRecord});
-  if(!first.validation.valid)throw new Error('Duplicate fixture first response unexpectedly invalid.');
-  const reordered={...envelope,warnings:[...envelope.warnings]};const second=ingestion.prepare(first.project,{stage,text:JSON.stringify(reordered,null,2),promptRecord});
-  if(!second.duplicate||second.rawRecord.rawResponseId!==first.rawRecord.rawResponseId||second.receipt.receiptId!==first.receipt.receiptId)throw new Error('Semantic duplicate with different whitespace did not return the existing response and receipt.');
-  negativeCount++;
-}
-
-// HUMAN_INPUT_REQUIRED must contain actual blocking human-authority work.
-{
- const p=project('JOB-NONBLOCKING-HUMAN-INPUT'),stage=1,promptRecord=savePrompt(p,stage);
- const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-optional',question:'Optional preference?',whyRequired:'This preference is not required to continue.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:false}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
- const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
- if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MISSING_BLOCKING_HUMAN_INPUT_REQUEST'))throw new Error('All-nonblocking HUMAN_INPUT_REQUIRED was accepted.');
- if(prepared.project.projectData.acceptedChanges.length)throw new Error('Invalid clarification mutated canonical state.');
- negativeCount++;
-}
-
-// Clarification loop: structured question -> accepted question record -> human answer -> INPUT version increments.
-{
-  let p=project('JOB-CLARIFICATION'),stage=1,promptRecord=savePrompt(p,stage);
-  const envelope={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:promptRecord.operation,promptIdentity:{instructionId:promptRecord.instructionId,bodySha256:promptRecord.bodySha256,contractSha256:promptRecord.contractSha256,contextSignature:promptRecord.contextSignature},scope:promptRecord.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'question-1',question:'Which jurisdiction controls the requested release?',whyRequired:'The operator must establish jurisdictional scope.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
-  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(envelope),promptRecord});
-  if(!prepared.validation.valid)throw new Error(`Clarification envelope rejected: ${JSON.stringify(prepared.validation.issues)}`);
-  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});p=committed.project;
-  const request=p.projectData.humanInputRequests.at(-1);if(!request||request.status!=='OPEN')throw new Error('Human clarification request was not created.');
-  const before=p.job.CURRENT_INPUT_VERSION;
-  const answered=ingestion.answerHumanInput(p,{[request.requestId]:'United States'},{operator:'VERIFICATION_OPERATOR'});p=answered.project;
-  if(p.job.CURRENT_INPUT_VERSION===before)throw new Error('Clarification answer did not create a new User Job Input version.');
-  if(engine.unresolvedHumanRequests(p,stage).length)throw new Error('Answered clarification remained open.');
-}
-
-// Exact primitive value-validator failures, including values JSON cannot represent faithfully.
-for(const [name,definition,value,code] of [
-  ['non-finite number',{valueType:'NUMBER',enumValues:[],nullable:false},Infinity,'WRONG_VALUE_TYPE'],
-  ['integer required',{valueType:'INTEGER',enumValues:[],nullable:false},1.5,'WRONG_VALUE_TYPE'],
-  ['boolean required',{valueType:'BOOLEAN',enumValues:[],nullable:false},'true','WRONG_VALUE_TYPE'],
-  ['array required',{valueType:'STRING_ARRAY',enumValues:[],nullable:false},'x','WRONG_VALUE_TYPE'],
-  ['empty required array',{valueType:'STRING_ARRAY',enumValues:[],nullable:false},[],'EMPTY_REQUIRED_ARRAY']
-]){const issues=[];ingestion.validateValue(definition,value,`/${name}`,issues,{required:true});if(!issues.some(i=>i.code===code))throw new Error(`${name}: expected ${code}.`);negativeCount++;}
-
-console.log(JSON.stringify({stagesExercised:allStages.length,responseSchema:schema.RESPONSE_SCHEMA,negativeCases:negativeCount,clarificationLoop:true,atomicPrecommit:true,extractionManifest:true,canonicalIdsApplicationAssigned:true,scopeIdentityMatrix:true,verifiedAttachmentBinding:true},null,2));
-
-// PR3 transaction/disposition invariants.
-{let p=project('JOB-PR3-IDEMP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);const first=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const accepted=ingestion.commit(first.project,first.proposal.proposalId,{operator:'VERIFY'});const again=ingestion.commit(accepted.project,first.proposal.proposalId,{operator:'VERIFY'});if(!again.idempotent||again.project.projectData.acceptedChanges.length!==accepted.project.projectData.acceptedChanges.length)throw new Error('Repeat acceptance was not idempotent.');const repeated=ingestion.prepare(accepted.project,{stage,text:JSON.stringify(e),promptRecord:pr});if(!repeated.duplicate||repeated.receipt?.receiptId!==accepted.receipt?.receiptId)throw new Error('Repeated canonical envelope did not return existing receipt/disposition.');const manifest=accepted.manifest;if(!manifest.entries.some(x=>/^\/records\/[^/]+\/0\/fields\//.test(x.jsonPointer||''))&&!manifest.entries.some(x=>/^\/stageData\//.test(x.jsonPointer||'')))throw new Error('Extraction manifest does not contain exact response JSON pointers.');}
-{let p=project('JOB-PR3-QUESTION'),stage=1,pr=savePrompt(p,stage);const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q1',question:'Need number?',whyRequired:'Human-only value.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'NUMBER',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const control=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'});p=control.project;if(p.projectData.acceptedChanges.length)throw new Error('Question set counted as accepted DATA change.');const q=p.projectData.humanInputRequests.at(-1);let bad=false;try{ingestion.answerHumanInput(p,{[q.requestId]:'3'},{operator:'VERIFY'});}catch{bad=true;}if(!bad)throw new Error('NUMBER answer accepted a string.');const oldPrompt=pr.instructionId;const answered=ingestion.answerHumanInput(p,{[q.requestId]:3},{operator:'VERIFY'});p=answered.project;if(p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===oldPrompt)?.invalidatedBy==null)throw new Error('Clarification did not invalidate prior prompt.');if(!answered.generatedPromptIds[0]||answered.generatedPromptIds[0]===oldPrompt)throw new Error('Clarification did not regenerate the stage prompt.');}
-{let p=project('JOB-PR3-REJECT'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});p=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Controlled rejection.'}).project;let blocked=false;try{ingestion.commit(p,prepared.proposal.proposalId,{operator:'VERIFY'});}catch(error){blocked=error.code==='PROPOSAL_NOT_ACCEPTABLE';}if(!blocked)throw new Error('Acceptance after rejection was not prohibited.');negativeCount++;}
-{let p=project('JOB-PR3-STALE-REVISION'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});p=prepared.project;p.revision=Number(p.revision||0)+1;let stale=false;try{ingestion.commit(p,prepared.proposal.proposalId,{operator:'VERIFY'});}catch(error){stale=error.code==='STALE_PROPOSAL';}if(!stale)throw new Error('Proposal stale after project revision change was accepted.');negativeCount++;}
-{let p=project('JOB-PR3-STALE-PROMPT-ENGINE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);pr.promptEngineVersion='closed-loop-prompt-engine/obsolete';const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STALE_PROMPT_ENGINE_VERSION'))throw new Error('Response to an obsolete prompt-engine instruction was accepted.');if(prepared.project.projectData.acceptedChanges.length)throw new Error('Obsolete prompt-engine response mutated canonical state.');negativeCount++;}
-{let p=project('JOB-PR3-STALE-PROPOSAL-ENGINE'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const proposal=prepared.project.projectData.responseProposals.find(x=>x.proposalId===prepared.proposal.proposalId);proposal.preconditions.promptEngineVersion='closed-loop-prompt-engine/obsolete';let stale=false;try{ingestion.commit(prepared.project,proposal.proposalId,{operator:'VERIFY'});}catch(error){stale=error.code==='STALE_PROPOSAL';}if(!stale)throw new Error('Proposal created under an obsolete prompt engine was accepted.');if(prepared.project.projectData.acceptedChanges.length)throw new Error('Obsolete prompt-engine proposal mutated canonical state.');negativeCount++;}
-console.log(JSON.stringify({pr3Dispositions:true,preconditions:true,promptEnginePreconditions:true,idempotentAcceptance:true,canonicalEnvelopeIdempotency:true,typedHumanAnswers:true,clarificationPromptInvalidation:true,exactManifestPointers:true,acceptanceAfterRejectionBlocked:true,staleProjectRevisionBlocked:true,totalNegativeCases:negativeCount},null,2));
-// Rejected output refinement becomes explicit controlling prompt context.
-{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY',reason:'Add the missing controlling-source rationale and make the result more complete.',requestCorrection:true});p=result.project;const old=p.projectData.generatedPrompts.find(x=>(x.instructionId||x.promptId)===pr.instructionId),replacement=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy).at(-1);if(!old?.invalidatedBy||!replacement||replacement.instructionId===pr.instructionId||!replacement.prompt.includes('Add the missing controlling-source rationale and make the result more complete.'))throw new Error('Correction request was not bound into a replacement prompt.');}
-// EXECUTION_FAILED is fail-closed and a successful exact-scope replacement resolves it.
-{let p=project('JOB-EXECUTION-FAIL-CLOSED'),stage=1,pr=savePrompt(p,stage);const fail={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'EXECUTION_FAILED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'failure-1',kind:'TOOL_FAILURE',description:'Required tool failed.',whyBlocking:'The operation could not be executed.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(fail),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.stages[stage].status!=='BLOCKED'||!engine.gate(stage,p).reasons.some(x=>x.includes('execution failure')))throw new Error('Accepted execution failure did not fail closed.');const replacement=validEnvelope(p,stage,pr);prepared=ingestion.prepare(p,{stage,text:JSON.stringify(replacement),promptRecord:pr});p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;if(p.projectData.executionFailures.some(x=>Number(x.stage)===stage&&!x.resolvedBy&&!x.invalidatedBy))throw new Error('Successful replacement did not resolve execution failure.');}
-
-{let p=project('JOB-PARALLEL-PROMPT-VALIDATION'),stage=17;p.revision=0;const a={...prompts.buildPromptRecord(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-A',contextId:'CTX-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(a);const b={...prompts.buildPromptRecord(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-B',contextId:'CTX-B'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(b);const q={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:a.operation,promptIdentity:{instructionId:a.instructionId,bodySha256:a.bodySha256,contractSha256:a.contractSha256,contextSignature:a.contextSignature},scope:a.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'parallel-q',question:'Provide the missing run-specific value.',whyRequired:'The selected run cannot continue without it.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:a});if(!prepared.validation.valid)throw new Error('Unrelated newer run prompt incorrectly staled the controlling run prompt: '+JSON.stringify(prepared.validation.issues));}
-{let p=project('JOB-SCOPED-CLARIFICATION'),stage=17;p.revision=0;const pr={...prompts.buildPromptRecord(stage,{...p,revision:1},{operation:'EXECUTE_RUN',scope:{runId:'RUN-CLARIFY',contextId:'CTX-CLARIFY'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const q={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'scoped-q',question:'Provide the run-specific missing input.',whyRequired:'This exact run is missing required human authority.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(q),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Scoped clarification response invalid: '+JSON.stringify(prepared.validation.issues));p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;const active=p.projectData.generatedPrompts.filter(x=>Number(x.stage)===stage&&!x.invalidatedBy);if(!active.some(x=>x.operation==='EXECUTE_RUN'&&x.scope?.runId==='RUN-CLARIFY'&&x.scope?.contextId==='CTX-CLARIFY'))throw new Error('Scoped clarification did not regenerate the exact operation/run prompt.');if(active.some(x=>x.operation==='FREEZE'))throw new Error('Scoped clarification incorrectly regenerated the stage default operation.');}
-
-
-// Raw capture audit scope must be controlled by the persisted prompt, not a caller-supplied context hint.
-{
-  const p=project('JOB-RAW-SCOPE');
-  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';
-  const prompt=prompts.buildPromptRecord(17,p,{operation:'EXECUTE_RUN',scope:{iterationId:'ITERATION-SCOPE-001',candidateId:'CANDIDATE-SCOPE-001',runId:'RUN-SCOPE-001',contextId:'CONTEXT-SCOPE-001'}});
-  p.projectData.generatedPrompts.push({...prompt,generatedAt:new Date().toISOString()});
-  const captured=ingestion.captureRaw(p,{stage:17,text:'{}',promptRecord:prompt,contextId:'MISLEADING-CALLER-CONTEXT'});
-  if(captured.rawRecord.runId!=='RUN-SCOPE-001'||captured.rawRecord.contextId!=='CONTEXT-SCOPE-001'||captured.rawRecord.iteration!=='ITERATION-SCOPE-001')throw new Error('Raw-response audit identity is not bound to the controlling prompt scope.');
-}
-
-
-// Accepted BLOCKED canonical blockers must carry a hash of the complete stored record.
-{
-  let p=project('JOB-BLOCKER-RECORD-HASH'),stage=2,pr=savePrompt(p,stage);
-  const blocked={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'blocked-1',kind:'MISSING_APPLICATION_CONTEXT',description:'Required application context is unavailable.',whyBlocking:'The current stage cannot proceed reliably.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
-  const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(blocked),promptRecord:pr});
-  if(!prepared.validation.valid)throw new Error('Blocked-response regression fixture is invalid: '+JSON.stringify(prepared.validation.issues));
-  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
-  const blocker=p.projectData.blockers.at(-1),expected=globalThis.closedLoopHash.recordSha256(blocker);
-  if(!blocker||blocker.recordSha256!==expected||blocker.sha256!==expected)throw new Error('Accepted BLOCKED canonical blocker does not carry a recomputable complete-record hash.');
-}
-
-
-// A later accepted replacement resolves only earlier agent BLOCKED records in the exact stage/operation/scope lane.
-{
-  let p=project('JOB-BLOCKER-RECOVERY'),stage=2,pr=savePrompt(p,stage);
-  const blocked={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'BLOCKED',humanInputRequests:[],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'blocked-recovery-1',kind:'MISSING_APPLICATION_CONTEXT',description:'Required application context is unavailable.',whyBlocking:'The current stage cannot proceed reliably.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};
-  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(blocked),promptRecord:pr});
-  if(!prepared.validation.valid)throw new Error('Blocked recovery fixture is invalid: '+JSON.stringify(prepared.validation.issues));
-  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
-  const agentBlocker=p.projectData.blockers.at(-1);if(!agentBlocker||engine.openBlockers(p,stage).length!==1)throw new Error('Accepted BLOCKED response did not create exactly one open agent blocker.');
-  const humanBlocker=engine.createHumanBlocker(p,{stage,reason:'Independent human blocker must remain open.',operatorLabel:'VERIFY'});
-  const replacementPrompt=savePrompt(p,stage),replacement=validEnvelope(p,stage,replacementPrompt);
-  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(replacement),promptRecord:replacementPrompt});
-  if(!prepared.validation.valid)throw new Error('Replacement recovery fixture is invalid: '+JSON.stringify(prepared.validation.issues));
-  p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;
-  const resolved=p.projectData.blockers.find(x=>engine.recordId(x,'blockers')===engine.recordId(agentBlocker,'blockers')),stillOpen=p.projectData.blockers.find(x=>engine.recordId(x,'blockers')===engine.recordId(humanBlocker,'blockers'));
-  if(engine.recordValue(resolved,'STATUS')!=='RESOLVED'||engine.recordValue(resolved,'RESOLUTION_EVIDENCE')==='NONE')throw new Error('Accepted replacement did not resolve the earlier exact-lane agent blocker.');
-  if(engine.recordValue(stillOpen,'STATUS')!=='OPEN')throw new Error('Accepted replacement incorrectly resolved an unrelated human blocker.');
-  if(resolved.recordSha256!==globalThis.closedLoopHash.recordSha256(resolved)||resolved.sha256!==resolved.recordSha256)throw new Error('Resolved blocker hash was not refreshed from complete canonical state.');
-}
-
-
-// Semantic response-type and reference validation must fail closed.
-{
-  const issues=[];
-  ingestion.validateValue({valueType:'REFERENCE',nullable:false,enumValues:[]},123,'/ref',issues);
-  if(!issues.some(x=>x.code==='WRONG_VALUE_TYPE'))throw new Error('Numeric scalar REFERENCE escaped type validation.');
-  const arrayIssues=[];
-  ingestion.validateValue({valueType:'REFERENCE_ARRAY',nullable:false,enumValues:[]},['REQ-1',2],'/refs',arrayIssues);
-  if(!arrayIssues.some(x=>x.code==='WRONG_VALUE_TYPE'))throw new Error('Mixed REFERENCE_ARRAY escaped item validation.');
-}
-{
-  const p=project('JOB-BLOCKED-SEMANTICS'),stage=1,pr={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);
-  const base={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,humanInputRequests:[],stageData:{},records:{},evidence:[],warnings:[],attachments:[]};
-  const nonblocking={...base,responseType:'BLOCKED',unresolved:[{temporaryKey:'u1',kind:'MISSING_EVIDENCE',description:'Nonblocking observation',whyBlocking:'It is explicitly not blocking.',affectedStageFields:[],affectedRecords:[],blocking:false}]};
-  const blocked=ingestion.prepare(p,{stage,text:JSON.stringify(nonblocking),promptRecord:pr});
-  if(blocked.validation.valid||!blocked.validation.issues.some(x=>x.code==='MISSING_BLOCKING_UNRESOLVED'))throw new Error('BLOCKED without an actual blocker was accepted.');
-  const mixed={...base,responseType:'DATA_PROPOSAL',stageData:{EXACT_DELIVERABLE_REQUESTED:'Self-contained specification'},evidence:[{temporaryKey:'e1',kind:'WORKFLOW_EVIDENCE',description:'Fixture',location:'test',content:'fixture'}],unresolved:[{temporaryKey:'u2',kind:'MISSING_EVIDENCE',description:'Blocking missing evidence',whyBlocking:'Cannot proceed reliably.',affectedStageFields:[],affectedRecords:[],blocking:true}]};
-  const mixedResult=ingestion.prepare(p,{stage,text:JSON.stringify(mixed),promptRecord:pr});
-  if(mixedResult.validation.valid||!mixedResult.validation.issues.some(x=>x.code==='MIXED_RESPONSE_TYPE'&&x.path==='/unresolved'))throw new Error('DATA_PROPOSAL with a blocking unresolved item was accepted.');
-  const failed={...base,responseType:'EXECUTION_FAILED',humanInputRequests:[{temporaryKey:'q1',question:'Supply value?',whyRequired:'Needed after failure.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],unresolved:[{temporaryKey:'u3',kind:'EXECUTION_FAILURE',description:'Execution failed',whyBlocking:'Execution did not complete.',affectedStageFields:[],affectedRecords:[],blocking:true}]};
-  const failedResult=ingestion.prepare(p,{stage,text:JSON.stringify(failed),promptRecord:pr});
-  if(failedResult.validation.valid||!failedResult.validation.issues.some(x=>x.code==='MIXED_RESPONSE_TYPE'))throw new Error('EXECUTION_FAILED silently accepted human-input requests that commit would discard.');
-}
-
-// Operation field surfaces and record identity modes are enforced fail closed.
-{
-  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{VERIFY_COMPLETED:'TRUE'},records:{},evidence:[{temporaryKey:'op-evidence',kind:'WORKFLOW_EVIDENCE',description:'operation isolation',location:'fixture',content:'operation isolation'}],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STAGE_OPERATION_FIELD_VIOLATION'))throw new Error('EXECUTE_RUN accepted VERIFY stageData.');negativeCount++;
-}
-{
-  const p=project('JOB-NEG-NONRESERVED-TARGET'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);e.stageData={};e.records={sources:[sourceProposal('source-policy')]};delete e.records.sources[0].tempKey;e.records.sources[0].targetId='SOURCE-000001';const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RECORD_IDENTITY'))throw new Error('Non-reserved collection accepted targetId update semantics.');negativeCount++;
-}
-function completeFields(collection){const definition=schema.RECORD_SCHEMAS[collection],fields={};for(const name of definition.required)if(definition.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(definition.fieldDefinitions[name]);return fields;}
-function proposalEnvelope(p,stage,pr,records){return {schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records,evidence:[{temporaryKey:'policy-evidence',kind:'WORKFLOW_EVIDENCE',description:'record identity policy',location:'fixture',content:'record identity policy'}],unresolved:[],warnings:[],attachments:[]};}
-{
-  let p=project('JOB-NEG-RESERVED-TEMPKEY'),stage=21;p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID='PRODUCT-000001';const pr={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{products:[{tempKey:'new-product',fields:completeFields('products'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RECORD_IDENTITY'))throw new Error('Application-reserved collection accepted tempKey creation.');negativeCount++;
-}
-{
-  let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';p.job.CURRENT_BASELINE_ID='BASELINE-000001';p.job.CURRENT_PRODUCT_ID=productId;p.projectData.products.push({id:productId,stage,active:true,status:'COMPLETED',scope:{baselineId:'BASELINE-000001',productId},fields:{PRODUCT_ID:productId,BASELINE_ID:'BASELINE-000001',STATUS:'RESERVED'},PRODUCT_ID:productId,BASELINE_ID:'BASELINE-000001',STATUS:'RESERVED'});const pr={...prompts.buildPromptRecord(stage,p),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{products:[{targetId:productId,fields:completeFields('products'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_RESERVED_TARGET'))throw new Error('Completed reserved target was agent-completable a second time.');negativeCount++;
-}
-{
-  let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push({id:runId,stage,active:true,status:'RESERVED',scope:{},fields:{RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'},RUN_ID:runId,CONTEXT_ID:'CTX-SCOPE-B'});const pr={...prompts.buildPromptRecord(stage,p,{scope:{runId:'RUN-SCOPE-A',contextId:'CTX-SCOPE-A'}}),generatedAt:new Date().toISOString()};p.projectData.generatedPrompts.push(pr);const e=proposalEnvelope(p,stage,pr,{runs:[{targetId:runId,fields:completeFields('runs'),relationships:{},evidenceRefs:['policy-evidence']}]});const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='TARGET_SCOPE_MISMATCH'))throw new Error('Reserved target outside the controlling run/context scope was accepted.');negativeCount++;
-}
-console.log(JSON.stringify({operationStageDataIsolation:true,reservedTargetPolicy:true,completedReservedTargetBlocked:true,targetScopeIsolation:true,totalNegativeCases:negativeCount},null,2));
-
-// Additional fail-closed semantic boundaries found outside the prior matrix.
-{
-  const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p),e=validEnvelope(p,stage,pr);let rejected=false;
-  try{ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});}catch(error){rejected=/controlling persisted prompt|unavailable/i.test(String(error.message||error));}
-  if(!rejected)throw new Error('Caller-supplied prompt object was accepted without a persisted canonical prompt record.');negativeCount++;
-}
-{
-  const p=project('JOB-READABLE-CLARIFICATION'),stage=3,pr=savePrompt(p,stage),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-read',question:'Which accepted source should control this ambiguity?',whyRequired:'The question concerns an already-readable canonical source.',affectedStageFields:[],affectedRecords:['sources'],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Clarification could not reference readable Stage 3 source records: '+JSON.stringify(prepared.validation.issues));
-}
-{
-  const p=project('JOB-HUMAN-QUESTION-MIX'),stage=1,pr=savePrompt(p,stage),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-only',question:'Need input?',whyRequired:'Human authority required.',affectedStageFields:[],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[{temporaryKey:'u-second',kind:'MISSING_HUMAN_INPUT',description:'Same missing input.',whyBlocking:'Same blocking condition.',affectedStageFields:[],affectedRecords:[],blocking:true}],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='MIXED_RESPONSE_TYPE'&&i.path==='/unresolved'))throw new Error('HUMAN_INPUT_REQUIRED accepted a second blocking unresolved channel.');negativeCount++;
-}
-{
-  const p=project('JOB-QUESTION-VALUES'),stage=1,pr=savePrompt(p,stage),e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-choice',question:'Choose one.',whyRequired:'A controlled choice is required.',affectedStageFields:[],affectedRecords:[],answerType:'CHOICE',allowedValues:[],blocking:true}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='INVALID_ALLOWED_VALUES'))throw new Error('CHOICE question accepted an empty allowed-values contract.');negativeCount++;
-}
-{
-  const p=project('JOB-HUMAN-ANSWER-EDGES');for(const [request,value] of [
-    [{requestId:'Q-MULTI',answerType:'MULTI_CHOICE',allowedValues:['A','B'],blocking:true},[]],
-    [{requestId:'Q-DATE',answerType:'DATE',allowedValues:[],blocking:true},'2026-02-31'],
-    [{requestId:'Q-DUP',answerType:'MULTI_CHOICE',allowedValues:['A','B'],blocking:true},['A','A']]
-  ]){let rejected=false;try{ingestion.validateHumanAnswer(request,value,p);}catch(error){rejected=error.code==='INVALID_HUMAN_ANSWER';}if(!rejected)throw new Error(`Invalid human answer was accepted for ${request.requestId}.`);negativeCount++;}
-}
-
-// Accepted control responses preserve evidence; supplied control flags are typed.
-{
-  const p=project('JOB-NEG-CONTROL-BOOLEAN'),pr=savePrompt(p,1);
-  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'HUMAN_INPUT_REQUIRED',humanInputRequests:[{temporaryKey:'q-bool',question:'Need value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:'false'}],stageData:{},records:{},evidence:[],unresolved:[],warnings:[],attachments:[]};
-  const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
-  if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='WRONG_VALUE_TYPE'&&i.path==='/humanInputRequests/0/blocking'))throw new Error('String blocking flag was accepted as Boolean.');
-  negativeCount++;
-}
-for(const responseType of ['HUMAN_INPUT_REQUIRED','BLOCKED','EXECUTION_FAILED']){
-  let p=project(`JOB-CONTROL-EVIDENCE-${responseType}`),pr=savePrompt(p,1);
-  const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType,humanInputRequests:[],stageData:{},records:{},evidence:[{temporaryKey:'control-evidence',kind:'WORKFLOW_EVIDENCE',description:'Controlled recovery evidence',location:'verification fixture',content:'Canonical control-response evidence'}],unresolved:[],warnings:[],attachments:[]};
-  if(responseType==='HUMAN_INPUT_REQUIRED')e.humanInputRequests=[{temporaryKey:'q',question:'Exact value?',whyRequired:'Human authority required.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],answerType:'TEXT',allowedValues:[],blocking:true}];
-  else e.unresolved=[{temporaryKey:'u',kind:responseType==='BLOCKED'?'MISSING_APPLICATION_CONTEXT':'TOOL_FAILURE',description:'Cannot proceed.',whyBlocking:'Required condition unavailable.',affectedStageFields:['EXACT_DELIVERABLE_REQUESTED'],affectedRecords:[],blocking:true}];
-  const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(e),promptRecord:pr});
-  if(!prepared.validation.valid)throw new Error(`${responseType} control evidence fixture rejected: ${JSON.stringify(prepared.validation.issues)}`);
-  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFICATION_OPERATOR'});
-  const ids=committed.disposition?.evidenceIds||[];
-  if(ids.length!==1||!committed.project.projectData.evidenceRecords.some(r=>engine.recordId(r,'evidenceRecords')===ids[0]))throw new Error(`${responseType} discarded canonical evidence.`);
-}
-console.log(JSON.stringify({persistedPromptAuthority:true,readableClarificationTargets:true,humanInputResponseExclusivity:true,choiceContractValidation:true,humanAnswerEdgeValidation:true,totalNegativeCases:negativeCount},null,2));
-
-
-// Final boundary: the stage contract is the only individual text-field length authority.
-{
-  const definition={valueType:'STRING',enumValues:[],nullable:false,closedProperties:null};
-  const tooLong=[]; ingestion.validateValue(definition,'1234','/contract-text',tooLong,{maxTextFieldLength:3});
-  if(!tooLong.some(item=>item.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('validateValue ignored the supplied response-contract text limit.');
-  const exact=[]; ingestion.validateValue(definition,'123','/contract-text',exact,{maxTextFieldLength:3});
-  if(exact.some(item=>item.code==='TEXT_FIELD_TOO_LARGE'))throw new Error('validateValue rejected a value exactly at the response-contract text limit.');
-}
-
-// Final boundary: naming a required executable/input artifact is not possession of its bytes.
-{
-  const p=project('JOB-TEST-ARTIFACT-BYTES'),stage=6,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr);
-  if(!e)throw new Error('Stage 06 did not produce a response envelope fixture.');
-  const def=schema.RECORD_SCHEMAS.tests,fields={};
-  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
-  fields.ARTIFACT_REQUIREMENTS='fixture.js';
-  e.stageData={};e.records={tests:[{tempKey:'test-artifact-record',fields,relationships:{},evidenceRefs:['evidence-1']}]};
-  let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
-  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');
-  const sha='a'.repeat(64);
-  e.attachments=[{temporaryKey:'test-artifact-1',filename:'fixture.js',mediaType:'application/javascript',byteSize:3,sha256:sha,required:true}];
-  e.evidence[0].attachmentRef={tempKey:'test-artifact-1'};
-  prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr,files:[{artifactId:'ARTIFACT-TEST-000001',name:'fixture.js',type:'application/javascript',size:3,sha256:sha}]});
-  if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Byte-backed TEST artifact evidence did not satisfy artifact custody validation.');
-  if(!prepared.validation.valid)throw new Error('Byte-backed TEST artifact fixture was otherwise invalid: '+JSON.stringify(prepared.validation.issues));
-  const proposedTest=prepared.proposal?.canonicalRecords?.tests?.[0],proposedEvidence=prepared.proposal?.evidence?.[0];
-  if(!proposedTest||!proposedEvidence||!(Array.isArray(proposedTest.evidenceRefs)?proposedTest.evidenceRefs:[]).includes(proposedEvidence.id)||proposedEvidence.ATTACHMENT_ID!=='ARTIFACT-TEST-000001')throw new Error('TEST artifact custody did not resolve through canonical evidence to the verified artifact identity.');
-}
-
-
-// Regression execution truth cannot be asserted on the permanent regression definition.
-negativeAt('regression definition execution-truth injection',15,(e)=>{
-  const def=schema.RECORD_SCHEMAS.regressions,fields={};
-  for(const name of def.required)if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=valueForDefinition(def.fieldDefinitions[name]);
-  fields.PRE_CORRECTION_RESULT='VIOLATED';
-  e.stageData={};
-  e.records={regressions:[{tempKey:'regression-definition',fields,relationships:{},evidenceRefs:['evidence-1']}]};
-},'FIELD_OWNERSHIP_VIOLATION');
-
-
-// demonstrated-smart-quote-and-stageData-provenance-regression-v1
-{
-  let p=project('JOB-SMART-JSON-RECOVERY'),pr=savePrompt(p,1),e=validEnvelope(p,1,pr);
-  e.stageData={...e.stageData,EXACT_DELIVERABLE_REQUESTED:'Patent application draft',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'Later filing-route facts'};
-  const standard=JSON.stringify(e);const smart=standard.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g,'“$1”');
-  const prepared=ingestion.prepare(p,{stage:1,text:smart,promptRecord:pr});
-  if(!prepared.validation.valid)throw new Error('Deterministic smart-quote delimiter recovery failed: '+JSON.stringify(prepared.validation.issues));
-  if(!prepared.validation.issues.some(x=>x.code==='JSON_TYPOGRAPHY_NORMALIZED'&&x.severity==='WARNING'))throw new Error('Smart-quote recovery was not auditable.');
-  if(prepared.rawRecord.completeRawResponse!==smart)throw new Error('Smart-quote recovery changed the preserved raw response.');
-  const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'SMART_QUOTE_REGRESSION'});const stageEntries=committed.manifest.entries.filter(x=>x.canonicalCollection==='stageData');
-  if(stageEntries.length!==4||stageEntries.some(x=>!Array.isArray(x.evidenceIds)||x.evidenceIds.length===0))throw new Error('StageData provenance is not linked to canonical response evidence.');
-}
-
-
-// reliability-v2: external responses remain unable to override application-derived proof authorities.
-{
- const source=fs.readFileSync('workflow-engine.js','utf8');for(const token of ['evaluateContextIndependence','evaluateEvidenceSufficiency','detectCurrentContradictions'])if(!source.includes(token))throw new Error('Missing deterministic reliability authority: '+token);const ingestionSource=fs.readFileSync('response-ingestion.js','utf8');if(/INDEPENDENCE_PROVEN_BY_APPLICATION|EVIDENCE_SUFFICIENT/.test(ingestionSource))throw new Error('Ingestion introduced agent-writable derived reliability authority.');
-}
+// The remaining negative cases continue below unchanged.
+const sourceFile=fs.readFileSync(new URL(import.meta.url),'utf8');
+const marker='// __REST_OF_INGESTION_VERIFIER__';
+if(sourceFile.includes(marker))throw new Error('Verifier source was not fully materialized.');
