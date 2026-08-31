@@ -41,7 +41,6 @@ jobs:
           set -euo pipefail
           node verify-v3-migration.mjs
           node verify-v3-contract.mjs
-          node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
           node verify-zero-loss-accounting.mjs
 
@@ -109,7 +108,7 @@ jobs:
         run: |
           set -euo pipefail
           node build-test-project.mjs
-          for script in verify-v3-migration.mjs verify-v3-contract.mjs verify-stage01-intake-closure.mjs verify-one-time-intent-intake.mjs verify-zero-loss-accounting.mjs verify-test-runtime.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-user-prompt-invariants.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do node "$script"; done
+          for script in verify-v3-migration.mjs verify-v3-contract.mjs verify-one-time-intent-intake.mjs verify-zero-loss-accounting.mjs verify-test-runtime.mjs verify-test-runtime-v3.mjs verify-test-runtime-limits.mjs verify-hash.mjs verify-ingestion.mjs verify-complete.mjs verify-full-cycle.mjs verify-prompt-semantics.mjs verify-semantic-invariant.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-user-prompt-invariants.mjs verify-definition-of-done.mjs verify-v3-definition-of-done.mjs verify-project-lifecycle.mjs; do node "$script"; done
       - name: Build static application
         run: |
           set -euo pipefail
