@@ -9,20 +9,15 @@
   "visualsPreserved": true
 }
 === verify-stage-prompts-complete.mjs ===
-prompt-engine.js:154
-function assertStage4UpstreamExhausted(state){const fail=reason=>{const error=new Error(reason);error.code='STAGE4_UPSTREAM_INCOMPLETE';throw error;};const one=state?.stages?.[1],three=state?.stages?.[3];if(String(one?.status||'').toUpperCase()!=='COMPLETE'||one?.gate?.complete===false)fail('Stage 04 cannot be generated until Stage 01 human-authority intake is complete.');const intake=workflow.evaluateIntakeAccounting(state);if(!intake.complete)fail('Stage 04 cannot be generated because Stage 01 controlled-input accounting is incomplete: '+intake.reasons.join('; '));if(String(three?.status||'').toUpperCase()!=='COMPLETE'||three?.gate?.complete===false)fail('Stage 04 cannot be generated until Stage 03 research is complete.');const noSource=upper(state?.stages?.[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION||state?.stages?.[2]?.acceptedData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE';if(!noSource){const sources=safe(state?.projectData?.sources).filter(r=>r?.active!==false&&!r?.invalidatedBy),research=safe(state?.projectData?.research).filter(r=>r?.active!==false&&!r?.invalidatedBy),covered=new Set(research.map(r=>clean(recordValue(r,'SOURCE_ID')||r?.relationships?.SOURCE_ID)).filter(Boolean));for(const src of sources){const sid=recordId(src,'sources');if(sid&&!covered.has(sid))fail('Stage 04 cannot be generated because Stage 03 has not researched every current Stage 02 source.');}const d=three?.agentData||three?.acceptedData||{};if(!['TRUE','YES','COMPLETE','COMPLETED'].includes(upper(d.ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED)))fail('Stage 04 cannot be generated until Stage 03 confirms all controlling sources were examined.');if(!['TRUE','YES','COMPLETE','COMPLETED'].includes(upper(d.SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED)))fail('Stage 04 cannot be generated until Stage 03 completes the second conflict and exception pass.');if(['TRUE','YES','FOUND','DETECTED'].includes(upper(d.NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS)))fail('Stage 04 cannot be generated while the latest Stage 03 pass found a new material requirement category.');}return true;}
-                                                                              ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50
+    for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
+                                                                                               ^
 
-Error: Stage 04 cannot be generated because Stage 01 controlled-input accounting is incomplete: Stage 01 INPUT_SET_CONTENTS must be the structured current intake accounting capture.; Stage 01 intake accounting is not bound to the current input version.; Stage 01 intake accounting is not bound to the current application intake manifest.; Stage 01 intake accounting omitted controlled input unit INPUT-UNIT-E44117E39BA14259B1AD.; Stage 01 intake accounting omitted controlled input unit INPUT-UNIT-187F9A77C090B15D29FC.; Stage 01 intake accounting omitted controlled input unit INPUT-UNIT-578DC1CC1229AEAEC110.
-    at fail (prompt-engine.js:154:79)
-    at assertStage4UpstreamExhausted (prompt-engine.js:154:450)
-    at Object.buildPromptRecord (prompt-engine.js:164:310)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:52:26
+Error: Stage 5 COMPLETE missing required read collection candidateRequirements.
+    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50:96
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
-  code: 'STAGE4_UPSTREAM_INCOMPLETE'
-}
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
 
 Node.js v22.23.2
 === verify-complete.mjs ===
@@ -43,23 +38,36 @@ Node.js v22.23.2
   "evidenceChainNoFabrication": true,
   "acceptedStateStorageRollback": true
 }
-prompt-engine.js:146
-    const error=new Error(`Stage ${String(stage).padStart(2,'0')} controlling instruction cannot be generated until Stage ${String(stage-1).padStart(2,'0')} is complete. Missing upstream work must be completed at its responsible stage; the human must not be asked to repeat or resupply captured project information.`);
-                ^
-
-Error: Stage 11 controlling instruction cannot be generated until Stage 10 is complete. Missing upstream work must be completed at its responsible stage; the human must not be asked to repeat or resupply captured project information.
-    at assertPromptPrerequisites (prompt-engine.js:146:17)
-    at Object.buildPromptRecord (prompt-engine.js:164:258)
-    at acceptLane (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:197:55)
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-complete.mjs:198:49
-    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
-    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
-    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
-  code: 'UPSTREAM_STAGE_INCOMPLETE',
-  upstreamStage: 10
+{
+  "scopedAcceptedResultRefinement": true
 }
-
-Node.js v22.23.2
+{
+  "stage5RequirementVersionIsolation": true,
+  "iterationOperationIsolation": true,
+  "currentRegressionClosure": true,
+  "stage28CurrentBatch": true
+}
+{
+  "reliabilityV2Execution": true,
+  "reliabilityV2Independence": true,
+  "reliabilityV2Evidence": true,
+  "reliabilityV2Contradictions": true
+}
+{
+  "stage22ProductHandoff": true,
+  "epistemicEffectiveEvidence": true,
+  "releaseContradictions": true
+}
+{"stage04CapturedInputReuse":true}
+{
+  "nativeHandoffNoExternalReturn": true,
+  "capabilityNegation": true,
+  "stage7AcceptedInvalidBlocks": true
+}
+{
+  "reviewerIndependenceAuthority": true,
+  "truthfulOperationalMetrics": true
+}
 === verify-one-time-intent-intake.mjs ===
 {"oneTimeIntentCapture":true,"intakeManifestComplete":true,"stage03ReceivesCurrentProjectAuthority":true,"stage04ReceivesAllStage01AndStage03Data":true,"noRepeatIntentTransfer":true,"incompleteDownstreamAccountingRejected":true}
 === verify-prompt-semantics.mjs ===
