@@ -1,17 +1,15 @@
-name: Restore complete conversational prompt execution contract
-on:
-  push:
+name: Restore prompt experience
+'on': [push]
 permissions:
   contents: write
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore prompt execution behavior without visual changes
+      - name: Patch prompt engine only
         shell: bash
         run: |
           python3 - <<'PY'
@@ -43,7 +41,7 @@ CONVERSATION PRECEDENCE — HUMAN EXPERIENCE IS PART OF EXECUTION\
           s=s.replace(old,new,1)
           p.write_text(s)
           for name in ['index.html','app-core.js']:
-              q=Path(name); t=q.read_text().replace('runtime-20260830-live-operator-59','runtime-20260830-live-operator-60'); q.write_text(t)
+              q=Path(name); q.write_text(q.read_text().replace('runtime-20260830-live-operator-59','runtime-20260830-live-operator-60'))
           PY
           rm -f .github/workflows/apply-prompt-ux-restoration.yml
           git config user.name "github-actions[bot]"
