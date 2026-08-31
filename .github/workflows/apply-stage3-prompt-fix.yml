@@ -18,6 +18,16 @@ jobs:
           ref: fix/monotonic-reliability-pass-20260831
           fetch-depth: 0
 
+      - name: Materialize the exact retained Stage 01 output
+        run: |
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
+          const output=String(project.stageRecords?.['1']?.output||'');
+          if(!output||project.generatedOutputs?.[0]?.output!==output)throw new Error('Canonical retained Stage 01 output is missing or inconsistent.');
+          fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);
+          NODE
+
       - name: Correct the earliest missing Stage 03 prompt boundary
         shell: bash
         run: |
