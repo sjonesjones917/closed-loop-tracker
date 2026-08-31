@@ -24,49 +24,54 @@ jobs:
       - name: Syntax
         run: |
           set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
-            node --check "$file"
-          done
-      - name: Schema ownership migration and deterministic runtime
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done
+      - name: Hash authority
+        run: node verify-hash.mjs
+      - name: Schema and ownership architecture
         run: |
           set -euo pipefail
-          node verify-hash.mjs
           node verify-spec3-contract.mjs
           node verify-v3-contract.mjs
-          node verify-v3-migration.mjs
+      - name: Migration
+        run: node verify-v3-migration.mjs
+      - name: Test IR validation and deterministic runtime
+        run: |
+          set -euo pipefail
           node verify-test-runtime.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
-      - name: Stage 01 and Stage 04 accounting
+      - name: Stage 01 raw intake and semantic accounting
         run: |
           set -euo pipefail
           node verify-stage01-intake-closure.mjs
           node verify-one-time-intent-intake.mjs
           node verify-zero-loss-accounting.mjs
-      - name: Ingestion workflow prompts gates and full cycle
+      - name: Ingestion
+        run: node verify-ingestion.mjs
+      - name: Workflow gates and semantic evidence
         run: |
           set -euo pipefail
-          node verify-ingestion.mjs
           node verify-semantic-invariant.mjs
-          node verify-prompt-semantics.mjs
-          node verify-user-prompt-invariants.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-all-stage-prompts.mjs
-          node verify-full-cycle.mjs
           node verify-complete.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
           node verify-project-lifecycle.mjs
+      - name: Prompt semantics and leakage
+        run: |
+          set -euo pipefail
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-all-stage-prompts.mjs
+      - name: Full-cycle verification
+        run: node verify-full-cycle.mjs
       - name: Local Chromium operator-path acceptance
         run: |
           set -euo pipefail
           python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          for i in {1..100}; do
-            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
-            sleep 0.1
-          done
+          for i in {1..100}; do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi; sleep 0.1; done
           curl -fsS http://127.0.0.1:4173/ >/dev/null
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
           PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
@@ -87,8 +92,7 @@ jobs:
       - name: Build static application
         run: |
           set -euo pipefail
-          rm -rf _site
-          mkdir _site
+          rm -rf _site && mkdir _site
           cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
@@ -100,9 +104,7 @@ jobs:
       - name: Verify exact deployed bytes
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          set -euo pipefail
-          node verify-live.mjs
+        run: node verify-live.mjs
       - name: Deployed Chromium operator-path acceptance
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
@@ -116,27 +118,10 @@ jobs:
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
-          set -euo pipefail
           node - <<'NODE'
           const fs=require('node:fs');
-          const report={
-            commit:process.env.GITHUB_SHA,
-            workflow:'mobile-closed-loop/30',
-            projectSchema:'closed-loop-project/3',
-            responseSchema:'closed-loop-stage-response/3',
-            testIrSchema:'closed-loop-test-spec/1',
-            verificationPackageSchema:'closed-loop-verification-package/1',
-            stageCount:30,
-            proofStatus:'PASSED_ALL_PRECEDING_REQUIRED_CI_AND_DEPLOYED_BROWSER_STEPS',
-            deployedByteIdentity:true,
-            liveBrowserVerification:true,
-            deployedUrl:process.env.PAGE_URL,
-            testedBrowserWidths:[320,393,1280],
-            actualAndroidChromeAcceptance:false,
-            fullProductionMaturity:false
-          };
+          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',stageCount:30,proofStatus:'PASSED_ALL_PRECEDING_REQUIRED_CI_AND_DEPLOYED_BROWSER_STEPS',deployedByteIdentity:true,liveBrowserVerification:true,deployedUrl:process.env.PAGE_URL,testedBrowserWidths:[320,393,1280],actualAndroidChromeAcceptance:false,fullProductionMaturity:false};
           fs.writeFileSync('final-acceptance.json',JSON.stringify(report,null,2)+'\n');
-          console.log(JSON.stringify(report,null,2));
           NODE
       - uses: actions/upload-artifact@v4
         with:
