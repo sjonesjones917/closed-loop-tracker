@@ -39,14 +39,29 @@ jobs:
           e.write_text(w)
 
           sc=Path('workflow-schema.js'); ss=sc.read_text()
-          old4="4:['research','candidateRequirements','sources','evidenceRecords']"
-          new4="4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
-          if old4 not in ss: raise SystemExit('Stage 04 read contract marker missing')
-          ss=ss.replace(old4,new4,1)
-          old5="5:['requirements','research','sources','sourceConflicts','evidenceRecords']"
-          new5="5:['requirements','research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
-          if old5 not in ss: raise SystemExit('Stage 05 read contract marker missing')
-          sc.write_text(ss.replace(old5,new5,1))
+          replacements={
+            "4:['research','candidateRequirements','sources','evidenceRecords']":"4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']",
+            "5:['requirements','research','sources','sourceConflicts','evidenceRecords']":"5:['requirements','research','candidateRequirements','sources','sourceConflicts','evidenceRecords']",
+            "6:['requirements','requirementResolutions','artifacts']":"6:['requirements','requirementResolutions','sources','research','artifacts']",
+            "8:['requirements','tests','failureTests','requirementResolutions','sources']":"8:['requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts']",
+            "9:['instructions','instructionTraces','requirements','tests']":"9:['instructions','instructionTraces','requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts']",
+            "18:['iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','blockers']":"18:['iterations','runs','verification','comparisons','defects','rootCauses','changes','requirements','tests','regressions','regressionExecutions','blockers']",
+            "20:['confirmationRecords','candidateFreezes','iterations']":"20:['confirmationRecords','candidateFreezes','iterations','artifacts']",
+            "23:['products','requirements','tests','sources','evidenceRecords']":"23:['products','requirements','tests','sources','research','evidenceRecords']",
+            "24:['products','requirements','tests','failureTests','regressions','regressionExecutions','defects','sources','evidenceRecords']":"24:['products','requirements','tests','failureTests','regressions','regressionExecutions','defects','sources','research','artifacts','evidenceRecords']",
+            "26:['products','baselines','requirements','instructions','tests','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','defects','blockers','evidenceRecords']":"26:['products','baselines','requirements','instructions','tests','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','confirmationRecords','regressions','regressionExecutions','defects','blockers','evidenceRecords']",
+            "27:['requirements','tests','products','baselines','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressionExecutions','evidenceRecords']":"27:['requirements','tests','products','baselines','confirmationRecords','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','defects','blockers','regressions','regressionExecutions','evidenceRecords']",
+            "29:['sources','requirements','instructions','instructionTraces','runs','products','baselines','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','regressionExecutions','releaseRecords','artifactIdentities','evidenceRecords']":"29:['sources','requirements','instructions','instructionTraces','runs','products','baselines','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','regressionExecutions','releaseRecords','artifactIdentities','evidenceRecords','evidenceChains']",
+            "30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines','evidenceRecords']":"30:['defects','rootCauses','regressions','regressionExecutions','changes','requirements','baselines','evidenceRecords']",
+            "FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','tests','regressions','regressionExecutions']":"FREEZE:Object.freeze({readCollections:['changes','candidateFreezes','iterations','instructions','requirements','tests','regressions','regressionExecutions','artifacts']",
+            "CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations']":"CONFIRM_FREEZE:Object.freeze({readCollections:['convergenceRecords','candidateFreezes','iterations','requirements','tests','artifacts']",
+            "REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs']":"REGRESSION_VERIFY:Object.freeze({readCollections:['regressions','regressionExecutions','runs','tests','requirements','artifacts']",
+            "CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','tests','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords']":"CONFIRM:Object.freeze({readCollections:['runs','verification','comparisons','requirements','tests','regressions','regressionExecutions','candidateFreezes','defects','blockers','evidenceRecords']"
+          }
+          for old,new in replacements.items():
+            if old not in ss: raise SystemExit('Read-contract marker missing: '+old)
+            ss=ss.replace(old,new,1)
+          sc.write_text(ss)
 
           h=Path('index.html'); x=h.read_text()
           old_css='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
