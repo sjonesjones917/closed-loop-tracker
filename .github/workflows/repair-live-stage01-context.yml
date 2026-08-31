@@ -82,6 +82,9 @@ jobs:
 
           p=Path('verify-browser.mjs')
           s=p.read_text()
+          old="const longEnvelope=structuredClone(envelope);longEnvelope.evidence=Array.from({length:12}"
+          assert old in s
+          s=s.replace(old,"const longEnvelope=structuredClone(envelope);longEnvelope.evidence=Array.from({length:40}",1)
           regression="""\n// Permanent regression: Stage 01 proposal summary reads the current /3 INPUT_SET_CONTENTS contract.\n{\n  const source=fs.readFileSync(new URL('./app-core.js',import.meta.url),'utf8');\n  assert.match(source,/parseCapturedInputSet\\(\\{agentData:p\\.envelope\\?\\.stageData\\|\\|\\{\\}\\}\\)/);\n  assert.doesNotMatch(source,/stageData\\?\\.INTAKE_ACCOUNTING/);\n  assert.doesNotMatch(source,/records\\?\\.intentStatements/);\n}\n"""
           if regression.strip() not in s:
               s += regression
