@@ -1,0 +1,41 @@
+name: Diagnose project deletion confirmation
+
+on:
+  push:
+    branches:
+      - finish/live-human-gate-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+      - name: Replay deletion path and print exact state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-browser.mjs')
+          text=path.read_text()
+          old="await fill(cdp,'#delete-project-confirmation',deletionJobId);await waitExpr(cdp,`document.querySelector('#delete-project')?.disabled===false`);"
+          new="await fill(cdp,'#delete-project-confirmation',deletionJobId);console.log('DELETE_CONFIRM_DIAG',JSON.stringify(await evalValue(cdp,`(()=>{const input=document.querySelector('#delete-project-confirmation'),button=document.querySelector('#delete-project'),summary=document.querySelector('#current-project-summary')?.textContent||'';return {expected:${json.dumps if False else ''}}})()`)));"
+          # Build without Python interpolation into the JS template literal.
+          new="await fill(cdp,'#delete-project-confirmation',deletionJobId);console.log('DELETE_CONFIRM_DIAG',JSON.stringify(await evalValue(cdp,`(()=>{const input=document.querySelector('#delete-project-confirmation'),button=document.querySelector('#delete-project'),summary=document.querySelector('#current-project-summary')?.textContent||'';return {inputValue:input?.value,buttonDisabled:button?.disabled,currentJob:summary.split(' · ')[0],summary};})()`)));throw new Error('DELETE_CONFIRM_DIAGNOSTIC_COMPLETE');"
+          if old not in text:
+              raise SystemExit('Deletion diagnostic target not found')
+          path.write_text(text.replace(old,new,1))
+          PY
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.2
+          done
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
