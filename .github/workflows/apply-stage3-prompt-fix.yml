@@ -72,6 +72,9 @@ jobs:
           replace_once('prompt-engine.js',
             "function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}",
             "function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}")
+          replace_once('verify-stage-prompts-complete.mjs',
+            "'every current accepted Stage 02 source has current research coverage'",
+            "'Every current Stage 02 source must receive current research coverage'")
           PY
           node build-test-project.mjs
 
