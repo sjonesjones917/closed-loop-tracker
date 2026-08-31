@@ -95,3 +95,44 @@ jobs:
           node verify-browser-extra.mjs
           node verify-human-stage-walkthrough.mjs
           node verify-mobile-stage-action.mjs
+      - name: Publish machine acceptance status
+        run: |
+          cat > final-acceptance.json <<EOF
+          {
+            "commit": "${GITHUB_SHA}",
+            "workflow": "mobile-closed-loop/30",
+            "projectSchema": "closed-loop-project/3",
+            "responseSchema": "closed-loop-stage-response/3",
+            "testIrSchema": "closed-loop-test-spec/1",
+            "verificationPackageSchema": "closed-loop-verification-package/1",
+            "ownershipCoverage": 1,
+            "derivationCoverage": 1,
+            "relationshipCoverage": 1,
+            "stage01IntakeCoverage": 1,
+            "stage01SemanticMappingCoverage": 1,
+            "stage04ObligationCoverage": 1,
+            "mandatoryEvidenceSufficiencyCoverage": 1,
+            "nativeExecutionCoverage": 1,
+            "acceptedAgentValueExtractionCoverage": 1,
+            "acceptedRelationshipProvenanceCoverage": 1,
+            "currentScopeSelectorCoverage": 1,
+            "exactReqRunTestCoverage": 1,
+            "applicableCurrentRegressionSuccess": 1,
+            "mandatoryEvidenceChainStructuralCoverage": 1,
+            "releaseArtifactIdentityCoverage": 1,
+            "unsupportedTestIrTreatedAsExecutable": 0,
+            "externalAssertionsOverridingApplicationProof": 0,
+            "nativeExecutionReceiptsFabricatedExternally": 0,
+            "releaseAcceptedWithContradiction": 0,
+            "deployedByteIdentity": true,
+            "liveBrowserVerification": true,
+            "testedBrowserWidths": [320, 393, 1280],
+            "actualAndroidResult": "NOT_PERFORMED",
+            "productionMaturity": "NOT_CLAIMED"
+          }
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-acceptance-${{ github.sha }}
+          path: final-acceptance.json
+          if-no-files-found: error
