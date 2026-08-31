@@ -1,0 +1,75 @@
+name: Candidate proof
+
+on:
+  push:
+    branches:
+      - fix/current-scope-route-closure-20260831
+
+permissions:
+  contents: write
+
+concurrency:
+  group: current-scope-route-candidate-proof
+  cancel-in-progress: false
+
+jobs:
+  prove-and-retain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/current-scope-route-closure-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact anchored candidate
+        run: |
+          set -euo pipefail
+          python3 .repair-current-scope-engine.py
+          python3 .repair-current-scope-prompt.py
+          python3 .repair-current-scope-route-test.py
+          python3 .repair-current-scope-fixtures.py
+          python3 .repair-current-scope-scope-test.py
+          python3 .repair-current-scope-ci.py
+          rm -f .repair-current-scope-engine.py .repair-current-scope-prompt.py .repair-current-scope-route-test.py .repair-current-scope-fixtures.py .repair-current-scope-scope-test.py .repair-current-scope-ci.py
+      - name: Execute fixed acceptance epoch
+        run: |
+          set -euo pipefail
+          for f in *.js *.mjs; do node --check "$f"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-data-route-closure.mjs
+          node verify-current-scope-regressions.mjs
+          node verify-infrastructure-route-closure.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-hash.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+      - name: Commit only proven retained candidate
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/candidate-proof.yml
+          git config user.name closed-loop-reliability
+          git config user.email actions@users.noreply.github.com
+          git add -u
+          git add workflow-engine.js prompt-engine.js response-ingestion.js verify-data-route-closure.mjs verify-current-scope-regressions.mjs verify-user-prompt-invariants.mjs verify-complete.mjs .github/workflows/pages.yml index.html
+          git diff --cached --check
+          git commit -m 'Close current-scope data routes across the workflow'
+          git push origin HEAD:fix/current-scope-route-closure-20260831
