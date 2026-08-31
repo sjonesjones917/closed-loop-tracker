@@ -1,0 +1,52 @@
+name: Repair ingestion agent authority fixture
+
+on:
+  push:
+    branches: [fix/monotonic-reliability-pass-20260831]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Repair operation-visible versus agent-writable fixture boundary
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
+          new="const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=(operationContract?.allowedStageData||contract.allowedStageData).filter(name=>schema.stageFieldDefinition(stage,name).producer===schema.PRODUCER.AGENT),writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
+          if new not in s:
+              if s.count(old)!=1:
+                  raise SystemExit(f'Expected exactly one validEnvelope authority boundary; found {s.count(old)}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/repair-ingestion-agent-authority.yml \
+                .github/workflows/repair-ingestion-scope-and-cleanup.yml \
+                .github/workflows/repair-stage06-conditional-fixture.yml \
+                .github/workflows/repair-stage06-generic-fixture.yml \
+                .github/workflows/repair-stage06-native-fixture.yml \
+                .github/workflows/repair-stage06-complete-test-ir.yml
+          node --check verify-ingestion.mjs
+          node verify-ingestion.mjs
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A verify-ingestion.mjs .github/workflows
+          git commit -m "Respect agent authority in ingestion fixtures"
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
