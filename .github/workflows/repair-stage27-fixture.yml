@@ -1,0 +1,39 @@
+name: Correct Stage 27 acceptance fixture
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct only the invalid Stage 27 external stageData fixture
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="data(27,{records:{releaseGateReviews:[recordProposal(schema,'releaseGateReviews',{tempKey:'review'})]},stageData:{CONTROLLING_DECISION_RULE:'Application-derived release only',CONTROLLING_REASON:'Canonical current evidence',AFFIRMATIVE_EVIDENCE:'Complete'}});"
+          new="data(27,{records:{releaseGateReviews:[recordProposal(schema,'releaseGateReviews',{tempKey:'review'})]}});"
+          if old not in s: raise SystemExit('Exact stale fixture not found; refusing broad mutation.')
+          p.write_text(s.replace(old,new,1))
+          PY
+          node --check verify-full-cycle.mjs
+          grep -F "data(27,{records:{releaseGateReviews:[recordProposal(schema,'releaseGateReviews',{tempKey:'review'})]}});" verify-full-cycle.mjs
+          ! grep -F "stageData:{CONTROLLING_DECISION_RULE:'Application-derived release only'" verify-full-cycle.mjs
+      - name: Commit correction and remove one-shot workflow
+        run: |
+          rm .github/workflows/repair-stage27-fixture.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-full-cycle.mjs .github/workflows/repair-stage27-fixture.yml
+          git commit -m 'Correct Stage 27 full-cycle authority fixture'
+          git push origin HEAD:fix/zero-loss-controlled-20260831
