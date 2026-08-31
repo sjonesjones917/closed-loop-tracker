@@ -14,13 +14,16 @@ jobs:
         with:
           ref: fix/complete-closed-loop-spec-20260831
           fetch-depth: 0
-      - run: python3 .github/apply-preflight.py
-      - run: |
+      - name: Integrate Stage 9 application-enumerated preflight coverage
+        run: python3 .github/apply-preflight.py
+      - name: Verify changed runtime parses
+        run: |
           node --check workflow-engine.js
           node --check prompt-engine.js
           node --check app-core.js
           node --check test-runtime.js
-      - run: |
+      - name: Commit integrated runtime and remove one-time files
+        run: |
           rm .github/apply-preflight.py .github/workflows/apply-preflight.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
