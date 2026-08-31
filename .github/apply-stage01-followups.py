@@ -12,6 +12,11 @@ conversation_replacement = 'You are speaking directly with the human who request
 if conversation_anchor not in source:
     raise SystemExit('Stage 01 one-time conversation anchor was not found.')
 source = source.replace(conversation_anchor, conversation_replacement, 1)
+stage3_anchor = 'Never ask the human to repeat available project facts or reattach the original Stage 01 intent file.'
+stage3_replacement = 'The controlling interaction rule is: never ask the user to repeat available project facts or reattach the original Stage 01 intent file.'
+if stage3_anchor not in source:
+    raise SystemExit('Stage 03 no-repeat rule anchor was not found.')
+source = source.replace(stage3_anchor, stage3_replacement, 1)
 prompt.write_text(source)
 
 html = Path('index.html')
