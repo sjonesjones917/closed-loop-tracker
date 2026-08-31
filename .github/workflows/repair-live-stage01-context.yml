@@ -84,7 +84,7 @@ jobs:
           s=p.read_text()
           old="const longEnvelope=structuredClone(envelope);longEnvelope.evidence=Array.from({length:12}"
           assert old in s
-          new="const longEnvelope=structuredClone(envelope);longEnvelope.records.sources=Array.from({length:3},(_,i)=>{const r=structuredClone(envelope.records.sources[0]);r.tempKey=`source-${i+1}`;r.fields.TITLE=`Independent source ${i+1}`;r.fields.URL_REFERENCE=`https://example.com/source-${i+1}`;r.evidenceRefs=[`evidence-${i+1}`];return r;});longEnvelope.evidence=Array.from({length:3}"
+          new="const longEnvelope=structuredClone(envelope);longEnvelope.records.sources=Array.from({length:2},(_,i)=>{const r=structuredClone(envelope.records.sources[0]);r.tempKey=`source-${i+1}`;r.fields.TITLE=`Independent source ${i+1} with deliberately verbose browser-review text`;r.fields.URL_REFERENCE=`https://example.com/source-${i+1}`;r.fields.RELEVANCE='Independent accessibility authority with enough descriptive material to exercise long proposal review navigation without crossing the collapse threshold.';r.fields.NOTES='Long-review regression fixture preserves expanded proposal behavior and tests both review navigation controls.';r.evidenceRefs=[`evidence-${i+1}`];return r;});longEnvelope.evidence=Array.from({length:2}"
           s=s.replace(old,new,1)
           old="await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`,8000);await positionNode(cdp,'#proposal-heading','top');"
           assert old in s
