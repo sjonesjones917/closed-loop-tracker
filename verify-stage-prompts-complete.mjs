@@ -33,7 +33,7 @@ const semantic={
   11:['this prompt authorizes exactly one reserved RUN_ID and CONTEXT_ID','do not perform another run'],
   12:['REQ_ID × RUN_ID × TEST_ID','Never substitute a different executor'],
   13:['Compare all ten executions','Never discard a run'],
-  14:['tracing backward through product/output, execution, instruction, requirement, research, source, user input','tool/configuration, artifact, and audit/evidence','earliest defective layer'],
+  14:['tracing backward through product/output, execution, instruction, requirement, research, source, user input, tool, and audit','earliest defective layer'],
   15:['actual pre-correction regression execution','Do not claim post-correction success at Stage 15'],
   16:['responsible earliest defective layer','Never overwrite a controlled version in place'],
   18:['application calculates mandatory requirement coverage','Do not set or override those application-derived values'],
