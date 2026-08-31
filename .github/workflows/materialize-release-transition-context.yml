@@ -1,0 +1,58 @@
+name: Materialize release transition and derived prompt context fixes
+on:
+  push:
+    branches: [fix/release-transition-and-stage-context-20260830]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply release and context corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def one(text, old, new, label):
+              if old not in text:
+                  raise SystemExit(f'{label}: expected source not found')
+              return text.replace(old,new,1)
+
+          prompt=Path('prompt-engine.js')
+          p=prompt.read_text()
+          p=one(p,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/50';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/51';",'prompt version')
+          p=one(p,"if(stage>1&&![11,12,23,24].includes(stage)){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:workflow.deriveStageData(state,stage-1)}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\\n${show(prior)}`);}","if(stage>1&&stage!==4&&![11,12,23,24].includes(stage)){const prior=state?.stages?.[stage-1]?{agentData:state.stages[stage-1].agentData||state.stages[stage-1].acceptedData||{},humanData:state.stages[stage-1].humanData||{},derivedData:workflow.deriveStageData(state,stage-1)}:'NONE';parts.push(`PRIOR STAGE DECISION AND ACCEPTED DATA\\n${show(prior)}`);}",'Stage 04 duplicate prior-stage context')
+          marker="if(stage===4)parts.push(`APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION\\n${show(obligationManifest(state))}`);"
+          addition=marker+"if(stage===18)parts.push(`APPLICATION-DERIVED CONVERGENCE METRICS — AUTHORITATIVE\\n${show(workflow.convergenceMetrics(state))}`);if(stage===19&&operation==='CONFIRM'&&scope?.iterationId)parts.push(`APPLICATION-DERIVED UNCHANGED-CONFIRMATION ITERATION EVALUATION — AUTHORITATIVE\\n${show(workflow.evaluateIteration(state,scope.iterationId,'UNCHANGED_CONFIRMATION'))}`);if([18,19,26,29].includes(stage)){const contradictions=workflow.detectCurrentContradictions(state);if(contradictions.length)parts.push(`APPLICATION-DERIVED CURRENT CONTRADICTIONS — DO NOT OVERRIDE\\n${show(contradictions)}`);}"
+          p=one(p,marker,addition,'derived stage correctness context')
+          prompt.write_text(p)
+
+          engine=Path('workflow-engine.js')
+          e=engine.read_text()
+          old="if(unexplained.length)reasons.push('Unexplained correctness-affecting variance remains.');\n  const stability=executionStability(project,iterationId);"
+          new="if(unexplained.length)reasons.push('Unexplained correctness-affecting variance remains.');const currentContradictions=detectCurrentContradictions(project).filter(item=>item.severity==='RELEASE_MATERIAL');if(mode==='UNCHANGED_CONFIRMATION'&&currentContradictions.length)reasons.push('Current release-material contradictions remain during unchanged confirmation: '+currentContradictions.map(item=>item.type+':'+item.key).join(', ')+'.');\n  const stability=executionStability(project,iterationId);"
+          e=one(e,old,new,'unchanged confirmation contradictions')
+          old="case 26:{const process=recordsForCurrentScope(project,'processAudits'),productAudits=recordsForCurrentScope(project,'productAudits'),product=recordsForCurrentScope(project,'products').at(-1),baseline=recordsForCurrentScope(project,'baselines').at(-1),allAudits=[...process,...productAudits],missing=allAudits.filter(a=>!evaluateEvidenceSufficiency(project,{result:a}).sufficient).map(a=>recordId(a,process.includes(a)?'processAudits':'productAudits')),defects=[...new Set(allAudits.map(a=>String(recordValue(a,'DEFECT_ID')||a.relationships?.DEFECT_ID||'')).filter(Boolean))],blockers=openBlockers(project,26).map(b=>recordId(b,'blockers'));Object.assign(derived,{PRODUCT_ID:recordId(product,'products')||'NONE',PRODUCT_VERSION:recordValue(product,'PRODUCT_VERSION')||'NONE',BASELINE_ID:recordId(baseline,'baselines')||project.job.CURRENT_BASELINE_ID||'NONE',REVIEW_VERSION:'RECONCILIATION-'+hash.sha256Value(allAudits.map(a=>a.recordSha256||a.sha256||a.id)).slice(0,16).toUpperCase(),MISSING_EVIDENCE_LINKS:missing,RECONCILIATION_DEFECT_IDS:defects,RECONCILIATION_BLOCKER_IDS:blockers});break;}case 27:{requireAccepted();const r=recordsForCurrentScope(project,'releaseRecords').at(-1);if(!r)reasons.push('The application has not recorded a current release determination.');else if(!['ACCEPTED','REJECTED','BLOCKED'].includes(upper(recordValue(r,'DETERMINATION'))))reasons.push('Current release determination is invalid.');break;}"
+          new="case 26:{const process=recordsForCurrentScope(project,'processAudits'),productAudits=recordsForCurrentScope(project,'productAudits'),product=recordsForCurrentScope(project,'products').at(-1),baseline=recordsForCurrentScope(project,'baselines').at(-1),allAudits=[...process,...productAudits],missing=allAudits.filter(a=>!evaluateEvidenceSufficiency(project,{result:a}).sufficient).map(a=>recordId(a,process.includes(a)?'processAudits':'productAudits')),defects=[...new Set(allAudits.map(a=>String(recordValue(a,'DEFECT_ID')||a.relationships?.DEFECT_ID||'')).filter(Boolean))],blockers=openBlockers(project,26).map(b=>recordId(b,'blockers'));Object.assign(derived,{PRODUCT_ID:recordId(product,'products')||'NONE',PRODUCT_VERSION:recordValue(product,'PRODUCT_VERSION')||'NONE',BASELINE_ID:recordId(baseline,'baselines')||project.job.CURRENT_BASELINE_ID||'NONE',REVIEW_VERSION:'RECONCILIATION-'+hash.sha256Value(allAudits.map(a=>a.recordSha256||a.sha256||a.id)).slice(0,16).toUpperCase(),MISSING_EVIDENCE_LINKS:missing,RECONCILIATION_DEFECT_IDS:defects,RECONCILIATION_BLOCKER_IDS:blockers});break;}case 27:{const r=recordsForCurrentScope(project,'releaseRecords').at(-1);if(!r)reasons.push('The application has not recorded a current release determination.');else{const determination=upper(recordValue(r,'DETERMINATION'));if(!['ACCEPTED','REJECTED','BLOCKED'].includes(determination))reasons.push('Current release determination is invalid.');else if(determination==='REJECTED')reasons.push('Release is rejected by current affirmative nonconformance; correct the evidenced root cause before Stage 28.');else if(determination==='BLOCKED')reasons.push('Release is blocked by incomplete, insufficient, stale, or contradictory current evidence; resolve the blocker before Stage 28.');}break;}"
+          e=one(e,old,new,'Stage 27 application-owned gate')
+          old="const blocked=questions.length>0||blockers.length>0||executionFailures.length>0;"
+          new="const releaseDetermination=stage===27?upper(recordValue(recordsForCurrentScope(project,'releaseRecords').at(-1),'DETERMINATION')):'';const blocked=questions.length>0||blockers.length>0||executionFailures.length>0||releaseDetermination==='BLOCKED';"
+          e=one(e,old,new,'Stage 27 blocked state')
+          old="if(stage===27&&acceptedChanges(project,27).length&&!recordsForCurrentScope(project,'releaseRecords').length)return actionEnvelope(project,stage,{actionType:'CALCULATE_RELEASE',heading:'Calculate the release determination',explanation:'The advisory Stage 27 review is accepted. No agent or human may select the release state. The application must now evaluate the complete current release evidence, blockers, violations, unknowns, contradictions, baseline identity, product identity, and evidence sufficiency and record exactly one idempotent ACCEPTED, REJECTED, or BLOCKED determination.',primaryButton:'Calculate release'});"
+          new="if(stage===27){const release=recordsForCurrentScope(project,'releaseRecords').at(-1),determination=upper(recordValue(release,'DETERMINATION'));if(!release)return actionEnvelope(project,stage,{actionType:'CALCULATE_RELEASE',heading:'Calculate the release determination',explanation:'No external advisory response is required. The application must evaluate the complete current release evidence, blockers, violations, unknowns, contradictions, baseline identity, product identity, and evidence sufficiency and record exactly one idempotent ACCEPTED, REJECTED, or BLOCKED determination.',primaryButton:'Calculate release'});if(determination==='REJECTED')return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:'Release rejected — correct the evidenced root cause',explanation:'Current evidence establishes mandatory nonconformance. Stage 28 is prohibited. Preserve the rejection evidence and return through root-cause analysis and controlled correction before recalculating release.',blockingReason:'Release is REJECTED by current affirmative nonconformance.'});if(determination==='BLOCKED')return actionEnvelope(project,stage,{actionType:'BLOCKED',heading:'Release blocked — resolve current evidence blockers',explanation:'Current evidence is incomplete, insufficient, stale, or contradictory. Stage 28 is prohibited until the exact blocking evidence condition is resolved and release is recalculated.',blockingReason:'Release is BLOCKED by current evidence.'});}"
+          e=one(e,old,new,'Stage 27 next action')
+          engine.write_text(e)
+
+          for name in ['index.html','app-core.js']:
+              path=Path(name); text=path.read_text();
+              if 'runtime-20260830-live-operator-56' not in text: raise SystemExit(name+': runtime token not found')
+              path.write_text(text.replace('runtime-20260830-live-operator-56','runtime-20260830-live-operator-57'))
+          PY
+          git add prompt-engine.js workflow-engine.js index.html app-core.js
+          git commit -m 'Make release gate application-owned and close contradiction transitions'
+          git push origin HEAD
