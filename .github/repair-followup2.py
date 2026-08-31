@@ -27,5 +27,11 @@ for old, new in replacements:
         raise AssertionError(f'Direct Stage 17 fixture fragment was not found: {old}')
     text = text.replace(old, new, 1)
 
+old = "const request=p.projectData.humanInputRequests.at(-1);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;"
+new = "const request=p.projectData.humanInputRequests.at(-1);p.stages[16].status='COMPLETE';p.stages[16].gate={complete:true,blocked:false,reasons:[]};p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;"
+if old not in text:
+    raise AssertionError('Scoped Stage 17 clarification regeneration fixture was not found.')
+text = text.replace(old, new, 1)
+
 path.write_text(text)
-print('Bound every direct Stage 17 ingestion fixture to an explicitly completed Stage 16 predecessor.')
+print('Bound every direct Stage 17 ingestion fixture and its clarification regeneration to an explicitly completed Stage 16 predecessor.')
