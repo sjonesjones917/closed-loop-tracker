@@ -83,6 +83,7 @@ jobs:
           path.write_text(text.replace(old,new,1))
           PY
           node --check prompt-engine.js
+          node --check workflow-schema.js
           node --check workflow-engine.js
           node --check verify-stage01-conversation-first.mjs
           node --check verify-human-stage-walkthrough.mjs
@@ -105,6 +106,6 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm -f .github/workflows/apply-stage01-conversation.yml .github/apply-stage01-conversation.py .github/apply-stage01-followups.py
           git rm -f .github/workflows/apply-verify-op01.yml .github/apply-verify-op01.py AUTHORIZED_OPERATION_01.txt
-          git add prompt-engine.js workflow-engine.js index.html verify-stage01-conversation-first.mjs verify-stage01-intake-closure.mjs verify-human-stage-walkthrough.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-live.mjs .github/workflows/pages.yml
+          git add prompt-engine.js workflow-schema.js workflow-engine.js index.html verify-stage01-conversation-first.mjs verify-stage01-intake-closure.mjs verify-human-stage-walkthrough.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-live.mjs .github/workflows/pages.yml
           git commit -m "Restore complete human-facing prompt workflow"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
