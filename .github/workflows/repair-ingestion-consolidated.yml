@@ -19,14 +19,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply authoritative generic-fixture corrections and remove all one-time repair workflows
+      - name: Apply stage-scoped clarification correction and remove all one-time repair workflows
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('inputVersion','sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}"
+          new="function requiredVersionScopeKeys(collection){const stage=Number(schema.RECORD_SCHEMAS[collection]?.stage||0),keys=[];if(stage>=2)keys.push('sourceSetVersion');if(stage>=4)keys.push('requirementsVersion');if(stage>=6)keys.push('testSuiteVersion');if(stage>=8)keys.push('instructionVersion');return keys;}"
+          if new not in s:
+              count=s.count(old)
+              if count!=1:
+                  raise SystemExit(f'Expected exactly one current-scope repair target; found {count}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-
           replacements=[
             (
               "const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};",
@@ -74,6 +85,7 @@ jobs:
           find .github/workflows -maxdepth 1 -type f -name 'repair-*.yml' -delete
           find .github/workflows -maxdepth 1 -type f -name 'repair-*.yaml' -delete
 
+          node --check workflow-engine.js
           node --check verify-ingestion.mjs
           node verify-ingestion.mjs
           node verify-monotonic-pass.mjs
@@ -83,6 +95,6 @@ jobs:
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A verify-ingestion.mjs .github/workflows
-          git commit -m "Stabilize ingestion fixtures and remove repair workflows"
+          git add -A workflow-engine.js verify-ingestion.mjs .github/workflows
+          git commit -m "Preserve upstream scope across stage clarification"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
