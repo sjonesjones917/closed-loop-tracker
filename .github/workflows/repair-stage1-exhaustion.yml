@@ -1,0 +1,38 @@
+name: Repair Stage 01 exhaustion invariant
+on:
+  push:
+    branches: [fix/monotonic-zero-loss-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - name: Apply and commit exact Stage 01 invariant
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          text=p.read_text(encoding='utf-8')
+          phrase='Exhaust the human-authority intake.'
+          if phrase not in text:
+              marker='"1":"'
+              if text.count(marker)!=1: raise SystemExit(f'Stage 01 marker count {text.count(marker)}')
+              text=text.replace(marker,marker+phrase+' ',1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          node --check prompt-engine.js
+          rm .github/workflows/repair-stage1-exhaustion.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js .github/workflows/repair-stage1-exhaustion.yml
+          git diff --cached --check
+          git commit -m "Require exhaustive Stage 01 human-authority intake"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
