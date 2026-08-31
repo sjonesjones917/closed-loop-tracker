@@ -17,6 +17,11 @@ stage3_replacement = 'The controlling interaction rule is: never ask the user to
 if stage3_anchor not in source:
     raise SystemExit('Stage 03 no-repeat rule anchor was not found.')
 source = source.replace(stage3_anchor, stage3_replacement, 1)
+common_anchor = 'Project-relevant information supplied by the human is supplied once. Stage 01 is the one-time capture boundary and accepted project meaning must be carried forward in canonical context.'
+common_replacement = 'Project-relevant information supplied by the human is supplied once; never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. Stage 01 is the one-time capture boundary and accepted project meaning must be carried forward in canonical context.'
+if common_anchor not in source:
+    raise SystemExit('Universal no-repeat prompt rule anchor was not found.')
+source = source.replace(common_anchor, common_replacement, 1)
 prompt.write_text(source)
 
 html = Path('index.html')
