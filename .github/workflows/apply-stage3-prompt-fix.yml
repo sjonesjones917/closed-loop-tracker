@@ -57,6 +57,9 @@ jobs:
           replace_once('build-test-project.mjs',
             "if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');",
             "if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');\nif(!String(globalThis.closedLoopCore.STAGES[1]?.result||'').includes('Independent external sources only.'))throw new Error('Stage 02 human-facing source boundary is missing from workbook-owned runtime stage data.');")
+          replace_once('verify-stage-prompts-complete.mjs',
+            "'never ask the human to repeat, retype, summarize, resend, reopen, or reattach it'",
+            "'Never ask the human to repeat, retype, summarize, resend, reopen, or reattach it'")
           PY
           node build-test-project.mjs
 
