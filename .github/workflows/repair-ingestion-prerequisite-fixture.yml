@@ -110,6 +110,14 @@ jobs:
                   raise SystemExit('Expected scoped clarification fixture boundary not found; no change made.')
               text = text.replace(answer_needle, answer_replacement, 1)
 
+          oracle_marker = "issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'))throw new Error('EXECUTE_RUN accepted application-owned VERIFY stageData.')"
+          oracle_needle = "issues.some(i=>i.code==='STAGE_OPERATION_FIELD_VIOLATION'))throw new Error('EXECUTE_RUN accepted VERIFY stageData.')"
+          oracle_replacement = "issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'))throw new Error('EXECUTE_RUN accepted application-owned VERIFY stageData.')"
+          if oracle_marker not in text:
+              if oracle_needle not in text:
+                  raise SystemExit('Expected Stage 17 operation test oracle not found; no change made.')
+              text = text.replace(oracle_needle, oracle_replacement, 1)
+
           if 'fixtureBuildPrompt(stage,p,options)' not in text:
               raise SystemExit('Fixture prompt wrapper was not installed.')
           text = text.replace('prompts.buildPromptRecord(', 'fixtureBuildPrompt(')
