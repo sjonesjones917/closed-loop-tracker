@@ -43,18 +43,16 @@ jobs:
 
           p=Path('verify-all-stage-prompts.mjs')
           s=p.read_text()
-          marker="console.log('verify-all-stage-prompts: PASS');"
-          assert marker in s
-          regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert.match(source,/contextRecordsFor\\(state,collection,scope,batchPlan,stage,operation\\)\\.map\\(record=>/);\n}\n"""
-          s=s.replace(marker,regression+'\n'+marker,1)
+          regression="""\n// Permanent regression: persisted prompt context must use the same operation-isolated selector as the visible prompt.\n{\n  const source=fs.readFileSync(new URL('./prompt-engine.js',import.meta.url),'utf8');\n  assert(source.includes('contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>'),'Persisted prompt context selector omitted the active operation.');\n}\n"""
+          if regression.strip() not in s:
+              s += regression
           p.write_text(s)
 
           p=Path('verify-browser.mjs')
           s=p.read_text()
-          marker="console.log('verify-browser: PASS');"
-          assert marker in s
           regression="""\n// Permanent regression: Stage 01 proposal summary reads the current /3 INPUT_SET_CONTENTS contract.\n{\n  const source=fs.readFileSync(new URL('./app-core.js',import.meta.url),'utf8');\n  assert.match(source,/parseCapturedInputSet\\(\\{agentData:p\\.envelope\\?\\.stageData\\|\\|\\{\\}\\}\\)/);\n  assert.doesNotMatch(source,/stageData\\?\\.INTAKE_ACCOUNTING/);\n  assert.doesNotMatch(source,/records\\?\\.intentStatements/);\n}\n"""
-          s=s.replace(marker,regression+'\n'+marker,1)
+          if regression.strip() not in s:
+              s += regression
           p.write_text(s)
       - name: Verify repaired sources
         run: |
