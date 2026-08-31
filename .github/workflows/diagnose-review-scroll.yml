@@ -1,0 +1,39 @@
+name: Diagnose proposal review scroll state
+
+on:
+  push:
+    branches:
+      - finish/live-human-gate-20260830
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+      - name: Run the real browser path and print the first mismatched review state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-browser.mjs')
+          text=path.read_text()
+          old="await positionNode(cdp,'#proposal-heading','top');await waitExpr(cdp,`(()=>{const t=document.querySelector('#review-top-jump'),b=document.querySelector('#review-bottom-jump');return Boolean(t?.hidden&&b&&!b.hidden);})()`);"
+          diag="await positionNode(cdp,'#proposal-heading','top');console.log('REVIEW_DIAG_TOP',JSON.stringify(await evalValue(cdp,`(()=>{const review=document.querySelector('#proposal-heading'),r=review?.getBoundingClientRect(),d=review?.querySelector(':scope>details.record-card'),top=document.querySelector('#review-top-jump'),bottom=document.querySelector('#review-bottom-jump'),visible=r?Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,0)):null;return {innerHeight,scrollY,documentHeight:document.documentElement.scrollHeight,reviewRect:r?{top:r.top,bottom:r.bottom,height:r.height}:null,reviewScrollHeight:review?.scrollHeight,reviewClientHeight:review?.clientHeight,directDetailsOpen:d?.open,anyOpen:Boolean(review?.querySelector('details.record-card[open]')),topHidden:top?.hidden,bottomHidden:bottom?.hidden,visible};})()`)));throw new Error('REVIEW_DIAGNOSTIC_COMPLETE');"
+          if old not in text:
+              raise SystemExit('Review diagnostic insertion target was not found')
+          path.write_text(text.replace(old,diag,1))
+          PY
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.2
+          done
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
