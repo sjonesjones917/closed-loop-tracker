@@ -56,6 +56,10 @@ jobs:
               (
                 "OBSERVATIONS:'No defects'",
                 "OBSERVATIONS:JSON.stringify({requiredPageOrViewIds:[],inspectedPageOrViewIds:[],requiredPackagedFileIds:[],openedOrTestedPackagedFileIds:[],requiredTransformationIds:[],inspectedTransformationIds:[],observation:'No defects'})"
+              ),
+              (
+                "data(27,{records:{releaseGateReviews:[recordProposal(schema,'releaseGateReviews',{tempKey:'review'})]},stageData:{CONTROLLING_DECISION_RULE:'Application-derived release only',CONTROLLING_REASON:'Canonical current evidence',AFFIRMATIVE_EVIDENCE:'Complete'}});",
+                "data(27,{records:{releaseGateReviews:[recordProposal(schema,'releaseGateReviews',{tempKey:'review'})]}});"
               )
             ],
             'workflow-schema.js':[
@@ -131,5 +135,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-schema.js workflow-engine.js verify-full-cycle.mjs .github/workflows/targeted-cycle-fixture-repair.yml
-          git commit -m "Derive Stage 17 no-defect operations and unify Stage 25 coverage"
+          git commit -m "Derive Stage 17 no-defect operations and preserve Stage 27 authority"
           git push origin HEAD:fix/restore-full-acceptance-20260831
