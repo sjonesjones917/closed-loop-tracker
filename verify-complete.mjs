@@ -63,7 +63,7 @@ assert(core.STAGES.length===30&&!core.STAGES[30],'Stage 31 exists.');
 
 // Invalid canonical relationship is rejected before mutation.
 {
-  const p=project('JOB-BAD-REL'),stage=3;p.stages[1].status='COMPLETE';p.stages[2].status='COMPLETE';const pr=prompt(p,stage);
+  const p=project('JOB-BAD-REL'),stage=3;p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true};const pr=prompt(p,stage);
   const e={schema:schema.RESPONSE_SCHEMA,jobId:p.job.JOB_ID,stage,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{},records:{research:[{tempKey:'research-1',fields:{PASS_NUMBER:1,EXACT_PORTION_EXAMINED:'Controlled source portion',FINDING_CLASSIFICATION:'FACT',SOURCE_EVIDENCE:'Controlled evidence'},relationships:{SOURCE_ID:{recordId:'SOURCE-DOES-NOT-EXIST'}},evidenceRefs:['evidence-1']}]},evidence:[{temporaryKey:'evidence-1',kind:'WORKFLOW_EVIDENCE',description:'Relationship validation fixture',location:'synthetic test',content:'controlled'}],unresolved:[],warnings:[],attachments:[]};
   const prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});
   assert(!prepared.validation.valid&&prepared.validation.issues.some(x=>x.code==='UNRESOLVED_RELATIONSHIP'),'Invalid relationship was not rejected.');
