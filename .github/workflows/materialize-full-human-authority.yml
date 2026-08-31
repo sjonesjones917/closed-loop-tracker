@@ -38,10 +38,11 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          files=['index.html','app-core.js','test-runtime.js']
-          old='runtime-20260830-live-operator-57'
-          new='runtime-20260830-live-operator-58'
-          for name in files:
+          replacements={
+            'index.html':('runtime-20260830-live-operator-57','runtime-20260830-live-operator-58'),
+            'app-core.js':('runtime-20260830-live-operator-56','runtime-20260830-live-operator-58'),
+          }
+          for name,(old,new) in replacements.items():
               p=Path(name); s=p.read_text()
               if old not in s: raise SystemExit(f'{name}: cache token target not found')
               p.write_text(s.replace(old,new))
@@ -50,7 +51,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -B fix/full-human-authority-carry-forward-source-20260830
-          git add prompt-engine.js README.md index.html app-core.js test-runtime.js
+          git add prompt-engine.js README.md index.html app-core.js
           git commit -m 'Carry complete human authority through stage prompts'
           git push --force origin fix/full-human-authority-carry-forward-source-20260830
 # trigger materialization after required PR check
