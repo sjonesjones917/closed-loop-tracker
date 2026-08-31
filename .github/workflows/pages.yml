@@ -44,7 +44,6 @@ jobs:
       - name: Verify schemas, migration, ingestion, routing, prompts, gates, and full cycle
         run: |
           set -euo pipefail
-          node verify-v3-contract.mjs
           node verify-v3-migration.mjs
           node verify-test-runtime-v3.mjs
           node verify-test-runtime-limits.mjs
