@@ -17,22 +17,21 @@ jobs:
         with:
           ref: fix/monotonic-reliability-pass-20260831
           fetch-depth: 0
-      - name: Make Stage 06 fixture a coherent supported Test IR
+      - name: Make Stage 06 test record a coherent supported Test IR
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          marker="function safeValue(name){\n  if(name==='TEST_TYPE')return 'DETERMINISTIC';\n  if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';\n"
-          replacement="function safeValue(name){\n  if(name==='TEST_TYPE')return 'DETERMINISTIC';\n  if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';\n  if(name==='REQUIRED_CAPABILITY')return 'CLOSED_LOOP_TEST_IR';\n  if(name==='EXECUTABLE_KIND')return 'TEST_IR';\n  if(name==='EXECUTABLE_SPEC')return {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};\n  if(name==='EXECUTABLE_INPUT_BINDINGS')return {};\n"
+          target="    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"
+          replacement="    for(const name of def.required){if(def.fieldDefinitions[name]?.producer===schema.PRODUCER.AGENT)fields[name]=safeValue(name);}\n    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='APPLICATION_DETERMINISTIC';fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n"
           if replacement not in s:
-              if s.count(marker)!=1:
-                  raise SystemExit(f'Expected one Stage 06 safeValue marker; found {s.count(marker)}')
-              s=s.replace(marker,replacement,1)
+              if s.count(target)!=1: raise SystemExit(f'Expected one record-construction target; found {s.count(target)}')
+              s=s.replace(target,replacement,1)
               p.write_text(s)
           PY
-          rm .github/workflows/repair-stage06-complete-test-ir.yml
+          rm -f .github/workflows/repair-stage06-complete-test-ir.yml .github/workflows/repair-stage06-ingestion-fixture.yml
           node --check verify-ingestion.mjs
           node verify-ingestion.mjs
           git diff --check
@@ -41,5 +40,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A verify-ingestion.mjs .github/workflows
-          git commit -m "Make Stage 06 ingestion fixture a valid Test IR"
+          git commit -m "Make Stage 06 ingestion fixture a valid Test IR record"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
