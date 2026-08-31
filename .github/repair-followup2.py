@@ -33,5 +33,11 @@ if old not in text:
     raise AssertionError('Scoped Stage 17 clarification regeneration fixture was not found.')
 text = text.replace(old, new, 1)
 
+old = "if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STAGE_OPERATION_FIELD_VIOLATION'))throw new Error('EXECUTE_RUN accepted VERIFY stageData.');"
+new = "if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'))throw new Error('EXECUTE_RUN accepted an application-owned Stage 17 field.');"
+if old not in text:
+    raise AssertionError('The obsolete Stage 17 operation-field rejection assertion was not found.')
+text = text.replace(old, new, 1)
+
 path.write_text(text)
-print('Bound every direct Stage 17 ingestion fixture and its clarification regeneration to an explicitly completed Stage 16 predecessor.')
+print('Bound direct Stage 17 fixtures to Stage 16 and aligned the negative assertion with the controlling application-ownership rejection.')
