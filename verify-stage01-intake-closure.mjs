@@ -20,6 +20,7 @@ Object.assign(p.job,{
 });
 engine.ensureShape(p);
 engine.registerArtifactBytes(p,{stage:1,artifactId:'ARTIFACT-INTENT-001',filename:'intent.txt',mediaType:'text/plain',byteSize:42,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',role:'HUMAN_INPUT'});
+p.stages[1].authorizedFiles.push({artifactId:'ARTIFACT-INTENT-001',name:'intent.txt',type:'text/plain',size:42,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',stage:'STAGE 01',role:'HUMAN_INPUT',retainedBytes:true});
 
 const manifest=engine.intakeCoverageManifest(p);
 assert(manifest.unitCount===manifest.units.length&&manifest.unitCount>0,'Stage 01 intake manifest is not closed and countable.');
