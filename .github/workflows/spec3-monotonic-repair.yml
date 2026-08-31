@@ -1,33 +1,65 @@
-name: Spec3 monotonic source diagnostic
+name: Spec3 monotonic candidate
 on:
   push:
     branches: [spec3-monotonic-20260831]
 permissions:
   contents: write
 jobs:
-  inspect:
+  candidate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Capture Stage 6 source locations
+      - name: Apply minimal candidate
         shell: bash
         run: |
           set -euo pipefail
-          {
-            echo '=== execution-plan symbols ==='
-            grep -n -E 'testExecutionPlan|missingArtifact|artifactReady|requiredArtifact|Stage 06|case 6|stage===6|stage == 6' workflow-engine.js || true
-            echo '=== prompt common contract symbols ==='
-            grep -n -E 'Project-relevant information supplied by the human|APPLICATION OBLIGATION MANIFEST|STRICT RESPONSE CONTRACT' prompt-engine.js || true
-          } > spec3-source-diagnostic.txt
-          cat spec3-source-diagnostic.txt
-      - name: Persist source diagnostic
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          old="const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';"
+          if old not in s: raise SystemExit('prompt version marker missing')
+          s=s.replace(old,"const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/55';",1)
+          old_aug="const procedureAugmentation=Object.freeze({\n  2:'Continue source discovery until no new applicable controlling or correctness-relevant external source category is found. Do not stop at the first plausible source or at an arbitrary source count; source count is a search target, never permission to omit stronger authority or invent weaker sources.',\n  5:'Resolve the current job requirement set exhaustively. After each semantic correction, repeat the defect review against the resulting current requirement set until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',"
+          new_aug="const procedureAugmentation=Object.freeze({\n  2:'Continue source discovery until no new applicable controlling or correctness-relevant external source category is found. Do not stop at the first plausible source or at an arbitrary source count; source count is a search target, never permission to omit stronger authority or invent weaker sources.',\n  4:'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST is the controlling application-owned form of the APPLICATION OBLIGATION MANIFEST.',\n  5:'Resolve the current job’s requirement set exhaustively. After each semantic correction, repeat the review against the resulting requirement set from the beginning until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',"
+          if old_aug not in s: raise SystemExit('procedure augmentation marker missing')
+          s=s.replace(old_aug,new_aug,1)
+          old_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,procedureAugmentation[stage]?`${text} ${procedureAugmentation[stage]}`:text])));"
+          universal="Project-relevant information supplied by the human is supplied once; never ask the human to repeat, retype, summarize, resend, reopen, or reattach it."
+          new_proc="const procedures=Object.freeze(Object.fromEntries(Object.entries(stageSpecial).map(([stage,text])=>[stage,`${text}${procedureAugmentation[stage]?` ${procedureAugmentation[stage]}`:''} ${universal}`])));"
+          if old_proc not in s: raise SystemExit('procedures marker missing')
+          s=s.replace(old_proc,new_proc,1)
+          p.write_text(s)
+
+          e=Path('workflow-engine.js'); w=e.read_text()
+          old_gate="      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.\n      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage."
+          new_gate="      const executionPlan=testExecutionPlan(project);\n      const missingArtifactTestIds=safe(executionPlan?.missingArtifactTestIds);\n      if(missingArtifactTestIds.length)reasons.push(`Required artifact bytes are missing or no longer application-verified for mandatory test(s): ${missingArtifactTestIds.join(', ')}.`);"
+          if old_gate not in w: raise SystemExit('Stage 06 gate marker missing')
+          e.write_text(w.replace(old_gate,new_gate,1))
+          PY
+      - name: Verify candidate
+        shell: bash
+        run: |
+          set +e
+          : > spec3-candidate-result.txt
+          status=0
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            node --check "$file" >> spec3-candidate-result.txt 2>&1 || status=1
+          done
+          for test in verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-one-time-intent-intake.mjs verify-prompt-semantics.mjs verify-complete.mjs; do
+            echo "=== $test ===" >> spec3-candidate-result.txt
+            node "$test" >> spec3-candidate-result.txt 2>&1 || status=1
+          done
+          echo "FINAL_STATUS=$status" >> spec3-candidate-result.txt
+          cat spec3-candidate-result.txt
+          exit 0
+      - name: Persist diagnostic only
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add spec3-source-diagnostic.txt
-          git commit -m "Record Stage 6 source diagnostics" || true
+          git add spec3-candidate-result.txt
+          git commit -m "Record prompt and Stage 6 candidate result" || true
           git push origin HEAD:spec3-monotonic-20260831
