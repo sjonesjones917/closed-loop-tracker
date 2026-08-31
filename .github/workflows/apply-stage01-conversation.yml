@@ -32,6 +32,7 @@ jobs:
           node --check workflow-engine.js
           node --check verify-stage01-conversation-first.mjs
           node --check verify-human-stage-walkthrough.mjs
+          node --check verify-all-stage-prompts.mjs
           node --check verify-live.mjs
           node build-test-project.mjs
           node verify-stage01-conversation-first.mjs
@@ -53,4 +54,4 @@ jobs:
           git commit -m "Restore Stage 01 human conversation and required file intake"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
 
-# Re-run after replacing the obsolete Stage 01 closure fixture with the canonical capture path.
+# Re-run after making every stage/operation prompt generation follow the actual Stage 01 through Stage 30 order.
