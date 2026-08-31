@@ -14,5 +14,14 @@ jobs:
           PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
         run: |
           set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-browser-extra.mjs')
+          s=p.read_text()
+          old="await click(cdp,'#project-actions-toggle');await waitExpr(cdp,`document.querySelector('.project-action-menu')?.open===true&&document.querySelector('#project-actions-toggle')?.getAttribute('aria-expanded')==='true'`);"
+          new="await click(cdp,'#project-actions-toggle');console.log('project-action-state='+JSON.stringify(await evalValue(cdp,`(()=>{const m=document.querySelector('.project-action-menu'),t=document.querySelector('#project-actions-toggle'),p=document.querySelector('.project-action-popover');return {open:m?.open,aria:t?.getAttribute('aria-expanded'),display:getComputedStyle(p).display,visible:Boolean(p?.offsetParent)}})()`)));await waitExpr(cdp,`document.querySelector('.project-action-menu')?.open===true&&document.querySelector('#project-actions-toggle')?.getAttribute('aria-expanded')==='true'`);"
+          if old not in s: raise SystemExit('instrumentation anchor not found')
+          p.write_text(s.replace(old,new,1))
+          PY
           node verify-browser-extra.mjs
           node verify-mobile-stage-action.mjs
