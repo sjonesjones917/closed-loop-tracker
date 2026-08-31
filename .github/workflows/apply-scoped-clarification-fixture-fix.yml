@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/restore-controlling-verification-20260831b
-      - name: Patch Stage 06 custody gate and its downstream fixture
+      - name: Patch Stage 06 custody gate and downstream fixtures
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -24,11 +24,15 @@ jobs:
 
           p = Path('verify-complete.mjs')
           s = p.read_text()
-          old = "  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);"
-          new = "  const p=project('JOB-BAD-REL'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=prompt(p,stage);"
-          if old not in s:
-              raise SystemExit('Stage 03 complete-contract fixture target not found')
-          p.write_text(s.replace(old, new, 1))
+          replacements = [
+            ("  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);", "  const p=project('JOB-BAD-REL'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=prompt(p,stage);"),
+            ("  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');", "  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};")
+          ]
+          for old,new in replacements:
+              if old not in s:
+                  raise SystemExit('complete-contract fixture target not found: '+old[:80])
+              s = s.replace(old,new,1)
+          p.write_text(s)
           PY
       - name: Verify complete-contract regression
         run: |
