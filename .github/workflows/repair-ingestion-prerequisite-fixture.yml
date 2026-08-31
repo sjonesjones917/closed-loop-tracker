@@ -76,6 +76,13 @@ jobs:
                   raise SystemExit('Expected savePrompt options boundary not found; no change made.')
               text = text.replace(options_needle, options_replacement, 1)
 
+          ownership_needle = "  const stageData={};\n  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);"
+          ownership_replacement = "  const stageData={};\n  const agentStageFields=stageFields.filter(name=>schema.stageFieldDefinition(stage,name).producer===schema.PRODUCER.AGENT);\n  if(agentStageFields.length)stageData[agentStageFields[0]]=safeValue(agentStageFields[0]);"
+          if ownership_replacement not in text:
+              if ownership_needle not in text:
+                  raise SystemExit('Expected stage-data ownership boundary not found; no change made.')
+              text = text.replace(ownership_needle, ownership_replacement, 1)
+
           next_needle = "if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt"
           next_replacement = "if(stage<30){const nextStage=stage+1;preparePromptPrerequisites(reloaded,nextStage);if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=fixturePromptOptions(nextStage),nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt"
           if next_replacement not in text:
