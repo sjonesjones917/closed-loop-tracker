@@ -1,0 +1,39 @@
+name: Repair proposal review open state
+
+on:
+  push:
+    branches:
+      - finish/live-human-gate-20260830
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+          fetch-depth: 0
+      - name: Keep validated proposal diff open and remove temporary diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('app-core.js')
+          text=path.read_text()
+          old="stageOneSummary=stageOne?`<div class=\"record-card\"><div class=\"record-body\"><div class=\"record-rows\">${field('Requested deliverable',p.envelope?.stageData?.EXACT_DELIVERABLE_REQUESTED||'UNKNOWN')}${field('Controlled input units accounted',stageOneAccounting.length)}${field('Intent statements captured',stageOneIntents.length)}${field('Assumptions',p.envelope?.stageData?.ASSUMPTIONS||'NONE')}${field('Unresolved human information',p.envelope?.stageData?.UNKNOWN_INFORMATION||'NONE')}</div></div></div><details class=\"record-card\"><summary>Advanced Stage 01 extraction details<span>${rows.length}</span></summary><div class=\"record-body\">${details('Complete extraction diff',rows,false)}</div></details>`:details('Proposal diff',rows,!longProposal);"
+          new="stageOneSummary=stageOne?`<div class=\"record-card\"><div class=\"record-body\"><div class=\"record-rows\">${field('Requested deliverable',p.envelope?.stageData?.EXACT_DELIVERABLE_REQUESTED||'UNKNOWN')}${field('Controlled input units accounted',stageOneAccounting.length)}${field('Intent statements captured',stageOneIntents.length)}${field('Assumptions',p.envelope?.stageData?.ASSUMPTIONS||'NONE')}${field('Unresolved human information',p.envelope?.stageData?.UNKNOWN_INFORMATION||'NONE')}</div></div></div><details class=\"record-card\"><summary>Advanced Stage 01 extraction details<span>${rows.length}</span></summary><div class=\"record-body\">${details('Complete extraction diff',rows,false)}</div></details>`:details('Proposal diff',rows,true);"
+          if old not in text:
+              raise SystemExit('Proposal review render target not found')
+          path.write_text(text.replace(old,new,1))
+          for temporary in [Path('.github/workflows/diagnose-review-scroll.yml'),Path('.github/workflows/repair-proposal-review-open.yml')]:
+              if temporary.exists(): temporary.unlink()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app-core.js .github/workflows
+          git commit -m "Keep validated proposal review open"
+          git push origin HEAD:finish/live-human-gate-20260830
