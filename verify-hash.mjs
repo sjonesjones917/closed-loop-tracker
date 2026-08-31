@@ -28,7 +28,7 @@ const testRuntime=fs.readFileSync('test-runtime.js','utf8');
 assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
 assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');
 const appCore=fs.readFileSync('app-core.js','utf8');
-assert(appCore.includes("function artifactControlMarkup(n,locked){if(n===19)"),'Stage 04 artifact controls must retain the established visual rendering; repeat-input prevention belongs to canonical data flow, not UI suppression.');
-assert(!appCore.includes("function artifactControlMarkup(n,locked){if(n===4)return '';"),'Stage 04 visual controls must not be hidden as a substitute for canonical intent reuse.');
+assert(appCore.includes("const applicable=[1,10,17,20,21,25].includes(n)"),'Artifact controls must be limited to stages that actually require operator file custody/selection.');
+assert(!appCore.includes("const applicable=[1,4,10,17,20,21,25].includes(n)"),'Stage 04 must not expose a repeat original-intent attachment control; it consumes accepted canonical Stage 01/03 information.');
 
 console.log(JSON.stringify({sha256Vectors:true,canonicalOrdering:true,ambiguousValuesRejected:17,sharedBuildIdentity,runtimeScriptCount:runtimeFiles.length,workerSharesBuildIdentity:true,stage04RepeatAttachmentControlAbsent:true}));
