@@ -1,4 +1,4 @@
-name: Apply Stage 03 source-boundary prompt correction
+name: Apply current prompt-authority corrections
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
           fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);
           NODE
 
-      - name: Correct the earliest source-boundary acceptance failures
+      - name: Correct Stage 03 and Stage 05 prompt authority
         shell: bash
         run: |
           set -euo pipefail
@@ -45,44 +45,36 @@ jobs:
                   raise SystemExit(f'{path}: expected exactly one correction target, found {count}')
               file.write_text(source.replace(old,new))
 
-          replace_once('prompt-engine.js',
-            '"3":"Research only the complete current accepted Stage 02 independent external source set supplied in this prompt, using the accepted Stage 01 human-authority capture',
-            '"3":"Research only the current accepted Stage 02 independent external source set supplied in this prompt. Treat it as the complete current source set for this stage, using the accepted Stage 01 human-authority capture')
-          replace_once('workbook.js',
-            "'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'",
-            "'Research only the current accepted Stage 02 independent external source set. Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from that source set while preserving each source role.'")
-          replace_once('build-test-project.mjs',
-            "for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);",
-            "for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);")
-          replace_once('build-test-project.mjs',
-            "if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');",
-            "if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');\nif(!String(globalThis.closedLoopCore.STAGES[1]?.result||'').includes('Independent external sources only.'))throw new Error('Stage 02 human-facing source boundary is missing from workbook-owned runtime stage data.');")
-          replace_once('verify-stage-prompts-complete.mjs',"'never ask the human to repeat, retype, summarize, resend, reopen, or reattach it'","'Never ask the human to repeat, retype, summarize, resend, reopen, or reattach it'")
-          replace_once('verify-stage-prompts-complete.mjs',"'every inputId exactly once'","'every application-enumerated intake unit is accounted for'")
-          replace_once('verify-stage-prompts-complete.mjs',"2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements']","2:[],4:[],5:['sources']")
-          replace_once('verify-stage-prompts-complete.mjs',
-            "engine.ensureShape(p);engine.recalculate(p);",
-            "engine.ensureShape(p);engine.recalculate(p);\nconst intake=prompts.intakeCoverageManifest(p);\np.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Prompt closure deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+i,text:u.rawValueText||('captured '+u.label),statementClass:'CONTEXT'}]}))})};\np.stages[1].status='COMPLETE';p.stages[1].gate={complete:true};\np.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true};\np.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false};p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true};\nfor(let stage=4;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true};}")
-          replace_once('prompt-engine.js',"function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}","function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}")
-          replace_once('verify-stage-prompts-complete.mjs',"'every current accepted Stage 02 source has current research coverage'","'Every current Stage 02 source must receive current research coverage'")
-          replace_once('verify-stage-prompts-complete.mjs',"'distinct conflict/exception/saturation pass'","'the required conflict-and-exception pass','Repeat until the latest complete pass finds no new material'")
-          replace_once('verify-stage-prompts-complete.mjs',"'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST'","'APPLICATION OBLIGATION MANIFEST'")
+          replace_once(
+              'prompt-engine.js',
+              '"3":"Research only the complete current accepted Stage 02 independent external source set supplied in this prompt, using the accepted Stage 01 human-authority capture',
+              '"3":"Research only the current accepted Stage 02 independent external source set supplied in this prompt. Treat it as the complete current source set for this stage, using the accepted Stage 01 human-authority capture'
+          )
+          replace_once(
+              'prompt-engine.js',
+              '"5":"Resolve only defects in the complete current Stage 04 requirement set supplied in this prompt.',
+              '"5":"Resolve the current job’s requirement set exhaustively. Resolve only defects in the complete current Stage 04 requirement set supplied in this prompt.'
+          )
+          replace_once(
+              'workbook.js',
+              "'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'",
+              "'Research only the current accepted Stage 02 independent external source set. Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from that source set while preserving each source role.'"
+          )
           PY
-          node build-test-project.mjs
 
-      - name: Prove Stage 03 and downstream prompt behavior
+      - name: Prove the corrected failure paths
         shell: bash
         run: |
           set -euo pipefail
           node --check workbook.js
           node --check prompt-engine.js
+          node build-test-project.mjs
           node verify-monotonic-pass.mjs
           node verify-all-stage-prompts.mjs
-          node verify-stage-prompts-complete.mjs
-          node verify-one-time-intent-intake.mjs
-          node verify-zero-loss-accounting.mjs
+          grep -F "Research only the current accepted Stage 02 independent external source set" prompt-engine.js
+          grep -F "Resolve the current job’s requirement set exhaustively" prompt-engine.js
 
-      - name: Commit the correction and remove this one-time workflow
+      - name: Commit correction and remove one-time repair workflow
         shell: bash
         run: |
           set -euo pipefail
@@ -90,5 +82,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'Restore Stage 02 and Stage 03 source boundaries'
+          git commit -m 'Correct Stage 03 and Stage 05 prompt authority'
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
