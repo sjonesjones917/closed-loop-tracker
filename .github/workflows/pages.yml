@@ -117,13 +117,18 @@ jobs:
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
+          set -euo pipefail
+          node verify-definition-of-done.mjs > definition.json
+          node verify-v3-definition-of-done.mjs > v3.json
           node - <<'NODE'
           const fs=require('node:fs');
-          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',stageCount:30,proofStatus:'PASSED_ALL_PRECEDING_REQUIRED_CI_AND_DEPLOYED_BROWSER_STEPS',deployedByteIdentity:true,liveBrowserVerification:true,deployedUrl:process.env.PAGE_URL,testedBrowserWidths:[320,393,1280],actualAndroidChromeAcceptance:false,fullProductionMaturity:false};
-          fs.writeFileSync('final-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          const definition=JSON.parse(fs.readFileSync('definition.json','utf8'));
+          const v3=JSON.parse(fs.readFileSync('v3.json','utf8'));
+          const report={commit:process.env.GITHUB_SHA,workflow:'mobile-closed-loop/30',projectSchema:'closed-loop-project/3',responseSchema:'closed-loop-stage-response/3',testIrSchema:'closed-loop-test-spec/1',verificationPackageSchema:'closed-loop-verification-package/1',stageCount:30,...definition,...v3,proofStatus:'PASSED_ALL_PRECEDING_REQUIRED_CI_AND_DEPLOYED_BROWSER_STEPS',deployedByteIdentity:true,liveBrowserVerification:true,deployedChromiumAcceptance:true,deployedUrl:process.env.PAGE_URL,testedBrowserWidths:[320,393,1280],actualAndroidChromeAcceptance:false,fullProductionMaturity:false};
+          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: final-acceptance-${{ github.sha }}
-          path: final-acceptance.json
+          name: closed-loop-acceptance-${{ github.sha }}
+          path: closed-loop-acceptance.json
           if-no-files-found: error
