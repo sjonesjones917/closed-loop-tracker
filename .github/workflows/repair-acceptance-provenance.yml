@@ -1,0 +1,159 @@
+name: Repair acceptance provenance and immutable tagging
+
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-acceptance-provenance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bind machine acceptance to executed proof outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/pages.yml')
+          text = path.read_text(encoding='utf-8')
+
+          old_lifecycle = """      - name: Workflow, gates, full cycle, and lifecycle
+        run: |
+          set -euo pipefail
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+
+      - name: Prompt semantics and leakage
+"""
+          new_lifecycle = """      - name: Workflow, gates, and full cycle
+        run: |
+          set -euo pipefail
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+
+      - name: Project lifecycle and application-owned controls
+        run: |
+          set -euo pipefail
+          node verify-project-lifecycle.mjs
+
+      - name: Prompt semantics and leakage
+"""
+          if old_lifecycle in text:
+              text = text.replace(old_lifecycle, new_lifecycle, 1)
+          elif new_lifecycle not in text:
+              raise SystemExit('Lifecycle proof-step boundary was not found exactly once.')
+
+          old_commands = """          node verify-ingestion.mjs > /tmp/ingestion.out
+          node verify-stage01-intake-closure.mjs > /tmp/stage01.out
+          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
+"""
+          new_commands = """          node verify-ingestion.mjs > /tmp/ingestion.out
+          node verify-stage01-intake-closure.mjs > /tmp/stage01.out
+          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
+          node verify-full-cycle.mjs > /tmp/full-cycle.json
+"""
+          if new_commands not in text:
+              if text.count(old_commands) != 1:
+                  raise SystemExit(f'Acceptance proof command boundary count: {text.count(old_commands)}')
+              text = text.replace(old_commands, new_commands, 1)
+
+          old_parse = """          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
+          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
+          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
+"""
+          new_parse = """          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
+          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
+          const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
+          const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
+          const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
+          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
+          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
+          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
+          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
+          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
+"""
+          if new_parse not in text:
+              if text.count(old_parse) != 1:
+                  raise SystemExit(f'Acceptance proof parser boundary count: {text.count(old_parse)}')
+              text = text.replace(old_parse, new_parse, 1)
+
+          replacements = {
+              '            stage01RawInputAccounting:1,': '            stage01RawInputAccounting,',
+              '            stage01RequiredFileInspectionAccounting:1,': '            stage01RequiredFileInspectionAccounting,',
+              '            stage01AcceptedSemanticMappingCoverage:1,': '            stage01AcceptedSemanticMappingCoverage,',
+              '            stage04ObligationAccounting:1,': '            stage04ObligationAccounting,',
+              '            stagesCompleted:30,': '            stagesCompleted:Number(fullCycle.stagesCompleted||0),',
+              '            deployedByteIdentity:true,': "            deployedByteIdentity:process.env.LIVE_RESULT==='success',",
+              '            localChromiumAcceptance:true,': "            localChromiumAcceptance:process.env.TEST_RESULT==='success',",
+              '            deployedChromiumAcceptance:true,': "            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',"
+          }
+          for old, new in replacements.items():
+              if new not in text:
+                  if text.count(old) != 1:
+                      raise SystemExit(f'Acceptance replacement boundary count for {old.strip()}: {text.count(old)}')
+                  text = text.replace(old, new, 1)
+
+          old_tag = """          git tag -f "$TAG" "$GITHUB_SHA"
+          git push --force origin "refs/tags/$TAG"
+"""
+          new_tag = """          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
+          if [ -n "$EXISTING" ]; then
+            test "$EXISTING" = "$GITHUB_SHA"
+          else
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+          fi
+"""
+          if new_tag not in text:
+              if text.count(old_tag) != 1:
+                  raise SystemExit(f'Release-tag replacement boundary count: {text.count(old_tag)}')
+              text = text.replace(old_tag, new_tag, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Prove the acceptance-layer correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F "const stage01RawInputAccounting=Number(Boolean(" .github/workflows/pages.yml
+          grep -F "stagesCompleted:Number(fullCycle.stagesCompleted||0)" .github/workflows/pages.yml
+          grep -F "Project lifecycle and application-owned controls" .github/workflows/pages.yml
+          ! grep -F "stage01RawInputAccounting:1" .github/workflows/pages.yml
+          ! grep -F "git tag -f" .github/workflows/pages.yml
+          ! grep -F "git push --force" .github/workflows/pages.yml
+          node verify-project-lifecycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+      - name: Commit the accepted proof correction and remove this one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/repair-acceptance-provenance.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pages.yml .github/workflows/repair-acceptance-provenance.yml
+          git diff --cached --check
+          git commit -m "Bind machine acceptance to executed proof"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
