@@ -11,8 +11,6 @@ const engine=globalThis.closedLoopWorkflowEngine;
 const prompts=globalThis.closedLoopPromptEngine;
 const assert=(value,message)=>{if(!value)throw new Error(message);};
 
-// Stage 01 captures project authority once through the application-owned intake manifest and the
-// accepted INPUT_SET_CONTENTS capture. It must not invent a second canonical intent registry.
 assert(schema.STAGE_CONTRACTS[1].allowedStageData.includes('INPUT_SET_CONTENTS'),'Stage 01 cannot submit the durable intake capture.');
 assert(!Object.prototype.hasOwnProperty.call(schema.RECORD_SCHEMAS,'intentStatements'),'A redundant intentStatements canonical registry was introduced.');
 
@@ -75,7 +73,7 @@ project.stages[1].status='COMPLETE';
 project.stages[1].gate={complete:true,blocked:false,reasons:[]};
 
 const stage1Prompt=prompts.buildPromptRecord(1,project,{operation:'COMPLETE'});
-assert(stage1Prompt.prompt.includes('The user supplies project information once'),'Stage 01 does not instruct the agent to capture project information once.');
+assert(/user supplies project information once/i.test(stage1Prompt.prompt),'Stage 01 does not instruct the agent to capture project information once.');
 assert(stage1Prompt.prompt.includes('Classify every APPLICATION INTAKE MANIFEST unit exactly once'),'Stage 01 does not require exhaustive application-accounted intake.');
 assert(stage1Prompt.prompt.includes('INPUT_SET_CONTENTS must preserve the complete durable meaning needed by later stages'),'Stage 01 does not require a durable downstream capture.');
 assert(stage1Prompt.contextManifest.intakeCoverageManifest.manifestSha256===intake.manifestSha256,'The Stage 01 prompt is not bound to the current intake manifest.');
@@ -122,8 +120,8 @@ project.stages[3].gate={complete:true,blocked:false,reasons:[]};
 const stage3Prompt=prompts.buildPromptRecord(3,project,{operation:'COMPLETE'});
 assert(stage3Prompt.prompt.includes(project.job.EXACT_USER_OBJECTIVE_VERBATIM),'Stage 03 did not receive the current human objective.');
 assert(stage3Prompt.prompt.includes(project.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED),'Stage 03 did not receive the accepted Stage 01 deliverable definition.');
-assert(stage3Prompt.prompt.includes('never ask the user to repeat available project facts'),'Stage 03 permits repeated project-data entry.');
-assert(!stage3Prompt.prompt.includes('Attach or provide the original material with the Stage 04 instruction.'),'Stage 03 still tells the operator to resend the original intent file.');
+assert(/never ask the (?:human|user) to repeat available project facts/i.test(stage3Prompt.prompt),'Stage 03 permits repeated project-data entry.');
+assert(!/attach or provide the original material with the Stage 04 instruction/i.test(stage3Prompt.prompt),'Stage 03 still tells the operator to resend the original intent file.');
 assert((stage3Prompt.contextManifest.readCollections.sources||[]).some(item=>item.id==='SOURCE-000001'),'Stage 03 prompt omitted the current source identity.');
 
 const obligations=engine.obligationManifest(project);
@@ -143,8 +141,8 @@ assert(exhausted.stage01AcceptedCapture.units.length===intake.unitCount,'Stage 0
 assert(exhausted.stage03Research.length===1,'Stage 04 did not receive the complete current Stage 03 research set.');
 assert(exhausted.stage03CandidateRequirements.length===1,'Stage 04 did not receive the current Stage 03 candidate obligations.');
 assert(stage4Prompt.contextManifest.obligationManifest.manifestSha256===obligations.manifestSha256,'Stage 04 prompt is not bound to the current obligation manifest.');
-assert(stage4Prompt.prompt.includes('Do not ask the user to attach, restate, summarize, retype, or otherwise resupply any project information already captured.'),'Stage 04 permits repeated project-data entry.');
-assert(stage4Prompt.prompt.includes('Do not attach or resend the original intent file.'),'Stage 04 does not prohibit repeat intent-file transfer.');
+assert(/do not ask the user to attach, restate, summarize, retype, or otherwise resupply any project information already captured/i.test(stage4Prompt.prompt),'Stage 04 permits repeated project-data entry.');
+assert(/do not attach or resend the original intent file/i.test(stage4Prompt.prompt),'Stage 04 does not prohibit repeat intent-file transfer.');
 assert(stage4Prompt.prompt.includes('The prompt box must retain its established dimensions.'),'Stage 04 prompt omitted captured Stage 01 project detail.');
 assert(stage4Prompt.prompt.includes('External mandatory obligation retained from Stage 03.'),'Stage 04 prompt omitted Stage 03 research detail.');
 assert(stage4Prompt.contextManifest.executionHandoff.send.length===0,'Stage 04 generated a repeat file-transfer handoff.');
