@@ -25,9 +25,9 @@ s=s.replace(exp,exp2,1)
 p.write_text(s)
 
 q=Path('prompt-engine.js');t=q.read_text()
-marker="if(stage===6)"
-if marker not in t: raise SystemExit('Stage 6 context marker missing')
-t=t.replace(marker,"if(stage===26)parts.push(`APPLICATION RECONCILIATION FACTS — THESE IDENTITIES, COUNTS, FAILURES, AND CONTRADICTIONS ARE APPLICATION AUTHORITY\\n${show(workflow.reconciliationFacts(state))}`);"+marker,1)
+marker=";const humanInspectionEvidence=workflow.recordsForCurrentScope(state,'evidenceRecords')"
+if marker not in t: raise SystemExit('generic context insertion marker missing')
+t=t.replace(marker,";if(stage===26)parts.push(`APPLICATION RECONCILIATION FACTS — THESE IDENTITIES, COUNTS, FAILURES, AND CONTRADICTIONS ARE APPLICATION AUTHORITY\\n${show(workflow.reconciliationFacts(state))}`)"+marker,1)
 old_rule=""""26":"Independently reconcile process correctness and product correctness against current canonical evidence. Inspect the actual process trail and the actual product evidence separately, identify every discrepancy, missing evidence link, contradiction, or unsupported conclusion, and return evidence-based processAudits and productAudits. Do not treat procedural success as product correctness or product plausibility as process correctness. Do not calculate or override application-owned identities, counts, missing-link status, contradiction consequences, or reconciliation state.","""
 new_rule=""""26":"Independently reconcile process correctness and product correctness against current canonical evidence. Inspect the actual process trail and the actual product evidence separately, identify every discrepancy, missing evidence link, contradiction, or unsupported conclusion, and return evidence-based processAudits and productAudits. APPLICATION RECONCILIATION FACTS in this prompt are controlling application authority for current identities, mandatory requirement/test counts, normalized result state, evidence insufficiency, defects, blockers, and contradictions; do not recompute or override them. Your job is the semantic audit: explain whether the process evidence and product evidence support those facts and expose any additional discrepancy. Do not treat procedural success as product correctness or product plausibility as process correctness. A favorable prose audit cannot override an application-reported violation, unknown, insufficient evidence item, material defect, blocker, or contradiction.","""
 if old_rule not in t: raise SystemExit('stage26 special rule anchor missing')
