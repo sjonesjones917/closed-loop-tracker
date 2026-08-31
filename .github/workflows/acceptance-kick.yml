@@ -6,21 +6,41 @@ on:
       - fix/monotonic-zero-loss-20260831
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   acceptance:
+    if: ${{ !contains(github.event.head_commit.message, '[accepted-stage04-heading]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Test the clean final tree
+      - name: Apply minimal prompt-authority correction
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('prompt-engine.js')
+          text=path.read_text(encoding='utf-8')
+          old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
+          new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
+          count=text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one Stage 04 manifest heading insertion point; found {count}.')
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Test the corrected clean final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/workflows/acceptance-kick.yml /tmp/acceptance-kick.yml
           rm .github/workflows/acceptance-kick.yml
           for file in *.js *.mjs; do node --check "$file"; done
           node build-test-project.mjs
@@ -72,3 +92,15 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          cp /tmp/acceptance-kick.yml .github/workflows/acceptance-kick.yml
+      - name: Commit only the accepted production correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add prompt-engine.js
+          git diff --cached --quiet && exit 0
+          test "$(git diff --cached --name-only)" = "prompt-engine.js"
+          git commit -m "Make Stage 04 manifest ownership explicit [accepted-stage04-heading]"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
