@@ -1,32 +1,10 @@
-name: Apply retained verification correction
+name: Retained repair carrier disabled
 on:
-  push:
-    branches: [fix/restore-controlling-verification-20260831b]
-    paths: [.github/workflows/apply-stage04-visual-regression-fix.yml]
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: fix/restore-controlling-verification-20260831b
-      - name: Separate response acceptance from stage completion in ingestion regression
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify-ingestion.mjs')
-          s=p.read_text()
-          old="  if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);const nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{},nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}"
-          new="  if(stage<30){const nextStage=stage+1,nextOptions=nextStage===11?{scope:{runId:'RUN-NEXT-FIXTURE',contextId:'CONTEXT-NEXT-FIXTURE'}}:{};if(reloaded.stages[stage]?.gate?.complete===true){if(nextStage===4)prepareStage4Upstream(reloaded);const nextPrompt=prompts.buildPromptRecord(nextStage,reloaded,nextOptions).prompt,isolated=[11,12,23,24].includes(nextStage);if(!nextPrompt.includes(`JOB_ID: ${p.job.JOB_ID}`))throw new Error(`Stage ${nextStage} prompt lost JOB_ID isolation.`);if(isolated&&nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} isolation prompt leaked generic prior-stage context.`);if(!isolated&&!nextPrompt.includes('PRIOR STAGE DECISION AND ACCEPTED DATA'))throw new Error(`Stage ${nextStage} prompt did not consume accepted prior-stage context.`);}else{let blocked=false;try{prompts.buildPromptRecord(nextStage,reloaded,nextOptions);}catch(error){blocked=error?.code==='UPSTREAM_STAGE_INCOMPLETE'&&error?.upstreamStage===stage;}if(!blocked)throw new Error(`Stage ${stage} acceptance without stage completion did not block Stage ${nextStage} prompt generation.`);}}"
-          if old not in s: raise SystemExit('expected post-acceptance next-prompt assertion not found')
-          p.write_text(s.replace(old,new,1))
-          PY
-      - name: Commit minimal correction
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verify-ingestion.mjs
-          git commit -m "Separate acceptance from stage completion in ingestion regression"
-          git push origin HEAD:fix/restore-controlling-verification-20260831b
+      - run: echo "One-time repair carrier is disabled pending final deletion."
