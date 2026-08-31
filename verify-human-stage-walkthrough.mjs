@@ -38,13 +38,46 @@ try{
     Object.assign(state.job,{JOB_ID:'JOB-HUMAN-WALKTHROUGH',JOB_TITLE:'Sequential human walkthrough',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Build one complete subject-neutral deliverable while preserving every supplied project requirement exactly once.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',REQUIRED_OUTPUT_FORMAT:'Use the actual artifact format required by the project.',DEADLINE_OR_TEMPORAL_SCOPE:'No artificial deadline.',DESIRED_SOURCE_COUNT:3,KNOWN_AUTHORITATIVE_SOURCES:'Use governing sources where applicable.',AVAILABLE_TOOLS:'Authorized research and deterministic application tools.',PROHIBITED_ACTIONS:'Never ask for project information already supplied. Never invent evidence.',EXPLICIT_USER_REQUIREMENTS:'Capture all human intent once. Each stage must perform only its own complete job and must receive every relevant canonical prior-stage fact.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITER-001',CURRENT_BASELINE_ID:'BASE-001',CURRENT_PRODUCT_ID:'PROD-001'});
     engine.ensureShape(state);engine.recalculate(state);
     const checked=[],lane={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
-    for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
-      const record=prompts.buildPromptRecord(stage,state,{operation,scope:lane}),text=record.prompt;
-      if(!text||text.length<200)throw new Error('Stage '+stage+' '+operation+' generated an incomplete prompt.');
-      if(!text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'))throw new Error('Stage '+stage+' '+operation+' omitted the one-time project-data rule.');
-      if(stage>1&&!text.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error('Stage '+stage+' '+operation+' can request the original intent again.');
-      if(!text.includes('STRICT RESPONSE CONTRACT'))throw new Error('Stage '+stage+' '+operation+' omitted its response contract.');
-      checked.push(stage+':'+operation);
+    for(let stage=1;stage<=30;stage++){
+      let intakeManifest=null;
+      for(const operation of schema.STAGE_CONTRACTS[stage].operations){
+        let record;
+        try{record=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}
+        catch(error){throw new Error('Stage '+stage+' '+operation+' prompt generation failed: '+(error?.stack||error));}
+        const text=record.prompt;
+        if(!text||text.length<200)throw new Error('Stage '+stage+' '+operation+' generated an incomplete prompt.');
+        if(!text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'))throw new Error('Stage '+stage+' '+operation+' omitted the one-time project-data rule.');
+        if(stage>1&&!text.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error('Stage '+stage+' '+operation+' can request the original intent again.');
+        if(!text.includes('STRICT RESPONSE CONTRACT'))throw new Error('Stage '+stage+' '+operation+' omitted its response contract.');
+        if(stage===1){
+          intakeManifest=record.contextManifest?.intakeCoverageManifest;
+          if(!text.includes('STAGE 01 HUMAN CONVERSATION — THIS OCCURS BEFORE ANY FINAL JSON'))throw new Error('Stage 01 did not begin with the human conversation protocol.');
+          if(text.indexOf('STAGE 01 HUMAN CONVERSATION')>text.indexOf('STRICT RESPONSE CONTRACT'))throw new Error('Stage 01 machine contract appears before the human conversation.');
+          if(!text.includes('intent.txt')||!text.includes('ask the human in plain language to attach or provide the exact named material now'))throw new Error('Stage 01 did not request the named intake file when unavailable.');
+        }
+        checked.push(stage+':'+operation);
+      }
+      if(stage===1){
+        if(!intakeManifest?.units?.length)throw new Error('Stage 01 intake manifest was not generated.');
+        state.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED='One complete subject-neutral deliverable implementing every supplied project requirement.';
+        state.stages[1].agentData.ASSUMPTIONS='NONE';
+        state.stages[1].agentData.UNKNOWN_INFORMATION='NONE';
+        state.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({
+          inputVersion:intakeManifest.inputVersion,
+          manifestSha256:intakeManifest.manifestSha256,
+          units:intakeManifest.units.map((unit,index)=>({
+            sourceUnitId:unit.unitId,
+            sourceRawValueSha256:unit.rawValueSha256,
+            disposition:'incorporated into the job definition',
+            reason:'Captured once for the ordered browser walkthrough.',
+            extractedStatements:[{statementKey:'WALK-'+String(index+1),text:unit.rawValueText||unit.label||'Captured authorized project input.',statementClass:'FACT'}]
+          }))
+        });
+      }
+      if(stage===2)state.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
+      if(stage===3)Object.assign(state.stages[3].agentData,{ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'});
+      state.stages[stage].status='COMPLETE';
+      state.stages[stage].gate={complete:true,blocked:false,reasons:[]};
     }
     const workflowButton=document.querySelector('[data-view="Workflow"]');if(!workflowButton)throw new Error('Workflow navigation is missing.');workflowButton.click();await new Promise(r=>setTimeout(r,100));
     const picker=document.querySelector('#stage-picker');if(!picker)throw new Error('Stage picker is missing after opening Workflow.');

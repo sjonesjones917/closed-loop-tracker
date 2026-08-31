@@ -143,7 +143,7 @@ for(let stage=1;stage<=30;stage++){
     if(stage>1)assert(prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'),`Stage ${stage} ${operation} can regress to requesting the original intent again.`);
     assert(!prompt.includes('CUSTOM_PIPELINE'),`Stage ${stage} ${operation} exposes prohibited CUSTOM_PIPELINE.`);
     for(const phrase of semantic[stage]||[])assert(prompt.toLowerCase().includes(String(phrase).toLowerCase()),`Stage ${stage} ${operation} is missing stage-semantic instruction: ${phrase}`);
-    if((stage===17||stage===19))assert(prompt.includes(`CURRENT DECLARED OPERATION: ${operation}`),`Stage ${stage} ${operation} lacks its exact operation-specific instruction.`);
+    if(stage===17||stage===19){const operationProcedure=prompts.procedureFor(stage,operation);assert(prompt.includes(operationProcedure),`Stage ${stage} ${operation} does not embed its operation-specific procedure.`);assert(operationProcedure.includes(`operation ${operation} only`),`Stage ${stage} ${operation} is not restricted to its declared operation.`);}
     if(stage===1){
       assert(prompt.indexOf('STAGE 01 HUMAN CONVERSATION')<prompt.indexOf('STRICT RESPONSE CONTRACT'),'Stage 01 machine output contract precedes the human conversation.');
       assert(prompt.includes('intent.txt'),'Stage 01 omitted the named supplied file.');
