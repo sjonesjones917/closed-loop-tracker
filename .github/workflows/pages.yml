@@ -1,68 +1,28 @@
 name: Deploy application
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-  statuses: write
-
-concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: false
-
-env:
-  NODE_VERSION: '22'
 
 jobs:
-  repair-current-branch:
-    name: integrate-stage26-runtime-fix
-    if: github.event_name == 'pull_request' && github.head_ref == 'fix/complete-closed-loop-spec-20260831' && github.actor != 'github-actions[bot]'
+  cleanup-current-branch:
+    if: github.head_ref == 'fix/complete-closed-loop-spec-20260831' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 50
-      - name: Integrate Stage 26 application-owned reconciliation
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 .github/apply-reconcile.py
-          node --check workflow-engine.js
-          node --check prompt-engine.js
-          node --check workflow-schema.js
-          node --check app-core.js
-          node --check test-runtime.js
-      - name: Remove one-time files and restore the normal full proof workflow
-        shell: bash
+      - shell: bash
         run: |
           set -euo pipefail
           rm -f .github/apply-reconcile.py .github/workflows/apply-reconcile.yml .github/workflows/apply-preflight.yml .github/apply-preflight.py
           git show 1fb354e024d217ed199ab70eb205f883239fbb90:.github/workflows/pages.yml > .github/workflows/pages.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js prompt-engine.js workflow-schema.js index.html app-core.js test-runtime.js .github
-          git commit -m "Integrate Stage 26 application-owned reconciliation"
+          git add .github
+          git commit -m "Remove completed one-time repair infrastructure"
           git push origin HEAD:${{ github.head_ref }}
-
-  test:
-    name: test
-    if: github.event_name != 'pull_request' || needs.repair-current-branch.result == 'skipped'
-    needs: [repair-current-branch]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Repair synchronization run; normal full proof workflow is restored by the repair commit."
-
-  deploy:
-    if: false
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - run: true
