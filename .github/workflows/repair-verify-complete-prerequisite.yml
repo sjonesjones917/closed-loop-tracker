@@ -1,0 +1,39 @@
+name: Repair Stage 2 refinement fixture prerequisite
+
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+      - name: Patch exact failing fixture and remove repair workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('verify-complete.mjs')
+          s=p.read_text()
+          old="  const p=project('JOB-REFINEMENT-CANONICAL'),stage=2,source=record('sources',2,{TITLE:'Accepted source'},'SOURCE-REFINE');\n"
+          new=old+"  p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};\n"
+          if old not in s:
+              raise SystemExit('target fixture line not found')
+          if new in s:
+              raise SystemExit('fixture already patched')
+          p.write_text(s.replace(old,new,1))
+          PY
+          git rm .github/workflows/repair-verify-complete-prerequisite.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-complete.mjs
+          git commit -m "Repair Stage 2 refinement fixture prerequisite"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
