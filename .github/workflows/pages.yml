@@ -24,6 +24,17 @@ jobs:
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
             node --check "$file"
           done
+      - name: Package source workspace for controlled implementation
+        if: github.event_name == 'pull_request'
+        run: tar --exclude=.git -czf /tmp/source-workspace.tar.gz .
+      - name: Preserve source workspace artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-workspace
+          path: /tmp/source-workspace.tar.gz
+          if-no-files-found: error
+          retention-days: 1
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
