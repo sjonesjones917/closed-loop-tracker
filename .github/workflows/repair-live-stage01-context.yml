@@ -28,6 +28,9 @@ jobs:
           old="contextRecordsFor(state,collection,scope,batchPlan,stage).map(record=>"
           assert old in s
           s=s.replace(old,"contextRecordsFor(state,collection,scope,batchPlan,stage,operation).map(record=>",1)
+          old='HUMAN COLLABORATION MODE — APPLIES TO EVERY EXTERNAL-AGENT STAGE'
+          assert old in s
+          s=s.replace(old,'HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE',1)
           p.write_text(s)
 
           p=Path('app-core.js')
@@ -63,8 +66,9 @@ jobs:
       - name: Commit integrated repair and remove one-time workflow
         run: |
           rm .github/workflows/repair-live-stage01-context.yml
+          rm -f .repair-trigger-20260831
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js app-core.js verify-all-stage-prompts.mjs verify-browser.mjs .github/workflows/repair-live-stage01-context.yml
+          git add -A
           git commit -m 'Fix Stage 01 proposal accounting and operation-bound prompt context [repair-applied]'
           git push origin HEAD:fix/live-stage01-context-binding-20260831
