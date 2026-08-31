@@ -7,14 +7,13 @@
   "noGenericFallback": true,
   "visualsPreserved": true
 }
-file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17
-async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
-                                                                                                                                ^
+file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:15
+const assert=(x,m)=>{if(!x)throw new Error(m);};
+                                 ^
 
-Error: Waiting: document.querySelector('#delete-project')?.disabled===false
-    at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:17:129
-    at async poll (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:13:110)
-    at async main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:97:63)
+Error: Exact JOB_ID did not re-enable deletion after stale rejection: {"inputExists":true,"inputValue":"JOB-20260831061417973","inputDisabled":false,"buttonExists":true,"buttonDisabled":true,"currentSummary":"JOB-20260831061425413 · New project","detailsOpen":true}
+    at assert (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:15:34)
+    at main (file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:97:583)
     at async file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-browser.mjs:104:5
 
 Node.js v22.23.2
