@@ -26,12 +26,13 @@ jobs:
           done
       - name: Run deterministic acceptance verifiers
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mapfile -t verifiers < <(find . -maxdepth 1 -type f -name 'verify-*.mjs' -printf '%f\n' | sort)
           if [ "${#verifiers[@]}" -eq 0 ]; then
             echo 'No deterministic verifier scripts found.' >&2
             exit 1
           fi
+          failures=0
           for verifier in "${verifiers[@]}"; do
             case "$verifier" in
               *browser*.mjs|*chromium*.mjs|*deployed*.mjs|*live*.mjs)
@@ -39,8 +40,15 @@ jobs:
                 ;;
             esac
             echo "==> node $verifier"
-            node "$verifier"
+            if ! node "$verifier"; then
+              echo "FAILED: $verifier" >&2
+              failures=$((failures+1))
+            fi
           done
+          if [ "$failures" -ne 0 ]; then
+            echo "$failures deterministic verifier(s) failed." >&2
+            exit 1
+          fi
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
