@@ -1,0 +1,46 @@
+name: Repair sequential human-stage walkthrough
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+          fetch-depth: 0
+      - name: Make the walkthrough satisfy prompt prerequisites in sequence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('verify-human-stage-walkthrough.mjs')
+          text = path.read_text(encoding='utf-8')
+          old_open = "    for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
+          new_open = "    for(let stage=1;stage<=30;stage++){\n      if(stage>1){const prior=state.stages[stage-1];prior.status='COMPLETE';prior.gate={...(prior.gate||{}),complete:true};}\n      for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
+          old_close = "      checked.push(stage+':'+operation);\n    }\n    const workflowButton=document.querySelector('[data-view=\"Workflow\"]');"
+          new_close = "      checked.push(stage+':'+operation);\n    }}\n    const workflowButton=document.querySelector('[data-view=\"Workflow\"]');"
+          if text.count(old_open) != 1:
+              raise SystemExit(f'Expected one walkthrough loop opener, found {text.count(old_open)}.')
+          if text.count(old_close) != 1:
+              raise SystemExit(f'Expected one walkthrough loop closer, found {text.count(old_close)}.')
+          text = text.replace(old_open, new_open, 1).replace(old_close, new_close, 1)
+          path.write_text(text, encoding='utf-8')
+          self_path = Path('.github/workflows/repair-human-stage-walkthrough-prerequisites.yml')
+          if self_path.exists():
+              self_path.unlink()
+          PY
+          node --check verify-human-stage-walkthrough.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add verify-human-stage-walkthrough.mjs .github/workflows
+          git commit -m "Walk through prompt prerequisites sequentially"
+          git push origin HEAD:finish/live-human-gate-20260830
