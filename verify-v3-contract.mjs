@@ -12,6 +12,7 @@ const store=read('./project-store.js');
 const app=read('./app-core.js');
 const html=read('./index.html');
 const workflow=read('./.github/workflows/pages.yml');
+const definitionVerifier=read('./verify-definition-of-done.mjs');
 
 const requiredRuntimeOps=[
   'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML',
@@ -75,10 +76,12 @@ assert.match(workflow,reportField('verificationPackageSchema',"['\"]closed-loop-
 for(const field of [
   'stage01IntakeCoverage','stage04ObligationCoverage','mandatoryEvidenceSufficiencyCoverage','nativeExecutionCoverage',
   'acceptedAgentValueExtractionCoverage','acceptedRelationshipProvenanceCoverage','currentScopeSelectorCoverage',
-  'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','mandatoryEvidenceChainStructuralCoverage','releaseArtifactIdentityCoverage',
+  'exactReqRunTestCoverage','applicableCurrentRegressionSuccess','releaseArtifactIdentityCoverage',
   'unsupportedTestIrTreatedAsExecutable','externalAssertionsOverridingApplicationProof',
   'nativeExecutionReceiptsFabricatedExternally','releaseAcceptedWithContradiction'
 ])assert.match(workflow,new RegExp(`\\b${field}\\b`),`acceptance report must identify ${field}`);
+assert.match(definitionVerifier,/\bmandatoryEvidenceChainStructuralCoverage\b/,'executed definition-of-done proof must emit mandatoryEvidenceChainStructuralCoverage');
+assert.match(workflow,/\.\.\.definition/,'acceptance artifact must include executed definition-of-done proof output');
 assert.match(workflow,/final-acceptance\.json/,'post-deploy machine acceptance artifact is required');
 assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
 assert.match(workflow,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
