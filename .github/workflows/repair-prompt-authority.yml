@@ -12,7 +12,7 @@ jobs:
   repair:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,51 +21,61 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply minimal prompt authority corrections
+      - name: Apply minimal prompt and stage-read corrections
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          path=Path('prompt-engine.js')
-          text=path.read_text(encoding='utf-8')
 
-          stage1_old='"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
-          stage1_new='"1":"Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage. Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
-          if stage1_new not in text:
-              if text.count(stage1_old) != 1: raise SystemExit(f'Stage 01 insertion count {text.count(stage1_old)}')
-              text=text.replace(stage1_old,stage1_new,1)
+          p=Path('prompt-engine.js')
+          text=p.read_text(encoding='utf-8')
+          replacements=[
+            ('"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.', '"1":"Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage. Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'),
+            ('Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.', 'Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found. Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'),
+            ('Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE.', 'Every current accepted Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform a distinct conflict/exception/saturation pass over the complete current source set. Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE.'),
+            ('APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION')
+          ]
+          for old,new in replacements:
+              if new not in text:
+                  if text.count(old)!=1: raise SystemExit(f'Prompt insertion point count for {old[:45]!r}: {text.count(old)}')
+                  text=text.replace(old,new,1)
+          p.write_text(text,encoding='utf-8')
 
-          stage2_old='Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'
-          stage2_new='Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found. Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'
-          if stage2_new not in text:
-              if text.count(stage2_old) != 1: raise SystemExit(f'Stage 02 insertion count {text.count(stage2_old)}')
-              text=text.replace(stage2_old,stage2_new,1)
-
-          stage3_old='Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE.'
-          stage3_new='Every current accepted Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform a distinct conflict/exception/saturation pass over the complete current source set. Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE.'
-          if stage3_new not in text:
-              if text.count(stage3_old) != 1: raise SystemExit(f'Stage 03 insertion count {text.count(stage3_old)}')
-              text=text.replace(stage3_old,stage3_new,1)
-
-          old_heading='APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
-          new_heading='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
-          if new_heading not in text and old_heading in text:
-              text=text.replace(old_heading,new_heading,1)
-          stage4_old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
-          stage4_new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
-          if stage4_new not in text and stage4_old in text:
-              text=text.replace(stage4_old,stage4_new,1)
-
-          path.write_text(text,encoding='utf-8')
+          s=Path('workflow-schema.js')
+          schema=s.read_text(encoding='utf-8')
+          stage_reads={
+            4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords'],
+            5:['requirements','research','sources','sourceConflicts','candidateRequirements','evidenceRecords'],
+            6:['requirements','requirementResolutions','artifacts','sources','research'],
+            8:['requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts'],
+            9:['instructions','instructionTraces','requirements','tests','failureTests','requirementResolutions','sources','sourceConflicts'],
+            18:['iterations','runs','verification','comparisons','defects','regressions','regressionExecutions','blockers','requirements','tests','rootCauses','changes'],
+            20:['confirmationRecords','candidateFreezes','iterations','artifacts'],
+            23:['products','requirements','tests','sources','research','evidenceRecords'],
+            24:['products','requirements','tests','failureTests','regressions','regressionExecutions','defects','sources','research','artifacts','evidenceRecords'],
+            26:['products','baselines','requirements','instructions','tests','runs','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','regressions','regressionExecutions','confirmationRecords','defects','blockers','evidenceRecords'],
+            27:['requirements','tests','products','baselines','confirmationRecords','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','defects','blockers','regressionExecutions','evidenceRecords'],
+            29:['sources','requirements','instructions','instructionTraces','runs','products','baselines','tests','verification','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','regressions','regressionExecutions','releaseRecords','artifactIdentities','evidenceRecords','evidenceChains'],
+            30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines','requirements','evidenceRecords']
+          }
+          import re
+          for stage,items in stage_reads.items():
+              new=f"{stage}:["+','.join(repr(x) for x in items)+"]"
+              pattern=rf"{stage}:\[[^\]]*\]"
+              matches=list(re.finditer(pattern,schema))
+              if len(matches)!=1: raise SystemExit(f'Stage {stage} READ_COLLECTIONS match count {len(matches)}')
+              schema=schema[:matches[0].start()]+new+schema[matches[0].end():]
+          s.write_text(schema,encoding='utf-8')
           PY
           rm -f .github/workflows/repair-stage4-manifest.yml
           rm -f .github/workflows/repair-prompt-authority.yml
-      - name: Prove corrected prompt authority
+      - name: Prove corrected prompt and declared-read authority
         shell: bash
         run: |
           set -euo pipefail
           node --check prompt-engine.js
+          node --check workflow-schema.js
           node verify-spec3-contract.mjs
           node verify-stage01-intake-closure.mjs
           node verify-zero-loss-accounting.mjs
@@ -87,7 +97,7 @@ jobs:
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
+          git add prompt-engine.js workflow-schema.js .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
           git diff --cached --check
-          git commit -m "Complete Stage 01-04 prompt authority semantics [repair-applied]"
+          git commit -m "Complete prompt and stage-read authority contracts [repair-applied]"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
