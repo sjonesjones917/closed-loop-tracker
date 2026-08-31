@@ -29,6 +29,7 @@ jobs:
           python3 .github/apply-stage01-conversation.py
           python3 .github/apply-stage01-followups.py
           node --check prompt-engine.js
+          node --check workflow-engine.js
           node --check verify-stage01-conversation-first.mjs
           node --check verify-human-stage-walkthrough.mjs
           node --check verify-live.mjs
@@ -48,6 +49,6 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm -f .github/workflows/apply-stage01-conversation.yml .github/apply-stage01-conversation.py .github/apply-stage01-followups.py
           git rm -f .github/workflows/apply-verify-op01.yml .github/apply-verify-op01.py AUTHORIZED_OPERATION_01.txt
-          git add prompt-engine.js index.html verify-stage01-conversation-first.mjs verify-human-stage-walkthrough.mjs verify-live.mjs .github/workflows/pages.yml
+          git add prompt-engine.js workflow-engine.js index.html verify-stage01-conversation-first.mjs verify-human-stage-walkthrough.mjs verify-live.mjs .github/workflows/pages.yml
           git commit -m "Restore Stage 01 human conversation and required file intake"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
