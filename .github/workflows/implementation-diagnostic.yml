@@ -1,0 +1,81 @@
+name: Complete implementation diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: implementation-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify runtime syntax
+        run: |
+          set -euo pipefail
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+            node --check "$file"
+          done
+
+      - name: Start the exact checked-out application
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/closed-loop-http.log 2>&1 &
+          echo $! > /tmp/closed-loop-http.pid
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 0.2
+          done
+          cat /tmp/closed-loop-http.log
+          exit 1
+
+      - name: Exercise every repository verification path
+        env:
+          PAGE_URL: http://127.0.0.1:4173/
+        run: |
+          set -u
+          mkdir -p implementation-results
+          : > implementation-results/summary.tsv
+          overall=0
+          for file in verify-*.mjs; do
+            case "$file" in
+              verify-live.mjs) continue ;;
+            esac
+            log="implementation-results/${file%.mjs}.log"
+            echo "RUNNING $file"
+            timeout 300 node "$file" >"$log" 2>&1
+            code=$?
+            if [ "$code" -eq 0 ]; then
+              printf 'PASS\t%s\n' "$file" | tee -a implementation-results/summary.tsv
+            else
+              printf 'FAIL\t%s\texit=%s\n' "$file" "$code" | tee -a implementation-results/summary.tsv
+              overall=1
+            fi
+          done
+          printf '%s\n' "$overall" > implementation-results/exit-code.txt
+          cat implementation-results/summary.tsv
+
+      - name: Upload complete diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: complete-implementation-diagnostic-${{ github.run_id }}
+          path: implementation-results/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Fail when any functional or browser path failed
+        if: always()
+        run: |
+          test -f implementation-results/exit-code.txt
+          test "$(cat implementation-results/exit-code.txt)" = "0"
