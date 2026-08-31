@@ -11,10 +11,12 @@ This repository contains one static, phone-first vanilla-JavaScript application 
 | Workflow stages, names, roles, declared completion conditions | `workbook.js` |
 | Field ownership, types, relationships, and stage contracts | `workflow-schema.js` |
 | Canonical serialization and SHA-256 | `hash.js` |
-| Prompt content, context selection, and prompt identity | `prompt-engine.js` |
+| Deterministic Test IR validation support, registered operations, capabilities, and runtime coordination | `test-runtime.js` |
+| Isolated declarative Test IR execution | `test-worker.js` |
+| Prompt content, bounded context selection, withheld-context rules, blind aliases, and prompt identity | `prompt-engine.js` |
 | Parsing, validation, proposal planning, and response disposition | `response-ingestion.js` |
-| Derived values, current-scope selection, gates, invalidation, and release logic | `workflow-engine.js` |
-| Projects, revisions, artifact bytes, migration, import/export | `project-store.js` |
+| Derived values, current-scope selection, routing, independence, evidence sufficiency, contradictions, stability, gates, invalidation, convergence, and release logic | `workflow-engine.js` |
+| Projects, revisions, artifact bytes, migration, integrity, import/export, artifact download, and execution-package construction | `project-store.js` |
 | Rendering and operator actions | `app-core.js` |
 | Static shell, CSS, and ordered module loading | `index.html` |
 | Source, lifecycle, browser, deployment, and live verification | `.github/workflows/pages.yml` |
@@ -23,8 +25,8 @@ There is no second parser, store, workflow engine, prompt layer, application she
 
 ## Current contracts
 
-- Project schema: `closed-loop-project/2`.
-- Response schema: `closed-loop-stage-response/2`.
+- Project schema: `closed-loop-project/3`.
+- Response schema: `closed-loop-stage-response/3`.
 - Workflow identity: `mobile-closed-loop/30` with exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
 - Required browser capabilities: IndexedDB, Web Crypto, Blob, CompressionStream, and DecompressionStream for complete compressed package export/import.
@@ -57,7 +59,7 @@ The application requests persistent browser storage and reports storage usage/qu
 
 ## Migration policy
 
-The deterministic legacy migration is `human-project/30` → `closed-loop-project/2`. Migrations preserve unknown extension data, raw outputs, receipts, historical records, project identities, and all 30 stages. Original imported payloads remain auditable in non-operational migration history and do not act as current canonical state. A migration never creates Stage 31.
+The deterministic migration chain is `human-project/30` → `closed-loop-project/2` → `closed-loop-project/3`. Current `/2` raw responses remain historical and cannot satisfy a current `/3` prompt without a new current response. Migrations preserve unknown extension data, raw outputs, receipts, historical records, project identities, and all 30 stages. Original imported payloads remain auditable in non-operational migration history and do not act as current canonical state. A migration never creates Stage 31.
 
 ## Verification
 
