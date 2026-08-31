@@ -41,6 +41,10 @@ jobs:
           old_heading='HUMAN COLLABORATION MODE — APPLIES TO EVERY EXTERNAL-AGENT STAGE'
           if old_heading not in s: raise SystemExit('human collaboration heading missing')
           s=s.replace(old_heading,'HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE',1)
+          old_dispatch="function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}"
+          new_dispatch="function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}"
+          if old_dispatch not in s: raise SystemExit('procedure dispatch marker missing')
+          s=s.replace(old_dispatch,new_dispatch,1)
           p.write_text(s)
 
           e=Path('workflow-engine.js'); w=e.read_text()
@@ -68,7 +72,11 @@ jobs:
           marker="state.stages[3].status='COMPLETE';state.stages[3].gate={complete:true};"
           replacement=marker+"for(let completedStage=4;completedStage<=30;completedStage++){state.stages[completedStage].status='COMPLETE';state.stages[completedStage].gate={complete:true,blocked:false,reasons:[]};}"
           if marker not in av: raise SystemExit('all-stage prompt fixture marker missing')
-          a.write_text(av.replace(marker,replacement,1))
+          av=av.replace(marker,replacement,1)
+          old_scope="const scope=s===11?{runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT'}:{};"
+          new_scope="const scope={runId:'RUN-AUDIT',contextId:'CONTEXT-AUDIT',iterationId:'ITER-AUDIT',candidateId:'CAND-AUDIT',baselineId:'BASE-AUDIT',productId:'PROD-AUDIT'};"
+          if old_scope not in av: raise SystemExit('all-stage scope fixture marker missing')
+          a.write_text(av.replace(old_scope,new_scope,1))
 
           c=Path('verify-stage-prompts-complete.mjs'); cv=c.read_text()
           old_reads="  2:['intentStatements'],4:['sourceConflicts'],5:['intentStatements','sources','candidateRequirements'],"
