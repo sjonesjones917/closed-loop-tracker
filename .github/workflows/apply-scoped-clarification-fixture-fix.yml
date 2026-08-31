@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/restore-controlling-verification-20260831b
-      - name: Patch Stage 06 custody gate
+      - name: Patch Stage 06 custody gate and its downstream fixture
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -21,15 +21,24 @@ jobs:
           if old not in s:
               raise SystemExit('Stage 06 gate target not found')
           p.write_text(s.replace(old, new, 1))
+
+          p = Path('verify-complete.mjs')
+          s = p.read_text()
+          old = "  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);"
+          new = "  const p=project('JOB-BAD-REL'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=prompt(p,stage);"
+          if old not in s:
+              raise SystemExit('Stage 03 complete-contract fixture target not found')
+          p.write_text(s.replace(old, new, 1))
           PY
-      - name: Verify Stage 06 regression
+      - name: Verify complete-contract regression
         run: |
           node --check workflow-engine.js
+          node --check verify-complete.mjs
           node verify-complete.mjs
       - name: Commit repair
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add workflow-engine.js
-          git commit -m "Fail Stage 06 closed when bound test bytes are lost"
+          git add workflow-engine.js verify-complete.mjs
+          git commit -m "Enforce Stage 06 artifact readiness in complete contracts"
           git push origin HEAD:fix/restore-controlling-verification-20260831b
