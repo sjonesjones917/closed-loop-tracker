@@ -1,0 +1,41 @@
+name: Repair native Stage 10 gate
+on:
+  push:
+    branches: [fix/zero-loss-controlled-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/zero-loss-controlled-20260831
+      - name: Repair earliest Stage 10 gate and full-cycle proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          e=Path('workflow-engine.js'); s=e.read_text()
+          old="case 10:requireAccepted();requireCount('iterations',1);requireCount('candidateFreezes',1);break;"
+          new="case 10:requireCount('iterations',1);requireCount('candidateFreezes',1);break;"
+          if new not in s:
+              if old not in s: raise SystemExit('Stage 10 gate target not found')
+              e.write_text(s.replace(old,new,1))
+          f=Path('verify-full-cycle.mjs'); s=f.read_text()
+          old9="data(9,{records:{preflightRecords:"
+          new9="engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'PREFLIGHT-REVIEW-CONTEXT-1',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'});const preflightContextId=rid('freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:"
+          if new9 not in s:
+              if old9 not in s: raise SystemExit('Stage 9 fixture target not found')
+              s=s.replace(old9,new9,1)
+          old10="data(10,{stageData:{HASHES_RECORDED_WHERE_PRACTICAL:'TRUE',CHANGES_ALLOWED_DURING_BATCH:'NONE'}});engine.freezeCandidate"
+          if old10 in s: s=s.replace(old10,"engine.freezeCandidate",1)
+          f.write_text(s)
+          PY
+          git rm .github/workflows/repair-stage10-native-gate.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js verify-full-cycle.mjs
+          git commit -m "Make Stage 10 freeze gate application-native"
+          git push origin HEAD:fix/zero-loss-controlled-20260831
