@@ -1,0 +1,45 @@
+name: Repair Stage 06 complete Test IR fixture
+
+on:
+  push:
+    branches:
+      - fix/monotonic-reliability-pass-20260831
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - name: Make Stage 06 fixture a coherent supported Test IR
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          marker="function safeValue(name){\n  if(name==='TEST_TYPE')return 'DETERMINISTIC';\n  if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';\n"
+          replacement="function safeValue(name){\n  if(name==='TEST_TYPE')return 'DETERMINISTIC';\n  if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';\n  if(name==='REQUIRED_CAPABILITY')return 'CLOSED_LOOP_TEST_IR';\n  if(name==='EXECUTABLE_KIND')return 'TEST_IR';\n  if(name==='EXECUTABLE_SPEC')return {version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};\n  if(name==='EXECUTABLE_INPUT_BINDINGS')return {};\n"
+          if replacement not in s:
+              if s.count(marker)!=1:
+                  raise SystemExit(f'Expected one Stage 06 safeValue marker; found {s.count(marker)}')
+              s=s.replace(marker,replacement,1)
+              p.write_text(s)
+          PY
+          rm .github/workflows/repair-stage06-complete-test-ir.yml
+          node --check verify-ingestion.mjs
+          node verify-ingestion.mjs
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A verify-ingestion.mjs .github/workflows
+          git commit -m "Make Stage 06 ingestion fixture a valid Test IR"
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
