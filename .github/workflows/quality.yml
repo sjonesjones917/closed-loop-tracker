@@ -1,0 +1,58 @@
+name: Verify application contract
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax
+        run: |
+          node build-test-project.mjs
+          for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js verify*.mjs; do node --check "$f"; done
+      - name: Core deterministic contract
+        run: |
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-hash.mjs
+          node verify.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Stage 01 and Stage 04 zero-loss contract
+        run: |
+          node verify-stage01-intake-closure.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage01-stage04-zero-loss.mjs
+      - name: All 30 stage prompt contracts
+        run: |
+          node verify-prompt-semantics.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
+      - name: Schema, lifecycle, and definition of done
+        run: |
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-semantic-invariant.mjs
+          node verify-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+      - name: Single architecture and visual-preservation assertions
+        run: |
+          test "$(grep -R -l -E 'indexedDB\.open\(' --include='*.js' . | wc -l)" -eq 1
+          test "$(grep -R -l -E 'function[[:space:]]+parseAgentResponse|parseAgentResponse[[:space:]]*=' --include='*.js' . | wc -l)" -eq 1
+          test "$(grep -R -l -E 'function[[:space:]]+buildPrompt|buildPrompt[[:space:]]*=|function[[:space:]]+buildPromptRecord|buildPromptRecord[[:space:]]*=' --include='*.js' . | wc -l)" -eq 1
+          ! grep -R -n -E 'MutationObserver|document\.write\(|eval\(|new Function\(' --include='*.js' --include='*.html' .
+          grep -q 'height:clamp(260px,45vh,520px)' index.html
+          grep -q '.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}' index.html
