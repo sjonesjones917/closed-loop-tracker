@@ -1,0 +1,21 @@
+name: Materialize prompt release and runtime closure
+on:
+  push:
+    branches: [fix/prompt-release-runtime-closure-20260830]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply functional corrections
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 .github/scripts/apply-prompt-release-runtime-closure.py
+          for file in prompt-engine.js workflow-engine.js app-core.js test-runtime.js; do node --check "$file"; done
+          git add index.html app-core.js test-runtime.js prompt-engine.js workflow-engine.js
+          git commit -m 'Close prompt context, release transition, and runtime identity gaps'
+          git push origin HEAD
