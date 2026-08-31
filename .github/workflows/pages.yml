@@ -24,17 +24,23 @@ jobs:
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
             node --check "$file"
           done
-      - name: Package exact current source workspace
-        if: github.event_name == 'pull_request'
-        run: tar --exclude=.git -czf /tmp/source-workspace-current.tar.gz .
-      - name: Preserve exact current source workspace
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: source-workspace-current
-          path: /tmp/source-workspace-current.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+      - name: Run deterministic acceptance verifiers
+        run: |
+          set -euo pipefail
+          mapfile -t verifiers < <(find . -maxdepth 1 -type f -name 'verify-*.mjs' -printf '%f\n' | sort)
+          if [ "${#verifiers[@]}" -eq 0 ]; then
+            echo 'No deterministic verifier scripts found.' >&2
+            exit 1
+          fi
+          for verifier in "${verifiers[@]}"; do
+            case "$verifier" in
+              *browser*.mjs|*chromium*.mjs|*deployed*.mjs|*live*.mjs)
+                continue
+                ;;
+            esac
+            echo "==> node $verifier"
+            node "$verifier"
+          done
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
