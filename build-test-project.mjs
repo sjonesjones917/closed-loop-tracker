@@ -40,6 +40,6 @@ if(core?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain 
 if(schema?.PROJECT_SCHEMA!=='closed-loop-project/3'||schema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime /3 schema identities are wrong.');
 if(Object.keys(prompts?.procedures||{}).length!==30)throw new Error('Every one of the 30 stages must have an explicit prompt procedure.');
 for(let stage=1;stage<=30;stage++)if(!String(prompts.procedures[stage]||'').trim())throw new Error(`Stage ${stage} has no explicit prompt procedure.`);
-const classified=[...schema.HUMAN_FIELDS,...schema.HUMAN_DECISION_FIELDS,...schema.AGENT_FIELDS,...schema.APPLICATION_FIELDS];
-if(new Set(classified).size!==classified.length)throw new Error('Job field producer partitions overlap.');
-console.log(JSON.stringify({singleApplicationShell:true,stages:30,allPromptProceduresExplicit:true,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,projectSchema:schema.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,obsoleteRuntimeWrappers:false},null,2));
+const jobDefs=Object.values(schema.JOB_FIELDS||{}),allowedProducers=new Set(['HUMAN','HUMAN_DECISION','AGENT','APPLICATION']);
+if(!jobDefs.length||jobDefs.some(def=>!allowedProducers.has(def.producer)))throw new Error('Every canonical job field must have exactly one declared producer.');
+console.log(JSON.stringify({singleApplicationShell:true,stages:30,allPromptProceduresExplicit:true,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,projectSchema:schema.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,jobFieldsClassified:jobDefs.length,obsoleteRuntimeWrappers:false},null,2));
