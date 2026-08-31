@@ -1,0 +1,40 @@
+name: Materialize proposal current-value browser regression
+
+on:
+  push:
+    branches: [fix/restore-controlling-proof-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-proof-20260830
+          fetch-depth: 0
+      - name: Add visible proposal current-value assertion and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path=Path('verify-browser-extra.mjs')
+          text=path.read_text()
+          old="await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`);retained=await activeProject(cdp);"
+          new="await fill(cdp,'#stage-output',JSON.stringify(envelope));await click(cdp,'#parse-output');await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`);assert((await evalValue(cdp,`document.querySelector('#proposal-heading')?.innerText||''`)).includes('Current Value'),'Proposal review did not display the current-value column.');retained=await activeProject(cdp);"
+          if old in text:
+            text=text.replace(old,new,1)
+          elif new not in text:
+            raise SystemExit('Proposal reload browser fixture was not found.')
+          path.write_text(text)
+          Path('.github/workflows/materialize-proposal-current-value-regression.yml').unlink()
+          PY
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add verify-browser-extra.mjs .github/workflows/materialize-proposal-current-value-regression.yml
+          git commit -m 'Verify proposal current values through the live UI'
+          git push origin HEAD:fix/restore-controlling-proof-20260830
