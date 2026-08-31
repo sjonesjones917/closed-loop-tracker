@@ -28,7 +28,7 @@ jobs:
           fs.writeFileSync('AUTHORIZED_OPERATION_01.txt',output);
           NODE
 
-      - name: Correct the earliest missing Stage 03 prompt boundary
+      - name: Correct the earliest source-boundary acceptance failures
         shell: bash
         run: |
           set -euo pipefail
@@ -51,6 +51,12 @@ jobs:
           replace_once('workbook.js',
             "'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'",
             "'Research only the current accepted Stage 02 independent external source set. Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from that source set while preserving each source role.'")
+          replace_once('build-test-project.mjs',
+            "for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);",
+            "for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);")
+          replace_once('build-test-project.mjs',
+            "if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');",
+            "if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');\nif(!String(globalThis.closedLoopCore.STAGES[1]?.result||'').includes('Independent external sources only.'))throw new Error('Stage 02 human-facing source boundary is missing from workbook-owned runtime stage data.');")
           PY
           node build-test-project.mjs
 
@@ -74,5 +80,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'Restore the Stage 03 independent-source prompt boundary'
+          git commit -m 'Restore Stage 02 and Stage 03 source boundaries'
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
