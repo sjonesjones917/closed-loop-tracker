@@ -27,11 +27,10 @@ jobs:
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$file"; done
       - name: Hash authority
         run: node verify-hash.mjs
-      - name: Schema and ownership architecture
-        run: |
-          set -euo pipefail
-          node verify-spec3-contract.mjs
-          node verify-v3-contract.mjs
+      - name: Project response and Test IR schema identities
+        run: node verify-spec3-contract.mjs
+      - name: Ownership and v3 architecture
+        run: node verify-v3-contract.mjs
       - name: Migration
         run: node verify-v3-migration.mjs
       - name: Test IR validation and deterministic runtime
