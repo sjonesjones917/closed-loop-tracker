@@ -1,0 +1,37 @@
+name: Controlled repair
+on:
+  push:
+    branches: [fix/restore-monotonic-proof-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-monotonic-proof-20260831
+          fetch-depth: 0
+      - name: Bind scoped run fixture to completed Stage 10 freeze
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-complete.mjs'); text=p.read_text()
+          old="const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');\n const slots=engine.reserveRunBatch"
+          new="const frozen=engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-REFINE'],operatorLabel:'VERIFY'}),iterationId=engine.recordId(frozen.iteration,'iterations'),candidateId=engine.recordId(frozen.candidate,'candidateFreezes');p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true};\n const slots=engine.reserveRunBatch"
+          count=text.count(old)
+          if count==1:p.write_text(text.replace(old,new))
+          elif count==0 and new in text:pass
+          else:raise SystemExit(f'expected one Stage 11 refinement fixture sentinel, found {count}')
+          PY
+          node --check verify-complete.mjs
+      - name: Commit fixture correction
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add verify-complete.mjs
+          git commit -m 'Bind scoped run refinement fixture to candidate freeze'
+          git push origin HEAD:fix/restore-monotonic-proof-20260831
