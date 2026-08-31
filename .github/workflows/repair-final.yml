@@ -1,0 +1,35 @@
+name: Final repair
+on:
+  push:
+    branches:
+      - fix/monotonic-reliability-pass-20260831
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 .repair-final.py
+      - run: |
+          node --check workbook.js
+          node --check workflow-engine.js
+          node --check verify-spec3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-ingestion.mjs
+          node verify-monotonic-pass.mjs
+          git diff --check
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .repair-final.py .github/workflows/repair-final.yml
+          git add workbook.js workflow-engine.js verify-spec3-contract.mjs .github/workflows/pages.yml
+          git commit -m 'Correct migration clarification scope and acceptance proof'
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
