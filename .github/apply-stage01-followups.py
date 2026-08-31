@@ -26,7 +26,10 @@ replacement = r'''    const checked=[],lane={runId:'RUN-001',contextId:'CTX-001'
     for(let stage=1;stage<=30;stage++){
       let intakeManifest=null;
       for(const operation of schema.STAGE_CONTRACTS[stage].operations){
-        const record=prompts.buildPromptRecord(stage,state,{operation,scope:lane}),text=record.prompt;
+        let record;
+        try{record=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}
+        catch(error){throw new Error('Stage '+stage+' '+operation+' prompt generation failed: '+(error?.stack||error));}
+        const text=record.prompt;
         if(!text||text.length<200)throw new Error('Stage '+stage+' '+operation+' generated an incomplete prompt.');
         if(!text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'))throw new Error('Stage '+stage+' '+operation+' omitted the one-time project-data rule.');
         if(stage>1&&!text.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error('Stage '+stage+' '+operation+' can request the original intent again.');
