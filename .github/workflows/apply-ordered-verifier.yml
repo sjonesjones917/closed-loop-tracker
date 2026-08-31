@@ -2,8 +2,10 @@ name: Apply ordered permanent verifier repair
 
 on:
   push:
-    branches: [fix/complete-closed-loop-spec-20260831]
-    paths: [.github/workflows/apply-ordered-verifier.yml]
+    branches:
+      - fix/complete-closed-loop-spec-20260831
+    paths:
+      - .github/workflows/apply-ordered-verifier.yml
 
 permissions:
   contents: write
@@ -17,79 +19,13 @@ jobs:
         with:
           ref: fix/complete-closed-loop-spec-20260831
       - uses: actions/setup-node@v4
-        with: {node-version: '22'}
+        with:
+          node-version: '22'
       - name: Make verify.mjs honor the ordered workflow
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('verify.mjs')
-          s=p.read_text()
-          start=s.find('const generated=[];')
-          end=s.find('\n\nclass MemoryStorage',start)
-          if start<0 or end<0:
-              raise SystemExit('verify.mjs prompt-fixture block was not found')
-          replacement=r'''function preparePromptStage(p,targetStage){
-  Object.assign(p.job,{
-    CURRENT_SOURCE_SET_VERSION:'SOURCE-SET-v001',
-    CURRENT_REQUIREMENTS_VERSION:'REQUIREMENTS-v001',
-    CURRENT_TEST_SUITE_VERSION:'TEST-SUITE-v001',
-    CURRENT_INSTRUCTION_VERSION:'INSTRUCTION-v001',
-    CURRENT_ITERATION:'ITERATION-000001',
-    CURRENT_BASELINE_ID:'BASELINE-000001',
-    CURRENT_PRODUCT_ID:'PRODUCT-000001'
-  });
-  if(targetStage<=1)return p;
-  const intakeRecord=prompts.buildPromptRecord(1,p,syntheticPromptOptions(1,p));
-  const intake=intakeRecord.contextManifest.intakeCoverageManifest;
-  p.stages[1].agentData={
-    EXACT_DELIVERABLE_REQUESTED:'Complete controlled verification deliverable.',
-    ASSUMPTIONS:'NONE',
-    UNKNOWN_INFORMATION:'NONE',
-    INPUT_SET_CONTENTS:JSON.stringify({
-      schema:'closed-loop-stage01-capture/1',
-      inputVersion:intake.inputVersion,
-      manifestSha256:intake.manifestSha256,
-      units:intake.units.map((u,i)=>({
-        sourceUnitId:u.unitId,
-        sourceRawValueSha256:u.rawValueSha256,
-        disposition:'incorporated into the job definition',
-        reason:'Captured once for the ordered prompt fixture.',
-        extractedStatements:[{statementKey:'PROMPT-'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]
-      }))
-    })
-  };
-  p.stages[1].status='COMPLETE';
-  p.stages[1].gate={complete:true,blocked:false,reasons:[]};
-  for(let prior=2;prior<targetStage;prior++){
-    if(prior===2)p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';
-    if(prior===3)Object.assign(p.stages[3].agentData,{
-      ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,
-      SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,
-      NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false
-    });
-    p.stages[prior].status='COMPLETE';
-    p.stages[prior].gate={complete:true,blocked:false,reasons:[]};
-  }
-  return p;
-}
-const generated=[];
-for(let stage=1;stage<=30;stage++){
-  const p=preparePromptStage(blank(`JOB-PROMPT-${stage}`),stage);
-  const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));
-  generated.push(record.prompt);
-  for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/3','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);
-  if(stage===1&&record.prompt.indexOf('STAGE 01 HUMAN CONVERSATION')>record.prompt.indexOf('STRICT RESPONSE CONTRACT'))throw new Error('Stage 01 machine contract precedes the human conversation.');
-  if(stage===2&&!record.prompt.includes('independent external sources'))throw new Error('Stage 02 non-circular authority rule missing.');
-  if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');
-}
-if(new Set(generated).size!==30)throw new Error('Prompts are not stage-specific.');
-const projectA=preparePromptStage(blank('JOB-A'),2),projectB=preparePromptStage(blank('JOB-B'),2);
-const pa=prompts.buildPromptRecord(2,projectA,syntheticPromptOptions(2,projectA)).prompt,pb=prompts.buildPromptRecord(2,projectB,syntheticPromptOptions(2,projectB)).prompt;
-if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');'''
-          p.write_text(s[:start]+replacement+s[end:])
-          PY
+          python3 -c "import base64;exec(base64.b64decode('ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgndmVyaWZ5Lm1qcycpCnM9cC5yZWFkX3RleHQoKQpzdGFydD1zLmZpbmQoJ2NvbnN0IGdlbmVyYXRlZD1bXTsnKQplbmQ9cy5maW5kKCdcblxuY2xhc3MgTWVtb3J5U3RvcmFnZScsc3RhcnQpCmlmIHN0YXJ0PDAgb3IgZW5kPDA6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCd2ZXJpZnkubWpzIHByb21wdC1maXh0dXJlIGJsb2NrIHdhcyBub3QgZm91bmQnKQpyZXBsYWNlbWVudD1yJycnZnVuY3Rpb24gcHJlcGFyZVByb21wdFN0YWdlKHAsdGFyZ2V0U3RhZ2UpewogIE9iamVjdC5hc3NpZ24ocC5qb2IsewogICAgQ1VSUkVOVF9TT1VSQ0VfU0VUX1ZFUlNJT046J1NPVVJDRS1TRVQtdjAwMScsCiAgICBDVVJSRU5UX1JFUVVJUkVNRU5UU19WRVJTSU9OOidSRVFVSVJFTUVOVFMtdjAwMScsCiAgICBDVVJSRU5UX1RFU1RfU1VJVEVfVkVSU0lPTjonVEVTVC1TVUlURS12MDAxJywKICAgIENVUlJFTlRfSU5TVFJVQ1RJT05fVkVSU0lPTjonSU5TVFJVQ1RJT04tdjAwMScsCiAgICBDVVJSRU5UX0lURVJBVElPTjonSVRFUkFUSU9OLTAwMDAwMScsCiAgICBDVVJSRU5UX0JBU0VMSU5FX0lEOidCQVNFTElORS0wMDAwMDEnLAogICAgQ1VSUkVOVF9QUk9EVUNUX0lEOidQUk9EVUNULTAwMDAwMScKICB9KTsKICBpZih0YXJnZXRTdGFnZTw9MSlyZXR1cm4gcDsKICBjb25zdCBpbnRha2VSZWNvcmQ9cHJvbXB0cy5idWlsZFByb21wdFJlY29yZCgxLHAsc3ludGhldGljUHJvbXB0T3B0aW9ucygxLHApKTsKICBjb25zdCBpbnRha2U9aW50YWtlUmVjb3JkLmNvbnRleHRNYW5pZmVzdC5pbnRha2VDb3ZlcmFnZU1hbmlmZXN0OwogIHAuc3RhZ2VzWzFdLmFnZW50RGF0YT17CiAgICBFWEFDVF9ERUxJVkVSQUJMRV9SRVFVRVNURUQ6J0NvbXBsZXRlIGNvbnRyb2xsZWQgdmVyaWZpY2F0aW9uIGRlbGl2ZXJhYmxlLicsCiAgICBBU1NVTVBUSU9OUzonTk9ORScsCiAgICBVTktOT1dOX0lORk9STUFUSU9OOidOT05FJywKICAgIElOUFVUX1NFVF9DT05URU5UUzpKU09OLnN0cmluZ2lmeSh7CiAgICAgIHNjaGVtYTonY2xvc2VkLWxvb3Atc3RhZ2UwMS1jYXB0dXJlLzEnLAogICAgICBpbnB1dFZlcnNpb246aW50YWtlLmlucHV0VmVyc2lvbiwKICAgICAgbWFuaWZlc3RTaGEyNTY6aW50YWtlLm1hbmlmZXN0U2hhMjU2LAogICAgICB1bml0czppbnRha2UudW5pdHMubWFwKCh1LGkpPT4oewogICAgICAgIHNvdXJjZVVuaXRJZDp1LnVuaXRJZCwKICAgICAgICBzb3VyY2VSYXdWYWx1ZVNoYTI1Njp1LnJhd1ZhbHVlU2hhMjU2LAogICAgICAgIGRpc3Bvc2l0aW9uOidpbmNvcnBvcmF0ZWQgaW50byB0aGUgam9iIGRlZmluaXRpb24nLAogICAgICAgIHJlYXNvbjonQ2FwdHVyZWQgb25jZSBmb3IgdGhlIG9yZGVyZWQgcHJvbXB0IGZpeHR1cmUuJywKICAgICAgICBleHRyYWN0ZWRTdGF0ZW1lbnRzOlt7c3RhdGVtZW50S2V5OidQUk9NUFQtJytTdHJpbmcoaSsxKSx0ZXh0OnUucmF3VmFsdWVUZXh0fHwoJ0NhcHR1cmVkICcrdS5sYWJlbCksc3RhdGVtZW50Q2xhc3M6J0ZBQ1QnfV0KICAgICAgfSkpCiAgICB9KQogIH07CiAgcC5zdGFnZXNbMV0uc3RhdHVzPSdDT01QTEVURSc7CiAgcC5zdGFnZXNbMV0uZ2F0ZT17Y29tcGxldGU6dHJ1ZSxibG9ja2VkOmZhbHNlLHJlYXNvbnM6W119OwogIGZvcihsZXQgcHJpb3I9Mjtwcmlvcjx0YXJnZXRTdGFnZTtwcmlvcisrKXsKICAgIGlmKHByaW9yPT09MilwLnN0YWdlc1syXS5hZ2VudERhdGEuU09VUkNFX0FQUExJQ0FCSUxJVFlfREVURVJNSU5BVElPTj0nTk9fQVBQTElDQUJMRV9FWFRFUk5BTF9TT1VSQ0UnOwogICAgaWYocHJpb3I9PT0zKU9iamVjdC5hc3NpZ24ocC5zdGFnZXNbM10uYWdlbnREYXRhLHsKICAgICAgQUxMX0tOT1dOX0NPTlRST0xMSU5HX1NPVVJDRVNfRVhBTUlORUQ6dHJ1ZSwKICAgICAgU0VDT05EX0NPTkZMSUNUX0FORF9FWENFUFRJT05fUEFTU19DT01QTEVURUQ6dHJ1ZSwKICAgICAgTkVXX01BVEVSSUFMX0NBVEVHT1JZX0ZPVU5EX0lOX0xBVEVTVF9QQVNTOmZhbHNlCiAgICB9KTsKICAgIHAuc3RhZ2VzW3ByaW9yXS5zdGF0dXM9J0NPTVBMRVRFJzsKICAgIHAuc3RhZ2VzW3ByaW9yXS5nYXRlPXtjb21wbGV0ZTp0cnVlLGJsb2NrZWQ6ZmFsc2UscmVhc29uczpbXX07CiAgfQogIHJldHVybiBwOwp9CmNvbnN0IGdlbmVyYXRlZD1bXTsKZm9yKGxldCBzdGFnZT0xO3N0YWdlPD0zMDtzdGFnZSsrKXsKICBjb25zdCBwPXByZXBhcmVQcm9tcHRTdGFnZShibGFuayhgSk9CLVBST01QVC0ke3N0YWdlfWApLHN0YWdlKTsKICBjb25zdCByZWNvcmQ9cHJvbXB0cy5idWlsZFByb21wdFJlY29yZChzdGFnZSxwLHN5bnRoZXRpY1Byb21wdE9wdGlvbnMoc3RhZ2UscCkpOwogIGdlbmVyYXRlZC5wdXNoKHJlY29yZC5wcm9tcHQpOwogIGZvcihjb25zdCB0b2tlbiBvZiBbYEpPQl9JRDogJHtwLmpvYi5KT0JfSUR9YCwnUFJPSkVDVC1TQ09QRSBCT1VOREFS...TRUNCATED...'))"
           node --check verify.mjs
           node build-test-project.mjs
           node verify.mjs
