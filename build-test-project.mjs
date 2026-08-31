@@ -4,8 +4,9 @@ import './build-test-project-impl.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
-const required=['index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-ingestion.mjs'];
+const required=['index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-ingestion.mjs'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
+if(fs.existsSync('AUTHORIZED_OPERATION_01.txt'))throw new Error('Obsolete retained-project source materialization artifact remains.');
 const retired=['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'];
 for(const file of retired)if(fs.existsSync(file))throw new Error(`Obsolete runtime wrapper remains: ${file}`);
 for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error(`One-time repair scaffolding remains: ${file}`);
@@ -42,4 +43,4 @@ if(/human-project\/31|31 operations|Stage 31|Operation 31/i.test(activeSource))t
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
 if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime response schema is wrong.');
-console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false},null,2));
+console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,obsoleteSourceMaterialization:false},null,2));
