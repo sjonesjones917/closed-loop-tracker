@@ -1,0 +1,36 @@
+name: Apply repeated-stage context isolation
+on:
+  push:
+    branches: [fix/repeated-stage-context-isolation-20260830]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/repeated-stage-context-isolation-20260830
+      - name: Apply source isolation repair
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old="function contextRecordsFor(state,collection,scope,plan,stage){const verifierStage=stage===12||((stage===17||stage===19)&&scope?.contextId&&plan);const selectionScope=verifierStage&&collection==='runs'?{...scope,contextId:null}:scope;let selected=selectedContextRecords(state,collection,selectionScope);if(verifierStage&&collection==='freshContexts'&&scope?.contextId)selected=selected.filter(record=>recordId(record,'freshContexts')===String(scope.contextId));const forbidden=stage===11?new Set(['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults']):stage===12?new Set(['verification','comparisons','rootCauses','changes','meaningResults','adversarialResults']):stage===23?new Set(['deterministicResults','adversarialResults']):stage===24?new Set(['deterministicResults','meaningResults']):new Set();if(forbidden.has(collection))return [];if(!plan?.triples?.length)return selected;let ids=null;if(collection==='requirements')ids=new Set(plan.triples.map(x=>x.requirementId));else if(collection==='tests')ids=new Set(plan.triples.map(x=>x.testId));else if(collection==='runs')ids=new Set(plan.triples.map(x=>x.runId));return ids?selected.filter(record=>ids.has(recordId(record,collection))):selected;}"
+          new="function contextRecordsFor(state,collection,scope,plan,stage,operation){const verifierStage=stage===12||((stage===17||stage===19)&&operation==='VERIFY'),executionLane=stage===11||((stage===17||stage===19)&&operation==='EXECUTE_RUN');const selectionScope=verifierStage&&collection==='runs'?{...scope,contextId:null}:scope;let selected=selectedContextRecords(state,collection,selectionScope);if(verifierStage&&collection==='freshContexts'&&scope?.contextId)selected=selected.filter(record=>recordId(record,'freshContexts')===String(scope.contextId));const verificationForbidden=new Set(['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults','processAudits','productAudits','releaseGateReviews','releaseRecords']);const executionForbidden=new Set(['verification','comparisons','defects','rootCauses','changes','regressions','regressionExecutions','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseGateReviews','releaseRecords','artifactIdentities','evidenceChains']);const stage23Forbidden=new Set(['deterministicResults','meaningResults','adversarialResults','processAudits','productAudits','releaseRecords']);const stage24Forbidden=new Set(['deterministicResults','meaningResults','adversarialResults','processAudits','productAudits','releaseRecords']);const forbidden=executionLane?executionForbidden:verifierStage?verificationForbidden:stage===23?stage23Forbidden:stage===24?stage24Forbidden:new Set();if(forbidden.has(collection))return [];if(!plan?.triples?.length)return selected;let ids=null;if(collection==='requirements')ids=new Set(plan.triples.map(x=>x.requirementId));else if(collection==='tests')ids=new Set(plan.triples.map(x=>x.testId));else if(collection==='runs')ids=new Set(plan.triples.map(x=>x.runId));return ids?selected.filter(record=>ids.has(recordId(record,collection))):selected;}"
+          if old not in s: raise SystemExit('contextRecordsFor anchor not found')
+          s=s.replace(old,new,1)
+          s=s.replace("contextRecordsFor(state,collection,scope,batchPlan,stage).filter", "contextRecordsFor(state,collection,scope,batchPlan,stage,operation).filter")
+          s=s.replace("contextRecordsFor(state,collection,scope,batchPlan,stage);", "contextRecordsFor(state,collection,scope,batchPlan,stage,operation);")
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/", "const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/")
+          p.write_text(s)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js
+          git commit -m "Enforce repeated-stage prompt context isolation"
+          git rm .github/workflows/apply-repeated-context-isolation.yml
+          git commit -m "Remove temporary context editor"
+          git push origin HEAD:fix/repeated-stage-context-isolation-20260830
