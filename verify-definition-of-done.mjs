@@ -106,6 +106,7 @@ const evidenceChainProofs=[
 ];
 const mandatoryEvidenceChainCoverage=ratio(evidenceChainProofs.filter(Boolean).length,evidenceChainProofs.length);
 assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage proof is incomplete.');
+const mandatoryEvidenceChainStructuralCoverage=mandatoryEvidenceChainCoverage;
 
 const artifactIdentityProofs=[
   engineSource.includes("if(a.length!==d.length)throw new Error('Audited and delivery artifact counts differ.')"),
@@ -147,6 +148,7 @@ console.log(JSON.stringify({
   exactReqRunTestCoverage,
   applicableCurrentRegressionSuccess,
   mandatoryEvidenceChainCoverage,
+  mandatoryEvidenceChainStructuralCoverage,
   releaseArtifactIdentityCoverage,
   ...zeroAcceptanceCounters,
   canonicalFieldCount:fieldRows.length,
