@@ -118,6 +118,14 @@ jobs:
                   raise SystemExit('Expected Stage 17 operation test oracle not found; no change made.')
               text = text.replace(oracle_needle, oracle_replacement, 1)
 
+          artifact_marker = "Stage 06 future artifact requirement was rejected before execution readiness."
+          artifact_needle = "let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});\n  if(!prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('A TEST requiring an artifact was not rejected without byte-backed artifact evidence.');"
+          artifact_replacement = "let prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});\n  if(!prepared.validation.valid)throw new Error('Stage 06 future artifact requirement was rejected before execution readiness: '+JSON.stringify(prepared.validation.issues));\n  if(prepared.validation.issues.some(item=>item.code==='MISSING_REQUIRED_TEST_ARTIFACT'))throw new Error('Stage 06 incorrectly required execution bytes while accepting a test definition.');"
+          if artifact_marker not in text:
+              if artifact_needle not in text:
+                  raise SystemExit('Expected Stage 06 artifact-definition fixture boundary not found; no change made.')
+              text = text.replace(artifact_needle, artifact_replacement, 1)
+
           if 'fixtureBuildPrompt(stage,p,options)' not in text:
               raise SystemExit('Fixture prompt wrapper was not installed.')
           text = text.replace('prompts.buildPromptRecord(', 'fixtureBuildPrompt(')
