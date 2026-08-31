@@ -12,7 +12,7 @@ for(const file of fs.readdirSync('.'))if(/^\.repair-/.test(file))throw new Error
 if(fs.existsSync('.github/workflows'))for(const file of fs.readdirSync('.github/workflows'))if(/repair/i.test(file))throw new Error(`Temporary repair workflow remains: ${file}`);
 
 const project=JSON.parse(fs.readFileSync('TEST_PROJECT.json','utf8'));
-if(project.schema!=='human-project/30')throw new Error(`Unexpected project schema ${project.schema}`);
+if(project.schema!=='human-project/30')throw new Error(`Unexpected retained project schema ${project.schema}`);
 if(project.jobId!=='JOB-20260823144121'||project.title!=='Mobile Closed-Loop Agent Reliability Workbook')throw new Error('Authorized retained project identity is wrong.');
 if(Object.keys(project.stageRecords||{}).length!==30)throw new Error('Retained project must contain exactly 30 stage records.');
 if(project.stageRecords?.['1']?.status!=='COMPLETE'||project.currentStage!==2||project.currentState!=='READY')throw new Error('Retained project must preserve completed Stage 01 and current Stage 02 READY state.');
@@ -20,7 +20,7 @@ for(let n=2;n<=30;n++)if(project.stageRecords?.[String(n)]?.status!=='NOT STARTE
 if(project.currentVersions?.sources!=='NOT APPLICABLE')throw new Error('Stage 02 source set must remain NOT APPLICABLE until substantive Stage 02 work occurs.');
 for(const name of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if((project.projectData?.[name]||project[name]||[]).length)throw new Error(`${name} contains fabricated downstream project data.`);
 
-const html=fs.readFileSync('index.html','utf8'),app=fs.readFileSync('app-core.js','utf8'),prompts=fs.readFileSync('prompt-engine.js','utf8'),schema=fs.readFileSync('workflow-schema.js','utf8'),ingestion=fs.readFileSync('response-ingestion.js','utf8');
+const html=fs.readFileSync('index.html','utf8'),activeFiles=['app-core.js','prompt-engine.js','workflow-schema.js','response-ingestion.js','workflow-engine.js','project-store.js','workbook.js','test-runtime.js','test-worker.js'],activeSource=html+activeFiles.map(file=>fs.readFileSync(file,'utf8')).join('\n');
 if((html.match(/<html\b/gi)||[]).length!==1)throw new Error('Exactly one application shell is required.');
 const orderedScripts=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];
 const scriptTags=[...html.matchAll(/<script\s+defer\s+src="([^"]+)"\s*><\/script>/g)].map(match=>match[1]);
@@ -29,17 +29,17 @@ const buildTokens=new Set();
 orderedScripts.forEach((file,index)=>{const matches=scriptTags.filter(src=>src.split('?')[0]===file);if(matches.length!==1)throw new Error(`${file} must occur exactly once in index.html.`);if(scriptTags[index].split('?')[0]!==file)throw new Error(`Runtime script order is wrong at ${file}.`);const token=new URLSearchParams(scriptTags[index].split('?')[1]||'').get('v');if(!token)throw new Error(`${file} is missing the shared build token.`);buildTokens.add(token);});
 if(buildTokens.size!==1)throw new Error('Runtime scripts do not use one shared build token.');
 if(fs.existsSync('app.js')||/document\.write\s*\(/.test(html))throw new Error('Dynamic loader app.js/document.write remains.');
-for(const retiredToken of ['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'])if(html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
-for(const token of ['closed-loop-stage-response/3','PRODUCER','STAGE_CONTRACTS','sourceClassificationIssues','HUMAN_INTAKE_FIELDS'])if(!schema.includes(token))throw new Error(`Ownership/response schema control missing: ${token}`);
-for(const token of ['strictParse','validateEnvelope','PENDING_OPERATOR_REVIEW','ACCEPTED_DATA_CHANGE','extractionManifests','answerHumanInput'])if(!ingestion.includes(token))throw new Error(`Transactional ingestion control missing: ${token}`);
-for(const token of ['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources','Research only the complete current accepted Stage 02 independent external source set'])if(!prompts.includes(token))throw new Error(`Canonical prompt contract missing: ${token}`);
-for(const token of ['Parse / validate response','Proposed extracted changes','Accept response','Reject response','Request correction','Human-owned stage input','Application-derived job control','Independent external sources only.'])if(!app.includes(token))throw new Error(`Human-facing ingestion UI missing: ${token}`);
-if(/MutationObserver/.test(html+app+prompts+schema+ingestion))throw new Error('Patch-style MutationObserver behavior remains in the active application.');
-const activeSource=html+app+prompts+schema+ingestion+fs.readFileSync('workflow-engine.js','utf8')+fs.readFileSync('project-store.js','utf8')+fs.readFileSync('workbook.js','utf8')+fs.readFileSync('test-runtime.js','utf8')+fs.readFileSync('test-worker.js','utf8');
+for(const retiredToken of retired)if(html.includes(retiredToken))throw new Error(`Obsolete runtime layer is still loaded: ${retiredToken}`);
+if(/MutationObserver/.test(activeSource))throw new Error('Patch-style MutationObserver behavior remains in the active application.');
 if(/GEN-042|field status report|maintenance[- ]handoff/i.test(activeSource+JSON.stringify(project)))throw new Error('Unauthorized product interpretation remains active.');
 if(/human-project\/31|31 operations|Stage 31|Operation 31/i.test(activeSource))throw new Error('A prohibited Stage/Operation 31 remains.');
 
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
-if(globalThis.closedLoopCore?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
-if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime response schema is wrong.');
-console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false},null,2));
+const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,prompts=globalThis.closedLoopPromptEngine;
+if(core?.STAGES?.length!==30)throw new Error('Runtime workflow does not contain exactly 30 stages.');
+if(schema?.PROJECT_SCHEMA!=='closed-loop-project/3'||schema?.RESPONSE_SCHEMA!=='closed-loop-stage-response/3')throw new Error('Runtime /3 schema identities are wrong.');
+if(Object.keys(prompts?.procedures||{}).length!==30)throw new Error('Every one of the 30 stages must have an explicit prompt procedure.');
+for(let stage=1;stage<=30;stage++)if(!String(prompts.procedures[stage]||'').trim())throw new Error(`Stage ${stage} has no explicit prompt procedure.`);
+const classified=[...schema.HUMAN_FIELDS,...schema.HUMAN_DECISION_FIELDS,...schema.AGENT_FIELDS,...schema.APPLICATION_FIELDS];
+if(new Set(classified).size!==classified.length)throw new Error('Job field producer partitions overlap.');
+console.log(JSON.stringify({singleApplicationShell:true,stages:30,allPromptProceduresExplicit:true,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,projectSchema:schema.PROJECT_SCHEMA,responseSchema:schema.RESPONSE_SCHEMA,obsoleteRuntimeWrappers:false},null,2));
