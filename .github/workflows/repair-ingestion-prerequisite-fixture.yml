@@ -32,8 +32,8 @@ jobs:
           text = path.read_text(encoding='utf-8')
 
           enum_marker = "if(name==='TEST_TYPE')return 'DETERMINISTIC';"
-          enum_needle = "function safeValue(name){\n  if(name==='JOB_ID')return undefined;"
-          enum_replacement = "function safeValue(name){\n  if(name==='JOB_ID')return undefined;\n  if(name==='TEST_TYPE')return 'DETERMINISTIC';\n  if(name==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';"
+          enum_needle = "function safeValue(name){\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';"
+          enum_replacement = "function safeValue(name){\n  if(name==='TEST_TYPE')return 'DETERMINISTIC';\n  if(name==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';"
           if enum_marker not in text:
               if enum_needle not in text:
                   raise SystemExit('Expected fixture value boundary not found; no change made.')
