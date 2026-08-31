@@ -124,7 +124,7 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
       if(!definition){issues.push(issue('UNKNOWN_STAGE_FIELD',path,`Stage ${stageNumber} has no field ${name}.`));continue;}
       validateValue(definition,value,path,issues,{maxTextFieldLength:contract?.resourceLimits?.maxTextFieldLength??schema.DEFAULT_RESOURCE_LIMITS.maxTextFieldLength});
       if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));
-      else if(!allowedStageData.has(name))issues.push(issue('STAGE_OPERATION_FIELD_VIOLATION',path,`${name} is not writable by operation ${expectedOperation}.`));
+      if(!allowedStageData.has(name))issues.push(issue('STAGE_OPERATION_FIELD_VIOLATION',path,`${name} is not writable by operation ${expectedOperation}.`));
       if(value===undefined)issues.push(issue('UNDEFINED_VALUE',path,'Undefined values cannot be ingested.'));
     }
   }
@@ -226,9 +226,8 @@ function validateEnvelope(project,envelope,{stage,promptRecord,rawSha256,files=[
     for(const evidenceRef of safe(record?.evidenceRefs))if(!evidenceIndex.has(String(evidenceRef)))issues.push(issue('UNRESOLVED_EVIDENCE_REFERENCE',`${path}/evidenceRefs`,`Evidence reference ${evidenceRef} does not exist.`));
     const hasAgentData=object(record?.fields)&&Object.keys(record.fields).some(name=>definition?.fieldDefinitions?.[name]?.provenanceRequired);
     if(hasAgentData&&!safe(record.evidenceRefs).length)issues.push(issue('MISSING_PROVENANCE',`${path}/evidenceRefs`,'Agent-produced canonical record data requires at least one evidence reference.'));
-    // Stage 06 defines tests before candidate/product bytes necessarily exist.
-    // Artifact availability is execution readiness owned by testExecutionPlan()/workflow gates.
-    // Explicit current artifactId bindings are still validated above; future CURRENT_PRODUCT/CURRENT_SCOPE bindings stay declarative until execution.
+    if(collection==='tests'){const requirement=String(record?.fields?.ARTIFACT_REQUIREMENTS||'').trim(),namedArtifactRequired=Boolean(requirement&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(requirement)));if(namedArtifactRequired){const backed=safe(record.evidenceRefs).some(ref=>{const entry=evidenceIndex.get(String(ref)),attachmentRef=entry?.evidence?.attachmentRef;if(attachmentRef?.tempKey)return attachmentIndex.has(String(attachmentRef.tempKey));if(attachmentRef?.recordId){const artifact=workflow.records(project,'artifacts',{active:true}).find(item=>workflow.recordId(item,'artifacts')===String(attachmentRef.recordId));return Boolean(artifact&&upper(workflow.recordValue(artifact,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED');}return false;});if(!backed)issues.push(issue('MISSING_REQUIRED_TEST_ARTIFACT',`${path}/evidenceRefs`,`Test artifact requirement ${requirement} is not backed by application-verified artifact bytes.`));}}
+    // Future CURRENT_PRODUCT/CURRENT_SCOPE Test IR bindings may remain declarative until their product bytes exist; explicit named artifact requirements require verified custody now.
     if(object(record?.relationships))for(const [name,reference] of Object.entries(record.relationships)){
       const expectedCollection=definition?.relationships?.[name];
       if(!expectedCollection||!object(reference))continue;
