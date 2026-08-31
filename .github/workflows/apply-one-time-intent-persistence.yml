@@ -36,18 +36,27 @@ jobs:
             if [ "$code" -ne 0 ]; then status="$code"; fi
           done
           exit "$status"
-      - name: Preserve proof output
+      - name: Preserve proof output and patched sources
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: one-time-intent-repair-proof
-          path: repair-proof.log
+          path: |
+            repair-proof.log
+            workflow-engine.js
+            prompt-engine.js
+            verify-one-time-intent-intake.mjs
+            verify-stage-prompts-complete.mjs
+            verify-all-stage-prompts.mjs
+            verify-complete.mjs
+            app-core.js
+            index.html
           if-no-files-found: error
       - name: Commit repair
         if: steps.prove.outcome == 'success'
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
+          git config user.name "github-actions[bot]]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           rm .github/workflows/apply-one-time-intent-persistence.yml
           rm .github/scripts/apply-one-time-intent-persistence.py
