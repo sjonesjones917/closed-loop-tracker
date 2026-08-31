@@ -29,7 +29,7 @@ if (!promptSource.includes(legacyPhrase)) {
 const semanticsPath = 'verify-prompt-semantics.mjs';
 let semantics = fs.readFileSync(semanticsPath, 'utf8');
 const brittlePreviewCheck = "assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt preview/collapse sizing changed.');";
-const semanticPreviewCheck = "assert(/\\.expandable-prompt\\{[^}]*max-height:280px[^}]*\\}/.test(html)&&/\\.expandable-prompt\\.expanded\\{[^}]*max-height:none[^}]*\\}/.test(html),'Prompt preview/collapse sizing changed.');";
+const actualPreviewCheck = "assert(html.includes('.expandable-prompt{height:280px;max-height:280px}')&&html.includes('.expandable-prompt.expanded{height:auto;max-height:none}'),'Prompt preview/collapse sizing changed.');";
 if (!semantics.includes(brittlePreviewCheck)) throw new Error('Brittle prompt-preview check not found.');
-semantics = semantics.replace(brittlePreviewCheck, semanticPreviewCheck);
+semantics = semantics.replace(brittlePreviewCheck, actualPreviewCheck);
 fs.writeFileSync(semanticsPath, semantics, 'utf8');
