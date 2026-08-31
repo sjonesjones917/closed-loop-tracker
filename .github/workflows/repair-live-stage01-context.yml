@@ -84,7 +84,8 @@ jobs:
           s=p.read_text()
           old="const longEnvelope=structuredClone(envelope);longEnvelope.evidence=Array.from({length:12}"
           assert old in s
-          s=s.replace(old,"const longEnvelope=structuredClone(envelope);longEnvelope.evidence=Array.from({length:40}",1)
+          new="const longEnvelope=structuredClone(envelope);longEnvelope.records.sources=Array.from({length:3},(_,i)=>{const r=structuredClone(envelope.records.sources[0]);r.tempKey=`source-${i+1}`;r.fields.TITLE=`Independent source ${i+1}`;r.fields.URL_REFERENCE=`https://example.com/source-${i+1}`;r.evidenceRefs=[`evidence-${i+1}`];return r;});longEnvelope.evidence=Array.from({length:3}"
+          s=s.replace(old,new,1)
           regression="""\n// Permanent regression: Stage 01 proposal summary reads the current /3 INPUT_SET_CONTENTS contract.\n{\n  const source=fs.readFileSync(new URL('./app-core.js',import.meta.url),'utf8');\n  assert.match(source,/parseCapturedInputSet\\(\\{agentData:p\\.envelope\\?\\.stageData\\|\\|\\{\\}\\}\\)/);\n  assert.doesNotMatch(source,/stageData\\?\\.INTAKE_ACCOUNTING/);\n  assert.doesNotMatch(source,/records\\?\\.intentStatements/);\n}\n"""
           if regression.strip() not in s:
               s += regression
