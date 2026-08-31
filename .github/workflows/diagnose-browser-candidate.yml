@@ -67,3 +67,4 @@ jobs:
           git commit -m 'Capture exact browser verification failure [diagnostic-output]' || true
           git push origin HEAD:fix/live-stage01-context-binding-20260831
           exit "$rc"
+# diagnostic trigger 2
