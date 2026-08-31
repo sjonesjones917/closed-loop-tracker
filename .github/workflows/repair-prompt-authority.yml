@@ -3,10 +3,14 @@ name: Apply canonical zero-loss corrections
 on:
   push:
     branches:
-      - fix/monotonic-zero-loss-20260831
+      - fix/zero-loss-controlled-20260831
 
 permissions:
   contents: write
+
+concurrency:
+  group: controlled-zero-loss-repair-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   repair:
@@ -16,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: fix/monotonic-zero-loss-20260831
+          ref: ${{ github.sha }}
           fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
@@ -34,12 +38,14 @@ jobs:
 
           def prepend(stage, phrase):
               global text
-              if phrase in text:
-                  return
               marker=f'"{stage}":"'
               if text.count(marker)!=1:
                   raise SystemExit(f'Expected exactly one stage marker {marker!r}; found {text.count(marker)}')
-              text=text.replace(marker, marker+phrase+' ', 1)
+              start=text.index(marker)+len(marker)
+              end=text.index(f',"{stage+1}":"',start) if stage<30 else text.index('});',start)
+              if phrase.casefold() in text[start:end].casefold():
+                  return
+              text=text[:start]+phrase+' '+text[start:]
 
           prepend(1, 'Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage.')
           prepend(2, 'Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found.')
@@ -97,12 +103,17 @@ jobs:
             30:['defects','rootCauses','regressions','regressionExecutions','changes','baselines','requirements','evidenceRecords']
           }
           for stage,items in stage_reads.items():
-              replacement=f"{stage}:["+','.join(repr(x) for x in items)+"]"
-              pattern=rf"(?<!\d){stage}:\[[^\]]*\]"
+              pattern=rf'(?<!\d){stage}:\[([^\]]*)\]'
               matches=list(re.finditer(pattern,reads))
               if len(matches)!=1:
                   raise SystemExit(f'Stage {stage} bounded READ_COLLECTIONS match count {len(matches)}')
-              reads=reads[:matches[0].start()]+replacement+reads[matches[0].end():]
+              match=matches[0]
+              inner=match.group(1).strip()
+              for item in items:
+                  if not re.search(rf'["\']{re.escape(item)}["\']',inner):
+                      inner+=((',' if inner else '')+repr(item))
+              replacement=f'{stage}:[{inner}]'
+              reads=reads[:match.start()]+replacement+reads[match.end():]
           schema=schema[:begin]+reads+schema[end:]
           s.write_text(schema,encoding='utf-8')
 
@@ -116,6 +127,10 @@ jobs:
               engine=engine.replace(bad,good,1)
           e.write_text(engine,encoding='utf-8')
           PY
+          rm -f .github/workflows/apply-prompt-repair.yml
+          rm -f .github/workflows/repair-prompt-authority.yml
+          rm -f .github/workflows/repair-stage4-manifest.yml
+          rm -f .repair-*
       - name: Prove canonical corrections before commit
         shell: bash
         run: |
@@ -123,9 +138,11 @@ jobs:
           node --check prompt-engine.js
           node --check workflow-schema.js
           node --check workflow-engine.js
+          node verify.mjs
           node verify-spec3-contract.mjs
           node verify-stage01-intake-closure.mjs
           node verify-zero-loss-accounting.mjs
+          node verify-one-time-intent-intake.mjs
           node verify-all-stage-prompts.mjs
           export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
           test -n "$BROWSER"
@@ -142,14 +159,13 @@ jobs:
           PAGE_URL=http://127.0.0.1:4173/ node verify-semantic-invariant.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
-      - name: Commit accepted correction and remove temporary runner
+      - name: Commit accepted correction and remove temporary runners
         shell: bash
         run: |
           set -euo pipefail
-          rm -f .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js workflow-schema.js workflow-engine.js .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
+          git add prompt-engine.js workflow-schema.js workflow-engine.js .github/workflows
           git diff --cached --check
           git commit -m "Integrate canonical prompt routing corrections"
-          git push origin HEAD:fix/monotonic-zero-loss-20260831
+          git push origin HEAD:fix/zero-loss-controlled-20260831
