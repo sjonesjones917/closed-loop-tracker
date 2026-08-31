@@ -62,7 +62,7 @@ jobs:
             "'Never ask the human to repeat, retype, summarize, resend, reopen, or reattach it'")
           replace_once('verify-stage-prompts-complete.mjs',
             "'every inputId exactly once'",
-            "'every application-enumerated input unit is accounted for'")
+            "'every application-enumerated intake unit is accounted for'")
           PY
           node build-test-project.mjs
 
