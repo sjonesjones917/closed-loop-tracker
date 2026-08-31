@@ -87,8 +87,11 @@ for(const field of [
 ])assert.match(proofSource,new RegExp(`\\b${field}\\b`),`executed acceptance proof must identify ${field}`);
 assert.match(definitionProof,/\bmandatoryEvidenceChainCoverage\b/,'executed acceptance proof must identify mandatory evidence-chain structural coverage');
 assert.match(workflow,/closed-loop-acceptance\.json/,'post-deploy machine acceptance artifact is required');
-assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
-assert.match(workflow,/(?:deployedChromiumAcceptance|liveBrowserVerification)\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
+assert.match(workflow,/deployedByteIdentity\s*:\s*process\.env\.LIVE_RESULT\s*===\s*['"]success['"]/,'post-deploy byte identity must derive from the successful live-verification job');
+assert.match(workflow,/deployedChromiumAcceptance\s*:\s*process\.env\.LIVE_RESULT\s*===\s*['"]success['"]/,'deployed browser acceptance must derive from the successful live-verification job');
+assert.match(workflow,/localChromiumAcceptance\s*:\s*process\.env\.TEST_RESULT\s*===\s*['"]success['"]/,'local browser acceptance must derive from the successful test job');
+assert.doesNotMatch(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy byte identity must not be hard-coded');
+assert.doesNotMatch(workflow,/(?:deployedChromiumAcceptance|liveBrowserVerification)\s*:\s*true/,'deployed browser acceptance must not be hard-coded');
 
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
