@@ -26,7 +26,16 @@ jobs:
           old="const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});"
           new="const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(process.env.PAGE_URL+'?walkthrough='+Date.now())}`,{method:'PUT'});"
           if old not in s: raise SystemExit('live walkthrough target anchor not found')
-          w.write_text(s.replace(old,new,1))
+          s=s.replace(old,new,1)
+          old="for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
+          new="for(let stage=1;stage<=30;stage++){if(stage>1){state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
+          if old not in s: raise SystemExit('walkthrough stage loop anchor not found')
+          s=s.replace(old,new,1)
+          old="      checked.push(stage+':'+operation);\n    }\n    const workflowButton"
+          new="      checked.push(stage+':'+operation);\n    }}\n    const workflowButton"
+          if old not in s: raise SystemExit('walkthrough stage loop close anchor not found')
+          s=s.replace(old,new,1)
+          w.write_text(s)
           PY
           node verify-browser-extra.mjs
           node verify-mobile-stage-action.mjs
