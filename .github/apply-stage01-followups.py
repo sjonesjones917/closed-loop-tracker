@@ -8,7 +8,7 @@ if old not in source:
     raise SystemExit('One-time input wording anchor was not found.')
 source = source.replace(old, new, 1)
 conversation_anchor = 'You are speaking directly with the human who requested the project. You are not responding to an API, filling a form, or producing a report for a machine.\nDO NOT return final JSON'
-conversation_replacement = 'You are speaking directly with the human who requested the project. You are not responding to an API, filling a form, or producing a report for a machine.\nThe user supplies project information once. Capture it completely, preserve it as durable project authority, and reuse it instead of asking for it again.\nDO NOT return final JSON'
+conversation_replacement = 'You are speaking directly with the human who requested the project. You are not responding to an API, filling a form, or producing a report for a machine.\nThe user supplies project information once. Capture it completely, preserve it as durable project authority, and reuse it instead of asking for it again.\nClassify every APPLICATION INTAKE MANIFEST unit exactly once.\nINPUT_SET_CONTENTS must preserve the complete durable meaning needed by later stages.\nDO NOT return final JSON'
 if conversation_anchor not in source:
     raise SystemExit('Stage 01 one-time conversation anchor was not found.')
 source = source.replace(conversation_anchor, conversation_replacement, 1)
