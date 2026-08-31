@@ -56,7 +56,7 @@ const workflows=fs.readdirSync('.github/workflows').filter(name=>name.endsWith('
 assert(workflows.length===1&&workflows[0]==='pages.yml','Repository must retain exactly one Pages workflow.');
 assert(workflowSource.includes('node verify-semantic-invariant.mjs'),'Semantic false-acceptance invariant is not in CI.');
 assert(workflowSource.includes('verify-browser.mjs')&&workflowSource.includes('verify-browser-extra.mjs'),'Chromium acceptance is not in CI.');
-assert(workflowSource.includes('Verify exact deployed source identity'),'Exact deployed-byte verification is not in CI.');
+assert(workflowSource.includes('Exact deployed-byte verification')&&workflowSource.includes('run: node verify-live.mjs'),'Exact deployed-byte verification is not in CI.');
 
 const engineSource=fs.readFileSync('workflow-engine.js','utf8');
 const ingestionTestSource=fs.readFileSync('verify-ingestion.mjs','utf8');
