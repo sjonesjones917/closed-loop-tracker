@@ -20,4 +20,27 @@ if old not in text:
     raise AssertionError('The stale Stage 04 source-name heuristic was not found.')
 path.write_text(text.replace(old,new,1))
 
-print('Aligned prompt regressions with the generated Stage 03 and Stage 04 behavior.')
+# Ingestion tests exercise stages independently. Their prompt fixtures must still
+# obey the production prerequisite gate; no test may generate a later prompt from
+# an illegal predecessor state.
+path=Path('verify-ingestion.mjs')
+text=path.read_text()
+old="""function savePrompt(p,stage){
+  if(stage===4)prepareStage4Upstream(p);
+  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
+"""
+new="""function savePrompt(p,stage){
+  if(stage===4)prepareStage4Upstream(p);
+  else if(stage>1){p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}
+  const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};
+"""
+if old not in text:
+    raise AssertionError('The ingestion prompt fixture helper was not found.')
+text=text.replace(old,new,1)
+old="if(stage<30){const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
+new="if(stage<30){reloaded.stages[stage].status='COMPLETE';reloaded.stages[stage].gate={complete:true,blocked:false,reasons:[]};const nextStage=stage+1;if(nextStage===4)prepareStage4Upstream(reloaded);"
+if old not in text:
+    raise AssertionError('The ingestion downstream prompt fixture was not found.')
+path.write_text(text.replace(old,new,1))
+
+print('Aligned prompt and ingestion regressions with generated behavior and legal stage prerequisites.')
