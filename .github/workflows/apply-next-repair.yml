@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Restore exact invariant and fixture spelling
+      - name: Restore exact invariant and repair current-scope fixtures
         shell: bash
         run: |
           set -euo pipefail
@@ -30,9 +30,16 @@ jobs:
               s=s.replace(needle,replacement,1)
           p.write_text(s)
           p=Path('verify-ingestion.mjs'); s=p.read_text().replace('EXACT_DELIVERABlE_REQUESTED','EXACT_DELIVERABLE_REQUESTED'); p.write_text(s)
+          p=Path('verify-user-prompt-invariants.mjs'); s=p.read_text()
+          scope="scope:{inputVersion:'INPUT-v001',sourceSetVersion:'SOURCE-SET-v001',requirementsVersion:'REQUIREMENTS-v001'},"
+          s=s.replace("{id:'SOURCE-000001',active:true,stage:2,fields:","{id:'SOURCE-000001',active:true,stage:2,"+scope+"fields:")
+          s=s.replace("{id:'RESEARCH-000001',active:true,stage:3,fields:","{id:'RESEARCH-000001',active:true,stage:3,"+scope+"fields:")
+          s=s.replace("{id:'CANDIDATE-REQ-000001',active:true,stage:3,fields:","{id:'CANDIDATE-REQ-000001',active:true,stage:3,"+scope+"fields:")
+          p.write_text(s)
           PY
           node --check prompt-engine.js
           node --check verify-ingestion.mjs
+          node --check verify-user-prompt-invariants.mjs
           node verify-user-prompt-invariants.mjs
           node verify-ingestion.mjs
       - name: Commit repair and remove temporary workflow
@@ -41,7 +48,7 @@ jobs:
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js verify-ingestion.mjs
+          git add prompt-engine.js verify-ingestion.mjs verify-user-prompt-invariants.mjs
           git rm .github/workflows/apply-next-repair.yml
-          git commit -m 'Restore Stage 01 intake exhaustion invariant'
+          git commit -m 'Restore Stage 01 exhaustion and scoped prompt fixtures'
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
