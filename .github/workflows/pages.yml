@@ -1,4 +1,4 @@
-name: Deploy application
+name: Verify and deploy the single reliability app
 on:
   push:
     branches: [main]
@@ -12,29 +12,89 @@ permissions:
 concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
+
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify retained project construction
+        run: node build-test-project.mjs
+      - name: Verify runtime and acceptance JavaScript parses
         run: |
           set -euo pipefail
-          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
+          for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js test-fixtures.mjs verify*.mjs; do
             node --check "$file"
           done
+      - name: Run deterministic architecture, migration, intake, Test IR, ingestion, prompt, gate, and lifecycle proofs
+        run: |
+          set -euo pipefail
+          for script in \
+            verify-hash.mjs \
+            verify-spec3-contract.mjs \
+            verify-v3-contract.mjs \
+            verify-v3-migration.mjs \
+            verify-test-runtime.mjs \
+            verify-test-runtime-v3.mjs \
+            verify-test-runtime-limits.mjs \
+            verify-stage01-intake-closure.mjs \
+            verify-one-time-intent-intake.mjs \
+            verify-user-prompt-invariants.mjs \
+            verify-all-stage-prompts.mjs \
+            verify-stage-prompts-complete.mjs \
+            verify-prompt-semantics.mjs \
+            verify-ingestion.mjs \
+            verify-complete.mjs \
+            verify-semantic-invariant.mjs \
+            verify-project-lifecycle.mjs \
+            verify-full-cycle.mjs \
+            verify-definition-of-done.mjs \
+            verify-v3-definition-of-done.mjs \
+            verify.mjs; do
+              echo "==> $script"
+              node "$script"
+          done
+      - name: Enforce the single runtime architecture
+        run: |
+          set -euo pipefail
+          test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
+          test ! -f app.js
+          test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
+          test -z "$(find .github/workflows -maxdepth 1 -type f ! -name 'pages.yml' -print -quit)"
+          ! grep -R "document.write" --include='*.js' --include='*.html' .
+          ! grep -R "MutationObserver" --include='*.js' --include='*.html' .
+      - name: Exercise local Chromium operator path and responsive behavior
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for script in verify-browser.mjs verify-browser-extra.mjs verify-mobile-stage-action.mjs verify-human-stage-walkthrough.mjs; do
+            echo "==> $script"
+            node "$script"
+          done
+
   deploy:
+    name: deploy
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build static application
+      - name: Build exact static deployment set
         run: |
+          set -euo pipefail
           rm -rf _site
           mkdir _site
           cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
@@ -45,3 +105,41 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live:
+    name: verify-live
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    env:
+      PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact deployed bytes
+        run: node verify-live.mjs
+      - name: Exercise deployed Chromium operator path
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+
+  publish-status:
+    name: publish-status
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-evidence-${{ github.sha }}
+          path: |
+            TEST_PROJECT.json
+            .github/workflows/pages.yml
+          if-no-files-found: error
+          retention-days: 90
