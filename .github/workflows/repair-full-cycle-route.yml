@@ -33,10 +33,12 @@ jobs:
              "engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE'});")
           ]
           for old,new in repairs:
-              if new in text: continue
               count=text.count(old)
-              if count != 1: raise SystemExit(f'Expected exactly one fixture target, found {count}: {old[:70]}')
-              text=text.replace(old,new,1)
+              if count == 1:
+                  text=text.replace(old,new,1)
+                  continue
+              if count != 0: raise SystemExit(f'Expected at most one fixture target, found {count}: {old[:70]}')
+              if new not in text: raise SystemExit(f'Neither old nor repaired fixture exists: {old[:70]}')
           p.write_text(text,encoding='utf-8')
           PY
       - name: Prove full-cycle and downstream lifecycle
