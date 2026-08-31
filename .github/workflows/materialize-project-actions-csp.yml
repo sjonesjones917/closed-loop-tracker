@@ -1,0 +1,46 @@
+name: Materialize Project actions CSP repair
+on:
+  push:
+    branches: [fix/project-actions-csp-20260830]
+permissions:
+  contents: write
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, 'Integrate Project actions toggle into allowed inline shell') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/project-actions-csp-20260830
+      - name: Integrate the toggle state sync into the existing CSP-authorized shell script
+        shell: python
+        run: |
+          from pathlib import Path
+          import re,hashlib,base64
+          p=Path('index.html')
+          s=p.read_text()
+          separate="<script>(()=>{const menu=document.querySelector('.project-action-menu'),toggle=document.getElementById('project-actions-toggle');if(!menu||!toggle)return;const sync=()=>toggle.setAttribute('aria-expanded',menu.open?'true':'false');menu.addEventListener('toggle',sync);sync();})();</script>\n"
+          if separate not in s:
+            raise SystemExit('separate Project actions inline script not found')
+          s=s.replace(separate,'',1)
+          pattern=re.compile(r'<script>(\(\(\)=>\{const sync=\(\)=>\{const select=document\.getElementById\(\'stage-picker\'\);.*?\}\)\(\);)</script>',re.S)
+          m=pattern.search(s)
+          if not m:
+            raise SystemExit('existing stage-picker inline shell script not found')
+          old_js=m.group(1)
+          project_js="(()=>{const menu=document.querySelector('.project-action-menu'),toggle=document.getElementById('project-actions-toggle');if(!menu||!toggle)return;const sync=()=>toggle.setAttribute('aria-expanded',menu.open?'true':'false');menu.addEventListener('toggle',sync);sync();})();"
+          new_js=old_js+project_js
+          s=s[:m.start()]+f'<script>{new_js}</script>'+s[m.end():]
+          new_hash=base64.b64encode(hashlib.sha256(new_js.encode()).digest()).decode()
+          s,count=re.subn(r"script-src 'self' 'sha256-[^']+';",f"script-src 'self' 'sha256-{new_hash}';",s,count=1)
+          if count!=1:
+            raise SystemExit('CSP script hash not replaced exactly once')
+          p.write_text(s)
+          Path('.github/workflows/materialize-project-actions-csp.yml').unlink()
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows/materialize-project-actions-csp.yml
+          git commit -m 'Integrate Project actions toggle into allowed inline shell'
+          git push origin fix/project-actions-csp-20260830
