@@ -1,0 +1,72 @@
+name: Consolidate ingestion fixture repairs
+
+on:
+  push:
+    branches: [fix/monotonic-reliability-pass-20260831]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply authoritative generic-fixture corrections and remove all one-time repair workflows
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+
+          replacements=[
+            (
+              "const options=stage===19?{operation:'COMPARE'}:stage===11?{scope:{runId:'RUN-INGESTION-FIXTURE',contextId:'CONTEXT-INGESTION-FIXTURE'}}:{};",
+              "const operation=stage===19?'COMPARE':schema.STAGE_CONTRACTS[stage].operations[0],requiredScope=schema.operationContract(stage,operation)?.scopeRequirements||[],syntheticScope={};if(requiredScope.includes('runId'))syntheticScope.runId='RUN-INGESTION-FIXTURE';if(requiredScope.includes('contextId'))syntheticScope.contextId='CONTEXT-INGESTION-FIXTURE';const options={operation,...(Object.keys(syntheticScope).length?{scope:syntheticScope}:{})};"
+            ),
+            (
+              "if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';",
+              "if(name==='EXECUTION_MODE')return 'EXTERNAL_AGENT_TOOL';"
+            ),
+            (
+              "if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';",
+              "if(name==='REQUIRED_CAPABILITY')return 'CONTROLLED_EXTERNAL_TOOL';\n  if(name==='EXECUTABLE_KIND')return 'NONE';\n  if(name==='EXECUTABLE_SPEC'||name==='EXECUTABLE_INPUT_BINDINGS')return {};\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';"
+            ),
+            (
+              "const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;",
+              "const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=(operationContract?.allowedStageData||contract.allowedStageData).filter(name=>schema.stageFieldDefinition(stage,name).producer===schema.PRODUCER.AGENT),writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
+            )
+          ]
+          for old,new in replacements:
+              if new in s:
+                  continue
+              count=s.count(old)
+              if count!=1:
+                  raise SystemExit(f'Expected exactly one repair target; found {count}: {old[:80]}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+
+          find .github/workflows -maxdepth 1 -type f -name 'repair-*.yml' -delete
+          find .github/workflows -maxdepth 1 -type f -name 'repair-*.yaml' -delete
+
+          node --check verify-ingestion.mjs
+          node verify-ingestion.mjs
+          node verify-monotonic-pass.mjs
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A verify-ingestion.mjs .github/workflows
+          git commit -m "Stabilize ingestion fixtures and remove repair workflows"
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
