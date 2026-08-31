@@ -15,7 +15,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Apply repair
-        run: python3 .github/scripts/apply-one-time-intent-persistence.py
+        run: |
+          python3 .github/scripts/apply-one-time-intent-persistence.py
+          python3 .github/scripts/apply-followup-fixes.py
       - name: Prove repaired paths
         id: prove
         shell: bash
@@ -36,6 +38,9 @@ jobs:
             if [ "$code" -ne 0 ]; then status="$code"; fi
           done
           exit "$status"
+      - name: Package patched checkout for exact defect isolation
+        if: always()
+        run: tar --exclude=.git --exclude=patched-repo.tar.gz -czf patched-repo.tar.gz .
       - name: Preserve proof output and patched sources
         if: always()
         uses: actions/upload-artifact@v4
@@ -43,6 +48,7 @@ jobs:
           name: one-time-intent-repair-proof
           path: |
             repair-proof.log
+            patched-repo.tar.gz
             workflow-engine.js
             prompt-engine.js
             verify-one-time-intent-intake.mjs
@@ -56,10 +62,11 @@ jobs:
         if: steps.prove.outcome == 'success'
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]]"
+          git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           rm .github/workflows/apply-one-time-intent-persistence.yml
           rm .github/scripts/apply-one-time-intent-persistence.py
-          git add workflow-engine.js prompt-engine.js verify-one-time-intent-intake.mjs index.html app-core.js .github/workflows/apply-one-time-intent-persistence.yml .github/scripts/apply-one-time-intent-persistence.py
+          rm .github/scripts/apply-followup-fixes.py
+          git add workflow-engine.js prompt-engine.js verify-one-time-intent-intake.mjs index.html app-core.js .github/workflows/apply-one-time-intent-persistence.yml .github/scripts/apply-one-time-intent-persistence.py .github/scripts/apply-followup-fixes.py
           git commit -m "Persist one-time Stage 1 intent through Stage 4"
           git push origin HEAD:fix/one-time-intent-persistence
