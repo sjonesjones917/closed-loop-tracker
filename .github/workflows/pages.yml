@@ -37,19 +37,29 @@ jobs:
           done
           cat /tmp/closed-loop-http.log
           exit 1
-      - name: Run every repository verification before merge or deploy
+      - name: Run controlling application acceptance before merge or deploy
         env:
           PAGE_URL: http://127.0.0.1:4173/
         run: |
           set -euo pipefail
-          mapfile -t checks < <(find . -maxdepth 1 -type f -name 'verify*.mjs' ! -name 'verify-live.mjs' -printf '%f\n' | sort)
-          if [ "${#checks[@]}" -eq 0 ]; then
-            echo 'No verification scripts found.' >&2
-            exit 1
-          fi
-          printf 'Running %s verification scripts:\n' "${#checks[@]}"
-          printf '  %s\n' "${checks[@]}"
+          checks=(
+            verify-v3-migration.mjs
+            verify-v3-contract.mjs
+            verify-test-runtime-v3.mjs
+            verify-test-runtime-limits.mjs
+            verify-ingestion.mjs
+            verify-full-cycle.mjs
+            verify-v3-definition-of-done.mjs
+            verify-prompt-semantics.mjs
+            verify-stage-prompts-complete.mjs
+            verify-one-time-intent-intake.mjs
+            verify-human-stage-walkthrough.mjs
+            verify-browser.mjs
+            verify-browser-extra.mjs
+            verify-mobile-stage-action.mjs
+          )
           for check in "${checks[@]}"; do
+            test -f "$check" || { echo "Missing required verification: $check" >&2; exit 1; }
             echo "===== $check ====="
             node "$check"
           done
