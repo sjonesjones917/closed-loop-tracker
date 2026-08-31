@@ -27,6 +27,10 @@ jobs:
           new="const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(process.env.PAGE_URL+'?walkthrough='+Date.now())}`,{method:'PUT'});"
           if old not in s: raise SystemExit('live walkthrough target anchor not found')
           s=s.replace(old,new,1)
+          old="    engine.ensureShape(state);engine.recalculate(state);\n    const checked=[]"
+          new="    engine.ensureShape(state);engine.recalculate(state);\n    const intake=prompts.intakeCoverageManifest(state);state.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Complete subject-neutral deliverable',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+i,text:u.rawValueText||('captured '+u.label),statementClass:'CONTEXT'}]}))})};state.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};state.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:true,SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:true,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:false};\n    const checked=[]"
+          if old not in s: raise SystemExit('walkthrough intake fixture anchor not found')
+          s=s.replace(old,new,1)
           old="for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
           new="for(let stage=1;stage<=30;stage++){if(stage>1){state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
           if old not in s: raise SystemExit('walkthrough stage loop anchor not found')
