@@ -68,7 +68,7 @@ function valueForDefinition(def){if(def.enumValues?.length)return def.enumValues
 function validEnvelope(p,stage,promptRecord){
   const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;
   const stageData={};
-  if(stageFields.length)stageData[stageFields[0]]=safeValue(stageFields[0]);
+  const writableStageField=stageFields.find(name=>schema.STAGE_FIELDS[stage]?.[name]?.producer===schema.PRODUCER.AGENT);if(writableStageField)stageData[writableStageField]=valueForDefinition(schema.STAGE_FIELDS[stage][writableStageField]);
   if(stage===1){const m=promptRecord.contextManifest.intakeCoverageManifest;stageData.EXACT_DELIVERABLE_REQUESTED='Verified deliverable';stageData.ASSUMPTIONS='NONE';stageData.UNKNOWN_INFORMATION='NONE';stageData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:m.inputVersion,manifestSha256:m.manifestSha256,units:m.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||u.label,statementClass:'FACT'}]}))});}
   const records={};
   if(!Object.keys(stageData).length||stage===4){
