@@ -25,6 +25,22 @@ else:
     raise SystemExit(f'verify-complete.mjs: expected one Stage 10 scoped-lane prerequisite sentinel, found {count2}')
 p.write_text(s)
 
+# The prompt authority has an augmented per-stage procedure table. The runtime
+# selector must use it; otherwise Stage 02/05/09/14 silently lose their
+# saturation, repeated-review, and earliest-layer instructions.
+p=Path('prompt-engine.js')
+s=p.read_text()
+old="function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}"
+new="function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}"
+count=s.count(old)
+if count==1:
+    s=s.replace(old,new)
+elif count==0 and new in s:
+    pass
+else:
+    raise SystemExit(f'prompt-engine.js: expected one augmented-procedure routing sentinel, found {count}')
+p.write_text(s)
+
 # Prompt completeness must be checked against the actual generated prompt,
 # whose selected context is the union of schema reads and prompt-engine context
 # additions. `intentStatements` is not a canonical collection in /3; accepted
