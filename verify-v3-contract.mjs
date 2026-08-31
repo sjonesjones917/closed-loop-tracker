@@ -82,7 +82,7 @@ for(const field of [
 ])assert.match(workflow,new RegExp(`\\b${field}\\b`),`acceptance report must identify ${field}`);
 assert.match(definitionVerifier,/\bmandatoryEvidenceChainStructuralCoverage\b/,'executed definition-of-done proof must emit mandatoryEvidenceChainStructuralCoverage');
 assert.match(workflow,/\.\.\.definition/,'acceptance artifact must include executed definition-of-done proof output');
-assert.match(workflow,/final-acceptance\.json/,'post-deploy machine acceptance artifact is required');
+assert.match(workflow,/closed-loop-acceptance\.json/,'post-deploy machine acceptance artifact is required');
 assert.match(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy acceptance must record byte identity only after proof');
 assert.match(workflow,/liveBrowserVerification\s*:\s*true/,'post-deploy acceptance must record live browser verification only after proof');
 
