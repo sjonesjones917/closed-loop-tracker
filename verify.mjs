@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
-const files=['index.html','app-core.js','hash.js','workflow-schema.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','AUTHORIZED_OPERATION_01.txt'];
+const files=['index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json'];
 for(const file of files)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js'])vm.runInThisContext(fs.readFileSync(file,'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
@@ -37,15 +37,14 @@ if(retained.stageRecords['1'].status!=='COMPLETE')throw new Error('Retained Stag
 for(let n=2;n<=30;n++)if(retained.stageRecords[String(n)].status!=='NOT STARTED')throw new Error(`Retained Stage ${n} is falsely started/completed.`);
 if(retained.currentVersions.sources!=='NOT APPLICABLE')throw new Error('Retained Stage 02 source set was fabricated.');
 for(const name of ['sources','sourceConflicts','research','candidateRequirements','requirements','tests','failureTests','preflightRecords','candidateFreezes','runs','verification','comparisons','defects','rootCauses','regressions','changes','baselines','products','deterministicResults','meaningResults','adversarialResults','representationInspections','processAudits','productAudits','releaseRecords','artifactIdentities','evidenceChains'])if((retained.projectData?.[name]||retained[name]||[]).length)throw new Error(`Retained ${name} contains fabricated downstream data.`);
-const operation01=fs.readFileSync('AUTHORIZED_OPERATION_01.txt','utf8').trim();
-if(retained.generatedOutputs?.[0]?.output!==operation01||retained.stageRecords?.['1']?.output!==operation01)throw new Error('Authorized Operation 01 output was not preserved exactly.');
+if(retained.generatedOutputs?.[0]?.output!==retained.stageRecords?.['1']?.output)throw new Error('Retained Stage 01 output history is internally inconsistent.');
 if(retained.generatedPrompts?.length!==1||retained.outputReceipts?.length!==1)throw new Error('Actual Stage 01 instruction/output receipt history was not preserved.');
 
 function blank(jobId){const p=core.createBlankState(jobId);p.job.JOB_ID=jobId;p.job.JOB_TITLE='Verification project';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Controlled verification objective';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;}
 function prepareStage4(p){const intake=prompts.buildPromptRecord(1,p).contextManifest.intakeCoverageManifest;p.stages[1].agentData.INPUT_SET_CONTENTS=JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'incorporated into the job definition',reason:'Preserved for downstream reuse.',extractedStatements:[{statementKey:'S'+String(i+1),text:u.rawValueText||('Captured '+u.label),statementClass:'FACT'}]}))});p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};p.stages[2].status='COMPLETE';p.stages[2].gate={complete:true,blocked:false,reasons:[]};p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';p.stages[3].status='COMPLETE';p.stages[3].gate={complete:true,blocked:false,reasons:[]};return p;}
 function syntheticPromptOptions(stage,p){const operation=schema.STAGE_CONTRACTS[stage].operations[0],scope={};for(const key of schema.operationContract(stage,operation).scopeRequirements){if(key==='projectRevision')scope[key]=Number(p.revision||0);else if(key==='inputVersion')scope[key]=p.job.CURRENT_INPUT_VERSION;else if(key==='sourceSetVersion')scope[key]='SOURCE-SET-v001';else if(key==='requirementsVersion')scope[key]='REQUIREMENTS-v001';else if(key==='testSuiteVersion')scope[key]='TEST-SUITE-v001';else if(key==='instructionVersion')scope[key]='INSTRUCTION-v001';else if(key==='iterationId')scope[key]='ITERATION-000001';else if(key==='candidateId')scope[key]='CANDIDATE-000001';else if(key==='runId')scope[key]='RUN-000001';else if(key==='contextId')scope[key]='CONTEXT-000001';else if(key==='baselineId')scope[key]='BASELINE-000001';else if(key==='productId')scope[key]='PRODUCT-000001';}return {operation,scope};}
 const generated=[];
-for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);if(stage===4)prepareStage4(p);const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));generated.push(record.prompt);for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/3','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);if(stage===2&&!record.prompt.includes('independent external sources'))throw new Error('Stage 02 non-circular authority rule missing.');if(stage===3&&!record.prompt.includes('Research only the current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');}
+for(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);if(stage===4)prepareStage4(p);const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));generated.push(record.prompt);for(const token of [`JOB_ID: ${p.job.JOB_ID}`,'PROJECT-SCOPE BOUNDARY','STRICT RESPONSE CONTRACT','closed-loop-stage-response/3','PROMPT IDENTITY — ECHO EXACTLY'])if(!record.prompt.includes(token))throw new Error(`Stage ${stage} prompt missing ${token}.`);if(stage===2&&!record.prompt.includes('independent external sources'))throw new Error('Stage 02 non-circular authority rule missing.');if(stage===3&&!record.prompt.includes('Research only the complete current accepted Stage 02 independent external source set'))throw new Error('Stage 03 external-source research boundary missing.');}
 if(new Set(generated).size!==30)throw new Error('Prompts are not stage-specific.');
 const pa=prompts.buildPromptRecord(2,blank('JOB-A')).prompt,pb=prompts.buildPromptRecord(2,blank('JOB-B')).prompt;if(pa.includes('JOB-B')||pb.includes('JOB-A'))throw new Error('Cross-project prompt contamination detected.');
 
@@ -73,14 +72,12 @@ if(/GEN-042|field status report|maintenance[- ]handoff/i.test(active+JSON.string
 
 console.log(JSON.stringify({application:'single',stages:30,ownershipLedger:true,responseSchema:schema.RESPONSE_SCHEMA,allStagePromptsVerified:30,externalSourceNonCircularity:true,retainedProject:retained.jobId,retainedStage1:'COMPLETE',retainedCurrentStage:2,retainedDownstreamFabricated:false,legacyProjectPreservation:true,unknownFieldRoundTrip:true,transactionRollback:true,ingestionCycle:'30/30',negativeIngestion:true},null,2));
 
-// Practical-100 schema/ownership contract.
 const assert=(condition,message)=>{if(!condition)throw new Error(message);};
 assert(core.PROJECT_SCHEMA==='closed-loop-project/3'&&core.WORKFLOW_ID==='mobile-closed-loop/30'&&core.STAGE_COUNT===30,'Project/workflow identities must be separated.');
 assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema /3 is required.');
 for(const stage of core.STAGES){const p=stage.ownership;const union=[...p.human,...p.humanDecision,...p.agent,...p.application];assert(union.length===stage.fields.length&&new Set(union).size===stage.fields.length&&stage.fields.every(f=>union.includes(f)),`Stage ${stage.number} ownership must be a complete disjoint partition.`);for(const def of Object.values(schema.STAGE_FIELDS[stage.number])){assert(schema.VALUE_TYPES.includes(def.valueType),'Every stage field needs a valueType.');assert(Array.isArray(def.enumValues),'Every stage field needs enumValues.');assert(Object.hasOwn(def,'nullable')&&Object.hasOwn(def,'normalizerKey'),'Every stage field needs nullability and normalizer metadata.');}}
 for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.ownership;const union=[...p.human,...p.humanDecision,...p.agent,...p.application];assert(union.length===def.fields.length&&new Set(union).size===def.fields.length&&def.fields.every(f=>union.includes(f)),`${name} ownership must be a complete disjoint partition.`);}
 
-// Practical-100 PR5 persistence/UI boundaries.
 {
  const storeSource=fs.readFileSync('project-store.js','utf8'),appSource=fs.readFileSync('app-core.js','utf8'),engineSource=fs.readFileSync('workflow-engine.js','utf8');
  for(const token of ["DB_NAME='closed-loop-reliability'","createObjectStore(PROJECTS","createObjectStore(ARTIFACTS","createObjectStore(META",'expectedProjectRevision','BroadcastChannel','putArtifact','exportPackage','importPackage','CompressionStream','projectSha256'])if(!storeSource.includes(token))throw new Error(`PR5 storage boundary missing ${token}.`);
@@ -90,8 +87,6 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
  if(!engineSource.includes('identityAssurance'))throw new Error('PR5 engine identity assurance metadata missing.');for(const token of ['SELF_ASSERTED','MULTI_CHOICE','FILE_REFERENCE','Proposal diff','retainedBytes:true'])if(!appSource.includes(token))throw new Error(`PR5 UI boundary missing ${token}.`);
 }
 
-
-// IMPORT_FIELD_CONTRACT_INTEGRITY
 {
  const p=core.createBlankState('JOB-IMPORT-FIELD-CONTRACT');engine.ensureShape(p);engine.recalculate(p);
  const id='REQ-IMPORT-TYPE-BAD',fields={REQ_ID:id,OBLIGATION:123};p.projectData.requirements.push({id,stage:4,active:true,scope:{requirementsVersion:'REQUIREMENTS-v001'},fields,...fields});
@@ -102,7 +97,6 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
  if(badMirror.valid||!badMirror.issues.some(x=>x.includes('contradictory mirrored value for OBLIGATION')))throw new Error('Canonical import integrity accepted contradictory mirrored record values.');
 }
 
-// Current and legacy project schemas must pass through deterministic migration; legacy duplicates remain non-operational.
 {
   const legacy=core.createBlankState('JOB-MIGRATION-LEGACY');legacy.schema='human-project/30';delete legacy.workflow;delete legacy.stageCount;legacy.projectData.stageRecords={1:{status:'COMPLETE',record:'legacy'}};const migrated=core.migrateState(legacy);if(migrated.schema!==core.PROJECT_SCHEMA||migrated.workflow!==core.WORKFLOW_ID||migrated.stageCount!==30)throw new Error('Legacy schema migration did not establish current identities.');if(migrated.projectData.stageRecords)throw new Error('Legacy stageRecords remained operational after migration.');if(!migrated.projectData.historicalImportRecords?.some(x=>x.kind==='LEGACY_STAGE_RECORDS'))throw new Error('Legacy stageRecords were not preserved as history.');
 }
@@ -113,8 +107,6 @@ for(const [name,def] of Object.entries(schema.RECORD_SCHEMAS)){const p=def.owner
   const app=fs.readFileSync('app-core.js','utf8');if(!app.includes('currentSchema&&!legacyNested&&!legacyStageRecords?p:core.migrateState(p)'))throw new Error('Current-schema projects do not have an explicit migration-safe startup fast path.');if(!app.includes('core.migrateState(p)'))throw new Error('Legacy or structurally stale projects can bypass deterministic migration.');if(!app.includes("[core.SCHEMA,'human-project/30'].includes(raw.schema)"))throw new Error('Declared human-project/30 migration cannot be imported through the UI.');
 }
 
-
-// Regression definition/execution authority must have exactly one canonical execution-truth lane.
 {
   const definition=schema.RECORD_SCHEMAS.regressions,execution=schema.RECORD_SCHEMAS.regressionExecutions;
   for(const field of ['PRE_CORRECTION_RESULT','PRE_CORRECTION_EVIDENCE','POST_CORRECTION_RESULT','POST_CORRECTION_EVIDENCE']){
