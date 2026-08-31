@@ -1,0 +1,34 @@
+name: Apply current Stage 01 capture preservation
+on:
+  push:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve full accepted Stage 01 capture
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js'); s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/52';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/53';",1)
+          old="const fullStage01=Number(stage)<=3&&!isolatedReviewer;\n  const acceptedStage01=isolatedReviewer?{objectiveVerbatim:job.EXACT_USER_OBJECTIVE_VERBATIM??null,detailWithheld:true,withheldReason:'Independent verification receives only the current operation-authorized projection. The complete Stage 01 intake remains canonical and reusable but is not embedded when it is unnecessary to the proposition under review.'}:fullStage01?{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1)}:{objective:job.EXACT_DELIVERABLE_REQUESTED||job.EXACT_USER_OBJECTIVE_VERBATIM||null,inputVersion:job.CURRENT_INPUT_VERSION||null,capturePreservedCanonically:true,acceptedChangeIds:safe(stageOne.acceptedDataChangeIds)};"
+          new="const fullStage01=!isolatedReviewer;\n  const acceptedStage01=isolatedReviewer?{objectiveVerbatim:job.EXACT_USER_OBJECTIVE_VERBATIM??null,detailWithheld:true,withheldReason:'Independent verification receives only the current operation-authorized projection. The complete Stage 01 intake remains canonical and reusable but is not embedded when it is unnecessary to the proposition under review.'}:{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1),capturePreservedCanonically:true};"
+          if old not in s: raise SystemExit('Stage 01 reduction target not found')
+          s=s.replace(old,new,1); p.write_text(s)
+          for name in ['index.html','app-core.js']:
+              q=Path(name); t=q.read_text();
+              if 'runtime-20260830-live-operator-58' not in t: raise SystemExit(name+': runtime 58 not found')
+              q.write_text(t.replace('runtime-20260830-live-operator-58','runtime-20260830-live-operator-59'))
+          PY
+          rm -f .github/workflows/apply-stage01-current.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js index.html app-core.js .github/workflows
+          git commit -m "Preserve complete accepted Stage 01 capture in downstream prompts"
+          git push origin HEAD:fix/preserve-stage01-capture-current-20260830
