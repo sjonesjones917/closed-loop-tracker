@@ -35,6 +35,10 @@ jobs:
           new="for(let stage=1;stage<=30;stage++){if(stage>1){state.stages[stage-1].status='COMPLETE';state.stages[stage-1].gate={complete:true,blocked:false,reasons:[]};}for(const operation of schema.STAGE_CONTRACTS[stage].operations){"
           if old not in s: raise SystemExit('walkthrough stage loop anchor not found')
           s=s.replace(old,new,1)
+          old="      const record=prompts.buildPromptRecord(stage,state,{operation,scope:lane}),text=record.prompt;"
+          new="      let record;try{record=prompts.buildPromptRecord(stage,state,{operation,scope:lane});}catch(error){throw new Error('PROMPT-STAGE-'+stage+'-'+operation+': '+error.message);}const text=record.prompt;"
+          if old not in s: raise SystemExit('walkthrough prompt call anchor not found')
+          s=s.replace(old,new,1)
           old="      checked.push(stage+':'+operation);\n    }\n    const workflowButton"
           new="      checked.push(stage+':'+operation);\n    }}\n    const workflowButton"
           if old not in s: raise SystemExit('walkthrough stage loop close anchor not found')
