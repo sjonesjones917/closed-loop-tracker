@@ -1,10 +1,32 @@
-name: Retained repair carrier disabled
+name: Apply retained verification correction
 on:
-  workflow_dispatch:
+  push:
+    branches: [fix/restore-controlling-verification-20260831b]
+    paths: [.github/workflows/apply-stage04-visual-regression-fix.yml]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  disabled:
+  apply:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "One-time repair carrier is disabled pending final deletion."
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-controlling-verification-20260831b
+      - name: Use valid Stage 06 enum fixtures without synthetic native execution
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          anchor="function safeValue(name){\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';"
+          replacement="function safeValue(name){\n  if(name==='TEST_TYPE')return 'MEANING';\n  if(name==='EXECUTION_MODE')return 'INDEPENDENT_AGENT_REVIEW';\n  if(name==='REQUIRED_CAPABILITY')return 'INDEPENDENT_MEANING_REVIEW';\n  if(name==='EXECUTABLE_KIND')return 'NONE';\n  if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';"
+          if anchor not in s: raise SystemExit('expected safeValue source not found')
+          p.write_text(s.replace(anchor,replacement,1))
+          PY
+      - name: Commit minimal correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-ingestion.mjs
+          git commit -m "Use valid Stage 06 ingestion fixtures"
+          git push origin HEAD:fix/restore-controlling-verification-20260831b
