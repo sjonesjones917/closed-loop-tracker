@@ -1,0 +1,57 @@
+name: Gated Stage 04 artifact surface repair
+on:
+  push:
+    branches: [ci/pages-zero-loss-proof-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[stage04-repair-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ci/pages-zero-loss-proof-20260831
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply minimal Stage 04 correction
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('app-core.js')
+          s=p.read_text()
+          old="function artifactControlMarkup(n,locked){\n  if(n===19)"
+          new="function artifactControlMarkup(n,locked){if(n===19)"
+          assert old in s
+          s=s.replace(old,new,1)
+          old="const applicable=[1,10,17,20,21,25].includes(n)"
+          new="const applicable=[1,4,10,17,20,21,25].includes(n)"
+          assert old in s
+          s=s.replace(old,new,1)
+          old="const productReady=n!==21||Boolean(currentStageProduct()),fileLocked=locked||!productReady||(n===1&&current.stages[1].status==='COMPLETE');"
+          new="const productReady=n!==21||Boolean(currentStageProduct()),fileLocked=locked||!productReady||(n===1&&current.stages[1].status==='COMPLETE')||(n===4&&action.actionType!=='ATTACH_REQUIRED_FILES'&&requiredReturns.length===0);"
+          assert old in s
+          s=s.replace(old,new,1)
+          p.write_text(s)
+      - name: Verify exact regression and live operator path
+        run: |
+          set -euo pipefail
+          node --check app-core.js
+          node verify-hash.mjs
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in {1..100}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.1
+          done
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+      - name: Commit accepted repair
+        run: |
+          rm -f .github/workflows/repair-stage04-artifact-surface.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js .github/workflows/repair-stage04-artifact-surface.yml
+          git commit -m 'Restore Stage 04 artifact-control surface without repeat intent input [stage04-repair-applied]'
+          git push origin HEAD:ci/pages-zero-loss-proof-20260831
