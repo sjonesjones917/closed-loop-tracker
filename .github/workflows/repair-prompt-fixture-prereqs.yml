@@ -1,0 +1,47 @@
+name: Repair prompt fixture prerequisites
+
+on:
+  push:
+    branches:
+      - fix/monotonic-reliability-pass-20260831
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+      - name: Repair fixture upstream state without weakening prompt gates
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify.mjs')
+          s=p.read_text()
+          old="const generated=[];\nfor(let stage=1;stage<=30;stage++){const p=blank(`JOB-PROMPT-${stage}`);if(stage===4)prepareStage4(p);const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));generated.push(record.prompt);"
+          new="function preparePromptPrerequisites(p,stage){if(stage<=1)return p;if(stage>=4)prepareStage4(p);for(let i=1;i<stage;i++){p.stages[i].status='COMPLETE';p.stages[i].gate={complete:true,blocked:false,reasons:[]};}if(stage>=3){p.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EXTERNAL_SOURCE';}return p;}\nconst generated=[];\nfor(let stage=1;stage<=30;stage++){const p=preparePromptPrerequisites(blank(`JOB-PROMPT-${stage}`),stage);const record=prompts.buildPromptRecord(stage,p,syntheticPromptOptions(stage,p));generated.push(record.prompt);"
+          if new not in s:
+              if s.count(old)!=1: raise SystemExit(f'Expected prompt-loop fixture target once; found {s.count(old)}')
+              s=s.replace(old,new)
+          old2="const pa=prompts.buildPromptRecord(2,blank('JOB-A')).prompt,pb=prompts.buildPromptRecord(2,blank('JOB-B')).prompt;"
+          new2="const pa=prompts.buildPromptRecord(2,preparePromptPrerequisites(blank('JOB-A'),2)).prompt,pb=prompts.buildPromptRecord(2,preparePromptPrerequisites(blank('JOB-B'),2)).prompt;"
+          if new2 not in s:
+              if s.count(old2)!=1: raise SystemExit(f'Expected cross-project fixture target once; found {s.count(old2)}')
+              s=s.replace(old2,new2)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/repair-prompt-fixture-prereqs.yml
+          node --check verify.mjs
+          git diff --check
+          test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A verify.mjs .github/workflows
+          git commit -m "Prepare upstream state in prompt verification fixtures"
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
