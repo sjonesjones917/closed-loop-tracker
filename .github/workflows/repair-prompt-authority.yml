@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply minimal prompt authority correction
+      - name: Apply minimal prompt authority corrections
         shell: bash
         run: |
           set -euo pipefail
@@ -33,27 +33,34 @@ jobs:
           stage1_old='"1":"Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
           stage1_new='"1":"Stage 01 is the first semantic reader of the complete human request and every accessible supplied artifact. Do not assume any prior semantic intake or extraction occurred before this stage. Perform complete human-authority intake only. This is an actual conversational intake, not a JSON-form-filling exercise.'
           if stage1_new not in text:
-              if text.count(stage1_old) != 1:
-                  raise SystemExit(f'Expected exactly one Stage 01 insertion point; found {text.count(stage1_old)}')
+              if text.count(stage1_old) != 1: raise SystemExit(f'Stage 01 insertion count {text.count(stage1_old)}')
               text=text.replace(stage1_old,stage1_new,1)
 
           stage2_old='Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'
           stage2_new='Do not stop at the first plausible source. Repeat the source-inventory search and applicability review until no new applicable controlling or correctness-relevant external source category is found. Never invent a source and do not perform Stage 03 source extraction or Stage 04 requirement compilation.'
           if stage2_new not in text:
-              if text.count(stage2_old) != 1:
-                  raise SystemExit(f'Expected exactly one Stage 02 insertion point; found {text.count(stage2_old)}')
+              if text.count(stage2_old) != 1: raise SystemExit(f'Stage 02 insertion count {text.count(stage2_old)}')
               text=text.replace(stage2_old,stage2_new,1)
 
+          stage3_old='Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE.'
+          stage3_new='Every current accepted Stage 02 source has current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE. Perform a distinct conflict/exception/saturation pass over the complete current source set. Every current Stage 02 source must receive current research coverage unless Stage 02 validly established NO_APPLICABLE_EXTERNAL_SOURCE.'
+          if stage3_new not in text:
+              if text.count(stage3_old) != 1: raise SystemExit(f'Stage 03 insertion count {text.count(stage3_old)}')
+              text=text.replace(stage3_old,stage3_new,1)
+
+          old_heading='APPLICATION OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
+          new_heading='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST — ACCOUNT FOR EVERY OBLIGATION'
+          if new_heading not in text and old_heading in text:
+              text=text.replace(old_heading,new_heading,1)
           stage4_old='Every obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
           stage4_new='APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST\\nEvery obligationId in APPLICATION OBLIGATION MANIFEST must be completely accounted.'
-          if stage4_new not in text:
-              if text.count(stage4_old) != 1:
-                  raise SystemExit(f'Expected exactly one Stage 04 insertion point; found {text.count(stage4_old)}')
+          if stage4_new not in text and stage4_old in text:
               text=text.replace(stage4_old,stage4_new,1)
 
           path.write_text(text,encoding='utf-8')
           PY
-          rm .github/workflows/repair-prompt-authority.yml
+          rm -f .github/workflows/repair-stage4-manifest.yml
+          rm -f .github/workflows/repair-prompt-authority.yml
       - name: Prove corrected prompt authority
         shell: bash
         run: |
@@ -63,17 +70,24 @@ jobs:
           node verify-stage01-intake-closure.mjs
           node verify-zero-loss-accounting.mjs
           node verify-all-stage-prompts.mjs
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-repair-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           node verify-stage-prompts-complete.mjs
           node verify-user-prompt-invariants.mjs
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
-      - name: Commit accepted correction and remove runner
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit accepted correction and remove temporary runners
         shell: bash
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add prompt-engine.js .github/workflows/repair-prompt-authority.yml
+          git add prompt-engine.js .github/workflows/repair-prompt-authority.yml .github/workflows/repair-stage4-manifest.yml
           git diff --cached --check
           git commit -m "Complete Stage 01-04 prompt authority semantics [repair-applied]"
           git push origin HEAD:fix/monotonic-zero-loss-20260831
