@@ -124,6 +124,34 @@ jobs:
               replacement=f'{stage}:[{inner}]'
               reads=reads[:match.start()]+replacement+reads[match.end():]
           schema=schema[:begin]+reads+schema[end:]
+
+          overrides_begin=schema.index('const OPERATION_CONTRACT_OVERRIDES=Object.freeze({')
+          overrides_end=schema.index('function operationContract',overrides_begin)
+          overrides=schema[overrides_begin:overrides_end]
+          operation_reads={
+            (17,'FREEZE'):['instructions','requirements','artifacts'],
+            (17,'COMPARE'):['tests'],
+            (17,'ROOT_CAUSE'):['instructions','requirements','tests','runs'],
+            (17,'REGRESSION'):['tests','runs','verification','artifacts'],
+            (17,'CORRECT'):['instructions','requirements','tests','runs','artifacts'],
+            (19,'CONFIRM_FREEZE'):['requirements','tests','artifacts'],
+            (19,'COMPARE'):['tests'],
+            (19,'REGRESSION_VERIFY'):['tests','requirements','artifacts'],
+            (19,'CONFIRM'):['requirements','tests','regressions','defects','blockers']
+          }
+          for (stage,operation),items in operation_reads.items():
+              pattern=rf'({stage}:Object\.freeze\(\{{.*?{operation}:Object\.freeze\(\{{readCollections:\[)([^\]]*)(\])'
+              matches=list(re.finditer(pattern,overrides,re.S))
+              if len(matches)!=1:
+                  raise SystemExit(f'{stage}:{operation} operation-read boundary count {len(matches)}')
+              match=matches[0]
+              inner=match.group(2).strip()
+              for item in items:
+                  if not re.search(rf'["\']{re.escape(item)}["\']',inner):
+                      inner+=((',' if inner else '')+repr(item))
+              replacement=match.group(1)+inner+match.group(3)
+              overrides=overrides[:match.start()]+replacement+overrides[match.end():]
+          schema=schema[:overrides_begin]+overrides+schema[overrides_end:]
           s.write_text(schema,encoding='utf-8')
 
           e=Path('workflow-engine.js')
