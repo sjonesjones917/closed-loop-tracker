@@ -1,0 +1,68 @@
+name: Repair full-cycle Stage 07 capability fixture
+
+on:
+  push:
+    branches:
+      - fix/zero-loss-controlled-20260831
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-full-cycle-capability-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Declare the exact external capability used by the lifecycle tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-full-cycle.mjs')
+          text=path.read_text(encoding='utf-8')
+          old="Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',CURRENT_INPUT_VERSION:'INPUT-v001'});"
+          new="Object.assign(p.job,{JOB_TITLE:'Full lifecycle proof',EXACT_USER_OBJECTIVE_VERBATIM:'Prove one complete closed-loop lifecycle.',EXPLICIT_USER_REQUIREMENTS:'The deliverable must contain the required verified content.',AVAILABLE_TOOLS:'fixture-required_capability',CURRENT_INPUT_VERSION:'INPUT-v001'});"
+          if new not in text:
+              if text.count(old)!=1:
+                  raise SystemExit(f'Expected one full-cycle project boundary; found {text.count(old)}')
+              text=text.replace(old,new,1)
+          path.write_text(text,encoding='utf-8')
+          PY
+          rm .github/workflows/repair-full-cycle-capability.yml
+      - name: Prove Stage 07 has a capable current route
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check verify-full-cycle.mjs
+          set +e
+          node verify-full-cycle.mjs > /tmp/verify-full-cycle.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/verify-full-cycle.log
+          if grep -Fq 'no capable current execution route is established for the mutated requirement' /tmp/verify-full-cycle.log; then
+            echo 'The lifecycle fixture still lacks a capable Stage 07 execution route.' >&2
+            exit 1
+          fi
+          echo "verify-full-cycle advanced beyond Stage 07 capability adjudication with status ${status}."
+      - name: Commit the accepted fixture correction and remove the runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-full-cycle.mjs .github/workflows/repair-full-cycle-capability.yml
+          git diff --cached --check
+          git commit -m 'Declare full-cycle external verification capability'
+          git push origin HEAD:fix/zero-loss-controlled-20260831
