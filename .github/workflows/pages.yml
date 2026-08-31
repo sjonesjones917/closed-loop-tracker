@@ -18,12 +18,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+      - name: Verify runtime JavaScript parses
         run: |
           set -euo pipefail
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
             node --check "$file"
           done
+      - name: Start application for human-use browser verification
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/closed-loop-http.log 2>&1 &
+          echo $! > /tmp/closed-loop-http.pid
+          for i in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 0.2
+          done
+          cat /tmp/closed-loop-http.log
+          exit 1
+      - name: Run every repository verification before merge or deploy
+        env:
+          PAGE_URL: http://127.0.0.1:4173/
+        run: |
+          set -euo pipefail
+          mapfile -t checks < <(find . -maxdepth 1 -type f -name 'verify*.mjs' ! -name 'verify-live.mjs' -printf '%f\n' | sort)
+          if [ "${#checks[@]}" -eq 0 ]; then
+            echo 'No verification scripts found.' >&2
+            exit 1
+          fi
+          printf 'Running %s verification scripts:\n' "${#checks[@]}"
+          printf '  %s\n' "${checks[@]}"
+          for check in "${checks[@]}"; do
+            echo "===== $check ====="
+            node "$check"
+          done
+      - name: Stop local application server
+        if: always()
+        run: |
+          if [ -f /tmp/closed-loop-http.pid ]; then
+            kill "$(cat /tmp/closed-loop-http.pid)" 2>/dev/null || true
+          fi
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
@@ -35,9 +70,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build static application
         run: |
+          set -euo pipefail
           rm -rf _site
           mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -45,3 +81,16 @@ jobs:
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify exact deployed bytes
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node verify-live.mjs
+      - name: Exercise deployed app through Chrome
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          node verify-human-stage-walkthrough.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          node verify-mobile-stage-action.mjs
