@@ -42,6 +42,8 @@ function savePrompt(p,stage){
   return record;
 }
 function safeValue(name){
+  if(name==='TEST_TYPE')return 'DETERMINISTIC';
+  if(name==='EXECUTION_MODE')return 'APPLICATION_DETERMINISTIC';
   if(/ARTIFACT_REQUIREMENTS/.test(name))return 'NONE';
   if(/URL_REFERENCE/.test(name))return 'https://www.w3.org/TR/WCAG22/';
   if(/SOURCE_TYPE/.test(name))return 'OFFICIAL_STANDARD';
