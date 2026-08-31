@@ -32,6 +32,7 @@ assert.deepEqual(migrated.projectData.extensionX,{x:1});
 const p=core.createBlankState('CAPTURE');
 Object.assign(p.job,{EXACT_USER_OBJECTIVE_VERBATIM:'Build the requested thing',EXPLICIT_USER_REQUIREMENTS:'Never ask me for the same project data twice',SUPPLIED_MATERIALS_INVENTORY:'intent.pdf',EXACT_DELIVERABLE_REQUESTED:'finished product',INPUT_SET_CONTENTS:'captured project requirements'});
 engine.ensureShape(p);
+for(let stage=1;stage<=3;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,satisfied:true,reasons:[]};}
 engine.recalculate(p);
 const intake=engine.intakeCoverageManifest(p),ob=engine.obligationManifest(p);
 assert(intake.unitCount>=3);
