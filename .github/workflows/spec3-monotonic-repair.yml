@@ -15,29 +15,48 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+
           p=Path('prompt-engine.js'); s=p.read_text()
           s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/54';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/55';",1)
           s=s.replace("  5:'Resolve the current job requirement set exhaustively. After each semantic correction, repeat the defect review against the resulting current requirement set until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',","  4:'APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST is the controlling application-owned representation of the APPLICATION OBLIGATION MANIFEST.',\n  5:'Resolve the current job’s requirement set exhaustively. After each semantic correction, repeat the review against the resulting requirement set from the beginning until every defect class has been resolved or is explicitly blocked; do not review only the changed rows.',",1)
           s=s.replace("'Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.'","'never ask the human to repeat, retype, summarize, resend, reopen, or reattach it when project-relevant information is already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.'",1)
           s=s.replace('every application-enumerated input unit must be classified exactly once, every materially relevant','every application-enumerated input unit must be classified exactly once and every inputId exactly once, every materially relevant',1)
-          s=s.replace("Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category.');","Stage 03 is exhaustive source research: every current accepted Stage 02 source has current research coverage. Perform a distinct conflict/exception/saturation pass and a second complete pass; Stage 03 must not complete while the latest complete pass finds a new material requirement category. Never ask the user to repeat available project facts, and never ask the user to reattach the original Stage 01 intent file solely to rediscover captured semantics.');",1)
+          old3="Stage 03 is exhaustive source research: every current Stage 02 source must have current coverage, the conflict/exception pass and second complete pass must be performed, and Stage 03 must not complete while the latest complete pass finds a new material requirement category.');"
+          new3="Stage 03 is exhaustive source research: every current accepted Stage 02 source has current research coverage. Perform a distinct conflict/exception/saturation pass and a second complete pass; Stage 03 must not complete while the latest complete pass finds a new material requirement category; never ask the user to repeat available project facts, and never ask the user to reattach the original Stage 01 intent file solely to rediscover captured semantics.');"
+          if old3 not in s: raise SystemExit('Stage 03 marker missing')
+          s=s.replace(old3,new3,1)
           s=s.replace('HUMAN COLLABORATION MODE — APPLIES TO EVERY EXTERNAL-AGENT STAGE','HUMAN COLLABORATION MODE — APPLIES TO EVERY STAGE',1)
           s=s.replace('function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||stageSpecial[stage];}','function procedureFor(stage,operation){return operationSpecial?.[stage]?.[operation]||procedures[stage];}',1)
           p.write_text(s)
 
           e=Path('workflow-engine.js'); w=e.read_text()
-          old="      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.\n      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage."
-          new="      const executionPlan=testExecutionPlan(project);\n      const missingArtifactTestIds=safe(executionPlan?.missingArtifactTestIds);\n      if(missingArtifactTestIds.length)reasons.push(`Required artifact bytes are missing or no longer application-verified for mandatory test(s): ${missingArtifactTestIds.join(', ')}.`);"
-          if old not in w: raise SystemExit('Stage 6 marker missing')
-          e.write_text(w.replace(old,new,1))
+          old_gate="      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.\n      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage."
+          new_gate="      const executionPlan=testExecutionPlan(project);\n      const missingArtifactTestIds=safe(executionPlan?.missingArtifactTestIds);\n      if(missingArtifactTestIds.length)reasons.push(`Required artifact bytes are missing or no longer application-verified for mandatory test(s): ${missingArtifactTestIds.join(', ')}.`);"
+          if old_gate not in w: raise SystemExit('Stage 06 marker missing')
+          w=w.replace(old_gate,new_gate,1)
+          if 'ACTUAL_MANDATORY_RECORDS:matrix.actual.length' not in w: raise SystemExit('Stage 12 matrix.actual defect marker missing')
+          w=w.replace('ACTUAL_MANDATORY_RECORDS:matrix.actual.length','ACTUAL_MANDATORY_RECORDS:matrix.verification.length',1)
+          e.write_text(w)
 
-          h=Path('index.html'); x=h.read_text(); x=x.replace('.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}','.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}',1); h.write_text(x)
+          sc=Path('workflow-schema.js'); ss=sc.read_text()
+          old_reads="4:['research','candidateRequirements','sources','evidenceRecords']"
+          new_reads="4:['research','candidateRequirements','sources','sourceConflicts','evidenceRecords']"
+          if old_reads not in ss: raise SystemExit('Stage 04 read contract marker missing')
+          sc.write_text(ss.replace(old_reads,new_reads,1))
+
+          h=Path('index.html'); x=h.read_text()
+          old_css='.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}'
+          if old_css not in x: raise SystemExit('prompt CSS marker missing')
+          h.write_text(x.replace(old_css,'.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}',1))
 
           v=Path('verify-complete.mjs'); z=v.read_text()
           z=z.replace("  const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);","  const p=project('JOB-BAD-REL'),stage=3; p.stages[2].status='COMPLETE'; p.stages[2].gate={complete:true,blocked:false,reasons:[]}; const pr=prompt(p,stage);",1)
           needle="engine.invalidateAcceptedResponse(p,{stage:2,rawResponseId:'RAW-REFINE',reason,operatorLabel:'VERIFY'});"
           if needle not in z: raise SystemExit('refinement invalidation fixture missing')
           z=z.replace(needle,needle+"p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};",1)
+          run_marker=" const slots=engine.reserveRunBatch(p,{stage,iterationId,count:10});"
+          if run_marker not in z: raise SystemExit('Stage 11 run fixture marker missing')
+          z=z.replace(run_marker,run_marker+"p.stages[10].status='COMPLETE';p.stages[10].gate={complete:true,blocked:false,reasons:[]};",1)
           v.write_text(z)
 
           a=Path('verify-all-stage-prompts.mjs'); q=a.read_text()
@@ -76,7 +95,7 @@ jobs:
             git add -A
             git commit -m "Strengthen prompt closure and Stage 6 byte readiness"
           else
-            git checkout -- prompt-engine.js workflow-engine.js index.html verify-complete.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs
+            git checkout -- prompt-engine.js workflow-engine.js workflow-schema.js index.html verify-complete.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs
             git add spec3-candidate-result.txt
             git commit -m "Record remaining monotonic candidate failures" || true
           fi
