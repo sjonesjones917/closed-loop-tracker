@@ -1,4 +1,4 @@
-name: Repair Stage 06 conditional Test IR fixture
+name: Repair Stage 06 ingestion fixture
 
 on:
   push:
@@ -19,26 +19,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Repair conditional Test IR fixture and prove ingestion
+      - name: Use a coherent external Stage 06 fixture and remove every temporary repair workflow
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           p=Path('verify-ingestion.mjs')
           s=p.read_text()
-          old="""    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"""
-          new="""    if(!Object.keys(fields).length){const agentField=schema.recordAgentFields(collection)[0];if(agentField)fields[agentField]=safeValue(agentField);}\n    if(collection==='tests'&&fields.EXECUTION_MODE==='APPLICATION_DETERMINISTIC'){fields.REQUIRED_CAPABILITY='CLOSED_LOOP_TEST_IR';fields.EXECUTABLE_KIND='TEST_IR';fields.EXECUTABLE_SPEC={version:'closed-loop-test-spec/1',steps:[{op:'ASSERT_EQ',value:1}]};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"""
-          if s.count(old)!=1:
-              raise SystemExit(f'Expected exactly one conditional fixture insertion point; found {s.count(old)}')
-          p.write_text(s.replace(old,new,1))
+          old="    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];\n    if(stage===4&&collection==='requirements')"
+          new="    if(stage===6&&collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TOOL';fields.ARTIFACT_REQUIREMENTS='NONE';fields.EXECUTABLE_KIND='NONE';fields.EXECUTABLE_SPEC={};fields.EXECUTABLE_INPUT_BINDINGS={};}\n    records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];\n    if(stage===4&&collection==='requirements')"
+          if new not in s:
+              if s.count(old)!=1:
+                  raise SystemExit(f'Expected one Stage 06 fixture insertion point; found {s.count(old)}')
+              s=s.replace(old,new,1)
+              p.write_text(s)
           PY
-          rm .github/workflows/repair-stage06-conditional-fixture.yml
+          rm -f .github/workflows/repair-stage06-conditional-fixture.yml .github/workflows/repair-stage06-native-fixture.yml
           node --check verify-ingestion.mjs
           node verify-ingestion.mjs
+          node verify-monotonic-pass.mjs
           git diff --check
           test "$(find .github/workflows -maxdepth 1 -type f | wc -l)" -eq 1
+          test -f .github/workflows/pages.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A verify-ingestion.mjs .github/workflows
-          git commit -m "Make Stage 06 ingestion fixture conditionally valid"
+          git commit -m "Use coherent external Stage 06 ingestion fixture"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
