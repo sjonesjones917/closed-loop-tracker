@@ -1,0 +1,93 @@
+name: Apply focused reliability gate repairs
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+          fetch-depth: 0
+      - name: Apply minimal production corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new, expected=1):
+              p=Path(path); s=p.read_text(); n=s.count(old)
+              if n != expected:
+                  raise SystemExit(f'{path}: expected {expected} occurrence(s), found {n}: {old[:100]!r}')
+              p.write_text(s.replace(old,new))
+
+          # Stage 01/04 prompt closure and one-time intake semantics.
+          replace_exact('prompt-engine.js',
+            "},stage03Research:active(state?.projectData?.research)",
+            "},originalUserEntered:state?.projectData?.userEntered||{},stage03Research:active(state?.projectData?.research)")
+          replace_exact('prompt-engine.js',
+            "Project-relevant information supplied by the human is supplied once. Stage 01 is the one-time capture boundary and accepted project meaning must be carried forward in canonical context.",
+            "Project-relevant information supplied by the human is supplied once. The user supplies project information once; Stage 01 is the one-time capture boundary and accepted project meaning must be carried forward in canonical context.")
+          replace_exact('prompt-engine.js',
+            "Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research.",
+            "Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present in current User Job Input, accepted Stage 01 capture, accepted canonical records, accessible canonical artifacts, or authorized research. Never ask the human to repeat, retype, summarize, resend, reopen, or reattach it. In ordinary operator language: never ask the user to repeat available project facts.")
+          replace_exact('prompt-engine.js','Exhaust human-authority intake before Stage 01 completion:','Exhaust the human-authority intake before Stage 01 completion:')
+          replace_exact('prompt-engine.js',
+            "assertPromptPrerequisites(stage,state);if(stage===4)assertStage4UpstreamExhausted(state);",
+            "if(stage===4)assertStage4UpstreamExhausted(state);assertPromptPrerequisites(stage,state);")
+
+          # Workflow routing/evidence defects: preserve fail-closed behavior.
+          replace_exact('workflow-engine.js',
+            "if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);\n      const unsupportedApplication=",
+            "if(unavailable.length)reasons.push(`${unavailable.length} mandatory test definition(s) have unavailable execution capability and remain blocked.`);\n      const executionPlan=testExecutionPlan(project),missingBoundArtifacts=executionPlan.items.filter(item=>mandatoryIds.has(String(item.requirementId||''))&&item.artifactIds.length>0&&!item.artifactReady);\n      if(missingBoundArtifacts.length)reasons.push(`${missingBoundArtifacts.length} mandatory test definition(s) have required exact artifact bytes that are missing or no longer application-verified.`);\n      const unsupportedApplication=")
+          replace_exact('workflow-engine.js','plans=testExecutionPlan(project).filter(','plans=testExecutionPlan(project).items.filter(')
+          replace_exact('workflow-engine.js',
+            "humanEvidence=mode==='HUMAN_INSPECTION'?recordsForCurrentScope(project,'evidenceRecords').filter(x=>x?.source==='HUMAN_OBSERVATION'&&String(x?.humanInspectionTestId||'')===testId):[]",
+            "humanEvidence=mode==='HUMAN_INSPECTION'?recordsForCurrentScope(project,'evidenceRecords').filter(x=>{const explicitSource=x?.source==='HUMAN_OBSERVATION'&&String(x?.humanInspectionTestId||'')===testId,authority=upper(recordValue(x,'AUTHORITY_TYPE')||recordValue(x,'KIND')||recordValue(x,'APPLICATION_EVIDENCE_KIND'));return explicitSource||authority==='HUMAN_OBSERVATION'||authority==='HUMAN_INSPECTION';}):[]")
+          replace_exact('workflow-engine.js',
+            "const human=humanEvidence.some(e=>e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim());",
+            "const human=humanEvidence.some(e=>{const appRecorded=e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim(),canonicalHuman=['HUMAN_OBSERVATION','HUMAN_INSPECTION'].includes(upper(recordValue(e,'AUTHORITY_TYPE')||recordValue(e,'KIND')))&&String(recordValue(e,'CONTENT')||recordValue(e,'DESCRIPTION')||'').trim();return Boolean(appRecorded||canonicalHuman);});")
+
+          # Restore approved prompt preview behavior and keep one runtime identity.
+          replace_exact('index.html',
+            '.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}',
+            '.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}')
+          idx=Path('index.html'); s=idx.read_text(); old='runtime-20260830-live-operator-60'; n=s.count(old)
+          if n != 9: raise SystemExit(f'index.html: expected 9 old build tokens, found {n}')
+          idx.write_text(s.replace(old,'runtime-20260831-reliability-61'))
+
+          replace_exact('app-core.js',"const RUNTIME_BUILD_ID='runtime-20260830-live-operator-60';","const RUNTIME_BUILD_ID='runtime-20260831-reliability-61';")
+          replace_exact('app-core.js',
+            'Nothing below is canonical until you accept the complete validated proposal.</p>',
+            'Nothing below is canonical until you accept the complete validated proposal. The proposal diff shows the current value beside the proposed value.</p>')
+          replace_exact('test-runtime.js',"const RUNTIME_BUILD_ID='runtime-20260830-live-operator-60';","const RUNTIME_BUILD_ID='runtime-20260831-reliability-61';")
+          PY
+      - name: Run focused regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node --check workflow-engine.js
+          node --check app-core.js
+          node --check test-runtime.js
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-semantic-invariant.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+      - name: Commit corrected application and remove one-time workflow
+        shell: bash
+        run: |
+          rm .github/workflows/apply-reliability-repair.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Close intake routing and evidence gate regressions'
+          git push origin HEAD:finish/live-human-gate-20260830
