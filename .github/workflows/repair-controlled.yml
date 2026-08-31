@@ -1,0 +1,44 @@
+name: Controlled repair
+on:
+  push:
+    branches: [fix/restore-monotonic-proof-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-monotonic-proof-20260831
+          fetch-depth: 0
+      - name: Correct stale upstream-gate regression fixture
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-complete.mjs')
+          text=path.read_text()
+          old="const p=project('JOB-BAD-REL'),stage=3,pr=prompt(p,stage);"
+          new="const p=project('JOB-BAD-REL'),stage=3;p.stages[1].status='COMPLETE';p.stages[2].status='COMPLETE';const pr=prompt(p,stage);"
+          count=text.count(old)
+          if count==1:
+              path.write_text(text.replace(old,new))
+          elif count==0 and new in text:
+              pass
+          else:
+              raise SystemExit(f'verify-complete.mjs: expected one exact stale fixture sentinel, found {count}')
+          PY
+          node --check verify-complete.mjs
+      - name: Commit fixture correction
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No repair commit required.'
+            exit 0
+          fi
+          git config user.name 'closed-loop-repair'
+          git config user.email 'closed-loop-repair@users.noreply.github.com'
+          git add verify-complete.mjs
+          git commit -m 'Correct Stage 03 prerequisite regression fixture'
+          git push origin HEAD:fix/restore-monotonic-proof-20260831
