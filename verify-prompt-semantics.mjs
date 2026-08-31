@@ -68,7 +68,10 @@ assert((handoff.conversationMaterials||[]).length===0,'Stage 04 creates a repeat
 
 const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('height:clamp(260px,45vh,520px)'),'Prompt box height changed.');
-assert(html.includes('.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}'),'Prompt preview/collapse sizing changed.');
+const collapsedPromptRule=html.match(/\.expandable-prompt\{([^}]*)\}/)?.[1]||'';
+const expandedPromptRule=html.match(/\.expandable-prompt\.expanded\{([^}]*)\}/)?.[1]||'';
+assert(/(?:^|;)height:280px(?:;|$)/.test(collapsedPromptRule)&&/(?:^|;)max-height:280px(?:;|$)/.test(collapsedPromptRule),'Collapsed prompt preview must remain exactly 280px.');
+assert(/(?:^|;)height:auto(?:;|$)/.test(expandedPromptRule)&&/(?:^|;)max-height:none(?:;|$)/.test(expandedPromptRule),'Expanded prompt preview must reveal the complete prompt without a height limit.');
 assert(!html.includes('#prompt-heading .expandable-prompt:not(.expanded){max-height:88px}'),'Obsolete 88px prompt-size override returned.');
 
 console.log(JSON.stringify({
