@@ -1,0 +1,46 @@
+name: Apply complete human-authority carryforward
+on:
+  push:
+    branches: [fix/full-human-authority-carryforward-20260830]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/full-human-authority-carryforward-20260830
+          fetch-depth: 0
+      - name: Preserve complete captured human authority in later prompts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          s=s.replace("const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/51';","const PROMPT_ENGINE_VERSION='closed-loop-prompt-engine/52';",1)
+          old="""  const reviewerHumanFields=new Set(['EXACT_USER_OBJECTIVE_VERBATIM','PROHIBITED_ACTIONS']);
+  const carryForwardHumanFields=new Set(['JOB_TITLE','JOB_OWNER','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','AVAILABLE_TOOLS','PROHIBITED_ACTIONS']);
+  const humanAuthority=Object.fromEntries(humanFieldNames.filter(name=>isolatedReviewer?reviewerHumanFields.has(name):(Number(stage)<=3?false:carryForwardHumanFields.has(name))).map(name=>[name,job?.[name]??null]));"""
+          new="""  const reviewerHumanFields=new Set(['EXACT_USER_OBJECTIVE_VERBATIM','PROHIBITED_ACTIONS']);
+  const humanAuthority=Object.fromEntries(humanFieldNames.filter(name=>isolatedReviewer?reviewerHumanFields.has(name):true).map(name=>[name,job?.[name]??null]));"""
+          if old not in s:
+              raise SystemExit('human authority selector not found')
+          s=s.replace(old,new,1)
+          old2="""  const fullStage01=Number(stage)<=3&&!isolatedReviewer;
+  const acceptedStage01=isolatedReviewer?{objectiveVerbatim:job.EXACT_USER_OBJECTIVE_VERBATIM??null,detailWithheld:true,withheldReason:'Independent verification receives only the current operation-authorized projection. The complete Stage 01 intake remains canonical and reusable but is not embedded when it is unnecessary to the proposition under review.'}:fullStage01?{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1)}:{objective:job.EXACT_DELIVERABLE_REQUESTED||job.EXACT_USER_OBJECTIVE_VERBATIM||null,inputVersion:job.CURRENT_INPUT_VERSION||null,capturePreservedCanonically:true,acceptedChangeIds:safe(stageOne.acceptedDataChangeIds)};"""
+          new2="""  const fullStage01=!isolatedReviewer;
+  const acceptedStage01=isolatedReviewer?{objectiveVerbatim:job.EXACT_USER_OBJECTIVE_VERBATIM??null,detailWithheld:true,withheldReason:'Independent verification receives only the current operation-authorized projection. The complete Stage 01 intake remains canonical and reusable but is not embedded when it is unnecessary to the proposition under review.'}:{capture:parseCapturedInputSet(state),agentData:stageOne.agentData||stageOne.acceptedData||{},humanData:stageOne.humanData||{},derivedData:workflow.deriveStageData(state,1),capturePreservedCanonically:true};"""
+          if old2 not in s:
+              raise SystemExit('Stage 01 carry-forward selector not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/apply-full-human-authority-carryforward.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prompt-engine.js .github/workflows/apply-full-human-authority-carryforward.yml
+          git commit -m "Carry complete captured human authority into later prompts"
+          git push origin HEAD:fix/full-human-authority-carryforward-20260830
