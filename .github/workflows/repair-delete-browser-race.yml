@@ -1,0 +1,39 @@
+name: Repair deletion browser race
+
+on:
+  push:
+    branches: [finish/live-human-gate-20260830]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: finish/live-human-gate-20260830
+          fetch-depth: 0
+      - name: Wait for the newly created project before deletion assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('verify-browser.mjs')
+          text=path.read_text(encoding='utf-8')
+          old="await click(cdp,'#new-project');await waitExpr(cdp,`Boolean(document.querySelector('#project-management')&&!document.querySelector('#project-management').open)`);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
+          new="const preDeletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);await click(cdp,'#new-project');await waitExpr(cdp,`(()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];return Boolean(id&&id!==${JSON.stringify(preDeletionJobId)}&&document.querySelector('#project-management')&&!document.querySelector('#project-management').open);})()`,12000);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
+          if text.count(old)!=1:
+              raise SystemExit(f'Expected one deletion race target, found {text.count(old)}')
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          self_path=Path('.github/workflows/repair-delete-browser-race.yml')
+          if self_path.exists(): self_path.unlink()
+          PY
+          node --check verify-browser.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add verify-browser.mjs .github/workflows
+          git commit -m "Wait for project creation before deletion regression"
+          git push origin HEAD:finish/live-human-gate-20260830
