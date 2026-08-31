@@ -47,7 +47,9 @@ jobs:
           ("  const p=project('JOB-RAW-SCOPE');\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';",
            "  const p=project('JOB-RAW-SCOPE');\n  preparePromptPrerequisites(p,17);\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';"),
           ("  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};",
-           "  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;preparePromptPrerequisites(p,stage);const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};")]
+           "  let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;preparePromptPrerequisites(p,stage);const pr={...prompts.buildPromptRecord(stage,p,{operation:'EXECUTE_RUN',scope:{runId:'RUN-OP-1',contextId:'CTX-OP-1'}}),generatedAt:new Date().toISOString()};"),
+          ("if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='STAGE_OPERATION_FIELD_VIOLATION'))throw new Error('EXECUTE_RUN accepted VERIFY stageData.');negativeCount++;",
+           "if(prepared.validation.valid||!prepared.validation.issues.some(i=>i.code==='FIELD_OWNERSHIP_VIOLATION'))throw new Error('EXECUTE_RUN accepted application-owned VERIFY stageData.');negativeCount++;")]
           for old,new in replacements:
               if new in s: continue
               if s.count(old)!=1: raise SystemExit(f'Expected fixture target once; found {s.count(old)} for {old[:70]}')
