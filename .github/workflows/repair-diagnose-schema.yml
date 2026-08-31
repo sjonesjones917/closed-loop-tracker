@@ -1,4 +1,4 @@
-name: Capture schema gate failure
+name: Repair deterministic project v2 migration
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  diagnose:
+  repair:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,32 +18,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Capture exact schema gate
+      - name: Repair /2 to /3 migration and remove diagnostics
         shell: bash
         run: |
-          set +e
-          : > .repair-schema-diagnostic.txt
-          run_one() {
-            printf '\n===== %s =====\n' "$1" >> .repair-schema-diagnostic.txt
-            shift
-            "$@" >> .repair-schema-diagnostic.txt 2>&1
-            rc=$?
-            printf 'EXIT=%s\n' "$rc" >> .repair-schema-diagnostic.txt
-            return $rc
-          }
-          run_one build-test-project node build-test-project.mjs || true
-          run_one test-project-diff git diff --exit-code -- TEST_PROJECT.json || true
-          run_one verify node verify.mjs || true
-          run_one verify-spec3 node verify-spec3-contract.mjs || true
-          run_one verify-v3 node verify-v3-contract.mjs || true
-          run_one html-count bash -lc 'test "$(find . -maxdepth 1 -type f -name "*.html" | wc -l)" -eq 1' || true
-          run_one no-app-js bash -lc 'test ! -f app.js' || true
-          run_one no-repair-root bash -lc 'test -z "$(find . -maxdepth 1 -type f -name ".repair-*" ! -name ".repair-schema-diagnostic.txt" -print -quit)"' || true
-          run_one no-document-write bash -lc '! grep -R "document.write" --include="*.js" --include="*.html" .' || true
-          run_one no-mutation-observer bash -lc '! grep -R "MutationObserver" --include="*.js" --include="*.html" .' || true
-          run_one no-stage31 bash -lc '! grep -REi "human-project/31|Stage 31|Operation 31" --include="*.js" --include="*.html" --include="TEST_PROJECT.json" .' || true
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workbook.js')
+          s=p.read_text()
+          old="""  if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
+          new="""  const sourceSchema=String(p.schema||'');\n  if(!['human-project/30','closed-loop-project/2'].includes(sourceSchema))throw new Error(`Unsupported project schema: ${sourceSchema||'MISSING'}`);\n  const migrated=JSON.parse(JSON.stringify(p));\n  const original=JSON.parse(JSON.stringify(p));\n  migrated.schema=PROJECT_SCHEMA;migrated.workflow=WORKFLOW_ID;migrated.stageCount=STAGE_COUNT;migrated.revision=Number.isInteger(migrated.revision)?migrated.revision:0;"""
+          if new not in s:
+              if s.count(old)!=1: raise SystemExit('migration entry target not unique')
+              s=s.replace(old,new,1)
+          s=s.replace("{kind:'LEGACY_STAGE_RECORDS',schema:'human-project/30',records:","{kind:'LEGACY_STAGE_RECORDS',schema:sourceSchema,records:",1)
+          s=s.replace("{kind:'MIGRATION_SOURCE',schema:'human-project/30',preservedAt:","{kind:'MIGRATION_SOURCE',schema:sourceSchema,preservedAt:",1)
+          p.write_text(s)
+          PY
+          rm -f .repair-schema-diagnostic.txt
+          rm -f .github/workflows/repair-diagnose-schema.yml
+          node --check workbook.js
+          node verify-spec3-contract.mjs
+          git diff --check
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add .repair-schema-diagnostic.txt
-          git commit -m "Record exact schema gate diagnostic"
+          git add -A workbook.js .repair-schema-diagnostic.txt .github/workflows/repair-diagnose-schema.yml
+          git commit -m "Support deterministic project v2 migration"
           git push origin HEAD:fix/monotonic-reliability-pass-20260831
