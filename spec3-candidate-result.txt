@@ -13,7 +13,7 @@ file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-pr
     for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
                                                                                                ^
 
-Error: Stage 5 COMPLETE missing required read collection candidateRequirements.
+Error: Stage 6 COMPLETE missing required read collection sources.
     at file:///home/runner/work/closed-loop-tracker/closed-loop-tracker/verify-stage-prompts-complete.mjs:50:96
     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
