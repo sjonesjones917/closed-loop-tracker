@@ -98,14 +98,13 @@ jobs:
           node verify-stage01-intake-closure.mjs
           node verify-all-stage-prompts.mjs
           node verify-stage-prompts-complete.mjs
-      - name: Commit runtime repairs and remove one-time scaffolding
+      - name: Commit runtime repairs
         shell: bash
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm -f .github/workflows/apply-stage01-conversation.yml .github/apply-stage01-conversation.py .github/apply-stage01-followups.py
-          git rm -f .github/workflows/apply-verify-op01.yml .github/apply-verify-op01.py AUTHORIZED_OPERATION_01.txt
-          git add prompt-engine.js workflow-schema.js workflow-engine.js index.html verify-stage01-conversation-first.mjs verify-stage01-intake-closure.mjs verify-human-stage-walkthrough.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-live.mjs .github/workflows/pages.yml
+          git rm -f .github/apply-stage01-conversation.py .github/apply-stage01-followups.py .github/apply-verify-op01.py AUTHORIZED_OPERATION_01.txt
+          git add prompt-engine.js workflow-schema.js workflow-engine.js index.html verify-stage01-conversation-first.mjs verify-stage01-intake-closure.mjs verify-human-stage-walkthrough.mjs verify-all-stage-prompts.mjs verify-stage-prompts-complete.mjs verify-live.mjs
           git commit -m "Restore complete human-facing prompt workflow"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
