@@ -14,7 +14,7 @@ jobs:
           ref: fix/restore-full-acceptance-20260831
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
-      - name: Correct the earliest full-cycle and Stage 10 authority failures
+      - name: Correct the earliest full-cycle runtime and authority failures
         shell: bash
         run: |
           python3 - <<'PY'
@@ -46,6 +46,10 @@ jobs:
               (
                 "case 10:requireAccepted();requireCount('iterations',1);requireCount('candidateFreezes',1);break;",
                 "case 10:requireCount('iterations',1);requireCount('candidateFreezes',1);break;"
+              ),
+              (
+                "ACTUAL_MANDATORY_RECORDS:matrix.actual.length",
+                "ACTUAL_MANDATORY_RECORDS:matrix.verification.length"
               )
             ]
           }
@@ -68,5 +72,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-engine.js verify-full-cycle.mjs .github/workflows/targeted-cycle-fixture-repair.yml
-          git commit -m "Make candidate freeze completion application-derived"
+          git commit -m "Make candidate freeze application-derived and fix Stage 12 count"
           git push origin HEAD:fix/restore-full-acceptance-20260831
