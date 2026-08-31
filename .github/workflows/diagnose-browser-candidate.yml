@@ -42,6 +42,9 @@ jobs:
           old="await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`,8000);await positionNode(cdp,'#proposal-heading','top');"
           new="await waitExpr(cdp,`Boolean(document.querySelector('#proposal-heading'))`,8000);await evalValue(cdp,`(()=>{let spacer=document.querySelector('#browser-review-test-spacer');if(!spacer){spacer=document.createElement('div');spacer.id='browser-review-test-spacer';spacer.style.height='1200px';document.querySelector('#proposal-heading')?.after(spacer);}return true;})()`);await positionNode(cdp,'#proposal-heading','top');"
           assert old in s; s=s.replace(old,new,1)
+          old="await click(cdp,'#new-project');await waitExpr(cdp,`Boolean(document.querySelector('#project-management')&&!document.querySelector('#project-management').open)`);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
+          new="const beforeDeletionCreateId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);await click(cdp,'#new-project');await waitExpr(cdp,`(()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];return Boolean(id&&id!==${JSON.stringify(beforeDeletionCreateId)}&&document.querySelector('#project-management')&&!document.querySelector('#project-management').open);})()`,12000);\n const deletionJobId=await evalValue(cdp,`document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0]`);"
+          assert old in s; s=s.replace(old,new,1)
           old="await fill(cdp,'#delete-project-confirmation',deletionJobId);await waitExpr(cdp,`document.querySelector('#delete-project')?.disabled===false`);"
           new="await fill(cdp,'#delete-project-confirmation',deletionJobId);await sleep(250);const deleteEnableDiagnostic=await evalValue(cdp,`(()=>{const input=document.querySelector('#delete-project-confirmation'),button=document.querySelector('#delete-project');return {inputExists:Boolean(input),inputValue:input?.value||null,inputDisabled:input?.disabled??null,buttonExists:Boolean(button),buttonDisabled:button?.disabled??null,currentSummary:document.querySelector('#current-project-summary')?.textContent||null,detailsOpen:document.querySelector('#project-management')?.open??null};})()`);assert(deleteEnableDiagnostic?.buttonDisabled===false,`Exact JOB_ID did not re-enable deletion after stale rejection: ${JSON.stringify(deleteEnableDiagnostic)}`);"
           assert old in s; s=s.replace(old,new,1); p.write_text(s)
@@ -71,4 +74,4 @@ jobs:
           git commit -m 'Capture exact browser verification failure [diagnostic-output]' || true
           git push origin HEAD:fix/live-stage01-context-binding-20260831
           exit "$rc"
-# diagnostic trigger 4
+# diagnostic trigger 5
