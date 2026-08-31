@@ -104,6 +104,10 @@ jobs:
               (
                 "  const unexplained=comparisons.filter(r=>truth(recordValue(r,'CORRECTNESS_AFFECTING_VARIANCE'))&&!truth(recordValue(r,'AUTHORIZED_VARIANCE'))),ops=acceptedOperationSet(project,stage,{iterationId}),requiredOps=stage===17?['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']:stage===19?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[],reasons=[];",
                 "  const unexplained=comparisons.filter(r=>truth(recordValue(r,'CORRECTNESS_AFFECTING_VARIANCE'))&&!truth(recordValue(r,'AUTHORIZED_VARIANCE'))),ops=acceptedOperationSet(project,stage,{iterationId}),requiredOps=stage===17?['FREEZE','EXECUTE_RUN','VERIFY','COMPARE',...(defects.length?['ROOT_CAUSE']:[]),'REGRESSION',...(defects.length?['CORRECT']:[])]:stage===19?['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']:[],reasons=[];"
+              ),
+              (
+                ",rendered=!adjudicationEmpty(recordValue(record,'RENDERING_OPENING_EVIDENCE')),observations=upper(recordValue(record,'OBSERVATIONS'));if(defectId)",
+                ",rendered=!adjudicationEmpty(recordValue(record,'RENDERING_OPENING_EVIDENCE')),coverage=representationInspectionCoverage(project),detail=coverage.details.find(item=>item.artifactId===artifactId),observations=upper(detail?.observation||'');if(!coverage.complete)reasons.push(...coverage.reasons);if(defectId)"
               )
             ]
           }
@@ -127,5 +131,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-schema.js workflow-engine.js verify-full-cycle.mjs .github/workflows/targeted-cycle-fixture-repair.yml
-          git commit -m "Derive Stage 17 no-defect operations and prove strict representation coverage"
+          git commit -m "Derive Stage 17 no-defect operations and unify Stage 25 coverage"
           git push origin HEAD:fix/restore-full-acceptance-20260831
