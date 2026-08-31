@@ -16,14 +16,25 @@ const server=http.createServer((req,res)=>{
   res.end(fs.readFileSync(absolute));
 });
 await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve).once('error',reject));
-const remotePort=9800+Math.floor(Math.random()*500),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
-const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${remotePort}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+const profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
+let browserStderr='';
+const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+child.stderr?.on('data',chunk=>{browserStderr=(browserStderr+String(chunk)).slice(-16000);});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function poll(fn,timeout=20000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
+async function poll(fn,timeout=30000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
 async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
-let ws;
+let ws,remotePort;
 try{
-  await poll(()=>getJson(`http://127.0.0.1:${remotePort}/json/version`));
+  const devToolsPortFile=path.join(profile,'DevToolsActivePort');
+  remotePort=await poll(async()=>{
+    if(child.exitCode!==null)throw new Error(`Chrome exited before opening DevTools (exit ${child.exitCode}). ${browserStderr}`);
+    if(!fs.existsSync(devToolsPortFile))throw new Error('Chrome has not written DevToolsActivePort yet.');
+    const [rawPort]=fs.readFileSync(devToolsPortFile,'utf8').split(/\r?\n/);
+    const port=Number(rawPort);
+    if(!Number.isInteger(port)||port<1||port>65535)throw new Error(`Chrome wrote an invalid DevTools port: ${rawPort}`);
+    await getJson(`http://127.0.0.1:${port}/json/version`);
+    return port;
+  });
   const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});
   ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
   let seq=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}};
