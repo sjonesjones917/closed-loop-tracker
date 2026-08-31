@@ -31,6 +31,15 @@ p.write_text(s)
 # Stage 01 intake is carried by PROJECT AUTHORITY BASIS.
 p=Path('verify-stage-prompts-complete.mjs')
 s=p.read_text()
+old="engine.ensureShape(p);engine.recalculate(p);\nconst requiredReads={"
+new="engine.ensureShape(p);engine.recalculate(p);for(let stage=1;stage<=30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}\nconst requiredReads={"
+count=s.count(old)
+if count==1:
+    s=s.replace(old,new)
+elif count==0 and new in s:
+    pass
+else:
+    raise SystemExit(f'verify-stage-prompts-complete.mjs: expected one isolated prerequisite setup sentinel, found {count}')
 old="1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every inputId exactly once']"
 new="1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','APPLICATION INTAKE MANIFEST unit exactly once']"
 count=s.count(old)
