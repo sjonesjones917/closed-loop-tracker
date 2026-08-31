@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Correct full-cycle execution route and reviewer-context fixtures
+      - name: Correct full-cycle route, reviewer-context, and authority fixtures
         shell: bash
         run: |
           set -euo pipefail
@@ -28,7 +28,9 @@ jobs:
             ("overrides:{TEST_TYPE:'MEANING',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.'",
              "overrides:{TEST_TYPE:'MEANING',EXECUTION_MODE:'INDEPENDENT_AGENT_REVIEW',REQUIRED_CAPABILITY:'INDEPENDENT_REVIEW',INPUTS:'Product content',TOOLS:'Independent evaluator',PROCEDURE:'Compare delivered meaning with the requirement and evidence.'"),
             ("data(9,{records:{preflightRecords:[recordProposal(schema,'preflightRecords'",
-             "const preflightContext=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'PREFLIGHT-REVIEW-CONTEXT-1',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'}),preflightContextId=engine.recordId(preflightContext,'freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:[recordProposal(schema,'preflightRecords'")
+             "const preflightContext=engine.registerFreshContext(p,{stage:9,externalContextIdentifier:'PREFLIGHT-REVIEW-CONTEXT-1',operatorLabel:'FULL_CYCLE',purpose:'REVIEWER'}),preflightContextId=engine.recordId(preflightContext,'freshContexts');data(9,{scope:{contextId:preflightContextId},records:{preflightRecords:[recordProposal(schema,'preflightRecords'"),
+            ("data(10,{stageData:{HASHES_RECORDED_WHERE_PRACTICAL:'TRUE',CHANGES_ALLOWED_DURING_BATCH:'NONE'}});engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE'});",
+             "engine.freezeCandidate(p,{stage:10,artifactIds:['ARTIFACT-CANDIDATE'],operatorLabel:'FULL_CYCLE'});")
           ]
           for old,new in repairs:
               if new in text: continue
