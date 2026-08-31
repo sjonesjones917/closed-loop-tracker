@@ -52,6 +52,10 @@ for(const required of [
 ])assert.ok(workflow.includes(required),`Controlling workflow is missing required proof: ${required}`);
 assert.match(workflow,/if:\s*github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/,'Deployment must be limited to main pushes.');
 assert.ok(workflow.includes('git diff --exit-code -- TEST_PROJECT.json'),'Generated test state must equal the committed canonical fixture.');
+assert.match(workflow,/publish-status:[\s\S]*needs:\s*\[test, deploy, verify-live\]/,'Acceptance publication must depend on source proof, deployment, and deployed live proof.');
+assert.ok(workflow.includes('test "$TEST_RESULT" = success'),'Acceptance publication must fail closed unless the test job succeeded.');
+assert.ok(workflow.includes('test "$DEPLOY_RESULT" = success'),'Acceptance publication must fail closed unless deployment succeeded.');
+assert.ok(workflow.includes('test "$LIVE_RESULT" = success'),'Acceptance publication must fail closed unless deployed live verification succeeded.');
 
 for(const required of ['closed-loop-project/3','closed-loop-stage-response/3','closed-loop-test-spec/1','closed-loop-verification-package/1','exactDeployedBytes:true'])assert.ok(live.includes(required),`Live verifier is missing ${required}.`);
 assert.ok(!live.includes("responseSchema:'closed-loop-stage-response/2'"),'Live verification must not certify the obsolete /2 response contract.');
@@ -67,5 +71,6 @@ console.log(JSON.stringify({
   promptBoxBaselinePreserved:true,
   oneRuntimeBuildIdentity:true,
   controllingDeploymentProofPreserved:true,
+  acceptancePublicationFailClosed:true,
   liveV3ByteVerificationPreserved:true
 },null,2));
