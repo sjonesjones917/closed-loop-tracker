@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -f .github/apply-reconcile.py .github/workflows/apply-reconcile.yml .github/workflows/apply-preflight.yml .github/apply-preflight.py
-          git show 92a87ab2947c159227b7c73d6c30de890a6fb774:.github/workflows/pages.yml > .github/workflows/pages.yml
+          git show 1fb354e024d217ed199ab70eb205f883239fbb90:.github/workflows/pages.yml > .github/workflows/pages.yml
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add workflow-engine.js prompt-engine.js workflow-schema.js index.html app-core.js test-runtime.js .github
