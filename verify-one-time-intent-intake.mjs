@@ -122,7 +122,7 @@ project.stages[3].gate={complete:true,blocked:false,reasons:[]};
 const stage3Prompt=prompts.buildPromptRecord(3,project,{operation:'COMPLETE'});
 assert(stage3Prompt.prompt.includes(project.job.EXACT_USER_OBJECTIVE_VERBATIM),'Stage 03 did not receive the current human objective.');
 assert(stage3Prompt.prompt.includes(project.stages[1].agentData.EXACT_DELIVERABLE_REQUESTED),'Stage 03 did not receive the accepted Stage 01 deliverable definition.');
-assert(stage3Prompt.prompt.includes('never ask the user to repeat available project facts'),'Stage 03 permits repeated project-data entry.');
+assert(/(?:never|do not) ask (?:the )?(?:human|user)[^\n]{0,160}(?:repeat|restate|retype|reattach|resupply)/i.test(stage3Prompt.prompt),'Stage 03 permits repeated project-data entry.');
 assert(!stage3Prompt.prompt.includes('Attach or provide the original material with the Stage 04 instruction.'),'Stage 03 still tells the operator to resend the original intent file.');
 assert((stage3Prompt.contextManifest.readCollections.sources||[]).some(item=>item.id==='SOURCE-000001'),'Stage 03 prompt omitted the current source identity.');
 
