@@ -9,7 +9,9 @@ const runtime=read('./test-runtime.js');
 const index=read('./index.html');
 const workflow=read('./.github/workflows/pages.yml');
 const live=read('./verify-live.mjs');
+const workflowFiles=fs.readdirSync(new URL('./.github/workflows/',import.meta.url)).filter(name=>/\.ya?ml$/i.test(name));
 
+assert.deepEqual(workflowFiles,['pages.yml'],'One-time repair workflows must be removed before the candidate can be accepted.');
 assert.ok(app.includes('Independent external sources only.'),'Stage 02 operator UI must state the independent-external-source boundary explicitly.');
 assert.ok(prompt.includes('Research only the current accepted Stage 02 independent external source set'),'Stage 03 prompt must bind research to the complete current accepted Stage 02 source set.');
 assert.ok(prompt.includes('Resolve the current job’s requirement set exhaustively'),'Stage 05 prompt must require exhaustive resolution of the current requirement set.');
@@ -62,6 +64,7 @@ assert.ok(!live.includes("responseSchema:'closed-loop-stage-response/2'"),'Live 
 
 console.log(JSON.stringify({
   monotonicCandidateRegression:true,
+  oneTimeRepairWorkflowsRemoved:true,
   stage02OperatorBoundaryPreserved:true,
   stage03SourceBoundaryPreserved:true,
   stage04CurrentInputPreserved:true,
