@@ -41,7 +41,7 @@ jobs:
               raise SystemExit('Stage 21 prompt-procedure boundary was not found.')
           value_start=start+len(marker)
           procedure=json.loads(prompt_source[value_start:end])
-          addition=' Generate and return the actual output bytes for every required finished-product artifact whenever the executing environment can create them. Preserve the exact output-file inventory, application-verifiable byte identity, hashes from transferred bytes, baseline lineage, and production-context relationship. A prose description, filename, path, code block, or hash claim is not a substitute for the actual finished-product bytes.'
+          addition=' Use only approved baseline materials in the fresh production context. Generate and return the actual output bytes for every required finished-product artifact whenever the executing environment can create them. Preserve the exact output-file inventory, application-verifiable byte identity, hashes from transferred bytes, baseline lineage, and production-context relationship. A prose description, filename, path, code block, or hash claim is not a substitute for the actual finished-product bytes.'
           if 'actual output bytes' not in procedure:
               procedure=procedure+addition
           prompt_source=prompt_source[:value_start]+json.dumps(procedure,ensure_ascii=False)+prompt_source[end:]
@@ -82,4 +82,4 @@ jobs:
           git commit -m "Restore Stage 01 human conversation and required file intake"
           git push origin HEAD:fix/complete-closed-loop-spec-20260831
 
-# Stage 21 now requires the finished product's actual bytes, exact inventory, hashes, and lineage.
+# Stage 21 requires the actual finished-product bytes and only approved baseline materials.
