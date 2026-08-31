@@ -1,0 +1,47 @@
+name: Repair human evidence authority
+on:
+  push:
+    branches: [fix/monotonic-zero-loss-20260831]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-zero-loss-20260831
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correct shared human-evidence sufficiency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('workflow-engine.js')
+          text=p.read_text(encoding='utf-8')
+          old="humanEvidence=mode==='HUMAN_INSPECTION'?recordsForCurrentScope(project,'evidenceRecords').filter(x=>x?.source==='HUMAN_OBSERVATION'&&String(x?.humanInspectionTestId||'')===testId):[]"
+          new="humanEvidence=mode==='HUMAN_INSPECTION'?[...new Map([...referencedEvidence.filter(x=>upper(recordValue(x,'AUTHORITY_TYPE'))==='HUMAN_OBSERVATION'),...recordsForCurrentScope(project,'evidenceRecords').filter(x=>x?.source==='HUMAN_OBSERVATION'&&String(x?.humanInspectionTestId||'')===testId)].map(x=>[recordId(x,'evidenceRecords'),x])).values()]:[]"
+          if new not in text:
+              if text.count(old)!=1: raise SystemExit(f'humanEvidence selector count {text.count(old)}')
+              text=text.replace(old,new,1)
+          old2="const human=humanEvidence.some(e=>e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim())"
+          new2="const human=humanEvidence.some(e=>((e?.source==='HUMAN_OBSERVATION'&&String(e?.humanAuthority?.identityAssurance||'')==='SELF_ASSERTED'&&String(recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim())||(upper(recordValue(e,'AUTHORITY_TYPE'))==='HUMAN_OBSERVATION'&&String(recordValue(e,'CONTENT')||recordValue(e,'APPLICATION_EVIDENCE_CONTENT')||'').trim())))"
+          if new2 not in text:
+              if text.count(old2)!=1: raise SystemExit(f'human evidence authority predicate count {text.count(old2)}')
+              text=text.replace(old2,new2,1)
+          p.write_text(text,encoding='utf-8')
+          PY
+          node --check workflow-engine.js
+          node verify-semantic-invariant.mjs
+          rm .github/workflows/repair-human-evidence-authority.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js .github/workflows/repair-human-evidence-authority.yml
+          git diff --cached --check
+          git commit -m "Accept canonical human-owned inspection evidence"
+          git push origin HEAD:fix/monotonic-zero-loss-20260831
