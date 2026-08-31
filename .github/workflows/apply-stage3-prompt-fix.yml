@@ -1,0 +1,59 @@
+name: Apply Stage 03 source-boundary prompt correction
+
+on:
+  push:
+    branches: [fix/monotonic-reliability-pass-20260831]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/monotonic-reliability-pass-20260831
+          fetch-depth: 0
+
+      - name: Correct the earliest missing Stage 03 prompt boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('workbook.js')
+          source=path.read_text()
+          old="'Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from the accepted external source set while preserving each source role.'"
+          new="'Research only the current accepted Stage 02 independent external source set. Extract every material fact, requirement, restriction, exception, condition, dependency, recommendation, and evidentiary constraint from that source set while preserving each source role.'"
+          if new not in source:
+              count=source.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one Stage 03 result boundary, found {count}')
+              path.write_text(source.replace(old,new))
+          PY
+          node build-test-project.mjs
+
+      - name: Prove Stage 03 and downstream prompt behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check workbook.js
+          node verify-monotonic-pass.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+
+      - name: Commit the correction and remove this one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-stage3-prompt-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Restore the Stage 03 independent-source prompt boundary'
+          git push origin HEAD:fix/monotonic-reliability-pass-20260831
