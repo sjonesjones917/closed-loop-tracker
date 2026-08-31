@@ -1,4 +1,4 @@
-name: Apply scoped clarification fixture repair
+name: Apply Stage 06 artifact-readiness repair
 on:
   push:
     branches: [fix/restore-controlling-verification-20260831b]
@@ -15,46 +15,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply minimal ingestion and fixture repair
+      - name: Wire existing execution-plan custody into Stage 06
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('verify-ingestion.mjs'); s=p.read_text()
-          replacements=[
-            ("p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;","p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const request=p.projectData.humanInputRequests.at(-1);p=ingestion.answerHumanInput(p,{[request.requestId]:'Exact run-specific answer'},{operator:'VERIFY'}).project;"),
-            ("const p=project('JOB-RAW-SCOPE');\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';","const p=project('JOB-RAW-SCOPE');\n  for(let n=1;n<17;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}\n  p.job.CURRENT_ITERATION='ITERATION-SCOPE-001';"),
-            ("let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;const pr={...prompts.buildPromptRecord(stage,p,","let p=project('JOB-NEG-OPERATION-STAGEDATA'),stage=17;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr={...prompts.buildPromptRecord(stage,p,"),
-            ("let p=project('JOB-NEG-RESERVED-TEMPKEY'),stage=21;p.job.CURRENT_BASELINE_ID","let p=project('JOB-NEG-RESERVED-TEMPKEY'),stage=21;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}p.job.CURRENT_BASELINE_ID"),
-            ("let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';p.job.CURRENT_BASELINE_ID","let p=project('JOB-NEG-COMPLETED-TARGET'),stage=21,productId='PRODUCT-000001';for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}p.job.CURRENT_BASELINE_ID"),
-            ("let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';p.projectData.runs.push","let p=project('JOB-NEG-TARGET-SCOPE'),stage=11,runId='RUN-SCOPE-B';for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}p.projectData.runs.push"),
-            ("const p=project('JOB-UNPERSISTED-PROMPT'),stage=2,pr=prompts.buildPromptRecord(stage,p)","const p=project('JOB-UNPERSISTED-PROMPT'),stage=2;p.stages[1].status='COMPLETE';p.stages[1].gate={complete:true,blocked:false,reasons:[]};const pr=prompts.buildPromptRecord(stage,p)"),
-            ("const p=project('JOB-READABLE-CLARIFICATION'),stage=3,pr=savePrompt(p,stage)","const p=project('JOB-READABLE-CLARIFICATION'),stage=3;for(let n=1;n<stage;n++){p.stages[n].status='COMPLETE';p.stages[n].gate={complete:true,blocked:false,reasons:[]};}const pr=savePrompt(p,stage)"),
-            ("fields.ARTIFACT_REQUIREMENTS='fixture.js';","fields.ARTIFACT_REQUIREMENTS='fixture.js';\n  fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';")
-          ]
-          for old,new in replacements:
-              if old not in s: raise SystemExit('expected fixture target not found: '+old[:80])
-              s=s.replace(old,new,1)
-          p.write_text(s)
-
-          p=Path('response-ingestion.js'); s=p.read_text()
-          old="if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));\n      else if(!allowedStageData.has(name))issues.push(issue('STAGE_OPERATION_FIELD_VIOLATION',path,`${name} is not writable by operation ${expectedOperation}.`));"
-          new="if(!schema.authorizeMutation({fieldDefinition:definition,actor:'AGENT',mutationType:'RESPONSE_INGESTION'}).authorized)issues.push(issue('FIELD_OWNERSHIP_VIOLATION',path,`${name} is owned by ${definition.producer}, not the external agent.`));\n      if(!allowedStageData.has(name))issues.push(issue('STAGE_OPERATION_FIELD_VIOLATION',path,`${name} is not writable by operation ${expectedOperation}.`));"
-          if old not in s: raise SystemExit('ingestion authority/operation target not found')
-          s=s.replace(old,new,1)
-          marker="    // Stage 06 defines tests before candidate/product bytes necessarily exist.\n    // Artifact availability is execution readiness owned by testExecutionPlan()/workflow gates.\n    // Explicit current artifactId bindings are still validated above; future CURRENT_PRODUCT/CURRENT_SCOPE bindings stay declarative until execution."
-          check="    if(collection==='tests'){const requirement=String(record?.fields?.ARTIFACT_REQUIREMENTS||'').trim(),namedArtifactRequired=Boolean(requirement&&!['NONE','NOT APPLICABLE','N/A'].includes(upper(requirement)));if(namedArtifactRequired){const backed=safe(record.evidenceRefs).some(ref=>{const entry=evidenceIndex.get(String(ref)),attachmentRef=entry?.evidence?.attachmentRef;if(attachmentRef?.tempKey)return attachmentIndex.has(String(attachmentRef.tempKey));if(attachmentRef?.recordId){const artifact=workflow.records(project,'artifacts',{active:true}).find(item=>workflow.recordId(item,'artifacts')===String(attachmentRef.recordId));return Boolean(artifact&&upper(workflow.recordValue(artifact,'AVAILABILITY'))==='BYTES_PERSISTED_AND_VERIFIED');}return false;});if(!backed)issues.push(issue('MISSING_REQUIRED_TEST_ARTIFACT',`${path}/evidenceRefs`,`Test artifact requirement ${requirement} is not backed by application-verified artifact bytes.`));}}\n    // Future CURRENT_PRODUCT/CURRENT_SCOPE Test IR bindings may remain declarative until their product bytes exist; explicit named artifact requirements require verified custody now."
-          if marker not in s: raise SystemExit('test artifact custody marker not found')
-          p.write_text(s.replace(marker,check,1))
+          p=Path('workflow-engine.js')
+          s=p.read_text()
+          old="""      const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!applicationTestSupported(test));
+      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
+      // Stage 06 proves the verification definition is complete, not that future execution inputs already exist.
+      // Exact byte readiness remains fail-closed in testExecutionPlan() at the execution stage.
+      break;"""
+          new="""      const unsupportedApplication=mandatoryTests.filter(test=>upper(recordValue(test,'EXECUTION_MODE'))==='APPLICATION_DETERMINISTIC'&&!applicationTestSupported(test));
+      if(unsupportedApplication.length)reasons.push(`${unsupportedApplication.length} mandatory test definition(s) claim APPLICATION_DETERMINISTIC without a registered application-native executor.`);
+      const mandatoryTestIds=new Set(mandatoryTests.map(test=>recordId(test,'tests'))),custodyFailures=testExecutionPlan(project).items.filter(item=>mandatoryTestIds.has(item.testId)&&item.artifactIds.length>0&&!item.artifactReady);
+      if(custodyFailures.length)reasons.push(`${custodyFailures.length} mandatory test definition(s) have required exact artifact bytes missing or no longer application-verified.`);
+      // Future artifact identities may remain declarative before they exist, but bytes already bound as current test inputs must remain application-verified.
+      break;"""
+          if old not in s:
+              raise SystemExit('Stage 06 gate target not found')
+          p.write_text(s.replace(old,new,1))
           PY
-      - name: Syntax and targeted regression
+      - name: Run regression and downstream complete-contract suite
         run: |
-          node --check response-ingestion.js
-          node --check verify-ingestion.mjs
-          node verify-ingestion.mjs
-      - name: Commit minimal correction
+          node --check workflow-engine.js
+          node verify-complete.mjs
+      - name: Commit minimal production correction
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add response-ingestion.js verify-ingestion.mjs
-          git commit -m "Enforce operation scope and byte-backed test artifacts"
+          git add workflow-engine.js
+          git commit -m "Fail Stage 06 closed when bound test bytes are lost"
           git push origin HEAD:fix/restore-controlling-verification-20260831b
