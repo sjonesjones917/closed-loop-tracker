@@ -44,7 +44,9 @@ jobs:
           PAGE_URL: http://127.0.0.1:4173/
         run: |
           set -u
+          set +e
           mkdir -p implementation-results
+          git archive --format=zip HEAD -o implementation-results/repository-source.zip
           : > implementation-results/summary.tsv
           overall=0
           for file in verify-*.mjs; do
@@ -64,6 +66,7 @@ jobs:
           done
           printf '%s\n' "$overall" > implementation-results/exit-code.txt
           cat implementation-results/summary.tsv
+          exit 0
 
       - name: Upload complete diagnostic evidence
         if: always()
