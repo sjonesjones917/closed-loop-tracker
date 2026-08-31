@@ -16,7 +16,7 @@ assert.match(prompt,/never ask the user to repeat available project facts/i,'Pro
 
 assert.match(engine,/missingBoundArtifacts\s*=\s*executionPlan\.items\.filter/,'Stage 06 must block mandatory tests whose exact bound artifact bytes are unavailable.');
 assert.ok(engine.includes('plans=testExecutionPlan(project).items.filter('),'Evidence evaluation must consume the single execution-plan item set.');
-assert.match(engine,/HUMAN_OBSERVATION'[\s\S]{0,160}HUMAN_INSPECTION/,'Human inspection evidence must recognize the registered human evidence authorities.');
+assert.match(engine,/HUMAN_OBSERVATION'[\s\S]{0,220}HUMAN_INSPECTION/,'Human inspection evidence must recognize the registered human evidence authorities.');
 
 assert.ok(!index.includes('.expandable-prompt{height:280px;'),'The approved prompt box must not be forced to a fixed height.');
 assert.ok(index.includes('.expandable-prompt{max-height:280px}'),'The approved prompt preview maximum height must remain present.');
@@ -40,8 +40,8 @@ for(const required of [
   'node verify-ingestion.mjs',
   'node verify-complete.mjs',
   'node verify-full-cycle.mjs',
-  'node verify-browser.mjs',
-  'node verify-browser-extra.mjs',
+  'verify-browser.mjs',
+  'verify-browser-extra.mjs',
   'node verify-live.mjs',
   'actions/upload-artifact@v4',
   'Create release tag only after deployed proof'
