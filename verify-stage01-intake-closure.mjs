@@ -10,6 +10,7 @@ const assert=(value,message)=>{if(!value)throw new Error(message);};
 const p=core.createBlankState('JOB-STAGE01-CLOSURE');
 Object.assign(p.job,{JOB_TITLE:'Intake closure',JOB_OWNER:'Operator',EXACT_USER_OBJECTIVE_VERBATIM:'Build the exact requested product.',SUPPLIED_MATERIALS_INVENTORY:'intent.txt',REQUIRED_OUTPUT_FORMAT:'Exact requested artifacts',PROHIBITED_ACTIONS:'Do not discard supplied intent.',EXPLICIT_USER_REQUIREMENTS:'Capture every supplied requirement exactly.',CURRENT_INPUT_VERSION:'INPUT-v001'});
 engine.ensureShape(p);
+assert(!p.stages[1].agentData||Object.keys(p.stages[1].agentData).length===0,'Blank project falsely contains pre-Stage-01 semantic agent data.');
 engine.registerArtifactBytes(p,{stage:1,artifactId:'ARTIFACT-INTENT-001',filename:'intent.txt',mediaType:'text/plain',byteSize:42,sha256:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',role:'HUMAN_INPUT'});
 
 const manifest=engine.intakeCoverageManifest(p);
@@ -20,7 +21,7 @@ p.projectData.generatedPrompts.push(prompt);
 assert(prompt.contextManifest.intakeCoverageManifest.manifestSha256===manifest.manifestSha256,'Stage 01 prompt is not bound to the current application intake manifest.');
 for(const unit of manifest.units)assert(prompt.prompt.includes(unit.unitId),`Prompt 01 omitted controlled input unit ${unit.unitId}.`);
 assert(prompt.prompt.includes('INPUT_SET_CONTENTS must be a JSON STRING'),'Prompt 01 does not command the current closed Stage 01 accounting response.');
-assert(prompt.prompt.includes('first semantic reader')||prompt.prompt.includes('FIRST SEMANTIC READER'),'Prompt 01 does not identify Stage 01 as the first semantic reader.');
+for(const required of ['Exhaust the human-authority intake','first semantic reader','The user supplies project information once','Do not treat a filename or file hash as a substitute for inspecting the transferred file bytes'])assert(prompt.prompt.toLowerCase().includes(required.toLowerCase()),`Prompt 01 missing permanent first-semantic-reader regression invariant: ${required}`);
 assert(!prompt.prompt.includes('EXECUTABLE_KIND = CUSTOM_PIPELINE'),'Prompt still contains obsolete CUSTOM_PIPELINE instruction.');
 
 const capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Preserved as current human-authority input.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
@@ -35,4 +36,4 @@ assert(validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'
 let valid=envelope(capture);validation=ingestion.validateEnvelope(p,valid,{stage:1,promptRecord:prompt,rawSha256:hash.sha256Value(valid),files:[]});
 assert(!validation.issues.some(issue=>issue.code==='INCOMPLETE_INTAKE_ACCOUNTING'),`Stage 01 ingestion rejected repaired intake accounting: ${JSON.stringify(validation.issues)}`);
 
-console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true}));
+console.log(JSON.stringify({stage01IntakeClosure:true,artifactIdentityBound:true,currentManifestBound:true,incompleteAccountingRejected:true,firstSemanticReaderRegression:true,preSemanticAgentDataAbsent:true}));
