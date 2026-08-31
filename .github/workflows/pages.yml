@@ -1,47 +1,109 @@
 name: Deploy application
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: false
+
 jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Verify runtime JavaScript parses before deployment
+
+      - name: Verify runtime JavaScript parses
         run: |
           set -euo pipefail
           for file in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do
             node --check "$file"
           done
+
+      - name: Verify schemas, migration, ingestion, routing, prompts, gates, and full cycle
+        run: |
+          set -euo pipefail
+          node verify.mjs
+          node verify-v3-contract.mjs
+          node verify-v3-migration.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-prompt-semantics.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-semantic-invariant.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-complete.mjs
+
+      - name: Use the application through Chromium at phone and desktop widths
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/closed-loop-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 0.2
+          done
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser.mjs
+          PAGE_URL=http://127.0.0.1:4173/ node verify-browser-extra.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
+
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Build static application
         run: |
+          set -euo pipefail
           rm -rf _site
           mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json AUTHORIZED_OPERATION_01.txt .nojekyll _site/
+
       - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
       - name: Deploy application
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify exact deployed bytes and /3 runtime identity
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node verify-live.mjs
+
+      - name: Use the deployed application through Chromium
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
