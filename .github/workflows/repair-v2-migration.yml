@@ -25,6 +25,7 @@ jobs:
           python3 .github/repair-followup5.py
           python3 .github/repair-followup6.py
           python3 .github/repair-followup7.py
+          python3 .github/repair-followup8.py
       - name: Verify complete corrected source and local operator path
         run: |
           set -euo pipefail
@@ -66,7 +67,7 @@ jobs:
           PAGE_URL=http://127.0.0.1:4173/ node verify-human-stage-walkthrough.mjs
       - name: Commit only the accepted candidate
         run: |
-          rm -f .github/workflows/repair-v2-migration.yml .github/repair-v3.py .github/repair-followup.py .github/repair-followup2.py .github/repair-followup3.py .github/repair-followup4.py .github/repair-followup5.py .github/repair-followup6.py .github/repair-followup7.py .stage04-repair-trigger
+          rm -f .github/workflows/repair-v2-migration.yml .github/repair-v3.py .github/repair-followup.py .github/repair-followup2.py .github/repair-followup3.py .github/repair-followup4.py .github/repair-followup5.py .github/repair-followup6.py .github/repair-followup7.py .github/repair-followup8.py .stage04-repair-trigger
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
