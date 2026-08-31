@@ -25,12 +25,18 @@ jobs:
           echo "status=$status" >> "$GITHUB_OUTPUT"
           echo "message=$message" >> "$GITHUB_OUTPUT"
           exit "$status"
-      - name: Upload exact ingestion log
+      - name: Package exact branch source
+        if: always()
+        shell: bash
+        run: tar --exclude=.git -czf /tmp/closed-loop-source.tgz .
+      - name: Upload exact diagnostics and source
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: verify-ingestion-log-${{ github.sha }}
-          path: /tmp/verify-ingestion.log
+          name: closed-loop-diagnostic-source-${{ github.sha }}
+          path: |
+            /tmp/verify-ingestion.log
+            /tmp/closed-loop-source.tgz
           if-no-files-found: error
           retention-days: 1
       - name: Ingestion failure — ${{ steps.ingestion.outputs.message }}
