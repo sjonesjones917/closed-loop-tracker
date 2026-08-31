@@ -58,7 +58,7 @@ jobs:
           prepend(11, 'This prompt authorizes exactly one reserved RUN_ID and CONTEXT_ID. Do not perform another run.')
           prepend(12, 'Complete the exact REQ_ID × RUN_ID × TEST_ID verification cell or cells authorized by this prompt. Never substitute a different executor.')
           prepend(13, 'Compare all ten executions. Never discard a run.')
-          prepend(14, 'Perform RCA by tracing backward through product/output, execution, instruction, requirement, research, source, user input, tool, and audit to the earliest defective layer.')
+          prepend(14, 'Perform RCA by tracing backward through product/output, execution, instruction, requirement, research, source, user input, tool/configuration, artifact, and audit/evidence to the earliest defective layer.')
           prepend(15, 'Require an actual pre-correction regression execution. Do not claim post-correction success at Stage 15.')
           prepend(16, 'Correct the responsible earliest defective layer. Never overwrite a controlled version in place.')
           prepend(18, 'The application calculates mandatory requirement coverage. Do not set or override those application-derived values.')
