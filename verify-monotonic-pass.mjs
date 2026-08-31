@@ -10,6 +10,10 @@ const index=read('./index.html');
 const workflow=read('./.github/workflows/pages.yml');
 const live=read('./verify-live.mjs');
 
+assert.ok(app.includes('Independent external sources only.'),'Stage 02 operator UI must state the independent-external-source boundary explicitly.');
+assert.ok(prompt.includes('Research only the current accepted Stage 02 independent external source set'),'Stage 03 prompt must bind research to the complete current accepted Stage 02 source set.');
+assert.ok(prompt.includes('Resolve the current job’s requirement set exhaustively'),'Stage 05 prompt must require exhaustive resolution of the current requirement set.');
+
 assert.match(prompt,/originalUserEntered\s*:\s*state\?\.projectData\?\.userEntered\s*\|\|\s*\{\}/,'Stage 04 context must retain current User Job Input.');
 assert.ok(prompt.includes('if(stage===4)assertStage4UpstreamExhausted(state);assertPromptPrerequisites(stage,state);'),'Stage 04 exhaustion must be checked before generic prompt prerequisites.');
 assert.match(prompt,/never ask the user to repeat available project facts/i,'Prompts must prohibit repeated user-intent transcription in ordinary operator language.');
@@ -54,7 +58,10 @@ assert.ok(!live.includes("responseSchema:'closed-loop-stage-response/2'"),'Live 
 
 console.log(JSON.stringify({
   monotonicCandidateRegression:true,
+  stage02OperatorBoundaryPreserved:true,
+  stage03SourceBoundaryPreserved:true,
   stage04CurrentInputPreserved:true,
+  stage05ExhaustiveResolutionPreserved:true,
   missingByteGatePreserved:true,
   humanEvidenceAuthorityPreserved:true,
   promptBoxBaselinePreserved:true,
