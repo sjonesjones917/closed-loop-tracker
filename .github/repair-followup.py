@@ -81,6 +81,15 @@ old="records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRe
 new="if(collection==='tests'){fields.TEST_TYPE='DETERMINISTIC';fields.EXECUTION_MODE='EXTERNAL_AGENT_TOOL';fields.REQUIRED_CAPABILITY='CONTROLLED_EXTERNAL_TEST_TOOL';fields.ARTIFACT_REQUIREMENTS='NONE';delete fields.EXECUTABLE_KIND;delete fields.EXECUTABLE_SPEC;delete fields.EXECUTABLE_INPUT_BINDINGS;}records[collection]=[{tempKey:'record-1',fields,relationships:{},evidenceRefs:['evidence-1']}];"
 if old not in text:
     raise AssertionError('The ingestion record fixture insertion point was not found.')
+text=text.replace(old,new,1)
+
+# A Stage 02 correction-request regression must preserve a legally complete Stage
+# 01 predecessor through the rejection call. prepare() recalculates synthetic
+# fixture state, so restore the explicit predecessor fixture before regeneration.
+old="{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});const result=ingestion.reject(prepared.project"
+new="{let p=project('JOB-REFINEMENT-LOOP'),stage=2,pr=savePrompt(p,stage),e=validEnvelope(p,stage,pr),prepared=ingestion.prepare(p,{stage,text:JSON.stringify(e),promptRecord:pr});prepared.project.stages[1].status='COMPLETE';prepared.project.stages[1].gate={complete:true,blocked:false,reasons:[]};const result=ingestion.reject(prepared.project"
+if old not in text:
+    raise AssertionError('The Stage 02 rejection-refinement fixture was not found.')
 path.write_text(text.replace(old,new,1))
 
 # Permanent regression: every operation-level stageData exposure must resolve to
@@ -95,4 +104,4 @@ if marker not in text:
     raise AssertionError('Operation-authority regression insertion point was not found.')
 path.write_text(text.replace(marker,regression,1))
 
-print('Aligned prompt and ingestion regressions and removed application-owned Stage 17 fields from external-agent operation contracts.')
+print('Aligned prompt and ingestion regressions, preserved legal correction-request prerequisites, and removed application-owned Stage 17 fields from external-agent operation contracts.')
