@@ -65,7 +65,7 @@ project.stages[2].agentData.SOURCE_APPLICABILITY_DETERMINATION='NO_APPLICABLE_EX
 const intake=engine.intakeCoverageManifest(project);
 const obligations=engine.obligationManifest(project);
 assert(intake.units.length>=3);
-assert(obligations.entries.some(entry=>String(entry.value).includes('Never ask me')));
+assert(obligations.items.some(item=>String(item.text).includes('Never ask me')));
 const stage04Prompt=prompts.buildPromptRecord(4,project).prompt;
 for(const token of ['PROJECT DATA EXECUTION RULE — MANDATORY','APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Never ask the human','Never ask me for the same project data twice'])assert(stage04Prompt.includes(token),token);
 
@@ -74,7 +74,7 @@ console.log(JSON.stringify({
   responseSchema:schema.RESPONSE_SCHEMA,
   stageCount:core.STAGE_COUNT,
   intake:intake.units.length,
-  obligations:obligations.entries.length,
+  obligations:obligations.items.length,
   visualBaselineRestored:true,
   testRuntimeLoaded:true,
   migrationAuthority:'workflow-schema.js',
