@@ -48,15 +48,15 @@ const OP_DEFINITIONS=Object.freeze({
   SUM:{required:[],optional:[],types:{}},
   MIN:{required:[],optional:[],types:{}},
   MAX:{required:[],optional:[],types:{}},
-  SORT:{required:[],optional:['direction'],types:{direction:'sortDirection'}},
+  SORT:{required:[],optional:['direction','domain'],types:{direction:'sortDirection',domain:'sortDomain'}},
   UNIQUE:{required:[],optional:[],types:{}},
   HASH_SHA256:{required:[],optional:[],types:{}},
   REGEX:{required:['pattern'],optional:['flags'],types:{pattern:'regex',flags:'regexFlags'}},
-  COMPARE:{required:[],optional:['value','binding','operator','numericMode','absoluteTolerance','relativeTolerance'],types:{binding:'binding',operator:'compareOperator',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'},oneOf:[['value'],['binding']]},
+  COMPARE:{required:[],optional:['value','binding','operator','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{binding:'binding',operator:'compareOperator',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'},oneOf:[['value'],['binding']]},
   ASSERT_EXISTS:{required:[],optional:['message'],types:{message:'string'}},
   ASSERT_TYPE:{required:['value'],optional:['message'],types:{value:'typeName',message:'string'}},
-  ASSERT_NE:{required:['value'],optional:['message','numericMode','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'}},
-  ASSERT_EQ:{required:['value'],optional:['message','numericMode','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absoluteTolerance:'nonnegativeNumber',relativeTolerance:'nonnegativeNumber'}},
+  ASSERT_NE:{required:['value'],optional:['message','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'}},
+  ASSERT_EQ:{required:['value'],optional:['message','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'}},
   ASSERT_GT:{required:['value'],optional:['message'],types:{message:'string'}},
   ASSERT_GTE:{required:['value'],optional:['message'],types:{message:'string'}},
   ASSERT_LT:{required:['value'],optional:['message'],types:{message:'string'}},
@@ -73,7 +73,8 @@ const encoder=new TextEncoder();
 const hasOwn=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
-const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b))):v);
+const scalarCompare=(a,b)=>{const aa=Array.from(String(a),ch=>ch.codePointAt(0)),bb=Array.from(String(b),ch=>ch.codePointAt(0)),n=Math.min(aa.length,bb.length);for(let i=0;i<n;i++)if(aa[i]!==bb[i])return aa[i]-bb[i];return aa.length-bb.length;};
+const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>scalarCompare(a,b))):v);
 const byteLength=value=>encoder.encode(String(value)).byteLength;
 
 class RuntimeError extends Error{
@@ -198,6 +199,34 @@ function selectXml(rootNode,path){
   return current;
 }
 
+
+function validateJsonSourceExact(text){
+  const source=String(text),length=source.length;let i=0;
+  const ws=()=>{while(i<length&&/[\x20\x09\x0a\x0d]/.test(source[i]))i++;};
+  const error=message=>fail('MALFORMED_JSON',`JSON parse failed: ${message} at character ${i}.`,STATUS.UNDETERMINED);
+  const stringToken=()=>{if(source[i]!=='"')error('Expected string');const start=i++;let escaped=false;for(;i<length;i++){const ch=source[i];if(escaped){if(ch==='u'){if(!/^[0-9a-fA-F]{4}$/.test(source.slice(i+1,i+5)))error('Invalid Unicode escape');i+=4;}else if(!'"\\/bfnrt'.includes(ch))error('Invalid string escape');escaped=false;continue;}if(ch==='\\'){escaped=true;continue;}if(ch==='"'){i++;try{return JSON.parse(source.slice(start,i));}catch{error('Invalid JSON string');}}if(ch.charCodeAt(0)<0x20)error('Unescaped control character');}error('Unterminated string');};
+  const numberToken=()=>{const match=source.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);if(!match)error('Invalid number');const raw=match[0];i+=raw.length;if(raw.includes('.')||/[eE]/.test(raw))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is not a safe-integer JSON number. Use a typed exact number representation.`,STATUS.UNDETERMINED);const n=Number(raw);if(!Number.isSafeInteger(n)||Object.is(n,-0))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is outside the finite safe-integer domain.`,STATUS.UNDETERMINED);};
+  let parseValue,parseObject,parseArray;
+  parseObject=()=>{i++;ws();const keys=new Set();if(source[i]==='}'){i++;return;}while(i<length){ws();const key=stringToken();if(keys.has(key))fail('DUPLICATE_JSON_MEMBER',`PARSE_JSON rejects duplicate object member ${key}.`,STATUS.UNDETERMINED);keys.add(key);ws();if(source[i++]!==':')error('Expected colon');parseValue();ws();if(source[i]==='}'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated object');};
+  parseArray=()=>{i++;ws();if(source[i]===']'){i++;return;}while(i<length){parseValue();ws();if(source[i]===']'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated array');};
+  parseValue=()=>{ws();const ch=source[i];if(ch==='"'){stringToken();return;}if(ch==='{'){parseObject();return;}if(ch==='['){parseArray();return;}if(source.startsWith('true',i)){i+=4;return;}if(source.startsWith('false',i)){i+=5;return;}if(source.startsWith('null',i)){i+=4;return;}if(ch==='-'||/\d/.test(ch||'')){numberToken();return;}error('Unexpected token');};
+  ws();parseValue();ws();if(i!==length)error('Trailing content');return true;
+}
+function exactDecimalParts(value){
+  if(value&&typeof value==='object'&&!Array.isArray(value)&&value.numberType==='DECIMAL')value=value.value;
+  const text=String(value);if(!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text)||text==='-0'||/^-0(?:\.0+)?$/.test(text))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal value must be canonical plain decimal text with no exponent or negative zero.',STATUS.UNDETERMINED);
+  const neg=text[0]==='-',body=neg?text.slice(1):text,[whole,fraction='']=body.split('.'),scale=fraction.length,digits=BigInt((whole+fraction)||'0');return{sign:neg?-1n:1n,digits,scale};
+}
+function decimalAlign(a,b){const scale=Math.max(a.scale,b.scale),pow=n=>10n**BigInt(n);return{a:a.sign*a.digits*pow(scale-a.scale),b:b.sign*b.digits*pow(scale-b.scale),scale};}
+function decimalAbsDiff(a,b){const x=decimalAlign(exactDecimalParts(a),exactDecimalParts(b));return{digits:x.a>=x.b?x.a-x.b:x.b-x.a,scale:x.scale};}
+function decimalAbs(value){const p=exactDecimalParts(value);return{digits:p.digits,scale:p.scale};}
+function decimalMaxAbs(a,b){const aa=decimalAbs(a),bb=decimalAbs(b),x=decimalAlign({...aa,sign:1n},{...bb,sign:1n});return x.a>=x.b?{digits:x.a,scale:x.scale}:{digits:x.b,scale:x.scale};}
+function decimalMultiply(a,b){const aa=exactDecimalParts(a),bb=b&&b.digits!==undefined?b:decimalAbs(b);return{digits:aa.digits*bb.digits,scale:aa.scale+bb.scale};}
+function decimalLTE(left,right){const x=decimalAlign({sign:1n,digits:left.digits,scale:left.scale},{sign:1n,digits:right.digits,scale:right.scale});return x.a<=x.b;}
+function exactApproximate(actual,expected,step){const absTol=step.absTol??step.absoluteTolerance??'0',relTol=step.relTol??step.relativeTolerance??'0',diff=decimalAbsDiff(actual,expected),abs=decimalAbs(absTol),relProduct=decimalMultiply(relTol,decimalMaxAbs(actual,expected)),maxTol=decimalLTE(abs,relProduct)?relProduct:abs;return decimalLTE(diff,maxTol);}
+function sortDomain(values,declared){if(!values.length)return declared||'STRING';const inferred=typeof values[0]==='string'?'STRING':typeof values[0]==='boolean'?'BOOLEAN':Number.isSafeInteger(values[0])?'INTEGER':values[0]&&values[0].numberType==='DECIMAL'?'DECIMAL':null,domain=declared||inferred;if(!domain)fail('SORT_DOMAIN','SORT requires an explicit supported homogeneous domain.',STATUS.UNDETERMINED);const ok=v=>domain==='STRING'?typeof v==='string':domain==='BOOLEAN'?typeof v==='boolean':domain==='INTEGER'?Number.isSafeInteger(v):domain==='DECIMAL'&&v&&v.numberType==='DECIMAL';if(!values.every(ok))fail('SORT_DOMAIN','SORT input is not homogeneous in the declared domain.',STATUS.UNDETERMINED);return domain;}
+function compareSortValues(a,b,domain){if(domain==='STRING')return scalarCompare(a,b);if(domain==='BOOLEAN')return a===b?0:a?1:-1;if(domain==='INTEGER')return a===b?0:a<b?-1:1;if(domain==='DECIMAL')return compareDecimal(a.value,b.value);return 0;}
+
 function inspectStructure(value){
   let nodes=0,maxDepth=0;const seen=new Set();const stack=[{value,depth:1}];
   while(stack.length){const item=stack.pop();nodes++;maxDepth=Math.max(maxDepth,item.depth);if(nodes>LIMITS.maxParsedNodes)fail('PARSED_NODE_LIMIT','Parsed structure exceeds the registered node limit.');if(maxDepth>LIMITS.maxParsedDepth)fail('PARSED_DEPTH_LIMIT','Parsed structure exceeds the registered depth limit.');const current=item.value;if(!current||typeof current!=='object'||seen.has(current))continue;seen.add(current);if(Array.isArray(current)){if(current.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','Parsed array exceeds the registered collection limit.');for(const child of current)stack.push({value:child,depth:item.depth+1});}else for(const child of Object.values(current))stack.push({value:child,depth:item.depth+1});}
@@ -224,9 +253,7 @@ function isSafeIntegerValue(value){return typeof value==='number'&&Number.isSafe
 function exactEqual(actual,expected,step){
   const mode=step.numericMode;
   if(mode==='DECIMAL_STRING')return compareDecimal(actual,expected)===0;
-  if(mode==='APPROXIMATE'){
-    const a=Number(actual),b=Number(expected);if(!Number.isFinite(a)||!Number.isFinite(b))fail('INVALID_NUMERIC_VALUE','Approximate comparison requires finite numeric values.',STATUS.UNDETERMINED);const abs=Number(step.absoluteTolerance||0),rel=Number(step.relativeTolerance||0);return Math.abs(a-b)<=Math.max(abs,rel*Math.max(Math.abs(a),Math.abs(b)));
-  }
+  if(mode==='APPROXIMATE')return exactApproximate(actual,expected,step);
   if(typeof actual==='number'||typeof expected==='number'){
     if(!isSafeIntegerValue(actual)||!isSafeIntegerValue(expected))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit.',STATUS.UNDETERMINED);
     return actual===expected;
@@ -245,14 +272,14 @@ function validateType(value,type){
     case 'delimiter':return typeof value==='string'&&[...value].length===1&&!['\r','\n'].includes(value);
     case 'quote':return typeof value==='string'&&[...value].length===1&&!['\r','\n'].includes(value);
     case 'csvNewline':return ['AUTO','LF','CRLF','CR'].includes(value);
-    case 'utf8':return value==='UTF-8';case 'sortDirection':return ['ASC','DESC'].includes(value);
+    case 'utf8':return value==='UTF-8';case 'sortDirection':return ['ASC','DESC'].includes(value);case 'sortDomain':return ['STRING','BOOLEAN','INTEGER','DECIMAL'].includes(value);
     case 'regex':return typeof value==='string';case 'regexFlags':return typeof value==='string';
     case 'jsonSelector':try{parseJsonSelector(value);return true;}catch{return false;}
     case 'xmlSelector':try{parseXmlSelector(value);return true;}catch{return false;}
     case 'compareOperator':return ['EQ','NE','GT','GTE','LT','LTE'].includes(value);
     case 'typeName':return ['string','number','boolean','object','array','null','undefined','bytes'].includes(value);
     case 'numericMode':return ['INTEGER','DECIMAL_STRING','APPROXIMATE'].includes(value);
-    case 'nonnegativeNumber':return typeof value==='number'&&Number.isFinite(value)&&value>=0;
+    case 'exactNonnegativeDecimal':try{const p=exactDecimalParts(value);return p.sign>0n||p.digits===0n;}catch{return false;}case 'nonnegativeNumber':return typeof value==='number'&&Number.isFinite(value)&&value>=0;
     default:return true;
   }
 }
@@ -264,8 +291,8 @@ function validateStep(step,index){
   for(const alternatives of definition.oneOf||[]){/* evaluated together below */}
   if(definition.oneOf){const present=definition.oneOf.filter(group=>group.every(key=>hasOwn(step,key)));if(present.length!==1)issues.push(`Step ${index} operation ${step.op} requires exactly one of ${definition.oneOf.map(group=>group.join('+')).join(' or ')}.`);}
   if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&typeof step.pattern==='string')issues.push(...validateRegex(step.pattern,step.flags).map(message=>`Step ${index}: ${message}`));
-  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&step.numericMode==='APPROXIMATE'&&!(Number(step.absoluteTolerance)>0||Number(step.relativeTolerance)>0))issues.push(`Step ${index} approximate comparison requires a positive absoluteTolerance or relativeTolerance.`);
-  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&typeof step.value==='number'&&!Number.isSafeInteger(step.value)&&step.numericMode!=='APPROXIMATE')issues.push(`Step ${index} non-integer numeric equality requires explicit APPROXIMATE semantics and tolerance.`);
+  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&step.numericMode==='APPROXIMATE'&&!['absTol','relTol','absoluteTolerance','relativeTolerance'].some(key=>hasOwn(step,key)))issues.push(`Step ${index} approximate comparison requires absTol, relTol, or an explicitly supported compatibility tolerance.`);
+  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&typeof step.value==='number'&&!Number.isSafeInteger(step.value))issues.push(`Step ${index} numeric literals must be finite safe integers; use a typed DECIMAL value for precision-sensitive comparisons.`);
   if(step.op==='PARSE_CSV'&&step.delimiter===step.quote)issues.push(`Step ${index} CSV delimiter and quote must differ.`);
   return issues;
 }
@@ -334,14 +361,14 @@ async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
       }
       case 'READ_BYTES':{const bytes=bytesOf(current?.kind==='ARTIFACT'?(current.value?.bytes??current.value):value);if(!bytes)fail('BYTES_REQUIRED','READ_BYTES requires a byte-backed artifact binding.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
       case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)fail('BYTES_REQUIRED','DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)fail('TEXT_BYTE_LIMIT','UTF-8 input exceeds the registered text-byte limit.');if(bytes.byteLength>LIMITS.maxDecompressedBytes)fail('DECOMPRESSED_BYTE_LIMIT','UTF-8 input exceeds the registered decompressed-byte limit.');try{value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{fail('INVALID_UTF8','Input is not valid UTF-8.',STATUS.UNDETERMINED);}break;}
-      case 'PARSE_JSON':{try{value=JSON.parse(String(value));}catch(error){fail('MALFORMED_JSON',`JSON parse failed: ${error.message}`,STATUS.UNDETERMINED);}inspectStructure(value);break;}
+      case 'PARSE_JSON':{const source=String(value);validateJsonSourceExact(source);try{value=JSON.parse(source);}catch(error){fail('MALFORMED_JSON',`JSON parse failed: ${error.message}`,STATUS.UNDETERMINED);}inspectStructure(value);break;}
       case 'PARSE_CSV':value=parseCsv(String(value),step);inspectStructure(value);break;
       case 'PARSE_XML':value=parseXml(String(value));inspectStructure(value);break;
       case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;
       case 'SELECT_XML':value=selectXml(value,step.path);break;
       case 'COUNT':{if(value==null||typeof value.length!=='number')fail('COUNT_INPUT','COUNT requires an array, string, or array-like value.',STATUS.UNDETERMINED);if(value.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','COUNT input exceeds the registered collection limit.');value=value.length;break;}
       case 'SUM':case 'MIN':case 'MAX':{const values=collection(value,step.op);if(!values.every(isSafeIntegerValue))fail('UNSUPPORTED_NUMERIC_PRECISION',`${step.op} supports safe integers only in version 1.`,STATUS.UNDETERMINED);value=step.op==='SUM'?values.reduce((sum,item)=>{const next=sum+item;if(!Number.isSafeInteger(next))fail('INTEGER_OVERFLOW','SUM exceeded exact safe-integer range.',STATUS.UNDETERMINED);return next;},0):step.op==='MIN'?Math.min(...values):Math.max(...values);break;}
-      case 'SORT':{const direction=step.direction||'ASC';value=[...collection(value,'SORT')].sort((a,b)=>canonical(a).localeCompare(canonical(b)));if(direction==='DESC')value.reverse();break;}
+      case 'SORT':{const direction=step.direction||'ASC',items=[...collection(value,'SORT')],domain=sortDomain(items,step.domain);value=items.sort((a,b)=>compareSortValues(a,b,domain));if(direction==='DESC')value.reverse();break;}
       case 'UNIQUE':{const seen=new Set();value=collection(value,'UNIQUE').filter(item=>{const key=canonical(item);if(seen.has(key))return false;seen.add(key);return true;});break;}
       case 'HASH_SHA256':value=await sha256(value);break;
       case 'REGEX':{const input=String(value);if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(step.pattern,step.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));value=new RegExp(step.pattern,step.flags||'').test(input);break;}
@@ -404,4 +431,13 @@ function executeTest(test,artifacts,canonicalBindings,options={}){
 const operationContracts=()=>JSON.parse(JSON.stringify(OP_DEFINITIONS));
 const capabilities=()=>Object.freeze([CAPABILITY]);
 root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,OPS,OP_DEFINITIONS,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope});
+})();
+
+/* INTEGRATED CONTROLLING COMPLETION 53-70 */
+;(()=>{
+'use strict';
+const r0=globalThis.closedLoopTestRuntime;
+if(!r0)throw new Error('Base Test IR runtime must load before integrated completion runtime.');
+const VERSION='closed-loop-controlling-completion/53-70/1',safe=v=>Array.isArray(v)?v:[],up=v=>String(v==null?'':v).trim().toUpperCase(),fv=(r,k)=>r?.fields?.[k]??r?.[k];
+function exactIssues(spec){const out=[];const walk=(v,path='$')=>{if(typeof v==='number'&&(!Number.isSafeInteger(v)||Object.is(v,-0)))out.push(`${path} contains an unsupported numeric literal; use an exact typed number representation.`);if(Array.isArray(v))v.forEach((x,i)=>walk(x,`${path}[${i}]`));else if(v&&typeof v==='object')for(const[k,x]of Object.entries(v))walk(x,`${path}.${k}`);};walk(spec);return out;}function validate(spec){let b;try{b=r0.validateSpec(spec);}catch(err){return{valid:false,issues:[String(err?.message||err)]};}const issues=[...(b?.issues||[]),...exactIssues(spec)];return{...b,valid:issues.length===0,issues:[...new Set(issues)]};}const runtime=Object.freeze({...r0,VERSION:'closed-loop-test-runtime/3',__controllingCompletionAmendmentVersion:VERSION,validateSpec:validate,supports:test=>{const spec=fv(test,'EXECUTABLE_SPEC')||test?.EXECUTABLE_SPEC;return validate(spec).valid&&r0.supports(test);},execute:async (request,...args)=>{const spec=request?.spec??request;const v=validate(spec);if(!v.valid)throw new r0.RuntimeError('UNSUPPORTED_EXACT_SEMANTICS',v.issues.join(' '));return r0.execute(request,...args);},executeTest:async (test,...args)=>{const spec=fv(test,'EXECUTABLE_SPEC')||test?.EXECUTABLE_SPEC,v=validate(spec);if(!v.valid)throw new r0.RuntimeError('UNSUPPORTED_EXACT_SEMANTICS',v.issues.join(' '));return r0.executeTest(test,...args);}});globalThis.closedLoopTestRuntime=runtime;
 })();

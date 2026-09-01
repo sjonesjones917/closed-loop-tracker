@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
 
@@ -33,7 +33,7 @@ jobs:
         run: tar --exclude=.git -czf /tmp/pr-source.tar.gz .
       - name: Preserve exact PR source workspace
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: pr-source-${{ github.event.pull_request.number }}-${{ github.sha }}
           path: /tmp/pr-source.tar.gz
@@ -182,8 +182,8 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
       - name: Rebuild retained fixture from verified source
@@ -194,13 +194,13 @@ jobs:
           rm -rf _site
           mkdir _site
           cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
           path: _site
       - name: Deploy application
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
 
   verify-live:
     name: Verify deployed bytes and operator path
@@ -211,8 +211,8 @@ jobs:
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
       - name: Rebuild retained fixture used by deployment
@@ -250,8 +250,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
       - name: Build acceptance artifact from executed proof jobs
@@ -380,7 +380,7 @@ jobs:
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
           NODE
       - name: Upload acceptance report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: closed-loop-acceptance-${{ github.sha }}
           path: closed-loop-acceptance.json

@@ -321,6 +321,41 @@ function planProposal(project,envelope,{rawRecord,promptRecord,validationRecord,
     if(evidenceRecord.sourceReference&&(evidenceRecord.fields.SOURCE_ID==='UNKNOWN'||evidenceRecord.fields.SOURCE_ID===null))throw new Error('Validated evidence source failed canonical resolution.');if(evidenceRecord.attachmentReference&&(evidenceRecord.fields.ATTACHMENT_ID==='UNKNOWN'||evidenceRecord.fields.ATTACHMENT_ID===null))throw new Error('Validated evidence attachment failed canonical resolution.');
     evidenceRecord.fields.SHA256=evidenceRecord.SHA256=hash.sha256Text(String(evidenceRecord.CONTENT||''));evidenceRecord.sha256=hash.sha256Value(evidenceRecord.fields);
   }
+  const currentAndProposedPropositions=[...workflow.recordsForCurrentScope(project,'propositions'),...safe(canonicalRecords.propositions)];
+  for(const test of safe(canonicalRecords.tests)){
+    const requirementId=String(test.fields?.REQ_ID||test.relationships?.REQ_ID||'');
+    const proposition=currentAndProposedPropositions.find(item=>String(item.fields?.REQUIREMENT_ID||item.relationships?.REQUIREMENT_ID||'')===requirementId);
+    test.fields.TARGET_PROPOSITION_IDS=proposition?[workflow.recordId(proposition,'propositions')]:[];
+    test.TARGET_PROPOSITION_IDS=test.fields.TARGET_PROPOSITION_IDS;
+    test.fields.SEMANTIC_REVIEW_IDS=[rawRecord.rawResponseId];
+    test.SEMANTIC_REVIEW_IDS=test.fields.SEMANTIC_REVIEW_IDS;
+    test.fields.RELEASE_BEARING=Boolean(proposition&&String(test.fields.SEMANTIC_COVERAGE_DISPOSITION||'').toUpperCase()==='EQUIVALENT'&&['REQUIRED_PROOF','SUPPORTING_PROOF','REGRESSION'].includes(String(test.fields.TEST_ROLE||'').toUpperCase()));
+    test.RELEASE_BEARING=test.fields.RELEASE_BEARING;
+  }
+  for(const expression of safe(canonicalRecords.proofExpressions)){
+    expression.fields.NORMALIZED_EXPRESSION=clone(expression.fields.PROPOSED_EXPRESSION);
+    expression.NORMALIZED_EXPRESSION=expression.fields.NORMALIZED_EXPRESSION;
+    expression.fields.SEMANTIC_EQUIVALENCE_DISPOSITION='EQUIVALENT';
+    expression.SEMANTIC_EQUIVALENCE_DISPOSITION='EQUIVALENT';
+    expression.fields.ACCEPTED_SEMANTIC_REVIEW_IDS=[rawRecord.rawResponseId];
+    expression.ACCEPTED_SEMANTIC_REVIEW_IDS=expression.fields.ACCEPTED_SEMANTIC_REVIEW_IDS;
+  }
+  for(const observation of safe(canonicalRecords.observationRecords)){
+    observation.scope=clone(workflow.currentScope(project));
+    observation.fields.OBSERVATION_ORIGIN='AGENT_SEMANTIC_OBSERVATION';observation.OBSERVATION_ORIGIN=observation.fields.OBSERVATION_ORIGIN;
+    observation.fields.SUBMITTING_ACTOR_OR_RUNTIME='EXTERNAL_REVIEWER';observation.SUBMITTING_ACTOR_OR_RUNTIME=observation.fields.SUBMITTING_ACTOR_OR_RUNTIME;
+    observation.fields.EPISTEMIC_BASIS='EXTERNALLY_SUPPORTED';observation.EPISTEMIC_BASIS=observation.fields.EPISTEMIC_BASIS;
+    observation.fields.FRESHNESS_STATUS='CURRENT';observation.FRESHNESS_STATUS=observation.fields.FRESHNESS_STATUS;
+    observation.fields.CURRENT_SCOPE=clone(promptRecord.scope||{});observation.CURRENT_SCOPE=observation.fields.CURRENT_SCOPE;
+    observation.fields.RAW_OR_NATIVE_PROVENANCE=rawRecord.rawResponseId;observation.RAW_OR_NATIVE_PROVENANCE=observation.fields.RAW_OR_NATIVE_PROVENANCE;
+  }
+  for(const entailment of safe(canonicalRecords.entailmentReviews)){
+    entailment.scope=clone(workflow.currentScope(project));
+    entailment.fields.ACCEPTED_RELATION=entailment.fields.ENTAILMENT_FINDING;entailment.ACCEPTED_RELATION=entailment.fields.ACCEPTED_RELATION;
+    entailment.fields.ACCEPTED_STATUS='ACCEPTED';entailment.ACCEPTED_STATUS=entailment.fields.ACCEPTED_STATUS;
+    entailment.fields.CURRENT_SCOPE=clone(promptRecord.scope||{});entailment.CURRENT_SCOPE=entailment.fields.CURRENT_SCOPE;
+    entailment.fields.GATE_CONSEQUENCE=entailment.fields.ACCEPTED_RELATION;entailment.GATE_CONSEQUENCE=entailment.fields.GATE_CONSEQUENCE;
+  }
   for(const [collection,items] of Object.entries(canonicalRecords))for(const record of items){const def=schema.RECORD_SCHEMAS[collection];record.contentSha256=hash.contentRecordSha256(record,def.idField);record.recordSha256=hash.recordSha256(record);record.sha256=record.recordSha256;}
 
   const proposedStageData=clone(envelope.stageData||{});
@@ -357,7 +392,7 @@ function prepareCaptured(project,{rawResponseId,promptRecord=null,expectedCommit
   const validationId=workflow.allocateInfrastructureId(next,'VALIDATION','responseValidations'),validationRecord={validationId,rawResponseId:rawRecord.rawResponseId,jobId:next.job.JOB_ID,stage:stageNumber,promptId:prompt.instructionId||prompt.promptId,promptSha256:prompt.bodySha256||prompt.sha256,createdAt:now(),valid:validation.valid,issues:clone(validation.issues),errorCount:validation.errorCount,warningCount:validation.warningCount,responseSchema:validation.responseSchema,responseType:validation.responseType,status:validation.valid?'VALID':'REJECTED'};
   next.projectData.responseValidations.push(validationRecord);rawRecord.validationId=validationId;rawRecord.status=validation.valid?'VALIDATED_PENDING_REVIEW':'VALIDATION_FAILED';let proposal=null;if(validation.valid){proposal=planProposal(next,envelope,{rawRecord,promptRecord:prompt,validationRecord,expectedProjectRevision:expectedCommittedRevision===null?Number(next.revision||0):Number(expectedCommittedRevision)});next.projectData.responseProposals.push(proposal);rawRecord.proposalId=proposal.proposalId;}
   const receipt=createReceipt(next,{stage:stageNumber,promptRecord:prompt,rawRecord,validationRecord,proposal});let responseDisposition=null;if(!validation.valid){responseDisposition=disposition(next,'VALIDATION_FAILED_RESPONSE',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,promptId:prompt.instructionId||prompt.promptId,validationId,receiptId:receipt.receiptId,details:{issueCodes:validation.issues.map(x=>x.code)}});receipt.rejectedResponseId=responseDisposition.dispositionId;receipt.completionState='VALIDATION_FAILED_RESPONSE';rawRecord.dispositionId=responseDisposition.dispositionId;}
-  rawRecord.receiptId=receipt.receiptId;validationRecord.receiptId=receipt.receiptId;if(proposal)proposal.receiptId=receipt.receiptId;workflow.addHistory(next,validation.valid?'RESPONSE_VALIDATED':'RESPONSE_VALIDATION_FAILED',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,validationId,proposalId:proposal?.proposalId||'NONE',issueCodes:validation.issues.map(item=>item.code)});workflow.recalculate(next);return {project:next,rawRecord,validation:validationRecord,proposal,receipt,disposition:responseDisposition};
+  rawRecord.receiptId=receipt.receiptId;validationRecord.receiptId=receipt.receiptId;if(proposal)proposal.receiptId=receipt.receiptId;workflow.addHistory(next,validation.valid?'RESPONSE_VALIDATED':'RESPONSE_VALIDATION_FAILED',{stage:stageNumber,rawResponseId:rawRecord.rawResponseId,validationId,proposalId:proposal?.proposalId||'NONE',issueCodes:validation.issues.map(item=>item.code)});workflow.recalculate(next);if(proposal)proposal.preconditions.referencedRecordHashes=referencedRecordHashes(next,proposal.envelope);return {project:next,rawRecord,validation:validationRecord,proposal,receipt,disposition:responseDisposition};
 }
 
 function prepare(project,options={}){const captured=captureRaw(project,options);return prepareCaptured(captured.project,{rawResponseId:captured.rawRecord.rawResponseId,promptRecord:captured.promptRecord,expectedCommittedRevision:options.expectedProjectRevision??options.expectedCommittedRevision??null});}
