@@ -29,7 +29,7 @@ const scopeFor=c=>{const s=Number(schema.RECORD_SCHEMAS[c]?.stage||0),x={inputVe
 const sent={};
 for(const [c,d] of Object.entries(schema.RECORD_SCHEMAS)){
   const af=Object.values(d.fieldDefinitions).find(x=>x.producer===schema.PRODUCER.AGENT)?.name,id=`ORACLE-${c}-CURRENT`,sid=`ORACLE-${c}-STALE`,f={[d.idField]:id},sf={[d.idField]:sid};if(af){f[af]=`CURRENT-ORACLE-${c}`;sf[af]=`STALE-ORACLE-${c}`;}if(c==='defects'){f.OBSERVED_FAILURE='CURRENT-ORACLE-defects-observed';f.EXPECTED_CONDITION='CURRENT-ORACLE-defects-expected';sf.OBSERVED_FAILURE='STALE-ORACLE-defects-observed';sf.EXPECTED_CONDITION='STALE-ORACLE-defects-expected';}
-  const sc=scopeFor(c),ssc={...sc},first=Object.keys(ssc)[0];ssc[first]=`STALE-${ssc[first]}`;state.projectData[c]=[{stage:d.stage||1,fields:sf,scope:ssc,active:true,validity:'CURRENT'},{stage:d.stage||1,fields:f,scope:sc,active:true,validity:'CURRENT'}];sent[c]={id,sid,text:f[af]||id,stale:sf[af]||sid};
+  const sc=scopeFor(c),ssc={...sc},first=Object.keys(ssc)[0];ssc[first]=`STALE-${ssc[first]}`;state.projectData[c]=[{id:sid,stage:d.stage||1,fields:sf,scope:ssc,active:true,validity:'CURRENT'},{id,stage:d.stage||1,fields:f,scope:sc,active:true,validity:'CURRENT'}];sent[c]={id,sid,text:f[af]||id,stale:sf[af]||sid};
   const selected=engine.recordsForCurrentScope(state,c);assert(selected.some(r=>engine.recordId(r,c)===id),`${c}: current-scope selector omitted current record.`);assert(!selected.some(r=>engine.recordId(r,c)===sid),`${c}: current-scope selector admitted stale record.`);
 }
 // Rebind Stage 01 accounting only after every controlled-input fixture value is final. This is a fixture repair, not a weaker assertion.
