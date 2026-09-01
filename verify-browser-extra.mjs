@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {boundedBrowserCommand,fetchJsonWithTimeout,guardBrowserProcess} from './browser-verifier-lifecycle.mjs';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const PAGE_BASE=(()=>{const value=new URL(PAGE_URL);value.search='';value.hash='';if(!value.pathname.endsWith('/'))value.pathname+='/';return value.href;})();
@@ -20,11 +21,12 @@ const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium'
 if(!browser)throw new Error('Chrome/Chromium was not found');
 const port=9700+Math.floor(Math.random()*200),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-extra-'));
 const proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+const teardownBrowser=guardBrowserProcess(proc);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const assert=(v,m)=>{if(!v)throw new Error(m);};
-async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
+async function getJson(url,opts){return fetchJsonWithTimeout(url,opts);}
 async function poll(fn,timeout=15000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
-class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.dialogs=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else{this.events.push(m);if(m.method==='Page.javascriptDialogOpening'){this.dialogs.push(String(m.params?.message||''));this.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>{});}}};}async send(method,params={}){await this.ready;const id=++this.id,p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return p;}close(){this.ws.close();}}
+class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.dialogs=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else{this.events.push(m);if(m.method==='Page.javascriptDialogOpening'){this.dialogs.push(String(m.params?.message||''));this.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>{});}}};}async send(method,params={}){await boundedBrowserCommand(this.ready,'CDP websocket connection');const id=++this.id,p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));try{return await boundedBrowserCommand(p,`CDP ${method}`);}finally{this.pending.delete(id);}}close(){this.ws.close();}}
 async function evalValue(cdp,expression){const r=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'Evaluation failed');return r.result?.value;}
 async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
 async function click(cdp,selector){const ok=await evalValue(cdp,`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.click();return true})()`);assert(ok,`Missing clickable ${selector}`);await sleep(180);}
@@ -85,7 +87,7 @@ async function verifyExecutedDeployment(cdp,loadKind,eventStart){
 
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');await cdp.send('Network.enable');await cdp.send('Debugger.enable');
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await boundedBrowserCommand(cdp.ready,'CDP websocket connection');await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');await cdp.send('Network.enable');await cdp.send('Debugger.enable');
   const origin=new URL(PAGE_BASE).origin;await cdp.send('Network.clearBrowserCache');await cdp.send('Storage.clearDataForOrigin',{origin,storageTypes:'all'});
   const cleanEventStart=cdp.events.length,cleanUrl=new URL(PAGE_BASE);cleanUrl.searchParams.set('browserExtra',String(Date.now()));await cdp.send('Page.navigate',{url:cleanUrl.href});
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
@@ -180,7 +182,7 @@ async function main(){
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
   console.log(JSON.stringify({browserExtraVerified:true,executedDeploymentManifest:deploymentManifest.manifestDigest,runtimeBuildIdentity:deploymentManifest.buildIdentity,cleanLoadVerified:cleanDeployment.navigationType==='navigate',warmReloadVerified:warmDeployment.navigationType==='reload',noControllingServiceWorker:true,mixedBuildIdentityCount:0,executedWorkerDigest:warmDeployment.workerDigest,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
 }
-async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
+async function cleanup(){await teardownBrowser();try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
 try{await main();}finally{await cleanup();}
 
 // reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).

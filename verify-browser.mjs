@@ -2,16 +2,18 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {boundedBrowserCommand,fetchJsonWithTimeout,guardBrowserProcess} from './browser-verifier-lifecycle.mjs';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found');
 const port=9300+Math.floor(Math.random()*400),profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-browser-'));
 const proc=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+const teardownBrowser=guardBrowserProcess(proc);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
+async function getJson(url,opts){return fetchJsonWithTimeout(url,opts);}
 async function poll(fn,timeout=15000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
-class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else this.events.push(m);};}async send(method,params={}){await this.ready;const id=++this.id,p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));return p;}close(){this.ws.close();}}
+class CDP{constructor(ws){this.ws=new WebSocket(ws);this.id=0;this.pending=new Map();this.events=[];this.ready=new Promise((resolve,reject)=>{this.ws.onopen=resolve;this.ws.onerror=reject;});this.ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=this.pending.get(m.id);if(!p)return;this.pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}else this.events.push(m);};}async send(method,params={}){await boundedBrowserCommand(this.ready,'CDP websocket connection');const id=++this.id,p=new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));this.ws.send(JSON.stringify({id,method,params}));try{return await boundedBrowserCommand(p,`CDP ${method}`);}finally{this.pending.delete(id);}}close(){this.ws.close();}}
 const assert=(x,m)=>{if(!x)throw new Error(m);};
 async function evalValue(cdp,expression){const r=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'Evaluation failed');return r.result?.value;}
 async function waitExpr(cdp,expression,timeout=12000){return poll(async()=>{const v=await evalValue(cdp,expression);if(!v)throw new Error(`Waiting: ${expression}`);return v;},timeout);}
@@ -25,7 +27,7 @@ async function allProjects(cdp){return evalValue(cdp,`globalThis.closedLoopProje
 
 async function main(){
  await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
- const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+ const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browser=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await boundedBrowserCommand(cdp.ready,'CDP websocket connection');await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
  await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
  assert(await evalValue(cdp,`Boolean(document.querySelector('.app-help details')&&!document.querySelector('.app-help details').open)`),'Human guide must exist in its original location and start collapsed.');
  // Clean state: retained project is seeded exactly once and remains Stage 02 next.
@@ -102,5 +104,5 @@ async function main(){
 
  console.log(JSON.stringify({browserVerified:true,widths:[320,393,1280],horizontalOverflow:false,controlsWithinViewport:true,buttonSizing:true,touchTargetFloor:44,minimumUiTextPx:11,retainedCleanState:true,retainedStage1History:true,retainedStage2Next:true,all30StagesReachable:true,strictPromptContract:true,malformedResponseRejectedAtomically:true,proposalReview:true,canonicalCommit:true,canonicalIds:true,extractionManifest:true,receiptLinkage:true,genericLongSectionNavigation:true,compactPredictiveScrollControls:true,projectDeletion:true,reloadPersistence:true,nextPromptConsumesAcceptedData:true,existingProjectPreserved:true,newJobReset:true,artifactGenerationGuidance:true,sourceCountInputGuidance:true,sourceCountIntegerValidation:true,malformedImportNonDestructive:true,runtimeErrors:0},null,2));cdp.close();
 }
-async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
+async function cleanup(){await teardownBrowser();try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
 try{await main();}finally{await cleanup();}

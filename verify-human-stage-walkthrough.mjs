@@ -3,6 +3,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
+import {boundedBrowserCommand,fetchJsonWithTimeout,guardBrowserProcess} from './browser-verifier-lifecycle.mjs';
 
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found.');
@@ -19,10 +20,11 @@ await new Promise((resolve,reject)=>server.listen(serverPort,'127.0.0.1',resolve
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'closed-loop-human-stage-'));
 let browserStderr='';
 const child=spawn(browser,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--disable-background-networking','--no-first-run','--no-default-browser-check','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+const teardownBrowser=guardBrowserProcess(child);
 child.stderr?.on('data',chunk=>{browserStderr=(browserStderr+String(chunk)).slice(-16000);});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function poll(fn,timeout=30000){const end=Date.now()+timeout;let last;while(Date.now()<end){try{return await fn();}catch(e){last=e;await sleep(120);}}throw last||new Error('Timed out');}
-async function getJson(url,opts){const r=await fetch(url,opts);if(!r.ok)throw new Error(`${url} -> ${r.status}`);return r.json();}
+async function getJson(url,opts){return fetchJsonWithTimeout(url,opts);}
 let ws,remotePort;
 try{
   const devToolsPortFile=path.join(profile,'DevToolsActivePort');
@@ -36,9 +38,9 @@ try{
     return port;
   });
   const target=await getJson(`http://127.0.0.1:${remotePort}/json/new?${encodeURIComponent(`http://127.0.0.1:${serverPort}/?walkthrough=${Date.now()}`)}`,{method:'PUT'});
-  ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;});
+  ws=new WebSocket(target.webSocketDebuggerUrl);await boundedBrowserCommand(new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=reject;}),'CDP websocket connection');
   let seq=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}};
-  const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  const send=(method,params={})=>{const id=++seq,promise=new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});return boundedBrowserCommand(promise,`CDP ${method}`).finally(()=>pending.delete(id));};
   const evalJs=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text||'browser evaluation failed');return r.result?.value;};
   await send('Runtime.enable');await send('Page.enable');
   await poll(async()=>{const ready=await evalJs(`document.readyState==='complete'&&globalThis.closedLoopAppReady===true`);if(!ready)throw new Error('app not ready');return true;});
@@ -87,9 +89,7 @@ try{
   console.log(JSON.stringify({humanStageWalkthrough:true,...result}));
 }finally{
   try{ws?.close();}catch{}
-  const exited=new Promise(resolve=>child.once('exit',resolve));
-  child.kill('SIGKILL');
-  await Promise.race([exited,sleep(1200)]);
+  await teardownBrowser();
   await new Promise(r=>server.close(r));
   try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:5,retryDelay:100});}catch{}
 }

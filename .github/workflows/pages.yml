@@ -188,13 +188,18 @@ jobs:
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
             script="$1"
+            verifier_timeout_seconds="${BROWSER_VERIFIER_TIMEOUT_SECONDS:-300}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
+              echo "Starting ${script} attempt ${attempt} with a ${verifier_timeout_seconds}s hard limit."
+              set +e
+              timeout --signal=TERM --kill-after=5s "${verifier_timeout_seconds}s" node "$script" 2>&1 | tee "$log"
+              status="${PIPESTATUS[0]}"
+              set -e
+              if [ "$status" -eq 0 ]; then
                 return 0
               fi
-              cat "$log"
+              echo "${script} attempt ${attempt} failed with status ${status}."
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
                 return 1
               fi
@@ -271,13 +276,18 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            verifier_timeout_seconds="${BROWSER_VERIFIER_TIMEOUT_SECONDS:-300}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
-              if node "$script" >"$log" 2>&1; then
-                cat "$log"
+              echo "Starting ${script} attempt ${attempt} with a ${verifier_timeout_seconds}s hard limit."
+              set +e
+              timeout --signal=TERM --kill-after=5s "${verifier_timeout_seconds}s" node "$script" 2>&1 | tee "$log"
+              status="${PIPESTATUS[0]}"
+              set -e
+              if [ "$status" -eq 0 ]; then
                 return 0
               fi
-              cat "$log"
+              echo "${script} attempt ${attempt} failed with status ${status}."
               if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
                 return 1
               fi
