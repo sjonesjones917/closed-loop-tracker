@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
@@ -93,7 +94,15 @@ for(const [key,needed] of Object.entries(opNeed)){const [stage,operation]=key.sp
 for(const [stage,forbidden] of [[11,['verification','comparisons','rootCauses','changes']],[12,['comparisons','rootCauses','changes']],[23,['deterministicResults','adversarialResults']],[24,['deterministicResults','meaningResults']]]){
   const c=schema.operationContract(stage,schema.STAGE_CONTRACTS[stage].operations[0]);for(const x of forbidden)if(c.readCollections.includes(x))throw new Error(`Stage ${stage} leaks forbidden ${x} through its declared read contract.`);
 }
-const browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mjs'],{encoding:'utf8',env:process.env});
+const browserSite=fs.mkdtempSync(path.join(process.cwd(),'.prompt-walkthrough-site-'));
+let browserWalk;
+try{
+  const build=spawnSync(process.execPath,['build-static-site.mjs',browserSite],{encoding:'utf8',env:process.env});
+  if(build.status!==0)throw new Error(`Sequential browser stage walkthrough site build failed.\n${build.stdout||''}\n${build.stderr||''}`);
+  browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mjs'],{encoding:'utf8',env:{...process.env,CLOSED_LOOP_STATIC_ROOT:browserSite}});
+}finally{
+  fs.rmSync(browserSite,{recursive:true,force:true,maxRetries:5,retryDelay:100});
+}
 if(browserWalk.status!==0)throw new Error(`Sequential browser stage walkthrough failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
 const browserProof=JSON.parse(String(browserWalk.stdout||'{}'));
 if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Sequential browser stage walkthrough did not establish all 30 stages and one-time project input reuse.');
