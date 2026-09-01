@@ -1,0 +1,36 @@
+name: One-time completion amendment repair
+
+on:
+  push:
+    branches:
+      - repair/controlling-completion-amendment
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/controlling-completion-amendment
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply and prove correction set
+        run: |
+          set -euo pipefail
+          python3 .repair-amendment.py
+          node --check hash.js
+          node --check deployment-manifest.mjs
+          node verify-completion-amendment-foundation.mjs
+          node verify-hash.mjs
+          rm .repair-amendment.py .github/workflows/amendment-repair.yml
+          git config user.name closed-loop-repair-bot
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m 'Implement completion-amendment foundation invariants'
+          git push origin HEAD:repair/controlling-completion-amendment
