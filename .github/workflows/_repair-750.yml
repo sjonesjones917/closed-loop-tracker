@@ -1,0 +1,56 @@
+name: Controlled amendment repair probe
+on:
+  push:
+    branches: [fix/controlling-amendment-53-70]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/controlling-amendment-53-70
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch full-cycle oracle to amended semantic path
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-full-cycle.mjs')
+          s=p.read_text()
+          old="SEVERITY:'MAJOR'}})]}});const reqId=rid('requirements');"
+          new="SEVERITY:'MAJOR'}})],propositions:[recordProposal(schema,'propositions',{tempKey:'prop',relationships:{REQUIREMENT_ID:{tempKey:'req'}},overrides:{PROPOSITION_TEXT:'The deliverable contains the required verified content.',SUBJECT_AND_SCOPE_DESCRIPTION:'Current delivered product for this job.',SATISFACTION_MEANING:'Required verified content is present.',FAILURE_MEANING:'Required verified content is absent.'}})]}});const reqId=rid('requirements');const propositionId=rid('propositions');assert(propositionId,'Stage 4 did not allocate the canonical proposition.');"
+          assert old in s, 'stage4 anchor missing'
+          s=s.replace(old,new,1)
+          old="REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'}});complete(5);"
+          new="REQUIREMENTS_WITHOUT_VERIFICATION_PATH:'NONE'},records:{applicabilityRecords:[recordProposal(schema,'applicabilityRecords',{tempKey:'applicability',relationships:{SUBJECT_ID:{recordId:propositionId}},overrides:{PROPOSED_APPLICABILITY:'APPLICABLE',REASONING:'The mandatory proposition applies to the current product.'}})]}});complete(5);"
+          assert old in s, 'stage5 anchor missing'
+          s=s.replace(old,new,1)
+          # Add semantic fields to all three Stage 06 tests without altering execution routing.
+          s=s.replace("EVIDENCE_TO_PRESERVE:'Deterministic verifier result'", "EVIDENCE_TO_PRESERVE:'Deterministic verifier result',TEST_PROPOSITION_TEXT:'The deterministic observation establishes the required content proposition.',TESTED_SCOPE:'Current product content',POSITIVE_RESULT_MEANING:'Required content is established.',NEGATIVE_RESULT_MEANING:'Required content is refuted.',SEMANTIC_COVERAGE_DISPOSITION:'EQUIVALENT',TEST_ROLE:'REQUIRED_PROOF',EXPECTED_VARIANCE_CONTRACT:{mode:'INVARIANT',selector:'determination'}}",1)
+          s=s.replace("EVIDENCE_TO_PRESERVE:'Independent meaning review'", "EVIDENCE_TO_PRESERVE:'Independent meaning review',TEST_PROPOSITION_TEXT:'The independent meaning observation establishes the required content proposition.',TESTED_SCOPE:'Current product meaning',POSITIVE_RESULT_MEANING:'Required meaning is established.',NEGATIVE_RESULT_MEANING:'Required meaning is refuted.',SEMANTIC_COVERAGE_DISPOSITION:'EQUIVALENT',TEST_ROLE:'REQUIRED_PROOF',EXPECTED_VARIANCE_CONTRACT:{mode:'INVARIANT',selector:'determination'}}",1)
+          s=s.replace("EVIDENCE_TO_PRESERVE:'Adversarial challenge evidence'", "EVIDENCE_TO_PRESERVE:'Adversarial challenge evidence',TEST_PROPOSITION_TEXT:'The adversarial observation challenges the same required content proposition.',TESTED_SCOPE:'Current product adversarial surface',POSITIVE_RESULT_MEANING:'No adversarial refutation is established.',NEGATIVE_RESULT_MEANING:'The mandatory proposition is refuted.',SEMANTIC_COVERAGE_DISPOSITION:'EQUIVALENT',TEST_ROLE:'REQUIRED_PROOF',EXPECTED_VARIANCE_CONTRACT:{mode:'INVARIANT',selector:'determination'}}",1)
+          # Add a proof expression using response-local test keys. Production normalization must resolve these to canonical TEST_ID values.
+          old=")]}});const stage6Tests=engine.recordsForCurrentScope(p,'tests')"
+          new=")],proofExpressions:[recordProposal(schema,'proofExpressions',{tempKey:'proof',relationships:{TARGET_PROPOSITION_ID:{recordId:propositionId}},overrides:{PROPOSED_EXPRESSION:{type:'ALL_OF',children:[{type:'LEAF',testTempKey:'test-det'},{type:'LEAF',testTempKey:'test-meaning'},{type:'LEAF',testTempKey:'test-adversarial'}]},SEMANTIC_RATIONALE:'All required verification modes jointly establish the target proposition.'}})]}});const stage6Tests=engine.recordsForCurrentScope(p,'tests')"
+          assert old in s, 'stage6 close anchor missing'
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Run amended fixture until earliest failure
+        run: |
+          set -euo pipefail
+          node --check verify-full-cycle.mjs
+          node verify-full-cycle.mjs
+      - name: Remove probe and commit only if fixture passes
+        run: |
+          rm .github/workflows/_repair-750.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add verify-full-cycle.mjs .github/workflows/_repair-750.yml
+          git commit -m 'Exercise amended proposition proof path'
+          git push origin HEAD:fix/controlling-amendment-53-70
