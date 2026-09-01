@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const file='prompt-engine.js';
+const marker='/* INTEGRATED CONTROLLING COMPLETION 53-70 */';
+const source=fs.readFileSync(file,'utf8');
+const index=source.indexOf(marker);
+if(index<0)throw new Error('Integrated prompt boundary missing.');
+const head=source.slice(0,index),tail=source.slice(index);
+const fixed=tail.replace(/\\`/g,'`').replace(/\\\$\{/g,'${').replace(/\\\\n/g,'\\n');
+if(fixed===tail)throw new Error('Expected malformed template escapes were not present.');
+fs.writeFileSync(file,head+fixed);
+console.log(JSON.stringify({promptTemplateSyntaxRepaired:true}));
