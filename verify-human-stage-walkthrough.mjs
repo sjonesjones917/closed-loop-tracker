@@ -7,7 +7,7 @@ import {spawn} from 'node:child_process';
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
-const root=process.cwd();
+const root=path.resolve(process.env.CLOSED_LOOP_STATIC_ROOT||process.cwd());
 const server=http.createServer((req,res)=>{
   const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
   const absolute=path.resolve(root,rel);

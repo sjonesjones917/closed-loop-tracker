@@ -16,15 +16,18 @@ try{self.importScripts=unavailable('Dynamic importScripts');}catch{}
 self.addEventListener('message',async event=>{
   const message=event?.data||{};
   if(message.type!=='EXECUTE_TEST_IR'||typeof message.requestId!=='string')return;
+  const protocol=self.closedLoopTestRuntime?.WORKER_PROTOCOL_VERSION||'closed-loop-test-worker-protocol/1';
+  const identity={requestId:message.requestId,workerProtocolVersion:protocol,workerChallengeNonce:String(message.workerChallengeNonce||'')};
   try{
     const runtime=self.closedLoopTestRuntime;
     if(!runtime)throw Object.assign(new Error('Deterministic Test IR runtime did not load.'),{code:'RUNTIME_UNAVAILABLE'});
+    if(message.workerProtocolVersion!==protocol||!/^[0-9a-f]{32}$/i.test(String(message.workerChallengeNonce||'')))throw Object.assign(new Error('Worker request protocol or challenge identity is invalid.'),{code:'WORKER_IDENTITY_MISMATCH'});
     const validation=runtime.validateSpec(message.spec,message.bindings);
     if(!validation.valid)throw Object.assign(new Error(validation.issues.join(' ')),{code:'INVALID_TEST_IR'});
     const result=await runtime.execute({spec:message.spec,artifacts:message.artifacts||{},canonicalBindings:message.canonicalBindings||{},metadata:message.metadata||{}});
-    self.postMessage({requestId:message.requestId,ok:true,result});
+    self.postMessage({...identity,ok:true,result:{...result,runtimeBuildIdentity:runtime.runtimeBuildIdentity(),workerProtocolVersion:protocol,testWorkerSha256:message.metadata?.testWorkerSha256||null}});
   }catch(error){
-    self.postMessage({requestId:message.requestId,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED'}});
+    self.postMessage({...identity,ok:false,error:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error),disposition:error?.disposition||'EXECUTION_FAILED'}});
   }
 });
 })();

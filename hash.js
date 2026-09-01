@@ -3,6 +3,25 @@
 
 const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
 const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
+const HASH_ALGORITHM='SHA-256';
+const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
+const HASH_PROFILES=Object.freeze({
+  contentRecord:Object.freeze({
+    version:'closed-loop-content-record-hash/1',
+    includedPointers:Object.freeze(['/fields/*','/relationships','/evidenceRefs']),
+    excludedFieldNames:Object.freeze(['CREATED_AT','UPDATED_AT','VERSION','STATUS']),
+    excludesSchemaIdField:true
+  }),
+  completeRecord:Object.freeze({
+    version:'closed-loop-complete-record-hash/1',
+    includedPointers:Object.freeze(['/**']),
+    excludedRootMembers:Object.freeze(['recordSha256','sha256'])
+  }),
+  selfDigest:Object.freeze({
+    version:'closed-loop-self-digest/1',
+    rule:'Omit the owning digest field and every directly dependent self-digest field before canonicalization.'
+  })
+});
 
 function assertUnicodeScalars(value,path){
   for(let i=0;i<value.length;i++){
@@ -65,8 +84,31 @@ function stableStringify(value){
 }
 
 function rightRotate(value,amount){return (value>>>amount)|(value<<(32-amount));}
+const SHA256_TEXT_CACHE_MAX_ENTRIES=512;
+const SHA256_TEXT_CACHE_MAX_INPUT_CODE_UNITS=65536;
+const SHA256_TEXT_CACHE_MAX_TOTAL_CODE_UNITS=4*1024*1024;
+const sha256TextCache=new Map();
+let sha256TextCacheCodeUnits=0;
+function cachedTextDigest(text){
+  if(text.length>SHA256_TEXT_CACHE_MAX_INPUT_CODE_UNITS)return null;
+  const digest=sha256TextCache.get(text);
+  if(digest===undefined)return null;
+  sha256TextCache.delete(text);
+  sha256TextCache.set(text,digest);
+  return digest;
+}
+function rememberTextDigest(text,digest){
+  if(text.length>SHA256_TEXT_CACHE_MAX_INPUT_CODE_UNITS)return digest;
+  const prior=sha256TextCache.get(text);
+  if(prior!==undefined){sha256TextCache.delete(text);sha256TextCacheCodeUnits-=text.length;}
+  sha256TextCache.set(text,digest);sha256TextCacheCodeUnits+=text.length;
+  while(sha256TextCache.size>SHA256_TEXT_CACHE_MAX_ENTRIES||sha256TextCacheCodeUnits>SHA256_TEXT_CACHE_MAX_TOTAL_CODE_UNITS){const oldest=sha256TextCache.keys().next().value;sha256TextCache.delete(oldest);sha256TextCacheCodeUnits-=oldest.length;}
+  return digest;
+}
 function sha256Text(text){
-  const utf8=new TextEncoder().encode(String(text));
+  const exact=assertUnicodeScalars(String(text),'text to hash');
+  const cached=cachedTextDigest(exact);if(cached!==null)return cached;
+  const utf8=new TextEncoder().encode(exact);
   const bitLength=utf8.length*8;
   const withMarker=utf8.length+1;
   const paddedLength=((withMarker+8+63)>>6)<<6;
@@ -88,16 +130,32 @@ function sha256Text(text){
     for(let i=0;i<64;i++){const s1=(rightRotate(e,6)^rightRotate(e,11)^rightRotate(e,25))>>>0;const ch=((e&f)^((~e)&g))>>>0;const t1=(hh+s1+ch+k[i]+w[i])>>>0;const s0=(rightRotate(a,2)^rightRotate(a,13)^rightRotate(a,22))>>>0;const maj=((a&b)^(a&c)^(b&c))>>>0;const t2=(s0+maj)>>>0;hh=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
     h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+hh)>>>0;
   }
-  return Array.from(h,value=>value.toString(16).padStart(8,'0')).join('');
+  return rememberTextDigest(exact,Array.from(h,value=>value.toString(16).padStart(8,'0')).join(''));
 }
 function sha256Value(value){return sha256Text(stableStringify(value));}
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
 async function sha256Bytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));}
 function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
-function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
+function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,...HASH_PROFILES.contentRecord.excludedFieldNames])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
-function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
-globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:'closed-loop-canonical-json/1',stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
+function omitRootMembers(value,members,path='digest value'){
+  if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError(`${path} must be a plain object.`);
+  const prototype=Object.getPrototypeOf(value);
+  if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`${path} must be a plain object.`);
+  const omitted=new Set(members||[]),copy={};
+  for(const [key,item]of Object.entries(value))if(!omitted.has(key))copy[key]=item;
+  return copy;
+}
+function recordSha256(record){return sha256Value(omitRootMembers(record,HASH_PROFILES.completeRecord.excludedRootMembers,'record'));}
+function selfDigestValue(value,{digestField='digest',dependentDigestFields=[]}={}){
+  const omitted=[digestField,...dependentDigestFields];
+  if(new Set(omitted).size!==omitted.length)throw new TypeError('Self-digest omitted fields must be unique.');
+  return sha256Value(omitRootMembers(value,omitted,'self-digest value'));
+}
+function digestIdentityForText(text){const exact=assertUnicodeScalars(String(text),'text digest identity'),bytes=new TextEncoder().encode(exact);return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:sha256Text(exact),byteLength:bytes.byteLength});}
+function digestIdentityForValue(value){const canonical=stableStringify(value),bytes=new TextEncoder().encode(canonical);return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:sha256Text(canonical),canonicalByteLength:bytes.byteLength,canonicalizationVersion:CANONICALIZATION_VERSION});}
+async function digestIdentityForBytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('digestIdentityForBytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:await sha256Bytes(view),byteLength:view.byteLength});}
+globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',HASH_ALGORITHM,CANONICALIZATION_VERSION,hashAlgorithm:HASH_ALGORITHM,canonicalizationVersion:CANONICALIZATION_VERSION,hashProfiles:HASH_PROFILES,stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,selfDigestValue,digestIdentityForText,digestIdentityForValue,digestIdentityForBytes,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
 })();

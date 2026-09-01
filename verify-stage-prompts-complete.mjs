@@ -17,8 +17,15 @@ p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONF
 for(let stage=1;stage<30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
 if(!engine.evaluateIntakeAccounting(p).complete)throw new Error('Prompt closure fixture failed to establish current Stage 01 accounting.');
 const requiredReads={
-  4:['sourceConflicts'],5:['sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
+  5:['sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
 };
+const operationRequiredReads={
+  '4:COMPLETE':['research','candidateRequirements','sources','evidenceRecords','sourceConflicts'],
+	  '4:DISPOSITION_CHALLENGE':['requirements','propositions','evidenceRecords'],
+	  '4:ATOMICITY_CHALLENGE':['requirements','propositions','evidenceRecords'],
+	  '4:RECONCILE_REQUIREMENTS':['research','candidateRequirements','sources','evidenceRecords','sourceConflicts','requirements','propositions','requirementCompilationChallengeReviews'],
+	  '6:SEMANTIC_REVIEW':['requirements','tests','propositions','proofExpressions']
+	};
 const semantic={
   1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every application-enumerated input unit must be classified exactly once'],
   2:['until no new applicable controlling or correctness-relevant external source category is found','Do not stop at the first plausible source'],
@@ -49,14 +56,27 @@ const semantic={
   29:['complete evidence graph for every mandatory requirement','Do not fabricate a link'],
   30:['append-only defect and regression history','Do not rewrite history']
 };
-let promptsChecked=0;
+const lifecycleDependentOperations=new Set(['1:SEMANTIC_CHALLENGE','1:RECONCILE_INTAKE','2:SEARCH_ADEQUACY_REVIEW','4:DISPOSITION_CHALLENGE','4:ATOMICITY_CHALLENGE','4:RECONCILE_REQUIREMENTS','6:SEMANTIC_REVIEW']);
+let promptContextSequence=0;
+function preparedPrompt(stage,operation){
+  const requirements=schema.operationContract(stage,operation)?.scopeRequirements||[],laneKeys=new Set(['iterationId','candidateId','runId','baselineId','productId']),scope=Object.fromEntries(requirements.filter(key=>laneKeys.has(key)).map(key=>[key,`${key.toUpperCase()}-PROMPT-CLOSURE`]));
+  const independent=[9,12,23,24].includes(stage)||([17,19].includes(stage)&&operation==='VERIFY'),context=engine.registerFreshContext(p,{stage,externalContextIdentifier:`PROMPT-CLOSURE-${stage}-${operation}-${++promptContextSequence}`,operatorLabel:'PROMPT_CLOSURE_AUDIT',purpose:independent?'REVIEWER':'GENERAL'}),contextId=engine.recordId(context,'freshContexts');
+  scope.contextId=contextId;
+  for(let prior=1;prior<stage;prior++){p.stages[prior].status='COMPLETE';p.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
+  const prepared=engine.prepareCurrentOperationReservation(p,{stage,operation,contextId,scope,owningTabInstance:'PROMPT-CLOSURE-AUDIT'}),preview=engine.clone(p);
+  preview.revision=prepared.expectedRevision;
+  return prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});
+}
+let promptsChecked=0;const lifecycleDependentOperationsDeferred=[];let stage4ChallengeIsolationContractsChecked=0;
 for(let stage=1;stage<=30;stage++){
   const contract=schema.STAGE_CONTRACTS[stage];
   for(const operation of contract.operations){
     const op=schema.operationContract(stage,operation);
-    for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
-    const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
-    const prompt=prompts.buildPromptRecord(stage,p,{operation,scope}).prompt;
+    const operationKey=`${stage}:${operation}`,neededReads=operationRequiredReads[operationKey]||requiredReads[stage]||[];
+    for(const needed of neededReads)if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
+    if(stage===4&&['DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE'].includes(operation)){const forbidden=['research','candidateRequirements','sources','sourceConflicts','requirementCompilationChallengeReviews'];for(const name of forbidden)if(op.readCollections.includes(name))throw new Error(`Stage 4 ${operation} leaks non-target or prior-review collection ${name}.`);if(JSON.stringify(op.agentWritableCollections)!==JSON.stringify(['requirementCompilationChallengeReviews']))throw new Error(`Stage 4 ${operation} does not restrict writes to the canonical challenge-review family.`);if(op.allowedStageData.length)throw new Error(`Stage 4 ${operation} permits unbound stageData outside its exact target batch.`);stage4ChallengeIsolationContractsChecked++;}
+    if(lifecycleDependentOperations.has(operationKey)){lifecycleDependentOperationsDeferred.push(operationKey);continue;}
+    const prompt=preparedPrompt(stage,operation).prompt;
     promptsChecked++;
     for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
     if(stage>1&&!prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error(`Stage ${stage} ${operation} can regress to re-requesting original intent.`);
@@ -77,4 +97,4 @@ const browserWalk=spawnSync(process.execPath,['verify-human-stage-walkthrough.mj
 if(browserWalk.status!==0)throw new Error(`Sequential browser stage walkthrough failed.\n${browserWalk.stdout||''}\n${browserWalk.stderr||''}`);
 const browserProof=JSON.parse(String(browserWalk.stdout||'{}'));
 if(browserProof.stages!==30||browserProof.oneTimeSupply!==true)throw new Error('Sequential browser stage walkthrough did not establish all 30 stages and one-time project input reuse.');
-console.log(JSON.stringify({promptsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));
+console.log(JSON.stringify({promptsChecked,lifecycleDependentOperationsDeferred,stage4ChallengeIsolationContractsChecked,stagesChecked:30,compositeOperationChecks:Object.keys(opNeed).length,customPipelineOccurrences:0,oneTimeHumanInputInvariant:true,browserStageWalkthrough:true,browserPromptsChecked:browserProof.prompts,promptVisual:browserProof.promptVisual},null,2));

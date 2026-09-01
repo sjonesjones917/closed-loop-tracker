@@ -10,6 +10,12 @@ const schema=globalThis.closedLoopWorkflowSchema;
 const engine=globalThis.closedLoopWorkflowEngine;
 const prompts=globalThis.closedLoopPromptEngine;
 assert(core&&schema&&engine&&prompts,'Prompt-semantic runtime failed to load.');
+function activatePrompt(project,stage,operation='COMPLETE'){
+  const context=engine.registerFreshContext(project,{stage,externalContextIdentifier:`PROMPT-SEMANTICS-${stage}-${operation}`,operatorLabel:'PROMPT_SEMANTICS_VERIFIER',purpose:'GENERAL'}),contextId=engine.recordId(context,'freshContexts'),scope=prompts.scopeFor(stage,{...project,revision:Number(project.revision||0)+1},{contextId}),prepared=engine.prepareCurrentOperationReservation(project,{stage,operation,contextId,scope,owningTabInstance:'PROMPT_SEMANTICS_VERIFIER'}),preview=engine.clone(project);
+  preview.revision=prepared.expectedRevision;
+  const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});
+  engine.registerGeneratedPrompt(project,record);engine.reserveOperation(project,{preparedReservation:prepared,promptId:record.instructionId});project.revision=prepared.expectedRevision;engine.recalculate(project);return record;
+}
 assert(core.WORKFLOW_ID==='mobile-closed-loop/30','Workflow identity changed.');
 assert(core.STAGE_COUNT===30,'Stage count changed.');
 assert(core.PROJECT_SCHEMA==='closed-loop-project/3','Project schema is not /3.');
@@ -55,7 +61,7 @@ Object.assign(project.job,{
 engine.ensureShape(project);
 engine.recalculate(project);
 
-const stage1=prompts.buildPromptRecord(1,project,'COMPLETE').prompt;
+const stage1=activatePrompt(project,1).prompt;
 assert(stage1.includes('EXECUTION DIRECTIVE — USE THE PROJECT DATA AND DO THE STAGE WORK NOW'),'Generated Stage 01 prompt lacks explicit execution directive.');
 assert(stage1.includes('APPLICATION INTAKE MANIFEST'),'Generated Stage 01 prompt lacks application intake manifest.');
 assert(stage1.includes('EXACT_USER_OBJECTIVE_VERBATIM'),'Generated Stage 01 prompt omits current user project authority.');
