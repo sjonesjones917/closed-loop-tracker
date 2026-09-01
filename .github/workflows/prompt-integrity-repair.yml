@@ -1,0 +1,40 @@
+name: Apply prompt integrity repair
+
+on:
+  push:
+    branches: [repair-prompt-integrity-20260901]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prompt-integrity-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply, verify, and remove one-time repair infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's/!andoff/!handoff/g' .repair-prompt-integrity.py
+          python3 -m py_compile .repair-prompt-integrity.py
+          python3 .repair-prompt-integrity.py
+          node --check prompt-engine.js
+          node --check verify-prompt-semantics.mjs
+          node verify-prompt-semantics.mjs
+          rm .repair-prompt-integrity.py .github/workflows/prompt-integrity-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add prompt-engine.js index.html verify-prompt-semantics.mjs .repair-prompt-integrity.py .github/workflows/prompt-integrity-repair.yml
+          git diff --cached --quiet && { echo 'Repair produced no tracked change.' >&2; exit 1; }
+          git commit -m 'Fix exact prompt identity and untrusted data boundaries'
+          git push origin HEAD:${GITHUB_REF_NAME}
