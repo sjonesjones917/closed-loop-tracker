@@ -1,0 +1,24 @@
+name: Snapshot repair source
+
+on:
+  push:
+    branches: [fix/zero-loss-trust-closure-20260901]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Capture exact branch workspace
+        run: tar --exclude=.git -czf /tmp/closed-loop-repair-source.tgz .
+      - name: Upload exact branch workspace
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-loop-repair-source-${{ github.sha }}
+          path: /tmp/closed-loop-repair-source.tgz
+          if-no-files-found: error
+          retention-days: 1
