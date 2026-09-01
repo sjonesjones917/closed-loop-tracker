@@ -33,7 +33,7 @@ engine.recalculate(state);
 const intake=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData={
   EXACT_DELIVERABLE_REQUESTED:'Complete route-proven deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',
-  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'retained as context',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))})
+  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,...(u.kind==='SUPPLIED_MATERIAL'?{artifactInspection:{artifactId:u.artifactId,artifactSha256:u.artifactSha256,inspectedActualBytes:true}}:{}),disposition:'RETAINED_AS_CONTEXT',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT',sourceLocations:[{kind:'OTHER',value:u.sourceLocation||u.unitId}]}]}))})
 };
 state.stages[1].status='COMPLETE';state.stages[1].gate={complete:true,blocked:false,reasons:[]};
 state.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};state.stages[2].status='COMPLETE';state.stages[2].gate={complete:true,blocked:false,reasons:[]};
@@ -67,6 +67,18 @@ for(const [collection,recordSchema] of Object.entries(schema.RECORD_SCHEMAS)){
   assert(selected.some(record=>engine.recordId(record,collection)===currentId),`${collection}: current-scope selector omitted current record.`);
   assert(!selected.some(record=>engine.recordId(record,collection)===staleId),`${collection}: current-scope selector admitted stale record.`);
 }
+// Bind one coherent pending observation graph. Entailment-review prompts must
+// receive this exact linked projection, not every unrelated current record.
+const currentRecord=collection=>state.projectData[collection].find(record=>engine.recordId(record,collection)===collectionSentinels[collection].currentId);
+const assignFields=(record,values)=>{Object.assign(record.fields,values);Object.assign(record,values);};
+const requirement=currentRecord('requirements'),test=currentRecord('tests'),proposition=currentRecord('propositions'),proofExpression=currentRecord('proofExpressions'),proofObligation=currentRecord('proofObligations'),observation=currentRecord('observationRecords'),evidenceRecord=currentRecord('evidenceRecords');
+assignFields(requirement,{MANDATORY_OPTIONAL_STATUS:'MANDATORY',STATUS:'ACTIVE'});
+assignFields(proposition,{REQUIREMENT_ID:collectionSentinels.requirements.currentId,STATUS:'UNKNOWN',TRUTH_VALUE:'UNKNOWN'});proposition.relationships={REQUIREMENT_ID:collectionSentinels.requirements.currentId};
+assignFields(test,{REQ_ID:collectionSentinels.requirements.currentId,TARGET_PROPOSITION_IDS:[collectionSentinels.propositions.currentId],STATUS:'READY',TEST_TYPE:'DETERMINISTIC',EXECUTION_MODE:'EXTERNAL_AGENT_TOOL'});test.relationships={REQ_ID:collectionSentinels.requirements.currentId};
+assignFields(proofExpression,{TARGET_PROPOSITION_ID:collectionSentinels.propositions.currentId});proofExpression.relationships={TARGET_PROPOSITION_ID:collectionSentinels.propositions.currentId};
+assignFields(proofObligation,{PROPOSITION_ID:collectionSentinels.propositions.currentId});
+assignFields(evidenceRecord,{STATUS:'CURRENT'});
+assignFields(observation,{SUBJECT_ID:collectionSentinels.tests.currentId,EPISTEMIC_BASIS:'SELF_ASSERTED',FRESHNESS_STATUS:'UNKNOWN',NORMALIZATION_RECEIPT_ID:'',CURRENT_SCOPE:{runId:collectionSentinels.runs.currentId,productId:collectionSentinels.products.currentId},SOURCE_EVIDENCE_IDS:[collectionSentinels.evidenceRecords.currentId],INPUT_IDENTITIES_AND_HASHES:[{kind:'ARTIFACT',artifactId:collectionSentinels.artifacts.currentId,id:collectionSentinels.artifacts.currentId}]});observation.relationships={SUBJECT_ID:collectionSentinels.tests.currentId};observation.evidenceRefs=[collectionSentinels.evidenceRecords.currentId];
 
 const forbiddenReads={
   '11:COMPLETE':['verification','comparisons','defects','rootCauses','changes','meaningResults','adversarialResults'],
@@ -102,7 +114,7 @@ for(let stage=1;stage<=30;stage++){
     for(const field of op.allowedStageData){const def=schema.STAGE_FIELDS[stage]?.[field];assert(def&&def.producer===schema.PRODUCER.AGENT,`Stage ${stage}/${operation} exposes unauthorized stage field ${field}.`);writableFieldsChecked++;}
     for(const blocked of forbiddenReads[`${stage}:${operation}`]||[])assert(!op.readCollections.includes(blocked),`Stage ${stage}/${operation} leaks forbidden ${blocked}.`);
 
-    const scope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:'BASE-ROUTE-v1',productId:'PROD-ROUTE-v1'};
+    const scope={projectRevision:state.revision,inputVersion:state.job.CURRENT_INPUT_VERSION,sourceSetVersion:state.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:state.job.CURRENT_REQUIREMENTS_VERSION,testSuiteVersion:state.job.CURRENT_TEST_SUITE_VERSION,instructionVersion:state.job.CURRENT_INSTRUCTION_VERSION,iterationId:'ITER-ROUTE-v1',candidateId:'CAND-ROUTE-v1',runId:collectionSentinels.runs.currentId,contextId:collectionSentinels.freshContexts.currentId,baselineId:collectionSentinels.baselines.currentId,productId:collectionSentinels.products.currentId};
     for(const key of op.scopeRequirements)assert(scope[key]!==undefined,`Fixture missing required scope ${key} for Stage ${stage}/${operation}.`);
     let record;
     try{record=prompts.buildPromptRecord(stage,state,{operation,scope});}catch{record=null;}
@@ -111,9 +123,10 @@ for(let stage=1;stage<=30;stage++){
       for(const collection of op.readCollections){
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
+        const blind=record.contextManifest?.blindAliasMap?.find(item=>item.canonicalId===sent.currentId);
         assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
-        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
+        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId)||Boolean(blind&&record.prompt.includes(blind.alias)),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content or its application-controlled blind alias.`);
         assert(!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} prompt body leaked stale ${collection}.`);
       }
       for(const collection of op.agentWritableCollections){

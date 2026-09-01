@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -75,6 +76,7 @@ jobs:
           });
           if(tokens.size!==1)throw new Error('Mixed runtime build tokens');
           if(!/worker-src\s+'self'/.test(html))throw new Error('CSP does not restrict the worker to same origin.');
+          if(/<script(?![^>]*\bsrc=)/i.test(html))throw new Error('Inline script execution is prohibited.');
           NODE
 
       - name: Complete 30-stage canonical data-route closure
@@ -136,6 +138,41 @@ jobs:
           node verify-prompt-semantics.mjs
           node verify-semantic-invariant.mjs
 
+      - name: Focused completion-amendment regressions
+        run: |
+          set -euo pipefail
+          node verify-amendment-engine-safety.mjs
+          node verify-artifact-store-security.mjs
+          node verify-evidence-no-elevation.mjs
+          node verify-failure-variance-environment.mjs
+          node verify-identity-action-idempotency.mjs
+          node verify-independence-dimensions.mjs
+          node verify-proof-obligation-routing.mjs
+          node verify-response-reservation-binding.mjs
+          node verify-semantic-closure-bypasses.mjs
+          node verify-semantic-review-binding.mjs
+          node verify-source-search-evidence-binding.mjs
+          node verify-single-runtime-authority.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-store-reservation.mjs
+          node verify-terminal-release-safety.mjs
+          node verify-terminal-chain-reentry.mjs
+
+      - name: Build exact static application
+        run: |
+          set -euo pipefail
+          node verify-deployment-pipeline.mjs
+          rm -rf _site _site-rebuild
+          mkdir _site _site-rebuild
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
+          SOURCE_COMMIT="$GITHUB_SHA" WORKFLOW_RUN_ID="$GITHUB_RUN_ID" BUILD_ENVIRONMENT_IDENTITY="ubuntu-latest-node-22" node build-deployment-manifest.mjs _site
+          node verify-deployment-manifest.mjs _site
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site-rebuild/
+          SOURCE_COMMIT="$GITHUB_SHA" WORKFLOW_RUN_ID="$GITHUB_RUN_ID" BUILD_ENVIRONMENT_IDENTITY="ubuntu-latest-node-22" node build-deployment-manifest.mjs _site-rebuild
+          node verify-deployment-manifest.mjs _site-rebuild
+          diff -r --no-dereference _site _site-rebuild
+          rm -rf _site-rebuild
+
       - name: Local Chromium operator path
         env:
           BROWSER: /usr/bin/google-chrome
@@ -146,7 +183,7 @@ jobs:
             export BROWSER
           fi
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          python3 -m http.server 4173 --directory _site >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
@@ -171,6 +208,16 @@ jobs:
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
+      - name: Upload exact verified site artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-loop-site-${{ github.sha }}
+          path: _site/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 0
+          retention-days: 7
+
   deploy:
     name: Deploy exact verified bytes
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -182,19 +229,12 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: '22'
-      - name: Rebuild retained fixture from verified source
-        run: node build-test-project.mjs
-      - name: Build static application
-        run: |
-          set -euo pipefail
-          rm -rf _site
-          mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+      - name: Download exact verified site artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-loop-site-${{ github.sha }}
+          path: _site
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
           path: _site
@@ -215,8 +255,13 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Rebuild retained fixture used by deployment
-        run: node build-test-project.mjs
+      - name: Download exact verified site artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-loop-site-${{ github.sha }}
+          path: _site
+      - name: Verify downloaded deployment artifact
+        run: node verify-deployment-manifest.mjs _site
       - name: Exact deployed-byte verification
         run: node verify-live.mjs
       - name: Deployed Chromium operator path
@@ -248,12 +293,18 @@ jobs:
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Download exact verified site artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-loop-site-${{ github.sha }}
+          path: _site
       - name: Build acceptance artifact from executed proof jobs
         env:
           TEST_RESULT: ${{ needs.test.result }}
@@ -269,18 +320,56 @@ jobs:
           node verify-ingestion.mjs > /tmp/ingestion.out
           node verify-stage01-intake-closure.mjs > /tmp/stage01.out
           node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
+          node verify-test-runtime-v3.mjs > /tmp/test-runtime-v3.json
           node verify-full-cycle.mjs > /tmp/full-cycle.json
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
+          node verify-amendment-engine-safety.mjs > /tmp/amendment-engine-safety.json
+          node verify-artifact-store-security.mjs > /tmp/artifact-store-security.json
+          node verify-evidence-no-elevation.mjs > /tmp/evidence-no-elevation.json
+          node verify-failure-variance-environment.mjs > /tmp/failure-variance-environment.json
+          node verify-identity-action-idempotency.mjs > /tmp/identity-action-idempotency.json
+          node verify-independence-dimensions.mjs > /tmp/independence-dimensions.json
+          node verify-proof-obligation-routing.mjs > /tmp/proof-obligation-routing.json
+          node verify-response-reservation-binding.mjs > /tmp/response-reservation-binding.json
+          node verify-semantic-closure-bypasses.mjs > /tmp/semantic-closure-bypasses.json
+          node verify-semantic-review-binding.mjs > /tmp/semantic-review-binding.json
+          node verify-source-search-evidence-binding.mjs > /tmp/source-search-evidence-binding.json
+          node verify-single-runtime-authority.mjs > /tmp/single-runtime-authority.json
+          node verify-spec-grounded-route-oracle.mjs > /tmp/spec-grounded-route-oracle.json
+          node verify-store-reservation.mjs > /tmp/store-reservation.json
+          node verify-terminal-release-safety.mjs > /tmp/terminal-release-safety.json
+          node verify-terminal-chain-reentry.mjs > /tmp/terminal-chain-reentry.json
+          node verify-deployment-pipeline.mjs > /tmp/deployment-pipeline.json
+          node verify-deployment-manifest.mjs _site > /tmp/deployment-manifest.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
           const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
           const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
+          const testRuntimeV3=JSON.parse(fs.readFileSync('/tmp/test-runtime-v3.json','utf8'));
           const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
+          const amendmentEngineSafety=JSON.parse(fs.readFileSync('/tmp/amendment-engine-safety.json','utf8'));
+          const artifactStoreSecurity=JSON.parse(fs.readFileSync('/tmp/artifact-store-security.json','utf8'));
+          const evidenceNoElevation=JSON.parse(fs.readFileSync('/tmp/evidence-no-elevation.json','utf8'));
+          const failureVarianceEnvironment=JSON.parse(fs.readFileSync('/tmp/failure-variance-environment.json','utf8'));
+          const identityActionIdempotency=JSON.parse(fs.readFileSync('/tmp/identity-action-idempotency.json','utf8'));
+          const independenceDimensions=JSON.parse(fs.readFileSync('/tmp/independence-dimensions.json','utf8'));
+          const proofObligationRouting=JSON.parse(fs.readFileSync('/tmp/proof-obligation-routing.json','utf8'));
+          const responseReservationBinding=JSON.parse(fs.readFileSync('/tmp/response-reservation-binding.json','utf8'));
+          const semanticClosureBypasses=JSON.parse(fs.readFileSync('/tmp/semantic-closure-bypasses.json','utf8'));
+          const semanticReviewBinding=JSON.parse(fs.readFileSync('/tmp/semantic-review-binding.json','utf8'));
+          const sourceSearchEvidenceBinding=JSON.parse(fs.readFileSync('/tmp/source-search-evidence-binding.json','utf8'));
+          const singleRuntimeAuthority=JSON.parse(fs.readFileSync('/tmp/single-runtime-authority.json','utf8'));
+          const specGroundedRouteOracle=JSON.parse(fs.readFileSync('/tmp/spec-grounded-route-oracle.json','utf8'));
+          const storeReservation=JSON.parse(fs.readFileSync('/tmp/store-reservation.json','utf8'));
+          const terminalReleaseSafety=JSON.parse(fs.readFileSync('/tmp/terminal-release-safety.json','utf8'));
+          const terminalChainReentry=JSON.parse(fs.readFileSync('/tmp/terminal-chain-reentry.json','utf8'));
+          const deploymentPipeline=JSON.parse(fs.readFileSync('/tmp/deployment-pipeline.json','utf8'));
+          const deploymentManifest=JSON.parse(fs.readFileSync('/tmp/deployment-manifest.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -290,6 +379,35 @@ jobs:
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
+          const requireTrue=(record,keys,label)=>{for(const key of keys)if(record?.[key]!==true)throw new Error(`${label} did not establish ${key}.`);};
+          if(testRuntimeV3.verifyTestRuntimeV3!=='PASS')throw new Error('Test IR runtime v3 proof did not pass.');
+          requireTrue(testRuntimeV3,['staleWorkerBuildRejected','staleWorkerProtocolRejected','wrongWorkerDigestRejected','wrongInputBindingRejected','undeclaredWorkerBindingRejected','preExecutionWorkerByteMismatchRejected','observedWorkerIdentityPersisted','nativeCommitAuthorityBound'],'Test IR runtime worker-authority proof');
+          requireTrue(amendmentEngineSafety,['strictIntake','legacyDispositionRejected','artifactInspectionBound','proofAstClosed','terminalFailClosed','reservationBinding'],'Amendment-engine safety proof');
+          requireTrue(artifactStoreSecurity,['filenameContract','disclosureFailClosed','secretScanHonest','formatIdentity','packageAllowlist','importPreActivationLimits','restoreCloneExplicit','stagedAtomicRecovery','backupCheckpointPolicy','singleStoreAuthority'],'Artifact-store security proof');
+          requireTrue(evidenceNoElevation,['separateObservationAndEntailmentOperations','externalClaimNotElevatedOnIngestion','independentNormalizationBoundToExactRunAndLeaf','originPreserved','reusedContextRejected','wrongRunRejected','idempotent'],'Evidence authority proof');
+          requireTrue(failureVarianceEnvironment,['executableNowRequiresExecutionEvidence','futureTargetDeferralValidated','deferredNeverMarkedExecuted','dueDeferredBlocksUntilRecordedExecution','availableTargetCannotBeDeferred','allowedVarianceNeedsNoDefect','prohibitedVarianceRequiresDefect','unknownVarianceBlocks','expectedVarianceFrozenBeforeRuns','candidateFreezeDerivesSetHashes','materialEnvironmentUnknownOrExpiredBlocks','materialEnvironmentDifferenceDetected','sameBytesDoNotOverrideEnvironmentChange'],'Failure, variance, and environment proof');
+          requireTrue(identityActionIdempotency,['identityActionIdempotency','candidateFreezeIdempotent','unchangedIterationIdempotent','baselineFreezeIdempotent','productReservationIdempotent','conflictingReuseRejected','singleCommandAuthority'],'Identity-producing action idempotency proof');
+          requireTrue(independenceDimensions,['independenceDimensions','applicationIsolationSeparate','providerStateNotElevated','reuseDetected','proofPolicyControlsBasis','ruleOfThreeSuppressed','environmentUnknownFailsClosed'],'Independence-dimension proof');
+          requireTrue(proofObligationRouting,['humanInspectionBasis','independentReviewDimensions','nativeArtifactBinding','futureProductBindingPreserved','requiredProofLeafClosure','weakerBasisRejected','responseLocalProofLeafResolution'],'Proof-obligation routing proof');
+          requireTrue(responseReservationBinding,['reservationBindingValidated','wrongReservationRejected','wrongNonceRejected','wrongPackageRejected','unboundPreviewRejected','reservationConsumed','exactRetryIdempotent','correctionSuperseded','unboundCorrectionPromptPrevented','abandonmentCancelled'],'Response-reservation proof');
+          requireTrue(semanticClosureBypasses,['stage01ChallengeGate','stage02BoundedSearchGate','stage04AtomicityChallengeGate','stage05SemanticClosureGate','stage05EquivalenceReviewGate','stage06SelfReviewBlocked'],'Semantic-closure bypass proof');
+          requireTrue(semanticReviewBinding,['distinctReviewAccepted','exactTargetHashBound','wrongHashRejected','reusedAuthorContextRejected'],'Semantic-review binding proof');
+          requireTrue(sourceSearchEvidenceBinding,['fabricatedEvidenceRejected','missingEvidenceRejected','staleEvidenceRejected','wrongScopeEvidenceRejected','crossProjectEvidenceRejected','currentCanonicalEvidenceAccepted','currentCanonicalReceiptAccepted','noApplicableSourceRulesPreserved'],'Source-search evidence-binding proof');
+          if(singleRuntimeAuthority.singleRuntimeAuthority!=='PASS'||singleRuntimeAuthority.runtimePromptWrapperCount!==0||!Array.isArray(singleRuntimeAuthority.authorities)||!singleRuntimeAuthority.authorities.length)throw new Error('Single-runtime-authority proof did not establish one final prompt authority and an inspectable authority inventory.');
+          requireTrue(singleRuntimeAuthority,['postFinalExportMutationRejected','frozenRuntimeAuthorities','sharedPromptEntryPoint'],'Single-runtime-authority proof');
+          if(specGroundedRouteOracle.specGroundedRouteOracle!=='PASS')throw new Error('Specification-grounded route oracle did not pass.');
+          requireTrue(specGroundedRouteOracle,['currentScopeSelectors','independentReadWriteOracle','withheldContextOracle','promptGenerationCannotSilentlySkip','downstreamForwardingOracle','operatorDoubleCheckGuidance','humanExperiencePromptContract','infrastructureFamiliesPresent'],'Specification-grounded route oracle');
+          requireTrue(storeReservation,['stagedArtifactLifecycle','startupArtifactReconciliation','atomicArtifactPromotion','reservationBoundPackage','reservationPersistedBeforePackage'],'Store/reservation proof');
+          if(storeReservation.reservationNonceBits!==128||storeReservation.duplicateAuthoritativeReservations!==0)throw new Error('Store/reservation proof did not establish its exact nonce or duplicate-reservation boundary.');
+          requireTrue(terminalReleaseSafety,['completeProductArtifactSetRequired','authorizedFilenameIdentityRequired','activeRegressionExecutionsRequired','explicitPostCorrectionPhaseRequired','distinctLaterExecutionRequired','historicalPostCorrectionSurvivesCurrentScopeAdvance','invalidatedPostCorrectionRejected','latestApplicableRegressionExecutionRequired','unsupportedRetirementRejected','registryRepairProven'],'Terminal-release safety proof');
+          requireTrue(terminalChainReentry,['tenRunLeafInstancesAccepted','duplicateRunEntailmentRejected','skeletalEvidenceChainRejected','postReleaseDeliveryPreserved','reentryAtResponsibleStage','reentryIdempotent'],'Terminal chain and post-release re-entry proof');
+          if(deploymentPipeline.deploymentPipelineVerification!=='PASS')throw new Error('Deployment-pipeline proof did not pass.');
+          requireTrue(deploymentPipeline,['exactArtifactHandoff','pinnedActions','sharedCanonicalizer','cleanAndWarmBrowserProof'],'Deployment-pipeline proof');
+          if(deploymentPipeline.rebuildInDeploy!==false||deploymentPipeline.rebuildInLiveVerification!==false)throw new Error('Deployment-pipeline proof did not establish zero post-test rebuilds.');
+          if(deploymentManifest.deploymentManifestVerification!=='PASS')throw new Error('Deployment-manifest proof did not pass.');
+          if(testRuntimeV3.runtimeBuildIdentity!==deploymentManifest.buildIdentity)throw new Error('Test IR runtime build identity differs from the deployed build identity.');
+          if(testRuntimeV3.testWorkerSha256!==deploymentManifest.workerDigest)throw new Error('Test IR worker byte identity differs from the deployed worker digest.');
+          if(!/^closed-loop-test-worker-protocol\/\d+$/.test(String(testRuntimeV3.workerProtocolVersion||'')))throw new Error('Test IR worker protocol identity is missing or invalid.');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
@@ -350,6 +468,27 @@ jobs:
             stage04ObligationAccounting,
             stagesCompleted:Number(fullCycle.stagesCompleted||0),
             negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
+            focusedVerificationResults:{
+              runtimeWorkerIdentity:testRuntimeV3,
+              amendmentEngineSafety,
+              artifactStoreSecurity,
+              evidenceNoElevation,
+              failureVarianceEnvironment,
+              identityActionIdempotency,
+              independenceDimensions,
+              proofObligationRouting,
+              responseReservationBinding,
+              semanticClosureBypasses,
+              semanticReviewBinding,
+              sourceSearchEvidenceBinding,
+              singleRuntimeAuthority,
+              specGroundedRouteOracle,
+              storeReservation,
+              terminalReleaseSafety,
+              terminalChainReentry,
+              deploymentPipeline,
+              deploymentManifest
+            },
             deployedByteIdentity:process.env.LIVE_RESULT==='success',
             localChromiumAcceptance:process.env.TEST_RESULT==='success',
             deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
@@ -372,6 +511,24 @@ jobs:
               workflow:'verify-complete.mjs',
               fullCycle:'verify-full-cycle.mjs',
               prompts:'verify-prompt-semantics.mjs',
+              amendmentEngineSafety:'verify-amendment-engine-safety.mjs',
+              artifactStoreSecurity:'verify-artifact-store-security.mjs',
+              evidenceAuthority:'verify-evidence-no-elevation.mjs',
+              failureVarianceEnvironment:'verify-failure-variance-environment.mjs',
+              identityActionIdempotency:'verify-identity-action-idempotency.mjs',
+              independenceDimensions:'verify-independence-dimensions.mjs',
+              proofObligationRouting:'verify-proof-obligation-routing.mjs',
+              responseReservationBinding:'verify-response-reservation-binding.mjs',
+              semanticClosureBypasses:'verify-semantic-closure-bypasses.mjs',
+              semanticReviewBinding:'verify-semantic-review-binding.mjs',
+              sourceSearchEvidenceBinding:'verify-source-search-evidence-binding.mjs',
+              singleRuntimeAuthority:'verify-single-runtime-authority.mjs',
+              specificationGroundedRoutes:'verify-spec-grounded-route-oracle.mjs',
+              storeReservationAndArtifactLifecycle:'verify-store-reservation.mjs',
+              terminalReleaseSafety:'verify-terminal-release-safety.mjs',
+              terminalChainAndPostReleaseReentry:'verify-terminal-chain-reentry.mjs',
+              deploymentPipeline:'verify-deployment-pipeline.mjs',
+              deploymentManifest:'verify-deployment-manifest.mjs against downloaded closed-loop-site artifact',
               localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               deployedIdentity:'verify-live.mjs',
               deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs'

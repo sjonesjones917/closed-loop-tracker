@@ -55,6 +55,7 @@ assert((workflowSource.match(/^name:/gm)||[]).length===1,'Pages workflow file is
 const workflows=fs.readdirSync('.github/workflows').filter(name=>name.endsWith('.yml')||name.endsWith('.yaml'));
 assert(workflows.length===1&&workflows[0]==='pages.yml','Repository must retain exactly one Pages workflow.');
 assert(workflowSource.includes('node verify-semantic-invariant.mjs'),'Semantic false-acceptance invariant is not in CI.');
+for(const verifier of ['verify-amendment-engine-safety.mjs','verify-artifact-store-security.mjs','verify-evidence-no-elevation.mjs','verify-failure-variance-environment.mjs','verify-identity-action-idempotency.mjs','verify-independence-dimensions.mjs','verify-proof-obligation-routing.mjs','verify-response-reservation-binding.mjs','verify-semantic-closure-bypasses.mjs','verify-semantic-review-binding.mjs','verify-source-search-evidence-binding.mjs','verify-single-runtime-authority.mjs','verify-spec-grounded-route-oracle.mjs','verify-store-reservation.mjs','verify-terminal-release-safety.mjs','verify-terminal-chain-reentry.mjs'])assert(workflowSource.includes(`node ${verifier}`),`Focused regression ${verifier} is not in CI.`);
 assert(workflowSource.includes('verify-browser.mjs')&&workflowSource.includes('verify-browser-extra.mjs'),'Chromium acceptance is not in CI.');
 assert(workflowSource.includes('Exact deployed-byte verification')&&workflowSource.includes('run: node verify-live.mjs'),'Exact deployed-byte verification is not in CI.');
 
@@ -102,7 +103,7 @@ const evidenceChainProofs=[
   fullCycleSource.includes('engine.constructEvidenceChains(p)'),
   fullCycleSource.includes("evidenceChains:engine.gate(29,reloaded).complete"),
   completeTestSource.includes('Missing evidence-chain links remain missing; the application does not invent them.'),
-  completeTestSource.includes('Missing evidence links were fabricated as complete.')
+  completeTestSource.includes("chains.length===0&&status.complete===false&&status.reasons.includes('NO_CURRENT_APPLICABLE_MANDATORY_PROPOSITION')")
 ];
 const mandatoryEvidenceChainCoverage=ratio(evidenceChainProofs.filter(Boolean).length,evidenceChainProofs.length);
 assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage proof is incomplete.');
@@ -111,7 +112,8 @@ const artifactIdentityProofs=[
   engineSource.includes("if(a.length!==d.length)throw new Error('Audited and delivery artifact counts differ.')"),
   engineSource.includes("if(!right)throw new Error('Missing delivery artifact '"),
   engineSource.includes('fields.AUDITED_FILENAME===fields.RELEASE_FILENAME'),
-  completeTestSource.includes('Artifact identity depends on file-selection order.'),
+  completeTestSource.includes("delivery=[audited[1],audited[0]]"),
+  completeTestSource.includes("r.length===2&&r.every(item=>engine.recordValue(item,'EXACT_HASH_MATCH')===true)"),
   completeTestSource.includes('Mismatched release bytes were authorized.'),
   completeTestSource.includes('stage28CurrentBatch:true'),
   fullCycleSource.includes('engine.verifyArtifactIdentity(p')

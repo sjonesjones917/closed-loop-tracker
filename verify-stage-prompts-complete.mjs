@@ -10,18 +10,21 @@ const p=core.createBlankState('JOB-PROMPT-CLOSURE');
 Object.assign(p.job,{JOB_ID:'JOB-PROMPT-CLOSURE',JOB_TITLE:'Prompt closure fixture',EXACT_USER_OBJECTIVE_VERBATIM:'Prove every stage prompt has the data and instructions needed for exactly its job.',EXPLICIT_USER_REQUIREMENTS:'Never ask the human to repeat project information already supplied.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITER-001',CURRENT_BASELINE_ID:'BASE-001',CURRENT_PRODUCT_ID:'PROD-001'});
 engine.ensureShape(p);engine.recalculate(p);
 const intake=engine.intakeCoverageManifest(p);
-const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Prompt closure fixture preserves current human authority.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,...(unit.kind==='SUPPLIED_MATERIAL'?{artifactInspection:{artifactId:unit.artifactId,artifactSha256:unit.artifactSha256,inspectedActualBytes:true}}:{}),disposition:'RETAINED_AS_CONTEXT',reason:'Prompt closure fixture preserves current human authority.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT',sourceLocations:[{kind:'OTHER',value:unit.sourceLocation||unit.unitId}]}]}))};
 p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Prompt closure fixture deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};
 p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};
 p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
 for(let stage=1;stage<30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
 if(!engine.evaluateIntakeAccounting(p).complete)throw new Error('Prompt closure fixture failed to establish current Stage 01 accounting.');
+const seedAcceptedOperation=(stage,operation,eventSequence,stageData={})=>{const scope=prompts.scopeFor(stage,p),proposalId=`PROPOSAL-PROMPT-CLOSURE-${stage}-${operation}`,rawResponseId=`RAW-PROMPT-CLOSURE-${stage}-${operation}`;p.projectData.rawResponses.push({rawResponseId,stage,sha256:`RAW-HASH-${stage}-${operation}`,status:'ACCEPTED_DATA_CHANGE'});p.projectData.responseProposals.push({proposalId,rawResponseId,stage,status:'ACCEPTED',scope,proposedStageData:stageData,canonicalRecords:{},evidence:[],canonicalEnvelopeSha256:`ENVELOPE-HASH-${stage}-${operation}`});p.projectData.acceptedChanges.push({changeId:`CHANGE-PROMPT-CLOSURE-${stage}-${operation}`,proposalId,rawResponseId,stage,operation,eventSequence,status:'COMMITTED',responseType:'DATA_PROPOSAL',scope,promptId:`PROMPT-CLOSURE-${stage}-${operation}`,canonicalEnvelopeSha256:`ENVELOPE-HASH-${stage}-${operation}`});};
+seedAcceptedOperation(1,'COMPLETE',1,p.stages[1].agentData);seedAcceptedOperation(1,'SEMANTIC_CHALLENGE',2,{CHALLENGE_FINDING_RECORDS:{findings:[]}});seedAcceptedOperation(2,'COMPLETE',3,{SEARCH_UNIVERSE:'BOUNDED-SEARCH-UNIVERSE',SEARCH_EXECUTION_EVIDENCE:['SEARCH-EVIDENCE'],DISCOVERY_RISK:'NONMATERIAL'});seedAcceptedOperation(4,'COMPLETE',4,{REQUIREMENTS_VERSION:'REQ-v001'});seedAcceptedOperation(4,'SEMANTIC_CHALLENGE',5,{OBLIGATION_DISPOSITION_CHALLENGE_RECORDS:{findings:[]}});seedAcceptedOperation(4,'DISPOSITION_CHALLENGE',6,{OBLIGATION_DISPOSITION_CHALLENGE_RECORDS:{findings:[]}});seedAcceptedOperation(4,'ATOMICITY_CHALLENGE',7,{ATOMICITY_CHALLENGE_RECORDS:{findings:[]}});seedAcceptedOperation(5,'COMPLETE',8,{INPUT_REQUIREMENTS_VERSION:'REQ-v001'});seedAcceptedOperation(5,'NORMATIVE_CLASSIFICATION_REVIEW',9,{NORMATIVE_CLASSIFICATION_REVIEWS:{findings:[]}});seedAcceptedOperation(5,'APPLICABILITY_REVIEW',10,{CONDITIONAL_ACTIVATION_REVIEWS:{findings:[]}});seedAcceptedOperation(5,'PROPOSITION_EQUIVALENCE_REVIEW',11,{PROPOSITION_EQUIVALENCE_REVIEWS:{reviewedPropositionIds:[],findings:[]}});seedAcceptedOperation(6,'COMPLETE',12,{TEST_SUITE_VERSION:'TEST-v001'});
 const requiredReads={
   4:['sourceConflicts'],5:['sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
 };
+const entailmentReviewReads=['requirements','tests','propositions','proofExpressions','proofObligations','observationRecords','evidenceRecords','artifacts','runs','freshContexts','products'];
 const semantic={
   1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every application-enumerated input unit must be classified exactly once'],
-  2:['until no new applicable controlling or correctness-relevant external source category is found','Do not stop at the first plausible source'],
+  2:['bounded SOURCE_SEARCH_CONTRACT','Never claim universal source completeness or universal absence'],
   3:['every current accepted Stage 02 source has current research coverage','distinct conflict/exception/saturation pass'],
   4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Every obligationId'],
   5:['Resolve the current job’s requirement set exhaustively','repeat the review against the resulting requirement set'],
@@ -49,19 +52,35 @@ const semantic={
   29:['complete evidence graph for every mandatory requirement','Do not fabricate a link'],
   30:['append-only defect and regression history','Do not rewrite history']
 };
+const operationSemantic={
+  '1:SEMANTIC_CHALLENGE':['first Stage 01 extraction','deliberately withheld','findingKey'],
+  '1:RECONCILE_INTAKE':['exact accepted first Stage 01 extraction','RESOLVED, NONMATERIAL, or BLOCKED'],
+  '2:SEARCH_ADEQUACY_REVIEW':['exact accepted bounded SOURCE_SEARCH_CONTRACT','never claim universal source completeness or universal absence'],
+  '4:SEMANTIC_CHALLENGE':['accepted first Stage 04 compiler output','findingKey'],
+  '4:DISPOSITION_CHALLENGE':['challenge every accepted first-compiler disposition','findingKey'],
+  '4:ATOMICITY_CHALLENGE':['challenge the exact first-compiler requirements','findingKey'],
+  '4:RECONCILE_REQUIREMENTS':['exact accepted first Stage 04 compiler output','RESOLVED, NONMATERIAL, or BLOCKED'],
+  '5:NORMATIVE_CLASSIFICATION_REVIEW':['exact accepted Stage 05 compiler output','release obligation'],
+  '5:APPLICABILITY_REVIEW':['exact accepted Stage 05 compiler output','affirmative current evidence'],
+  '5:PROPOSITION_EQUIVALENCE_REVIEW':['reviewedPropositionIds','every current PROPOSITION_ID'],
+  '5:RECONCILE_SEMANTIC_CLOSURE':['exact accepted Stage 05 compiler output','RESOLVED, NONMATERIAL, or BLOCKED'],
+  '6:SEMANTIC_REVIEW':['exact accepted Stage 06 verification-suite compiler output','PARTIAL, UNKNOWN, or NOT_EQUIVALENT']
+};
 let promptsChecked=0;
 for(let stage=1;stage<=30;stage++){
   const contract=schema.STAGE_CONTRACTS[stage];
   for(const operation of contract.operations){
     const op=schema.operationContract(stage,operation);
-    for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
+    if(operation==='ENTAILMENT_REVIEW'){
+      if(JSON.stringify(op.readCollections)!==JSON.stringify(entailmentReviewReads))throw new Error(`Stage ${stage} ${operation} does not expose the exact linked-observation review projection.`);
+    }else for(const needed of requiredReads[stage]||[])if(!op.readCollections.includes(needed))throw new Error(`Stage ${stage} ${operation} missing required read collection ${needed}.`);
     const scope={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
     const prompt=prompts.buildPromptRecord(stage,p,{operation,scope}).prompt;
     promptsChecked++;
     for(const common of ['PROJECT DATA EXECUTION RULE — MANDATORY','Project-relevant information supplied by the human is supplied once','Never ask the human to repeat, retype, summarize, resend, reopen, or reattach project information already present','STRICT RESPONSE CONTRACT'])if(!prompt.includes(common))throw new Error(`Stage ${stage} ${operation} missing common prompt invariant: ${common}`);
     if(stage>1&&!prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error(`Stage ${stage} ${operation} can regress to re-requesting original intent.`);
     if(prompt.includes('CUSTOM_PIPELINE'))throw new Error(`Stage ${stage} ${operation} still exposes prohibited CUSTOM_PIPELINE.`);
-    for(const phrase of semantic[stage]||[])if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);
+    for(const phrase of operationSemantic[`${stage}:${operation}`]||(semantic[stage]||[]))if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);
     if((stage===17||stage===19)&&!prompt.includes(`CURRENT DECLARED OPERATION: ${operation}`))throw new Error(`Stage ${stage} ${operation} lacks exact operation-specific instruction.`);
   }
 }

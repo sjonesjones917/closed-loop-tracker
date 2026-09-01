@@ -2,8 +2,16 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const PAGE_URL=process.env.PAGE_URL||'http://127.0.0.1:4173/';
+const PAGE_BASE=(()=>{const value=new URL(PAGE_URL);value.search='';value.hash='';if(!value.pathname.endsWith('/'))value.pathname+='/';return value.href;})();
+const deploymentRoot=path.resolve(process.env.DEPLOYMENT_ROOT||'_site');
+const deploymentManifest=JSON.parse(fs.readFileSync(path.join(deploymentRoot,'deployment-manifest.json'),'utf8'));
+if(deploymentManifest.schema!=='closed-loop-deployment-manifest/1')throw new Error('Browser acceptance requires closed-loop-deployment-manifest/1.');
+const deploymentResources=new Map((deploymentManifest.runtimeResources||[]).map(resource=>[resource.path,resource]));
+if(deploymentResources.size!==(deploymentManifest.runtimeResources||[]).length)throw new Error('Browser acceptance deployment manifest contains duplicate resource paths.');
+const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const appCoreSource=fs.readFileSync('app-core.js','utf8');
 const promptStart=appCoreSource.indexOf('function currentStagePrompt'),promptEnd=appCoreSource.indexOf('function operationMarkup',promptStart),currentStagePromptSource=promptStart>=0&&promptEnd>promptStart?appCoreSource.slice(promptStart,promptEnd):'';
 if(!currentStagePromptSource||currentStagePromptSource.includes('clone(current)'))throw new Error('Workflow prompt preview must not deep-clone the complete project on stage navigation.');
@@ -25,10 +33,69 @@ async function openStage(cdp,n){await click(cdp,'[data-view="Workflow"]');await 
 async function projects(cdp){return evalValue(cdp,`globalThis.closedLoopProjectStore.readAll()`);}
 async function activeProject(cdp){return evalValue(cdp,`(async()=>{const id=document.querySelector('#current-project-summary')?.textContent?.split(' · ')[0];const all=await globalThis.closedLoopProjectStore.readAll();return all.find(p=>p.job?.JOB_ID===id)||all[0];})()`);}
 
+async function verifyExecutedDeployment(cdp,loadKind,eventStart){
+  const state=await evalValue(cdp,`(async()=>{
+    const hex=bytes=>Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');
+    const digest=async bytes=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)));
+    const manifestUrl=new URL('deployment-manifest.json',document.baseURI);manifestUrl.searchParams.set('browserManifestProof',String(Date.now()));
+    const manifestResponse=await fetch(manifestUrl,{cache:'no-store'});if(!manifestResponse.ok)throw new Error('Deployment manifest fetch failed: '+manifestResponse.status);
+    const manifest=await manifestResponse.json();
+    const externalScripts=Array.from(document.scripts).filter(script=>script.src);
+    const inlineScriptCount=Array.from(document.scripts).filter(script=>!script.src).length;
+    const scriptUrls=externalScripts.map(script=>script.src);
+    const scriptBuildTokens=scriptUrls.map(url=>new URL(url).searchParams.get('v'));
+    const scriptDigests=[];
+    for(const script of externalScripts){const response=await fetch(script.src,{cache:'no-store'});if(!response.ok)throw new Error('Executed script fetch failed: '+script.src);scriptDigests.push({url:script.src,digest:await digest(await response.arrayBuffer())});}
+    const worker=manifest.runtimeGraph.worker,workerUrl=new URL(worker.url,document.baseURI).href;
+    const workerResponse=await fetch(workerUrl,{cache:'no-store',credentials:'same-origin',redirect:'error'});if(!workerResponse.ok||workerResponse.redirected||workerResponse.url!==workerUrl)throw new Error('Worker byte fetch failed or changed URL: '+workerResponse.status);
+    const workerDigest=await digest(await workerResponse.arrayBuffer());
+    const runtime=globalThis.closedLoopTestRuntime;
+    const workerAttestation={runtimeBuildIdentity:manifest.buildIdentity,workerProtocolVersion:worker.workerProtocolVersion,testWorkerSha256:workerDigest};
+    const requestId='browser-worker-identity-'+Date.now();
+    const workerHandshake=await new Promise((resolve,reject)=>{const instance=new Worker(workerUrl),timer=setTimeout(()=>{instance.terminate();reject(new Error('Worker identity handshake timed out.'));},10000);instance.onerror=event=>{clearTimeout(timer);instance.terminate();reject(new Error(event.message||'Worker identity handshake failed.'));};instance.onmessage=event=>{if(event.data?.requestId!==requestId)return;clearTimeout(timer);instance.terminate();resolve(event.data);};instance.postMessage({type:'EXECUTE_TEST_IR',requestId,runtimeBuildIdentity:manifest.buildIdentity,workerProtocolVersion:worker.workerProtocolVersion,workerAttestation,spec:{version:'closed-loop-test-spec/1',steps:[]},bindings:{},artifacts:{},canonicalBindings:{},metadata:{purpose:'deployed-worker-identity'}});});
+    const registrations=navigator.serviceWorker?await navigator.serviceWorker.getRegistrations():[];
+    return {manifestDigest:manifest.manifestDigest,buildIdentity:manifest.buildIdentity,scriptUrls,scriptBuildTokens,scriptDigests,inlineScriptCount,runtimeBuildIdentity:runtime?.RUNTIME_BUILD_ID||'',runtimeWorkerDigest:runtime?.TEST_WORKER_SHA256||'',runtimeWorkerProtocol:runtime?.WORKER_PROTOCOL_VERSION||'',workerUrl,workerDigest,workerHandshake:{ok:Boolean(workerHandshake?.ok),runtimeBuildIdentity:workerHandshake?.runtimeBuildIdentity||'',workerProtocolVersion:workerHandshake?.workerProtocolVersion||'',testWorkerSha256:workerHandshake?.workerAttestation?.testWorkerSha256||'',errorCode:workerHandshake?.error?.code||''},serviceWorkerController:Boolean(navigator.serviceWorker?.controller),serviceWorkerRegistrationCount:registrations.length,navigationType:performance.getEntriesByType('navigation')[0]?.type||'UNKNOWN'};
+  })()`);
+  assert(state.manifestDigest===deploymentManifest.manifestDigest,`${loadKind} browser loaded the wrong deployment manifest.`);
+  assert(state.buildIdentity===deploymentManifest.buildIdentity,`${loadKind} browser loaded a mixed manifest build identity.`);
+  const expectedScriptUrls=deploymentManifest.runtimeGraph.scripts.map(script=>new URL(script.url,PAGE_BASE).href);
+  assert(JSON.stringify(state.scriptUrls)===JSON.stringify(expectedScriptUrls),`${loadKind} browser executed a script URL graph different from the manifest.`);
+  assert(state.inlineScriptCount===0,`${loadKind} browser executed inline script content.`);
+  assert(new Set(state.scriptBuildTokens).size===1&&state.scriptBuildTokens[0]===deploymentManifest.buildIdentity,`${loadKind} browser executed mixed build tokens.`);
+  for(const executed of state.scriptDigests){const expectedScript=deploymentManifest.runtimeGraph.scripts.find(script=>new URL(script.url,PAGE_BASE).href===executed.url),resource=deploymentResources.get(expectedScript?.path);assert(expectedScript&&resource&&expectedScript.digest===resource.digest&&executed.digest===resource.digest,`${loadKind} browser-resolved bytes differ for ${executed.url}.`);}
+  assert(state.runtimeBuildIdentity===deploymentManifest.buildIdentity,`${loadKind} page runtime reports a mixed build identity.`);
+  assert(state.runtimeWorkerDigest===deploymentManifest.runtimeGraph.worker.digest,`${loadKind} runtime is not bound to the manifested worker digest.`);
+  assert(state.runtimeWorkerProtocol===deploymentManifest.runtimeGraph.worker.workerProtocolVersion,`${loadKind} runtime reports a mixed worker protocol.`);
+  assert(state.workerUrl===new URL(deploymentManifest.runtimeGraph.worker.url,PAGE_BASE).href,`${loadKind} worker URL differs from the manifest.`);
+  assert(deploymentResources.get('test-worker.js')?.digest===deploymentManifest.runtimeGraph.worker.digest&&state.workerDigest===deploymentManifest.runtimeGraph.worker.digest,`${loadKind} browser-resolved worker bytes differ from the manifest.`);
+  assert(state.workerHandshake.runtimeBuildIdentity===deploymentManifest.buildIdentity&&state.workerHandshake.workerProtocolVersion===deploymentManifest.runtimeGraph.worker.workerProtocolVersion&&state.workerHandshake.testWorkerSha256===deploymentManifest.runtimeGraph.worker.digest,`${loadKind} executed worker reports a mixed deployment or worker-byte identity.`);
+  assert(!state.workerHandshake.ok&&state.workerHandshake.errorCode==='INVALID_TEST_IR',`${loadKind} worker identity probe did not execute the manifested Test IR validator.`);
+  assert(!state.serviceWorkerController&&state.serviceWorkerRegistrationCount===0,`${loadKind} browser is controlled by or retains a service worker.`);
+  assert(state.navigationType===(loadKind==='clean'?'navigate':'reload'),`${loadKind} browser proof used unexpected navigation type ${state.navigationType}.`);
+
+  const parsed=cdp.events.slice(eventStart).filter(event=>event.method==='Debugger.scriptParsed'&&event.params?.url);
+  for(const script of deploymentManifest.runtimeGraph.scripts){
+    const expectedUrl=new URL(script.url,PAGE_BASE).href,event=[...parsed].reverse().find(candidate=>candidate.params.url===expectedUrl);
+    assert(event,`${loadKind} browser did not report executing ${expectedUrl}.`);
+    const source=await cdp.send('Debugger.getScriptSource',{scriptId:event.params.scriptId});
+    assert(sha256(Buffer.from(source.scriptSource,'utf8'))===script.digest,`${loadKind} browser executed bytes different from the manifest for ${script.path}.`);
+  }
+  return state;
+}
+
 async function main(){
   await poll(()=>getJson(`http://127.0.0.1:${port}/json/version`),20000);
-  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtra=${Date.now()}`)}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');
+  const target=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent('about:blank')}`,{method:'PUT'}),cdp=new CDP(target.webSocketDebuggerUrl);await cdp.ready;await cdp.send('Runtime.enable');await cdp.send('Page.enable');await cdp.send('Log.enable');await cdp.send('Network.enable');await cdp.send('Debugger.enable');
+  const origin=new URL(PAGE_BASE).origin;await cdp.send('Network.clearBrowserCache');await cdp.send('Storage.clearDataForOrigin',{origin,storageTypes:'all'});
+  const cleanEventStart=cdp.events.length,cleanUrl=new URL(PAGE_BASE);cleanUrl.searchParams.set('browserExtra',String(Date.now()));await cdp.send('Page.navigate',{url:cleanUrl.href});
   await waitExpr(cdp,`document.readyState==='complete'`);await waitExpr(cdp,`globalThis.closedLoopAppReady===true`,20000);assert(!(await evalValue(cdp,`globalThis.closedLoopAppError`)),await evalValue(cdp,`globalThis.closedLoopAppError`));
+  await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
+
+  console.log('extra:executed-deployment-clean');
+  const cleanDeployment=await verifyExecutedDeployment(cdp,'clean',cleanEventStart);
+  const priorTimeOrigin=await evalValue(cdp,'performance.timeOrigin'),warmEventStart=cdp.events.length;await cdp.send('Page.reload',{ignoreCache:false});await poll(async()=>{const value=await evalValue(cdp,`({ready:document.readyState==='complete'&&globalThis.closedLoopAppReady===true,timeOrigin:performance.timeOrigin})`);if(!value.ready||value.timeOrigin===priorTimeOrigin)throw new Error('Warm reload has not completed.');return value;},20000);
+  console.log('extra:executed-deployment-warm');
+  const warmDeployment=await verifyExecutedDeployment(cdp,'warm',warmEventStart);
   await waitExpr(cdp,`document.querySelector('#project-picker')?.options.length>=1`,20000);
 
   console.log('extra:project-lifecycle-ui');
@@ -79,7 +146,7 @@ async function main(){
   assert(artifactIdempotence?.artifactId==='ARTIFACT-BROWSER-BLOB'&&artifactIdempotence.byteSize===10&&artifactIdempotence.sha256===blobProof.stored,'Idempotent artifact registration did not return the verified existing artifact.');
 
   console.log('extra:two-tab-cas');
-  const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(`${PAGE_URL}?browserExtraTab2=${Date.now()}`)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
+  const secondUrl=new URL(PAGE_BASE);secondUrl.searchParams.set('browserExtraTab2',String(Date.now()));const secondTarget=await getJson(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(secondUrl.href)}`,{method:'PUT'}),tab2=new CDP(secondTarget.webSocketDebuggerUrl);await tab2.ready;await tab2.send('Runtime.enable');await tab2.send('Page.enable');await waitExpr(tab2,`globalThis.closedLoopAppReady===true`,20000);
   const sharedJob=newest.job.JOB_ID;
   const starting=await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID===${JSON.stringify(sharedJob)});return {revision:p.revision,project:p};})()`);
   const firstWrite=await evalValue(cdp,`(async()=>{const p=(await closedLoopProjectStore.readAll()).find(x=>x.job?.JOB_ID===${JSON.stringify(sharedJob)});p.browserCasWinner='TAB1';return closedLoopProjectStore.writeProject(p,{expectedProjectRevision:${Number(starting.revision)}}).catch(e=>({__error:e.code||e.message}));})()`);
@@ -111,7 +178,7 @@ async function main(){
 
   assert(cdp.dialogs.length===0,`Unexpected browser dialogs: ${cdp.dialogs.join(' | ')}`);
   const errors=cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'||(e.method==='Log.entryAdded'&&['error','assert'].includes(e.params?.entry?.level)));assert(errors.length===0,`Browser/runtime errors: ${errors.map(e=>JSON.stringify(e.params)).join('\n')}`);
-  console.log(JSON.stringify({browserExtraVerified:true,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
+  console.log(JSON.stringify({browserExtraVerified:true,executedDeploymentManifest:deploymentManifest.manifestDigest,runtimeBuildIdentity:deploymentManifest.buildIdentity,cleanLoadVerified:cleanDeployment.navigationType==='navigate',warmReloadVerified:warmDeployment.navigationType==='reload',noControllingServiceWorker:true,mixedBuildIdentityCount:0,executedWorkerDigest:warmDeployment.workerDigest,exactPromptCopy:true,pendingProposalReload:true,successfulExport:true,successfulImport:true,unknownFieldRoundTrip:true,retainedNotDuplicated:true,retainedDeleteSuppression:true,projectLifecycleFunctional:true,blockerControl:true,freshContextControlContextual:true,blobPersistence:true,artifactIdempotence:true,twoTabConflict:true,storageFailureRollback:true,transactionMutatorLifetime:true,closedConnectionPromptSave:true,runtimeErrors:0},null,2));cdp.close();
 }
 async function cleanup(){if(!proc.killed)proc.kill('SIGTERM');await Promise.race([new Promise(r=>proc.once('exit',r)),sleep(1000)]);try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:3,retryDelay:100});}catch{}}
 try{await main();}finally{await cleanup();}
