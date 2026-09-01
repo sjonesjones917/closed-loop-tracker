@@ -51,7 +51,9 @@ function fixtureBuildPrompt(stage,p,options){
   preparePromptPrerequisites(p,stage);if(stage===4)prepareStage4Upstream(p);
   const scope=prompts.scopeFor(stage,{...p,revision:Number(p.revision||0)+1},{...(selected.scope||{}),contextId}),prepared=engine.prepareCurrentOperationReservation(p,{stage,operation,contextId,scope,owningTabInstance:'INGESTION_VERIFIER'}),preview=engine.clone(p);
   preview.revision=prepared.expectedRevision;
+  prepared.scope={...(prepared.scope||scope||{}),contextId};if(prepared.fields)prepared.fields.SCOPE=prepared.scope;
   const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});
+  record.scope={...(record.scope||{}),contextId};record.operationBinding={packageId:engine.recordValue(prepared,'PACKAGE_ID')||prepared.packageId||null,operationReservationId:engine.recordValue(prepared,'OPERATION_RESERVATION_ID')||prepared.operationReservationId||null,challengeNonce:engine.recordValue(prepared,'CHALLENGE_NONCE')||prepared.challengeNonce||null,targetSlot:engine.recordValue(prepared,'TARGET_SLOT')||prepared.targetSlot||null};
   engine.registerGeneratedPrompt(p,record);engine.reserveOperation(p,{preparedReservation:prepared,promptId:record.instructionId});p.revision=prepared.expectedRevision;return record;
 }
 function fixturePromptOperation(stage){

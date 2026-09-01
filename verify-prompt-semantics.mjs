@@ -13,7 +13,8 @@ assert(core&&schema&&engine&&prompts,'Prompt-semantic runtime failed to load.');
 function activatePrompt(project,stage,operation='COMPLETE'){
   const context=engine.registerFreshContext(project,{stage,externalContextIdentifier:`PROMPT-SEMANTICS-${stage}-${operation}`,operatorLabel:'PROMPT_SEMANTICS_VERIFIER',purpose:'GENERAL'}),contextId=engine.recordId(context,'freshContexts'),scope=prompts.scopeFor(stage,{...project,revision:Number(project.revision||0)+1},{contextId}),prepared=engine.prepareCurrentOperationReservation(project,{stage,operation,contextId,scope,owningTabInstance:'PROMPT_SEMANTICS_VERIFIER'}),preview=engine.clone(project);
   preview.revision=prepared.expectedRevision;
-  const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});
+  const exactScope={...(prepared.scope||scope||{}),contextId};if(prepared.fields)prepared.fields.SCOPE=exactScope;prepared.scope=exactScope;
+  const record=prompts.buildPromptRecord(stage,preview,{operation,scope:exactScope,operationReservation:prepared});
   engine.registerGeneratedPrompt(project,record);engine.reserveOperation(project,{preparedReservation:prepared,promptId:record.instructionId});project.revision=prepared.expectedRevision;engine.recalculate(project);return record;
 }
 assert(core.WORKFLOW_ID==='mobile-closed-loop/30','Workflow identity changed.');

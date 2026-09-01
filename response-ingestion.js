@@ -669,6 +669,8 @@ function regenerateReservedPrompt(next,proposal,promptEngine){
   const regeneratedScope=promptEngine.scopeFor(stage,preview,clone(prepared.scope||laneScope));
   if(hash.stableStringify(regeneratedScope)!==hash.stableStringify(prepared.scope||laneScope))throw new Error(`Replacement prompt scope diverged from its exact reservation: prepared=${JSON.stringify(prepared.scope||laneScope)}, regenerated=${JSON.stringify(regeneratedScope)}`);
   const generated=promptEngine.buildPromptRecord(stage,preview,{operation,scope:clone(prepared.scope||laneScope),operationReservation:prepared});
+  generated.operationBinding={packageId:workflow.recordValue(prepared,'PACKAGE_ID')||prepared.packageId||null,operationReservationId:workflow.recordValue(prepared,'OPERATION_RESERVATION_ID')||prepared.operationReservationId||null,challengeNonce:workflow.recordValue(prepared,'CHALLENGE_NONCE')||prepared.challengeNonce||null,targetSlot:workflow.recordValue(prepared,'TARGET_SLOT')||prepared.targetSlot||null,payload:clone(payload)};
+  if(generated.contextManifest)generated.contextManifest.operationBinding=clone(generated.operationBinding);
   workflow.reserveOperation(next,{preparedReservation:prepared,packageId:String(priorBinding.packageId||''),promptId:generated.instructionId});
   return generated;
 }
