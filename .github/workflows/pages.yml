@@ -20,13 +20,13 @@ concurrency:
 jobs:
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.19.0'
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
@@ -43,15 +43,46 @@ jobs:
       - name: Syntax
         run: |
           set -euo pipefail
+          git diff --check
           for file in *.js *.mjs; do
             node --check "$file"
           done
+          node - <<'NODE'
+          const fs=require('fs');
+          const vm=require('node:vm');
+          const workflow=fs.readFileSync('.github/workflows/pages.yml','utf8');
+          const blocks=[...workflow.matchAll(/^[ \t]*node - <<'NODE'\r?\n([\s\S]*?)^[ \t]*NODE[ \t]*$/gm)].map(match=>match[1]);
+          if(!blocks.length)throw new Error('Workflow contains no inline Node.js contracts.');
+          blocks.forEach((source,index)=>new vm.Script(source,{filename:`pages.yml:inline-node-${index+1}.js`}));
+          const publish=blocks.find(source=>source.includes("const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'))"));
+          if(!publish)throw new Error('Publish acceptance builder was not found.');
+          for(const token of [
+            "const executionRoute=JSON.parse(fs.readFileSync('/tmp/execution-route.json','utf8'))",
+            'executionRoute.futureProductBinding!==true',
+            'executionRoute.evidenceAttachmentPlaceholderFiltering!==true',
+            'executionRouteClosureProof:executionRoute',
+            "const finalSemanticGates=JSON.parse(fs.readFileSync('/tmp/final-semantic-gates.json','utf8'))",
+            "finalSemanticGates.status!=='PASS'",
+            'finalSemanticGateProof:finalSemanticGates',
+            "finalSemanticGates:'verify-final-semantic-gates.mjs'",
+            "verify-browser-core-proof.json",
+            'coreBrowserProof.browserVerified!==true',
+            "verify-human-stage-walkthrough-proof.json",
+            'humanWalkthroughProof.humanStageWalkthrough!==true',
+            "verify-mobile-stage-action-proof.json",
+            'mobileActionProof.mobileStageActionRegression!==true',
+            'deployedCoreBrowserProof:coreBrowserProof',
+            'deployedHumanStageWalkthroughProof:humanWalkthroughProof',
+            'deployedMobileStageActionProof:mobileActionProof'
+          ])if(!publish.includes(token))throw new Error(`Publish acceptance contract is missing ${token}.`);
+          NODE
 
       - name: Schema, ownership, and single-architecture proof
         run: |
           set -euo pipefail
           node build-test-project.mjs
           node verify.mjs
+          node verify-retained-candidate.mjs
           test "$(find . -maxdepth 1 -type f -name '*.html' | wc -l)" -eq 1
           test ! -f app.js
           test -z "$(find . -maxdepth 1 -type f -name '.repair-*' -print -quit)"
@@ -112,6 +143,20 @@ jobs:
           node verify-test-runtime.mjs
           node verify-hash.mjs
 
+      - name: Controlling completion amendment and deployment contracts
+        run: |
+          set -euo pipefail
+          node verify-amendment-schema.mjs
+          node verify-completion-amendment.mjs
+          node verify-semantic-challenge-gates.mjs
+          node verify-operation-reservation-routing.mjs
+          node verify-external-evidence-normalization.mjs
+          node verify-final-semantic-gates.mjs
+          node verify-source-backup-closure.mjs
+          node verify-restore-activation-contract.mjs
+          node verify-deployment-manifest.mjs
+          node verify-ui-contract.mjs
+
       - name: Raw-first ingestion and negative cases
         run: |
           set -euo pipefail
@@ -121,6 +166,7 @@ jobs:
         run: |
           set -euo pipefail
           node verify-complete.mjs
+          node verify-execution-route-closure.mjs
           node verify-full-cycle.mjs
           node verify-definition-of-done.mjs
           node verify-v3-definition-of-done.mjs
@@ -146,15 +192,25 @@ jobs:
             export BROWSER
           fi
           test -n "$BROWSER"
-          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          LOCAL_SITE_ROOT="_site-local-browser"
+          LOCAL_SOURCE_COMMIT="${GITHUB_SHA}"
+          LOCAL_WORKFLOW_RUN="${GITHUB_RUN_ID}-local-browser"
+          rm -rf "$LOCAL_SITE_ROOT"
+          mkdir "$LOCAL_SITE_ROOT"
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll "$LOCAL_SITE_ROOT/"
+          node build-deployment-manifest.mjs "$LOCAL_SITE_ROOT" "$LOCAL_SOURCE_COMMIT" "$LOCAL_WORKFLOW_RUN"
+          node verify-deployment-manifest.mjs "$LOCAL_SITE_ROOT" "$LOCAL_SOURCE_COMMIT" "$LOCAL_WORKFLOW_RUN"
+          python3 -m http.server 4173 --directory "$LOCAL_SITE_ROOT" >/tmp/closed-loop-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           run_browser_verifier() {
             script="$1"
+            proof_path="${2:-}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
               if node "$script" >"$log" 2>&1; then
                 cat "$log"
+                if [ -n "$proof_path" ]; then cp "$log" "$proof_path"; fi
                 return 0
               fi
               cat "$log"
@@ -168,6 +224,7 @@ jobs:
           run_browser_verifier verify-mobile-stage-action.mjs
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-restore-activation-path.mjs
           kill "$SERVER_PID" 2>/dev/null || true
           trap - EXIT
 
@@ -175,7 +232,7 @@ jobs:
     name: Deploy exact verified bytes
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -185,7 +242,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.19.0'
       - name: Rebuild retained fixture from verified source
         run: node build-test-project.mjs
       - name: Build static application
@@ -194,6 +251,16 @@ jobs:
           rm -rf _site
           mkdir _site
           cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
+          node build-deployment-manifest.mjs _site "$GITHUB_SHA" "$GITHUB_RUN_ID"
+          node verify-deployment-manifest.mjs _site "$GITHUB_SHA" "$GITHUB_RUN_ID"
+      - name: Preserve exact verified deployment artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verified-site-${{ github.sha }}
+          path: _site
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
@@ -206,7 +273,7 @@ jobs:
     name: Verify deployed bytes and operator path
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       PAGE_URL: ${{ needs.deploy.outputs.page_url }}
@@ -214,11 +281,27 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
-      - name: Rebuild retained fixture used by deployment
-        run: node build-test-project.mjs
+          node-version: '22.19.0'
+      - name: Retrieve the exact artifact uploaded by the verified build job
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: verified-site-${{ github.sha }}
+          path: _site
+      - name: Build an independent source-to-output reproducibility comparison
+        run: |
+          set -euo pipefail
+          node build-test-project.mjs
+          node verify-deployment-manifest.mjs _site "$GITHUB_SHA" "$GITHUB_RUN_ID"
+          rm -rf _site-rebuild
+          mkdir _site-rebuild
+          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site-rebuild/
+          node build-deployment-manifest.mjs _site-rebuild "$GITHUB_SHA" "$GITHUB_RUN_ID"
       - name: Exact deployed-byte verification
-        run: node verify-live.mjs
+        env:
+          REPRODUCIBILITY_SITE_ROOT: _site-rebuild
+        run: node verify-live.mjs | tee verify-live-proof.json
+      - name: Shared restore/import contract proof
+        run: node verify-restore-activation-contract.mjs | tee verify-restore-activation-contract-proof.json
       - name: Deployed Chromium operator path
         run: |
           set -euo pipefail
@@ -226,10 +309,12 @@ jobs:
           test -n "$BROWSER"
           run_browser_verifier() {
             script="$1"
+            proof_path="${2:-}"
             for attempt in 1 2 3; do
               log="/tmp/${script}.${attempt}.log"
               if node "$script" >"$log" 2>&1; then
                 cat "$log"
+                if [ -n "$proof_path" ]; then cp "$log" "$proof_path"; fi
                 return 0
               fi
               cat "$log"
@@ -239,21 +324,49 @@ jobs:
               test "$attempt" -lt 3 || return 1
             done
           }
-          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-human-stage-walkthrough.mjs verify-human-stage-walkthrough-proof.json
+          run_browser_verifier verify-mobile-stage-action.mjs verify-mobile-stage-action-proof.json
+          run_browser_verifier verify-browser.mjs verify-browser-core-proof.json
+          export BROWSER_PROOF_PATH=verify-browser-proof.json
           run_browser_verifier verify-browser-extra.mjs
+          run_browser_verifier verify-restore-activation-path.mjs verify-restore-activation-path-proof.json
+          test -s verify-human-stage-walkthrough-proof.json
+          test -s verify-mobile-stage-action-proof.json
+          test -s verify-browser-core-proof.json
+          test -s "$BROWSER_PROOF_PATH"
+          test -s verify-restore-activation-path-proof.json
+      - name: Preserve exact deployed verification evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: live-proof-${{ github.sha }}
+          path: |
+            verify-live-proof.json
+            verify-browser-core-proof.json
+            verify-browser-proof.json
+            verify-human-stage-walkthrough-proof.json
+            verify-mobile-stage-action-proof.json
+            verify-restore-activation-contract-proof.json
+            verify-restore-activation-path-proof.json
+          if-no-files-found: error
+          retention-days: 1
 
   publish-status:
     name: Publish machine acceptance
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy, verify-live]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '22'
+          node-version: '22.19.0'
+      - name: Retrieve exact deployed-byte proof
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: live-proof-${{ github.sha }}
+          path: /tmp/live-proof
       - name: Build acceptance artifact from executed proof jobs
         env:
           TEST_RESULT: ${{ needs.test.result }}
@@ -270,8 +383,18 @@ jobs:
           node verify-stage01-intake-closure.mjs > /tmp/stage01.out
           node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
           node verify-full-cycle.mjs > /tmp/full-cycle.json
+          node verify-execution-route-closure.mjs > /tmp/execution-route.json
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
+          node verify-amendment-schema.mjs > /tmp/amendment-schema.json
+          node verify-completion-amendment.mjs > /tmp/completion-amendment.json
+          node verify-semantic-challenge-gates.mjs > /tmp/semantic-challenge-gates.json
+          node verify-operation-reservation-routing.mjs > /tmp/operation-reservation-routing.json
+          node verify-external-evidence-normalization.mjs > /tmp/external-evidence-normalization.json
+          node verify-final-semantic-gates.mjs > /tmp/final-semantic-gates.json
+          node verify-source-backup-closure.mjs > /tmp/source-backup-closure.json
+          node verify-deployment-manifest.mjs > /tmp/deployment-manifest-proof.json
+          node verify-ui-contract.mjs > /tmp/ui-contract.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -279,8 +402,25 @@ jobs:
           const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
           const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
           const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
+          const executionRoute=JSON.parse(fs.readFileSync('/tmp/execution-route.json','utf8'));
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
+          const amendmentSchema=JSON.parse(fs.readFileSync('/tmp/amendment-schema.json','utf8'));
+          const completionAmendment=JSON.parse(fs.readFileSync('/tmp/completion-amendment.json','utf8'));
+          const semanticChallengeGates=JSON.parse(fs.readFileSync('/tmp/semantic-challenge-gates.json','utf8'));
+          const operationReservationRouting=JSON.parse(fs.readFileSync('/tmp/operation-reservation-routing.json','utf8'));
+          const externalEvidenceNormalization=JSON.parse(fs.readFileSync('/tmp/external-evidence-normalization.json','utf8'));
+          const finalSemanticGates=JSON.parse(fs.readFileSync('/tmp/final-semantic-gates.json','utf8'));
+          const sourceBackupClosure=JSON.parse(fs.readFileSync('/tmp/source-backup-closure.json','utf8'));
+          const deploymentManifestProof=JSON.parse(fs.readFileSync('/tmp/deployment-manifest-proof.json','utf8'));
+          const uiContract=JSON.parse(fs.readFileSync('/tmp/ui-contract.json','utf8'));
+          const liveProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-live-proof.json','utf8'));
+          const coreBrowserProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-browser-core-proof.json','utf8'));
+          const browserProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-browser-proof.json','utf8'));
+          const humanWalkthroughProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-human-stage-walkthrough-proof.json','utf8'));
+          const mobileActionProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-mobile-stage-action-proof.json','utf8'));
+          const restoreContractProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-restore-activation-contract-proof.json','utf8'));
+          const restoreActivationProof=JSON.parse(fs.readFileSync('/tmp/live-proof/verify-restore-activation-path-proof.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -288,8 +428,28 @@ jobs:
           const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
           const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
+          if(executionRoute.futureProductBinding!==true||executionRoute.evidenceAttachmentPlaceholderFiltering!==true||executionRoute.realEvidenceAttachmentPreserved!==true||executionRoute.stage22Through25ExactProductHandoff!==true||executionRoute.deferredFailureExecutionClosure!==true||executionRoute.humanInspectionExactReservation!==true)throw new Error('Execution routing, evidence-attachment filtering, deferred failure-test closure, or exact human-inspection reservation proof did not pass.');
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
+          if(amendmentSchema.verifyAmendmentSchema!=='PASS')throw new Error('Controlling amendment schema proof did not pass.');
+          if(completionAmendment.status!=='PASS')throw new Error('Controlling completion amendment proof did not pass.');
+          if(semanticChallengeGates.stage01OrdinaryCompletePath!==true||semanticChallengeGates.stage01ChallengeRequiresLaterReconciliation!==true||semanticChallengeGates.stage01ConfirmationBindsFinalAcceptedOperation!==true||semanticChallengeGates.stage04ChallengesRequireLaterReconciliation!==true||semanticChallengeGates.acceptedChangeOperationSequencing!==true||semanticChallengeGates.operatorSuboperationSelectionIsApplicationDerived!==true)throw new Error('Stage 01/04 semantic challenge and reconciliation gate proof did not pass.');
+          if(operationReservationRouting.reservationPromptIdentityBound!==true||operationReservationRouting.reservationFutureRevisionBound!==true||operationReservationRouting.orphanPendingProposalPreserved!==true||operationReservationRouting.stage17DefectPhaseOrder!==true||operationReservationRouting.stage19ExactPhaseOrder!==true||operationReservationRouting.operatorActionUsesEngineOperation!==true||operationReservationRouting.humanInspectionReservationUsesEngineOperation!==true)throw new Error('Operation reservation and deterministic phase-routing proof did not pass.');
+          if(externalEvidenceNormalization.status!=='PASS'||Number(externalEvidenceNormalization.assertions)<42||!externalEvidenceNormalization.coverage?.includes('stage5-proposition-applicability-binding')||!externalEvidenceNormalization.coverage?.includes('stage22-external-deterministic-normalization')||!externalEvidenceNormalization.coverage?.includes('distinct-author-reviewer-execution-scope')||!externalEvidenceNormalization.coverage?.includes('epistemic-non-elevation')||!externalEvidenceNormalization.coverage?.includes('advisory-proof-exclusion')||!externalEvidenceNormalization.coverage?.includes('frozen-proof-test-set'))throw new Error('External evidence application-normalization proof did not pass.');
+          if(finalSemanticGates.status!=='PASS'||Number(finalSemanticGates.assertions)<47||!finalSemanticGates.coverage?.includes('independent-exact-test-review')||!finalSemanticGates.coverage?.includes('independent-exact-proof-expression-review')||!finalSemanticGates.coverage?.includes('independent-review-context-isolation-with-controlling-scope')||!finalSemanticGates.coverage?.includes('closed-nonempty-proof-contracts')||!finalSemanticGates.coverage?.includes('not-applicable-review-and-evidence')||!finalSemanticGates.coverage?.includes('conditional-activation-three-valued')||!finalSemanticGates.coverage?.includes('stage23-refutation')||!finalSemanticGates.coverage?.includes('stage24-refutation-and-defect')||!finalSemanticGates.coverage?.includes('stage25-normalized-observation-entailment')||!finalSemanticGates.coverage?.includes('unrelated-attestation-non-elevation'))throw new Error('Final semantic proof/evidence gate mutations did not pass.');
+          if(sourceBackupClosure.sourceSearchContractClosure!==true||sourceBackupClosure.noSourceFailsClosed!==true||sourceBackupClosure.responseLocalEvidenceBinding!==true||sourceBackupClosure.sourceAuthenticityNotElevated!==true||sourceBackupClosure.stage3EpistemicLimitations!==true||sourceBackupClosure.sourceProofDependencyInheritance!==true||sourceBackupClosure.sourceProofBasisFloor!==true||sourceBackupClosure.expiredSourceBlocksStage6ReleaseDelivery!==true||sourceBackupClosure.contradictedSourceBlocksProof!==true||sourceBackupClosure.sensitiveBackupDisclosureControl!==true||sourceBackupClosure.restoreTestedBaselineCheckpoint!==true||sourceBackupClosure.staleCheckpointDetection!==true||sourceBackupClosure.terminalFinalBackupGate!==true||sourceBackupClosure.backupRoundTripIntegrity!==true)throw new Error('Bounded source discovery, inherited proof dependencies, and restore-tested backup closure proof did not pass.');
+          if(restoreContractProof.sharedCompleteImportValidation!==true||restoreContractProof.sharedActivationTransaction!==true||restoreContractProof.restoredProjectRowVerification!==true||restoreContractProof.restoredArtifactRowVerification!==true||restoreContractProof.activeDatabaseWriteCountZero!==true||restoreContractProof.temporaryLineageCleanup!==true||restoreContractProof.invalidRestoreMutationsRejected!==true)throw new Error('Shared complete import/restore contract proof did not pass in the deployed verification job.');
+          if(restoreActivationProof.sharedCompleteImportValidation!==true||restoreActivationProof.isolatedIndexedDbActivation!==true||restoreActivationProof.restoredProjectRowVerified!==true||restoreActivationProof.restoredArtifactRowsVerified!==true||restoreActivationProof.exactBackupPackageBytesBound!==true||restoreActivationProof.downloadInitiationNotCustodyProof!==true||restoreActivationProof.selfAssertedExternalCustodyRecorded!==true||restoreActivationProof.activeRestoreConflictFailsClosed!==true||restoreActivationProof.activeDatabaseUnchanged!==true||restoreActivationProof.temporaryRestoreLineageRemoved!==true||restoreActivationProof.isolatedRestoreDatabaseDeleted!==true)throw new Error('Deployed browser did not prove the shared IndexedDB restore/import activation and exact backup-custody path.');
+          if(deploymentManifestProof.status!=='PASS'||deploymentManifestProof.cleanCommittedTreeVerified!==true||deploymentManifestProof.dirtyRuntimeSourceRejected!==true||deploymentManifestProof.dirtyGeneratedOutputRejected!==true)throw new Error('Deployment-manifest source-to-build mutation proof did not pass.');
+          if(uiContract.uiContractVerified!==true)throw new Error('Operator UI amendment contract did not pass.');
+          if(liveProof.liveSourceIdentity!==true||liveProof.sourceCommit!==process.env.GITHUB_SHA)throw new Error('Exact deployed source/byte proof did not bind to this commit.');
+          if(liveProof.allTrackedReleaseInputBytesMatchAuditedCommit!==true||liveProof.sourceToBuildProvenanceEvidenceBasis!=='APPLICATION_OBSERVED_EXACT_GIT_BLOB_AND_OUTPUT_BYTE_COMPARISON'||!(Number(liveProof.auditedSourceInputCount)>0)||liveProof.deterministicGeneratedInputCount!==1)throw new Error('Source-to-build provenance did not prove exact audited input bytes and deterministic generated output.');
+          if(liveProof.reproducibilityEvidenceBasis!=='APPLICATION_OBSERVED_SEPARATE_WORKFLOW_JOB_SECOND_CLEAN_OUTPUT_BUILD'||liveProof.reproducibilityEnvironmentComparison?.separateWorkflowJob!==true)throw new Error('Reproducibility evidence did not preserve the separate-job environment boundary.');
+          if(coreBrowserProof.browserVerified!==true||JSON.stringify(coreBrowserProof.widths)!==JSON.stringify([320,393,1280])||coreBrowserProof.liveStage1OperatorPath!==true||coreBrowserProof.stage1ReservationBound!==true||coreBrowserProof.stage1IntentConfirmed!==true||coreBrowserProof.all30StagesReachable!==true||coreBrowserProof.canonicalCommit!==true||coreBrowserProof.reloadPersistence!==true||coreBrowserProof.runtimeErrors!==0)throw new Error('Deployed core browser operator-path proof is incomplete.');
+          if(browserProof.browserExtraVerified!==true||browserProof.executedManifestResourceGraph!==true||browserProof.actualWorkerExecution!==true||browserProof.persistentCachedProfileCurrent!==true||browserProof.controllingServiceWorkers!==0)throw new Error('Deployed browser execution proof is incomplete.');
+          if(browserProof.sourceCommit!==process.env.GITHUB_SHA||browserProof.workflowRunAttempt!==liveProof.workflowRunAttempt||browserProof.deploymentManifestDigest!==liveProof.deploymentManifestDigest||browserProof.buildIdentity!==liveProof.buildIdentity||browserProof.workerSha256!==liveProof.workerSha256)throw new Error('Deployed browser executed a different workflow attempt, source, or runtime graph from the exact-byte proof.');
+          if(humanWalkthroughProof.humanStageWalkthrough!==true||humanWalkthroughProof.stages!==30||humanWalkthroughProof.uiStagesReached!==30||!(Number(humanWalkthroughProof.prompts)>=30)||humanWalkthroughProof.oneTimeSupply!==true||humanWalkthroughProof.promptVisualBaseline!==true||humanWalkthroughProof.operatorDoubleCheckGuide!==true)throw new Error('Deployed sequential human-stage walkthrough proof is incomplete.');
+          if(mobileActionProof.mobileStageActionRegression!==true||JSON.stringify(mobileActionProof.widths)!==JSON.stringify([320,393])||mobileActionProof.longFilenameWrapped!==true||mobileActionProof.stateAndActionExplicit!==true||mobileActionProof.primaryActionReachable!==true||mobileActionProof.promptVisualBaselinePreserved!==true||mobileActionProof.horizontalOverflow!==false)throw new Error('Deployed mobile operator-action proof is incomplete.');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
@@ -326,6 +486,50 @@ jobs:
             infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
             infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
             infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
+            completionAmendmentSchema:completionAmendment.verifier,
+            amendmentStageFields:amendmentSchema.amendmentStageFields,
+            amendmentRecordFamilies:amendmentSchema.newRecordFamilies,
+            completionAmendmentChecks:completionAmendment.checks,
+            completionAmendmentCoverage:completionAmendment.coverage||{},
+            completionAmendmentZeroCounts:completionAmendment.zeroCounts||{},
+            executionRouteClosureProof:executionRoute,
+            semanticChallengeGateProof:semanticChallengeGates,
+            operationReservationRoutingProof:operationReservationRouting,
+            externalEvidenceNormalizationProof:externalEvidenceNormalization,
+            finalSemanticGateProof:finalSemanticGates,
+            sourceBackupClosureProof:sourceBackupClosure,
+            restoreActivationContractProof:restoreContractProof,
+            deployedRestoreActivationProof:restoreActivationProof,
+            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
+            deploymentManifestBuildIdentity:deploymentManifestProof.buildIdentity,
+            deploymentManifestResourceCount:deploymentManifestProof.resourceCount,
+            releaseActionsPinnedByCommit:deploymentManifestProof.pinnedActions,
+            deploymentCleanCommittedTreeVerified:deploymentManifestProof.cleanCommittedTreeVerified,
+            deploymentDirtyRuntimeSourceRejected:deploymentManifestProof.dirtyRuntimeSourceRejected,
+            deploymentDirtyGeneratedOutputRejected:deploymentManifestProof.dirtyGeneratedOutputRejected,
+            deployedManifestDigest:liveProof.deploymentManifestDigest,
+            deployedWorkerSha256:liveProof.workerSha256,
+            deployedToolchainManifestIdentity:liveProof.toolchainManifestIdentity,
+            deployedDependencyManifestIdentity:liveProof.dependencyManifestIdentity,
+            sourceToBuildProvenanceEvidenceBasis:liveProof.sourceToBuildProvenanceEvidenceBasis,
+            allTrackedReleaseInputBytesMatchAuditedCommit:liveProof.allTrackedReleaseInputBytesMatchAuditedCommit,
+            auditedSourceInputCount:liveProof.auditedSourceInputCount,
+            deterministicGeneratedInputCount:liveProof.deterministicGeneratedInputCount,
+            buildReproducibilityStatus:liveProof.reproducibilityStatus,
+            buildReproducibilityEvidenceBasis:liveProof.reproducibilityEvidenceBasis,
+            buildReproducibilityLimitations:liveProof.reproducibilityLimitations,
+            buildReproducibilityEnvironmentComparison:liveProof.reproducibilityEnvironmentComparison,
+            runnerImagePinning:liveProof.runnerImagePinning,
+            supplyChainLimitations:liveProof.supplyChainLimitations,
+            deployedBrowserVersion:browserProof.browserVersion,
+            deployedBrowserBuildIdentity:browserProof.buildIdentity,
+            deployedBrowserWorkerSha256:browserProof.workerSha256,
+            deployedCachedProfileCurrent:browserProof.persistentCachedProfileCurrent,
+            deployedControllingServiceWorkers:browserProof.controllingServiceWorkers,
+            deployedCoreBrowserProof:coreBrowserProof,
+            deployedHumanStageWalkthroughProof:humanWalkthroughProof,
+            deployedMobileStageActionProof:mobileActionProof,
+            approvedPromptCollapsedHeight:uiContract.promptHeight,
             currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
             exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
             applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
@@ -352,8 +556,8 @@ jobs:
             negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
             deployedByteIdentity:process.env.LIVE_RESULT==='success',
             localChromiumAcceptance:process.env.TEST_RESULT==='success',
-            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
-            testedBrowserWidths:[320,393,'desktop'],
+            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success'&&browserProof.browserExtraVerified===true&&coreBrowserProof.browserVerified===true&&humanWalkthroughProof.humanStageWalkthrough===true&&mobileActionProof.mobileStageActionRegression===true,
+            testedBrowserWidths:coreBrowserProof.widths,
             actualAndroidChromeAcceptance:false,
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
@@ -370,11 +574,23 @@ jobs:
               limits:'verify-test-runtime-limits.mjs',
               ingestion:'verify-ingestion.mjs',
               workflow:'verify-complete.mjs',
+              executionRouteClosure:'verify-execution-route-closure.mjs',
               fullCycle:'verify-full-cycle.mjs',
               prompts:'verify-prompt-semantics.mjs',
               localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               deployedIdentity:'verify-live.mjs',
-              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs'
+              deployedBrowser:'verify-browser.mjs, verify-browser-extra.mjs, verify-human-stage-walkthrough.mjs, and verify-mobile-stage-action.mjs',
+              completionAmendment:'verify-completion-amendment.mjs',
+              amendmentSchema:'verify-amendment-schema.mjs',
+              semanticChallengeGates:'verify-semantic-challenge-gates.mjs',
+              operationReservationRouting:'verify-operation-reservation-routing.mjs',
+              externalEvidenceNormalization:'verify-external-evidence-normalization.mjs',
+              finalSemanticGates:'verify-final-semantic-gates.mjs',
+              sourceBackupClosure:'verify-source-backup-closure.mjs',
+              restoreActivationContract:'verify-restore-activation-contract.mjs',
+              deployedRestoreActivation:'verify-restore-activation-path.mjs',
+              deploymentManifest:'verify-deployment-manifest.mjs and verify-live.mjs',
+              operatorAmendmentUi:'verify-ui-contract.mjs'
             }
           };
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');

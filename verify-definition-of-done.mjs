@@ -73,14 +73,16 @@ const currentScopeSelectorCoverage=ratio(scopeKeyProofs.filter(Boolean).length,s
 assert(currentScopeSelectorCoverage===1,'Current-scope selector coverage is not 100%.');
 
 const verificationMatrixProofs=[
-  engineSource.includes('verificationKey(record)'),
+  engineSource.includes('function requiredVerificationRelationSet(project,iterationId)'),
+  engineSource.includes('relationSet=requiredVerificationRelationSet(project,iterationId)'),
+  engineSource.includes('verificationKey(r,{includeProposition:relationSet.usesPropositions})'),
   engineSource.includes('expectedVerificationCount:matrix.expected.length'),
   engineSource.includes('verificationCoverage:matrix.coverage'),
   completeTestSource.includes('Stage 12 completed without verification triples.'),
   fullCycleSource.includes('verificationTripleCoverage:engine.coverageMetrics(reloaded).verificationCoverage')
 ];
 const exactReqRunTestCoverage=ratio(verificationMatrixProofs.filter(Boolean).length,verificationMatrixProofs.length);
-assert(exactReqRunTestCoverage===1,'Exact REQ × RUN × TEST coverage proof is incomplete.');
+assert(exactReqRunTestCoverage===1,'The application-derived required verification relation-set proof is incomplete.');
 
 const regressionProofs=[
   engineSource.includes("effectiveRegressionDetermination(project,r).determination==='SATISFIED'"),
@@ -110,7 +112,8 @@ assert(mandatoryEvidenceChainCoverage===1,'Mandatory evidence-chain coverage pro
 const artifactIdentityProofs=[
   engineSource.includes("if(a.length!==d.length)throw new Error('Audited and delivery artifact counts differ.')"),
   engineSource.includes("if(!right)throw new Error('Missing delivery artifact '"),
-  engineSource.includes('fields.AUDITED_FILENAME===fields.RELEASE_FILENAME'),
+  engineSource.includes('AUTHORIZED_FILENAME_MATCH:exactName'),
+  engineSource.includes('DELIVERY_ARTIFACT_IDENTITY_VERIFIED:exactHash&&exactSize&&exactName'),
   completeTestSource.includes('Artifact identity depends on file-selection order.'),
   completeTestSource.includes('Mismatched release bytes were authorized.'),
   completeTestSource.includes('stage28CurrentBatch:true'),

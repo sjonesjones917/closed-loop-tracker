@@ -5,7 +5,7 @@ import './build-test-project-impl.mjs';
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 
-const required=['index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-ingestion.mjs','verify-spec-grounded-route-oracle.mjs'];
+const required=['index.html','app-core.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','workbook.js','TEST_PROJECT.json','verify.mjs','verify-live.mjs','verify-browser.mjs','verify-ingestion.mjs','verify-spec-grounded-route-oracle.mjs','verify-amendment-schema.mjs','verify-completion-amendment.mjs','verify-final-semantic-gates.mjs','verify-security-closure.mjs','verify-deployment-manifest.mjs','verify-ui-contract.mjs','build-deployment-manifest.mjs'];
 for(const file of required)if(!fs.existsSync(file))throw new Error(`Missing ${file}`);
 const retired=['authority-guard.js','integrity-guard.js','storage-reliability.js','prompt-display.js','experience.js','usability.js'];
 for(const file of retired)if(fs.existsSync(file))throw new Error(`Obsolete runtime wrapper remains: ${file}`);
@@ -46,5 +46,6 @@ if(globalThis.closedLoopWorkflowSchema?.RESPONSE_SCHEMA!=='closed-loop-stage-res
 
 // Run the independent specification-side route ruler in a clean process so production declarations cannot serve as their own oracle.
 execFileSync(process.execPath,['verify-spec-grounded-route-oracle.mjs'],{stdio:'inherit'});
+execFileSync(process.execPath,['verify-final-semantic-gates.mjs'],{stdio:'inherit'});
 
 console.log(JSON.stringify({singleApplicationShell:true,stages:30,retainedJobId:project.jobId,currentStage:2,stage1:'COMPLETE',downstreamFabricated:false,responseSchema:'closed-loop-stage-response/3',obsoleteRuntimeWrappers:false,specGroundedRouteOracle:true},null,2));

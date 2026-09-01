@@ -32,7 +32,8 @@ assert.match(schema,/closed-loop-test-spec\/1/,'Test IR schema /1 is required');
 assert.match(schema,/closed-loop-verification-package\/1/,'verification-package schema /1 is required');
 assert.match(schema,/fields\.EXECUTABLE_KIND='NONE'/,'schema migration/default path must define NONE as the non-executable state');
 assert.doesNotMatch(schema,/enumValues\s*:\s*\[[^\]]*CUSTOM_PIPELINE[^\]]*\]/,'CUSTOM_PIPELINE cannot remain an active executable enum member');
-assert.match(schema,/fields\.EXECUTABLE_KIND==='CUSTOM_PIPELINE'[^\n]*fields\.EXECUTABLE_KIND='TEST_IR'/,'historical CUSTOM_PIPELINE records must migrate deterministically to TEST_IR');
+assert.match(schema,/legacyKind==='CUSTOM_PIPELINE'/,'historical CUSTOM_PIPELINE records must enter the controlled migration branch');
+assert.match(schema,/fields\.EXECUTABLE_KIND=structurallyDeclarative\?'TEST_IR':'NONE'/,'historical CUSTOM_PIPELINE records must migrate to TEST_IR only when the stored IR is registered and declarative');
 assert.match(schema,/\bTEST_IR\b/,'TEST_IR executable kind is required');
 
 for(const op of requiredRuntimeOps)assert.match(runtime,new RegExp(`\\b${op}\\b`),`runtime operation missing: ${op}`);
