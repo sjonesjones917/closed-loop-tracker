@@ -1,0 +1,191 @@
+name: One-time controlling completion amendment repair
+
+on:
+  push:
+    branches: [repair/controlling-completion-amendment]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/controlling-completion-amendment
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply minimal complete cross-cutting correction set
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          def write(path, text):
+              Path(path).write_text(text, encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              return text.replace(old,new,1)
+
+          # Section 59: one strict closed-loop-canonical-json/1 implementation.
+          p=Path('hash.js'); text=p.read_text(encoding='utf-8')
+          new_stable=r'''function unicodeScalarSequence(value,path){
+  const text=String(value),out=[];
+  for(let i=0;i<text.length;i++){
+    const first=text.charCodeAt(i);
+    if(first>=0xD800&&first<=0xDBFF){
+      if(i+1>=text.length)throw new TypeError(`Unpaired high surrogate at ${path}.`);
+      const second=text.charCodeAt(++i);
+      if(second<0xDC00||second>0xDFFF)throw new TypeError(`Unpaired high surrogate at ${path}.`);
+      out.push(((first-0xD800)<<10)+(second-0xDC00)+0x10000);
+    }else if(first>=0xDC00&&first<=0xDFFF)throw new TypeError(`Unpaired low surrogate at ${path}.`);
+    else out.push(first);
+  }
+  return out;
+}
+function compareUnicodeScalarStrings(a,b){
+  const left=unicodeScalarSequence(a,'object key'),right=unicodeScalarSequence(b,'object key'),n=Math.min(left.length,right.length);
+  for(let i=0;i<n;i++)if(left[i]!==right[i])return left[i]-right[i];
+  return left.length-right.length;
+}
+function stableStringify(value){
+  const seen=new WeakSet();
+  const normalize=(input,path='$')=>{
+    if(input===null)return null;
+    const type=typeof input;
+    if(type==='string'){unicodeScalarSequence(input,path);return input;}
+    if(type==='boolean')return input;
+    if(type==='number'){
+      if(!Number.isFinite(input))throw new TypeError(`Cannot canonically hash non-finite number at ${path}.`);
+      if(!Number.isSafeInteger(input))throw new TypeError(`closed-loop-canonical-json/1 permits JSON numbers only as safe integers at ${path}. Use the owning schema's typed decimal/integer-string representation for other numeric values.`);
+      if(Object.is(input,-0))throw new TypeError(`closed-loop-canonical-json/1 prohibits negative zero at ${path}.`);
+      return input;
+    }
+    if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
+    if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
+    seen.add(input);
+    let output;
+    if(Array.isArray(input)){
+      const keys=Object.keys(input);
+      for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
+      if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+      output=input.map((item,index)=>normalize(item,`${path}[${index}]`));
+    }else{
+      const prototype=Object.getPrototypeOf(input);
+      if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
+      if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
+      output={};
+      const keys=Object.keys(input);
+      for(const key of keys)unicodeScalarSequence(key,`${path} object member name`);
+      for(const key of keys.sort(compareUnicodeScalarStrings)){
+        const descriptor=Object.getOwnPropertyDescriptor(input,key);
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
+        output[key]=normalize(descriptor.value,`${path}.${key}`);
+      }
+    }
+    seen.delete(input);
+    return output;
+  };
+  return JSON.stringify(normalize(value));
+}'''
+          text=re.sub(r'function stableStringify\(value\)\{.*?\n\}\n\nfunction rightRotate',new_stable+'\n\nfunction rightRotate',text,count=1,flags=re.S)
+          if "closed-loop-canonical-json/1" not in text: raise SystemExit('hash canonicalization replacement failed')
+          text=text.replace("version:'closed-loop-hash/2',stableStringify","version:'closed-loop-hash/3',canonicalizationVersion:'closed-loop-canonical-json/1',stableStringify,unicodeScalarSequence,compareUnicodeScalarStrings")
+          write(p,text)
+
+          # Section 39.15: restore exact previously approved prompt preview dimensions.
+          p=Path('index.html'); text=p.read_text(encoding='utf-8')
+          text=replace_once(text,'.expandable-prompt{max-height:280px}.expandable-prompt.expanded{max-height:none}', '.expandable-prompt{height:280px;max-height:280px}.expandable-prompt.expanded{height:auto;max-height:none}', 'approved prompt dimensions')
+          write(p,text)
+
+          # Section 66: deterministic deployment manifest generator/verifier.
+          manifest=r'''import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
+
+const HASH_ALGORITHM='sha256';
+const SCHEMA='closed-loop-deployment-manifest/1';
+const CANONICALIZATION_VERSION='closed-loop-canonical-json/1';
+const DEFAULT_RUNTIME=['index.html','workbook.js','hash.js','workflow-schema.js','test-runtime.js','test-worker.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js','TEST_PROJECT.json','.nojekyll'];
+const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+const scalarCompare=(a,b)=>{const A=[...a].map(c=>c.codePointAt(0)),B=[...b].map(c=>c.codePointAt(0));for(let i=0;i<Math.min(A.length,B.length);i++)if(A[i]!==B[i])return A[i]-B[i];return A.length-B.length;};
+function canonical(value){
+  if(value===null||typeof value==='boolean'||typeof value==='string')return JSON.stringify(value);
+  if(typeof value==='number'){if(!Number.isSafeInteger(value)||Object.is(value,-0))throw new Error('Deployment canonical JSON permits safe integers only.');return String(value);}
+  if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
+  if(value&&Object.getPrototypeOf(value)===Object.prototype)return '{'+Object.keys(value).sort(scalarCompare).map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';
+  throw new Error('Unsupported deployment-manifest canonical value.');
+}
+function mediaType(file){if(file.endsWith('.html'))return 'text/html';if(file.endsWith('.js')||file.endsWith('.mjs'))return 'text/javascript';if(file.endsWith('.json'))return 'application/json';return 'application/octet-stream';}
+function generate({root='.',commit=process.env.GITHUB_SHA||'UNKNOWN',workflowRunIdentity=process.env.GITHUB_RUN_ID||'LOCAL',buildIdentity=process.env.CLOSED_LOOP_BUILD_ID||commit,files=DEFAULT_RUNTIME}={}){
+  const resources=[...files].sort(scalarCompare).map(file=>{const absolute=path.join(root,file);if(!fs.existsSync(absolute))throw new Error('Missing runtime resource '+file);const bytes=fs.readFileSync(absolute);return {path:file,mediaType:mediaType(file),byteSize:bytes.length,hashAlgorithm:HASH_ALGORITHM,digest:sha256(bytes)};});
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const csp=(html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/)||[])[1]||null;
+  const manifest={schema:SCHEMA,sourceCommit:commit,workflowRunIdentity,buildIdentity,canonicalizationVersion:CANONICALIZATION_VERSION,hashAlgorithm:HASH_ALGORITHM,resources,csp,toolchain:{node:process.version,platform:process.platform,arch:process.arch},buildCommand:'static-copy-from-verified-source',overallDigest:null};
+  const digestInput={...manifest};delete digestInput.overallDigest;manifest.overallDigest=sha256(Buffer.from(canonical(digestInput),'utf8'));return manifest;
+}
+function verify(manifest,{root='.'}={}){if(!manifest||manifest.schema!==SCHEMA)throw new Error('Wrong deployment manifest schema.');const expected=new Set(manifest.resources.map(r=>r.path));for(const entry of manifest.resources){const file=path.join(root,entry.path);if(!fs.existsSync(file))throw new Error('Missing deployed resource '+entry.path);const bytes=fs.readFileSync(file);if(bytes.length!==entry.byteSize||sha256(bytes)!==entry.digest)throw new Error('Deployed resource mismatch '+entry.path);}const digestInput={...manifest};delete digestInput.overallDigest;if(sha256(Buffer.from(canonical(digestInput),'utf8'))!==manifest.overallDigest)throw new Error('Deployment manifest digest mismatch.');return {verified:true,resourceCount:expected.size,overallDigest:manifest.overallDigest};}
+if(import.meta.url===`file://${process.argv[1]}`){const mode=process.argv[2]||'generate',target=process.argv[3]||'deployment-manifest.json',root=process.argv[4]||'.';if(mode==='generate'){const manifest=generate({root});fs.writeFileSync(target,JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify({schema:manifest.schema,resourceCount:manifest.resources.length,overallDigest:manifest.overallDigest}));}else if(mode==='verify'){const manifest=JSON.parse(fs.readFileSync(target,'utf8'));console.log(JSON.stringify(verify(manifest,{root})));}else throw new Error('Unknown mode '+mode);}
+export {generate,verify,canonical,DEFAULT_RUNTIME};
+'''
+          write('deployment-manifest.mjs',manifest)
+
+          verify=r'''import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {generate,verify,canonical,DEFAULT_RUNTIME} from './deployment-manifest.mjs';
+
+globalThis.TextEncoder=globalThis.TextEncoder||TextEncoder;
+vm.runInThisContext(fs.readFileSync('hash.js','utf8'),{filename:'hash.js'});
+const h=globalThis.closedLoopHash;
+assert.equal(h.canonicalizationVersion,'closed-loop-canonical-json/1');
+assert.equal(h.stableStringify({b:1,a:2}),'{"a":2,"b":1}');
+assert.throws(()=>h.stableStringify(-0),/negative zero/i);
+assert.throws(()=>h.stableStringify(1.5),/safe integers/i);
+assert.throws(()=>h.stableStringify(Number.MAX_SAFE_INTEGER+1),/safe integers/i);
+assert.throws(()=>h.stableStringify('\uD800'),/surrogate/i);
+assert.equal(h.stableStringify({"\u{1F600}":1,"\uE000":2}),'{"":2,"😀":1}');
+const first=generate({commit:'TEST',workflowRunIdentity:'TEST',buildIdentity:'TEST'});const second=generate({commit:'TEST',workflowRunIdentity:'TEST',buildIdentity:'TEST'});assert.deepEqual(first,second);assert.equal(first.schema,'closed-loop-deployment-manifest/1');assert.equal(first.resources.length,DEFAULT_RUNTIME.length);assert.ok(first.resources.some(r=>r.path==='test-worker.js'));
+const result=verify(first);assert.equal(result.verified,true);
+const html=fs.readFileSync('index.html','utf8');assert.match(html,/\.expandable-prompt\{height:280px;max-height:280px\}\.expandable-prompt\.expanded\{height:auto;max-height:none\}/);
+console.log(JSON.stringify({canonicalJson:'PASS',approvedPromptDimensions:'PASS',deploymentManifest:'PASS',runtimeResources:first.resources.length},null,2));
+'''
+          write('verify-completion-amendment-foundation.mjs',verify)
+
+          # Section 66.6: pin every release-critical action by immutable SHA and add manifest proof.
+          p=Path('.github/workflows/pages.yml'); text=p.read_text(encoding='utf-8')
+          pins={
+            'actions/checkout@v4':'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683',
+            'actions/setup-node@v4':'actions/setup-node@1e60f620b9541dca15154064ba5a2af64e440ed8',
+            'actions/upload-artifact@v4':'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02',
+            'actions/configure-pages@v5':'actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b',
+            'actions/upload-pages-artifact@v3':'actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa',
+            'actions/deploy-pages@v4':'actions/deploy-pages@d6db90192ee55b24a67b7bb4f05f4a7d05f2c93'
+          }
+          for old,new in pins.items(): text=text.replace(old,new)
+          text=text.replace("          node verify-hash.mjs\n","          node verify-hash.mjs\n          node verify-completion-amendment-foundation.mjs\n")
+          old_build="""          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/"""
+          new_build="""          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/\n          CLOSED_LOOP_BUILD_ID=\"${GITHUB_SHA}\" node deployment-manifest.mjs generate _site/deployment-manifest.json _site\n          node deployment-manifest.mjs verify _site/deployment-manifest.json _site"""
+          text=replace_once(text,old_build,new_build,'deployment build block')
+          text=text.replace("      - name: Exact deployed-byte verification\n        run: node verify-live.mjs\n","      - name: Exact deployed-byte verification\n        run: |\n          node verify-live.mjs\n          python3 - <<'PYVERIFY'\n          import json, os, urllib.request, hashlib\n          base=os.environ['PAGE_URL'].rstrip('/')+'/'\n          manifest=json.load(urllib.request.urlopen(base+'deployment-manifest.json?cache-bypass='+os.environ.get('GITHUB_SHA','')))\n          failures=[]\n          for r in manifest['resources']:\n              data=urllib.request.urlopen(base+r['path']+'?cache-bypass='+os.environ.get('GITHUB_SHA','')).read()\n              if len(data)!=r['byteSize'] or hashlib.sha256(data).hexdigest()!=r['digest']: failures.append(r['path'])\n          if failures: raise SystemExit('Deployed manifest resource mismatch: '+', '.join(failures))\n          print(json.dumps({'deploymentManifestSchema':manifest['schema'],'deployedResourcesVerified':len(manifest['resources']),'deploymentManifestDigest':manifest['overallDigest']}))\n          PYVERIFY\n")
+          write(p,text)
+
+          # Keep final repository at one workflow; this one-time runner removes itself in the commit it creates.
+          Path('.github/workflows/amendment-repair.yml').unlink()
+          PY
+          node --check hash.js
+          node --check deployment-manifest.mjs
+          node verify-completion-amendment-foundation.mjs
+          node verify-hash.mjs
+          git config user.name "closed-loop-repair-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Implement completion-amendment foundation invariants"
+          git push origin HEAD:repair/controlling-completion-amendment
