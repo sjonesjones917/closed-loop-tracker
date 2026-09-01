@@ -1,0 +1,23 @@
+name: One-time source snapshot
+
+on:
+  push:
+    branches: [implementation/completion-amendment-53-70]
+    paths: [.github/workflows/one-time-source-snapshot.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Capture exact source tree
+        run: tar --exclude=.git -czf /tmp/closed-loop-source.tar.gz .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: one-time-source-${{ github.sha }}
+          path: /tmp/closed-loop-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
