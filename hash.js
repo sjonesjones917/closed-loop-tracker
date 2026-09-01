@@ -1,14 +1,38 @@
 (()=>{
 'use strict';
 
+const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
+const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
+
+function assertUnicodeScalars(value,path){
+  for(let i=0;i<value.length;i++){
+    const unit=value.charCodeAt(i);
+    if(unit>=0xD800&&unit<=0xDBFF){
+      const next=value.charCodeAt(i+1);
+      if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Cannot canonically hash unpaired UTF-16 high surrogate at ${path}.`);
+      i++;
+    }else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Cannot canonically hash unpaired UTF-16 low surrogate at ${path}.`);
+  }
+  return value;
+}
+function compareUnicodeScalarSequence(a,b){
+  const left=Array.from(assertUnicodeScalars(String(a),'object key'),ch=>ch.codePointAt(0));
+  const right=Array.from(assertUnicodeScalars(String(b),'object key'),ch=>ch.codePointAt(0));
+  const length=Math.min(left.length,right.length);
+  for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];
+  return left.length-right.length;
+}
 function stableStringify(value){
   const seen=new WeakSet();
   const normalize=(input,path='$')=>{
     if(input===null)return null;
     const type=typeof input;
-    if(type==='string'||type==='boolean')return input;
+    if(type==='string')return assertUnicodeScalars(input,path);
+    if(type==='boolean')return input;
     if(type==='number'){
       if(!Number.isFinite(input))throw new TypeError(`Cannot canonically hash non-finite number at ${path}.`);
+      if(Object.is(input,-0))throw new TypeError(`Cannot canonically hash negative zero at ${path}.`);
+      if(!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}; use the owning schema's typed decimal-string representation.`);
       return input;
     }
     if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
@@ -25,7 +49,10 @@ function stableStringify(value){
       if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
       if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
       output={};
-      for(const key of Object.keys(input).sort()){
+      const keys=Object.keys(input);
+      for(const key of keys)assertUnicodeScalars(key,`${path} object key`);
+      keys.sort(compareUnicodeScalarSequence);
+      for(const key of keys){
         const descriptor=Object.getOwnPropertyDescriptor(input,key);
         if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
         output[key]=normalize(descriptor.value,`${path}.${key}`);
@@ -71,6 +98,6 @@ function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
 function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
 function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
-globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/2',stableStringify,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
+globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:'closed-loop-canonical-json/1',stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
 })();
