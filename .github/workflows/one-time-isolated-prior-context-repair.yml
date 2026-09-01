@@ -1,0 +1,25 @@
+name: One-time isolated prior-context repair
+on:
+  push:
+    branches: [fix/spec-grounded-route-oracle-20260831]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/spec-grounded-route-oracle-20260831
+      - run: python .repair-isolated-prior-context.py
+      - run: |
+          git diff --exit-code -- . ':!prompt-engine.js'
+          git diff --check
+      - run: |
+          if git diff --quiet -- prompt-engine.js; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add prompt-engine.js
+          git commit -m 'Withhold prior-stage corrections from isolated run prompts'
+          git push origin HEAD:fix/spec-grounded-route-oracle-20260831
