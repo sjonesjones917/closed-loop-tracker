@@ -1,0 +1,27 @@
+name: Export exact zero-loss source
+on:
+  push:
+    branches: [tmp/source-export-zero-loss]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: tmp/source-export-zero-loss
+      - name: Build exact source archive
+        run: |
+          set -euo pipefail
+          tar --exclude=.git --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -czf /tmp/zero-loss-source.tar.gz .
+          sha256sum /tmp/zero-loss-source.tar.gz > /tmp/zero-loss-source.tar.gz.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: zero-loss-source-${{ github.sha }}
+          path: |
+            /tmp/zero-loss-source.tar.gz
+            /tmp/zero-loss-source.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
