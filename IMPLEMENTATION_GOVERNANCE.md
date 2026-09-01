@@ -47,7 +47,9 @@ Agent agreement is diagnostic evidence, never correctness proof. Materially dist
 
 The repository repair scheduler follows:
 
-`one observable failure -> earliest responsible layer -> smallest complete correction -> exact path replay -> affected downstream proof -> permanent regression`
+`one observable failure -> every necessary earliest responsible cause -> one minimal complete correction set -> exact path replay -> affected downstream proof -> permanent regression`
+
+A correction set may contain multiple coordinated edits when they are jointly necessary for atomic consistency. It remains limited to the demonstrated failure and its affected downstream contract; one correction never means one file, one line, or one edit when that would leave the system inconsistent.
 
 If gates `G1..Gj-1` pass and `Gj` fails, `Gj` is the controlling frontier. Canonical repair work is directed to `Gj` or to an earlier responsible layer demonstrated to cause it. Later-stage cleanup, refactoring, architecture changes, or visual changes are not authorized by an earlier failure.
 

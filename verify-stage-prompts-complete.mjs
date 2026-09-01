@@ -10,18 +10,36 @@ const p=core.createBlankState('JOB-PROMPT-CLOSURE');
 Object.assign(p.job,{JOB_ID:'JOB-PROMPT-CLOSURE',JOB_TITLE:'Prompt closure fixture',EXACT_USER_OBJECTIVE_VERBATIM:'Prove every stage prompt has the data and instructions needed for exactly its job.',EXPLICIT_USER_REQUIREMENTS:'Never ask the human to repeat project information already supplied.',CURRENT_INPUT_VERSION:'INPUT-v001',CURRENT_SOURCE_SET_VERSION:'SOURCE-v001',CURRENT_REQUIREMENTS_VERSION:'REQ-v001',CURRENT_TEST_SUITE_VERSION:'TEST-v001',CURRENT_INSTRUCTION_VERSION:'INST-v001',CURRENT_ITERATION:'ITER-001',CURRENT_BASELINE_ID:'BASE-001',CURRENT_PRODUCT_ID:'PROD-001'});
 engine.ensureShape(p);engine.recalculate(p);
 const intake=engine.intakeCoverageManifest(p);
-const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'retained as context',reason:'Prompt closure fixture preserves current human authority.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+const capture={schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,semanticPasses:{exhaustiveExtractionCompleted:true,omissionChallengeCompleted:true,omissionsResolved:true},units:intake.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Prompt closure fixture preserves current human authority.',extractedStatements:[{statementKey:`statement-${index+1}`,text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
 p.stages[1].agentData={EXACT_DELIVERABLE_REQUESTED:'Prompt closure fixture deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)};
 p.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};
 p.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
 for(let stage=1;stage<30;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
 if(!engine.evaluateIntakeAccounting(p).complete)throw new Error('Prompt closure fixture failed to establish current Stage 01 accounting.');
+// Verifier prompts are defined only for a real current relation. Seed one exact
+// proposition/requirement/test/run tuple instead of weakening the fail-closed
+// production prompt contract for an empty project fixture.
+{
+  const requirementId='REQ-PROMPT-CLOSURE',propositionId='PROPOSITION-PROMPT-CLOSURE',testId='TEST-PROMPT-CLOSURE',iterationId='ITER-001',candidateId='CAND-001',runId='RUN-001',contextId='CTX-001';
+  const requirementScope={inputVersion:p.job.CURRENT_INPUT_VERSION,sourceSetVersion:p.job.CURRENT_SOURCE_SET_VERSION,requirementsVersion:p.job.CURRENT_REQUIREMENTS_VERSION};
+  const testScope={...requirementScope,testSuiteVersion:p.job.CURRENT_TEST_SUITE_VERSION};
+  const iterationScope={...testScope,instructionVersion:p.job.CURRENT_INSTRUCTION_VERSION,iterationId,candidateId};
+  p.projectData.requirements.push({id:requirementId,stage:4,active:true,validity:'CURRENT',scope:requirementScope,fields:{REQ_ID:requirementId,MANDATORY_OPTIONAL_STATUS:'MANDATORY',NORMATIVE_CLASSIFICATION:'MANDATORY',APPLICABILITY:'APPLICABLE',PRIMARY_PROPOSITION_ID:propositionId},relationships:{PRIMARY_PROPOSITION_ID:propositionId}});
+  p.projectData.propositions.push({id:propositionId,stage:4,active:true,validity:'CURRENT',scope:requirementScope,fields:{PROPOSITION_ID:propositionId,REQUIREMENT_ID:requirementId,PROPOSITION_TEXT:'The current prompt-closure run satisfies the required proposition.',SUBJECT_AND_SCOPE_DESCRIPTION:'The exact current reserved run.',SATISFACTION_MEANING:'The required run output satisfies the proposition.',FAILURE_MEANING:'The required run output does not satisfy the proposition.',STATUS:'CURRENT'},relationships:{REQUIREMENT_ID:requirementId}});
+  p.projectData.tests.push({id:testId,stage:6,active:true,validity:'CURRENT',scope:testScope,fields:{TEST_ID:testId,REQ_ID:requirementId,TEST_TYPE:'PROGRAMMATIC',STATUS:'READY',TEST_ROLE:'REQUIRED_PROOF',RELEASE_BEARING:true,TARGET_PROPOSITION_IDS:[propositionId],TEST_PROPOSITION_TEXT:'The current run satisfies the prompt-closure proposition.',POSITIVE_RESULT_MEANING:'The proposition is established.',NEGATIVE_RESULT_MEANING:'The proposition is refuted.',SEMANTIC_COVERAGE_DISPOSITION:'EQUIVALENT'},relationships:{REQ_ID:requirementId,TARGET_PROPOSITION_IDS:[propositionId]}});
+  p.projectData.candidateFreezes.push({id:candidateId,stage:10,active:true,validity:'CURRENT',scope:iterationScope,fields:{CANDIDATE_ID:candidateId,ITERATION_ID:iterationId},relationships:{ITERATION_ID:iterationId}});
+  p.projectData.iterations.push({id:iterationId,stage:10,active:true,validity:'CURRENT',scope:iterationScope,fields:{ITERATION_ID:iterationId,CANDIDATE_ID:candidateId},relationships:{CANDIDATE_ID:candidateId}});
+  p.projectData.freshContexts.push({id:contextId,stage:11,active:true,validity:'CURRENT',scope:{...iterationScope,runId,contextId},fields:{CONTEXT_ID:contextId,ITERATION_ID:iterationId,RUN_ID:runId},relationships:{ITERATION_ID:iterationId,RUN_ID:runId}});
+  p.projectData.runs.push({id:runId,stage:11,active:true,validity:'CURRENT',scope:{...iterationScope,runId,contextId},fields:{RUN_ID:runId,ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,CONTEXT_ID:contextId},relationships:{ITERATION_ID:iterationId,CANDIDATE_ID:candidateId,CONTEXT_ID:contextId}});
+  const relation=engine.requiredVerificationRelationSet(p,iterationId);
+  if(relation.tuples.length!==1||relation.tuples[0].propositionId!==propositionId||relation.tuples[0].requirementId!==requirementId||relation.tuples[0].runId!==runId||relation.tuples[0].testId!==testId)throw new Error('Prompt closure fixture did not create exactly one coherent current verification relation.');
+}
 const requiredReads={
   4:['sourceConflicts'],5:['sources','candidateRequirements'],6:['sources','research'],8:['sources','sourceConflicts'],9:['failureTests','requirementResolutions','sources','sourceConflicts'],10:['artifacts'],13:['tests'],14:['requirements','tests','instructions','runs','research','sources','artifacts','evidenceRecords'],15:['requirements','tests','runs','verification','artifacts','evidenceRecords'],16:['requirements','tests','instructions','runs','artifacts','evidenceRecords'],18:['requirements','tests','rootCauses','changes'],20:['artifacts'],21:['instructions','artifacts'],23:['research','evidenceRecords'],24:['sources','research','evidenceRecords','artifacts'],26:['requirements','tests','instructions','runs','verification','regressionExecutions','confirmationRecords','evidenceRecords'],27:['products','baselines','confirmationRecords','regressions','evidenceRecords'],29:['adversarialResults','representationInspections','regressions','regressionExecutions','processAudits','productAudits','evidenceChains'],30:['requirements','evidenceRecords']
 };
 const semantic={
   1:['BLOCKING_NOW','ASK_NOW_NONBLOCKING','LATER_RESOLVABLE','every application-enumerated input unit must be classified exactly once'],
-  2:['until no new applicable controlling or correctness-relevant external source category is found','Do not stop at the first plausible source'],
+  2:['bounded SOURCE_SEARCH_CONTRACT','Never claim universal source completeness','every source found inside that declared search universe'],
   3:['every current accepted Stage 02 source has current research coverage','distinct conflict/exception/saturation pass'],
   4:['APPLICATION-OWNED STAGE 04 OBLIGATION MANIFEST','Every obligationId'],
   5:['Resolve the current job’s requirement set exhaustively','repeat the review against the resulting requirement set'],
@@ -62,6 +80,7 @@ for(let stage=1;stage<=30;stage++){
     if(stage>1&&!prompt.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error(`Stage ${stage} ${operation} can regress to re-requesting original intent.`);
     if(prompt.includes('CUSTOM_PIPELINE'))throw new Error(`Stage ${stage} ${operation} still exposes prohibited CUSTOM_PIPELINE.`);
     for(const phrase of semantic[stage]||[])if(!prompt.toLowerCase().includes(String(phrase).toLowerCase()))throw new Error(`Stage ${stage} ${operation} missing stage-semantic instruction: ${phrase}`);
+    if(stage===2&&/(?:every reasonably possible controlling|until no new applicable controlling or correctness-relevant external source category is found)/i.test(prompt))throw new Error('Stage 2 retained a superseded open-world source-completeness instruction.');
     if((stage===17||stage===19)&&!prompt.includes(`CURRENT DECLARED OPERATION: ${operation}`))throw new Error(`Stage ${stage} ${operation} lacks exact operation-specific instruction.`);
   }
 }

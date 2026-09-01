@@ -33,7 +33,7 @@ engine.recalculate(state);
 const intake=prompts.intakeCoverageManifest(state);
 state.stages[1].agentData={
   EXACT_DELIVERABLE_REQUESTED:'Complete route-proven deliverable.',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',
-  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'retained as context',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))})
+  INPUT_SET_CONTENTS:JSON.stringify({schema:'closed-loop-stage01-capture/1',inputVersion:intake.inputVersion,manifestSha256:intake.manifestSha256,units:intake.units.map((u,i)=>({sourceUnitId:u.unitId,sourceRawValueSha256:u.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'route closure fixture',extractedStatements:[{statementKey:`S${i+1}`,text:u.rawValueText||u.label||u.unitId,statementClass:'CONTEXT'}]}))})
 };
 state.stages[1].status='COMPLETE';state.stages[1].gate={complete:true,blocked:false,reasons:[]};
 state.stages[2].agentData={SOURCE_APPLICABILITY_DETERMINATION:'NO_APPLICABLE_EXTERNAL_SOURCE'};state.stages[2].status='COMPLETE';state.stages[2].gate={complete:true,blocked:false,reasons:[]};
@@ -75,6 +75,12 @@ const forbiddenReads={
   '24:COMPLETE':['deterministicResults','meaningResults']
 };
 for(const operation of ['EXECUTE_RUN','VERIFY'])for(const stage of [17,19])forbiddenReads[`${stage}:${operation}`]=operation==='EXECUTE_RUN'?['verification','comparisons','rootCauses','changes']:['comparisons','rootCauses','changes'];
+const isVerifierOperation=(stage,operation)=>stage===12||((stage===17||stage===19)&&operation==='VERIFY');
+const isIsolatedReview=(stage,operation)=>(stage===2&&operation==='ADEQUACY_REVIEW')||isVerifierOperation(stage,operation)||stage===23||stage===24;
+const isProjectionFiltered=(stage,operation,collection)=>
+  isIsolatedReview(stage,operation)||
+  (collection==='artifacts'&&[20,21,22,25].includes(stage))||
+  (collection==='evidenceRecords'&&stage===19&&operation==='CONFIRM');
 
 let operationsChecked=0,readEdgesChecked=0,writableCollectionsChecked=0,writableFieldsChecked=0,relationshipDefinitionsChecked=0;
 const writeProducers=new Map();
@@ -86,6 +92,7 @@ for(let stage=1;stage<=30;stage++){
     operationsChecked++;
     const op=schema.operationContract(stage,operation);
     assert(op,`Stage ${stage}/${operation} lacks operation contract.`);
+    assert(!op.readCollections.includes('operationReservations'),`Stage ${stage}/${operation} exposes application-private operationReservations as prompt input.`);
     for(const collection of op.readCollections){
       readEdgesChecked++;
       assert(schema.RECORD_SCHEMAS[collection],`Stage ${stage}/${operation} reads unknown ${collection}.`);
@@ -109,12 +116,21 @@ for(let stage=1;stage<=30;stage++){
     if(record){
       const manifest=record.contextManifest?.readCollections||{};
       for(const collection of op.readCollections){
+        assert(Object.prototype.hasOwnProperty.call(manifest,collection),`Stage ${stage}/${operation} prompt manifest omitted the declared ${collection} projection.`);
         const ids=(manifest[collection]||[]).map(item=>item.id);
         const sent=collectionSentinels[collection];
-        assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
+        if(!isProjectionFiltered(stage,operation,collection))assert(ids.includes(sent.currentId),`Stage ${stage}/${operation} prompt manifest omitted current ${collection}.`);
         assert(!ids.includes(sent.staleId),`Stage ${stage}/${operation} prompt manifest leaked stale ${collection}.`);
-        assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
+        if(ids.includes(sent.currentId))assert(record.prompt.includes(sent.currentText)||record.prompt.includes(sent.currentId),`Stage ${stage}/${operation} prompt body omitted selected ${collection} content.`);
         assert(!record.prompt.includes(sent.staleText)&&!record.prompt.includes(sent.staleId),`Stage ${stage}/${operation} prompt body leaked stale ${collection}.`);
+      }
+      const reservation=collectionSentinels.operationReservations;
+      assert(!Object.prototype.hasOwnProperty.call(manifest,'operationReservations'),`Stage ${stage}/${operation} serialized application-private operationReservations in the prompt manifest.`);
+      assert(!record.prompt.includes(reservation.currentText)&&!record.prompt.includes(reservation.currentId)&&!record.prompt.includes(reservation.staleText)&&!record.prompt.includes(reservation.staleId),`Stage ${stage}/${operation} leaked an operation-reservation record instead of only its closed operation binding.`);
+      if(isIsolatedReview(stage,operation)||[20,21,22].includes(stage))for(const collection of ['observationRecords','entailmentReviews']){
+        const withheld=collectionSentinels[collection];
+        assert(!op.readCollections.includes(collection),`Stage ${stage}/${operation} reads prior ${collection} across an isolation boundary.`);
+        assert(!record.prompt.includes(withheld.currentText)&&!record.prompt.includes(withheld.currentId),`Stage ${stage}/${operation} leaked prior ${collection} across an isolation boundary.`);
       }
       for(const collection of op.agentWritableCollections){
         assert(record.prompt.includes(collection),`Stage ${stage}/${operation} prompt omits writable collection ${collection}.`);

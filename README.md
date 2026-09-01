@@ -2,7 +2,7 @@
 
 Live application: https://sjonesjones917.github.io/closed-loop-tracker/
 
-This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages and retains `JOB-20260823144121` as the authorized Stage 01-complete, Stage 02-next project.
+This repository contains one static, phone-first vanilla-JavaScript application with one HTML entry point: `index.html`. It implements exactly 30 closed-loop reliability stages. The bundled legacy `JOB-20260823144121` payload is retained as non-operational migration evidence; its raw human-authority input is preserved for current Stage 01, while its historical responses, stage states, and canonical records cannot satisfy a `/3` gate.
 
 ## Responsibility boundaries
 
@@ -11,6 +11,8 @@ This repository contains one static, phone-first vanilla-JavaScript application 
 | Workflow stages, names, roles, declared completion conditions | `workbook.js` |
 | Field ownership, types, relationships, and stage contracts | `workflow-schema.js` |
 | Canonical serialization and SHA-256 | `hash.js` |
+| Test IR registry, typed validation, runtime limits, and worker coordination | `test-runtime.js` |
+| Isolated deterministic Test IR execution | `test-worker.js` |
 | Prompt content, context selection, and prompt identity | `prompt-engine.js` |
 | Parsing, validation, proposal planning, and response disposition | `response-ingestion.js` |
 | Derived values, current-scope selection, gates, invalidation, and release logic | `workflow-engine.js` |
@@ -25,11 +27,16 @@ There is no second parser, store, workflow engine, prompt layer, application she
 
 - Project schema: `closed-loop-project/3`.
 - Response schema: `closed-loop-stage-response/3`.
+- Test IR schema: `closed-loop-test-spec/1`; verification packages: `closed-loop-verification-package/1`.
+- Canonical JSON: `closed-loop-canonical-json/1`; proof expressions: `closed-loop-proof-expression/1`; filenames: `closed-loop-filename/1`; deployment manifests: `closed-loop-deployment-manifest/1`.
 - Workflow identity: `mobile-closed-loop/30` with exactly 30 stages; no Stage or Operation 31.
 - Supported browser contract: current Chromium desktop and current Android Chrome, minimum viewport 320 CSS px.
 - Required browser capabilities: IndexedDB, Web Crypto, Blob, CompressionStream, and DecompressionStream for complete compressed package export/import.
 - Persistence: one `closedLoopProjectStore` adapter backed by IndexedDB database `closed-loop-reliability`, with project, artifact-Blob, and metadata storage. Artifact bytes are application-hashed on intake and verified on read-back. The application is browser-local and has no multi-device synchronization.
 - Stage 21 product artifacts are accepted only after the application reserves the current product execution. Finished-product bytes are then bound to that application-owned `PRODUCT_ID`, hashed, persisted, and included in the product artifact inventory.
+- Release-bearing conclusions use three-valued truth (`TRUE`, `FALSE`, `UNKNOWN`), explicit epistemic basis, current scope, freshness, contradiction status, an observation layer, and accepted entailment. Missing, partial, stale, contradictory, or insufficient evidence cannot be promoted to proof.
+- External and human work is bound to one current operation reservation, package identity, current revision and scope, and a random challenge nonce. Mutating commands are idempotent; an exact retry returns the existing receipt and a conflicting retry is rejected.
+- Stage 27 means product release eligibility only. Stage 28 verifies selected delivery bytes, Stage 29 closes current evidence chains, and Stage 30 verifies permanent-registry integrity. Final delivery is authorized only by a current application-derived `DELIVERY_RECORD` whose state is `AUTHORIZED`.
 
 ## Human + ChatGPT stage workflow
 
@@ -59,6 +66,12 @@ The application requests persistent browser storage and reports storage usage/qu
 
 The deterministic migration path is `human-project/30` → `closed-loop-project/2` → `closed-loop-project/3`; a direct legacy-to-/3 migration is valid only when it produces the same canonical result and auditability. Migrations preserve unknown extension data, raw outputs, receipts, historical records, project identities, and all 30 stages. Original imported payloads remain auditable in non-operational migration history and do not act as current canonical state. A migration never creates Stage 31.
 
+## Reliability and independence limits
+
+The ten-run loop is a bounded reproducibility and variance check under the recorded inputs and environment. Distinct application reservations prove application-session distinctness and application-controlled input isolation; they do not prove hidden provider-state independence. The interface reports those dimensions separately. The rule-of-three approximation is shown only when its predeclared Bernoulli-event, independence, comparability, representativeness, and no-exclusion assumptions are affirmatively established.
+
+Local hashes provide deterministic identity and corruption checking inside the supported application. They do not authenticate a publisher, external execution, device, browser, CI platform, or package against a party able to replace both bytes and stored hashes. Those claims retain their actual evidence basis.
+
 ## Verification
 
 Run the deterministic repository checks in this order:
@@ -85,6 +98,7 @@ node --check verify-prompt-semantics.mjs
 node --check verify-live.mjs
 node --check verify-browser.mjs
 node --check verify-browser-extra.mjs
+node --check verify-completion-amendment.mjs
 node verify.mjs
 node verify-ingestion.mjs
 node verify-complete.mjs
@@ -92,8 +106,11 @@ node verify-test-runtime.mjs
 node verify-prompt-semantics.mjs
 node verify-full-cycle.mjs
 node verify-definition-of-done.mjs
+node verify-completion-amendment.mjs
 ```
 
 The Pages workflow is the single deployment workflow. Pull requests run the source/schema/ingestion/gate/full-cycle/semantic and local Chromium acceptance checks. Only `main` deploys. A successful main run then verifies exact deployed bytes and the deployed Chromium application before publishing the machine-readable acceptance artifact. CI also verifies that every directly loaded runtime script uses the shared cache token derived from the exact runtime bundle identity, so a code change cannot silently ship under a stale browser cache identity.
 
-Local and deployed Chromium verification run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL. These browser tests cover the primary operator cycle, responsive layouts, actual Blob persistence, compressed package round-trip, injected storage rollback, and stale multi-tab revision rejection.
+Local and deployed Chromium verification run `verify-browser.mjs` and `verify-browser-extra.mjs` with `PAGE_URL` set to the application URL. These browser tests cover the primary operator cycle, responsive layouts, actual Blob persistence, compressed package round-trip, injected storage rollback, and stale multi-tab revision rejection. Deployment also publishes and retrieves a manifest of every runtime resource, rejects mixed cache/build identities, and verifies the exact worker bytes used by deterministic evidence.
+
+Repository and deployed Chromium acceptance are evidence for the tested support contract. The machine report keeps actual Android-device acceptance, a real subject-matter project exercised through all 30 stages, and full production maturity false until those distinct acceptance programs have actually run.

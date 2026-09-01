@@ -1,67 +1,91 @@
 (()=>{
 'use strict';
 
-const MAX_SAFE_INTEGER=Number.MAX_SAFE_INTEGER;
-const MIN_SAFE_INTEGER=Number.MIN_SAFE_INTEGER;
+const CANONICAL_JSON_VERSION='closed-loop-canonical-json/1';
+const HASH_ALGORITHM='SHA-256';
+const BUILD_IDENTITY='runtime-20260901-controlling-amendment-63';
+const DIGEST_CONTRACTS=Object.freeze({
+  canonicalValue:Object.freeze({canonicalizationVersion:CANONICAL_JSON_VERSION,includedPointers:Object.freeze(['/**'])}),
+  contentRecord:Object.freeze({canonicalizationVersion:CANONICAL_JSON_VERSION,includedPointers:Object.freeze(['/fields/**','/relationships/**','/evidenceRefs/**']),excludedFieldNames:Object.freeze(['<idField>','CREATED_AT','UPDATED_AT','VERSION','STATUS'])}),
+  record:Object.freeze({canonicalizationVersion:CANONICAL_JSON_VERSION,includedPointers:Object.freeze(['/**']),excludedPointers:Object.freeze(['/recordSha256','/sha256'])}),
+  project:Object.freeze({canonicalizationVersion:CANONICAL_JSON_VERSION,includedPointers:Object.freeze(['/**']),excludedPointers:Object.freeze(['/projectSha256'])})
+});
 
-function assertUnicodeScalars(value,path){
-  for(let i=0;i<value.length;i++){
-    const unit=value.charCodeAt(i);
-    if(unit>=0xD800&&unit<=0xDBFF){
-      const next=value.charCodeAt(i+1);
-      if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Cannot canonically hash unpaired UTF-16 high surrogate at ${path}.`);
-      i++;
-    }else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Cannot canonically hash unpaired UTF-16 low surrogate at ${path}.`);
+function assertScalarString(value,path){
+  for(let index=0;index<value.length;index++){
+    const unit=value.charCodeAt(index);
+    if(unit>=0xd800&&unit<=0xdbff){
+      const next=value.charCodeAt(index+1);
+      if(!(next>=0xdc00&&next<=0xdfff))throw new TypeError(`Cannot canonically hash an unpaired high surrogate at ${path}.`);
+      index++;
+    }else if(unit>=0xdc00&&unit<=0xdfff)throw new TypeError(`Cannot canonically hash an unpaired low surrogate at ${path}.`);
   }
-  return value;
 }
-function compareUnicodeScalarSequence(a,b){
-  const left=Array.from(assertUnicodeScalars(String(a),'object key'),ch=>ch.codePointAt(0));
-  const right=Array.from(assertUnicodeScalars(String(b),'object key'),ch=>ch.codePointAt(0));
-  const length=Math.min(left.length,right.length);
-  for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];
-  return left.length-right.length;
+function compareScalarStrings(left,right){
+  const a=[...left],b=[...right],length=Math.min(a.length,b.length);
+  for(let index=0;index<length;index++){
+    const ac=a[index].codePointAt(0),bc=b[index].codePointAt(0);
+    if(ac!==bc)return ac<bc?-1:1;
+  }
+  return a.length===b.length?0:a.length<b.length?-1:1;
+}
+function quoteCanonicalString(value,path){
+  assertScalarString(value,path);
+  let output='"';
+  for(const character of value){
+    const code=character.codePointAt(0);
+    if(character==='"')output+='\\"';
+    else if(character==='\\')output+='\\\\';
+    else if(character==='\b')output+='\\b';
+    else if(character==='\t')output+='\\t';
+    else if(character==='\n')output+='\\n';
+    else if(character==='\f')output+='\\f';
+    else if(character==='\r')output+='\\r';
+    else if(code<0x20)output+=`\\u${code.toString(16).padStart(4,'0')}`;
+    else output+=character;
+  }
+  return output+'"';
 }
 function stableStringify(value){
   const seen=new WeakSet();
   const normalize=(input,path='$')=>{
-    if(input===null)return null;
+    if(input===null)return 'null';
     const type=typeof input;
-    if(type==='string')return assertUnicodeScalars(input,path);
-    if(type==='boolean')return input;
+    if(type==='string')return quoteCanonicalString(input,path);
+    if(type==='boolean')return input?'true':'false';
     if(type==='number'){
-      if(!Number.isFinite(input))throw new TypeError(`Cannot canonically hash non-finite number at ${path}.`);
-      if(Object.is(input,-0))throw new TypeError(`Cannot canonically hash negative zero at ${path}.`);
-      if(!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}; use the owning schema's typed decimal-string representation.`);
-      return input;
+      if(!Number.isSafeInteger(input))throw new TypeError(`Canonical JSON number at ${path} must be a finite safe integer.`);
+      if(Object.is(input,-0))throw new TypeError(`Canonical JSON prohibits negative zero at ${path}.`);
+      return String(input);
     }
     if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
     if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
     seen.add(input);
     let output;
     if(Array.isArray(input)){
-      const keys=Object.keys(input);
+      if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed array properties at ${path}.`);
+      const keys=Object.getOwnPropertyNames(input).filter(key=>key!=='length');
       for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-      if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
-      output=input.map((item,index)=>normalize(item,`${path}[${index}]`));
+      if(keys.some(key=>!/^(0|[1-9]\d*)$/.test(key)||Number(key)>=input.length||!Number.isSafeInteger(Number(key))))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
+      for(const key of keys){const descriptor=Object.getOwnPropertyDescriptor(input,key);if(!descriptor||!descriptor.enumerable||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash a hidden or accessor array member at ${path}[${key}].`);}
+      output=`[${input.map((item,index)=>normalize(item,`${path}[${index}]`)).join(',')}]`;
     }else{
       const prototype=Object.getPrototypeOf(input);
       if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
       if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
-      output={};
-      const keys=Object.keys(input);
-      for(const key of keys)assertUnicodeScalars(key,`${path} object key`);
-      keys.sort(compareUnicodeScalarSequence);
-      for(const key of keys){
+      const members=[];
+      for(const key of Object.getOwnPropertyNames(input).sort(compareScalarStrings)){
+        assertScalarString(key,`${path} member name`);
         const descriptor=Object.getOwnPropertyDescriptor(input,key);
-        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
-        output[key]=normalize(descriptor.value,`${path}.${key}`);
+        if(!descriptor||!descriptor.enumerable||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash hidden or accessor property at ${path}.${key}.`);
+        members.push(`${quoteCanonicalString(key,`${path} member name`)}:${normalize(descriptor.value,`${path}.${key}`)}`);
       }
+      output=`{${members.join(',')}}`;
     }
     seen.delete(input);
     return output;
   };
-  return JSON.stringify(normalize(value));
+  return normalize(value);
 }
 
 function rightRotate(value,amount){return (value>>>amount)|(value<<(32-amount));}
@@ -93,11 +117,13 @@ function sha256Text(text){
 function sha256Value(value){return sha256Text(stableStringify(value));}
 function bytesToHex(bytes){return Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');}
 async function sha256Bytes(bytes){let view;if(bytes instanceof ArrayBuffer)view=new Uint8Array(bytes);else if(ArrayBuffer.isView(bytes))view=new Uint8Array(bytes.buffer,bytes.byteOffset,bytes.byteLength);else if(bytes instanceof Blob)view=new Uint8Array(await bytes.arrayBuffer());else throw new TypeError('sha256Bytes requires an ArrayBuffer, ArrayBuffer view, or Blob.');return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256',view)));}
+function canonicalDigest(value){const canonical=stableStringify(value),bytes=new TextEncoder().encode(canonical);return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:sha256Text(canonical),canonicalByteLength:bytes.byteLength,canonicalizationVersion:CANONICAL_JSON_VERSION});}
+async function byteDigest(value){let bytes;if(value instanceof ArrayBuffer)bytes=new Uint8Array(value);else if(ArrayBuffer.isView(value))bytes=new Uint8Array(value.buffer,value.byteOffset,value.byteLength);else if(value instanceof Blob)bytes=new Uint8Array(await value.arrayBuffer());else throw new TypeError('byteDigest requires an ArrayBuffer, ArrayBuffer view, or Blob.');return Object.freeze({hashAlgorithm:HASH_ALGORITHM,digest:await sha256Bytes(bytes),byteLength:bytes.byteLength,canonicalizationVersion:null});}
 function rawResponseSha256(raw){return sha256Text(String(raw??''));}
 function canonicalEnvelopeSha256(envelope){return sha256Value(envelope);}
 function contentRecordValue(record,idField){const fields={...(record?.fields||{})};for(const key of [idField,'CREATED_AT','UPDATED_AT','VERSION','STATUS'])delete fields[key];return {fields,relationships:record?.relationships||{},evidenceRefs:record?.evidenceRefs||[]};}
 function contentRecordSha256(record,idField){return sha256Value(contentRecordValue(record,idField));}
 function recordSha256(record){const value={...(record||{})};delete value.recordSha256;delete value.sha256;return sha256Value(value);}
-globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:'closed-loop-canonical-json/1',stableStringify,compareUnicodeScalarSequence,sha256Text,sha256Value,sha256Bytes,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
+globalThis.closedLoopHash=Object.freeze({version:'closed-loop-hash/3',canonicalizationVersion:CANONICAL_JSON_VERSION,BUILD_IDENTITY,CANONICAL_JSON_VERSION,HASH_ALGORITHM,DIGEST_CONTRACTS,stableStringify,compareScalarStrings,compareUnicodeScalarSequence:compareScalarStrings,sha256Text,sha256Value,sha256Bytes,canonicalDigest,byteDigest,rawResponseSha256,canonicalEnvelopeSha256,contentRecordValue,contentRecordSha256,recordSha256,knownVectors:Object.freeze({empty:sha256Text(''),abc:sha256Text('abc')})});
 
 })();
