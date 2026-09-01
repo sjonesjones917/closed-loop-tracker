@@ -60,6 +60,7 @@ try{
       if(lifecycleDependentOperations.has(stage+':'+operation))continue;
       const required=schema.operationContract(stage,operation)?.scopeRequirements||[],scope=Object.fromEntries(required.filter(key=>Object.hasOwn(lane,key)).map(key=>[key,lane[key]])),independent=[9,12,23,24].includes(stage)||([17,19].includes(stage)&&operation==='VERIFY'),context=engine.registerFreshContext(state,{stage,externalContextIdentifier:'HUMAN-WALKTHROUGH-'+stage+'-'+operation,operatorLabel:'HUMAN_WALKTHROUGH_AUDIT',purpose:independent?'REVIEWER':'GENERAL'}),contextId=engine.recordId(context,'freshContexts');
       scope.contextId=contextId;
+      for(let prior=1;prior<stage;prior++){state.stages[prior].status='COMPLETE';state.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
       const prepared=engine.prepareCurrentOperationReservation(state,{stage,operation,contextId,scope,owningTabInstance:'HUMAN-WALKTHROUGH-AUDIT'}),preview=engine.clone(state);
       preview.revision=prepared.expectedRevision;
       const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared}),text=record.prompt;
