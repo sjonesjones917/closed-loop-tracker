@@ -24,49 +24,61 @@ function compareUnicodeScalarSequence(a,b){
 }
 function stableStringify(value){
   const seen=new WeakSet();
-  const normalize=(input,path='$')=>{
-    if(input===null)return null;
+  const output=[],tasks=[{kind:'value',input:value,path:'$'}];
+  while(tasks.length){
+    const task=tasks.pop();
+    if(task.kind==='text'){output.push(task.text);continue;}
+    if(task.kind==='leave'){seen.delete(task.input);continue;}
+    const {input,path}=task;
+    if(input===null){output.push('null');continue;}
     const type=typeof input;
-    if(type==='string')return assertUnicodeScalars(input,path);
-    if(type==='boolean')return input;
+    if(type==='string'){output.push(JSON.stringify(assertUnicodeScalars(input,path)));continue;}
+    if(type==='boolean'){output.push(input?'true':'false');continue;}
     if(type==='number'){
       if(!Number.isFinite(input))throw new TypeError(`Cannot canonically hash non-finite number at ${path}.`);
       if(Object.is(input,-0))throw new TypeError(`Cannot canonically hash negative zero at ${path}.`);
       if(!Number.isSafeInteger(input)||input<MIN_SAFE_INTEGER||input>MAX_SAFE_INTEGER)throw new TypeError(`Cannot canonically hash non-safe-integer JSON number at ${path}; use the owning schema's typed decimal-string representation.`);
-      return input;
+      output.push(String(input));continue;
     }
     if(type!=='object')throw new TypeError(`Cannot canonically hash ${type} at ${path}.`);
     if(seen.has(input))throw new TypeError(`Cannot hash a cyclic value at ${path}.`);
     seen.add(input);
-    let output;
     if(Array.isArray(input)){
-      const keys=Object.keys(input);
-      for(let index=0;index<input.length;index++)if(!Object.prototype.hasOwnProperty.call(input,index))throw new TypeError(`Cannot canonically hash sparse array at ${path}.`);
-      if(keys.some(key=>!/^\d+$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash array with extra properties at ${path}.`);
-      output=input.map((item,index)=>normalize(item,`${path}[${index}]`));
+      if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed array properties at ${path}.`);
+      const names=Object.getOwnPropertyNames(input).filter(key=>key!=='length');
+      if(names.length!==input.length||names.some(key=>!/^(0|[1-9]\d*)$/.test(key)||Number(key)>=input.length))throw new TypeError(`Cannot canonically hash sparse array or array with extra properties at ${path}.`);
+      const descriptors=[];
+      for(let index=0;index<input.length;index++){
+        const descriptor=Object.getOwnPropertyDescriptor(input,String(index));
+        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor or sparse array element at ${path}[${index}].`);
+        descriptors.push(descriptor);
+      }
+      output.push('[');tasks.push({kind:'leave',input},{kind:'text',text:']'});
+      for(let index=input.length-1;index>=0;index--){tasks.push({kind:'value',input:descriptors[index].value,path:`${path}[${index}]`});if(index>0)tasks.push({kind:'text',text:','});}
     }else{
       const prototype=Object.getPrototypeOf(input);
-      if(prototype!==Object.prototype&&prototype!==null)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
+      const plain=prototype===null||prototype===Object.prototype||Object.getPrototypeOf(prototype)===null;
+      if(!plain)throw new TypeError(`Cannot canonically hash non-plain object at ${path}.`);
       if(Object.getOwnPropertySymbols(input).length)throw new TypeError(`Cannot canonically hash symbol-keyed properties at ${path}.`);
-      output={};
-      const keys=Object.keys(input);
-      for(const key of keys)assertUnicodeScalars(key,`${path} object key`);
-      keys.sort(compareUnicodeScalarSequence);
+      const keys=Object.getOwnPropertyNames(input);
+      const descriptors=new Map();
       for(const key of keys){
         const descriptor=Object.getOwnPropertyDescriptor(input,key);
-        if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash accessor property at ${path}.${key}.`);
-        output[key]=normalize(descriptor.value,`${path}.${key}`);
+        if(!descriptor||!descriptor.enumerable||!Object.prototype.hasOwnProperty.call(descriptor,'value'))throw new TypeError(`Cannot canonically hash non-data or non-enumerable property at ${path}.${key}.`);
+        assertUnicodeScalars(key,`${path} object key`);
+        descriptors.set(key,descriptor);
       }
+      keys.sort(compareUnicodeScalarSequence);
+      output.push('{');tasks.push({kind:'leave',input},{kind:'text',text:'}'});
+      for(let index=keys.length-1;index>=0;index--){const key=keys[index];tasks.push({kind:'value',input:descriptors.get(key).value,path:`${path}.${key}`},{kind:'text',text:`${JSON.stringify(key)}:`});if(index>0)tasks.push({kind:'text',text:','});}
     }
-    seen.delete(input);
-    return output;
-  };
-  return JSON.stringify(normalize(value));
+  }
+  return output.join('');
 }
 
 function rightRotate(value,amount){return (value>>>amount)|(value<<(32-amount));}
 function sha256Text(text){
-  const utf8=new TextEncoder().encode(String(text));
+  const utf8=new TextEncoder().encode(assertUnicodeScalars(String(text),'text'));
   const bitLength=utf8.length*8;
   const withMarker=utf8.length+1;
   const paddedLength=((withMarker+8+63)>>6)<<6;
