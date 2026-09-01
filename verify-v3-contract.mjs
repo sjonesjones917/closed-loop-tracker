@@ -87,7 +87,8 @@ for(const field of [
 ])assert.match(proofSource,new RegExp(`\\b${field}\\b`),`executed acceptance proof must identify ${field}`);
 assert.match(definitionProof,/\bmandatoryEvidenceChainCoverage\b/,'executed acceptance proof must identify mandatory evidence-chain structural coverage');
 assert.match(workflow,/closed-loop-acceptance\.json/,'post-deploy machine acceptance artifact is required');
-assert.match(workflow,/deployedByteIdentity\s*:\s*process\.env\.LIVE_RESULT\s*===\s*['"]success['"]/,'post-deploy byte identity must derive from the successful live-verification job');
+assert.match(workflow,/test "\$LIVE_RESULT" = success[\s\S]*DEPLOYMENT_MANIFEST_PATH=_site\/deployment-manifest\.json node verify-live\.mjs[\s\S]*DEPLOYMENT_MANIFEST_PATH=_site\/deployment-manifest\.json node verify-deployed-resource-graph\.mjs[\s\S]*deployedByteIdentity\s*:\s*live\.liveSourceIdentity===true/,'post-deploy byte identity must depend on successful live verification and the exact manifest/resource-graph proof');
+assert.match(workflow,/deploymentManifestDigest\s*:\s*manifest\.overallManifestDigest[\s\S]*deploymentRuntimeResources\s*:\s*manifest\.runtimeResources\.map[\s\S]*deploymentWorkerSha256\s*:\s*deployedResourceGraph\.workerDigest[\s\S]*executedWorkerSha256\s*:\s*deployedResourceGraph\.returnedWorkerDigest/,'machine acceptance must retain exact manifest and executed worker resource identities');
 assert.match(workflow,/deployedChromiumAcceptance\s*:\s*process\.env\.LIVE_RESULT\s*===\s*['"]success['"]/,'deployed browser acceptance must derive from the successful live-verification job');
 assert.match(workflow,/localChromiumAcceptance\s*:\s*process\.env\.TEST_RESULT\s*===\s*['"]success['"]/,'local browser acceptance must derive from the successful test job');
 assert.doesNotMatch(workflow,/deployedByteIdentity\s*:\s*true/,'post-deploy byte identity must not be hard-coded');

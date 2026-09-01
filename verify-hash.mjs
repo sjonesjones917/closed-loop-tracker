@@ -30,7 +30,7 @@ scriptSources.forEach((source,index)=>{
  assert(token===sharedBuildIdentity,`${file} cache token ${token} differs from shared runtime identity ${sharedBuildIdentity}.`);
 });
 const testRuntime=fs.readFileSync('test-runtime.js','utf8');
-assert(testRuntime.includes("if(source)url.search=new URL(source).search"),'Test IR worker URL must inherit the exact test-runtime.js build/cache query identity.');
+assert(testRuntime.includes("url.searchParams.set('v',runtimeBuildIdentity())"),'Test IR worker URL must use the exact injected test-runtime.js build identity.');
 assert(testRuntime.includes("new URL('test-worker.js',base)"),'Test IR worker must remain the same-origin registered worker entry.');
 const appCore=fs.readFileSync('app-core.js','utf8');
 assert(/function\s+artifactControlMarkup\s*\(\s*n\s*,\s*locked\s*\)\s*\{\s*if\s*\(\s*n\s*===\s*19\s*\)/.test(appCore),'Artifact controls must retain the established Stage 19 unchanged-candidate boundary; whitespace or formatting changes must not alter the invariant.');

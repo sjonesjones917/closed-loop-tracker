@@ -115,7 +115,7 @@ class SilentWorker{
   postMessage(){}
   terminate(){this.terminated=true;}
 }
-const timeoutResult=await runtime.executeTest(test(jsonSpec),{PRODUCT:artifact('ART-PRODUCT','{}')},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js'});
+const timeoutResult=await runtime.executeTest(test(jsonSpec),{PRODUCT:artifact('ART-PRODUCT','{}')},{},{Worker:SilentWorker,timeoutMs:5,workerUrl:'test-worker.js',testWorkerSha256:'0'.repeat(64)});
 assert.equal(timeoutResult.status,'EXECUTION_FAILED');
 assert.equal(timeoutResult.failure.code,'WORKER_TIMEOUT');
 assert.equal(timeoutResult.observations.length,0,'timeout must produce no partial result');
