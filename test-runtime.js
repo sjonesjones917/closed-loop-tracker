@@ -3,7 +3,7 @@
 
 const root=globalThis;
 const VERSION='closed-loop-test-runtime/1';
-const RUNTIME_BUILD_ID='runtime-20260830-live-operator-59';
+const RUNTIME_BUILD_ID=(()=>{try{return typeof document!=='undefined'&&document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
 const SPEC_VERSION='closed-loop-test-spec/1';
 const EXECUTABLE_KIND='TEST_IR';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
