@@ -47,6 +47,11 @@ jobs:
             node --check "$file"
           done
 
+      - name: Deployment manifest, build identity, and reproducibility
+        run: |
+          set -euo pipefail
+          node verify-deployment-manifest.mjs
+
       - name: Schema, ownership, and single-architecture proof
         run: |
           set -euo pipefail
@@ -191,9 +196,7 @@ jobs:
       - name: Build static application
         run: |
           set -euo pipefail
-          rm -rf _site
-          mkdir _site
-          cp index.html workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js TEST_PROJECT.json .nojekyll _site/
+          node build-static-site.mjs --out _site --source-commit "$GITHUB_SHA" --workflow-run "$GITHUB_RUN_ID"
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
         with:
@@ -351,6 +354,8 @@ jobs:
             stagesCompleted:Number(fullCycle.stagesCompleted||0),
             negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
             deployedByteIdentity:process.env.LIVE_RESULT==='success',
+            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
+            finalDeploymentResourceIdentityCoverage:process.env.LIVE_RESULT==='success'?1:0,
             localChromiumAcceptance:process.env.TEST_RESULT==='success',
             deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
             testedBrowserWidths:[320,393,'desktop'],
@@ -374,6 +379,7 @@ jobs:
               prompts:'verify-prompt-semantics.mjs',
               localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               deployedIdentity:'verify-live.mjs',
+              deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
               deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs'
             }
           };
