@@ -1,0 +1,25 @@
+name: One-time oracle browser-CI repair
+on:
+  push:
+    branches: [fix/spec-grounded-route-oracle-20260831]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/spec-grounded-route-oracle-20260831
+      - run: python .repair-oracle-browser-ci.py
+      - run: |
+          git diff --exit-code -- . ':!verify-spec-grounded-route-oracle.mjs'
+          git diff --check
+      - run: |
+          if git diff --quiet -- verify-spec-grounded-route-oracle.mjs; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add verify-spec-grounded-route-oracle.mjs
+          git commit -m 'Recognize the Chromium walkthrough invocation in CI'
+          git push origin HEAD:fix/spec-grounded-route-oracle-20260831
