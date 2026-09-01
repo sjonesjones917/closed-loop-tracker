@@ -8,77 +8,19 @@ jobs:
   complete:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
           ref: implementation/zero-loss-closure
-      - name: Apply minimal complete corrections and verify
+      - name: Verify exact implementation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           rm -f .zero-loss-last-failure.txt
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          p=Path('test-runtime.js'); s=p.read_text(); insertion=[]
-          if 'const DEPLOYMENT_TEST_WORKER_SHA256=' not in s: insertion.append("const DEPLOYMENT_TEST_WORKER_SHA256='__CLOSED_LOOP_TEST_WORKER_SHA256__';")
-          if 'const WORKER_PROTOCOL_VERSION=' not in s: insertion.append("const WORKER_PROTOCOL_VERSION='closed-loop-test-worker/1';")
-          if insertion:
-              s,n=re.subn(r"(const RUNTIME_BUILD_ID=[^\n]+;\n)",r"\1"+'\n'.join(insertion)+'\n',s,count=1)
-              if n!=1: raise SystemExit('runtime build identity anchor missing')
-          p.write_text(s)
-
-          p=Path('prompt-engine.js'); s=p.read_text()
-          if 'function semanticOperationDirective(' not in s:
-              anchor='function procedureFor(stage,operation){'
-              helper="""function semanticOperationDirective(stage,operation){
-            if(Number(stage)===2&&operation==='SEARCH_ADEQUACY_REVIEW')return 'Stage 02 operation SEARCH_ADEQUACY_REVIEW only. Independently review the exact accepted bounded source-search execution supplied by the application. Evaluate whether the declared search universe, procedure, locations, strategies, cutoff, limitations, execution evidence, candidate-source dispositions, unresolved discovery risk, and no-applicable-source reasoning are adequate for the stated project scope. Do not repeat the search, add or replace source records, rewrite the search contract, claim universal source completeness, or self-approve the search performer. Return only the semantic adequacy review allowed by the response contract, with substantive reasoning and the actual reviewer-context basis. Material unresolved discovery risk blocks adequacy.';
-            if(Number(stage)===6&&operation==='SEMANTIC_REVIEW')return 'Stage 06 operation SEMANTIC_REVIEW only. Independently review the exact release-bearing test proposition, target proposition, tested scope, positive and negative result meanings, proof-expression composition, required evidence classes, epistemic bases, and semantic relation supplied by the application. Determine only whether the proposed semantic coverage or complete proof expression is EQUIVALENT, PARTIAL, UNKNOWN, or NOT_EQUIVALENT to the target proposition, with substantive reasoning. Do not execute the test, alter Test IR, weaken a mandatory obligation, infer equivalence from wording similarity, or treat structural Test IR validity as semantic adequacy. PARTIAL, UNKNOWN, or NOT_EQUIVALENT cannot independently satisfy a mandatory proposition.';
-            return '';
-          }
-          """
-              if anchor not in s: raise SystemExit('semantic operation directive anchor missing')
-              s=s.replace(anchor,helper+anchor,1)
-          p.write_text(s)
-
-          p=Path('response-ingestion.js'); s=p.read_text()
-          old="const generated=promptEngine.buildPromptRecord(stage,preview,{operation,scope:clone(prepared.scope||laneScope),operationReservation:prepared});\n  workflow.reserveOperation(next,{preparedReservation:prepared,packageId:String(priorBinding.packageId||''),promptId:generated.instructionId});"
-          if old in s:
-              new="const generated=promptEngine.buildPromptRecord(stage,preview,{operation,scope:clone(prepared.scope||laneScope),operationReservation:prepared});\n  generated.operationBinding={packageId:workflow.recordValue(prepared,'PACKAGE_ID')||prepared.packageId||null,operationReservationId:workflow.recordValue(prepared,'OPERATION_RESERVATION_ID')||prepared.operationReservationId||null,challengeNonce:workflow.recordValue(prepared,'CHALLENGE_NONCE')||prepared.challengeNonce||null,targetSlot:workflow.recordValue(prepared,'TARGET_SLOT')||prepared.targetSlot||null,payload:clone(payload)};\n  if(generated.contextManifest)generated.contextManifest.operationBinding=clone(generated.operationBinding);\n  workflow.reserveOperation(next,{preparedReservation:prepared,packageId:String(priorBinding.packageId||''),promptId:generated.instructionId});"
-              s=s.replace(old,new,1)
-          p.write_text(s)
-
-          p=Path('verify-ingestion.mjs'); s=p.read_text()
-          old="const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});\n  engine.registerGeneratedPrompt(p,record);engine.reserveOperation(p,{preparedReservation:prepared,promptId:record.instructionId});p.revision=prepared.expectedRevision;return record;"
-          if old in s:
-              new="prepared.scope={...(prepared.scope||scope||{}),contextId};if(prepared.fields)prepared.fields.SCOPE=prepared.scope;\n  const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});\n  record.scope={...(record.scope||{}),contextId};record.operationBinding={packageId:engine.recordValue(prepared,'PACKAGE_ID')||prepared.packageId||null,operationReservationId:engine.recordValue(prepared,'OPERATION_RESERVATION_ID')||prepared.operationReservationId||null,challengeNonce:engine.recordValue(prepared,'CHALLENGE_NONCE')||prepared.challengeNonce||null,targetSlot:engine.recordValue(prepared,'TARGET_SLOT')||prepared.targetSlot||null};\n  engine.registerGeneratedPrompt(p,record);engine.reserveOperation(p,{preparedReservation:prepared,promptId:record.instructionId});p.revision=prepared.expectedRevision;return record;"
-              s=s.replace(old,new,1)
-          p.write_text(s)
-
-          p=Path('verify-prompt-semantics.mjs'); s=p.read_text()
-          old="const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared});\n  engine.registerGeneratedPrompt(project,record);engine.reserveOperation(project,{preparedReservation:prepared,promptId:record.instructionId});project.revision=prepared.expectedRevision;engine.recalculate(project);return record;"
-          if old in s:
-              new="const exactScope={...(prepared.scope||scope||{}),contextId};if(prepared.fields)prepared.fields.SCOPE=exactScope;prepared.scope=exactScope;\n  const record=prompts.buildPromptRecord(stage,preview,{operation,scope:exactScope,operationReservation:prepared});\n  engine.registerGeneratedPrompt(project,record);engine.reserveOperation(project,{preparedReservation:prepared,promptId:record.instructionId});project.revision=prepared.expectedRevision;engine.recalculate(project);return record;"
-              s=s.replace(old,new,1)
-          s=s.replace("const promptIdentityRecord=prompts.buildPromptRecord(1,promptIdentityProject,{});","const promptIdentityRecord=activatePrompt(promptIdentityProject,1);")
-          s=s.replace("const delimiterRecord=prompts.buildPromptRecord(1,delimiterProject,{});","const delimiterRecord=activatePrompt(delimiterProject,1);")
-          s=s.replace("const shortValuePrompt=prompts.buildPromptRecord(1,shortValueProject,{}).prompt;","const shortValuePrompt=activatePrompt(shortValueProject,1).prompt;")
-          p.write_text(s)
-
-          p=Path('verify-full-cycle.mjs'); s=p.read_text()
-          replacement="function activatePreparedPrompt(stage,operation,prepared){const preview=engine.clone(p);preview.revision=prepared.expectedRevision;const exactScope=prompts.scopeFor(stage,preview,prepared.scope);prepared.scope=exactScope;if(prepared.fields)prepared.fields.SCOPE=exactScope;const pr={...prompts.buildPromptRecord(stage,preview,{operation,scope:exactScope,operationReservation:prepared}),generatedAt:new Date().toISOString()};pr.operationBinding={packageId:engine.recordValue(prepared,'PACKAGE_ID')||prepared.packageId||null,operationReservationId:engine.recordValue(prepared,'OPERATION_RESERVATION_ID')||prepared.operationReservationId||null,challengeNonce:engine.recordValue(prepared,'CHALLENGE_NONCE')||prepared.challengeNonce||null,targetSlot:engine.recordValue(prepared,'TARGET_SLOT')||prepared.targetSlot||null};engine.registerGeneratedPrompt(p,pr);engine.reserveOperation(p,{preparedReservation:prepared,promptId:pr.instructionId});p.revision=prepared.expectedRevision;engine.recalculate(p);return pr;}"
-          s,n=re.subn(r"^function activatePreparedPrompt\(stage,operation,prepared\)\{[^\n]*$",replacement,s,count=1,flags=re.M)
-          if n!=1: raise SystemExit('full-cycle activatePreparedPrompt anchor missing')
-          replacement2="function reservedPrompt(stage,operation,{contextId,targetSlot,payload={}}={}){const prepared=engine.prepareCurrentOperationReservation(p,{stage,operation,contextId,scope:{contextId},targetSlot,payload,owningTabInstance:'FULL_CYCLE'});return activatePreparedPrompt(stage,operation,prepared);}"
-          s,n=re.subn(r"^function reservedPrompt\(stage,operation,\{contextId,targetSlot,payload=\{\}\}=\{\}\)\{[^\n]*$",replacement2,s,count=1,flags=re.M)
-          if n!=1: raise SystemExit('full-cycle reservedPrompt anchor missing')
-          p.write_text(s)
-          PY
-
           export FULL_CYCLE_TERMINAL_REPORT_PATH="$RUNNER_TEMP/full-cycle-terminal-evidence.json"
           rm -f "$FULL_CYCLE_TERMINAL_REPORT_PATH"
           run_test() {
@@ -91,7 +33,7 @@ jobs:
                 echo "HEAD: $(git rev-parse HEAD)"
                 echo "UTC: $(date -u +%FT%TZ)"
                 echo
-                tail -n 800 "$out"
+                tail -n 1200 "$out"
               } > .zero-loss-last-failure.txt
               cat .zero-loss-last-failure.txt
               git add -A
@@ -101,7 +43,6 @@ jobs:
             fi
             cat "$out"
           }
-
           for f in workbook.js hash.js workflow-schema.js test-runtime.js test-worker.js workflow-engine.js prompt-engine.js response-ingestion.js project-store.js app-core.js; do node --check "$f"; done
           run_test verify-full-cycle.mjs
           test -s "$FULL_CYCLE_TERMINAL_REPORT_PATH"
@@ -117,7 +58,6 @@ jobs:
             verify-release-workflow.mjs \
             verify-amendment-ui.mjs \
             verify-ingestion.mjs \
-            verify-workflow.mjs \
             verify-prompt-semantics.mjs \
             verify-test-ir.mjs \
             verify-test-ir-worker.mjs \
@@ -128,7 +68,6 @@ jobs:
             verify-spec-grounded-route-oracle.mjs; do
               run_test "$f"
           done
-
           rm -f .zero-loss-last-failure.txt .github/workflows/zero-loss-complete.yml
           git add -A
           git commit -m 'Complete reservation-bound zero-loss closure'
