@@ -104,6 +104,16 @@ input[type="file"],#stage-files,#stage-directory{display:block;width:100%;min-wi
   .header-actions button,.project-action-menu>summary,.file-button,.button-row button{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
   .project-action-menu>summary{width:100%;justify-content:center;text-align:center}
 }
+/* Normative accessibility floor: primary body and control text 16px; secondary metadata 14px. */
+:root{--ui-small:14px;--ui-body:16px}
+body{font-size:16px}
+.app *,.app-help *{font-size:16px!important}
+.app .brand-kicker,.app .storage-status,.app .progress-line strong,.app .fact span,.app .status,.app .field .help,.app .stage-number,.app .stage-meta,.app .record-key,.app .project-field-group>summary span:last-child,.app .prompt-meta,.app .stage-output-hint{font-size:14px!important}
+.app .brand h1,.app .hero h2{font-size:18px!important}
+.app h2.section-title,.app .fact strong{font-size:16px!important}
+.app button,.app .file-button,.app .project-action-menu>summary{line-height:1.2}
+@media(max-width:420px){.app .stage-picker-display{font-size:16px!important}}
+
 </style>
 </head>
 <body>
