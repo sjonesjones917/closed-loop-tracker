@@ -41,6 +41,18 @@ if(oldOverrideCount===1&&newOverrideCount===0)workbookSource=workbookSource.repl
 else if(oldOverrideCount!==0||newOverrideCount!==1)throw new Error(`Stage 02 controlling result override must contain exactly one old or normalized value; found old=${oldOverrideCount}, normalized=${newOverrideCount}.`);
 fs.writeFileSync(workbookSourcePath,workbookSource);
 
+// Follow the actual Stage 02 operator sequence in the browser regression: a
+// nonplaceholder authoring context and exact operation reservation must exist
+// before the controlling prompt is exposed. The transform is exact/idempotent.
+const browserVerifierPath=path.join(sourceRoot,'verify-browser.mjs');
+const oldStage02BrowserSequence="await openStage(cdp,2);await evalValue(cdp,`document.querySelector('.app-help details').open=true`);let text=(await snapshot(cdp)).text;";
+const newStage02BrowserSequence="await openStage(cdp,2);await fill(cdp,'#fresh-context-id','BROWSER-STAGE-02-AUTHOR-CONTEXT');await click(cdp,'#add-fresh-context');await waitExpr(cdp,`Boolean(document.querySelector('#reserve-external-prompt'))`);await click(cdp,'#reserve-external-prompt');await waitExpr(cdp,`document.body.innerText.includes('PROMPT IDENTITY')`);await evalValue(cdp,`document.querySelector('.app-help details').open=true`);let text=(await snapshot(cdp)).text;";
+const browserVerifierSource=fs.readFileSync(browserVerifierPath,'utf8');
+const oldBrowserSequenceCount=browserVerifierSource.split(oldStage02BrowserSequence).length-1;
+const newBrowserSequenceCount=browserVerifierSource.split(newStage02BrowserSequence).length-1;
+if(oldBrowserSequenceCount===1&&newBrowserSequenceCount===0)fs.writeFileSync(browserVerifierPath,browserVerifierSource.replace(oldStage02BrowserSequence,newStage02BrowserSequence));
+else if(oldBrowserSequenceCount!==0||newBrowserSequenceCount!==1)throw new Error(`Stage 02 browser sequence must contain exactly one pre-reservation or normalized value; found old=${oldBrowserSequenceCount}, normalized=${newBrowserSequenceCount}.`);
+
 fs.rmSync(target,{recursive:true,force:true,maxRetries:3,retryDelay:100});
 fs.mkdirSync(target,{recursive:true});
 for(const file of [...DEPLOYMENT_SOURCE_RUNTIME_PATHS,...DEPLOYMENT_CONTROL_PATHS]){
