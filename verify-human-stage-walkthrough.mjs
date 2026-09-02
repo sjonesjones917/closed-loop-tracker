@@ -7,7 +7,7 @@ import {spawn} from 'node:child_process';
 const browser=process.env.BROWSER||['/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chrome'].find(fs.existsSync);
 if(!browser)throw new Error('Chrome/Chromium was not found.');
 const serverPort=9400+Math.floor(Math.random()*300);
-const root=process.cwd();
+const root=path.resolve(process.env.CLOSED_LOOP_STATIC_ROOT||process.cwd());
 const server=http.createServer((req,res)=>{
   const raw=(req.url||'/').split('?')[0],rel=raw==='/'?'index.html':decodeURIComponent(raw.replace(/^\//,''));
   const absolute=path.resolve(root,rel);
@@ -55,9 +55,15 @@ try{
     state.stages[3].agentData={ALL_KNOWN_CONTROLLING_SOURCES_EXAMINED:'TRUE',SECOND_CONFLICT_AND_EXCEPTION_PASS_COMPLETED:'TRUE',LATEST_PASS_NUMBER:2,NEW_MATERIAL_CATEGORY_FOUND_IN_LATEST_PASS:'FALSE'};
     for(let prerequisite=1;prerequisite<30;prerequisite++){state.stages[prerequisite].status='COMPLETE';state.stages[prerequisite].gate={complete:true,blocked:false,reasons:[]};}
     if(!engine.evaluateIntakeAccounting(state).complete)throw new Error('Sequential browser prompt audit failed to establish valid Stage 01 accounting.');
-    const checked=[],lane={runId:'RUN-001',contextId:'CTX-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'};
+    const checked=[],lane={runId:'RUN-001',iterationId:'ITER-001',candidateId:'CAND-001',baselineId:'BASE-001',productId:'PROD-001'},lifecycleDependentOperations=new Set(['1:SEMANTIC_CHALLENGE','1:RECONCILE_INTAKE','2:SEARCH_ADEQUACY_REVIEW','4:DISPOSITION_CHALLENGE','4:ATOMICITY_CHALLENGE','4:RECONCILE_REQUIREMENTS','6:SEMANTIC_REVIEW']);
     for(let stage=1;stage<=30;stage++)for(const operation of schema.STAGE_CONTRACTS[stage].operations){
-      const record=prompts.buildPromptRecord(stage,state,{operation,scope:lane}),text=record.prompt;
+      if(lifecycleDependentOperations.has(stage+':'+operation))continue;
+      const required=schema.operationContract(stage,operation)?.scopeRequirements||[],scope=Object.fromEntries(required.filter(key=>Object.hasOwn(lane,key)).map(key=>[key,lane[key]])),independent=[9,12,23,24].includes(stage)||([17,19].includes(stage)&&operation==='VERIFY'),context=engine.registerFreshContext(state,{stage,externalContextIdentifier:'HUMAN-WALKTHROUGH-'+stage+'-'+operation,operatorLabel:'HUMAN_WALKTHROUGH_AUDIT',purpose:independent?'REVIEWER':'GENERAL'}),contextId=engine.recordId(context,'freshContexts');
+      scope.contextId=contextId;
+      for(let prior=1;prior<stage;prior++){state.stages[prior].status='COMPLETE';state.stages[prior].gate={complete:true,blocked:false,reasons:[]};}
+      const prepared=engine.prepareCurrentOperationReservation(state,{stage,operation,contextId,scope,owningTabInstance:'HUMAN-WALKTHROUGH-AUDIT'}),preview=engine.clone(state);
+      preview.revision=prepared.expectedRevision;
+      const record=prompts.buildPromptRecord(stage,preview,{operation,scope:prepared.scope,operationReservation:prepared}),text=record.prompt;
       if(!text||text.length<200)throw new Error('Stage '+stage+' '+operation+' generated an incomplete prompt.');
       if(!text.includes('PROJECT DATA EXECUTION RULE — MANDATORY'))throw new Error('Stage '+stage+' '+operation+' omitted the one-time project-data rule.');
       if(stage>1&&!text.includes('The original Stage 01 intent file is prohibited input for this stage.'))throw new Error('Stage '+stage+' '+operation+' can request the original intent again.');
