@@ -23,16 +23,23 @@ if(oldCount===1&&newCount===0)fs.writeFileSync(appCoreSourcePath,appCoreSource.r
 else if(oldCount!==0||newCount!==1)throw new Error(`Stage 02 operator-help source must contain exactly one old or normalized value; found old=${oldCount}, normalized=${newCount}.`);
 
 // Keep the Stage 02 boundary visible in the existing stage-result paragraph.
-// This is not a new panel or layout change; it restores the exact operator
-// statement that the browser regression requires on the current Stage 02 path.
+// Workbook Stage 02 has both a base result and a controlling amendment override;
+// both are normalized so the actual rendered STAGES entry carries the boundary.
 const workbookSourcePath=path.join(sourceRoot,'workbook.js');
 const oldStage02Result="'Identify every source that may control, inform, or prove correctness and establish the authority hierarchy.'";
 const newStage02Result="'Independent external sources only. Identify every external source that may control, inform, or prove correctness within the current bounded search contract, establish the authority hierarchy, and do not treat supplied project material as independent authority or claim open-world completeness.'";
-const workbookSource=fs.readFileSync(workbookSourcePath,'utf8');
+const oldStage02Override="2:'Identify and disposition every source within a bounded, evidenced source-search contract without claiming universal source completeness.'";
+const newStage02Override="2:'Independent external sources only. Identify and disposition every external source within the current bounded, evidenced source-search contract; do not treat supplied project material as independent authority or claim universal source completeness.'";
+let workbookSource=fs.readFileSync(workbookSourcePath,'utf8');
 const oldResultCount=workbookSource.split(oldStage02Result).length-1;
 const newResultCount=workbookSource.split(newStage02Result).length-1;
-if(oldResultCount===1&&newResultCount===0)fs.writeFileSync(workbookSourcePath,workbookSource.replace(oldStage02Result,newStage02Result));
-else if(oldResultCount!==0||newResultCount!==1)throw new Error(`Stage 02 result source must contain exactly one old or normalized value; found old=${oldResultCount}, normalized=${newResultCount}.`);
+if(oldResultCount===1&&newResultCount===0)workbookSource=workbookSource.replace(oldStage02Result,newStage02Result);
+else if(oldResultCount!==0||newResultCount!==1)throw new Error(`Stage 02 base result source must contain exactly one old or normalized value; found old=${oldResultCount}, normalized=${newResultCount}.`);
+const oldOverrideCount=workbookSource.split(oldStage02Override).length-1;
+const newOverrideCount=workbookSource.split(newStage02Override).length-1;
+if(oldOverrideCount===1&&newOverrideCount===0)workbookSource=workbookSource.replace(oldStage02Override,newStage02Override);
+else if(oldOverrideCount!==0||newOverrideCount!==1)throw new Error(`Stage 02 controlling result override must contain exactly one old or normalized value; found old=${oldOverrideCount}, normalized=${newOverrideCount}.`);
+fs.writeFileSync(workbookSourcePath,workbookSource);
 
 fs.rmSync(target,{recursive:true,force:true,maxRetries:3,retryDelay:100});
 fs.mkdirSync(target,{recursive:true});
