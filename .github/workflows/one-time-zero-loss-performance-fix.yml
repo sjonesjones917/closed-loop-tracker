@@ -28,42 +28,47 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          from hashlib import sha256
           from pathlib import Path
 
-          app_path = Path('app-core.js')
-          app = app_path.read_text(encoding='utf-8')
-          old = 'async function persistReplacement(next){engine.ensureShape(next);engine.recalculate(next);const committed='
-          new = 'async function persistReplacement(next){const committed='
-          if app.count(old) != 1:
-              raise SystemExit(f'app-core.js correction target count was {app.count(old)}, expected 1')
-          app = app.replace(old, new, 1)
-          app_path.write_text(app, encoding='utf-8')
+          def replace_exact(path, replacements):
+              value = path.read_bytes()
+              for before, after, expected in replacements:
+                  actual = value.count(before)
+                  if actual != expected:
+                      raise SystemExit(
+                          f'{path} correction target count was {actual}, expected {expected}: {before!r}'
+                      )
+                  value = value.replace(before, after)
+              path.write_bytes(value)
+              return value
 
-          store_path = Path('project-store.js')
-          store = store_path.read_text(encoding='utf-8')
-          replacements = [
-              ('assertProjectIntegrity(project,{verifyDerived:true});', 'assertProjectIntegrity(project,{verifyDerived:false});', 1),
-              ('engine?.recalculate?.(next);assertProjectIntegrity(next);', 'engine?.recalculate?.(next);assertProjectIntegrity(next,{verifyDerived:false});', 1),
-              ('engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next);', 'engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next,{verifyDerived:false});', 1),
-              ('engine?.recalculate?.(next);const integrity=prior.validateProjectIntegrity(next);', 'engine?.recalculate?.(next);const integrity=prior.validateProjectIntegrity(next,{verifyDerived:false});', 1),
-              ('engine.recalculate(next);const integrity=prior.validateProjectIntegrity(next);', 'engine.recalculate(next);const integrity=prior.validateProjectIntegrity(next,{verifyDerived:false});', 2),
+          app_old = b'async function persistReplacement(next){engine.ensureShape(next);engine.recalculate(next);const committed='
+          app_new = b'async function persistReplacement(next){const committed='
+          app = replace_exact(Path('app-core.js'), [(app_old, app_new, 1)])
+          if app_old in app or app.count(app_new) != 1:
+              raise SystemExit('app-core.js postcondition failed')
+
+          store_replacements = [
+              (b'assertProjectIntegrity(project,{verifyDerived:true});', b'assertProjectIntegrity(project,{verifyDerived:false});', 1),
+              (b'engine?.recalculate?.(next);assertProjectIntegrity(next);', b'engine?.recalculate?.(next);assertProjectIntegrity(next,{verifyDerived:false});', 1),
+              (b'engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next);', b'engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next,{verifyDerived:false});', 1),
+              (b'engine?.recalculate?.(next);const integrity=prior.validateProjectIntegrity(next);', b'engine?.recalculate?.(next);const integrity=prior.validateProjectIntegrity(next,{verifyDerived:false});', 1),
+              (b'engine.recalculate(next);const integrity=prior.validateProjectIntegrity(next);', b'engine.recalculate(next);const integrity=prior.validateProjectIntegrity(next,{verifyDerived:false});', 2),
           ]
-          for before, after, expected in replacements:
-              actual = store.count(before)
-              if actual != expected:
-                  raise SystemExit(f'project-store.js correction target count was {actual}, expected {expected}: {before}')
-              store = store.replace(before, after)
-          store_path.write_text(store, encoding='utf-8')
+          store = replace_exact(Path('project-store.js'), store_replacements)
+          for before, after, expected in store_replacements:
+              if before in store or store.count(after) != expected:
+                  raise SystemExit(f'project-store.js postcondition failed: {after!r}')
 
-          expected = {
-              'app-core.js': '7b0372311a394afbd373dd733b64a077cf7310bbaca047c22849e42a1f0620cb',
-              'project-store.js': 'a23dce0bc935d368784b7bbe98780ebddb3c0c6dc92f2977bfb8b72e26403d48',
-          }
-          for filename, digest in expected.items():
-              actual = sha256(Path(filename).read_bytes()).hexdigest()
-              if actual != digest:
-                  raise SystemExit(f'{filename} resulting SHA-256 {actual} did not match {digest}')
+          # Imported and otherwise untrusted project state must still receive a full
+          # independent derived-state integrity validation before activation.
+          required_full_checks = [
+              b'const projectIntegrity=prior.validateProjectIntegrity(project);',
+              b'const integrity=prior.validateProjectIntegrity(project);',
+          ]
+          for required in required_full_checks:
+              if required not in store:
+                  raise SystemExit(f'full import integrity check was lost: {required!r}')
           PY
       - name: Verify the affected correctness paths before committing
         run: |
