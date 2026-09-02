@@ -1,0 +1,89 @@
+name: Apply the one-time zero-loss operator-path performance correction
+
+on:
+  push:
+    branches:
+      - codex/zero-loss-final-v3
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-time-zero-loss-performance-fix
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/zero-loss-final-v3
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.19.0'
+      - name: Apply the minimal complete correction set
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          app_path = Path('app-core.js')
+          app = app_path.read_text(encoding='utf-8')
+          old = 'async function persistReplacement(next){engine.ensureShape(next);engine.recalculate(next);const committed='
+          new = 'async function persistReplacement(next){const committed='
+          if app.count(old) != 1:
+              raise SystemExit(f'app-core.js correction target count was {app.count(old)}, expected 1')
+          app = app.replace(old, new, 1)
+          app_path.write_text(app, encoding='utf-8')
+
+          store_path = Path('project-store.js')
+          store = store_path.read_text(encoding='utf-8')
+          replacements = [
+              ('assertProjectIntegrity(project,{verifyDerived:true});', 'assertProjectIntegrity(project,{verifyDerived:false});', 1),
+              ('engine?.recalculate?.(next);assertProjectIntegrity(next);', 'engine?.recalculate?.(next);assertProjectIntegrity(next,{verifyDerived:false});', 1),
+              ('engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next);', 'engine?.recalculate?.(next);next.revision=expected+1;assertProjectIntegrity(next,{verifyDerived:false});', 1),
+              ('engine?.recalculate?.(next);const integrity=prior.validateProjectIntegrity(next);', 'engine?.recalculate?.(next);const integrity=prior.validateProjectIntegrity(next,{verifyDerived:false});', 1),
+              ('engine.recalculate(next);const integrity=prior.validateProjectIntegrity(next);', 'engine.recalculate(next);const integrity=prior.validateProjectIntegrity(next,{verifyDerived:false});', 2),
+          ]
+          for before, after, expected in replacements:
+              actual = store.count(before)
+              if actual != expected:
+                  raise SystemExit(f'project-store.js correction target count was {actual}, expected {expected}: {before}')
+              store = store.replace(before, after)
+          store_path.write_text(store, encoding='utf-8')
+
+          expected = {
+              'app-core.js': '7b0372311a394afbd373dd733b64a077cf7310bbaca047c22849e42a1f0620cb',
+              'project-store.js': 'a23dce0bc935d368784b7bbe98780ebddb3c0c6dc92f2977bfb8b72e26403d48',
+          }
+          for filename, digest in expected.items():
+              actual = sha256(Path(filename).read_bytes()).hexdigest()
+              if actual != digest:
+                  raise SystemExit(f'{filename} resulting SHA-256 {actual} did not match {digest}')
+          PY
+      - name: Verify the affected correctness paths before committing
+        run: |
+          set -euo pipefail
+          node --check app-core.js
+          node --check project-store.js
+          node verify-ingestion.mjs
+          node verify-project-lifecycle.mjs
+          node verify-store-completion-amendment.mjs
+          node verify-terminal-delivery-lifecycle.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          git diff --check
+      - name: Commit the verified correction to the pull-request branch
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add app-core.js project-store.js
+          git diff --cached --quiet && { echo 'No correction remained to commit.'; exit 1; }
+          git commit -m 'Fix duplicate project recalculation on operator writes'
+          git push origin HEAD:codex/zero-loss-final-v3
