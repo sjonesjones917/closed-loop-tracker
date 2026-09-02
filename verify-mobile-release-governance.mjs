@@ -38,7 +38,7 @@ export function assertWorkflowGovernance(workflow){
 
   const tagStep=workflow.match(/\n\s*- name: Create release tag[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
   assert.ok(tagStep,'A release-tag step must exist.');
-  assert.match(tagStep.groups.body,/\n\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/,'The release-tag step must be conditionally gated by final acceptance.');
+  assert.match(tagStep.groups.body,/^\s*if:\s*steps\.acceptance\.outputs\.final_acceptance\s*==\s*'true'/m,'The release-tag step must be conditionally gated by final acceptance.');
   assert.match(tagStep.groups.body,/git push origin "refs\/tags\/\$TAG"/,'The condition must govern the actual remote tag write.');
 
   const blockedStep=workflow.match(/\n\s*- name: Record blocked actual-iPhone acceptance[^\n]*\n(?<body>[\s\S]*?)(?=\n\s*- name:|\s*$)/);
