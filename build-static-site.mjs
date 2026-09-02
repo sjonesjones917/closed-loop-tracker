@@ -15,7 +15,7 @@ if(target===path.parse(target).root)throw new Error('The deployment target must 
 // source-derived resource graph. The transform is exact and idempotent.
 const appCoreSourcePath=path.join(sourceRoot,'app-core.js');
 const oldStage02Help="return 'Stage 02 researches independent external sources. Supplied project artifacts are not required for this stage.';";
-const newStage02Help="return 'Independent external sources only. Stage 02 researches independent external sources within the current bounded source-search contract. Supplied project artifacts are project input, not automatically independent authority, and are not required for this stage.';";
+const newStage02Help="return 'Independent external sources only. Stage 02 researches independent external sources within the current bounded source-search contract. Supplied project artifacts are project input, not automatically independent authority, and are not required for this stage. The required response schema is closed-loop-stage-response/3.';";
 const appCoreSource=fs.readFileSync(appCoreSourcePath,'utf8');
 const oldCount=appCoreSource.split(oldStage02Help).length-1;
 const newCount=appCoreSource.split(newStage02Help).length-1;
@@ -27,9 +27,9 @@ else if(oldCount!==0||newCount!==1)throw new Error(`Stage 02 operator-help sourc
 // both are normalized so the actual rendered STAGES entry carries the boundary.
 const workbookSourcePath=path.join(sourceRoot,'workbook.js');
 const oldStage02Result="'Identify every source that may control, inform, or prove correctness and establish the authority hierarchy.'";
-const newStage02Result="'Independent external sources only. Identify every external source that may control, inform, or prove correctness within the current bounded search contract, establish the authority hierarchy, and do not treat supplied project material as independent authority or claim open-world completeness.'";
+const newStage02Result="'Independent external sources only. Identify every external source that may control, inform, or prove correctness within the current bounded search contract, establish the authority hierarchy, and do not treat supplied project material as independent authority or claim open-world completeness. The required response schema is closed-loop-stage-response/3.'";
 const oldStage02Override="2:'Identify and disposition every source within a bounded, evidenced source-search contract without claiming universal source completeness.'";
-const newStage02Override="2:'Independent external sources only. Identify and disposition every external source within the current bounded, evidenced source-search contract; do not treat supplied project material as independent authority or claim universal source completeness.'";
+const newStage02Override="2:'Independent external sources only. Identify and disposition every external source within the current bounded, evidenced source-search contract; do not treat supplied project material as independent authority or claim universal source completeness. The required response schema is closed-loop-stage-response/3.'";
 let workbookSource=fs.readFileSync(workbookSourcePath,'utf8');
 const oldResultCount=workbookSource.split(oldStage02Result).length-1;
 const newResultCount=workbookSource.split(newStage02Result).length-1;
