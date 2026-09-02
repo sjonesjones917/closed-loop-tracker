@@ -22,6 +22,18 @@ const newCount=appCoreSource.split(newStage02Help).length-1;
 if(oldCount===1&&newCount===0)fs.writeFileSync(appCoreSourcePath,appCoreSource.replace(oldStage02Help,newStage02Help));
 else if(oldCount!==0||newCount!==1)throw new Error(`Stage 02 operator-help source must contain exactly one old or normalized value; found old=${oldCount}, normalized=${newCount}.`);
 
+// Keep the Stage 02 boundary visible in the existing stage-result paragraph.
+// This is not a new panel or layout change; it restores the exact operator
+// statement that the browser regression requires on the current Stage 02 path.
+const workbookSourcePath=path.join(sourceRoot,'workbook.js');
+const oldStage02Result="'Identify every source that may control, inform, or prove correctness and establish the authority hierarchy.'";
+const newStage02Result="'Independent external sources only. Identify every external source that may control, inform, or prove correctness within the current bounded search contract, establish the authority hierarchy, and do not treat supplied project material as independent authority or claim open-world completeness.'";
+const workbookSource=fs.readFileSync(workbookSourcePath,'utf8');
+const oldResultCount=workbookSource.split(oldStage02Result).length-1;
+const newResultCount=workbookSource.split(newStage02Result).length-1;
+if(oldResultCount===1&&newResultCount===0)fs.writeFileSync(workbookSourcePath,workbookSource.replace(oldStage02Result,newStage02Result));
+else if(oldResultCount!==0||newResultCount!==1)throw new Error(`Stage 02 result source must contain exactly one old or normalized value; found old=${oldResultCount}, normalized=${newResultCount}.`);
+
 fs.rmSync(target,{recursive:true,force:true,maxRetries:3,retryDelay:100});
 fs.mkdirSync(target,{recursive:true});
 for(const file of [...DEPLOYMENT_SOURCE_RUNTIME_PATHS,...DEPLOYMENT_CONTROL_PATHS]){
