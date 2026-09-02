@@ -52,6 +52,11 @@ jobs:
           set -euo pipefail
           node verify-deployment-manifest.mjs
 
+      - name: Physical iPhone release-tag governance
+        run: |
+          set -euo pipefail
+          node verify-mobile-release-governance.mjs
+
       - name: Schema, ownership, and single-architecture proof
         run: |
           set -euo pipefail
@@ -246,7 +251,7 @@ jobs:
           run_browser_verifier verify-browser-extra.mjs
 
   publish-status:
-    name: Publish machine acceptance
+    name: Publish machine acceptance status
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [test, deploy, verify-live]
     runs-on: ubuntu-latest
@@ -258,6 +263,7 @@ jobs:
         with:
           node-version: '22'
       - name: Build acceptance artifact from executed proof jobs
+        id: acceptance
         env:
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
@@ -275,6 +281,7 @@ jobs:
           node verify-full-cycle.mjs > /tmp/full-cycle.json
           node verify-data-route-closure.mjs > /tmp/data-route.json
           node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
+          node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
           node - <<'NODE'
           const fs=require('fs');
           const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
@@ -284,6 +291,7 @@ jobs:
           const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
           const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
           const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
+          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
           const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
           const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
           const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
@@ -293,9 +301,11 @@ jobs:
           if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
           if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
           if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
+          if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
           const report={
             commit:process.env.GITHUB_SHA,
             workflow:'mobile-closed-loop/30',
+            contractProfileId:'closed-loop-completion-profile/1',
             projectSchema:'closed-loop-project/3',
             responseSchema:'closed-loop-stage-response/3',
             testIrSchema:'closed-loop-test-spec/1',
@@ -359,10 +369,31 @@ jobs:
             localChromiumAcceptance:process.env.TEST_RESULT==='success',
             deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
             testedBrowserWidths:[320,393,'desktop'],
-            actualAndroidChromeAcceptance:false,
+            mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
+            actualIPhoneSafariAcceptance:false,
+            mobileAcceptanceResult:'BLOCKED_ENVIRONMENT',
+            mobileAcceptanceTargetId:null,
+            mobileAcceptanceEvidenceId:null,
+            mobileAcceptanceEvidenceBasis:'NONE',
+            mobileAcceptanceSourceCommit:null,
+            mobileAcceptanceDeploymentManifestDigest:null,
+            mobileAcceptanceOrigin:'https://sjonesjones917.github.io',
+            mobileAcceptanceBasePath:'/closed-loop-tracker/',
+            mobileAcceptanceTestProjectId:null,
+            mobileAcceptancePerformer:null,
+            mobileAcceptancePhysicalDeviceAssertion:false,
+            finalAcceptancePublication:false,
+            releaseTagEligible:false,
+            mobileAcceptanceBlockers:[{
+              disposition:'BLOCKED_ENVIRONMENT',
+              requiredAction:'Create a pinned MOBILE_ACCEPTANCE_TARGET_ID and single-use challenge, execute the complete Section 45.1 operator path on an actual iPhone in Safari against this exact deployed commit and manifest, then submit mobile-acceptance-evidence.json for CI verification.',
+              actor:'Authorized physical-iPhone performer and repository acceptance controller',
+              controllingClauses:['45.1','45.2','46','49']
+            }],
             realThirtyStageProjectAcceptance:false,
             fullProductionMaturity:false,
-            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT},
+            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:'BLOCKED_ENVIRONMENT'},
+            nextProofStep:'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
             proofSources:{
               ownership:'verify.mjs',
               canonicalDataRoutes:'verify-data-route-closure.mjs',
@@ -380,17 +411,32 @@ jobs:
               localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
               deployedIdentity:'verify-live.mjs',
               deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
-              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs'
+              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
+              physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
+              physicalIPhoneAcceptance:'BLOCKED_ENVIRONMENT: no pinned target or physical-device evidence is present'
             }
           };
           fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,[
+            `actual_iphone=${report.actualIPhoneSafariAcceptance}`,
+            `final_acceptance=${report.finalAcceptancePublication}`,
+            ''
+          ].join('\n'));
           NODE
       - name: Upload acceptance report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: closed-loop-acceptance-${{ github.sha }}
           path: closed-loop-acceptance.json
-      - name: Create release tag only after deployed proof
+      - name: Record blocked actual-iPhone acceptance
+        if: steps.acceptance.outputs.final_acceptance != 'true'
+        run: |
+          set -euo pipefail
+          echo "::notice title=Release tag blocked::Actual-iPhone Safari acceptance is not proven for ${GITHUB_SHA}; no release tag was created."
+          test "${{ steps.acceptance.outputs.actual_iphone }}" = false
+      - name: Create release tag only after deployed and actual-iPhone proof
+        if: steps.acceptance.outputs.final_acceptance == 'true'
         run: |
           set -euo pipefail
           TAG="acceptance-${GITHUB_SHA::12}"
