@@ -15,6 +15,7 @@ const responseSchema='closed-loop-stage-response/3';
 const testIrSchema='closed-loop-test-spec/1';
 const verificationPackageSchema='closed-loop-verification-package/1';
 const contractProfileId='closed-loop-completion-profile/1';
+const testWorkerProtocolVersion='closed-loop-test-worker-protocol/1';
 const canonicalOrigin='https://sjonesjones917.github.io';
 const canonicalHost='sjonesjones917.github.io';
 const canonicalBasePath='/closed-loop-tracker/';
@@ -56,6 +57,8 @@ for(const file of deployedSources){
 }
 
 const runtimeResources=deployedSources.map(file=>{const bytes=fs.readFileSync(path.join(outDir,file));return {path:file,mediaType:mediaType(file),byteSize:bytes.length,hashAlgorithm,digest:sha256(bytes),buildIdentity};});
+const testWorkerResource=runtimeResources.find(resource=>resource.path==='test-worker.js');
+if(!testWorkerResource)throw new Error('test-worker.js is missing from the deployment resource graph.');
 const csp=fs.readFileSync(path.join(outDir,'index.html'),'utf8').match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/)?.[1];
 if(!csp)throw new Error('CSP was not found in built index.html.');
 const manifest={
@@ -72,6 +75,8 @@ const manifest={
   testIrSchema,
   verificationPackageSchema,
   contractProfileId,
+  testWorkerProtocolVersion,
+  testWorkerSha256:testWorkerResource.digest,
   sourceCommit,
   workflowRunIdentity,
   buildIdentity,
