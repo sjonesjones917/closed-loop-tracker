@@ -51,4 +51,9 @@ const conditionalRepairs=[
   ['function supports(test){function supports(test){','function supports(test){']
 ];
 for(const [needle,replacement] of conditionalRepairs)if(owner.includes(needle))owner=owner.replace(needle,replacement);
+
+const regexCountMarker="  if((text.match(/(?:^|[^\\\\])[+*]/g)||[]).length>16)issues.push('Regex contains too many unbounded quantifiers.');";
+if(!owner.includes(regexCountMarker))throw new Error('Expected regex quantifier-count marker was not found after materialization.');
+owner=owner.replace(regexCountMarker,"  if(/\\([^()]*[+*][^()]*\\)\\s*(?:[+*]|\\{)/.test(text))issues.push('Regex nested unbounded quantification is outside the registered safe subset.');\n"+regexCountMarker);
+
 fs.writeFileSync(ownerPath,owner);
