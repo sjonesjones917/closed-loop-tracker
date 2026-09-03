@@ -5,6 +5,8 @@ on:
     paths:
       - repair-current-reservation-contract.mjs
       - .github/workflows/repair-current-reservation-contract.yml
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
