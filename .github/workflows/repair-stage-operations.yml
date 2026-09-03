@@ -1,0 +1,42 @@
+name: One-time exact stage-operation repair
+
+on:
+  push:
+    branches: [codex/exact-stage-operation-registry]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/exact-stage-operation-registry
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Replace the contradicted generic operation registry
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const path='workflow-schema.js';
+          let text=fs.readFileSync(path,'utf8');
+          const old=`const STAGE_OPERATIONS=Object.fromEntries(Array.from({length:STAGE_COUNT},(_,i)=>[i+1,Object.freeze(['COMPLETE'])]));\nSTAGE_OPERATIONS[17]=Object.freeze(['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']);\nSTAGE_OPERATIONS[19]=Object.freeze(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']);\nObject.freeze(STAGE_OPERATIONS);`;
+          const replacement=`const STAGE_OPERATIONS=Object.freeze({\n  1:Object.freeze(['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_INTAKE']),\n  2:Object.freeze(['COMPLETE','SEARCH_ADEQUACY_REVIEW','RECONCILE_SOURCE_SEARCH']),\n  3:Object.freeze(['COMPLETE','SEMANTIC_CHALLENGE','RECONCILE_RESEARCH']),\n  4:Object.freeze(['COMPLETE','DISPOSITION_CHALLENGE','ATOMICITY_CHALLENGE','RECONCILE_REQUIREMENTS']),\n  5:Object.freeze(['COMPLETE','SEMANTIC_REVIEW','RECONCILE_REQUIREMENT_SET']),\n  6:Object.freeze(['COMPLETE','PROOF_REVIEW','RECONCILE_VERIFICATION_SUITE']),\n  7:Object.freeze(['COMPLETE','EXECUTE_FAILURE_TEST']),\n  8:Object.freeze(['COMPLETE']),\n  9:Object.freeze(['COMPLETE']),\n  10:Object.freeze(['FREEZE']),\n  11:Object.freeze(['EXECUTE_RUN']),\n  12:Object.freeze(['VERIFY']),\n  13:Object.freeze(['COMPARE']),\n  14:Object.freeze(['ROOT_CAUSE']),\n  15:Object.freeze(['COMPLETE','EXECUTE_REGRESSION']),\n  16:Object.freeze(['CORRECT']),\n  17:Object.freeze(['FREEZE','EXECUTE_RUN','VERIFY','COMPARE','ROOT_CAUSE','REGRESSION','CORRECT']),\n  18:Object.freeze(['COMPLETE']),\n  19:Object.freeze(['CONFIRM_FREEZE','EXECUTE_RUN','VERIFY','COMPARE','REGRESSION_VERIFY','CONFIRM']),\n  20:Object.freeze(['FREEZE_BASELINE']),\n  21:Object.freeze(['COMPLETE']),\n  22:Object.freeze(['RUN_NATIVE_TESTS','EXECUTE_EXTERNAL_TEST']),\n  23:Object.freeze(['COMPLETE']),\n  24:Object.freeze(['RUN_NATIVE_ATTACKS','COMPLETE']),\n  25:Object.freeze(['FREEZE_DELIVERY_CANDIDATE','COMPLETE']),\n  26:Object.freeze(['COMPLETE','SEMANTIC_REVIEW','RECONCILE']),\n  27:Object.freeze(['CALCULATE_RELEASE','ADVISORY_REVIEW']),\n  28:Object.freeze(['VERIFY_IDENTITY','CAPTURE_DELIVERY_INTENT']),\n  29:Object.freeze(['CALCULATE_EVIDENCE_CHAINS','INVESTIGATE_MISSING_EVIDENCE']),\n  30:Object.freeze(['CALCULATE_TERMINAL','EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS','RECORD_DELIVERY_EVIDENCE'])\n});`;
+          if(!text.includes(old))throw new Error('Expected generic stage-operation block not found; refusing ambiguous repair.');
+          text=text.replace(old,replacement);
+          fs.writeFileSync(path,text);
+          NODE
+          node --check workflow-schema.js
+          node verify-stage-operation-registry.mjs
+      - name: Remove one-time scaffolding and commit the complete ratchet step
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-stage-operations.yml
+          git add workflow-schema.js verify-stage-operation-registry.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "Enforce the exact closed stage-operation set"
+          git push origin HEAD:codex/exact-stage-operation-registry
