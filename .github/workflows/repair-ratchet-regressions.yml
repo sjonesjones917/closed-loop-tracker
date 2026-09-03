@@ -1,0 +1,35 @@
+name: One-time current-main ratchet regression repair
+on:
+  push:
+    branches: [repair/ratchet-regressions-main-4e263-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/ratchet-regressions-main-4e263-20260903
+          fetch-depth: 0
+      - name: Apply narrow repair
+        run: python .github/repair-ratchet-regressions.py
+      - name: Prove exact regressions and affected paths
+        run: |
+          node --check workflow-engine.js
+          node --check app-core.js
+          node verify-stage01-disposition-contract.mjs
+          node verify-terminal-human-authority.mjs
+          node verify-human-stage-walkthrough.mjs
+          node verify-stage-prompts-complete.mjs
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-complete.mjs
+      - name: Commit proven repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add workflow-engine.js app-core.js verify-complete.mjs verify-stage01-disposition-contract.mjs verify-human-stage-walkthrough.mjs
+          git commit -m "Restore ratchet regressions after Stage 01 merge"
+          git push origin HEAD:repair/ratchet-regressions-main-4e263-20260903
