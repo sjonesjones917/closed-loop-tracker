@@ -36,16 +36,19 @@ if(run.status!==0)process.exit(run.status??1);
 
 const ownerPath='test-runtime.js';
 let owner=fs.readFileSync(ownerPath,'utf8');
-const exactRepairs=[
+const requiredRepairs=[
   ['const encoder=new TextEncoder();const encoder=new TextEncoder();','const encoder=new TextEncoder();','duplicate encoder declaration'],
-  ['function parseJsonSelector(path){function parseJsonSelector(path){','function parseJsonSelector(path){','duplicate parseJsonSelector declaration'],
-  ['function decodeXmlEntity(entity){function decodeXmlEntity(entity){','function decodeXmlEntity(entity){','duplicate decodeXmlEntity declaration'],
-  ['function validateBindings(bindings){function validateBindings(bindings){','function validateBindings(bindings){','duplicate validateBindings declaration'],
-  ['function supports(test){function supports(test){','function supports(test){','duplicate supports declaration'],
   ['function workerUrl(){function workerUrl(){','function workerUrl(){','duplicate workerUrl declaration']
 ];
-for(const [needle,replacement,label] of exactRepairs){
+for(const [needle,replacement,label] of requiredRepairs){
   if(!owner.includes(needle))throw new Error(`Expected materializer ${label} was not found; refusing an unreviewed repair path.`);
   owner=owner.replace(needle,replacement);
 }
+const conditionalRepairs=[
+  ['function parseJsonSelector(path){function parseJsonSelector(path){','function parseJsonSelector(path){'],
+  ['function decodeXmlEntity(entity){function decodeXmlEntity(entity){','function decodeXmlEntity(entity){'],
+  ['function validateBindings(bindings){function validateBindings(bindings){','function validateBindings(bindings){'],
+  ['function supports(test){function supports(test){','function supports(test){']
+];
+for(const [needle,replacement] of conditionalRepairs)if(owner.includes(needle))owner=owner.replace(needle,replacement);
 fs.writeFileSync(ownerPath,owner);
