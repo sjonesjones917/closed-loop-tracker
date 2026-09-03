@@ -1,0 +1,78 @@
+name: One-time in-place contract repair r1
+
+on:
+  push:
+    branches:
+      - repair/spec-p4-contracts-20260903-r1
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/spec-p4-contracts-20260903-r1
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact in-place repairs and permanent regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          engine = Path('workflow-engine.js')
+          text = engine.read_text()
+
+          old = "if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE'){project.job.CURRENT_SOURCE_SET_VERSION='NOT APPLICABLE';return null;}"
+          new = "if(Number(stage)===2&&upper(project.stages[2]?.agentData?.SOURCE_APPLICABILITY_DETERMINATION)==='NO_APPLICABLE_EXTERNAL_SOURCE'){project.job.CURRENT_SOURCE_SET_VERSION=null;return null;}"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one Stage 02 sentinel assignment, found {text.count(old)}')
+          text = text.replace(old, new)
+
+          old = "deliveryRecords:27,deploymentManifests:1"
+          new = "deliveryRecords:30,deploymentManifests:1"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one deliveryRecords responsible-stage defect, found {text.count(old)}')
+          text = text.replace(old, new)
+          engine.write_text(text)
+
+          test = Path('verify-v3-definition-of-done.mjs')
+          body = test.read_text()
+          marker = 'SPEC_P4_CANONICAL_POINTER_AND_RESPONSIBLE_STAGE_REGRESSION'
+          if marker not in body:
+              body += r'''
+
+// SPEC_P4_CANONICAL_POINTER_AND_RESPONSIBLE_STAGE_REGRESSION
+{
+  const source=fs.readFileSync('workflow-engine.js','utf8');
+  assert(!source.includes("CURRENT_SOURCE_SET_VERSION='NOT APPLICABLE'"),'Stage 02 must not write a sentinel string into nullable CURRENT_SOURCE_SET_VERSION.');
+  assert(source.includes('deliveryRecords:30,deploymentManifests:1'),'deliveryRecords must invalidate from its declared Stage 30 owner, not Stage 27.');
+  assert(!source.includes('deliveryRecords:27,deploymentManifests:1'),'The obsolete Stage 27 deliveryRecords responsible-stage mapping must remain absent.');
+}
+'''
+              test.write_text(body)
+          PY
+
+          node --check workflow-engine.js
+          node --check verify-v3-definition-of-done.mjs
+          node build-test-project.mjs
+          node verify-v3-definition-of-done.mjs
+
+      - name: Commit repaired owner bytes and remove one-time scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/spec-repair-r1.yml
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
+          git add workflow-engine.js verify-v3-definition-of-done.mjs .github/workflows/spec-repair-r1.yml
+          git diff --cached --check
+          git commit -m 'Fix nullable source pointer and Stage 30 ownership mapping'
+          git push origin HEAD:repair/spec-p4-contracts-20260903-r1
