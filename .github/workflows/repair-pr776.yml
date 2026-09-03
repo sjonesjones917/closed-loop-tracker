@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: fix/spec-driven-file-first-20260902
-      - name: Wire file-first regressions into the existing proof step
+      - name: Wire permanent file-first checks
         shell: bash
         run: |
           set -euo pipefail
@@ -26,8 +26,6 @@ jobs:
               s=s.replace(needle,needle+'          node verify-file-first-response.mjs\n          node verify-file-first-operator.mjs\n',1)
           p.write_text(s)
           PY
-          node verify-file-first-response.mjs
-          node verify-file-first-operator.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add .github/workflows/pages.yml
