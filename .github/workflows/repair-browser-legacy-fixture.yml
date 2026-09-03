@@ -1,0 +1,80 @@
+name: One-time repair of legacy browser fixture
+
+on:
+  push:
+    branches: [repair/stage01-disposition-current-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/stage01-disposition-current-20260903
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Replace only the stale retained-project browser precondition
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const file='verify-browser.mjs';
+          const source=fs.readFileSync(file,'utf8');
+          const start='// Clean state: retained project is seeded exactly once and remains Stage 02 next.';
+          const end='// Phone and desktop rendering checks.';
+          const a=source.indexOf(start),b=source.indexOf(end,a);
+          if(a<0||b<0||b<=a)throw new Error('Expected stale retained-project browser block was not found exactly once.');
+          if(source.indexOf(start,a+1)>=0)throw new Error('Stale retained-project browser block is duplicated.');
+          const replacement=`// Clean state: the shipped retained fixture is legacy historical evidence and must not be promoted into current /3 proof by migration.
+ await waitExpr(cdp,\`document.querySelector('#project-picker')?.options.length>=1\`,20000);
+ assert((await allProjects(cdp)).filter(p=>p.job?.JOB_ID==='JOB-20260823144121').length===1,'Retained project missing or duplicated in clean state.');
+ let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(String(retained.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim().length>0,'Exact legacy user objective was not preserved as human authority.');
+ const legacyProofState=await evalValue(cdp,\`(()=>{const p=globalThis.closedLoopCore.migrateState(structuredClone(${JSON.stringify(null)}));return null;})()\`).catch(()=>null);
+ const retainedLegacyBasis=await evalValue(cdp,\`(async()=>{const all=await globalThis.closedLoopProjectStore.readAll(),p=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121');return {schema:p?.schema||'',profile:p?.job?.CONTRACT_PROFILE_ID||null,stage1Status:p?.stages?.['1']?.status||'',currentStage:p?.job?.CURRENT_STAGE||'',acceptedStage1:(p?.projectData?.acceptedChanges||[]).filter(x=>Number(x.stage)===1&&x.status==='COMMITTED'&&x.responseType==='DATA_PROPOSAL'&&!x.invalidatedBy).length,intakeComplete:globalThis.closedLoopWorkflowEngine.evaluateIntakeAccounting(p).complete,migrationArchives:(p?.projectData?.migrationArchives||[]).length};})()\`);
+ assert(retainedLegacyBasis&&retainedLegacyBasis.acceptedStage1===0,'Legacy migration fabricated a current accepted Stage 01 DATA_PROPOSAL.');
+ assert(retainedLegacyBasis.intakeComplete===false,'Legacy migration fabricated current Stage 01 semantic-accounting proof.');
+ assert(!(retainedLegacyBasis.stage1Status==='COMPLETE'&&retainedLegacyBasis.currentStage==='STAGE 02'),'Legacy migration incorrectly made historical Stage 01 evidence current and gating.');
+ await openStage(cdp,1);await click(cdp,'[data-view="Records"]');let recordText=(await snapshot(cdp)).text;for(const token of ['Original user-entered data','Migration archives'])assert(recordText.includes(token),\`Retained historical record surface missing \${token}.\`);
+ // The remainder of this browser suite needs a genuinely current Stage 01 prerequisite. Create it through the current prompt -> response ingestion -> human confirmation path, never through migration synthesis.
+ const currentFixture=await evalValue(cdp,\`(async()=>{
+   const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore;
+   const all=await store.readAll(),legacy=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121');if(!legacy)throw new Error('Legacy retained fixture disappeared before current browser-fixture construction.');
+   const p=core.createBlankState('JOB-20260823144121');p.isRetainedTestProject=true;p.retainedSpecRevision=legacy.retainedSpecRevision||legacy.specRevision||'legacy-retained-history';
+   for(const key of ['JOB_TITLE','JOB_OWNER','EXACT_USER_OBJECTIVE_VERBATIM','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT','KNOWN_AUTHORITATIVE_SOURCES','AVAILABLE_TOOLS','PROHIBITED_ACTIONS','EXPLICIT_USER_REQUIREMENTS'])if(legacy.job?.[key]!==undefined)p.job[key]=structuredClone(legacy.job[key]);
+   p.projectData.userEntered=structuredClone(legacy.projectData?.userEntered||{});p.projectData.migrationArchives=structuredClone(legacy.projectData?.migrationArchives||[]);engine.ensureShape(p);engine.recalculate(p);
+   const pr=prompts.buildPromptRecord(1,p),manifest=pr.contextManifest.intakeCoverageManifest;
+   const capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Current browser acceptance fixture preserves this already supplied human-authority unit for downstream reuse.',extractedStatements:[{statementKey:'BROWSER-STAGE1-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))};
+   const envelope={schema:globalThis.closedLoopWorkflowSchema.RESPONSE_SCHEMA,contractProfileId:globalThis.closedLoopWorkflowSchema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Mobile Closed-Loop Agent Reliability Workbook',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'browser-stage1-evidence',kind:'INTAKE',description:'Current browser Stage 01 acceptance fixture evidence',authorityType:'AGENT_CLAIM',location:'verify-browser.mjs',content:'Every current application-enumerated raw input unit is accounted for in the Stage 01 response.'}],unresolved:[],warnings:[],attachments:[]};
+   const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Current Stage 01 browser fixture response rejected: '+JSON.stringify(prepared.validation.issues));
+   const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_CURRENT_FIXTURE'});const q=committed.project;engine.recordStageConfirmation(q,1,true,'Current Stage 01 intent confirmed for browser acceptance.','BROWSER_CURRENT_FIXTURE',{acceptedChangeId:committed.acceptedChange.changeId,inputVersion:q.job.CURRENT_INPUT_VERSION,instructionId:committed.acceptedChange.promptId,contextSignature:committed.acceptedChange.contextSignature,operatorLabel:'BROWSER_CURRENT_FIXTURE'});engine.recalculate(q);
+   const gate=engine.gate(1,q);if(!gate.complete||q.stages[1].status!=='COMPLETE'||q.job.CURRENT_STAGE!=='STAGE 02')throw new Error('Current browser fixture did not establish Stage 01 through the current acceptance path: '+JSON.stringify({gate,status:q.stages[1].status,currentStage:q.job.CURRENT_STAGE}));
+   await store.writeAll([...all.filter(x=>x.job?.JOB_ID!=='JOB-20260823144121'),q]);return {stage1:q.stages[1].status,currentStage:q.job.CURRENT_STAGE,intakeComplete:engine.evaluateIntakeAccounting(q).complete,acceptedStage1:(q.projectData.acceptedChanges||[]).filter(x=>Number(x.stage)===1&&x.status==='COMMITTED').length};
+ })()\`);
+ assert(currentFixture?.stage1==='COMPLETE'&&currentFixture?.currentStage==='STAGE 02'&&currentFixture?.intakeComplete===true&&currentFixture?.acceptedStage1===1,\`Current Stage 01 browser fixture is not valid: \${JSON.stringify(currentFixture)}\`);
+ await evalValue(cdp,\`location.reload();true\`);await sleep(450);await waitExpr(cdp,\`globalThis.closedLoopAppReady===true\`,20000);retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121'&&retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Current Stage 01 browser prerequisite did not survive reload.');
+ const retainedInputCapture=String(retained.stages['1']?.agentData?.INPUT_SET_CONTENTS||retained.stages['1']?.acceptedData?.INPUT_SET_CONTENTS||'');let parsedRetainedInputCapture;try{parsedRetainedInputCapture=JSON.parse(retainedInputCapture);}catch{parsedRetainedInputCapture=null;}assert(parsedRetainedInputCapture?.inputVersion===retained.job.CURRENT_INPUT_VERSION&&String(parsedRetainedInputCapture?.manifestSha256||'').length>0,'Current Stage 01 accepted input-set capture is not bound to its intake manifest.');
+ const nativeIntakeProof=await evalValue(cdp,\`(()=>{const p=globalThis.closedLoopCore.createBlankState('JOB-BROWSER-INTAKE-PROOF');p.job.EXACT_USER_OBJECTIVE_VERBATIM='browser-intake-objective';p.job.EXPLICIT_USER_REQUIREMENTS='browser-intake-requirement';p.projectData.userEntered={objective:'browser-intake-objective',nested:{acceptance:'browser-intake-acceptance'}};globalThis.closedLoopWorkflowEngine.recalculate(p);const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(p);return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM'),hasNested:(m?.units||[]).some(u=>u.sourceLocation==='projectData.userEntered.nested.acceptance')};})()\`);assert(nativeIntakeProof&&nativeIntakeProof.unitCount>0&&nativeIntakeProof.hasObjective&&nativeIntakeProof.hasNested,'Application-owned Stage 01 intake manifest did not enumerate native current human-authority input.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on clean current fixture.');
+ await openStage(cdp,1);assert((await snapshot(cdp)).text.includes('Stage 01 is preserved completed history'),'Current Stage 01 completed history is not inspectable.');
+ await click(cdp,'[data-view="Records"]');recordText=(await snapshot(cdp)).text;for(const token of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Migration archives'])assert(recordText.includes(token),\`Current Stage 01 record surface missing \${token}.\`);
+ `;
+          const next=source.slice(0,a)+replacement+source.slice(b);
+          if(next===source)throw new Error('Browser verifier repair produced no change.');
+          fs.writeFileSync(file,next);
+          NODE
+          node --check verify-browser.mjs
+      - name: Remove one-time repair scaffold and commit the complete ratchet step
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/repair-browser-legacy-fixture.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-browser.mjs .github/workflows/repair-browser-legacy-fixture.yml
+          git commit -m "Fix browser proof to keep legacy evidence non-gating"
+          git push origin HEAD:repair/stage01-disposition-current-20260903
