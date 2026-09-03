@@ -7,9 +7,9 @@ const engine=read('./workflow-engine.js');
 const ingestion=read('./response-ingestion.js');
 const store=read('./project-store.js');
 const html=read('./index.html');
-const pagesWorkflow=read('./.github/workflows/pages.yml');
+const ingestionProof=read('./verify-ingestion.mjs');
 
-export function assertFileFirstResponseContract({appSource=app,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,pagesWorkflowSource=pagesWorkflow}={}){
+export function assertFileFirstResponseContract({appSource=app,engineSource=engine,ingestionSource=ingestion,storeSource=store,htmlSource=html,ingestionProofSource=ingestionProof}={}){
   assert.doesNotMatch(engineSource,/PASTE_FINAL_JSON/,'Paste must not remain a primary workflow action.');
   assert.match(engineSource,/SELECT_RESPONSE_JSON_FILE/,'Workflow engine must expose authoritative response-file selection.');
   assert.match(appSource,/id="response-json-file"[^>]*type="file"/,'Primary response UI must use a file input.');
@@ -29,7 +29,8 @@ export function assertFileFirstResponseContract({appSource=app,engineSource=engi
   assert.match(appSource,/id="export-prompt-file"/,'External work must expose instruction-file export without requiring clipboard use.');
   assert.match(htmlSource,/Select that exact response JSON file in the application/,'Static operator guidance must describe file-first response ingestion.');
   assert.doesNotMatch(htmlSource,/Paste only that final JSON|Parse \/ validate response/,'Static guidance must not require pasted final JSON.');
-  assert.match(pagesWorkflowSource,/node verify-file-first-response\.mjs/,'The single Pages workflow must permanently execute the file-first regression.');
+  assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-response\.mjs['"]/,'The required ingestion proof must permanently execute this file-first regression.');
+  assert.match(ingestionProofSource,/import ['"]\.\/verify-file-first-operator\.mjs['"]/,'The required ingestion proof must permanently execute the operator-path mutation regression.');
   return true;
 }
 
@@ -38,7 +39,7 @@ assert.throws(()=>assertFileFirstResponseContract({engineSource:engine.replaceAl
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replace('id="response-json-file" type="file"','id="response-json-file" type="text"')}),/file input/,'Mutation replacing the primary file selector must fail.');
 assert.throws(()=>assertFileFirstResponseContract({storeSource:store.replaceAll('RESPONSE_STAGE_REHASH_MISMATCH','RESPONSE_STAGE_IGNORED_MISMATCH')}),/Read-back byte mismatch/,'Mutation removing staged-byte mismatch enforcement must fail.');
 assert.throws(()=>assertFileFirstResponseContract({appSource:app.replaceAll('AUTHORITATIVE_RESPONSE_FILE','TEXT_ONLY')}),/authoritative response-file transport/,'Mutation erasing authoritative transport provenance must fail.');
-assert.throws(()=>assertFileFirstResponseContract({pagesWorkflowSource:pagesWorkflow.replace('node verify-file-first-response.mjs','node verify-ingestion.mjs')}),/permanently execute/,'Mutation removing the regression from CI must fail.');
+assert.throws(()=>assertFileFirstResponseContract({ingestionProofSource:ingestionProof.replace("import './verify-file-first-response.mjs';",'')}),/permanently execute this file-first regression/,'Mutation removing the regression from the required ingestion proof must fail.');
 
 console.log(JSON.stringify({
   fileFirstResponseContract:'PASS',
@@ -48,7 +49,7 @@ console.log(JSON.stringify({
   strictUtf8:true,
   textFallbackNonauthoritative:true,
   promptFileExportExposed:true,
-  ciRegressionInvocation:true,
+  requiredIngestionProofInvocation:true,
   pastePrimaryMutationDetected:true,
   fileSelectorMutationDetected:true,
   stagedRehashMutationDetected:true,
