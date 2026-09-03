@@ -1,0 +1,51 @@
+name: One-time explicit Test IR DAG repair
+on:
+  push:
+    branches: [conformance-test-ir-dag-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Materialize reviewed repair candidate from repository history
+        run: |
+          set -euo pipefail
+          git fetch origin fix/test-ir-explicit-dag:refs/remotes/origin/fix/test-ir-explicit-dag
+          git show origin/fix/test-ir-explicit-dag:repair-test-runtime-dag.mjs > repair-test-runtime-dag.mjs
+          git show origin/fix/test-ir-explicit-dag:repair-test-runtime-dag-bootstrap.mjs > repair-test-runtime-dag-bootstrap.mjs
+          git show origin/fix/test-ir-explicit-dag:verify-test-runtime-dag.mjs > verify-test-runtime-dag.mjs
+          node repair-test-runtime-dag-bootstrap.mjs
+      - name: Prove explicit DAG contract and affected downstream paths
+        run: |
+          set -euo pipefail
+          node --check test-runtime.js
+          node --check test-worker.js
+          node verify-test-runtime-dag.mjs
+          node verify-test-runtime.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+      - name: Make DAG regression permanent through existing v3 suite
+        run: |
+          set -euo pipefail
+          printf '\nawait import("./verify-test-runtime-dag.mjs");\n' >> verify-test-runtime-v3.mjs
+          node verify-test-runtime-v3.mjs
+      - name: Commit only the complete owner correction and permanent regression
+        run: |
+          set -euo pipefail
+          git checkout -- .github/workflows/repair-test-ir-dag.yml
+          rm -f repair-test-runtime-dag.mjs repair-test-runtime-dag-bootstrap.mjs .repair-test-runtime-dag.compiled.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add test-runtime.js verify-test-runtime-v3.mjs verify-test-runtime-dag.mjs
+          git commit -m "Replace implicit Test IR pipeline with explicit DAG semantics"
+          git push origin HEAD:${GITHUB_REF_NAME}
