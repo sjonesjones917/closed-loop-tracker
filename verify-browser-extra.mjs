@@ -129,7 +129,11 @@ try{await main();}finally{await cleanup();}
 
 // reliability-v2 responsive UI source obligations (runtime browser suite above still exercises 320/393/desktop).
 {
- const source=fs.readFileSync('app-core.js','utf8');for(const token of ['Exact handoff','Continue the external conversation','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'])if(!source.includes(token))throw new Error('Missing operator reliability UI: '+token);
+ const source=fs.readFileSync('app-core.js','utf8');
+ const required=['Exact handoff','Continue talking to the agent. Do not import a final response file yet.','The current external conversation is ready for its final response file. Select the returned response.json below.','Canonical state changed: NO','Execution stability','Regression lifecycle','Current evidence is contradictory','Why the application believes each requirement is established'];
+ const verify=current=>{for(const token of required)if(!current.includes(token))throw new Error('Missing operator reliability UI: '+token);};
+ verify(source);
+ for(const token of required.slice(1,3)){let detected=false;try{verify(source.replace(token,''));}catch{detected=true;}if(!detected)throw new Error('Conversation-mode mutation escaped browser regression: '+token);}
 }
 
 {
