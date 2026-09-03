@@ -1,0 +1,72 @@
+name: One-time Stage 01 legacy migration repair
+
+on:
+  push:
+    branches:
+      - repair/stage01-disposition-current-20260903
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair/stage01-disposition-current-20260903
+          fetch-depth: 0
+      - name: Remove fabricated current proof from legacy seed migration
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app-core.js')
+          source = path.read_text(encoding='utf-8')
+          start = source.index('function importSeed(raw){')
+          end = source.index('\nfunction normalize(p)', start)
+          replacement = r'''function importSeed(raw){
+            if(![core.SCHEMA,'human-project/30'].includes(raw?.schema))throw new Error('Bundled project must use a supported 30-stage project schema.');
+            if(raw.stages)return ensureState(raw.schema===core.SCHEMA?raw:core.migrateState(raw));
+            const p=core.createBlankState(raw.jobId||'JOB-UNKNOWN');
+            p.isRetainedTestProject=true;
+            p.retainedSpecRevision=raw.specRevision||'';
+            Object.assign(p.job,{
+              JOB_ID:raw.jobId||p.job.JOB_ID,
+              DATE_OPENED:raw.dateOpened||p.job.DATE_OPENED,
+              EXACT_USER_OBJECTIVE_VERBATIM:raw.userJobInput?.objective||'',
+              SUPPLIED_MATERIALS_INVENTORY:JSON.stringify(raw.suppliedMaterials||[],null,2),
+              REQUIRED_OUTPUT_FORMAT:raw.userJobInput?.requiredOutputFormat||'',
+              DEADLINE_OR_TEMPORAL_SCOPE:raw.userJobInput?.deadlineOrTemporalScope||'',
+              DESIRED_SOURCE_COUNT:raw.userJobInput?.desiredSourceCount??null,
+              KNOWN_AUTHORITATIVE_SOURCES:raw.userJobInput?.knownAuthorities||'',
+              AVAILABLE_TOOLS:raw.userJobInput?.availableTools||'',
+              PROHIBITED_ACTIONS:raw.userJobInput?.prohibitedActions||'',
+              EXPLICIT_USER_REQUIREMENTS:(raw.userJobInput?.explicitRequirements||[]).join('\n')
+            });
+            p.projectData.userEntered=clone(raw.userJobInput||{});
+            projectStore.archiveMigrationPayload(p,{kind:'ORIGINAL_IMPORT_PAYLOAD',payload:clone(raw)});
+            for(let n=1;n<=30;n++){
+              const record=raw.stageRecords?.[String(n)]||raw.stageRecords?.[n]||raw.stageStates?.[String(n)]||raw.stageStates?.[n]||{};
+              if(Object.keys(record).length)projectStore.archiveMigrationPayload(p,{kind:'LEGACY_STAGE_RECORD',stage:n,payload:clone(record)});
+            }
+            p.activeStage=1;
+            p.activeView='Overview';
+            return ensureState(p);
+          }'''
+          updated = source[:start] + replacement + source[end:]
+          if updated == source:
+              raise SystemExit('repair produced no change')
+          path.write_text(updated, encoding='utf-8')
+          PY
+          node --check app-core.js
+      - name: Remove one-time repair workflow and commit complete repair
+        shell: bash
+        run: |
+          rm .github/workflows/one-time-stage01-legacy-migration-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app-core.js .github/workflows/one-time-stage01-legacy-migration-repair.yml
+          git commit -m "fix: preserve legacy Stage 01 as non-gating history"
+          git push origin HEAD:repair/stage01-disposition-current-20260903
