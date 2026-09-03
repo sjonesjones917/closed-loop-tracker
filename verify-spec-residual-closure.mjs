@@ -16,3 +16,5 @@ assert(schema.STAGE_FIELDS[10].ALL_FROZEN_COMPONENT_BYTES_HASHED,'Stage 10 exact
 assert(!schema.STAGE_FIELDS[10].HASHES_RECORDED_WHERE_PRACTICAL,'Obsolete Stage 10 field leaked into runtime registry.');
 assert(!schema.STAGE_FIELDS[15].POST_CORRECTION_SUCCESSES_PROVEN,'Obsolete Stage 15 field leaked into runtime registry.');
 console.log(JSON.stringify({specResidualClosure:'PASS',testIrOperations:controllingOps.length}));
+
+await import('./verify-due-stage-timing.mjs');
