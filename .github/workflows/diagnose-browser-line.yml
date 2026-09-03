@@ -9,7 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Show failing browser fixture context
+      - name: Locate failing browser dereference
         run: |
-          nl -ba verify-browser.mjs | sed -n '400,418p'
-          grep -n -C 3 'contentSha256' verify-browser.mjs || true
+          grep -RIn -C 3 'contentSha256' verify-*browser*.mjs verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs || true
+          for f in verify-human-stage-walkthrough.mjs verify-mobile-stage-action.mjs verify-browser.mjs verify-browser-extra.mjs; do
+            echo "===== $f lines ====="
+            wc -l "$f"
+          done
