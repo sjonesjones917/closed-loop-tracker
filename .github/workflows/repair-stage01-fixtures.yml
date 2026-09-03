@@ -34,7 +34,7 @@ jobs:
             ['"inapplicable with reason"','"NO_PROJECT_RELEVANT_INFORMATION"']
           ]);
           let changed=[];
-          for(const file of fs.readdirSync('.').filter(n=>n.endsWith('.mjs'))){let s=fs.readFileSync(file,'utf8'),n=s;for(const [a,b] of replacements)n=n.split(a).join(b);if(n!==s){fs.writeFileSync(file,n);changed.push(file);}}
+          for(const file of fs.readdirSync('.').filter(n=>n.endsWith('.mjs')&&n!=='verify-stage01-disposition-contract.mjs')){let s=fs.readFileSync(file,'utf8'),n=s;for(const [a,b] of replacements)n=n.split(a).join(b);if(n!==s){fs.writeFileSync(file,n);changed.push(file);}}
           console.log(JSON.stringify({changed}));
           NODE
           rm .github/workflows/repair-stage01-fixtures.yml
