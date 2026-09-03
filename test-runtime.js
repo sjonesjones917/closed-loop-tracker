@@ -2,442 +2,108 @@
 'use strict';
 
 const root=globalThis;
+const hash=root.closedLoopHash;
+if(!hash)throw new Error('hash.js must load before test-runtime.js.');
+
 const VERSION='closed-loop-test-runtime/1';
-const RUNTIME_BUILD_ID=(()=>{try{return typeof document!=='undefined'&&document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
 const SPEC_VERSION='closed-loop-test-spec/1';
+const LANGUAGE_VERSION='closed-loop-test-ir-language/1';
+const OPERATION_REGISTRY_VERSION='closed-loop-test-ir-operations/1';
+const JSON_SELECTOR_REGISTRY_VERSION='closed-loop-json-selector/1';
+const XML_SELECTOR_REGISTRY_VERSION='closed-loop-xml-selector/1';
+const REGEX_REGISTRY_VERSION='closed-loop-regex/1';
+const PARSER_REGISTRY_VERSION='closed-loop-parser-registry/1';
+const WORKER_PROTOCOL_VERSION='closed-loop-test-worker-protocol/1';
 const EXECUTABLE_KIND='TEST_IR';
 const CAPABILITY='CLOSED_LOOP_TEST_IR';
+const RUNTIME_BUILD_ID=(()=>{try{return typeof document!=='undefined'&&document.currentScript?.src?new URL(document.currentScript.src).searchParams.get('v')||'UNMANIFESTED_LOCAL_RUNTIME':'UNMANIFESTED_LOCAL_RUNTIME';}catch{return 'UNMANIFESTED_LOCAL_RUNTIME';}})();
 
-/* Centralized implementation limits. These are support-contract limits, not claims
-   about every browser or every possible project. Every boundary is fail-closed. */
-const LIMITS=Object.freeze({
-  maxTotalInputBytes:32*1024*1024,
-  maxTextBytes:16*1024*1024,
-  maxDecompressedBytes:64*1024*1024,
-  maxSteps:128,
-  maxSelectorDepth:32,
-  maxParsedDepth:64,
-  maxParsedNodes:250000,
-  maxCollectionItems:100000,
-  maxRegexPatternBytes:2048,
-  maxRegexLength:2000,
-  maxRegexInputBytes:2*1024*1024,
-  maxCsvCells:250000,
-  maxXmlNodes:100000,
-  workerTimeoutMs:5000,
-  maxArchiveExpansionBytes:64*1024*1024
-});
-
-const STATUS=Object.freeze({
-  SATISFIED:'SATISFIED',
-  VIOLATED:'VIOLATED',
-  UNDETERMINED:'UNDETERMINED',
-  EXECUTION_FAILED:'EXECUTION_FAILED'
-});
+const LIMITS=Object.freeze({maxTotalInputBytes:32*1024*1024,maxTextBytes:16*1024*1024,maxDecompressedBytes:64*1024*1024,maxSteps:128,maxSelectorDepth:32,maxParsedDepth:64,maxParsedNodes:250000,maxCollectionItems:100000,maxRegexPatternBytes:2048,maxRegexInputBytes:2*1024*1024,maxCsvCells:250000,maxXmlNodes:100000,workerTimeoutMs:5000,maxArchiveExpansionBytes:64*1024*1024});
+const STATUS=Object.freeze({SATISFIED:'SATISFIED',VIOLATED:'VIOLATED',UNDETERMINED:'UNDETERMINED',EXECUTION_FAILED:'EXECUTION_FAILED'});
 
 const OP_DEFINITIONS=Object.freeze({
-  LOAD_ARTIFACT:{required:['binding'],optional:[],types:{binding:'binding'}},
-  READ_BYTES:{required:[],optional:[],types:{}},
-  DECODE_UTF8:{required:[],optional:[],types:{}},
-  PARSE_JSON:{required:[],optional:[],types:{}},
-  PARSE_CSV:{required:['delimiter','header','quote','newline','encoding'],optional:[],types:{delimiter:'delimiter',header:'boolean',quote:'quote',newline:'csvNewline',encoding:'utf8'}},
-  PARSE_XML:{required:[],optional:[],types:{}},
-  SELECT_JSON_PATH:{required:['path'],optional:[],types:{path:'jsonSelector'}},
-  SELECT_XML:{required:['path'],optional:[],types:{path:'xmlSelector'}},
-  COUNT:{required:[],optional:[],types:{}},
-  SUM:{required:[],optional:[],types:{}},
-  MIN:{required:[],optional:[],types:{}},
-  MAX:{required:[],optional:[],types:{}},
-  SORT:{required:[],optional:['direction','domain'],types:{direction:'sortDirection',domain:'sortDomain'}},
-  UNIQUE:{required:[],optional:[],types:{}},
-  HASH_SHA256:{required:[],optional:[],types:{}},
-  REGEX:{required:['pattern'],optional:['flags'],types:{pattern:'regex',flags:'regexFlags'}},
-  COMPARE:{required:[],optional:['value','binding','operator','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{binding:'binding',operator:'compareOperator',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'},oneOf:[['value'],['binding']]},
-  ASSERT_EXISTS:{required:[],optional:['message'],types:{message:'string'}},
-  ASSERT_TYPE:{required:['value'],optional:['message'],types:{value:'typeName',message:'string'}},
-  ASSERT_NE:{required:['value'],optional:['message','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'}},
-  ASSERT_EQ:{required:['value'],optional:['message','numericMode','absTol','relTol','absoluteTolerance','relativeTolerance'],types:{message:'string',numericMode:'numericMode',absTol:'exactNonnegativeDecimal',relTol:'exactNonnegativeDecimal',absoluteTolerance:'exactNonnegativeDecimal',relativeTolerance:'exactNonnegativeDecimal'}},
-  ASSERT_GT:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_GTE:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_LT:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_LTE:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_MATCH:{required:['pattern'],optional:['flags','message'],types:{pattern:'regex',flags:'regexFlags',message:'string'}},
-  ASSERT_CONTAINS:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_NOT_CONTAINS:{required:['value'],optional:['message'],types:{message:'string'}},
-  ASSERT_SET_EQUAL:{required:['value'],optional:['message'],types:{message:'string',value:'array'}},
-  BYTE_COMPARE:{required:['binding'],optional:[],types:{binding:'binding'}}
+  LOAD_ARTIFACT:Object.freeze({inputs:Object.freeze({binding:'BINDING_REF'}),outputs:Object.freeze({artifact:'ARTIFACT'}),cost:'IO'}),
+  READ_BYTES:Object.freeze({inputs:Object.freeze({artifact:'ARTIFACT'}),outputs:Object.freeze({bytes:'BYTES'}),cost:'IO'}),
+  DECODE_UTF8:Object.freeze({inputs:Object.freeze({bytes:'BYTES'}),outputs:Object.freeze({text:'STRING'}),cost:'LINEAR_BYTES'}),
+  PARSE_JSON:Object.freeze({inputs:Object.freeze({text:'STRING'}),outputs:Object.freeze({value:'JSON_VALUE'}),cost:'PARSE'}),
+  PARSE_CSV:Object.freeze({inputs:Object.freeze({text:'STRING',delimiter:'STRING',header:'BOOLEAN',quote:'STRING',newline:'CSV_NEWLINE',encoding:'UTF8'}),outputs:Object.freeze({value:'JSON_VALUE'}),cost:'PARSE'}),
+  PARSE_XML:Object.freeze({inputs:Object.freeze({text:'STRING'}),outputs:Object.freeze({value:'XML_DOCUMENT'}),cost:'PARSE'}),
+  SELECT_JSON_PATH:Object.freeze({inputs:Object.freeze({value:'JSON_VALUE',path:'STRING'}),outputs:Object.freeze({selection:'ANY'}),cost:'SELECT'}),
+  SELECT_XML:Object.freeze({inputs:Object.freeze({value:'XML_DOCUMENT',path:'STRING'}),outputs:Object.freeze({selection:'ANY'}),cost:'SELECT'}),
+  COUNT:Object.freeze({inputs:Object.freeze({value:'COUNTABLE'}),outputs:Object.freeze({count:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  SUM:Object.freeze({inputs:Object.freeze({value:'INTEGER_ARRAY'}),outputs:Object.freeze({value:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  MIN:Object.freeze({inputs:Object.freeze({value:'INTEGER_ARRAY'}),outputs:Object.freeze({value:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  MAX:Object.freeze({inputs:Object.freeze({value:'INTEGER_ARRAY'}),outputs:Object.freeze({value:'INTEGER'}),cost:'LINEAR_COLLECTION'}),
+  SORT:Object.freeze({inputs:Object.freeze({value:'ARRAY',direction:'SORT_DIRECTION?'}),outputs:Object.freeze({value:'ARRAY'}),cost:'N_LOG_N'}),
+  UNIQUE:Object.freeze({inputs:Object.freeze({value:'ARRAY'}),outputs:Object.freeze({value:'ARRAY'}),cost:'LINEAR_COLLECTION'}),
+  HASH_SHA256:Object.freeze({inputs:Object.freeze({bytes:'BYTES'}),outputs:Object.freeze({sha256:'STRING'}),cost:'LINEAR_BYTES'}),
+  REGEX:Object.freeze({inputs:Object.freeze({value:'STRING',pattern:'STRING',flags:'STRING?'}),outputs:Object.freeze({matches:'BOOLEAN'}),cost:'BOUNDED_REGEX'}),
+  COMPARE:Object.freeze({inputs:Object.freeze({left:'ANY',right:'ANY',operator:'COMPARE_OPERATOR?',absTolerance:'EXACT_DECIMAL?',relTolerance:'EXACT_DECIMAL?'}),outputs:Object.freeze({comparison:'BOOLEAN'}),cost:'CONSTANT'}),
+  ASSERT_EQ:Object.freeze({inputs:Object.freeze({actual:'ANY',expected:'ANY',absTolerance:'EXACT_DECIMAL?',relTolerance:'EXACT_DECIMAL?'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_GT:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_GTE:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_LT:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_LTE:Object.freeze({inputs:Object.freeze({actual:'ORDERED',expected:'ORDERED'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'CONSTANT'}),
+  ASSERT_MATCH:Object.freeze({inputs:Object.freeze({actual:'STRING',pattern:'STRING',flags:'STRING?'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'BOUNDED_REGEX'}),
+  ASSERT_CONTAINS:Object.freeze({inputs:Object.freeze({actual:'ANY',expected:'ANY'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'LINEAR_COLLECTION'}),
+  ASSERT_NOT_CONTAINS:Object.freeze({inputs:Object.freeze({actual:'ANY',expected:'ANY'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'LINEAR_COLLECTION'}),
+  ASSERT_SET_EQUAL:Object.freeze({inputs:Object.freeze({actual:'ARRAY',expected:'ARRAY'}),outputs:Object.freeze({assertion:'ASSERTION'}),cost:'N_LOG_N'}),
+  BYTE_COMPARE:Object.freeze({inputs:Object.freeze({left:'BYTES',right:'BYTES'}),outputs:Object.freeze({equal:'BOOLEAN'}),cost:'LINEAR_BYTES'})
 });
 const OPS=Object.freeze(Object.keys(OP_DEFINITIONS));
-const ASSERTION_OPS=new Set(['ASSERT_EXISTS','ASSERT_TYPE','ASSERT_NE','ASSERT_EQ','ASSERT_GT','ASSERT_GTE','ASSERT_LT','ASSERT_LTE','ASSERT_MATCH','ASSERT_CONTAINS','ASSERT_NOT_CONTAINS','ASSERT_SET_EQUAL']);
-const encoder=new TextEncoder();
-const hasOwn=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
-const bytesOf=value=>value instanceof Uint8Array?value:value instanceof ArrayBuffer?new Uint8Array(value):ArrayBuffer.isView(value)?new Uint8Array(value.buffer,value.byteOffset,value.byteLength):null;
+const OPERATION_REGISTRY_SHA256=hash.sha256Value(OP_DEFINITIONS);
+const JSON_SELECTOR_REGISTRY=Object.freeze({version:JSON_SELECTOR_REGISTRY_VERSION,root:true,childIdentifier:true,singleQuotedBracketName:true,nonnegativeArrayIndex:true,wildcardObjectValues:true,wildcardArrayElements:true,recursiveDescent:false,filters:false,unions:false,slices:false,scripts:false});
+const XML_SELECTOR_REGISTRY=Object.freeze({version:XML_SELECTOR_REGISTRY_VERSION,absoluteChildPaths:true,elementWildcard:true,positionIndexOneBased:true,attributeAccess:true,textExtraction:true,otherAxes:false,otherFunctions:false});
+const REGEX_REGISTRY=Object.freeze({version:REGEX_REGISTRY_VERSION,literals:true,dot:true,characterClasses:true,predefinedClasses:true,anchors:true,alternation:true,capturingGroups:true,nonCapturingGroups:true,greedyAndLazyQuantifiers:true,backreferences:false,lookaround:false,unicodePropertyEscapes:false});
+const PARSER_REGISTRY=Object.freeze({version:PARSER_REGISTRY_VERSION,utf8:true,json:'closed-json-safe-integer/1',csv:'closed-csv/1',xml:'closed-xml/1'});
+const JSON_SELECTOR_REGISTRY_SHA256=hash.sha256Value(JSON_SELECTOR_REGISTRY),XML_SELECTOR_REGISTRY_SHA256=hash.sha256Value(XML_SELECTOR_REGISTRY),REGEX_REGISTRY_SHA256=hash.sha256Value(REGEX_REGISTRY),PARSER_REGISTRY_SHA256=hash.sha256Value(PARSER_REGISTRY);
+
+const hasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k),encoder=new TextEncoder();
+const bytesOf=v=>v instanceof Uint8Array?v:v instanceof ArrayBuffer?new Uint8Array(v):ArrayBuffer.isView(v)?new Uint8Array(v.buffer,v.byteOffset,v.byteLength):null;
 const field=(test,key)=>test?.fields?.[key]??test?.[key];
-const scalarCompare=(a,b)=>{const aa=Array.from(String(a),ch=>ch.codePointAt(0)),bb=Array.from(String(b),ch=>ch.codePointAt(0)),n=Math.min(aa.length,bb.length);for(let i=0;i<n;i++)if(aa[i]!==bb[i])return aa[i]-bb[i];return aa.length-bb.length;};
-const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>scalarCompare(a,b))):v);
-const byteLength=value=>encoder.encode(String(value)).byteLength;
-
-class RuntimeError extends Error{
-  constructor(code,message,disposition=STATUS.EXECUTION_FAILED){super(message);this.name='ClosedLoopTestRuntimeError';this.code=code;this.disposition=disposition;}
-}
+class RuntimeError extends Error{constructor(code,message,disposition=STATUS.EXECUTION_FAILED){super(message);this.name='ClosedLoopTestRuntimeError';this.code=code;this.disposition=disposition;}}
 const fail=(code,message,disposition)=>{throw new RuntimeError(code,message,disposition);};
-
-async function sha256(bytes){
-  const data=bytesOf(bytes);if(!data)fail('BYTES_REQUIRED','SHA-256 requires byte input.');
-  const digest=await crypto.subtle.digest('SHA-256',data);
-  return [...new Uint8Array(digest)].map(value=>value.toString(16).padStart(2,'0')).join('');
-}
-async function sha256Canonical(value){return sha256(encoder.encode(canonical(value)));}
-
-function validateResourceEnvelope(claim={}){
-  const issues=[];const allowed=new Set(['totalInputBytes','decompressedBytes','archiveExpansionBytes']);for(const key of Object.keys(claim||{}))if(!allowed.has(key))issues.push('Unknown resource-envelope property '+key+'.');
-  const checks=[['totalInputBytes','maxTotalInputBytes'],['decompressedBytes','maxDecompressedBytes'],['archiveExpansionBytes','maxArchiveExpansionBytes']];
-  for(const [key,limitKey] of checks){if(!Object.prototype.hasOwnProperty.call(claim,key))continue;const value=claim[key];if(!Number.isSafeInteger(value)||value<0)issues.push(key+' must be a nonnegative safe integer.');else if(value>LIMITS[limitKey])issues.push(key+' exceeds '+limitKey+'.');}
-  return {valid:issues.length===0,issues};
-}
-function validateRegex(pattern,flags=''){
-  const issues=[];const text=String(pattern);const flagText=String(flags||'');
-  if(byteLength(text)>LIMITS.maxRegexPatternBytes||text.length>LIMITS.maxRegexLength)issues.push('Regex pattern exceeds the registered byte limit.');
-  if(!/^[imsu]*$/.test(flagText)||new Set(flagText).size!==flagText.length)issues.push('Regex flags must be a unique subset of i, m, s, and u.');
-  if(/\\[1-9]/.test(text)||/\\k</.test(text))issues.push('Regex backreferences are not supported.');
-  if(/\(\?/.test(text))issues.push('Regex lookaround, named groups, and inline mode groups are not supported.');
-  if(/[()]/.test(text))issues.push('Regex grouping is outside the registered safe subset.');
-  if((text.match(/[+*]/g)||[]).length>16)issues.push('Regex contains too many unbounded quantifiers.');
-  try{if(!issues.length)new RegExp(text,flagText);}catch(error){issues.push(`Regex is invalid: ${error.message}`);}
-  return issues;
-}
-
-function parseJsonSelector(path){
-  const text=String(path||'');
-  if(text==='$')return [];
-  if(!text.startsWith('$.'))fail('UNSUPPORTED_JSON_SELECTOR','JSON selector must be $ or begin with $.');
-  const parts=[];let i=2;let token='';
-  const pushToken=()=>{if(!token)fail('UNSUPPORTED_JSON_SELECTOR',`Empty JSON selector segment in ${text}.`);parts.push(token);token='';};
-  while(i<text.length){
-    const ch=text[i];
-    if(ch==='.') {pushToken();i++;continue;}
-    if(ch==='['){if(token)pushToken();const end=text.indexOf(']',i+1);if(end<0)fail('UNSUPPORTED_JSON_SELECTOR',`Unclosed JSON selector index in ${text}.`);const raw=text.slice(i+1,end);if(!/^(0|[1-9]\d*)$/.test(raw))fail('UNSUPPORTED_JSON_SELECTOR',`Only nonnegative numeric JSON selector indexes are supported: ${text}.`);parts.push(Number(raw));i=end+1;if(text[i]==='.')i++;continue;}
-    if(!/[A-Za-z0-9_:-]/.test(ch))fail('UNSUPPORTED_JSON_SELECTOR',`Unsupported JSON selector character ${ch}.`);
-    token+=ch;i++;
-  }
-  if(token)pushToken();
-  if(parts.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','JSON selector exceeds the registered depth limit.');
-  return parts;
-}
-function selectJsonPath(value,path){
-  const parts=parseJsonSelector(path);let current=value;
-  for(const part of parts){
-    if(current===null||current===undefined||!hasOwn(Object(current),part))fail('JSON_PATH_MISSING',`JSON selector does not resolve: ${path}.`,STATUS.UNDETERMINED);
-    current=current[part];
-  }
-  return current;
-}
-
-function decodeXmlEntity(entity){
-  const known={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};if(hasOwn(known,entity))return known[entity];
-  if(/^#\d+$/.test(entity)){const code=Number(entity.slice(1));if(Number.isInteger(code)&&code>=0&&code<=0x10ffff)return String.fromCodePoint(code);}
-  if(/^#x[0-9a-f]+$/i.test(entity)){const code=parseInt(entity.slice(2),16);if(Number.isInteger(code)&&code>=0&&code<=0x10ffff)return String.fromCodePoint(code);}
-  fail('UNSUPPORTED_XML_ENTITY',`Unsupported XML entity &${entity};.`);
-}
-const decodeXmlText=text=>String(text).replace(/&([^;]+);/g,(_,entity)=>decodeXmlEntity(entity));
-function parseXmlAttributes(source){
-  const attributes={};let rest=String(source||'').trim();
-  while(rest){
-    const match=rest.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*("[^"]*"|'[^']*')\s*/);if(!match)fail('MALFORMED_XML',`Malformed XML attribute text: ${rest.slice(0,80)}.`);
-    if(hasOwn(attributes,match[1]))fail('MALFORMED_XML',`Duplicate XML attribute ${match[1]}.`);
-    attributes[match[1]]=decodeXmlText(match[2].slice(1,-1));rest=rest.slice(match[0].length);
-  }
-  return attributes;
-}
-function parseXml(text){
-  let source=String(text||'');
-  if(/<!DOCTYPE|<!ENTITY/i.test(source))fail('UNSAFE_XML','DTD and entity declarations are prohibited.');
-  source=source.replace(/^\uFEFF?\s*<\?xml\s[^?]*\?>\s*/i,'');
-  const documentNode={name:'#document',attributes:{},children:[],textParts:[]};const stack=[documentNode];let nodes=0;let index=0;
-  const appendText=value=>{if(value)stack.at(-1).textParts.push(decodeXmlText(value));};
-  while(index<source.length){
-    const open=source.indexOf('<',index);if(open<0){appendText(source.slice(index));break;}appendText(source.slice(index,open));
-    if(source.startsWith('<!--',open)){const end=source.indexOf('-->',open+4);if(end<0)fail('MALFORMED_XML','Unterminated XML comment.');index=end+3;continue;}
-    if(source.startsWith('<![CDATA[',open)){const end=source.indexOf(']]>',open+9);if(end<0)fail('MALFORMED_XML','Unterminated XML CDATA section.');stack.at(-1).textParts.push(source.slice(open+9,end));index=end+3;continue;}
-    if(source.startsWith('<?',open))fail('UNSAFE_XML','XML processing instructions are not supported.');
-    const close=source.indexOf('>',open+1);if(close<0)fail('MALFORMED_XML','Unterminated XML tag.');
-    let body=source.slice(open+1,close).trim();
-    if(body.startsWith('!'))fail('UNSAFE_XML','Unsupported XML declaration.');
-    if(body.startsWith('/')){
-      const name=body.slice(1).trim();if(stack.length===1||stack.at(-1).name!==name)fail('MALFORMED_XML',`Unexpected XML closing tag ${name}.`);stack.pop();index=close+1;continue;
-    }
-    const selfClosing=/\/$/.test(body);if(selfClosing)body=body.slice(0,-1).trim();
-    const nameMatch=body.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)/);if(!nameMatch)fail('MALFORMED_XML','XML element name is invalid.');
-    const node={name:nameMatch[1],attributes:parseXmlAttributes(body.slice(nameMatch[0].length)),children:[],textParts:[]};
-    stack.at(-1).children.push(node);nodes++;if(nodes>LIMITS.maxXmlNodes)fail('XML_NODE_LIMIT','XML exceeds the registered node limit.');
-    if(!selfClosing)stack.push(node);index=close+1;
-  }
-  if(stack.length!==1)fail('MALFORMED_XML',`Unclosed XML element ${stack.at(-1).name}.`);
-  if(documentNode.children.length!==1)fail('MALFORMED_XML','XML must contain exactly one document element.');
-  return documentNode.children[0];
-}
-function parseXmlSelector(path){
-  const text=String(path||'');if(!text.startsWith('/')||text.startsWith('//'))fail('UNSUPPORTED_XML_SELECTOR','XML selector must be an absolute child path beginning with one /.');
-  const raw=text.slice(1).split('/');if(!raw.length||raw.some(part=>!part))fail('UNSUPPORTED_XML_SELECTOR','XML selector contains an empty segment.');
-  if(raw.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','XML selector exceeds the registered depth limit.');
-  return raw.map((part,index)=>{
-    if(part==='text()'){if(index!==raw.length-1)fail('UNSUPPORTED_XML_SELECTOR','text() is supported only as the final XML selector segment.');return {kind:'text'};}
-    if(part.startsWith('@')){if(index!==raw.length-1||!/^@[A-Za-z_][A-Za-z0-9_.:-]*$/.test(part))fail('UNSUPPORTED_XML_SELECTOR','XML attributes are supported only as a valid final @name segment.');return {kind:'attribute',name:part.slice(1)};}
-    const match=part.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)(?:\[(\d+)\])?$/);if(!match||match[2]==='0')fail('UNSUPPORTED_XML_SELECTOR',`Unsupported XML selector segment ${part}.`);return {kind:'element',name:match[1],index:match[2]?Number(match[2]):null};
-  });
-}
-function xmlText(node){return [...node.textParts,...node.children.map(xmlText)].join('');}
-function selectXml(rootNode,path){
-  const parts=parseXmlSelector(path);const first=parts.shift();if(first.kind!=='element'||first.name!==rootNode.name||(first.index&&first.index!==1))fail('XML_PATH_MISSING',`XML selector does not address document element ${rootNode.name}.`,STATUS.UNDETERMINED);
-  let current=[rootNode];
-  for(const part of parts){
-    if(part.kind==='text')return current.map(xmlText);
-    if(part.kind==='attribute')return current.map(node=>node.attributes[part.name]).filter(value=>value!==undefined);
-    const next=[];for(const node of current){const matches=node.children.filter(child=>child.name===part.name);if(part.index){if(matches[part.index-1])next.push(matches[part.index-1]);}else next.push(...matches);}current=next;
-  }
-  if(!current.length)fail('XML_PATH_MISSING',`XML selector does not resolve: ${path}.`,STATUS.UNDETERMINED);
-  return current;
-}
-
-
-function validateJsonSourceExact(text){
-  const source=String(text),length=source.length;let i=0;
-  const ws=()=>{while(i<length&&/[\x20\x09\x0a\x0d]/.test(source[i]))i++;};
-  const error=message=>fail('MALFORMED_JSON',`JSON parse failed: ${message} at character ${i}.`,STATUS.UNDETERMINED);
-  const stringToken=()=>{if(source[i]!=='"')error('Expected string');const start=i++;let escaped=false;for(;i<length;i++){const ch=source[i];if(escaped){if(ch==='u'){if(!/^[0-9a-fA-F]{4}$/.test(source.slice(i+1,i+5)))error('Invalid Unicode escape');i+=4;}else if(!'"\\/bfnrt'.includes(ch))error('Invalid string escape');escaped=false;continue;}if(ch==='\\'){escaped=true;continue;}if(ch==='"'){i++;try{return JSON.parse(source.slice(start,i));}catch{error('Invalid JSON string');}}if(ch.charCodeAt(0)<0x20)error('Unescaped control character');}error('Unterminated string');};
-  const numberToken=()=>{const match=source.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);if(!match)error('Invalid number');const raw=match[0];i+=raw.length;if(raw.includes('.')||/[eE]/.test(raw))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is not a safe-integer JSON number. Use a typed exact number representation.`,STATUS.UNDETERMINED);const n=Number(raw);if(!Number.isSafeInteger(n)||Object.is(n,-0))fail('UNSUPPORTED_JSON_NUMBER',`PARSE_JSON numeric token ${raw} is outside the finite safe-integer domain.`,STATUS.UNDETERMINED);};
-  let parseValue,parseObject,parseArray;
-  parseObject=()=>{i++;ws();const keys=new Set();if(source[i]==='}'){i++;return;}while(i<length){ws();const key=stringToken();if(keys.has(key))fail('DUPLICATE_JSON_MEMBER',`PARSE_JSON rejects duplicate object member ${key}.`,STATUS.UNDETERMINED);keys.add(key);ws();if(source[i++]!==':')error('Expected colon');parseValue();ws();if(source[i]==='}'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated object');};
-  parseArray=()=>{i++;ws();if(source[i]===']'){i++;return;}while(i<length){parseValue();ws();if(source[i]===']'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated array');};
-  parseValue=()=>{ws();const ch=source[i];if(ch==='"'){stringToken();return;}if(ch==='{'){parseObject();return;}if(ch==='['){parseArray();return;}if(source.startsWith('true',i)){i+=4;return;}if(source.startsWith('false',i)){i+=5;return;}if(source.startsWith('null',i)){i+=4;return;}if(ch==='-'||/\d/.test(ch||'')){numberToken();return;}error('Unexpected token');};
-  ws();parseValue();ws();if(i!==length)error('Trailing content');return true;
-}
-function exactDecimalParts(value){
-  if(value&&typeof value==='object'&&!Array.isArray(value)&&value.numberType==='DECIMAL')value=value.value;
-  const text=String(value);if(!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(text)||text==='-0'||/^-0(?:\.0+)?$/.test(text))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal value must be canonical plain decimal text with no exponent or negative zero.',STATUS.UNDETERMINED);
-  const neg=text[0]==='-',body=neg?text.slice(1):text,[whole,fraction='']=body.split('.'),scale=fraction.length,digits=BigInt((whole+fraction)||'0');return{sign:neg?-1n:1n,digits,scale};
-}
-function decimalAlign(a,b){const scale=Math.max(a.scale,b.scale),pow=n=>10n**BigInt(n);return{a:a.sign*a.digits*pow(scale-a.scale),b:b.sign*b.digits*pow(scale-b.scale),scale};}
-function decimalAbsDiff(a,b){const x=decimalAlign(exactDecimalParts(a),exactDecimalParts(b));return{digits:x.a>=x.b?x.a-x.b:x.b-x.a,scale:x.scale};}
-function decimalAbs(value){const p=exactDecimalParts(value);return{digits:p.digits,scale:p.scale};}
-function decimalMaxAbs(a,b){const aa=decimalAbs(a),bb=decimalAbs(b),x=decimalAlign({...aa,sign:1n},{...bb,sign:1n});return x.a>=x.b?{digits:x.a,scale:x.scale}:{digits:x.b,scale:x.scale};}
-function decimalMultiply(a,b){const aa=exactDecimalParts(a),bb=b&&b.digits!==undefined?b:decimalAbs(b);return{digits:aa.digits*bb.digits,scale:aa.scale+bb.scale};}
-function decimalLTE(left,right){const x=decimalAlign({sign:1n,digits:left.digits,scale:left.scale},{sign:1n,digits:right.digits,scale:right.scale});return x.a<=x.b;}
-function exactApproximate(actual,expected,step){const absTol=step.absTol??step.absoluteTolerance??'0',relTol=step.relTol??step.relativeTolerance??'0',diff=decimalAbsDiff(actual,expected),abs=decimalAbs(absTol),relProduct=decimalMultiply(relTol,decimalMaxAbs(actual,expected)),maxTol=decimalLTE(abs,relProduct)?relProduct:abs;return decimalLTE(diff,maxTol);}
-function sortDomain(values,declared){if(!values.length)return declared||'STRING';const inferred=typeof values[0]==='string'?'STRING':typeof values[0]==='boolean'?'BOOLEAN':Number.isSafeInteger(values[0])?'INTEGER':values[0]&&values[0].numberType==='DECIMAL'?'DECIMAL':null,domain=declared||inferred;if(!domain)fail('SORT_DOMAIN','SORT requires an explicit supported homogeneous domain.',STATUS.UNDETERMINED);const ok=v=>domain==='STRING'?typeof v==='string':domain==='BOOLEAN'?typeof v==='boolean':domain==='INTEGER'?Number.isSafeInteger(v):domain==='DECIMAL'&&v&&v.numberType==='DECIMAL';if(!values.every(ok))fail('SORT_DOMAIN','SORT input is not homogeneous in the declared domain.',STATUS.UNDETERMINED);return domain;}
-function compareSortValues(a,b,domain){if(domain==='STRING')return scalarCompare(a,b);if(domain==='BOOLEAN')return a===b?0:a?1:-1;if(domain==='INTEGER')return a===b?0:a<b?-1:1;if(domain==='DECIMAL')return compareDecimal(a.value,b.value);return 0;}
-
-function inspectStructure(value){
-  let nodes=0,maxDepth=0;const seen=new Set();const stack=[{value,depth:1}];
-  while(stack.length){const item=stack.pop();nodes++;maxDepth=Math.max(maxDepth,item.depth);if(nodes>LIMITS.maxParsedNodes)fail('PARSED_NODE_LIMIT','Parsed structure exceeds the registered node limit.');if(maxDepth>LIMITS.maxParsedDepth)fail('PARSED_DEPTH_LIMIT','Parsed structure exceeds the registered depth limit.');const current=item.value;if(!current||typeof current!=='object'||seen.has(current))continue;seen.add(current);if(Array.isArray(current)){if(current.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','Parsed array exceeds the registered collection limit.');for(const child of current)stack.push({value:child,depth:item.depth+1});}else for(const child of Object.values(current))stack.push({value:child,depth:item.depth+1});}
-  return {nodes,maxDepth};
-}
-
-function parseCsv(text,configuration){
-  const {delimiter,header,quote,newline,encoding}=configuration;if(encoding!=='UTF-8')fail('UNSUPPORTED_ENCODING','Version 1 CSV supports UTF-8 only.');
-  const rows=[];let row=[],cell='',quoted=false,cells=0,index=0;const source=String(text);
-  const newlineAt=position=>{if(newline==='LF')return source[position]==='\n'?1:0;if(newline==='CR')return source[position]==='\r'?1:0;if(newline==='CRLF')return source.startsWith('\r\n',position)?2:0;if(source.startsWith('\r\n',position))return 2;if(source[position]==='\n'||source[position]==='\r')return 1;return 0;};
-  const pushCell=()=>{row.push(cell);cell='';cells++;if(cells>LIMITS.maxCsvCells)fail('CSV_CELL_LIMIT','CSV exceeds the registered cell limit.');};
-  while(index<source.length){const ch=source[index];if(quoted){if(ch===quote&&source[index+1]===quote){cell+=quote;index+=2;continue;}if(ch===quote){quoted=false;index++;continue;}cell+=ch;index++;continue;}if(ch===quote){if(cell.length)fail('MALFORMED_CSV','CSV quote begins inside an unquoted field.');quoted=true;index++;continue;}if(ch===delimiter){pushCell();index++;continue;}const width=newlineAt(index);if(width){pushCell();rows.push(row);row=[];index+=width;continue;}cell+=ch;index++;}
-  if(quoted)fail('MALFORMED_CSV','CSV has an unterminated quoted field.');if(cell.length||row.length){pushCell();rows.push(row);}if(rows.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','CSV exceeds the registered row limit.');
-  if(!header)return rows;if(!rows.length)return [];const names=rows.shift();if(new Set(names).size!==names.length)fail('MALFORMED_CSV','CSV header names must be unique.');return rows.map((values,rowIndex)=>{if(values.length!==names.length)fail('MALFORMED_CSV',`CSV row ${rowIndex+2} has ${values.length} cells; expected ${names.length}.`);return Object.fromEntries(names.map((name,column)=>[name,values[column]]));});
-}
-
-function normalizeDecimal(value){
-  const text=String(value).trim();const match=text.match(/^([+-]?)(\d+)(?:\.(\d+))?$/);if(!match)return null;let whole=match[2].replace(/^0+(?=\d)/,'');let fraction=(match[3]||'').replace(/0+$/,'');if(whole==='0'&&!fraction)return '0';return `${match[1]==='-'?'-':''}${whole}${fraction?'.'+fraction:''}`;
-}
-function compareDecimal(left,right){
-  const a=normalizeDecimal(left),b=normalizeDecimal(right);if(a===null||b===null)fail('UNSUPPORTED_NUMERIC_PRECISION','Exact decimal comparison requires plain decimal strings.',STATUS.UNDETERMINED);if(a===b)return 0;const negA=a.startsWith('-'),negB=b.startsWith('-');if(negA!==negB)return negA?-1:1;const aa=negA?a.slice(1):a,bb=negB?b.slice(1):b;const [aw,af='']=aa.split('.'),[bw,bf='']=bb.split('.');let result=aw.length!==bw.length?(aw.length<bw.length?-1:1):aw!==bw?(aw<bw?-1:1):af.padEnd(Math.max(af.length,bf.length),'0')===bf.padEnd(Math.max(af.length,bf.length),'0')?0:af.padEnd(Math.max(af.length,bf.length),'0')<bf.padEnd(Math.max(af.length,bf.length),'0')?-1:1;return negA?-result:result;
-}
-function isSafeIntegerValue(value){return typeof value==='number'&&Number.isSafeInteger(value);}
-function exactEqual(actual,expected,step){
-  const mode=step.numericMode;
-  if(mode==='DECIMAL_STRING')return compareDecimal(actual,expected)===0;
-  if(mode==='APPROXIMATE')return exactApproximate(actual,expected,step);
-  if(typeof actual==='number'||typeof expected==='number'){
-    if(!isSafeIntegerValue(actual)||!isSafeIntegerValue(expected))fail('UNSUPPORTED_NUMERIC_PRECISION','Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit.',STATUS.UNDETERMINED);
-    return actual===expected;
-  }
-  return canonical(actual)===canonical(expected);
-}
-function orderedCompare(actual,expected){
-  if(isSafeIntegerValue(actual)&&isSafeIntegerValue(expected))return actual===expected?0:actual<expected?-1:1;
-  if(typeof actual==='string'&&typeof expected==='string'&&normalizeDecimal(actual)!==null&&normalizeDecimal(expected)!==null)return compareDecimal(actual,expected);
-  fail('UNSUPPORTED_NUMERIC_PRECISION','Ordered numeric comparison supports safe integers or plain decimal strings only.',STATUS.UNDETERMINED);
-}
-function validateType(value,type){
-  switch(type){
-    case 'string':return typeof value==='string';case 'boolean':return typeof value==='boolean';case 'array':return Array.isArray(value);
-    case 'binding':return typeof value==='string'&&/^[A-Z][A-Z0-9_]{0,63}$/.test(value);
-    case 'delimiter':return typeof value==='string'&&[...value].length===1&&!['\r','\n'].includes(value);
-    case 'quote':return typeof value==='string'&&[...value].length===1&&!['\r','\n'].includes(value);
-    case 'csvNewline':return ['AUTO','LF','CRLF','CR'].includes(value);
-    case 'utf8':return value==='UTF-8';case 'sortDirection':return ['ASC','DESC'].includes(value);case 'sortDomain':return ['STRING','BOOLEAN','INTEGER','DECIMAL'].includes(value);
-    case 'regex':return typeof value==='string';case 'regexFlags':return typeof value==='string';
-    case 'jsonSelector':try{parseJsonSelector(value);return true;}catch{return false;}
-    case 'xmlSelector':try{parseXmlSelector(value);return true;}catch{return false;}
-    case 'compareOperator':return ['EQ','NE','GT','GTE','LT','LTE'].includes(value);
-    case 'typeName':return ['string','number','boolean','object','array','null','undefined','bytes'].includes(value);
-    case 'numericMode':return ['INTEGER','DECIMAL_STRING','APPROXIMATE'].includes(value);
-    case 'exactNonnegativeDecimal':try{const p=exactDecimalParts(value);return p.sign>0n||p.digits===0n;}catch{return false;}case 'nonnegativeNumber':return typeof value==='number'&&Number.isFinite(value)&&value>=0;
-    default:return true;
-  }
-}
-function validateStep(step,index){
-  const issues=[];if(!step||typeof step!=='object'||Array.isArray(step))return [`Step ${index} must be an object.`];const definition=OP_DEFINITIONS[step.op];if(!definition)return [`Step ${index} uses unknown operation ${String(step.op)}.`];
-  const allowed=new Set(['op',...definition.required,...definition.optional]);for(const key of Object.keys(step))if(!allowed.has(key))issues.push(`Step ${index} operation ${step.op} contains unknown property ${key}.`);
-  for(const key of definition.required)if(!hasOwn(step,key))issues.push(`Step ${index} operation ${step.op} is missing required property ${key}.`);
-  for(const [key,type] of Object.entries(definition.types||{}))if(hasOwn(step,key)&&!validateType(step[key],type))issues.push(`Step ${index} operation ${step.op} has invalid ${key}.`);
-  for(const alternatives of definition.oneOf||[]){/* evaluated together below */}
-  if(definition.oneOf){const present=definition.oneOf.filter(group=>group.every(key=>hasOwn(step,key)));if(present.length!==1)issues.push(`Step ${index} operation ${step.op} requires exactly one of ${definition.oneOf.map(group=>group.join('+')).join(' or ')}.`);}
-  if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&typeof step.pattern==='string')issues.push(...validateRegex(step.pattern,step.flags).map(message=>`Step ${index}: ${message}`));
-  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&step.numericMode==='APPROXIMATE'&&!['absTol','relTol','absoluteTolerance','relativeTolerance'].some(key=>hasOwn(step,key)))issues.push(`Step ${index} approximate comparison requires absTol, relTol, or an explicitly supported compatibility tolerance.`);
-  if(['COMPARE','ASSERT_EQ'].includes(step.op)&&typeof step.value==='number'&&!Number.isSafeInteger(step.value))issues.push(`Step ${index} numeric literals must be finite safe integers; use a typed DECIMAL value for precision-sensitive comparisons.`);
-  if(step.op==='PARSE_CSV'&&step.delimiter===step.quote)issues.push(`Step ${index} CSV delimiter and quote must differ.`);
-  return issues;
-}
-function validateSpec(spec,bindings){
-  const issues=[];
-  if(!spec||typeof spec!=='object'||Array.isArray(spec))return {valid:false,issues:['Test IR must be an object.']};
-  for(const key of Object.keys(spec))if(!['version','steps'].includes(key))issues.push(`Test IR contains unknown root property ${key}.`);
-  if(spec.version!==SPEC_VERSION)issues.push(`Unsupported Test IR version ${String(spec.version)}.`);
-  if(!Array.isArray(spec.steps)||!spec.steps.length)issues.push('Test IR requires a nonempty steps array.');
-  if((spec.steps?.length||0)>LIMITS.maxSteps)issues.push(`Test IR exceeds the ${LIMITS.maxSteps}-step limit.`);
-  for(const [index,step] of (spec.steps||[]).entries())issues.push(...validateStep(step,index));
-  if(Array.isArray(spec.steps)&&spec.steps.length&&!spec.steps.some(step=>ASSERTION_OPS.has(step?.op)))issues.push('Test IR must contain at least one registered assertion operation.');
-  if(bindings!==undefined){const bindingResult=validateBindings(bindings);issues.push(...bindingResult.issues);const declared=new Set(Object.keys(bindings||{}));for(const [index,step] of (spec.steps||[]).entries())if(step&&typeof step.binding==='string'&&!declared.has(step.binding))issues.push(`Step ${index} references undeclared binding ${step.binding}.`);}
-  return {valid:issues.length===0,issues};
-}
-function validateBindings(bindings){
-  const issues=[];if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))return {valid:false,issues:['EXECUTABLE_INPUT_BINDINGS must be a closed object.']};
-  for(const [name,binding] of Object.entries(bindings)){
-    if(!/^[A-Z][A-Z0-9_]{0,63}$/.test(name))issues.push(`Invalid Test IR binding name ${name}.`);
-    if(typeof binding==='string'){if(!binding.trim())issues.push(`Binding ${name} cannot be empty.`);continue;}
-    if(!binding||typeof binding!=='object'||Array.isArray(binding)){issues.push(`Binding ${name} must be an artifact ID string or a closed binding object.`);continue;}
-    const allowed=new Set(['kind','artifactId','source','artifactRole','filename','expectedSha256','canonicalKey','valueSha256']);for(const key of Object.keys(binding))if(!allowed.has(key))issues.push(`Binding ${name} contains unknown property ${key}.`);
-    const kind=binding.kind||'ARTIFACT';if(!['ARTIFACT','CANONICAL_VALUE'].includes(kind))issues.push(`Binding ${name} has unsupported kind ${kind}.`);
-    if(kind==='ARTIFACT'&&!binding.artifactId&&!binding.artifactRole&&!binding.filename)issues.push(`Binding ${name} does not identify an artifact.`);
-    if(kind==='CANONICAL_VALUE'&&!binding.canonicalKey)issues.push(`Binding ${name} does not identify an immutable canonical value.`);
-    if(binding.source&&!['CURRENT_PRODUCT','CURRENT_SCOPE','EXPLICIT_ARTIFACT'].includes(binding.source))issues.push(`Binding ${name} has unsupported source ${binding.source}.`);
-    if(binding.expectedSha256&&!/^[0-9a-f]{64}$/.test(binding.expectedSha256))issues.push(`Binding ${name} expectedSha256 is invalid.`);
-    if(binding.valueSha256&&!/^[0-9a-f]{64}$/.test(binding.valueSha256))issues.push(`Binding ${name} valueSha256 is invalid.`);
-  }
-  return {valid:issues.length===0,issues};
-}
-function normalizeSpec(spec){
-  const check=validateSpec(spec);if(!check.valid)fail('INVALID_TEST_IR',check.issues.join(' '));
-  return {version:SPEC_VERSION,steps:spec.steps.map(step=>Object.fromEntries(Object.entries(step).sort(([a],[b])=>a==='op'?-1:b==='op'?1:a.localeCompare(b))))};
-}
-function supports(test){
-  if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;
-  if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;
-  if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!==EXECUTABLE_KIND)return false;
-  if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;
-  return validateSpec(field(test,'EXECUTABLE_SPEC'),field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;
-}
-function resolveBinding(name,artifacts,canonicalBindings){
-  if(hasOwn(artifacts||{},name))return {kind:'ARTIFACT',value:artifacts[name]};
-  if(hasOwn(canonicalBindings||{},name))return {kind:'CANONICAL_VALUE',value:canonicalBindings[name]};
-  fail('MISSING_BINDING',`Required binding ${name} is unavailable.`);
-}
-function valueFromBinding(name,artifacts,canonicalBindings){const resolved=resolveBinding(name,artifacts,canonicalBindings);return resolved.kind==='ARTIFACT'?(resolved.value?.value??resolved.value):resolved.value?.value??resolved.value;}
-function collection(value,op){if(!Array.isArray(value))fail('COLLECTION_REQUIRED',`${op} requires an array.`);if(value.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT',`${op} input exceeds the registered collection limit.`);return value;}
-function resultForAssertion(ok,expected,actual,message){return {determination:ok?STATUS.SATISFIED:STATUS.VIOLATED,expected,actual,message:message||null};}
-
-async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){
-  const normalized=normalizeSpec(spec);const bindingCheck=validateBindings(metadata.bindings||Object.fromEntries([...Object.keys(artifacts),...Object.keys(canonicalBindings)].map(key=>[key,{kind:hasOwn(artifacts,key)?'ARTIFACT':'CANONICAL_VALUE',artifactId:hasOwn(artifacts,key)?String(artifacts[key]?.artifactId||key):undefined,canonicalKey:hasOwn(canonicalBindings,key)?key:undefined}])));if(!bindingCheck.valid)fail('INVALID_BINDINGS',bindingCheck.issues.join(' '));
-  const uniqueBuffers=new Set();let totalInputBytes=0;for(const artifact of Object.values(artifacts||{})){const bytes=bytesOf(artifact?.bytes??artifact);if(bytes&&!uniqueBuffers.has(bytes.buffer)){uniqueBuffers.add(bytes.buffer);totalInputBytes+=bytes.byteLength;}}
-  const envelope=validateResourceEnvelope({totalInputBytes});if(!envelope.valid)fail('INPUT_BYTE_LIMIT',envelope.issues.join(' '));
-  let value=null,current=null;const observations=[];let finalAssertion=null;const inputArtifactIds=[];const inputArtifactSha256Values=[];
-  /* PREHASH_EVERY_BOUND_ARTIFACT: every consumed package input is identity-bound, even when a comparison operation references it without LOAD_ARTIFACT. */
-  for(const [bindingName,artifact] of Object.entries(artifacts||{})){const bytes=bytesOf(artifact?.bytes??artifact);if(!bytes)continue;const calculated=await sha256(bytes);if(artifact?.sha256&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||bindingName} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||bindingName));inputArtifactSha256Values.push(calculated);}
-  for(const [index,step] of normalized.steps.entries()){
-    switch(step.op){
-      case 'LOAD_ARTIFACT':{
-        const resolved=resolveBinding(step.binding,artifacts,canonicalBindings);current=resolved;value=resolved.kind==='CANONICAL_VALUE'?(resolved.value?.value??resolved.value):resolved.value;
-        if(resolved.kind==='ARTIFACT'){const artifact=resolved.value;const bytes=bytesOf(artifact?.bytes??artifact);const calculated=bytes?await sha256(bytes):null;if(artifact?.sha256&&calculated&&String(artifact.sha256).toLowerCase()!==calculated)fail('ARTIFACT_HASH_MISMATCH',`Artifact ${artifact.artifactId||step.binding} bytes do not match its declared SHA-256.`);inputArtifactIds.push(String(artifact?.artifactId||step.binding));inputArtifactSha256Values.push(calculated||String(artifact?.sha256||''));observations.push({step:index,op:step.op,binding:step.binding,bindingKind:'ARTIFACT',artifactId:artifact?.artifactId||null,filename:artifact?.filename||null,sha256:calculated||artifact?.sha256||null});}
-        else observations.push({step:index,op:step.op,binding:step.binding,bindingKind:'CANONICAL_VALUE'});
-        break;
-      }
-      case 'READ_BYTES':{const bytes=bytesOf(current?.kind==='ARTIFACT'?(current.value?.bytes??current.value):value);if(!bytes)fail('BYTES_REQUIRED','READ_BYTES requires a byte-backed artifact binding.');value=bytes;observations.push({step:index,op:step.op,byteLength:bytes.byteLength});break;}
-      case 'DECODE_UTF8':{const bytes=bytesOf(value);if(!bytes)fail('BYTES_REQUIRED','DECODE_UTF8 requires bytes.');if(bytes.byteLength>LIMITS.maxTextBytes)fail('TEXT_BYTE_LIMIT','UTF-8 input exceeds the registered text-byte limit.');if(bytes.byteLength>LIMITS.maxDecompressedBytes)fail('DECOMPRESSED_BYTE_LIMIT','UTF-8 input exceeds the registered decompressed-byte limit.');try{value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{fail('INVALID_UTF8','Input is not valid UTF-8.',STATUS.UNDETERMINED);}break;}
-      case 'PARSE_JSON':{const source=String(value);validateJsonSourceExact(source);try{value=JSON.parse(source);}catch(error){fail('MALFORMED_JSON',`JSON parse failed: ${error.message}`,STATUS.UNDETERMINED);}inspectStructure(value);break;}
-      case 'PARSE_CSV':value=parseCsv(String(value),step);inspectStructure(value);break;
-      case 'PARSE_XML':value=parseXml(String(value));inspectStructure(value);break;
-      case 'SELECT_JSON_PATH':value=selectJsonPath(value,step.path);break;
-      case 'SELECT_XML':value=selectXml(value,step.path);break;
-      case 'COUNT':{if(value==null||typeof value.length!=='number')fail('COUNT_INPUT','COUNT requires an array, string, or array-like value.',STATUS.UNDETERMINED);if(value.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','COUNT input exceeds the registered collection limit.');value=value.length;break;}
-      case 'SUM':case 'MIN':case 'MAX':{const values=collection(value,step.op);if(!values.every(isSafeIntegerValue))fail('UNSUPPORTED_NUMERIC_PRECISION',`${step.op} supports safe integers only in version 1.`,STATUS.UNDETERMINED);value=step.op==='SUM'?values.reduce((sum,item)=>{const next=sum+item;if(!Number.isSafeInteger(next))fail('INTEGER_OVERFLOW','SUM exceeded exact safe-integer range.',STATUS.UNDETERMINED);return next;},0):step.op==='MIN'?Math.min(...values):Math.max(...values);break;}
-      case 'SORT':{const direction=step.direction||'ASC',items=[...collection(value,'SORT')],domain=sortDomain(items,step.domain);value=items.sort((a,b)=>compareSortValues(a,b,domain));if(direction==='DESC')value.reverse();break;}
-      case 'UNIQUE':{const seen=new Set();value=collection(value,'UNIQUE').filter(item=>{const key=canonical(item);if(seen.has(key))return false;seen.add(key);return true;});break;}
-      case 'HASH_SHA256':value=await sha256(value);break;
-      case 'REGEX':{const input=String(value);if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(step.pattern,step.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));value=new RegExp(step.pattern,step.flags||'').test(input);break;}
-      case 'COMPARE':{const expected=hasOwn(step,'value')?step.value:valueFromBinding(step.binding,artifacts,canonicalBindings);const operator=step.operator||'EQ';const cmp=['EQ','NE'].includes(operator)?null:orderedCompare(value,expected);if(operator==='EQ')value=exactEqual(value,expected,step);else if(operator==='NE')value=!exactEqual(value,expected,step);else if(operator==='GT')value=cmp>0;else if(operator==='GTE')value=cmp>=0;else if(operator==='LT')value=cmp<0;else value=cmp<=0;break;}
-      case 'BYTE_COMPARE':{const left=bytesOf(value),resolved=resolveBinding(step.binding,artifacts,canonicalBindings),right=bytesOf(resolved.kind==='ARTIFACT'?(resolved.value?.bytes??resolved.value):resolved.value?.value??resolved.value);if(!left||!right)fail('BYTES_REQUIRED','BYTE_COMPARE requires byte-backed current and target bindings.');let equal=left.byteLength===right.byteLength;if(equal)for(let i=0;i<left.byteLength;i++)if(left[i]!==right[i]){equal=false;break;}value=equal;break;}
-      case 'ASSERT_EXISTS':finalAssertion=resultForAssertion(value!==null&&value!==undefined,'present',value,step.message);break;
-      case 'ASSERT_TYPE':{const actual=bytesOf(value)?'bytes':Array.isArray(value)?'array':value===null?'null':typeof value;finalAssertion=resultForAssertion(actual===step.value,step.value,actual,step.message);break;}
-      case 'ASSERT_NE':finalAssertion=resultForAssertion(!exactEqual(value,step.value,step),`not ${canonical(step.value)}`,value,step.message);break;
-      case 'ASSERT_EQ':finalAssertion=resultForAssertion(exactEqual(value,step.value,step),step.value,value,step.message);break;
-      case 'ASSERT_GT':finalAssertion=resultForAssertion(orderedCompare(value,step.value)>0,`> ${step.value}`,value,step.message);break;
-      case 'ASSERT_GTE':finalAssertion=resultForAssertion(orderedCompare(value,step.value)>=0,`>= ${step.value}`,value,step.message);break;
-      case 'ASSERT_LT':finalAssertion=resultForAssertion(orderedCompare(value,step.value)<0,`< ${step.value}`,value,step.message);break;
-      case 'ASSERT_LTE':finalAssertion=resultForAssertion(orderedCompare(value,step.value)<=0,`<= ${step.value}`,value,step.message);break;
-      case 'ASSERT_MATCH':{const input=String(value);if(byteLength(input)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds the registered byte limit.');const regexIssues=validateRegex(step.pattern,step.flags);if(regexIssues.length)fail('UNSAFE_REGEX',regexIssues.join(' '));finalAssertion=resultForAssertion(new RegExp(step.pattern,step.flags||'').test(input),`matches /${step.pattern}/${step.flags||''}`,value,step.message);break;}
-      case 'ASSERT_CONTAINS':{const ok=Array.isArray(value)?value.some(item=>canonical(item)===canonical(step.value)):String(value).includes(String(step.value));finalAssertion=resultForAssertion(ok,`contains ${canonical(step.value)}`,value,step.message);break;}
-      case 'ASSERT_NOT_CONTAINS':{const ok=Array.isArray(value)?!value.some(item=>canonical(item)===canonical(step.value)):!String(value).includes(String(step.value));finalAssertion=resultForAssertion(ok,`does not contain ${canonical(step.value)}`,value,step.message);break;}
-      case 'ASSERT_SET_EQUAL':{const actual=collection(value,'ASSERT_SET_EQUAL');const left=[...new Set(actual.map(canonical))].sort(),right=[...new Set(step.value.map(canonical))].sort();finalAssertion=resultForAssertion(canonical(left)===canonical(right),step.value,actual,step.message);break;}
-      default:fail('UNKNOWN_OPERATION',`Unsupported Test IR operation ${step.op}.`);
-    }
-    if(finalAssertion){observations.push({step:index,op:step.op,...finalAssertion});if(finalAssertion.determination===STATUS.VIOLATED)break;}
-  }
-  const testSpecSha256=await sha256Canonical(normalized);
-  return {
-    testId:metadata.testId||null,
-    testSpecVersion:SPEC_VERSION,
-    testSpecSha256,
-    status:'COMPLETE',
-    determination:finalAssertion?.determination||STATUS.UNDETERMINED,
-    expected:finalAssertion?.expected??null,
-    actual:finalAssertion?.actual??value,
-    observations,
-    evidence:[{kind:'APPLICATION_NATIVE_RUNTIME_OBSERVATION',testSpecSha256,inputArtifactIds:[...new Set(inputArtifactIds)],inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]}],
-    executorVersion:VERSION,
-    runtimeVersion:VERSION,
-    inputArtifactIds:[...new Set(inputArtifactIds)],
-    inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]
-  };
-}
-
-function workerUrl(){
-  const source=typeof document!=='undefined'?document.currentScript?.src:null;const base=source||root.location?.href;if(!base)return 'test-worker.js';const url=new URL('test-worker.js',base);if(source)url.search=new URL(source).search;return url.href;
-}
-function executionFailure(test,startedAtDeviceTime,error){
-  const disposition=error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED;
-  return {testId:field(test,'TEST_ID')||test?.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:null,status:disposition,determination:STATUS.UNDETERMINED,expected:null,actual:null,observations:[],evidence:[],executorVersion:VERSION,runtimeVersion:VERSION,inputArtifactIds:[],inputArtifactSha256Values:[],startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString(),failure:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error)}};
-}
-function executeTest(test,artifacts,canonicalBindings,options={}){
-  const spec=field(test,'EXECUTABLE_SPEC');const bindings=field(test,'EXECUTABLE_INPUT_BINDINGS');const check=validateSpec(spec,bindings);const startedAtDeviceTime=new Date().toISOString();if(!check.valid)return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('INVALID_TEST_IR',check.issues.join(' '))));
-  const WorkerClass=options.Worker||root.Worker;if(typeof WorkerClass!=='function')return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_UNAVAILABLE','The isolated Test IR worker is unavailable.')));
-  return new Promise(resolve=>{
-    const requestId=`test-ir-${Date.now()}-${Math.random().toString(36).slice(2)}`;let settled=false;const worker=new WorkerClass(options.workerUrl||workerUrl());
-    const finish=result=>{if(settled)return;settled=true;clearTimeout(timer);try{worker.terminate();}catch{}resolve(result);};
-    const timer=setTimeout(()=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_TIMEOUT',`Test IR worker exceeded ${LIMITS.workerTimeoutMs} ms.`))),Number(options.timeoutMs||LIMITS.workerTimeoutMs));
-    worker.onmessage=event=>{const message=event?.data||{};if(message.requestId!==requestId)return;if(message.ok){finish({...message.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});}else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(message.error?.code||'WORKER_EXECUTION_FAILED',message.error?.message||'Worker execution failed.',message.error?.disposition||STATUS.EXECUTION_FAILED)));};
-    worker.onerror=event=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_ERROR',event?.message||'Test IR worker failed.')));
-    try{worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizeSpec(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings}});}catch(error){finish(executionFailure(test,startedAtDeviceTime,error));}
-  });
-}
-
-const operationContracts=()=>JSON.parse(JSON.stringify(OP_DEFINITIONS));
-const capabilities=()=>Object.freeze([CAPABILITY]);
-root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,EXECUTABLE_KIND,CAPABILITY,OPS,OP_DEFINITIONS,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope});
-})();
-
-/* INTEGRATED CONTROLLING COMPLETION 53-70 */
-;(()=>{
-'use strict';
-const r0=globalThis.closedLoopTestRuntime;
-if(!r0)throw new Error('Base Test IR runtime must load before integrated completion runtime.');
-const VERSION='closed-loop-controlling-completion/53-70/1',safe=v=>Array.isArray(v)?v:[],up=v=>String(v==null?'':v).trim().toUpperCase(),fv=(r,k)=>r?.fields?.[k]??r?.[k];
-function exactIssues(spec){const out=[];const walk=(v,path='$')=>{if(typeof v==='number'&&(!Number.isSafeInteger(v)||Object.is(v,-0)))out.push(`${path} contains an unsupported numeric literal; use an exact typed number representation.`);if(Array.isArray(v))v.forEach((x,i)=>walk(x,`${path}[${i}]`));else if(v&&typeof v==='object')for(const[k,x]of Object.entries(v))walk(x,`${path}.${k}`);};walk(spec);return out;}function validate(spec){let b;try{b=r0.validateSpec(spec);}catch(err){return{valid:false,issues:[String(err?.message||err)]};}const issues=[...(b?.issues||[]),...exactIssues(spec)];return{...b,valid:issues.length===0,issues:[...new Set(issues)]};}const runtime=Object.freeze({...r0,VERSION:'closed-loop-test-runtime/3',__controllingCompletionAmendmentVersion:VERSION,validateSpec:validate,supports:test=>{const spec=fv(test,'EXECUTABLE_SPEC')||test?.EXECUTABLE_SPEC;return validate(spec).valid&&r0.supports(test);},execute:async (request,...args)=>{const spec=request?.spec??request;const v=validate(spec);if(!v.valid)throw new r0.RuntimeError('UNSUPPORTED_EXACT_SEMANTICS',v.issues.join(' '));return r0.execute(request,...args);},executeTest:async (test,...args)=>{const spec=fv(test,'EXECUTABLE_SPEC')||test?.EXECUTABLE_SPEC,v=validate(spec);if(!v.valid)throw new r0.RuntimeError('UNSUPPORTED_EXACT_SEMANTICS',v.issues.join(' '));return r0.executeTest(test,...args);}});globalThis.closedLoopTestRuntime=runtime;
+async function sha256(bytes){const b=bytesOf(bytes);if(!b)fail('BYTES_REQUIRED','SHA-256 requires bytes.');return hash.sha256Bytes(b);}
+const sha256Canonical=value=>Promise.resolve(hash.sha256Value(value)),canonical=value=>hash.stableStringify(value),byteLength=value=>encoder.encode(String(value)).byteLength;
+function validateResourceEnvelope(claim={}){const issues=[];const allowed=new Set(['totalInputBytes','decompressedBytes','archiveExpansionBytes']);for(const k of Object.keys(claim||{}))if(!allowed.has(k))issues.push('Unknown resource-envelope property '+k+'.');for(const [key,limit] of [['totalInputBytes','maxTotalInputBytes'],['decompressedBytes','maxDecompressedBytes'],['archiveExpansionBytes','maxArchiveExpansionBytes']])if(hasOwn(claim,key)){const v=claim[key];if(!Number.isSafeInteger(v)||v<0)issues.push(key+' must be a nonnegative safe integer.');else if(v>LIMITS[limit])issues.push(key+' exceeds '+limit+'.');}return{valid:issues.length===0,issues};}
+function inspectStructure(value){let nodes=0,maxDepth=0;const seen=new Set(),stack=[{value,depth:1}];while(stack.length){const {value:v,depth}=stack.pop();nodes++;maxDepth=Math.max(maxDepth,depth);if(nodes>LIMITS.maxParsedNodes)fail('PARSED_NODE_LIMIT','Parsed structure exceeds node limit.');if(depth>LIMITS.maxParsedDepth)fail('PARSED_DEPTH_LIMIT','Parsed structure exceeds depth limit.');if(!v||typeof v!=='object'||seen.has(v))continue;seen.add(v);if(Array.isArray(v)){if(v.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT','Collection exceeds limit.');v.forEach(x=>stack.push({value:x,depth:depth+1}));}else Object.values(v).forEach(x=>stack.push({value:x,depth:depth+1}));}return{nodes,maxDepth};}
+function validateRegex(pattern,flags=''){const issues=[];const text=String(pattern),f=String(flags||'');if(byteLength(text)>LIMITS.maxRegexPatternBytes)issues.push('Regex pattern exceeds the registered byte limit.');if(!/^[imsu]*$/.test(f)||new Set(f).size!==f.length)issues.push('Regex flags must be a unique subset of i, m, s, and u.');if(/\\[1-9]|\\k</.test(text))issues.push('Regex backreferences are prohibited.');if(/\(\?(?:=|!|<=|<!|<[^=!])/.test(text))issues.push('Regex lookaround and named groups are prohibited.');if(/\\[pP]\{/.test(text))issues.push('Unicode property escapes are prohibited.');try{if(!issues.length)new RegExp(text,f);}catch(e){issues.push('Regex is invalid: '+e.message);}return issues;}
+function parseJsonSelector(path){const text=String(path||'');if(text==='$')return[];if(!text.startsWith('$'))fail('UNSUPPORTED_JSON_SELECTOR','JSON selector must start with $.');const parts=[];let i=1;while(i<text.length){if(text[i]==='.'){i++;if(text[i]==='*'){parts.push({kind:'wildcard'});i++;continue;}const m=text.slice(i).match(/^[A-Za-z_][A-Za-z0-9_:-]*/);if(!m)fail('UNSUPPORTED_JSON_SELECTOR','Invalid child identifier.');parts.push({kind:'key',key:m[0]});i+=m[0].length;continue;}if(text[i]==='['){if(text[i+1]==="'"){let j=i+2,key='';for(;j<text.length;j++){if(text[j]==='\\'){j++;if(j>=text.length)fail('UNSUPPORTED_JSON_SELECTOR','Bad bracket escape.');key+=text[j];continue;}if(text[j]==="'"&&text[j+1]===']')break;key+=text[j];}if(j>=text.length)fail('UNSUPPORTED_JSON_SELECTOR','Unclosed bracket name.');parts.push({kind:'key',key});i=j+2;continue;}if(text[i+1]==='*'&&text[i+2]===']'){parts.push({kind:'wildcard'});i+=3;continue;}const end=text.indexOf(']',i+1);if(end<0)fail('UNSUPPORTED_JSON_SELECTOR','Unclosed array index.');const raw=text.slice(i+1,end);if(!/^(0|[1-9]\d*)$/.test(raw))fail('UNSUPPORTED_JSON_SELECTOR','Only nonnegative array indexes are supported.');parts.push({kind:'index',index:Number(raw)});i=end+1;continue;}fail('UNSUPPORTED_JSON_SELECTOR','Unsupported JSON selector syntax.');}if(parts.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','Selector depth limit exceeded.');return parts;}
+function selectJsonPath(value,path){let current=[value];for(const part of parseJsonSelector(path)){const next=[];for(const v of current){if(part.kind==='key'){if(v&&typeof v==='object'&&hasOwn(v,part.key))next.push(v[part.key]);}else if(part.kind==='index'){if(Array.isArray(v)&&part.index<v.length)next.push(v[part.index]);}else if(Array.isArray(v))next.push(...v);else if(v&&typeof v==='object')next.push(...Object.values(v));}if(!next.length)fail('JSON_PATH_MISSING','JSON selector does not resolve: '+path+'.',STATUS.UNDETERMINED);current=next;}return current.length===1?current[0]:current;}
+function decodeXmlEntity(entity){const known={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"};if(hasOwn(known,entity))return known[entity];if(/^#\d+$/.test(entity)){const c=Number(entity.slice(1));if(Number.isInteger(c)&&c<=0x10ffff)return String.fromCodePoint(c);}if(/^#x[0-9a-f]+$/i.test(entity)){const c=parseInt(entity.slice(2),16);if(Number.isInteger(c)&&c<=0x10ffff)return String.fromCodePoint(c);}fail('UNSUPPORTED_XML_ENTITY','Unsupported XML entity.');}
+const decodeXmlText=text=>String(text).replace(/&([^;]+);/g,(_,e)=>decodeXmlEntity(e));
+function parseXmlAttributes(source){const attributes={};let rest=String(source||'').trim();while(rest){const m=rest.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*("[^"]*"|'[^']*')\s*/);if(!m)fail('MALFORMED_XML','Malformed XML attribute text.');if(hasOwn(attributes,m[1]))fail('MALFORMED_XML','Duplicate XML attribute.');attributes[m[1]]=decodeXmlText(m[2].slice(1,-1));rest=rest.slice(m[0].length);}return attributes;}
+function parseXml(text){let source=String(text||'');if(/<!DOCTYPE|<!ENTITY/i.test(source))fail('UNSAFE_XML','DTD and entity declarations are prohibited.');source=source.replace(/^\uFEFF?\s*<\?xml\s[^?]*\?>\s*/i,'');const doc={name:'#document',attributes:{},children:[],textParts:[]},stack=[doc];let nodes=0,index=0;const append=t=>{if(t)stack.at(-1).textParts.push(decodeXmlText(t));};while(index<source.length){const open=source.indexOf('<',index);if(open<0){append(source.slice(index));break;}append(source.slice(index,open));if(source.startsWith('<!--',open)){const end=source.indexOf('-->',open+4);if(end<0)fail('MALFORMED_XML','Unterminated XML comment.');index=end+3;continue;}if(source.startsWith('<![CDATA[',open)){const end=source.indexOf(']]>',open+9);if(end<0)fail('MALFORMED_XML','Unterminated CDATA.');stack.at(-1).textParts.push(source.slice(open+9,end));index=end+3;continue;}if(source.startsWith('<?',open))fail('UNSAFE_XML','Processing instructions are unsupported.');const close=source.indexOf('>',open+1);if(close<0)fail('MALFORMED_XML','Unterminated tag.');let body=source.slice(open+1,close).trim();if(body.startsWith('/')){const name=body.slice(1).trim();if(stack.length===1||stack.at(-1).name!==name)fail('MALFORMED_XML','Unexpected closing tag.');stack.pop();index=close+1;continue;}const selfClosing=/\/$/.test(body);if(selfClosing)body=body.slice(0,-1).trim();const nm=body.match(/^([A-Za-z_][A-Za-z0-9_.:-]*)/);if(!nm)fail('MALFORMED_XML','Invalid element name.');const node={name:nm[1],attributes:parseXmlAttributes(body.slice(nm[0].length)),children:[],textParts:[]};stack.at(-1).children.push(node);nodes++;if(nodes>LIMITS.maxXmlNodes)fail('XML_NODE_LIMIT','XML node limit exceeded.');if(!selfClosing)stack.push(node);index=close+1;}if(stack.length!==1||doc.children.length!==1)fail('MALFORMED_XML','XML must contain one closed document element.');return doc.children[0];}
+function parseXmlSelector(path){const text=String(path||'');if(!text.startsWith('/')||text.startsWith('//'))fail('UNSUPPORTED_XML_SELECTOR','XML selector must be an absolute child path.');const raw=text.slice(1).split('/');if(raw.some(x=>!x))fail('UNSUPPORTED_XML_SELECTOR','XML selector contains an empty segment.');if(raw.length>LIMITS.maxSelectorDepth)fail('SELECTOR_LIMIT','Selector depth limit exceeded.');return raw.map((part,index)=>{if(part==='text()'){if(index!==raw.length-1)fail('UNSUPPORTED_XML_SELECTOR','text() must be final.');return{kind:'text'};}if(part.startsWith('@')){if(index!==raw.length-1||!/^@[A-Za-z_][A-Za-z0-9_.:-]*$/.test(part))fail('UNSUPPORTED_XML_SELECTOR','Attribute access must be final @name.');return{kind:'attribute',name:part.slice(1)};}const m=part.match(/^(\*|[A-Za-z_][A-Za-z0-9_.:-]*)(?:\[(\d+)\])?$/);if(!m||m[2]==='0')fail('UNSUPPORTED_XML_SELECTOR','Unsupported XML selector segment.');return{kind:'element',name:m[1],index:m[2]?Number(m[2]):null};});}
+const xmlText=node=>[...node.textParts,...node.children.map(xmlText)].join('');
+function selectXml(rootNode,path){const parts=parseXmlSelector(path),first=parts.shift();if(first.kind!=='element'||(first.name!=='*'&&first.name!==rootNode.name)||(first.index&&first.index!==1))fail('XML_PATH_MISSING','XML selector does not address the root.',STATUS.UNDETERMINED);let current=[rootNode];for(const part of parts){if(part.kind==='text')return current.map(xmlText);if(part.kind==='attribute')return current.map(n=>n.attributes[part.name]).filter(v=>v!==undefined);const next=[];for(const node of current){const matches=node.children.filter(c=>part.name==='*'||c.name===part.name);if(part.index){if(matches[part.index-1])next.push(matches[part.index-1]);}else next.push(...matches);}if(!next.length)fail('XML_PATH_MISSING','XML selector does not resolve.',STATUS.UNDETERMINED);current=next;}return current;}
+function validateJsonSourceExact(text){const source=String(text),len=source.length;let i=0;const ws=()=>{while(i<len&&/[\x20\x09\x0a\x0d]/.test(source[i]))i++;};const error=m=>fail('MALFORMED_JSON',`${m} at character ${i}.`,STATUS.UNDETERMINED);const stringToken=()=>{if(source[i]!=='"')error('Expected string');const start=i++;let esc=false;for(;i<len;i++){const ch=source[i];if(esc){if(ch==='u'){if(!/^[0-9a-fA-F]{4}$/.test(source.slice(i+1,i+5)))error('Invalid Unicode escape');i+=4;}else if(!'"\\/bfnrt'.includes(ch))error('Invalid escape');esc=false;continue;}if(ch==='\\'){esc=true;continue;}if(ch==='"'){i++;return JSON.parse(source.slice(start,i));}if(ch.charCodeAt(0)<0x20)error('Unescaped control');}error('Unterminated string');};const numberToken=()=>{const m=source.slice(i).match(/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/);if(!m)error('Invalid number');const raw=m[0];i+=raw.length;if(raw.includes('.')||/[eE]/.test(raw))fail('UNSUPPORTED_JSON_NUMBER','JSON numbers must be safe integers; exact nonintegers use typed strings.',STATUS.UNDETERMINED);const n=Number(raw);if(!Number.isSafeInteger(n)||Object.is(n,-0))fail('UNSUPPORTED_JSON_NUMBER','JSON number outside exact safe-integer domain.',STATUS.UNDETERMINED);};let value,obj,arr;obj=()=>{i++;ws();const keys=new Set();if(source[i]==='}'){i++;return;}while(i<len){ws();const k=stringToken();if(keys.has(k))fail('DUPLICATE_JSON_MEMBER','Duplicate JSON member '+k+'.',STATUS.UNDETERMINED);keys.add(k);ws();if(source[i++]!==':')error('Expected colon');value();ws();if(source[i]==='}'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated object');};arr=()=>{i++;ws();if(source[i]===']'){i++;return;}while(i<len){value();ws();if(source[i]===']'){i++;return;}if(source[i++]!==',')error('Expected comma');}error('Unterminated array');};value=()=>{ws();const ch=source[i];if(ch==='"')return void stringToken();if(ch==='{')return obj();if(ch==='[')return arr();if(source.startsWith('true',i)){i+=4;return;}if(source.startsWith('false',i)){i+=5;return;}if(source.startsWith('null',i)){i+=4;return;}if(ch==='-'||/\d/.test(ch||''))return numberToken();error('Unexpected token');};ws();value();ws();if(i!==len)error('Trailing content');}
+function parseCsv(text,cfg){const{delimiter,header,quote,newline,encoding}=cfg;if(encoding!=='UTF-8')fail('UNSUPPORTED_ENCODING','CSV supports UTF-8 only.');if(typeof delimiter!=='string'||[...delimiter].length!==1||typeof quote!=='string'||[...quote].length!==1||delimiter===quote)fail('MALFORMED_CSV','CSV delimiter and quote must be distinct single characters.');if(!['AUTO','LF','CRLF','CR'].includes(newline))fail('MALFORMED_CSV','Unsupported CSV newline contract.');const source=String(text),rows=[];let row=[],cell='',quoted=false,cells=0,i=0;const nl=p=>newline==='LF'?(source[p]==='\n'?1:0):newline==='CR'?(source[p]==='\r'?1:0):newline==='CRLF'?(source.startsWith('\r\n',p)?2:0):source.startsWith('\r\n',p)?2:(source[p]==='\n'||source[p]==='\r'?1:0);const push=()=>{row.push(cell);cell='';cells++;if(cells>LIMITS.maxCsvCells)fail('CSV_CELL_LIMIT','CSV cell limit exceeded.');};while(i<source.length){const ch=source[i];if(quoted){if(ch===quote&&source[i+1]===quote){cell+=quote;i+=2;continue;}if(ch===quote){quoted=false;i++;continue;}cell+=ch;i++;continue;}if(ch===quote){if(cell)fail('MALFORMED_CSV','Quote begins inside field.');quoted=true;i++;continue;}if(ch===delimiter){push();i++;continue;}const width=nl(i);if(width){push();rows.push(row);row=[];i+=width;continue;}cell+=ch;i++;}if(quoted)fail('MALFORMED_CSV','Unterminated quoted field.');if(cell||row.length){push();rows.push(row);}if(!header)return rows;if(!rows.length)return[];const names=rows.shift();if(new Set(names).size!==names.length)fail('MALFORMED_CSV','CSV headers must be unique.');return rows.map((values,ri)=>{if(values.length!==names.length)fail('MALFORMED_CSV',`CSV row ${ri+2} has wrong cell count.`);return Object.fromEntries(names.map((n,j)=>[n,values[j]]));});}
+function exactDecimal(value){const t=String(value);if(!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(t))fail('UNSUPPORTED_NUMERIC_PRECISION','Tolerance must be a canonical nonnegative decimal string.',STATUS.UNDETERMINED);const [w,f='']=t.split('.');return{digits:BigInt(w+f),scale:f.length};}
+function decimalValue(value){if(typeof value==='number'){if(!Number.isSafeInteger(value))fail('UNSUPPORTED_NUMERIC_PRECISION','Only safe integers are exact numeric JSON values.',STATUS.UNDETERMINED);return{sign:value<0?-1n:1n,digits:BigInt(Math.abs(value)),scale:0};}const t=String(value);if(!/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(t)||/^-0(?:\.0+)?$/.test(t))fail('UNSUPPORTED_NUMERIC_PRECISION','Ordered decimal values require canonical decimal text.',STATUS.UNDETERMINED);const neg=t.startsWith('-'),body=neg?t.slice(1):t,[w,f='']=body.split('.');return{sign:neg?-1n:1n,digits:BigInt(w+f),scale:f.length};}
+const align=(a,b)=>{const s=Math.max(a.scale,b.scale),pow=n=>10n**BigInt(n);return{a:a.sign*a.digits*pow(s-a.scale),b:b.sign*b.digits*pow(s-b.scale),scale:s};};
+function compareOrdered(a,b){const x=align(decimalValue(a),decimalValue(b));return x.a===x.b?0:x.a<x.b?-1:1;}
+function approxEqual(a,b,absTol='0',relTol='0'){const x=align(decimalValue(a),decimalValue(b)),diff=x.a>=x.b?x.a-x.b:x.b-x.a;const abs=exactDecimal(absTol),rel=exactDecimal(relTol),scale=Math.max(x.scale,abs.scale),pow=n=>10n**BigInt(n),diffScaled=diff*pow(scale-x.scale),absScaled=abs.digits*pow(scale-abs.scale);if(diffScaled<=absScaled)return true;const aa=x.a<0n?-x.a:x.a,bb=x.b<0n?-x.b:x.b,max=aa>bb?aa:bb;const relScale=x.scale+rel.scale,relProduct=max*rel.digits,common=Math.max(x.scale,relScale),lhs=diff*pow(common-x.scale),rhs=relProduct*pow(common-relScale);return lhs<=rhs;}
+function equal(a,b,absTol,relTol){if(absTol!==undefined||relTol!==undefined)return approxEqual(a,b,absTol??'0',relTol??'0');return canonical(a)===canonical(b);}
+function contains(actual,expected){return Array.isArray(actual)?actual.some(x=>canonical(x)===canonical(expected)):String(actual).includes(String(expected));}
+function assertion(ok,expected,actual){return{determination:ok?STATUS.SATISFIED:STATUS.VIOLATED,expected,actual};}
+function validateBindings(bindings){const issues=[];if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))return{valid:false,issues:['EXECUTABLE_INPUT_BINDINGS must be an object.']};for(const [name,b] of Object.entries(bindings)){if(!/^[A-Z][A-Z0-9_]{0,63}$/.test(name))issues.push('Invalid binding name '+name+'.');if(typeof b==='string'){if(!b.trim())issues.push('Binding '+name+' cannot be empty.');continue;}if(!b||typeof b!=='object'||Array.isArray(b)){issues.push('Binding '+name+' must be an artifact ID string or binding object.');continue;}const allowed=new Set(['kind','artifactId','source','artifactRole','filename','expectedSha256','canonicalKey','valueSha256']);for(const k of Object.keys(b))if(!allowed.has(k))issues.push('Binding '+name+' contains unknown property '+k+'.');const kind=b.kind||'ARTIFACT';if(!['ARTIFACT','CANONICAL_VALUE'].includes(kind))issues.push('Binding '+name+' has unsupported kind '+kind+'.');if(kind==='ARTIFACT'&&!b.artifactId&&!b.artifactRole&&!b.filename)issues.push('Binding '+name+' does not identify an artifact.');if(kind==='CANONICAL_VALUE'&&!b.canonicalKey)issues.push('Binding '+name+' does not identify a canonical value.');if(b.expectedSha256&&!/^[0-9a-f]{64}$/.test(b.expectedSha256))issues.push('Binding '+name+' expectedSha256 is invalid.');}return{valid:issues.length===0,issues};}
+function inputRefIssues(ref,label,priorIds,bindings){const issues=[];if(!ref||typeof ref!=='object'||Array.isArray(ref)){issues.push(label+' must be a reference object.');return issues;}const keys=Object.keys(ref),forms=[hasOwn(ref,'literal'),hasOwn(ref,'bindingRef'),hasOwn(ref,'stepRef')].filter(Boolean).length;if(forms!==1)issues.push(label+' must contain exactly one of literal, bindingRef, or stepRef.');if(hasOwn(ref,'bindingRef')){if(keys.some(k=>k!=='bindingRef'))issues.push(label+' bindingRef contains extra properties.');if(typeof ref.bindingRef!=='string'||!hasOwn(bindings||{},ref.bindingRef))issues.push(label+' references undeclared binding '+String(ref.bindingRef)+'.');}if(hasOwn(ref,'stepRef')){if(keys.some(k=>!['stepRef','output'].includes(k)))issues.push(label+' stepRef contains extra properties.');if(typeof ref.stepRef!=='string'||!priorIds.has(ref.stepRef))issues.push(label+' must reference an earlier step.');if(typeof ref.output!=='string'||!ref.output)issues.push(label+' stepRef requires output.');}if(hasOwn(ref,'literal')&&keys.some(k=>k!=='literal'))issues.push(label+' literal contains extra properties.');return issues;}
+function validateSpec(spec,bindings={}){const issues=[];if(!spec||typeof spec!=='object'||Array.isArray(spec))return{valid:false,issues:['Test IR must be an object.']};const allowedRoot=new Set(['version','languageVersion','operationRegistryVersion','operationRegistrySha256','steps','result']);for(const k of Object.keys(spec))if(!allowedRoot.has(k))issues.push('Unknown Test IR root property '+k+'.');if(spec.version!==SPEC_VERSION)issues.push('Unsupported Test IR version '+String(spec.version)+'.');if(spec.languageVersion!==LANGUAGE_VERSION)issues.push('Wrong Test IR languageVersion.');if(spec.operationRegistryVersion!==OPERATION_REGISTRY_VERSION)issues.push('Wrong operationRegistryVersion.');if(spec.operationRegistrySha256!==OPERATION_REGISTRY_SHA256)issues.push('Wrong operationRegistrySha256.');if(!Array.isArray(spec.steps)||!spec.steps.length)issues.push('Test IR requires nonempty steps.');if((spec.steps?.length||0)>LIMITS.maxSteps)issues.push('Test IR step limit exceeded.');const bindingCheck=validateBindings(bindings);issues.push(...bindingCheck.issues);const priorIds=new Set(),outputsById=new Map();for(const [index,step] of (spec.steps||[]).entries()){if(!step||typeof step!=='object'||Array.isArray(step)){issues.push(`Step ${index} must be an object.`);continue;}for(const k of Object.keys(step))if(!['stepId','op','inputs'].includes(k))issues.push(`Step ${index} contains unknown property ${k}.`);if(typeof step.stepId!=='string'||!/^S[0-9A-Z_-]{1,63}$/.test(step.stepId))issues.push(`Step ${index} has invalid stepId.`);else if(priorIds.has(step.stepId))issues.push(`Duplicate stepId ${step.stepId}.`);const def=OP_DEFINITIONS[step.op];if(!def){issues.push(`Step ${index} uses unknown operation ${String(step.op)}.`);continue;}if(!step.inputs||typeof step.inputs!=='object'||Array.isArray(step.inputs)){issues.push(`Step ${step.stepId||index} inputs must be an object.`);continue;}for(const k of Object.keys(step.inputs))if(!hasOwn(def.inputs,k))issues.push(`Step ${step.stepId||index} operation ${step.op} has unknown input port ${k}.`);for(const [port,type] of Object.entries(def.inputs)){const optional=type.endsWith('?');if(!optional&&!hasOwn(step.inputs,port))issues.push(`Step ${step.stepId||index} operation ${step.op} is missing input ${port}.`);if(hasOwn(step.inputs,port)){issues.push(...inputRefIssues(step.inputs[port],`Step ${step.stepId||index} input ${port}`,priorIds,bindings));const ref=step.inputs[port];if(ref?.stepRef&&outputsById.has(ref.stepRef)&&!hasOwn(outputsById.get(ref.stepRef),ref.output))issues.push(`Step ${step.stepId||index} references unknown output ${ref.output} on ${ref.stepRef}.`);}}if((step.op==='REGEX'||step.op==='ASSERT_MATCH')&&hasOwn(step.inputs,'pattern')&&hasOwn(step.inputs.pattern,'literal'))issues.push(...validateRegex(step.inputs.pattern.literal,step.inputs.flags?.literal||'').map(x=>`Step ${step.stepId||index}: ${x}`));if(typeof step.stepId==='string'&&!priorIds.has(step.stepId)){priorIds.add(step.stepId);outputsById.set(step.stepId,def.outputs);}}
+  if(!spec.result||typeof spec.result!=='object'||Array.isArray(spec.result))issues.push('Test IR requires result stepRef/output.');else{for(const k of Object.keys(spec.result))if(!['stepRef','output'].includes(k))issues.push('Result contains unknown property '+k+'.');if(typeof spec.result.stepRef!=='string'||!priorIds.has(spec.result.stepRef))issues.push('Result stepRef must reference an existing step.');else if(!hasOwn(outputsById.get(spec.result.stepRef)||{},spec.result.output))issues.push('Result output is not declared by its step.');}return{valid:issues.length===0,issues:[...new Set(issues)]};}
+function normalizeSpec(spec,bindings={}){const check=validateSpec(spec,bindings);if(!check.valid)fail('INVALID_TEST_IR',check.issues.join(' '));return JSON.parse(canonical(spec));}
+function supports(test){if(String(field(test,'EXECUTION_MODE')||'').toUpperCase()!=='APPLICATION_DETERMINISTIC')return false;if(String(field(test,'REQUIRED_CAPABILITY')||'').toUpperCase()!==CAPABILITY)return false;if(String(field(test,'EXECUTABLE_KIND')||'').toUpperCase()!==EXECUTABLE_KIND)return false;if(field(test,'EXECUTABLE_SPEC_VERSION')!==SPEC_VERSION)return false;return validateSpec(field(test,'EXECUTABLE_SPEC'),field(test,'EXECUTABLE_INPUT_BINDINGS')).valid;}
+function resolveBinding(name,artifacts,canonicalBindings){if(hasOwn(artifacts||{},name))return{kind:'ARTIFACT',value:artifacts[name]};if(hasOwn(canonicalBindings||{},name))return{kind:'CANONICAL_VALUE',value:canonicalBindings[name]};fail('MISSING_BINDING','Required binding '+name+' is unavailable.');}
+function resolveInput(ref,outputs,artifacts,canonicalBindings){if(hasOwn(ref,'literal'))return ref.literal;if(hasOwn(ref,'bindingRef'))return resolveBinding(ref.bindingRef,artifacts,canonicalBindings);const step=outputs.get(ref.stepRef);if(!step||!hasOwn(step,ref.output))fail('MISSING_STEP_OUTPUT',`Missing output ${ref.stepRef}.${ref.output}.`);return step[ref.output];}
+function unwrap(v){return v&&v.kind==='CANONICAL_VALUE'?(v.value?.value??v.value):v;}
+function artifactBytes(v){const item=v&&v.kind==='ARTIFACT'?v.value:v;return bytesOf(item?.bytes??item);}
+function array(v,op){if(!Array.isArray(v))fail('COLLECTION_REQUIRED',op+' requires an array.',STATUS.UNDETERMINED);if(v.length>LIMITS.maxCollectionItems)fail('COLLECTION_LIMIT',op+' collection limit exceeded.');return v;}
+async function execute({spec,artifacts={},canonicalBindings={},metadata={}}){const bindings=metadata.bindings||{};const normalized=normalizeSpec(spec,bindings);let totalInputBytes=0;const inputArtifactIds=[],inputArtifactSha256Values=[];for(const [name,artifact] of Object.entries(artifacts||{})){const b=artifactBytes(artifact);if(!b)continue;totalInputBytes+=b.byteLength;const digest=await sha256(b);if(artifact?.sha256&&String(artifact.sha256).toLowerCase()!==digest)fail('ARTIFACT_HASH_MISMATCH','Artifact '+(artifact.artifactId||name)+' digest mismatch.');inputArtifactIds.push(String(artifact?.artifactId||name));inputArtifactSha256Values.push(digest);}const envelope=validateResourceEnvelope({totalInputBytes});if(!envelope.valid)fail('INPUT_BYTE_LIMIT',envelope.issues.join(' '));const outputs=new Map(),observations=[],usedParsers=new Set(),usedSelectors=new Set();let usedRegex=false;for(const step of normalized.steps){const input={};for(const [port,ref] of Object.entries(step.inputs))input[port]=resolveInput(ref,outputs,artifacts,canonicalBindings);let out={};try{switch(step.op){case'LOAD_ARTIFACT':{const b=input.binding;if(!b||b.kind!=='ARTIFACT')fail('ARTIFACT_REQUIRED','LOAD_ARTIFACT requires artifact bindingRef.');out.artifact=b;break;}case'READ_BYTES':{const b=artifactBytes(input.artifact);if(!b)fail('BYTES_REQUIRED','READ_BYTES requires byte-backed artifact.');out.bytes=b;break;}case'DECODE_UTF8':{const b=bytesOf(input.bytes);if(!b)fail('BYTES_REQUIRED','DECODE_UTF8 requires bytes.');if(b.byteLength>LIMITS.maxTextBytes)fail('TEXT_BYTE_LIMIT','UTF-8 input exceeds limit.');try{out.text=new TextDecoder('utf-8',{fatal:true}).decode(b);}catch{fail('INVALID_UTF8','Input is not valid UTF-8.',STATUS.UNDETERMINED);}usedParsers.add('UTF8');break;}case'PARSE_JSON':validateJsonSourceExact(input.text);out.value=JSON.parse(input.text);inspectStructure(out.value);usedParsers.add('JSON');break;case'PARSE_CSV':out.value=parseCsv(input.text,{delimiter:input.delimiter,header:input.header,quote:input.quote,newline:input.newline,encoding:input.encoding});inspectStructure(out.value);usedParsers.add('CSV');break;case'PARSE_XML':out.value=parseXml(input.text);inspectStructure(out.value);usedParsers.add('XML');break;case'SELECT_JSON_PATH':out.selection=selectJsonPath(input.value,input.path);usedSelectors.add(JSON_SELECTOR_REGISTRY_VERSION);break;case'SELECT_XML':out.selection=selectXml(input.value,input.path);usedSelectors.add(XML_SELECTOR_REGISTRY_VERSION);break;case'COUNT':{const v=unwrap(input.value);if(v==null||typeof v.length!=='number')fail('COUNT_INPUT','COUNT requires countable input.',STATUS.UNDETERMINED);out.count=v.length;break;}case'SUM':case'MIN':case'MAX':{const v=array(unwrap(input.value),step.op);if(!v.every(Number.isSafeInteger))fail('UNSUPPORTED_NUMERIC_PRECISION',step.op+' supports safe integers only.',STATUS.UNDETERMINED);if(step.op==='SUM'){let sum=0;for(const n of v){sum+=n;if(!Number.isSafeInteger(sum))fail('INTEGER_OVERFLOW','SUM overflow.',STATUS.UNDETERMINED);}out.value=sum;}else out.value=step.op==='MIN'?Math.min(...v):Math.max(...v);break;}case'SORT':{const v=[...array(unwrap(input.value),'SORT')],dir=input.direction??'ASC';if(!['ASC','DESC'].includes(dir))fail('SORT_DIRECTION','SORT direction must be ASC or DESC.');v.sort((a,b)=>canonical(a)<canonical(b)?-1:canonical(a)>canonical(b)?1:0);if(dir==='DESC')v.reverse();out.value=v;break;}case'UNIQUE':{const seen=new Set();out.value=array(unwrap(input.value),'UNIQUE').filter(v=>{const k=canonical(v);if(seen.has(k))return false;seen.add(k);return true;});break;}case'HASH_SHA256':out.sha256=await sha256(input.bytes);break;case'REGEX':{const issues=validateRegex(input.pattern,input.flags||'');if(issues.length)fail('UNSAFE_REGEX',issues.join(' '));if(byteLength(input.value)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds limit.');out.matches=new RegExp(input.pattern,input.flags||'').test(input.value);usedRegex=true;break;}case'COMPARE':{const op=input.operator??'EQ',left=unwrap(input.left),right=unwrap(input.right);if(!['EQ','NE','GT','GTE','LT','LTE'].includes(op))fail('COMPARE_OPERATOR','Unknown compare operator.');let ok;if(op==='EQ'||op==='NE'){ok=equal(left,right,input.absTolerance,input.relTolerance);if(op==='NE')ok=!ok;}else{const c=compareOrdered(left,right);ok=op==='GT'?c>0:op==='GTE'?c>=0:op==='LT'?c<0:c<=0;}out.comparison=ok;break;}case'ASSERT_EQ':out.assertion=assertion(equal(unwrap(input.actual),unwrap(input.expected),input.absTolerance,input.relTolerance),unwrap(input.expected),unwrap(input.actual));break;case'ASSERT_GT':case'ASSERT_GTE':case'ASSERT_LT':case'ASSERT_LTE':{const a=unwrap(input.actual),e=unwrap(input.expected),c=compareOrdered(a,e),ok=step.op==='ASSERT_GT'?c>0:step.op==='ASSERT_GTE'?c>=0:step.op==='ASSERT_LT'?c<0:c<=0;out.assertion=assertion(ok,e,a);break;}case'ASSERT_MATCH':{const issues=validateRegex(input.pattern,input.flags||'');if(issues.length)fail('UNSAFE_REGEX',issues.join(' '));const a=String(unwrap(input.actual));if(byteLength(a)>LIMITS.maxRegexInputBytes)fail('REGEX_INPUT_LIMIT','Regex input exceeds limit.');out.assertion=assertion(new RegExp(input.pattern,input.flags||'').test(a),`matches /${input.pattern}/${input.flags||''}`,a);usedRegex=true;break;}case'ASSERT_CONTAINS':out.assertion=assertion(contains(unwrap(input.actual),unwrap(input.expected)),unwrap(input.expected),unwrap(input.actual));break;case'ASSERT_NOT_CONTAINS':out.assertion=assertion(!contains(unwrap(input.actual),unwrap(input.expected)),unwrap(input.expected),unwrap(input.actual));break;case'ASSERT_SET_EQUAL':{const a=array(unwrap(input.actual),'ASSERT_SET_EQUAL'),e=array(unwrap(input.expected),'ASSERT_SET_EQUAL'),left=[...new Set(a.map(canonical))].sort(),right=[...new Set(e.map(canonical))].sort();out.assertion=assertion(canonical(left)===canonical(right),e,a);break;}case'BYTE_COMPARE':{const l=bytesOf(input.left),r=bytesOf(input.right);if(!l||!r)fail('BYTES_REQUIRED','BYTE_COMPARE requires explicit byte inputs.');let eq=l.byteLength===r.byteLength;if(eq)for(let i=0;i<l.length;i++)if(l[i]!==r[i]){eq=false;break;}out.equal=eq;break;}default:fail('UNKNOWN_OPERATION','Unsupported operation '+step.op+'.');}}catch(error){throw error instanceof RuntimeError?error:new RuntimeError('STEP_EXECUTION_FAILED',`${step.stepId} ${step.op}: ${error?.message||error}`);}outputs.set(step.stepId,out);observations.push({stepId:step.stepId,op:step.op,outputs:Object.keys(out)});if(out.assertion?.determination===STATUS.VIOLATED)break;}
+  const selected=outputs.get(normalized.result.stepRef);if(!selected||!hasOwn(selected,normalized.result.output))fail('RESULT_UNAVAILABLE','Selected result output is unavailable.',STATUS.UNDETERMINED);const resultValue=selected[normalized.result.output],determination=resultValue&&typeof resultValue==='object'&&hasOwn(resultValue,'determination')?resultValue.determination:(typeof resultValue==='boolean'?(resultValue?STATUS.SATISFIED:STATUS.VIOLATED):STATUS.UNDETERMINED),testSpecSha256=hash.sha256Value(normalized),normalizedDagSha256=testSpecSha256;return{testId:metadata.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256,status:'COMPLETE',determination,expected:resultValue?.expected??null,actual:resultValue?.actual??resultValue,observations,evidence:[{kind:'APPLICATION_NATIVE_RUNTIME_OBSERVATION',testSpecSha256,normalizedDagSha256,inputArtifactIds:[...new Set(inputArtifactIds)],inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]}],executorVersion:VERSION,runtimeVersion:VERSION,runtimeBuildIdentity:metadata.runtimeBuildIdentity||RUNTIME_BUILD_ID,testWorkerSha256:metadata.testWorkerSha256||null,workerProtocolVersion:WORKER_PROTOCOL_VERSION,TEST_IR_LANGUAGE_VERSION:LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION:usedSelectors.has(JSON_SELECTOR_REGISTRY_VERSION)?JSON_SELECTOR_REGISTRY_VERSION:null,JSON_SELECTOR_REGISTRY_SHA256:usedSelectors.has(JSON_SELECTOR_REGISTRY_VERSION)?JSON_SELECTOR_REGISTRY_SHA256:null,XML_SELECTOR_REGISTRY_VERSION:usedSelectors.has(XML_SELECTOR_REGISTRY_VERSION)?XML_SELECTOR_REGISTRY_VERSION:null,XML_SELECTOR_REGISTRY_SHA256:usedSelectors.has(XML_SELECTOR_REGISTRY_VERSION)?XML_SELECTOR_REGISTRY_SHA256:null,REGEX_REGISTRY_VERSION:usedRegex?REGEX_REGISTRY_VERSION:null,REGEX_REGISTRY_SHA256:usedRegex?REGEX_REGISTRY_SHA256:null,PARSER_REGISTRY_VERSION:usedParsers.size?PARSER_REGISTRY_VERSION:null,PARSER_REGISTRY_SHA256:usedParsers.size?PARSER_REGISTRY_SHA256:null,parserIdentities:[...usedParsers],normalizedDagSha256,resultPort:{stepRef:normalized.result.stepRef,output:normalized.result.output},inputArtifactIds:[...new Set(inputArtifactIds)],inputArtifactSha256Values:[...new Set(inputArtifactSha256Values)]};}
+function workerUrl(){const source=typeof document!=='undefined'?document.currentScript?.src:null,base=source||root.location?.href;if(!base)return'test-worker.js';const url=new URL('test-worker.js',base);if(source)url.search=new URL(source).search;return url.href;}
+function executionFailure(test,started,error){return{testId:field(test,'TEST_ID')||test?.testId||null,testSpecVersion:SPEC_VERSION,testSpecSha256:null,status:error?.disposition===STATUS.UNDETERMINED?STATUS.UNDETERMINED:STATUS.EXECUTION_FAILED,determination:STATUS.UNDETERMINED,expected:null,actual:null,observations:[],evidence:[],executorVersion:VERSION,runtimeVersion:VERSION,runtimeBuildIdentity:RUNTIME_BUILD_ID,testWorkerSha256:null,workerProtocolVersion:WORKER_PROTOCOL_VERSION,TEST_IR_LANGUAGE_VERSION:LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,inputArtifactIds:[],inputArtifactSha256Values:[],startedAtDeviceTime:started,endedAtDeviceTime:new Date().toISOString(),failure:{code:error?.code||'WORKER_EXECUTION_FAILED',message:String(error?.message||error)}};}
+const normalizedCopy=value=>JSON.parse(canonical(value));
+function executeTest(test,artifacts,canonicalBindings,options={}){const spec=field(test,'EXECUTABLE_SPEC'),bindings=field(test,'EXECUTABLE_INPUT_BINDINGS')||{},check=validateSpec(spec,bindings),startedAtDeviceTime=new Date().toISOString();if(!check.valid)return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('INVALID_TEST_IR',check.issues.join(' '))));const WorkerClass=options.Worker||root.Worker;if(typeof WorkerClass!=='function')return Promise.resolve(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_UNAVAILABLE','The isolated Test IR worker is unavailable.')));return new Promise(resolve=>{const requestId=`test-ir-${Date.now()}-${Math.random().toString(36).slice(2)}`,worker=new WorkerClass(options.workerUrl||workerUrl());let settled=false;const finish=result=>{if(settled)return;settled=true;clearTimeout(timer);try{worker.terminate();}catch{}resolve(result);};const timer=setTimeout(()=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_TIMEOUT',`Test IR worker exceeded ${LIMITS.workerTimeoutMs} ms.`))),Number(options.timeoutMs||LIMITS.workerTimeoutMs));worker.onmessage=event=>{const m=event?.data||{};if(m.requestId!==requestId)return;if(m.ok)finish({...m.result,startedAtDeviceTime,endedAtDeviceTime:new Date().toISOString()});else finish(executionFailure(test,startedAtDeviceTime,new RuntimeError(m.error?.code||'WORKER_EXECUTION_FAILED',m.error?.message||'Worker execution failed.',m.error?.disposition||STATUS.EXECUTION_FAILED)));};worker.onerror=e=>finish(executionFailure(test,startedAtDeviceTime,new RuntimeError('WORKER_ERROR',e?.message||'Worker failed.')));try{worker.postMessage({type:'EXECUTE_TEST_IR',requestId,spec:normalizedCopy(spec),bindings,artifacts:artifacts||{},canonicalBindings:canonicalBindings||{},metadata:{testId:field(test,'TEST_ID')||test?.testId||null,bindings,runtimeBuildIdentity:RUNTIME_BUILD_ID,testWorkerSha256:options.testWorkerSha256||null}});}catch(e){finish(executionFailure(test,startedAtDeviceTime,e));}});}
+const operationContracts=()=>normalizedCopy(OP_DEFINITIONS),capabilities=()=>Object.freeze([CAPABILITY]);
+root.closedLoopTestRuntime=Object.freeze({VERSION,SPEC_VERSION,LANGUAGE_VERSION,OPERATION_REGISTRY_VERSION,OPERATION_REGISTRY_SHA256,JSON_SELECTOR_REGISTRY_VERSION,JSON_SELECTOR_REGISTRY_SHA256,XML_SELECTOR_REGISTRY_VERSION,XML_SELECTOR_REGISTRY_SHA256,REGEX_REGISTRY_VERSION,REGEX_REGISTRY_SHA256,PARSER_REGISTRY_VERSION,PARSER_REGISTRY_SHA256,WORKER_PROTOCOL_VERSION,EXECUTABLE_KIND,CAPABILITY,OPS,OP_DEFINITIONS,LIMITS,STATUS,RuntimeError,validateSpec,validateBindings,normalizeSpec,supports,execute,executeTest,capabilities,operationContracts,sha256Canonical,validateResourceEnvelope});
 })();
