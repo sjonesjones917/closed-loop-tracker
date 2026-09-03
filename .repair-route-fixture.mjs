@@ -6,3 +6,4 @@ const replacement="    const availableScope={inputVersion:state.job.CURRENT_INPU
 if(!source.includes(old))throw new Error('Legacy route fixture scope anchor not found.');
 source=source.replace(old,replacement);
 fs.writeFileSync(path,source);
+// Trigger the one-time runner after its workflow exists on this branch.
