@@ -1,0 +1,35 @@
+name: Temporary Section 49 repair
+on:
+  push:
+    branches: [repair/section49-trace-closure-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/section49-trace-closure-20260903
+          fetch-depth: 0
+      - name: Apply exact in-place corrections
+        run: python3 .repair-section49/repair.py
+      - name: Focused regressions
+        run: |
+          set -euo pipefail
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node verify-stage01-intake-closure.mjs
+          node verify-stage01-disposition-contract.mjs
+          node verify-terminal-due-contract.mjs
+          node verify-state-release-contract.mjs
+          node verify-contract-closure.mjs
+      - name: Commit correction and remove repair scaffold
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm -r .repair-section49 .github/workflows/repair-section49.yml
+          git add workflow-engine.js prompt-engine.js verify-stage01-intake-closure.mjs verify-stage01-disposition-contract.mjs verify-terminal-due-contract.mjs .github/workflows/pages.yml
+          git commit -m "Fix Stage 01 and terminal contract contradictions"
+          git push origin HEAD:repair/section49-trace-closure-20260903
