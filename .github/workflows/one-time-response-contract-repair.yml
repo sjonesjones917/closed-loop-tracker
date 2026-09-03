@@ -1,0 +1,72 @@
+name: One-time response contract repair
+
+on:
+  push:
+    branches: [repair/controlling-prompt-scope-closure]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/controlling-prompt-scope-closure
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Merge current main and repair non-circular prompt contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git merge --no-edit origin/main
+          node <<'NODE'
+          const fs=require('fs');
+          const read=f=>fs.readFileSync(f,'utf8'),write=(f,s)=>fs.writeFileSync(f,s,'utf8');
+          const once=(s,a,b,label)=>{const n=s.split(a).length-1;if(n!==1)throw new Error(`${label}: expected one match, found ${n}`);return s.replace(a,b);};
+          let p=read('prompt-engine.js');
+          const old="  const prompt=`${UNTRUSTED_DATA_RULE}\\n\\n${refreshDataEnvelopes(aliasedBody)}`.replace(/\\r\\n?/g,'\\n').replace(/\\n*$/,'')+'\\n';\n  const bodySha256=hash.sha256Text(prompt);\n  const descriptor=responseContractDescriptor(stage,operation);\n  const contractSha256=hash.sha256Value(descriptor);";
+          const neu="  const descriptor=responseContractDescriptor(stage,operation);\n  const contractSha256=hash.sha256Value(descriptor);\n  const contractText=`STRICT RESPONSE CONTRACT\\n${JSON.stringify(descriptor,null,2)}\\n\\nBINDING RULE\\nEcho promptIdentity, packageId, operationReservationId, challengeNonce, and every scope value exactly from manifest.json. Do not calculate, rewrite, infer, or substitute those application-owned bindings.`;\n  const prompt=`${UNTRUSTED_DATA_RULE}\\n\\n${refreshDataEnvelopes(aliasedBody)}\\n\\n${contractText}`.replace(/\\r\\n?/g,'\\n').replace(/\\n*$/,'')+'\\n';\n  const bodySha256=hash.sha256Text(prompt);";
+          p=once(p,old,neu,'prompt contract insertion');
+          write('prompt-engine.js',p);
+
+          let b=read('build-test-project.mjs');
+          b=b.replace("['STRICT RESPONSE CONTRACT','PROMPT IDENTITY','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources']","['STRICT RESPONSE CONTRACT','MANDATORY RESPONSE RULES','PROJECT-SCOPE BOUNDARY','independent external sources']");
+          write('build-test-project.mjs',b);
+
+          let t=read('verify-prompt-semantics.mjs');
+          const anchor="assert(promptIdentityRecord.prompt.includes('Echo promptIdentity, packageId, operationReservationId, challengeNonce, and scope exactly from manifest.json'),'Authoritative instruction does not direct the external actor to echo manifest-owned bindings.');";
+          if(t.includes(anchor))t=t.replace(anchor,"assert(promptIdentityRecord.prompt.includes('STRICT RESPONSE CONTRACT'),'Authoritative instruction omits the exact writable response contract.');\nassert(promptIdentityRecord.prompt.includes('Echo promptIdentity, packageId, operationReservationId, challengeNonce, and every scope value exactly from manifest.json'),'Authoritative instruction does not direct the external actor to echo manifest-owned bindings.');");
+          write('verify-prompt-semantics.mjs',t);
+
+          let oracle=read('verify-spec-grounded-route-oracle.mjs');
+          const oldOracle="for(const [c,list] of producers){for(const producer of list)for(const consumer of consumers.get(c)||[])assert(producer.stage<consumer.stage||(producer.stage===consumer.stage&&producer.operation===consumer.operation)||[17,19].includes(producer.stage),`${c}: later-stage producer ${producer.stage}/${producer.operation} is routed into earlier ${consumer.stage}/${consumer.operation}.`);}";
+          const newOracle="for(const [c,list] of producers){for(const producer of list)for(const consumer of consumers.get(c)||[]){const sameStage=producer.stage===consumer.stage;const order=sameStage?(schema.STAGE_OPERATIONS[producer.stage]||[]):[];const producerIndex=order.indexOf(producer.operation),consumerIndex=order.indexOf(consumer.operation);const forwardSameStage=sameStage&&producerIndex>=0&&consumerIndex>=0&&producerIndex<=consumerIndex;assert(producer.stage<consumer.stage||forwardSameStage,`${c}: producer ${producer.stage}/${producer.operation} is routed backward into ${consumer.stage}/${consumer.operation}.`);}}";
+          oracle=once(oracle,oldOracle,newOracle,'same-stage route oracle');
+          write('verify-spec-grounded-route-oracle.mjs',oracle);
+          NODE
+          rm .github/workflows/one-time-response-contract-repair.yml
+      - name: Prove prompt contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check prompt-engine.js
+          node build-test-project.mjs
+          node verify-prompt-semantics.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          ! grep -q "PROMPT IDENTITY — ECHO EXACTLY" prompt-engine.js
+      - name: Commit repair and remove scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git commit -m "Bind non-circular response contract into authoritative prompt"
+          git push origin HEAD:repair/controlling-prompt-scope-closure
