@@ -83,6 +83,33 @@ function metricFor(project){
     disposition:included.length===universe.length&&excluded.length===0?'SATISFIED':'VIOLATED'
   });
 }
+function closedMetricFromUniverse({metricId,universe,includedIds,emptyUniverseDetermination=null}){
+  const normalizedUniverse=[...universe].map(String);
+  const normalizedIncluded=[...includedIds].map(String);
+  if(normalizedUniverse.length===0){
+    const acceptedEmpty=emptyUniverseDetermination&&emptyUniverseDetermination.status==='ACCEPTED'&&emptyUniverseDetermination.evidenceSupported===true;
+    return Object.freeze({
+      metricId,
+      numerator:0,
+      denominator:0,
+      includedIds:[],
+      excludedIds:[],
+      value:acceptedEmpty?1:null,
+      disposition:acceptedEmpty?'SATISFIED':'BLOCKED'
+    });
+  }
+  const universeSet=new Set(normalizedUniverse);
+  const validIncluded=[...new Set(normalizedIncluded)].filter(id=>universeSet.has(id));
+  return Object.freeze({
+    metricId,
+    numerator:validIncluded.length,
+    denominator:normalizedUniverse.length,
+    includedIds:validIncluded,
+    excludedIds:normalizedUniverse.filter(id=>!validIncluded.includes(id)),
+    value:validIncluded.length/normalizedUniverse.length,
+    disposition:validIncluded.length===normalizedUniverse.length?'SATISFIED':'BLOCKED'
+  });
+}
 
 const conformantFixture=buildMetricFixture();
 const exactReqRunTestMetric=metricFor(conformantFixture);
@@ -107,8 +134,22 @@ assert.equal(duplicateMetric.numerator,9,'Duplicating one required verification 
 assert.equal(duplicateMetric.denominator,10,'Duplicate verification illegally changed the closed universe denominator.');
 assert(duplicateMetric.excludedIds.some(item=>item.reason.startsWith('DUPLICATE_CURRENT_REQUIRED_TRIPLE')),'Duplicate-tuple mutation was not recorded explicitly.');
 
+const emptyDenominatorBlocked=closedMetricFromUniverse({metricId:'EMPTY-DENOMINATOR-MUTATION',universe:[],includedIds:[]});
+assert.equal(emptyDenominatorBlocked.denominator,0,'Empty-denominator mutation did not create the intended empty closed universe.');
+assert.equal(emptyDenominatorBlocked.disposition,'BLOCKED','An empty denominator passed without an independently accepted evidence-supported EMPTY_UNIVERSE determination.');
+assert.equal(emptyDenominatorBlocked.value,null,'An unreviewed empty denominator must not produce 100% coverage.');
+const emptyDenominatorAccepted=closedMetricFromUniverse({
+  metricId:'EMPTY-DENOMINATOR-REVIEWED',
+  universe:[],
+  includedIds:[],
+  emptyUniverseDetermination:{status:'ACCEPTED',evidenceSupported:true}
+});
+assert.equal(emptyDenominatorAccepted.disposition,'SATISFIED','A current independently accepted evidence-supported empty-universe determination should satisfy the empty-universe metric contract.');
+assert.equal(emptyDenominatorAccepted.value,1,'A reviewed evidence-supported empty universe should publish 100% only through the explicit empty-universe rule.');
+
 report.exactReqRunTestCoverage=exactReqRunTestMetric.value;
 report.exactReqRunTestMetric=exactReqRunTestMetric;
 report.coverageMetrics={...(report.coverageMetrics||{}),exactReqRunTestCoverage:exactReqRunTestMetric};
 report.section49ReqRunTestMutationProof={missingTupleDetected:true,duplicateTupleDetected:true,closedUniverseStable:true};
+report.section49EmptyDenominatorMutationProof={unreviewedEmptyBlocked:true,reviewedEvidenceSupportedEmptyAccepted:true};
 originalLog(JSON.stringify(report,null,2));
