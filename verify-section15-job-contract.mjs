@@ -36,7 +36,7 @@ const expectedNames=[
   'LATEST_EVIDENCE_REFERENCE','INPUT_SET_HASH_OR_MANIFEST','JOB_RECORD_STATUS','STATUS_EVIDENCE','EXACT_DELIVERABLE_REQUESTED',
   'ASSUMPTIONS','UNKNOWN_INFORMATION','INPUT_SET_CONTENTS'
 ].sort();
-assert.deepEqual(Object.keys(schema.JOB_FIELDS).sort(),expectedNames,'Section 15 job field registry must be exact and complete.');
+assert.deepEqual(Array.from(Object.keys(schema.JOB_FIELDS).sort()),expectedNames,'Section 15 job field registry must be exact and complete.');
 
 const nullable=new Set([
   'JOB_TITLE','JOB_OWNER','SUPPLIED_MATERIALS_INVENTORY','REQUIRED_OUTPUT_FORMAT','DEADLINE_OR_TEMPORAL_SCOPE','DESIRED_SOURCE_COUNT',
@@ -52,10 +52,10 @@ assert.equal(schema.JOB_FIELDS.DESIRED_SOURCE_COUNT.valueType,'INTEGER');
 assert.equal(schema.JOB_FIELDS.NEXT_REQUIRED_ACTION.valueType,'OBJECT');
 assert.equal(schema.JOB_FIELDS.CURRENT_BLOCKERS.valueType,'OBJECT_ARRAY');
 assert.equal(schema.JOB_FIELDS.INPUT_SET_CONTENTS.valueType,'STRING');
-assert.deepEqual([...schema.JOB_FIELDS.CURRENT_STATE.enumValues],[
+assert.deepEqual(Array.from(schema.JOB_FIELDS.CURRENT_STATE.enumValues),[
   'BLOCKED','AWAITING_HUMAN_INPUT','PROPOSAL_PENDING_REVIEW','RESPONSE_STAGED','AWAITING_EXTERNAL_RESPONSE','READY_FOR_NEXT_OPERATION','WORKFLOW_COMPLETE'
 ]);
-assert.deepEqual([...schema.JOB_FIELDS.JOB_RECORD_STATUS.enumValues],['INCOMPLETE','BLOCKED','COMPLETE']);
+assert.deepEqual(Array.from(schema.JOB_FIELDS.JOB_RECORD_STATUS.enumValues),['INCOMPLETE','BLOCKED','COMPLETE']);
 assert.equal(schema.JOB_FIELDS.CONTRACT_PROFILE_ID.producer,'APPLICATION');
 assert.equal(schema.JOB_FIELDS.CONTRACT_PROFILE_ID.nullable,false);
 
@@ -63,7 +63,8 @@ const blank=core.createBlankState('JOB-SECTION15-REGRESSION');
 assert.equal(blank.job.CONTRACT_PROFILE_ID,'closed-loop-completion-profile/1');
 assert.equal(blank.job.CURRENT_STATE,'AWAITING_HUMAN_INPUT');
 assert.equal(blank.job.JOB_RECORD_STATUS,'INCOMPLETE');
-assert.deepEqual(blank.job.CURRENT_BLOCKERS,[]);
+assert.equal(Array.isArray(blank.job.CURRENT_BLOCKERS),true);
+assert.equal(blank.job.CURRENT_BLOCKERS.length,0);
 assert.equal(blank.job.CURRENT_ITERATION,null);
 assert.equal(blank.job.CURRENT_SOURCE_SET_VERSION,null);
 assert.equal(blank.job.CURRENT_RESEARCH_VERSION,null);
