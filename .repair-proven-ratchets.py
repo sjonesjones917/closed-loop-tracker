@@ -29,7 +29,6 @@ else:
   s=s.replace(legacy2,closed,1)
 reason_anchor="if(disposition==='NO_PROJECT_RELEVANT_INFORMATION'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);"
 if reason_anchor not in s:
-  # Main may still carry the legacy wording at this exact logic site.
   reason_anchor="if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);"
   if reason_anchor in s: s=s.replace(reason_anchor,"if(disposition==='NO_PROJECT_RELEVANT_INFORMATION'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);",1)
   reason_anchor="if(disposition==='NO_PROJECT_RELEVANT_INFORMATION'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);"
@@ -38,7 +37,14 @@ if "if(disposition==='INACCESSIBLE_OR_BLOCKED')" not in s:
   s=s.replace(reason_anchor,reason_anchor+"if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and cannot complete Stage 01.`);",1)
 e.write_text(s)
 
-# Permanent Stage 01 regression without touching unrelated browser fixtures.
+# Test fixtures must submit the same closed enum; do not preserve acceptance of legacy values.
+for f in Path('.').glob('verify-*.mjs'):
+  s=f.read_text()
+  s2=s.replace("disposition:'retained as context'","disposition:'RETAINED_AS_CONTEXT'")
+  s2=s2.replace('disposition:"retained as context"','disposition:"RETAINED_AS_CONTEXT"')
+  if s2!=s: f.write_text(s2)
+
+# Permanent Stage 01 regression without touching unrelated browser behavior.
 t=Path('verify-stage01-intake-closure.mjs')
 s=t.read_text()
 marker="assert(prompt.prompt.includes('first semantic reader')||prompt.prompt.includes('FIRST SEMANTIC READER'),'Prompt 01 does not identify Stage 01 as the first semantic reader.');"
