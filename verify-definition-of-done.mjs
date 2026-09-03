@@ -67,8 +67,10 @@ const browserExtraSource=fs.readFileSync('verify-browser-extra.mjs','utf8');
 for(const token of ['evaluateEvidenceContract','evaluateResultConsistency','effectiveDetermination','validateTraceIntegrity','detectCurrentContradictions','releaseMetrics','testExecutionPlan','executionHandoff'])assert(engineSource.includes(token),`Central reliability authority missing ${token}.`);
 
 const scopeKeys=[...new Set(Object.values(schema.SCOPE_REQUIREMENTS||{}).flat())];
-const scopeKeyProofs=scopeKeys.map(key=>ingestionTestSource.includes(`'${key}'`)||ingestionTestSource.includes(`\"${key}\"`));
+assert(scopeKeys.length>0,'No operation scope dimensions were discovered.');
 assert(ingestionTestSource.includes('scopeNegative')&&ingestionTestSource.includes("code==='STALE_SCOPE'"),'Stale-scope mutation matrix is not executable.');
+const scopeMatrixProofSource=fs.readFileSync('verify-section14-scope-matrix.mjs','utf8');
+const scopeKeyProofs=scopeKeys.map(key=>scopeMatrixProofSource.includes(`'${key}'`)||scopeMatrixProofSource.includes(`\"${key}\"`));
 const currentScopeSelectorCoverage=ratio(scopeKeyProofs.filter(Boolean).length,scopeKeyProofs.length);
 assert(currentScopeSelectorCoverage===1,'Current-scope selector coverage is not 100%.');
 
