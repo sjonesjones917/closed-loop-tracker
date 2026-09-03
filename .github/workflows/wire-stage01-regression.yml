@@ -1,0 +1,29 @@
+name: One-time Stage 01 regression wiring
+on:
+  push:
+    branches: [fix/stage01-disposition-contract-20260903c]
+permissions:
+  contents: write
+jobs:
+  wire:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/stage01-disposition-contract-20260903c
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Wire regression
+        run: python .github/wire-stage01-regression.py
+      - name: Prove permanent suite entry
+        run: node verify-complete.mjs
+      - name: Commit permanent suite wiring
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add verify-complete.mjs
+          git commit -m "Run Stage 01 disposition regression in complete suite"
+          git push origin HEAD:fix/stage01-disposition-contract-20260903c
