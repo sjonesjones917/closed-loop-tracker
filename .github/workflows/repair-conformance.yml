@@ -19,7 +19,17 @@ jobs:
         with:
           node-version: '22'
       - name: Apply exact owning-layer corrections
-        run: node .repair-conformance.mjs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.repair-conformance.mjs')
+          s=p.read_text()
+          block='''replaceOnce(workbook,\n  "globalThis.closedLoopCore=Object.freeze({WORKFLOW_ID,PROJECT_SCHEMA,SCHEMA,STAGE_COUNT,STAGE_DECISIONS,STAGES,createBlankProject});",\n  "globalThis.closedLoopCore=Object.freeze({WORKFLOW_ID,PROJECT_SCHEMA,CONTRACT_PROFILE_ID,SCHEMA,STAGE_COUNT,STAGE_DECISIONS,STAGES,createBlankProject});",\n  'export contract profile identity');\n'''
+          if block not in s:
+              raise SystemExit('expected obsolete export matcher not found')
+          p.write_text(s.replace(block,''))
+          PY
+          node .repair-conformance.mjs
       - name: Prove syntax and targeted regressions
         run: |
           set -euo pipefail
