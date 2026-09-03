@@ -24,13 +24,15 @@ const runtimeOrder=['workbook.js','hash.js','workflow-schema.js','test-runtime.j
 const deployedSources=['index.html',...runtimeOrder.slice(0,4),'test-worker.js',...runtimeOrder.slice(4),'TEST_PROJECT.json','.nojekyll'];
 const sha256=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const mediaType=file=>file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.js')?'text/javascript; charset=utf-8':file.endsWith('.json')?'application/json':file==='.nojekyll'?'application/octet-stream':'application/octet-stream';
+const assertUnicodeScalars=(value,label='canonical string')=>{for(let i=0;i<value.length;i++){const unit=value.charCodeAt(i);if(unit>=0xD800&&unit<=0xDBFF){const next=value.charCodeAt(i+1);if(!(next>=0xDC00&&next<=0xDFFF))throw new TypeError(`Unpaired UTF-16 high surrogate in ${label}.`);i++;}else if(unit>=0xDC00&&unit<=0xDFFF)throw new TypeError(`Unpaired UTF-16 low surrogate in ${label}.`);}return value;};
+const compareUnicodeScalarSequence=(a,b)=>{const left=Array.from(assertUnicodeScalars(String(a),'canonical object key'),ch=>ch.codePointAt(0));const right=Array.from(assertUnicodeScalars(String(b),'canonical object key'),ch=>ch.codePointAt(0));const length=Math.min(left.length,right.length);for(let i=0;i<length;i++)if(left[i]!==right[i])return left[i]-right[i];return left.length-right.length;};
 const canonical=value=>{
   if(value===null)return 'null';
   if(typeof value==='boolean')return value?'true':'false';
-  if(typeof value==='string')return JSON.stringify(value);
+  if(typeof value==='string')return JSON.stringify(assertUnicodeScalars(value));
   if(typeof value==='number'){if(!Number.isSafeInteger(value)||Object.is(value,-0))throw new TypeError('Manifest canonical numbers must be safe integers.');return String(value);}
   if(Array.isArray(value))return `[${value.map(canonical).join(',')}]`;
-  if(value&&Object.getPrototypeOf(value)===Object.prototype)return `{${Object.keys(value).sort().map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  if(value&&Object.getPrototypeOf(value)===Object.prototype){const keys=Object.keys(value);for(const key of keys)assertUnicodeScalars(key,'canonical object key');keys.sort(compareUnicodeScalarSequence);return `{${keys.map(key=>`${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;}
   throw new TypeError('Unsupported manifest value.');
 };
 
