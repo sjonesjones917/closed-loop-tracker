@@ -1,0 +1,89 @@
+name: Temporary Stage 01 current-main repair
+
+on:
+  push:
+    branches: [repair/stage01-dispositions-current-main-20260903-r2]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply one complete Stage 01 disposition ratchet
+        shell: bash
+        run: |
+          set -euo pipefail
+          PR_HEAD=6373994ff1cdbbf36d4c8029de9654583d940e4f
+          git fetch origin "$PR_HEAD"
+          for f in \
+            verify-all-stage-prompts.mjs \
+            verify-browser.mjs \
+            verify-complete.mjs \
+            verify-data-route-closure.mjs \
+            verify-human-stage-walkthrough.mjs \
+            verify-ingestion.mjs \
+            verify-one-time-intent-intake.mjs \
+            verify-spec-grounded-route-oracle.mjs \
+            verify-spec3-contract.mjs \
+            verify-stage-prompts-complete.mjs \
+            verify-stage01-disposition-contract.mjs \
+            verify-stage01-intake-closure.mjs \
+            verify-test-runtime.mjs \
+            verify-user-prompt-invariants.mjs \
+            verify-zero-loss-accounting.mjs \
+            verify.mjs
+          do
+            git show "$PR_HEAD:$f" > "$f"
+          done
+          node <<'NODE'
+          const fs=require('fs');
+          function replaceOnce(path,from,to){
+            const s=fs.readFileSync(path,'utf8');
+            const i=s.indexOf(from);
+            if(i<0) throw new Error(`${path}: expected repair anchor not found`);
+            if(s.indexOf(from,i+1)>=0) throw new Error(`${path}: repair anchor is not unique`);
+            fs.writeFileSync(path,s.slice(0,i)+to+s.slice(i+from.length));
+          }
+          replaceOnce('workflow-engine.js',
+            "const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason']);",
+            "const INTAKE_ACCOUNTING_DISPOSITIONS=Object.freeze(['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED']);");
+          replaceOnce('workflow-engine.js',
+            "    const disposition=String(unit?.disposition||'').trim().toLowerCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);if(disposition==='inapplicable with reason'&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires an inapplicability reason.`);\n    const statements=safe(unit?.extractedStatements);if(disposition!=='inapplicable with reason'&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;",
+            "    const disposition=String(unit?.disposition||'').trim().toUpperCase();if(!INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition))reasons.push(`Stage 01 intake unit ${id} has an invalid disposition.`);const noStatementDisposition=['NO_PROJECT_RELEVANT_INFORMATION','INACCESSIBLE_OR_BLOCKED'].includes(disposition);if(noStatementDisposition&&!String(unit?.reason||'').trim())reasons.push(`Stage 01 intake unit ${id} requires a reason for ${disposition}.`);if(disposition==='INACCESSIBLE_OR_BLOCKED')reasons.push(`Stage 01 intake unit ${id} is inaccessible or blocked and cannot satisfy Stage 01 completion.`);\n    const statements=safe(unit?.extractedStatements);if(!noStatementDisposition&&!statements.length)reasons.push(`Stage 01 intake unit ${id} contains no extracted human-authority statement.`);const statementKeys=new Set();let statementsValid=true;");
+          replaceOnce('workflow-engine.js',
+            "    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(disposition==='inapplicable with reason'?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);",
+            "    if(hashMatches&&INTAKE_ACCOUNTING_DISPOSITIONS.includes(disposition)&&statementsValid&&(noStatementDisposition?Boolean(String(unit?.reason||'').trim()):statements.length>0))accounted.add(id);");
+          replaceOnce('workflow-engine.js',
+            "  version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,",
+            "  version:'closed-loop-workflow-engine/1',STAGE_STATES,FORMAL_STATES,ALL_COLLECTIONS,ACTION_TYPES,INTAKE_ACCOUNTING_DISPOSITIONS,");
+          replaceOnce('prompt-engine.js',
+            "Classify every APPLICATION INTAKE MANIFEST unit exactly once. INPUT_SET_CONTENTS",
+            "Classify every APPLICATION INTAKE MANIFEST unit exactly once. Classify each unit using exactly one of these closed disposition values: EXTRACTED_RELEVANT_INFORMATION, RETAINED_AS_CONTEXT, NO_PROJECT_RELEVANT_INFORMATION, UNRESOLVED_HUMAN_AUTHORITY, LATER_RESOLVABLE, or INACCESSIBLE_OR_BLOCKED. INACCESSIBLE_OR_BLOCKED means required semantic content could not be inspected; report the exact blocker and do not claim Stage 01 completion. INPUT_SET_CONTENTS");
+          replaceOnce('verify-full-cycle.mjs',
+            "disposition:'incorporated into the job definition'",
+            "disposition:'EXTRACTED_RELEVANT_INFORMATION'");
+          NODE
+          node --check workflow-engine.js
+          node --check prompt-engine.js
+          node verify-stage01-disposition-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-ingestion.mjs
+          node verify-due-stage-timing.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify.mjs
+          rm .github/workflows/repair-stage01-current-r2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Close Stage 01 disposition contract on current main'
+          git push origin HEAD:repair/stage01-dispositions-current-main-20260903-r2
