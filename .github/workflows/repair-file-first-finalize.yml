@@ -1,0 +1,38 @@
+name: One-time file-first finalization
+
+on:
+  push:
+    branches: [repair/file-first-clean-20260903]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/file-first-clean-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Correct the external-agent instruction boundary
+        run: node .repair-file-first-finalize.mjs
+      - name: Prove the corrected boundary
+        run: |
+          set -euo pipefail
+          node --check app-core.js
+          node verify-data-route-closure.mjs
+          node verify-file-first-operator.mjs
+          node verify-file-first-response.mjs
+      - name: Commit only permanent implementation and regressions
+        run: |
+          set -euo pipefail
+          rm .repair-file-first-finalize.mjs .github/workflows/repair-file-first-finalize.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add app-core.js .repair-file-first-finalize.mjs .github/workflows/repair-file-first-finalize.yml
+          git commit -m "Finalize file-first operator boundary"
+          git push origin HEAD:repair/file-first-clean-20260903
