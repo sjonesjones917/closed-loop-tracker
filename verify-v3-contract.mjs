@@ -1,3 +1,4 @@
+import './verify-test-ir-port-types.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 
