@@ -5,35 +5,61 @@ on:
 permissions:
   contents: write
 jobs:
-  inspect:
-    if: ${{ !contains(github.event.head_commit.message, '[inspection-output]') && !contains(github.event.head_commit.message, '[spec-repair-applied]') }}
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[spec-repair-applied]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Capture exact repair seams
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply first controlling-spec contradiction repair
         run: |
           python - <<'PY'
           from pathlib import Path
-          out=[]
-          for file, needles in {
-            'app-core.js':['savePromptRecord','export-prompt-file','prepareStageResponseFile'],
-            'workflow-engine.js':['reserveOperation','reservationTargetSlot'],
-            'project-store.js':['createExecutionPackage','stageResponseFile'],
-            'prompt-engine.js':['function buildPromptRecord','function responseContractDescriptor'],
-            'response-ingestion.js':['function validateEnvelope','function planProposal'],
-          }.items():
-            text=Path(file).read_text()
-            out.append(f'===== {file} =====')
-            for needle in needles:
-              i=text.find(needle)
-              out.append(f'--- {needle} @ {i} ---')
-              if i>=0: out.append(text[max(0,i-2500):min(len(text),i+10000)])
-          Path('repair-inspection.txt').write_text('\n'.join(out))
+          p=Path('prompt-engine.js')
+          s=p.read_text()
+          old='incorporated into the job definition|retained as context|unresolved human-only|later-resolvable|inapplicable with reason'
+          new='EXTRACTED_RELEVANT_INFORMATION|RETAINED_AS_CONTEXT|NO_PROJECT_RELEVANT_INFORMATION|UNRESOLVED_HUMAN_AUTHORITY|LATER_RESOLVABLE|INACCESSIBLE_OR_BLOCKED'
+          if old not in s:
+              raise SystemExit('Expected nonconforming Stage 01 disposition vocabulary was not found.')
+          s=s.replace(old,new)
+          p.write_text(s)
+
+          test=Path('verify-stage01-disposition-contract.mjs')
+          test.write_text(r'''import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import { webcrypto } from 'node:crypto';
+globalThis.crypto=webcrypto;
+globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
+globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
+for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
+const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
+function project(){const p=core.createBlankState('JOB-STAGE01-DISPOSITIONS');p.job.JOB_ID='JOB-STAGE01-DISPOSITIONS';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve all human input exactly.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;}
+const required=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];
+const forbidden=['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'];
+function verify(source){
+  for(const token of required)assert(source.includes(token),`Stage 01 prompt must publish ${token}.`);
+  for(const token of forbidden)assert(!source.includes(token),`Legacy non-contract Stage 01 disposition remains: ${token}.`);
+}
+const prompt=prompts.buildPromptRecord(1,project(),{operation:'COMPLETE'}).prompt;
+verify(prompt);
+assert.throws(()=>verify(prompt.replace('INACCESSIBLE_OR_BLOCKED','inapplicable with reason')),/Legacy non-contract|must publish/,'Mutation restoring legacy disposition must fail.');
+console.log(JSON.stringify({stage01DispositionContract:'PASS',requiredDispositionCount:required.length,mutationDetected:true}));
+''')
           PY
+          node --check prompt-engine.js
+          node verify-stage01-disposition-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-prompt-semantics.mjs
+      - name: Commit complete ratchet step
+        run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add repair-inspection.txt
-          git commit -m 'Capture repair inspection seams [inspection-output]'
+          git add prompt-engine.js verify-stage01-disposition-contract.mjs
+          git commit -m 'Enforce closed Stage 01 accounting dispositions [spec-repair-applied]'
           git push
