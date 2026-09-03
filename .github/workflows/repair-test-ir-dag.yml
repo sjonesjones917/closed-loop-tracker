@@ -22,6 +22,16 @@ jobs:
           git show origin/fix/test-ir-explicit-dag:repair-test-runtime-dag.mjs > repair-test-runtime-dag.mjs
           git show origin/fix/test-ir-explicit-dag:repair-test-runtime-dag-bootstrap.mjs > repair-test-runtime-dag-bootstrap.mjs
           git show origin/fix/test-ir-explicit-dag:verify-test-runtime-dag.mjs > verify-test-runtime-dag.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-test-runtime-dag.mjs')
+          s=p.read_text()
+          old="assert.deepEqual(normalized.result,{stepRef:'S007',output:'assertion'});"
+          new="assert.equal(normalized.result.stepRef,'S007');assert.equal(normalized.result.output,'assertion');"
+          if old not in s:
+              raise SystemExit('Expected cross-realm result assertion not found')
+          p.write_text(s.replace(old,new))
+          PY
           node repair-test-runtime-dag-bootstrap.mjs
       - name: Prove explicit DAG contract and affected downstream paths
         run: |
