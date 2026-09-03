@@ -3,6 +3,8 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 const source=fs.readFileSync(new URL('./workflow-schema.js',import.meta.url),'utf8');
+const ingestionSource=fs.readFileSync(new URL('./response-ingestion.js',import.meta.url),'utf8');
+const engineSource=fs.readFileSync(new URL('./workflow-engine.js',import.meta.url),'utf8');
 
 export function assertOperationAuthoritySourceClosure(schemaSource=source){
   assert.match(schemaSource,/STAGE_OPERATION_REGISTRY/,'workflow-schema.js must expose the closed STAGE_OPERATION_REGISTRY');
@@ -14,7 +16,15 @@ export function assertOperationAuthoritySourceClosure(schemaSource=source){
   assert.match(schemaSource,/responseEnvelopeAllowed\s*:\s*false/,'non-agent operations must reject external response envelopes by contract');
 }
 
+export function assertAuthorityEnforcement(responseSource=ingestionSource,workflowSource=engineSource){
+  assert.match(responseSource,/operationContract\?\.responseEnvelopeAllowed===false/,'response ingestion must enforce the closed operation response-envelope prohibition');
+  assert.match(responseSource,/EXTERNAL_RESPONSE_NOT_ALLOWED/,'forbidden external response envelopes must fail closed with a stable validation code');
+  assert.match(workflowSource,/function calculateUnchangedConfirmation\s*\(/,'Stage 19 CONFIRM must execute through an application-owned calculation command');
+  assert.match(workflowSource,/calculateUnchangedConfirmation/,'the Stage 19 application-owned calculation command must be exported');
+}
+
 assertOperationAuthoritySourceClosure();
+assertAuthorityEnforcement();
 
 globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type;}};
 globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
@@ -88,5 +98,7 @@ assert.deepEqual([...calculateRelease.agentWritableCollections],[],'Stage 27 rel
 
 assert.throws(()=>assertOperationAuthoritySourceClosure(source.replaceAll('agentWritableCollections:Object.freeze([])','agentWritableCollections:Object.freeze([\'releaseGateReviews\'])')),/empty agent-writable/,'mutation granting a non-agent operation an agent write surface must fail');
 assert.throws(()=>assertOperationAuthoritySourceClosure(source.replaceAll('responseEnvelopeAllowed:false','responseEnvelopeAllowed:true')),/reject external response envelopes/,'mutation allowing an external response envelope for a non-agent operation must fail');
+assert.throws(()=>assertAuthorityEnforcement(ingestionSource.replaceAll('operationContract?.responseEnvelopeAllowed===false','false'),engineSource),/enforce the closed operation/,'mutation bypassing response-envelope enforcement must fail');
+assert.throws(()=>assertAuthorityEnforcement(ingestionSource,engineSource.replaceAll('function calculateUnchangedConfirmation','function removedUnchangedConfirmation')),/application-owned calculation command/,'mutation removing Stage 19 application calculation must fail');
 
-console.log(JSON.stringify({verifyOperationAuthorityClosure:'PASS',operations:operationKeys.length,runtimeRegistry:true,nonAgentAuthorityClosed:true}));
+console.log(JSON.stringify({verifyOperationAuthorityClosure:'PASS',operations:operationKeys.length,runtimeRegistry:true,nonAgentAuthorityClosed:true,responseEnvelopeEnforced:true,stage19ApplicationConfirmation:true}));
