@@ -1,0 +1,74 @@
+name: One-time Stage 01 accounting repair
+
+on:
+  push:
+    branches: [repair/stage01-accounting-20260903-r1]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: repair/stage01-accounting-20260903-r1
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact Stage 01 repair
+        run: python3 .repair-stage01.py
+      - name: Prove Stage 01 and downstream invariants
+        env:
+          BROWSER: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          for file in *.js *.mjs; do node --check "$file"; done
+          node build-test-project.mjs
+          node verify.mjs
+          node verify-v3-migration.mjs
+          node verify-v3-contract.mjs
+          node verify-spec3-contract.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-stage01-disposition-contract.mjs
+          node verify-one-time-intent-intake.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-all-stage-prompts.mjs
+          node verify-stage-prompts-complete.mjs
+          node verify-user-prompt-invariants.mjs
+          node verify-test-runtime-v3.mjs
+          node verify-test-runtime-limits.mjs
+          node verify-test-runtime.mjs
+          node verify-ingestion.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+          node verify-definition-of-done.mjs
+          node verify-v3-definition-of-done.mjs
+          node verify-project-lifecycle.mjs
+          node verify-prompt-semantics.mjs
+          node verify-semantic-invariant.mjs
+          if [ ! -x "$BROWSER" ]; then BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"; export BROWSER; fi
+          test -n "$BROWSER"
+          python3 -m http.server 4173 >/tmp/closed-loop-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node verify-human-stage-walkthrough.mjs
+          node verify-mobile-stage-action.mjs
+          node verify-browser.mjs
+          node verify-browser-extra.mjs
+          kill "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
+      - name: Commit repair and remove one-time scaffolding
+        run: |
+          set -euo pipefail
+          rm .repair-stage01.py .github/workflows/spec-repair-stage01.yml
+          git config user.name 'closed-loop-repair-bot'
+          git config user.email 'closed-loop-repair-bot@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          test -n "$(git status --porcelain)"
+          git commit -m 'Fix Stage 01 accounting disposition contract'
+          git push origin HEAD:repair/stage01-accounting-20260903-r1
