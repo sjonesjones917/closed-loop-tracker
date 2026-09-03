@@ -14,8 +14,12 @@ assert(core.WORKFLOW_ID==='mobile-closed-loop/30','Workflow identity changed.');
 assert(core.STAGE_COUNT===30,'Stage count changed.');
 assert(core.PROJECT_SCHEMA==='closed-loop-project/3','Project schema is not /3.');
 assert(schema.RESPONSE_SCHEMA==='closed-loop-stage-response/3','Response schema is not /3.');
-assert(!fs.existsSync('IMPLEMENTATION_GOVERNANCE.md'),'Implementation-agent governance must not be stored in the repository.');
-assert(!fs.existsSync('specification'),'Controlling implementation instructions must not be stored in a repository specification directory.');
+assert(!fs.existsSync('IMPLEMENTATION_GOVERNANCE.md'),'Implementation-agent controller/governance must not be stored as runtime repository content.');
+if(fs.existsSync('specification')){
+  assert(fs.existsSync('specification/closed-loop-reliability-controlling-implementation-specification.txt'),'Specification directory exists without the required controlling source.');
+  assert(fs.existsSync('specification/closed-loop-specification-manifest.json'),'Specification directory exists without the required repository-only specification manifest.');
+  assert(fs.existsSync('specification/closed-loop-normative-requirements.json'),'Specification directory exists without the required repository-only normative-requirement manifest.');
+}
 
 const source=fs.readFileSync('prompt-engine.js','utf8');
 for(const forbidden of [
@@ -131,6 +135,6 @@ console.log(JSON.stringify({
   promptDelimiterEscapePrevented:true,
   shortValueInstructionCorruptionPrevented:true,
   postGenerationPromptWrapperAbsent:true,
-  repositoryImplementationInstructionBoundary:true
+  repositoryGovernanceBoundary:true
 },null,2));
 await import('./verify-file-first-operator.mjs');
