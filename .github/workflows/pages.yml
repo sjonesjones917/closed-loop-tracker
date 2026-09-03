@@ -17,7 +17,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
   statuses: write
@@ -33,53 +33,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-
-      - name: Apply and commit the one-time legacy browser-fixture repair
-        if: github.event_name == 'pull_request' && github.head_ref == 'repair/stage01-disposition-current-20260903'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          node <<'NODE'
-          const fs=require('fs');
-          const file='verify-browser.mjs',source=fs.readFileSync(file,'utf8');
-          const start='// Clean state: retained project is seeded exactly once and remains Stage 02 next.';
-          const end='// Phone and desktop rendering checks.';
-          const a=source.indexOf(start),b=source.indexOf(end,a);
-          if(a<0||b<0||b<=a)throw new Error('Expected stale retained-project browser block was not found exactly once.');
-          if(source.indexOf(start,a+1)>=0)throw new Error('Stale retained-project browser block is duplicated.');
-          const replacement=String.raw`// Clean state: the shipped retained fixture is legacy historical evidence and must not be promoted into current /3 proof by migration.
- await waitExpr(cdp,\`document.querySelector('#project-picker')?.options.length>=1\`,20000);
- assert((await allProjects(cdp)).filter(p=>p.job?.JOB_ID==='JOB-20260823144121').length===1,'Retained project missing or duplicated in clean state.');
- let retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121','Wrong retained JOB_ID.');assert(String(retained.job.EXACT_USER_OBJECTIVE_VERBATIM||'').trim().length>0,'Exact legacy user objective was not preserved as human authority.');
- const retainedLegacyBasis=await evalValue(cdp,\`(async()=>{const all=await globalThis.closedLoopProjectStore.readAll(),p=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121');return {stage1Status:p?.stages?.['1']?.status||'',currentStage:p?.job?.CURRENT_STAGE||'',acceptedStage1:(p?.projectData?.acceptedChanges||[]).filter(x=>Number(x.stage)===1&&x.status==='COMMITTED'&&x.responseType==='DATA_PROPOSAL'&&!x.invalidatedBy).length,intakeComplete:globalThis.closedLoopWorkflowEngine.evaluateIntakeAccounting(p).complete};})()\`);
- assert(retainedLegacyBasis&&retainedLegacyBasis.acceptedStage1===0,'Legacy migration fabricated a current accepted Stage 01 DATA_PROPOSAL.');
- assert(retainedLegacyBasis.intakeComplete===false,'Legacy migration fabricated current Stage 01 semantic-accounting proof.');
- assert(!(retainedLegacyBasis.stage1Status==='COMPLETE'&&retainedLegacyBasis.currentStage==='STAGE 02'),'Legacy migration incorrectly made historical Stage 01 evidence current and gating.');
- await openStage(cdp,1);await click(cdp,'[data-view="Records"]');let recordText=(await snapshot(cdp)).text;for(const token of ['Original user-entered data','Migration archives'])assert(recordText.includes(token),\`Retained historical record surface missing \${token}.\`);
- // The remaining Stage 02+ browser checks require a genuinely current Stage 01 prerequisite. Build it through the current prompt, ingestion, commit, and human-confirmation path.
- const currentFixture=await evalValue(cdp,\`(async()=>{const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,store=globalThis.closedLoopProjectStore,schema=globalThis.closedLoopWorkflowSchema;const all=await store.readAll(),legacy=all.find(x=>x.job?.JOB_ID==='JOB-20260823144121');if(!legacy)throw new Error('Legacy retained fixture disappeared.');const p=core.createBlankState('JOB-20260823144121');p.isRetainedTestProject=true;p.retainedSpecRevision=legacy.retainedSpecRevision||legacy.specRevision||'legacy-retained-history';Object.assign(p.job,{JOB_TITLE:'Mobile Closed-Loop Agent Reliability Workbook',JOB_OWNER:'Browser acceptance operator',EXACT_USER_OBJECTIVE_VERBATIM:'Exercise the current closed-loop browser operator path without fabricating legacy semantic proof.',SUPPLIED_MATERIALS_INVENTORY:'NONE',REQUIRED_OUTPUT_FORMAT:'Controlled browser acceptance fixture.',DEADLINE_OR_TEMPORAL_SCOPE:null,DESIRED_SOURCE_COUNT:null,KNOWN_AUTHORITATIVE_SOURCES:null,AVAILABLE_TOOLS:'Current application and authorized browser verifier.',PROHIBITED_ACTIONS:'Do not promote legacy migration evidence into current semantic proof.',EXPLICIT_USER_REQUIREMENTS:'Use current Stage 01 ingestion and human confirmation before Stage 02.'});p.projectData.userEntered={objective:p.job.EXACT_USER_OBJECTIVE_VERBATIM,explicitRequirements:p.job.EXPLICIT_USER_REQUIREMENTS};p.projectData.migrationArchives=structuredClone(legacy.projectData?.migrationArchives||[]);engine.ensureShape(p);engine.recalculate(p);const pr=prompts.buildPromptRecord(1,p),manifest=pr.contextManifest.intakeCoverageManifest,capture={schema:'closed-loop-stage01-capture/1',inputVersion:manifest.inputVersion,manifestSha256:manifest.manifestSha256,units:manifest.units.map((unit,index)=>({sourceUnitId:unit.unitId,sourceRawValueSha256:unit.rawValueSha256,disposition:'RETAINED_AS_CONTEXT',reason:'Current browser acceptance fixture preserves this supplied human-authority unit for downstream reuse.',extractedStatements:[{statementKey:'BROWSER-STAGE1-'+String(index+1),text:unit.rawValueText||unit.label||unit.unitId,statementClass:'CONTEXT'}]}))},envelope={schema:schema.RESPONSE_SCHEMA,contractProfileId:schema.CONTRACT_PROFILE_ID,jobId:p.job.JOB_ID,stage:1,operation:pr.operation,promptIdentity:{instructionId:pr.instructionId,bodySha256:pr.bodySha256,contractSha256:pr.contractSha256,contextSignature:pr.contextSignature},scope:pr.scope,responseType:'DATA_PROPOSAL',humanInputRequests:[],stageData:{EXACT_DELIVERABLE_REQUESTED:'Controlled browser acceptance fixture',ASSUMPTIONS:'NONE',UNKNOWN_INFORMATION:'NONE',INPUT_SET_CONTENTS:JSON.stringify(capture)},records:{},evidence:[{temporaryKey:'browser-stage1-evidence',kind:'INTAKE',description:'Current browser Stage 01 acceptance fixture evidence',authorityType:'AGENT_CLAIM',location:'verify-browser.mjs',content:'Every current application-enumerated raw input unit is accounted for.'}],unresolved:[],warnings:[],attachments:[]};const prepared=ingestion.prepare(p,{stage:1,text:JSON.stringify(envelope),promptRecord:pr});if(!prepared.validation.valid)throw new Error('Current Stage 01 browser fixture response rejected: '+JSON.stringify(prepared.validation.issues));const committed=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'BROWSER_CURRENT_FIXTURE'}),q=committed.project;engine.recordStageConfirmation(q,1,true,'Current Stage 01 intent confirmed for browser acceptance.','BROWSER_CURRENT_FIXTURE',{acceptedChangeId:committed.acceptedChange.changeId,inputVersion:q.job.CURRENT_INPUT_VERSION,instructionId:committed.acceptedChange.promptId,contextSignature:committed.acceptedChange.contextSignature,operatorLabel:'BROWSER_CURRENT_FIXTURE'});engine.recalculate(q);const gate=engine.gate(1,q);if(!gate.complete||q.stages[1].status!=='COMPLETE'||q.job.CURRENT_STAGE!=='STAGE 02')throw new Error('Current browser fixture did not establish Stage 01: '+JSON.stringify({gate,status:q.stages[1].status,currentStage:q.job.CURRENT_STAGE}));await store.writeAll([...all.filter(x=>x.job?.JOB_ID!=='JOB-20260823144121'),q]);return {stage1:q.stages[1].status,currentStage:q.job.CURRENT_STAGE,intakeComplete:engine.evaluateIntakeAccounting(q).complete,acceptedStage1:(q.projectData.acceptedChanges||[]).filter(x=>Number(x.stage)===1&&x.status==='COMMITTED').length};})()\`);
- assert(currentFixture?.stage1==='COMPLETE'&&currentFixture?.currentStage==='STAGE 02'&&currentFixture?.intakeComplete===true&&currentFixture?.acceptedStage1===1,\`Current Stage 01 browser fixture is not valid: \${JSON.stringify(currentFixture)}\`);
- await evalValue(cdp,\`location.reload();true\`);await sleep(450);await waitExpr(cdp,\`globalThis.closedLoopAppReady===true\`,20000);retained=await activeProject(cdp);assert(retained.job.JOB_ID==='JOB-20260823144121'&&retained.stages['1'].status==='COMPLETE'&&retained.job.CURRENT_STAGE==='STAGE 02','Current Stage 01 browser prerequisite did not survive reload.');
- const retainedInputCapture=String(retained.stages['1']?.agentData?.INPUT_SET_CONTENTS||retained.stages['1']?.acceptedData?.INPUT_SET_CONTENTS||'');let parsedRetainedInputCapture;try{parsedRetainedInputCapture=JSON.parse(retainedInputCapture);}catch{parsedRetainedInputCapture=null;}assert(parsedRetainedInputCapture?.inputVersion===retained.job.CURRENT_INPUT_VERSION&&String(parsedRetainedInputCapture?.manifestSha256||'').length>0,'Current Stage 01 accepted input-set capture is not bound to its intake manifest.');
- const nativeIntakeProof=await evalValue(cdp,\`(()=>{const p=globalThis.closedLoopCore.createBlankState('JOB-BROWSER-INTAKE-PROOF');p.job.EXACT_USER_OBJECTIVE_VERBATIM='browser-intake-objective';p.job.EXPLICIT_USER_REQUIREMENTS='browser-intake-requirement';p.projectData.userEntered={objective:'browser-intake-objective',nested:{acceptance:'browser-intake-acceptance'}};globalThis.closedLoopWorkflowEngine.recalculate(p);const m=globalThis.closedLoopWorkflowEngine.intakeCoverageManifest(p);return {inputVersion:m?.inputVersion,unitCount:m?.unitCount||0,hasObjective:(m?.units||[]).some(u=>u.sourceLocation==='job.EXACT_USER_OBJECTIVE_VERBATIM'),hasNested:(m?.units||[]).some(u=>u.sourceLocation==='projectData.userEntered.nested.acceptance')};})()\`);assert(nativeIntakeProof&&nativeIntakeProof.unitCount>0&&nativeIntakeProof.hasObjective&&nativeIntakeProof.hasNested,'Application-owned Stage 01 intake manifest did not enumerate native current human-authority input.');assert((retained.projectData.sources||[]).length===0,'Stage 02 sources were fabricated on current fixture.');
- await openStage(cdp,1);assert((await snapshot(cdp)).text.includes('Stage 01 is preserved completed history'),'Current Stage 01 completed history is not inspectable.');
- await click(cdp,'[data-view="Records"]');recordText=(await snapshot(cdp)).text;for(const token of ['Original user-entered data','Generated instructions','Generated outputs','Output receipts','Migration archives'])assert(recordText.includes(token),\`Current Stage 01 record surface missing \${token}.\`);
- `;
-          fs.writeFileSync(file,source.slice(0,a)+replacement+source.slice(b));
-          NODE
-          node --check verify-browser.mjs
-          git checkout origin/main -- .github/workflows/pages.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add verify-browser.mjs .github/workflows/pages.yml
-          git commit -m "Fix browser proof to keep legacy evidence non-gating"
-          git push origin HEAD:${{ github.head_ref }}
 
       - name: Capture exact PR source workspace
         if: github.event_name == 'pull_request'
@@ -302,3 +258,228 @@ jobs:
           }
           run_browser_verifier verify-browser.mjs
           run_browser_verifier verify-browser-extra.mjs
+
+  publish-status:
+    name: Publish machine acceptance status
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'push' && needs.test.result == 'success' && needs.deploy.result == 'success' && needs.verify-live.result == 'success') ||
+       (github.event_name == 'workflow_dispatch' && needs.test.result == 'success'))
+    needs: [test, deploy, verify-live]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Reverify deployed Chromium for authenticated mobile acceptance
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PAGE_URL: https://sjonesjones917.github.io/closed-loop-tracker/
+        run: |
+          set -euo pipefail
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chrome || true)"
+          test -n "$BROWSER"
+          run_browser_verifier() {
+            script="$1"
+            for attempt in 1 2 3; do
+              log="/tmp/mobile-${script}.${attempt}.log"
+              if node "$script" >"$log" 2>&1; then
+                cat "$log"
+                return 0
+              fi
+              cat "$log"
+              if ! grep -Eq 'ECONNREFUSED 127\.0\.0\.1:[0-9]+' "$log"; then
+                return 1
+              fi
+              test "$attempt" -lt 3 || return 1
+            done
+          }
+          run_browser_verifier verify-browser.mjs
+          run_browser_verifier verify-browser-extra.mjs
+      - name: Build acceptance artifact from executed proof jobs
+        id: acceptance
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.deploy.result }}
+          LIVE_RESULT: ${{ github.event_name == 'workflow_dispatch' && 'success' || needs.verify-live.result }}
+          MOBILE_ACCEPTANCE_TARGET_JSON: ${{ inputs.mobile_acceptance_target_json || '' }}
+          MOBILE_ACCEPTANCE_EVIDENCE_JSON: ${{ inputs.mobile_acceptance_evidence_json || '' }}
+        run: |
+          set -euo pipefail
+          test "$TEST_RESULT" = success
+          test "$DEPLOY_RESULT" = success
+          test "$LIVE_RESULT" = success
+          node verify-definition-of-done.mjs > /tmp/definition.json
+          node verify-v3-definition-of-done.mjs > /tmp/v3.json
+          node verify-ingestion.mjs > /tmp/ingestion.out
+          node verify-stage01-intake-closure.mjs > /tmp/stage01.out
+          node verify-zero-loss-accounting.mjs > /tmp/zero-loss.out
+          node verify-full-cycle.mjs > /tmp/full-cycle.json
+          node verify-data-route-closure.mjs > /tmp/data-route.json
+          node verify-infrastructure-route-closure.mjs > /tmp/infrastructure-route.json
+          node verify-mobile-release-governance.mjs > /tmp/mobile-governance.json
+          USED_MOBILE_CHALLENGES_JSON="$(git ls-remote --tags origin 'refs/tags/mobile-acceptance-challenge-*' | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const a=s.split(/\n/).filter(Boolean).map(l=>l.trim().split(/\s+/)[1]||'').map(r=>r.replace('refs/tags/mobile-acceptance-challenge-','').replace(/\^\{\}$/,'')).filter(Boolean);process.stdout.write(JSON.stringify([...new Set(a)]));});")"
+          export USED_MOBILE_CHALLENGES_JSON
+          node evaluate-mobile-acceptance-submission.mjs > /tmp/mobile-acceptance.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const definition=JSON.parse(fs.readFileSync('/tmp/definition.json','utf8'));
+          const v3=JSON.parse(fs.readFileSync('/tmp/v3.json','utf8'));
+          const stage01=JSON.parse(fs.readFileSync('/tmp/stage01.out','utf8'));
+          const zeroLoss=JSON.parse(fs.readFileSync('/tmp/zero-loss.out','utf8'));
+          const fullCycle=JSON.parse(fs.readFileSync('/tmp/full-cycle.json','utf8'));
+          const dataRoute=JSON.parse(fs.readFileSync('/tmp/data-route.json','utf8'));
+          const infrastructureRoute=JSON.parse(fs.readFileSync('/tmp/infrastructure-route.json','utf8'));
+          const mobileGovernance=JSON.parse(fs.readFileSync('/tmp/mobile-governance.json','utf8'));
+          const mobileAcceptance=JSON.parse(fs.readFileSync('/tmp/mobile-acceptance.json','utf8'));
+          const ingestionText=fs.readFileSync('/tmp/ingestion.out','utf8');
+          const stage01RawInputAccounting=Number(Boolean(stage01.stage01IntakeClosure&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
+          const stage01RequiredFileInspectionAccounting=Number(Boolean(stage01.artifactIdentityBound&&stage01.currentManifestBound&&stage01.incompleteAccountingRejected));
+          const stage01AcceptedSemanticMappingCoverage=Number(Boolean(zeroLoss.zeroLossStage01&&zeroLoss.incompleteIntakeRejected));
+          const stage04ObligationAccounting=Number(Boolean(zeroLoss.zeroLossStage04&&zeroLoss.completeStage03ResearchUnion&&zeroLoss.incompleteObligationRejected));
+          const negativeMatches=[...ingestionText.matchAll(/"totalNegativeCases"\s*:\s*(\d+)/g)];
+          if(!negativeMatches.length)throw new Error('Ingestion proof did not publish totalNegativeCases.');
+          if(dataRoute.dataRouteClosure!=='PASS')throw new Error('Canonical data-route closure proof did not pass.');
+          if(infrastructureRoute.infrastructureRouteClosure!=='PASS')throw new Error('Infrastructure route-closure proof did not pass.');
+          if(mobileGovernance.mobileReleaseGovernance!=='PASS')throw new Error('Physical-iPhone release-tag governance proof did not pass.');
+          const finalAcceptancePublication=mobileAcceptance.actualIPhoneSafariAcceptance===true&&mobileAcceptance.mobileAcceptanceResult==='ACCEPTED';
+          const report={
+            commit:process.env.GITHUB_SHA,
+            workflow:'mobile-closed-loop/30',
+            contractProfileId:'closed-loop-completion-profile/1',
+            projectSchema:'closed-loop-project/3',
+            responseSchema:'closed-loop-stage-response/3',
+            testIrSchema:'closed-loop-test-spec/1',
+            verificationPackageSchema:'closed-loop-verification-package/1',
+            stageCount:30,
+            ...definition,
+            ...v3,
+            dataRouteClosure:dataRoute.dataRouteClosure,
+            infrastructureRouteClosure:infrastructureRoute.infrastructureRouteClosure,
+            routeOperationsChecked:dataRoute.operationsChecked,
+            routeCanonicalFamilies:dataRoute.canonicalFamilies,
+            routeReadEdgesChecked:dataRoute.readEdgesChecked,
+            routeWritableCollectionsChecked:dataRoute.writableCollectionsChecked,
+            routeWritableFieldsChecked:dataRoute.writableFieldsChecked,
+            routeRelationshipDefinitionsChecked:dataRoute.relationshipDefinitionsChecked,
+            routeInvalidationStagesChecked:dataRoute.invalidationStagesChecked,
+            routeCurrentScopeStaleExclusion:dataRoute.currentScopeStaleExclusion,
+            routePromptReadSerialization:dataRoute.promptReadSerialization,
+            routeResponseAuthorizationClosure:dataRoute.responseAuthorizationClosure,
+            routeProvenanceContractClosure:dataRoute.provenanceContractClosure,
+            routeDownstreamForwardingClosure:dataRoute.downstreamForwardingClosure,
+            routeDownstreamOnlyInvalidation:dataRoute.downstreamOnlyInvalidation,
+            routeSubjectNeutralPromptAuthority:dataRoute.subjectNeutralPromptAuthority,
+            routeHumanExperiencePromptContract:dataRoute.humanExperiencePromptContract,
+            infrastructureFamiliesChecked:infrastructureRoute.infrastructureFamilies,
+            infrastructureRawFirstCapture:infrastructureRoute.rawFirstCapture,
+            infrastructurePrecommitRevalidation:infrastructureRoute.precommitRevalidation,
+            infrastructureExtractionManifestProvenance:infrastructureRoute.extractionManifestProvenance,
+            infrastructurePromptContextManifestRoute:infrastructureRoute.promptContextManifestRoute,
+            infrastructureAuthorityPartitionsSeparated:infrastructureRoute.authorityPartitionsSeparated,
+            infrastructureCurrentScopeRoute:infrastructureRoute.currentScopeRoute,
+            infrastructurePersistenceIntegrityRoute:infrastructureRoute.persistenceIntegrityRoute,
+            infrastructureStructuredOperatorActionRoute:infrastructureRoute.structuredOperatorActionRoute,
+            currentScopeSelectorCoverage:definition.currentScopeSelectorCoverage,
+            exactReqRunTestCoverage:definition.exactReqRunTestCoverage,
+            applicableCurrentRegressionSuccess:definition.applicableCurrentRegressionSuccess,
+            mandatoryEvidenceChainStructuralCoverage:definition.mandatoryEvidenceChainCoverage,
+            mandatoryEvidenceSufficiencyCoverage:v3.mandatoryEvidenceSufficiencyCoverage,
+            releaseArtifactIdentityCoverage:definition.releaseArtifactIdentityCoverage,
+            unauthorizedFieldMutationsAccepted:definition.unauthorizedFieldMutationsAccepted,
+            canonicalMutationsBeforeAcceptance:definition.canonicalMutationsBeforeAcceptance,
+            partialCommitsAfterInjectedFailure:definition.partialCommitsAfterInjectedFailure,
+            staleProposalsAccepted:definition.staleProposalsAccepted,
+            crossProjectRelationshipsAccepted:definition.crossProjectRelationshipsAccepted,
+            historicalScopeSatisfyingCurrentGates:definition.historicalScopeSatisfyingCurrentGates,
+            unmatchedDeliveryFilesAuthorized:definition.unmatchedDeliveryFilesAuthorized,
+            appendOnlyHistoryRewritesAccepted:definition.appendOnlyHistoryRewritesAccepted,
+            unsupportedTestIrTreatedAsExecutable:v3.unsupportedTestIrTreatedAsExecutable,
+            externalAssertionsOverridingApplicationProof:v3.externalAssertionsOverridingApplicationProof,
+            nativeExecutionReceiptsFabricatedExternally:v3.nativeExecutionReceiptsFabricatedExternally,
+            releaseAcceptedWithContradiction:v3.releaseAcceptedWithContradiction,
+            stage01RawInputAccounting,
+            stage01RequiredFileInspectionAccounting,
+            stage01AcceptedSemanticMappingCoverage,
+            stage04ObligationAccounting,
+            stagesCompleted:Number(fullCycle.stagesCompleted||0),
+            negativeCasesPassed:Number(negativeMatches.at(-1)[1]),
+            deployedByteIdentity:process.env.LIVE_RESULT==='success',
+            deploymentManifestSchema:'closed-loop-deployment-manifest/1',
+            finalDeploymentResourceIdentityCoverage:process.env.LIVE_RESULT==='success'?1:0,
+            localChromiumAcceptance:process.env.TEST_RESULT==='success',
+            deployedChromiumAcceptance:process.env.LIVE_RESULT==='success',
+            testedBrowserWidths:[320,393,'desktop'],
+            mobileReleaseTagGovernanceCoverage:Number(mobileGovernance.mobileReleaseGovernance==='PASS'),
+            ...mobileAcceptance,
+            finalAcceptancePublication,
+            releaseTagEligible:finalAcceptancePublication,
+            realThirtyStageProjectAcceptance:false,
+            fullProductionMaturity:false,
+            jobResults:{test:process.env.TEST_RESULT,deploy:process.env.DEPLOY_RESULT,live:process.env.LIVE_RESULT,physicalIPhone:mobileAcceptance.physicalIPhoneJobResult},
+            nextProofStep:finalAcceptancePublication?'Create the release tag for this exact accepted commit.':'Pinned actual-iPhone Safari acceptance for the exact deployed commit and deployment manifest.',
+            proofSources:{
+              ownership:'verify.mjs',
+              canonicalDataRoutes:'verify-data-route-closure.mjs',
+              infrastructureRoutes:'verify-infrastructure-route-closure.mjs',
+              migration:'verify-v3-migration.mjs',
+              stage01:'verify-stage01-intake-closure.mjs',
+              stage01Reuse:'verify-one-time-intent-intake.mjs',
+              stage04:'verify-zero-loss-accounting.mjs',
+              testIr:'verify-test-runtime-v3.mjs',
+              limits:'verify-test-runtime-limits.mjs',
+              ingestion:'verify-ingestion.mjs',
+              workflow:'verify-complete.mjs',
+              fullCycle:'verify-full-cycle.mjs',
+              prompts:'verify-prompt-semantics.mjs',
+              localBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
+              deployedIdentity:'verify-live.mjs or evaluate-mobile-acceptance-submission.mjs exact deployed manifest/resource verification',
+              deploymentManifest:'build-static-site.mjs and verify-deployment-manifest.mjs',
+              deployedBrowser:'verify-browser.mjs and verify-browser-extra.mjs',
+              physicalIPhoneReleaseGovernance:'verify-mobile-release-governance.mjs',
+              physicalIPhoneAcceptance:finalAcceptancePublication?`${mobileAcceptance.mobileAcceptanceEvidenceId} (${mobileAcceptance.mobileAcceptanceEvidenceBasis})`:'BLOCKED_ENVIRONMENT or BLOCKED: current physical-device evidence did not satisfy the gate'
+            }
+          };
+          fs.writeFileSync('closed-loop-acceptance.json',JSON.stringify(report,null,2)+'\n');
+          if(!process.env.GITHUB_OUTPUT)throw new Error('GITHUB_OUTPUT is unavailable.');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,[
+            `actual_iphone=${report.actualIPhoneSafariAcceptance}`,
+            `final_acceptance=${report.finalAcceptancePublication}`,
+            ''
+          ].join('\n'));
+          NODE
+      - name: Upload acceptance report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-loop-acceptance-${{ github.sha }}-${{ github.run_id }}
+          path: closed-loop-acceptance.json
+      - name: Record blocked actual-iPhone acceptance
+        if: steps.acceptance.outputs.final_acceptance != 'true'
+        run: |
+          set -euo pipefail
+          echo "::notice title=Release tag blocked::Actual-iPhone Safari acceptance is not proven for ${GITHUB_SHA}; no release tag was created."
+          test "${{ steps.acceptance.outputs.actual_iphone }}" = false
+      - name: Create release tag only after deployed and actual-iPhone proof
+        if: steps.acceptance.outputs.final_acceptance == 'true'
+        run: |
+          set -euo pipefail
+          TAG="acceptance-${GITHUB_SHA::12}"
+          CHALLENGE="$(node -e "const r=require('./closed-loop-acceptance.json');const c=String(r.mobileAcceptanceChallenge||'').toLowerCase();if(!/^[0-9a-f]{32,}$/.test(c))process.exit(2);process.stdout.write(c);")"
+          CHALLENGE_TAG="mobile-acceptance-challenge-$CHALLENGE"
+          git config user.name closed-loop-release
+          git config user.email closed-loop-release@users.noreply.github.com
+          test -z "$(git ls-remote --tags origin "refs/tags/$CHALLENGE_TAG" | awk '{print $1}')"
+          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')"
+          if [ -n "$EXISTING" ]; then
+            test "$EXISTING" = "$GITHUB_SHA"
+          fi
+          git tag "$CHALLENGE_TAG" "$GITHUB_SHA"
+          if [ -z "$EXISTING" ]; then
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$CHALLENGE_TAG" "refs/tags/$TAG"
+          else
+            git push origin "refs/tags/$CHALLENGE_TAG"
+          fi
