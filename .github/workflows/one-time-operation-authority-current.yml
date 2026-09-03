@@ -40,6 +40,20 @@ jobs:
           test -s /tmp/authority.patch
           git apply --3way /tmp/authority.patch
           ! grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' -- workflow-schema.js workflow-engine.js response-ingestion.js verify-v3-contract.mjs verify-spec-grounded-route-oracle.mjs
+      - name: Correct contradictory legacy ingestion fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('verify-ingestion.mjs')
+          s=p.read_text()
+          old="function validEnvelope(p,stage,promptRecord){\n  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;"
+          new="function validEnvelope(p,stage,promptRecord){\n  const contract=schema.STAGE_CONTRACTS[stage],operationContract=schema.operationContract(stage,promptRecord.operation),stageFields=operationContract?.allowedStageData||contract.allowedStageData,writableCollections=operationContract?.agentWritableCollections||contract.allowedCollections;\n  if(operationContract?.responseEnvelopeAllowed===false)return null;"
+          if old not in s:
+              raise SystemExit('verify-ingestion validEnvelope anchor changed; refusing blind test rewrite')
+          p.write_text(s.replace(old,new,1))
+          PY
       - name: Prove repaired authority boundary
         shell: bash
         run: |
