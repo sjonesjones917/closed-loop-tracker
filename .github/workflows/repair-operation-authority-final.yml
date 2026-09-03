@@ -1,0 +1,35 @@
+name: one-time-final-operation-authority-repair
+on:
+  push:
+    branches:
+      - repair/scope-authority-20260902
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[operation-authority-final]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply repair
+        run: node repair-operation-authority-final.mjs
+      - name: Prove focused and existing contracts
+        run: |
+          node --check workflow-schema.js
+          node verify-operation-scope-authority.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-v3-contract.mjs
+      - name: Remove all one-time scaffolding and commit
+        run: |
+          rm -f repair-operation-authority-final.mjs repair-routed-operations.mjs
+          rm -f .github/workflows/repair-operation-authority-final.yml .github/workflows/repair-routed-operations.yml
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add -A
+          git commit -m 'Separate canonical outputs from external agent authority [operation-authority-final]'
+          git push origin HEAD:repair/scope-authority-20260902
