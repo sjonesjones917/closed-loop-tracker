@@ -53,10 +53,11 @@ jobs:
           node verify-current-spec-contradictions.mjs
           node verify-ingestion.mjs
           node verify-v3-contract.mjs
-      - name: Remove one-time scaffolding and commit the complete ratchet step
+      - name: Commit the complete ratchet step without workflow mutation
         run: |
           set -euo pipefail
-          rm -f .repair-conformance.mjs .github/workflows/repair-conformance.yml
+          git checkout -- .github/workflows/pages.yml .github/workflows/repair-conformance.yml
+          rm -f .repair-conformance.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
