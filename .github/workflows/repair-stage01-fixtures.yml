@@ -1,0 +1,52 @@
+name: One-time Stage 01 fixture migration
+on:
+  push:
+    branches: [codex/stage01-disposition-contract-20260903]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: codex/stage01-disposition-contract-20260903
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Migrate only Stage 01 proof fixtures to the closed vocabulary
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const replacements=new Map([
+            ["'incorporated into the job definition'","'EXTRACTED_RELEVANT_INFORMATION'"],
+            ['"incorporated into the job definition"','"EXTRACTED_RELEVANT_INFORMATION"'],
+            ["'retained as context'","'RETAINED_AS_CONTEXT'"],
+            ['"retained as context"','"RETAINED_AS_CONTEXT"'],
+            ["'unresolved human-only'","'UNRESOLVED_HUMAN_AUTHORITY'"],
+            ['"unresolved human-only"','"UNRESOLVED_HUMAN_AUTHORITY"'],
+            ["'later-resolvable'","'LATER_RESOLVABLE'"],
+            ['"later-resolvable"','"LATER_RESOLVABLE"'],
+            ["'inapplicable with reason'","'NO_PROJECT_RELEVANT_INFORMATION'"],
+            ['"inapplicable with reason"','"NO_PROJECT_RELEVANT_INFORMATION"']
+          ]);
+          let changed=[];
+          for(const file of fs.readdirSync('.').filter(n=>n.endsWith('.mjs'))){let s=fs.readFileSync(file,'utf8'),n=s;for(const [a,b] of replacements)n=n.split(a).join(b);if(n!==s){fs.writeFileSync(file,n);changed.push(file);}}
+          console.log(JSON.stringify({changed}));
+          NODE
+          node build-test-project.mjs
+          node verify-stage01-intake-closure.mjs
+          node verify-spec-grounded-route-oracle.mjs
+          node verify-zero-loss-accounting.mjs
+          node verify-complete.mjs
+          node verify-full-cycle.mjs
+      - name: Commit fixture migration
+        run: |
+          set -euo pipefail
+          git config user.name closed-loop-repair
+          git config user.email closed-loop-repair@users.noreply.github.com
+          git add '*.mjs'
+          git diff --cached --check
+          if ! git diff --cached --quiet; then git commit -m 'Align Stage 01 proof fixtures with closed dispositions'; git push origin HEAD:codex/stage01-disposition-contract-20260903; fi
