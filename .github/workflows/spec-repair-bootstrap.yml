@@ -27,29 +27,8 @@ jobs:
               raise SystemExit('Expected nonconforming Stage 01 disposition vocabulary was not found.')
           s=s.replace(old,new)
           p.write_text(s)
-
-          test=Path('verify-stage01-disposition-contract.mjs')
-          test.write_text(r'''import fs from 'node:fs';
-import vm from 'node:vm';
-import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
-globalThis.crypto=webcrypto;
-globalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};
-globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
-for(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});
-const core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;
-function project(){const p=core.createBlankState('JOB-STAGE01-DISPOSITIONS');p.job.JOB_ID='JOB-STAGE01-DISPOSITIONS';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve all human input exactly.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;}
-const required=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];
-const forbidden=['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'];
-function verify(source){
-  for(const token of required)assert(source.includes(token),`Stage 01 prompt must publish ${token}.`);
-  for(const token of forbidden)assert(!source.includes(token),`Legacy non-contract Stage 01 disposition remains: ${token}.`);
-}
-const prompt=prompts.buildPromptRecord(1,project(),{operation:'COMPLETE'}).prompt;
-verify(prompt);
-assert.throws(()=>verify(prompt.replace('INACCESSIBLE_OR_BLOCKED','inapplicable with reason')),/Legacy non-contract|must publish/,'Mutation restoring legacy disposition must fail.');
-console.log(JSON.stringify({stage01DispositionContract:'PASS',requiredDispositionCount:required.length,mutationDetected:true}));
-''')
+          test="""import fs from 'node:fs';\nimport vm from 'node:vm';\nimport assert from 'node:assert/strict';\nimport { webcrypto } from 'node:crypto';\nglobalThis.crypto=webcrypto;\nglobalThis.Event=globalThis.Event||class Event{constructor(type){this.type=type}};\nglobalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);\nfor(const f of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js'])vm.runInThisContext(fs.readFileSync(f,'utf8'),{filename:f});\nconst core=globalThis.closedLoopCore,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine;\nfunction project(){const p=core.createBlankState('JOB-STAGE01-DISPOSITIONS');p.job.JOB_ID='JOB-STAGE01-DISPOSITIONS';p.job.EXACT_USER_OBJECTIVE_VERBATIM='Preserve all human input exactly.';p.job.CURRENT_INPUT_VERSION='INPUT-v001';engine.ensureShape(p);engine.recalculate(p);return p;}\nconst required=['EXTRACTED_RELEVANT_INFORMATION','RETAINED_AS_CONTEXT','NO_PROJECT_RELEVANT_INFORMATION','UNRESOLVED_HUMAN_AUTHORITY','LATER_RESOLVABLE','INACCESSIBLE_OR_BLOCKED'];\nconst forbidden=['incorporated into the job definition','retained as context','unresolved human-only','later-resolvable','inapplicable with reason'];\nfunction verify(source){for(const token of required)assert(source.includes(token),`Stage 01 prompt must publish ${token}.`);for(const token of forbidden)assert(!source.includes(token),`Legacy non-contract Stage 01 disposition remains: ${token}.`);}\nconst prompt=prompts.buildPromptRecord(1,project(),{operation:'COMPLETE'}).prompt;\nverify(prompt);\nassert.throws(()=>verify(prompt.replace('INACCESSIBLE_OR_BLOCKED','inapplicable with reason')),/Legacy non-contract|must publish/,'Mutation restoring legacy disposition must fail.');\nconsole.log(JSON.stringify({stage01DispositionContract:'PASS',requiredDispositionCount:required.length,mutationDetected:true}));\n"""
+          Path('verify-stage01-disposition-contract.mjs').write_text(test)
           PY
           node --check prompt-engine.js
           node verify-stage01-disposition-contract.mjs
